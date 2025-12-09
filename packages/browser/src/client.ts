@@ -73,11 +73,16 @@ export class OutlitBrowser extends OutlitClient {
         }
       }
 
-      // Set anonymous ID in user properties (don't use it as userId)
+      // Set anonymous ID in user properties
       const currentUser = this.getUser();
       if (!currentUser.userId && !currentUser.anonymousId) {
-        // Only set anonymousId property, don't treat it as userId
-        super.identify('', { anonymousId });
+        // Store anonymousId directly in user object without calling identify
+        this.user = {
+          anonymousId,
+        };
+        if (this.browserConfig.debug) {
+          console.log('[Outlit] Anonymous user initialized:', { anonymousId });
+        }
       }
     } catch (e) {
       // Handle any storage access errors

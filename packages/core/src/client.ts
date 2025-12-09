@@ -13,7 +13,7 @@ import type {
 export class OutlitClient {
   private config: Required<OutlitConfig>;
   private queue: Event[] = [];
-  private user: UserProperties = {};
+  protected user: UserProperties = {};
   private flushTimer?: NodeJS.Timeout | number;
 
   constructor(config: OutlitConfig) {
@@ -168,8 +168,12 @@ export class OutlitClient {
    * Stop the automatic flush timer
    */
   private stopFlushTimer(): void {
-    if (this.flushTimer) {
-      clearInterval(this.flushTimer as number);
+    if (this.flushTimer !== undefined) {
+      if (typeof this.flushTimer === 'number') {
+        clearInterval(this.flushTimer);
+      } else {
+        clearInterval(this.flushTimer as unknown as number);
+      }
       this.flushTimer = undefined;
     }
   }
