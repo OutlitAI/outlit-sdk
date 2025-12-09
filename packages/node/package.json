@@ -1,0 +1,48 @@
+{
+  "name": "@outlit/node",
+  "version": "0.1.0",
+  "description": "Node.js SDK for Outlit events ingestion API",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "outlit",
+    "analytics",
+    "events",
+    "tracking",
+    "node",
+    "sdk"
+  ],
+  "author": "Outlit AI",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OutlitAI/outlit-sdk.git",
+    "directory": "packages/node"
+  },
+  "bugs": {
+    "url": "https://github.com/OutlitAI/outlit-sdk/issues"
+  },
+  "homepage": "https://github.com/OutlitAI/outlit-sdk#readme",
+  "dependencies": {
+    "@outlit/core": "workspace:*"
+  }
+}
