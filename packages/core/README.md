@@ -50,6 +50,11 @@ await client.shutdown();
 - `timeout` (optional): Request timeout in milliseconds (default: 5000)
 - `debug` (optional): Enable debug logging (default: false)
 
+## Requirements
+
+- Node.js 18+ or modern browser with fetch API support
+- Requires native `fetch` API (available in Node.js 18+ and modern browsers)
+
 ## License
 
 Apache-2.0

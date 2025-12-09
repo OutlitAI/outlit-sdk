@@ -107,8 +107,10 @@ export class OutlitNode extends OutlitClient {
 
   /**
    * Create a middleware function for Express/Koa/etc.
+   * Note: Uses loose typing to support various middleware frameworks
    */
   createMiddleware() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (req: any, _res: any, next: any) => {
       const context: EventContext = {
         ip: req.ip || req.connection?.remoteAddress,

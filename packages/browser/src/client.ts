@@ -57,18 +57,33 @@ export class OutlitBrowser extends OutlitClient {
    * Ensure anonymous ID exists in localStorage
    */
   private ensureAnonymousId(): void {
-    const storageKey = 'outlit_anonymous_id';
-    let anonymousId = localStorage.getItem(storageKey);
+    try {
+      const storageKey = 'outlit_anonymous_id';
+      let anonymousId = localStorage.getItem(storageKey);
 
-    if (!anonymousId) {
-      anonymousId = this.generateId();
-      localStorage.setItem(storageKey, anonymousId);
-    }
+      if (!anonymousId) {
+        anonymousId = this.generateId();
+        try {
+          localStorage.setItem(storageKey, anonymousId);
+        } catch (e) {
+          // localStorage not available, continue with in-memory ID
+          if (this.browserConfig.debug) {
+            console.warn('[Outlit] localStorage not available:', e);
+          }
+        }
+      }
 
-    // Set anonymous ID in user properties
-    const currentUser = this.getUser();
-    if (!currentUser.userId) {
-      this.identify(anonymousId, { anonymousId });
+      // Set anonymous ID in user properties (don't use it as userId)
+      const currentUser = this.getUser();
+      if (!currentUser.userId && !currentUser.anonymousId) {
+        // Only set anonymousId property, don't treat it as userId
+        super.identify('', { anonymousId });
+      }
+    } catch (e) {
+      // Handle any storage access errors
+      if (this.browserConfig.debug) {
+        console.warn('[Outlit] Error initializing anonymous ID:', e);
+      }
     }
   }
 
@@ -155,6 +170,13 @@ export class OutlitBrowser extends OutlitClient {
    */
   identify(userId: string, properties?: UserProperties): void {
     super.identify(userId, properties);
-    localStorage.setItem('outlit_user_id', userId);
+    try {
+      localStorage.setItem('outlit_user_id', userId);
+    } catch (e) {
+      // localStorage not available
+      if (this.browserConfig.debug) {
+        console.warn('[Outlit] Could not save user ID to localStorage:', e);
+      }
+    }
   }
 }
