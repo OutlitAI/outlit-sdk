@@ -138,7 +138,7 @@ export class OutlitClient {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result = await response.json();
+      const result = (await response.json()) as ApiResponse;
 
       if (this.config.debug) {
         console.log('[Outlit] Events sent successfully:', result);

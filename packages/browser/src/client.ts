@@ -1,4 +1,4 @@
-import { OutlitClient, OutlitConfig, EventProperties } from '@outlit/core';
+import { OutlitClient, OutlitConfig, EventProperties, UserProperties } from '@outlit/core';
 
 /**
  * Browser-specific configuration
@@ -153,7 +153,7 @@ export class OutlitBrowser extends OutlitClient {
   /**
    * Override identify to save userId to localStorage
    */
-  identify(userId: string, properties?: Record<string, unknown>): void {
+  identify(userId: string, properties?: UserProperties): void {
     super.identify(userId, properties);
     localStorage.setItem('outlit_user_id', userId);
   }
