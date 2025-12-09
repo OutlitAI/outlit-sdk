@@ -107,11 +107,9 @@ export class OutlitNode extends OutlitClient {
 
   /**
    * Create a middleware function for Express/Koa/etc.
-   * Note: Uses loose typing to support various middleware frameworks
    */
   createMiddleware() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (req: any, _res: any, next: any) => {
+    return (req: MiddlewareRequest, _res: unknown, next: NextFunction) => {
       const context: EventContext = {
         ip: req.ip || req.connection?.remoteAddress,
         userAgent: req.get?.('user-agent'),
@@ -145,3 +143,25 @@ export interface EventContext {
   method?: string;
   headers?: Record<string, string>;
 }
+
+/**
+ * Minimal request interface for middleware
+ */
+interface MiddlewareRequest {
+  ip?: string;
+  connection?: { remoteAddress?: string };
+  get?: (header: string) => string | undefined;
+  originalUrl?: string;
+  url?: string;
+  method?: string;
+  headers?: Record<string, string>;
+  outlit?: {
+    track: (eventName: string, properties?: EventProperties) => void;
+    identify: (userId: string, properties?: UserProperties) => void;
+  };
+}
+
+/**
+ * Minimal next function for middleware
+ */
+type NextFunction = () => void;
