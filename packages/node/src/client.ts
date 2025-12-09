@@ -1,4 +1,4 @@
-import { OutlitClient, OutlitConfig, EventProperties } from '@outlit/core';
+import { OutlitClient, OutlitConfig, EventProperties, UserProperties } from '@outlit/core';
 
 /**
  * Node.js-specific configuration
@@ -66,8 +66,8 @@ export class OutlitNode extends OutlitClient {
   /**
    * Extract relevant properties from context (e.g., HTTP request)
    */
-  private extractContextProperties(context: EventContext): Record<string, unknown> {
-    const properties: Record<string, unknown> = {};
+  private extractContextProperties(context: EventContext): EventProperties {
+    const properties: EventProperties = {};
 
     if (context.ip) {
       properties.ip = context.ip;
@@ -86,19 +86,19 @@ export class OutlitNode extends OutlitClient {
     }
 
     if (context.headers) {
-      // Only include safe headers
+      // Only include safe headers as string array
       const safeHeaders = ['content-type', 'accept', 'accept-language'];
-      const filteredHeaders: Record<string, string> = {};
+      const headerValues: string[] = [];
 
       safeHeaders.forEach((header) => {
         const value = context.headers?.[header];
         if (value) {
-          filteredHeaders[header] = value;
+          headerValues.push(`${header}: ${value}`);
         }
       });
 
-      if (Object.keys(filteredHeaders).length > 0) {
-        properties.headers = filteredHeaders;
+      if (headerValues.length > 0) {
+        properties.headers = headerValues;
       }
     }
 
@@ -109,7 +109,7 @@ export class OutlitNode extends OutlitClient {
    * Create a middleware function for Express/Koa/etc.
    */
   createMiddleware() {
-    return (req: any, res: any, next: any) => {
+    return (req: any, _res: any, next: any) => {
       const context: EventContext = {
         ip: req.ip || req.connection?.remoteAddress,
         userAgent: req.get?.('user-agent'),
@@ -123,7 +123,7 @@ export class OutlitNode extends OutlitClient {
         track: (eventName: string, properties?: EventProperties) => {
           this.trackServer(eventName, properties, context);
         },
-        identify: (userId: string, properties?: Record<string, unknown>) => {
+        identify: (userId: string, properties?: UserProperties) => {
           this.identify(userId, properties);
         },
       };
