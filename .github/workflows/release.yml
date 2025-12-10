@@ -38,6 +38,8 @@ jobs:
           TIMESTAMP=$(date +%Y%m%d%H%M)
           SHORT_SHA=$(git rev-parse --short HEAD)
           pnpm changeset version --snapshot canary-${TIMESTAMP}-${SHORT_SHA}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish canary to npm
         run: pnpm changeset publish --tag canary --no-git-tag
