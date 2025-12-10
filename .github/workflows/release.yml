@@ -23,13 +23,11 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: ".nvmrc"
           cache: "pnpm"
           registry-url: "https://registry.npmjs.org"
 
@@ -62,13 +60,11 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: ".nvmrc"
           cache: "pnpm"
 
       - name: Install dependencies
@@ -117,4 +113,3 @@ jobs:
           echo "**URLs:**" >> $GITHUB_STEP_SUMMARY
           echo "- Versioned: https://storage.googleapis.com/cdn.outlit.ai/v${{ steps.version.outputs.version }}/outlit.js" >> $GITHUB_STEP_SUMMARY
           echo "- Stable: https://storage.googleapis.com/cdn.outlit.ai/stable/outlit.js" >> $GITHUB_STEP_SUMMARY
-
