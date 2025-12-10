@@ -171,7 +171,7 @@ async function main(): Promise<void> {
   console.log(`  Target:      ${gcsPath}`)
   console.log(`  Public URL:  ${publicUrl}`)
   if (config.ci) {
-    console.log(`  Mode:        CI (non-interactive)`)
+    console.log("  Mode:        CI (non-interactive)")
   }
 
   // Require confirmation for stable (production) deploys
