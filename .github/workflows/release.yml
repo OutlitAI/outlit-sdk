@@ -8,8 +8,75 @@ on:
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
+  # Always publish canary to npm on every main push
+  canary:
+    name: Publish Canary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Create canary versions
+        run: |
+          # Generate snapshot version like 0.1.0-canary-20231210-abc1234
+          TIMESTAMP=$(date +%Y%m%d%H%M)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          pnpm changeset version --snapshot canary-${TIMESTAMP}-${SHORT_SHA}
+
+      - name: Publish canary to npm
+        run: pnpm changeset publish --tag canary --no-git-tag
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy canary IIFE to CDN
+        run: |
+          gcloud storage cp packages/browser/dist/outlit.global.js \
+            gs://cdn.outlit.ai/canary/outlit.js \
+            --cache-control="public, max-age=300" \
+            --content-type="application/javascript"
+
+      - name: Summary
+        run: |
+          echo "## Canary Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**npm:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npm install @outlit/browser@canary" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**CDN:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`html" >> $GITHUB_STEP_SUMMARY
+          echo '<script src="https://storage.googleapis.com/cdn.outlit.ai/canary/outlit.js"></script>' >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # Handle stable releases via Changesets
   release:
     name: Release
+    needs: canary
     runs-on: ubuntu-latest
     permissions:
       contents: write
