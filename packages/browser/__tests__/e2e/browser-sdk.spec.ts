@@ -413,7 +413,7 @@ test.describe("API Payload Structure", () => {
 
     const payload = apiCalls[0]?.payload
     expect(payload?.visitorId).toBeTruthy()
-    expect(payload?.source).toBe("pixel")
+    expect(payload?.source).toBe("client")
   })
 
   test("API URL includes public key", async ({ page }) => {

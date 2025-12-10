@@ -247,7 +247,7 @@ export class Outlit {
     if (events.length === 0) return
     if (!this.visitorId) return // Can't send without a visitor ID
 
-    const payload = buildIngestPayload(this.visitorId, "pixel", events)
+    const payload = buildIngestPayload(this.visitorId, "client", events)
     const url = `${this.apiHost}/api/i/v1/${this.publicKey}/events`
 
     try {

@@ -4,7 +4,7 @@
 
 export type EventType = "pageview" | "form" | "identify" | "custom"
 
-export type SourceType = "pixel" | "server" | "integration"
+export type SourceType = "client" | "server" | "integration"
 
 // ============================================
 // UTM PARAMETERS
