@@ -25,7 +25,7 @@ export interface UseOutlitReturn {
   getVisitorId: () => string | null
 
   /**
-   * Whether the tracker is initialized.
+   * Whether Outlit is initialized.
    */
   isInitialized: boolean
 
@@ -43,11 +43,11 @@ export interface UseOutlitReturn {
 }
 
 /**
- * Hook to access the Outlit tracker.
+ * Hook to access the Outlit client.
  *
  * @example
  * ```tsx
- * import { useOutlit } from '@outlit/tracker/react'
+ * import { useOutlit } from '@outlit/browser/react'
  *
  * function MyComponent() {
  *   const { track, identify } = useOutlit()
@@ -78,34 +78,34 @@ export interface UseOutlitReturn {
  * ```
  */
 export function useOutlit(): UseOutlitReturn {
-  const { tracker, isInitialized, isTrackingEnabled, enableTracking } = useContext(OutlitContext)
+  const { outlit, isInitialized, isTrackingEnabled, enableTracking } = useContext(OutlitContext)
 
   const track = useCallback(
     (eventName: string, properties?: BrowserTrackOptions["properties"]) => {
-      if (!tracker) {
-        console.warn("[Outlit] Tracker not initialized. Make sure OutlitProvider is mounted.")
+      if (!outlit) {
+        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
         return
       }
-      tracker.track(eventName, properties)
+      outlit.track(eventName, properties)
     },
-    [tracker],
+    [outlit],
   )
 
   const identify = useCallback(
     (options: BrowserIdentifyOptions) => {
-      if (!tracker) {
-        console.warn("[Outlit] Tracker not initialized. Make sure OutlitProvider is mounted.")
+      if (!outlit) {
+        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
         return
       }
-      tracker.identify(options)
+      outlit.identify(options)
     },
-    [tracker],
+    [outlit],
   )
 
   const getVisitorId = useCallback(() => {
-    if (!tracker) return null
-    return tracker.getVisitorId()
-  }, [tracker])
+    if (!outlit) return null
+    return outlit.getVisitorId()
+  }, [outlit])
 
   return {
     track,
@@ -126,7 +126,7 @@ export function useOutlit(): UseOutlitReturn {
  *
  * @example
  * ```tsx
- * import { useTrack } from '@outlit/tracker/react'
+ * import { useTrack } from '@outlit/browser/react'
  *
  * function MyComponent() {
  *   const track = useTrack()
@@ -148,7 +148,7 @@ export function useTrack() {
  *
  * @example
  * ```tsx
- * import { useIdentify } from '@outlit/tracker/react'
+ * import { useIdentify } from '@outlit/browser/react'
  *
  * function LoginForm() {
  *   const identify = useIdentify()

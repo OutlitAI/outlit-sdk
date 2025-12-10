@@ -1,19 +1,19 @@
 import { type ReactNode, createContext, useCallback, useEffect, useRef, useState } from "react"
-import { Tracker, type TrackerOptions } from "../tracker"
+import { Outlit, type OutlitOptions } from "../tracker"
 
 // ============================================
 // CONTEXT
 // ============================================
 
 export interface OutlitContextValue {
-  tracker: Tracker | null
+  outlit: Outlit | null
   isInitialized: boolean
   isTrackingEnabled: boolean
   enableTracking: () => void
 }
 
 export const OutlitContext = createContext<OutlitContextValue>({
-  tracker: null,
+  outlit: null,
   isInitialized: false,
   isTrackingEnabled: false,
   enableTracking: () => {},
@@ -23,7 +23,7 @@ export const OutlitContext = createContext<OutlitContextValue>({
 // PROVIDER
 // ============================================
 
-export interface OutlitProviderProps extends Omit<TrackerOptions, "trackPageviews"> {
+export interface OutlitProviderProps extends Omit<OutlitOptions, "trackPageviews"> {
   children: ReactNode
   /**
    * Whether to automatically track pageviews.
@@ -41,12 +41,12 @@ export interface OutlitProviderProps extends Omit<TrackerOptions, "trackPageview
 
 /**
  * Outlit Provider component.
- * Initializes the tracker and provides it to child components via context.
+ * Initializes the client and provides it to child components via context.
  *
  * @example
  * ```tsx
  * // layout.tsx - Auto tracking (default)
- * import { OutlitProvider } from '@outlit/tracker/react'
+ * import { OutlitProvider } from '@outlit/browser/react'
  *
  * export default function RootLayout({ children }) {
  *   return (
@@ -60,7 +60,7 @@ export interface OutlitProviderProps extends Omit<TrackerOptions, "trackPageview
  * @example
  * ```tsx
  * // layout.tsx - With consent management
- * import { OutlitProvider } from '@outlit/tracker/react'
+ * import { OutlitProvider } from '@outlit/browser/react'
  *
  * export default function RootLayout({ children }) {
  *   return (
@@ -71,7 +71,7 @@ export interface OutlitProviderProps extends Omit<TrackerOptions, "trackPageview
  * }
  *
  * // ConsentBanner.tsx
- * import { useOutlit } from '@outlit/tracker/react'
+ * import { useOutlit } from '@outlit/browser/react'
  *
  * function ConsentBanner() {
  *   const { enableTracking } = useOutlit()
@@ -90,15 +90,15 @@ export function OutlitProvider({
   autoTrack = true,
   autoIdentify = true,
 }: OutlitProviderProps) {
-  const trackerRef = useRef<Tracker | null>(null)
+  const outlitRef = useRef<Outlit | null>(null)
   const initializedRef = useRef(false)
   const [isTrackingEnabled, setIsTrackingEnabled] = useState(false)
 
-  // Initialize tracker once
+  // Initialize Outlit once
   useEffect(() => {
     if (initializedRef.current) return
 
-    trackerRef.current = new Tracker({
+    outlitRef.current = new Outlit({
       publicKey,
       apiHost,
       trackPageviews,
@@ -110,11 +110,11 @@ export function OutlitProvider({
     })
 
     initializedRef.current = true
-    setIsTrackingEnabled(trackerRef.current.isEnabled())
+    setIsTrackingEnabled(outlitRef.current.isEnabled())
 
     // Cleanup on unmount
     return () => {
-      trackerRef.current?.shutdown()
+      outlitRef.current?.shutdown()
     }
   }, [
     publicKey,
@@ -128,8 +128,8 @@ export function OutlitProvider({
   ])
 
   const enableTracking = useCallback(() => {
-    if (trackerRef.current) {
-      trackerRef.current.enableTracking()
+    if (outlitRef.current) {
+      outlitRef.current.enableTracking()
       setIsTrackingEnabled(true)
     }
   }, [])
@@ -137,7 +137,7 @@ export function OutlitProvider({
   return (
     <OutlitContext.Provider
       value={{
-        tracker: trackerRef.current,
+        outlit: outlitRef.current,
         isInitialized: initializedRef.current,
         isTrackingEnabled,
         enableTracking,

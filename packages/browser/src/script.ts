@@ -23,7 +23,7 @@
  */
 
 import type { BrowserIdentifyOptions, BrowserTrackOptions } from "@outlit/core"
-import { Tracker, type TrackerOptions } from "./tracker"
+import { Outlit, type OutlitOptions } from "./tracker"
 
 // ============================================
 // TYPES
@@ -39,9 +39,9 @@ interface OutlitStub {
 
 interface OutlitGlobal {
   _initialized: boolean
-  _instance: Tracker | null
+  _instance: Outlit | null
   _queue: Array<() => void>
-  init: (options: TrackerOptions) => void
+  init: (options: OutlitOptions) => void
   track: (eventName: string, properties?: BrowserTrackOptions["properties"]) => void
   identify: (options: BrowserIdentifyOptions) => void
   getVisitorId: () => string | null
@@ -65,13 +65,13 @@ const outlit: OutlitGlobal & { _loaded?: boolean } = {
   _queue: [],
   _loaded: true, // Marks that the real SDK has loaded (for double-load protection)
 
-  init(options: TrackerOptions) {
+  init(options: OutlitOptions) {
     if (this._initialized) {
       console.warn("[Outlit] Already initialized")
       return
     }
 
-    this._instance = new Tracker(options)
+    this._instance = new Outlit(options)
     this._initialized = true
 
     // Process calls queued by the stub snippet (before SDK loaded)

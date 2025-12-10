@@ -14,10 +14,10 @@ import { initFormTracking, initPageviewTracking, stopAutocapture } from "./autoc
 import { getOrCreateVisitorId } from "./storage"
 
 // ============================================
-// TRACKER CLASS
+// OUTLIT CLIENT
 // ============================================
 
-export interface TrackerOptions extends TrackerConfig {
+export interface OutlitOptions extends TrackerConfig {
   /**
    * Automatically start tracking on init.
    * Set to false if you need to wait for user consent before tracking.
@@ -37,7 +37,7 @@ export interface TrackerOptions extends TrackerConfig {
   autoIdentify?: boolean
 }
 
-export class Tracker {
+export class Outlit {
   private publicKey: string
   private apiHost: string
   private visitorId: string | null = null
@@ -46,9 +46,9 @@ export class Tracker {
   private flushInterval: number
   private isInitialized = false
   private isTrackingEnabled = false
-  private options: TrackerOptions
+  private options: OutlitOptions
 
-  constructor(options: TrackerOptions) {
+  constructor(options: OutlitOptions) {
     this.publicKey = options.publicKey
     this.apiHost = options.apiHost ?? DEFAULT_API_HOST
     this.flushInterval = options.flushInterval ?? 5000
@@ -171,7 +171,7 @@ export class Tracker {
   }
 
   /**
-   * Shutdown the tracker.
+   * Shutdown the client.
    */
   async shutdown(): Promise<void> {
     if (this.flushTimer) {
@@ -278,29 +278,29 @@ export class Tracker {
 // SINGLETON INSTANCE
 // ============================================
 
-let instance: Tracker | null = null
+let instance: Outlit | null = null
 
 /**
- * Initialize the Outlit tracker.
+ * Initialize the Outlit client.
  * Should be called once at app startup.
  */
-export function init(options: TrackerOptions): Tracker {
+export function init(options: OutlitOptions): Outlit {
   if (instance) {
-    console.warn("[Outlit] Tracker already initialized")
+    console.warn("[Outlit] Already initialized")
     return instance
   }
 
-  instance = new Tracker(options)
+  instance = new Outlit(options)
   return instance
 }
 
 /**
- * Get the tracker instance.
+ * Get the Outlit instance.
  * Throws if not initialized.
  */
-export function getInstance(): Tracker {
+export function getInstance(): Outlit {
   if (!instance) {
-    throw new Error("[Outlit] Tracker not initialized. Call init() first.")
+    throw new Error("[Outlit] Not initialized. Call init() first.")
   }
   return instance
 }

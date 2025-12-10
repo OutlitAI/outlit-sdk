@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Deployment script for Outlit Tracker to Google Cloud Storage
+ * Deployment script for Outlit SDK to Google Cloud Storage
  *
  * Environments:
  *   canary  - For testing/development. Safe to overwrite frequently.
@@ -165,7 +165,7 @@ async function main(): Promise<void> {
   const publicUrl = getPublicUrl(gcsPath)
 
   console.log("\n============================================")
-  console.log("         Outlit Tracker Deployment          ")
+  console.log("           Outlit SDK Deployment            ")
   console.log("============================================")
   console.log(`\n  Environment: ${config.environment.toUpperCase()}`)
   console.log(`  Target:      ${gcsPath}`)

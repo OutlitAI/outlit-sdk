@@ -20,7 +20,7 @@ export default defineConfig([
       outlit: "src/script.ts",
     },
     format: ["iife"],
-    globalName: "OutlitTracker",
+    globalName: "Outlit",
     minify: true,
     sourcemap: true,
     clean: false, // Don't clean, already done above

@@ -1,6 +1,6 @@
 // Main exports for npm package
 export {
-  Tracker,
+  Outlit,
   init,
   getInstance,
   track,
@@ -8,7 +8,7 @@ export {
   enableTracking,
   isTrackingEnabled,
 } from "./tracker"
-export type { TrackerOptions } from "./tracker"
+export type { OutlitOptions } from "./tracker"
 
 // Re-export useful types from core
 export type {
@@ -20,7 +20,7 @@ export type {
 
 // Default export for simple import
 import {
-  Tracker,
+  Outlit,
   enableTracking,
   getInstance,
   identify,
@@ -34,7 +34,7 @@ export default {
   track,
   identify,
   getInstance,
-  Tracker,
+  Outlit,
   enableTracking,
   isTrackingEnabled,
 }

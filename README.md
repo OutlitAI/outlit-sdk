@@ -30,49 +30,93 @@ npm install @outlit/core
 ### Browser
 
 ```typescript
-import { OutlitBrowser } from '@outlit/browser';
+import { Outlit } from '@outlit/browser'
 
-const outlit = new OutlitBrowser({
-  apiKey: 'your-api-key',
-  autoPageViews: true,
-});
+const outlit = new Outlit({
+  publicKey: 'pk_xxx',
+  trackPageviews: true,
+  trackForms: true,
+})
 
 // Identify a user
-outlit.identify('user-123', {
+outlit.identify({
   email: 'user@example.com',
-  name: 'John Doe',
-});
+  traits: { name: 'John Doe' },
+})
 
 // Track events
 outlit.track('button_clicked', {
   button_id: 'signup',
   page: '/homepage',
-});
+})
+```
+
+#### Using the singleton API
+
+```typescript
+import { init, track, identify } from '@outlit/browser'
+
+// Initialize once at app startup
+init({ publicKey: 'pk_xxx' })
+
+// Then use anywhere
+track('page_viewed', { page: '/home' })
+identify({ email: 'user@example.com' })
+```
+
+#### Using with React
+
+```tsx
+import { OutlitProvider, useOutlit } from '@outlit/browser/react'
+
+// Wrap your app
+function App() {
+  return (
+    <OutlitProvider publicKey="pk_xxx">
+      <MyComponent />
+    </OutlitProvider>
+  )
+}
+
+// Use in components
+function MyComponent() {
+  const { track, identify } = useOutlit()
+  
+  return (
+    <button onClick={() => track('button_clicked')}>
+      Click me
+    </button>
+  )
+}
 ```
 
 ### Node.js
 
 ```typescript
-import { OutlitNode } from '@outlit/node';
+import { Outlit } from '@outlit/node'
 
-const outlit = new OutlitNode({
-  apiKey: 'your-api-key',
-});
+const outlit = new Outlit({
+  publicKey: 'pk_xxx',
+})
+
+// Track server-side events (requires identity)
+outlit.track('api_request', {
+  email: 'user@example.com',
+  properties: {
+    endpoint: '/api/users',
+    method: 'GET',
+    status: 200,
+  },
+})
 
 // Identify a user
-outlit.identify('user-123', {
+outlit.identify({
   email: 'user@example.com',
-});
+  traits: { plan: 'pro' },
+})
 
-// Track server-side events
-outlit.track('api_request', {
-  endpoint: '/api/users',
-  method: 'GET',
-  status: 200,
-});
-
-// Use with Express
-app.use(outlit.createMiddleware());
+// Flush events before shutdown
+await outlit.flush()
 ```
 
 ## Features
@@ -156,8 +200,8 @@ The changeset file will be committed with your PR and used to generate changelog
 
 ### Workflows
 
-- **CI** (`ci.yml`) - Runs on PRs: lint, typecheck, build, test, deploy canary IIFE
-- **Release** (`release.yml`) - Runs on main: creates version PR or publishes to npm + CDN
+- **CI** (`ci.yml`) - Runs on PRs: lint, typecheck, build, test
+- **Release** (`release.yml`) - Runs on main: publish canary to npm + CDN, create version PR or publish stable releases
 
 ### Required Secrets
 
@@ -190,9 +234,16 @@ The browser SDK IIFE bundle is deployed to Google Cloud Storage:
 
 | Path | Description |
 |------|-------------|
-| `/canary/outlit.js` | Deployed on every PR for testing (5 min cache) |
+| `/canary/outlit.js` | Latest from main branch (5 min cache) |
 | `/stable/outlit.js` | Latest stable release (1 year cache) |
 | `/v{version}/outlit.js` | Immutable versioned release (1 year cache) |
+
+**npm tags:**
+
+| Tag | Description |
+|-----|-------------|
+| `latest` | Stable release (`npm install @outlit/browser`) |
+| `canary` | Latest from main (`npm install @outlit/browser@canary`) |
 
 Manual deployment (requires gcloud CLI):
 ```bash
