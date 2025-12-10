@@ -1,38 +1,9 @@
 {
   "name": "@outlit/browser",
   "version": "0.1.0",
-  "description": "Browser SDK for Outlit events ingestion API",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
-    }
-  },
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-    "test": "echo \"No tests yet\"",
-    "test:watch": "vitest",
-    "lint": "eslint src --ext .ts",
-    "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
-  },
-  "keywords": [
-    "outlit",
-    "analytics",
-    "events",
-    "tracking",
-    "browser",
-    "sdk"
-  ],
-  "author": "Outlit AI",
+  "description": "Outlit browser tracking SDK with React bindings",
   "license": "Apache-2.0",
+  "author": "Outlit AI",
   "repository": {
     "type": "git",
     "url": "https://github.com/OutlitAI/outlit-sdk.git",
@@ -42,7 +13,63 @@
     "url": "https://github.com/OutlitAI/outlit-sdk/issues"
   },
   "homepage": "https://github.com/OutlitAI/outlit-sdk#readme",
+  "keywords": ["outlit", "analytics", "tracking", "sdk", "browser", "react"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.mjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.mjs",
+      "require": "./dist/react/index.js",
+      "default": "./dist/react/index.mjs"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist .turbo node_modules",
+    "lint": "biome check . --write",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "serve:test": "tsx ./__tests__/e2e/serve.ts",
+    "deploy:canary": "pnpm build && tsx ./scripts/deploy.ts canary",
+    "deploy:stable": "pnpm build && tsx ./scripts/deploy.ts stable",
+    "deploy:version": "pnpm build && tsx ./scripts/deploy.ts version"
+  },
   "dependencies": {
-    "@outlit/core": "*"
+    "@outlit/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@outlit/typescript-config": "workspace:*",
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "react": "^18.2.0",
+    "tsup": "^8.0.1",
+    "tsx": "^4.0.0",
+    "typescript": "^5.3.3"
+  },
+  "peerDependencies": {
+    "react": ">=17.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   }
 }

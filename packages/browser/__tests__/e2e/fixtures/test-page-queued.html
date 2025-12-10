@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDK Test Page - Queued Calls</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+    #status { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; }
+    .info { background: #e3f2fd; padding: 10px; border-radius: 4px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <h1>SDK Test Page - Queued Calls</h1>
+  <p>This page tests that calls made BEFORE the SDK loads are queued and processed.</p>
+  
+  <div class="info">
+    ℹ️ The stub snippet queues calls immediately, and they're processed when the SDK loads.
+  </div>
+
+  <div id="status">
+    <strong>Status:</strong> <span id="status-text">Loading SDK...</span>
+  </div>
+
+  <script>
+    // Stub snippet - creates queue immediately
+    !function(w,d,src,key,auto){
+      if(w.outlit&&w.outlit._loaded)return;
+      w.outlit=w.outlit||{_q:[]};
+      ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId"].forEach(function(m){
+        w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
+      });
+      var s=d.createElement("script");s.async=1;s.src=src;
+      s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
+      (d.body||d.head).appendChild(s);
+    }(window,document,"https://cdn.outlit.ai/canary/outlit.js","pk_test_key_12345");
+    
+    // Queue calls BEFORE SDK loads - these should be processed after init
+    window.outlit.track('early_event_1', { queued: true, order: 1 });
+    window.outlit.track('early_event_2', { queued: true, order: 2 });
+    
+    console.log('[Test] Queued 2 early events, queue length:', window.outlit._q.length);
+  </script>
+
+  <script>
+    // Wait for SDK and update status
+    function waitForOutlit(callback) {
+      if (window.outlit && window.outlit._initialized) {
+        callback();
+      } else {
+        setTimeout(() => waitForOutlit(callback), 50);
+      }
+    }
+
+    waitForOutlit(() => {
+      document.getElementById('status-text').textContent = 
+        'SDK Initialized! Queued events should have been processed.';
+      console.log('[Test] SDK initialized, visitor ID:', window.outlit.getVisitorId());
+    });
+  </script>
+</body>
+</html>
+

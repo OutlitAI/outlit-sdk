@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Form Test - Multiple Forms</title>
+</head>
+<body>
+  <h1>Page With Multiple Forms</h1>
+  
+  <form id="form-1">
+    <input name="email" type="email" value="user1@example.com" />
+    <button type="submit">Submit 1</button>
+  </form>
+  
+  <form id="form-2">
+    <input name="email" type="email" value="user2@example.com" />
+    <button type="submit">Submit 2</button>
+  </form>
+
+  <script>
+    !function(w,d,src,key){
+      if(w.outlit&&w.outlit._loaded)return;
+      w.outlit=w.outlit||{_q:[]};
+      ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId"].forEach(function(m){
+        w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
+      });
+      var s=d.createElement("script");s.async=1;s.src=src;
+      s.dataset.publicKey=key;
+      (d.body||d.head).appendChild(s);
+    }(window,document,"https://cdn.outlit.ai/canary/outlit.js","pk_test_key_12345");
+  </script>
+  <script>
+    document.querySelectorAll('form').forEach(f => {
+      f.addEventListener('submit', e => e.preventDefault());
+    });
+  </script>
+</body>
+</html>
+

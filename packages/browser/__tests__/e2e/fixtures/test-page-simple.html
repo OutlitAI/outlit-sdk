@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDK Test Page - Simple Async Script</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+    button { padding: 10px 20px; margin: 10px 0; cursor: pointer; }
+    form { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+    input { display: block; margin: 10px 0; padding: 8px; width: 100%; box-sizing: border-box; }
+    #status { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; }
+    .warning { background: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <h1>SDK Test Page - Simple Async</h1>
+  <p>This page tests the simple <code>&lt;script async&gt;</code> approach.</p>
+  
+  <div class="warning">
+    ⚠️ This approach doesn't support queuing calls before the SDK loads.
+  </div>
+
+  <div>
+    <button id="track-btn">Track Custom Event</button>
+    <button id="identify-btn">Identify User</button>
+  </div>
+
+  <form id="test-form">
+    <h3>Test Form</h3>
+    <input name="email" type="email" placeholder="Email" />
+    <input name="name" type="text" placeholder="Name" />
+    <button type="submit">Submit Form</button>
+  </form>
+
+  <div id="status">
+    <strong>Status:</strong> <span id="status-text">Loading SDK...</span>
+  </div>
+
+  <!-- Simple async script approach (not recommended for production) -->
+  <script
+    src="https://cdn.outlit.ai/canary/outlit.js"
+    data-public-key="pk_test_key_12345"
+    async
+  ></script>
+
+  <script>
+    // We CANNOT call window.outlit methods here - they don't exist yet!
+    // We need to wait for the SDK to load
+
+    function waitForOutlit(callback, maxWait = 10000) {
+      const startTime = Date.now();
+      
+      function check() {
+        if (window.outlit && window.outlit._initialized) {
+          callback();
+        } else if (Date.now() - startTime < maxWait) {
+          setTimeout(check, 50);
+        } else {
+          document.getElementById('status-text').textContent = 'SDK failed to initialize!';
+        }
+      }
+      check();
+    }
+
+    waitForOutlit(() => {
+      document.getElementById('status-text').textContent = 
+        'SDK Initialized. Visitor ID: ' + (window.outlit.getVisitorId() || 'none');
+    });
+
+    // Track button click - must check if SDK is ready
+    document.getElementById('track-btn').addEventListener('click', () => {
+      if (window.outlit && window.outlit._initialized) {
+        window.outlit.track('button_clicked', { 
+          buttonId: 'track-btn',
+          approach: 'simple-async'
+        });
+        document.getElementById('status-text').textContent = 'Custom event tracked!';
+      } else {
+        document.getElementById('status-text').textContent = 'SDK not ready yet!';
+      }
+    });
+
+    // Identify button click
+    document.getElementById('identify-btn').addEventListener('click', () => {
+      if (window.outlit && window.outlit._initialized) {
+        window.outlit.identify({
+          email: 'simple@example.com',
+          userId: 'user_simple_async',
+          traits: { approach: 'simple-async' }
+        });
+        document.getElementById('status-text').textContent = 'User identified!';
+      } else {
+        document.getElementById('status-text').textContent = 'SDK not ready yet!';
+      }
+    });
+  </script>
+</body>
+</html>
+

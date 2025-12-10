@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Form Test - File Inputs</title>
+</head>
+<body>
+  <h1>Form With File Inputs</h1>
+  
+  <form id="upload-form">
+    <input name="email" type="email" value="test@example.com" />
+    <input name="document" type="file" />
+    <input name="resume" type="file" />
+    <button type="submit">Submit</button>
+  </form>
+
+  <script>
+    !function(w,d,src,key){
+      if(w.outlit&&w.outlit._loaded)return;
+      w.outlit=w.outlit||{_q:[]};
+      ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId"].forEach(function(m){
+        w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
+      });
+      var s=d.createElement("script");s.async=1;s.src=src;
+      s.dataset.publicKey=key;
+      (d.body||d.head).appendChild(s);
+    }(window,document,"https://cdn.outlit.ai/canary/outlit.js","pk_test_key_12345");
+  </script>
+  <script>
+    document.querySelector('form').addEventListener('submit', e => e.preventDefault());
+  </script>
+</body>
+</html>
+

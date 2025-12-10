@@ -1,0 +1,120 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create Release PR or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: pnpm release
+          title: "chore: version packages"
+          commit: "chore: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  deploy-cdn:
+    name: Deploy to CDN
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Get browser package version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./packages/browser/package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Deploying version: $VERSION"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Deploy versioned IIFE
+        run: |
+          echo "Deploying to v${{ steps.version.outputs.version }}/outlit.js"
+          gcloud storage cp packages/browser/dist/outlit.global.js \
+            "gs://cdn.outlit.ai/v${{ steps.version.outputs.version }}/outlit.js" \
+            --cache-control="public, max-age=31536000, immutable" \
+            --content-type="application/javascript"
+
+      - name: Deploy to stable
+        run: |
+          echo "Deploying to stable/outlit.js"
+          gcloud storage cp packages/browser/dist/outlit.global.js \
+            gs://cdn.outlit.ai/stable/outlit.js \
+            --cache-control="public, max-age=31536000, immutable" \
+            --content-type="application/javascript"
+
+      - name: Summary
+        run: |
+          echo "## CDN Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**URLs:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Versioned: https://storage.googleapis.com/cdn.outlit.ai/v${{ steps.version.outputs.version }}/outlit.js" >> $GITHUB_STEP_SUMMARY
+          echo "- Stable: https://storage.googleapis.com/cdn.outlit.ai/stable/outlit.js" >> $GITHUB_STEP_SUMMARY
+

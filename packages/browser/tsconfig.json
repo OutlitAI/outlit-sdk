@@ -1,10 +1,8 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "@outlit/typescript-config/browser.json",
   "compilerOptions": {
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "outDir": "./dist",
-    "rootDir": "./src"
+    "baseUrl": "."
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "include": ["."],
+  "exclude": ["node_modules", "dist"]
 }

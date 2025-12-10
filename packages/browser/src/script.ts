@@ -1,0 +1,203 @@
+/**
+ * IIFE entry point for CDN script tag usage.
+ *
+ * Usage (with stub snippet - recommended):
+ * <script>
+ *   !function(w,d,src,key,auto){
+ *     if(w.outlit&&w.outlit._loaded)return;
+ *     w.outlit=w.outlit||{_q:[]};
+ *     ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId"].forEach(function(m){
+ *       w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
+ *     });
+ *     var s=d.createElement("script");s.async=1;s.src=src;
+ *     s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
+ *     (d.body||d.head).appendChild(s);
+ *   }(window,document,"https://cdn.outlit.ai/outlit.js","pk_xxx");
+ * </script>
+ *
+ * Usage (simple script tag):
+ * <script src="https://cdn.outlit.ai/outlit.js" data-public-key="pk_xxx" async></script>
+ *
+ * Usage (with consent management):
+ * Pass `false` as last param to stub, or use data-auto-track="false" on script tag
+ */
+
+import type { BrowserIdentifyOptions, BrowserTrackOptions } from "@outlit/core"
+import { Tracker, type TrackerOptions } from "./tracker"
+
+// ============================================
+// TYPES
+// ============================================
+
+// Stub queue format: [methodName, arguments]
+type StubQueueItem = [string, unknown[]]
+
+interface OutlitStub {
+  _q?: StubQueueItem[]
+  [key: string]: unknown
+}
+
+interface OutlitGlobal {
+  _initialized: boolean
+  _instance: Tracker | null
+  _queue: Array<() => void>
+  init: (options: TrackerOptions) => void
+  track: (eventName: string, properties?: BrowserTrackOptions["properties"]) => void
+  identify: (options: BrowserIdentifyOptions) => void
+  getVisitorId: () => string | null
+  enableTracking: () => void
+  isTrackingEnabled: () => boolean
+}
+
+// ============================================
+// GLOBAL API
+// ============================================
+
+// Check for existing stub with queued calls
+const existingStub =
+  typeof window !== "undefined" ? (window as { outlit?: OutlitStub }).outlit : undefined
+const stubQueue: StubQueueItem[] = existingStub?._q || []
+
+// Create global object with queuing support
+const outlit: OutlitGlobal & { _loaded?: boolean } = {
+  _initialized: false,
+  _instance: null,
+  _queue: [],
+  _loaded: true, // Marks that the real SDK has loaded (for double-load protection)
+
+  init(options: TrackerOptions) {
+    if (this._initialized) {
+      console.warn("[Outlit] Already initialized")
+      return
+    }
+
+    this._instance = new Tracker(options)
+    this._initialized = true
+
+    // Process calls queued by the stub snippet (before SDK loaded)
+    for (const [method, args] of stubQueue) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const self = this as any
+      if (method in self && typeof self[method] === "function") {
+        self[method](...args)
+      }
+    }
+
+    // Process calls queued after SDK loaded but before init
+    while (this._queue.length > 0) {
+      const fn = this._queue.shift()
+      fn?.()
+    }
+  },
+
+  track(eventName: string, properties?: BrowserTrackOptions["properties"]) {
+    if (!this._initialized || !this._instance) {
+      // Queue the call for after initialization
+      this._queue.push(() => this.track(eventName, properties))
+      return
+    }
+    this._instance.track(eventName, properties)
+  },
+
+  identify(options: BrowserIdentifyOptions) {
+    if (!this._initialized || !this._instance) {
+      // Queue the call for after initialization
+      this._queue.push(() => this.identify(options))
+      return
+    }
+    this._instance.identify(options)
+  },
+
+  getVisitorId() {
+    if (!this._instance) return null
+    return this._instance.getVisitorId()
+  },
+
+  /**
+   * Enable tracking after user consent.
+   * Call this in your consent management tool's callback.
+   */
+  enableTracking() {
+    if (!this._initialized || !this._instance) {
+      // Queue the call for after initialization
+      this._queue.push(() => this.enableTracking())
+      return
+    }
+    this._instance.enableTracking()
+  },
+
+  /**
+   * Check if tracking is currently enabled.
+   */
+  isTrackingEnabled() {
+    if (!this._instance) return false
+    return this._instance.isEnabled()
+  },
+}
+
+// ============================================
+// AUTO-INITIALIZATION
+// ============================================
+
+/**
+ * Auto-initialize from script tag attributes.
+ */
+function autoInit(): void {
+  // Find the script tag - currentScript is only available during synchronous execution
+  // When called from DOMContentLoaded, we need to fall back to querySelector
+  let script = document.currentScript as HTMLScriptElement | null
+
+  if (!script) {
+    // Fallback: find script tag with data-public-key attribute
+    script = document.querySelector("script[data-public-key]") as HTMLScriptElement | null
+  }
+
+  if (!script) {
+    console.warn("[Outlit] No script tag found with data-public-key attribute")
+    return
+  }
+
+  const publicKey = script.getAttribute("data-public-key")
+  if (!publicKey) {
+    console.warn("[Outlit] Missing data-public-key attribute on script tag")
+    return
+  }
+
+  // Get optional attributes
+  const apiHost = script.getAttribute("data-api-host") ?? undefined
+  const trackPageviews = script.getAttribute("data-track-pageviews") !== "false"
+  const trackForms = script.getAttribute("data-track-forms") !== "false"
+  const autoTrack = script.getAttribute("data-auto-track") !== "false"
+  const autoIdentify = script.getAttribute("data-auto-identify") !== "false"
+
+  // Initialize
+  outlit.init({
+    publicKey,
+    apiHost,
+    trackPageviews,
+    trackForms,
+    autoTrack,
+    autoIdentify,
+  })
+}
+
+// ============================================
+// EXPOSE GLOBAL & AUTO-INIT
+// ============================================
+
+// Expose on window
+if (typeof window !== "undefined") {
+  // @ts-expect-error - Adding to window
+  window.outlit = outlit
+
+  // Auto-initialize when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", autoInit)
+  } else {
+    // DOM is already ready
+    autoInit()
+  }
+}
+
+// Also export for module usage if needed
+export { outlit }

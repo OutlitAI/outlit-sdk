@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback Form - No Email</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+    form { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+    input, textarea, select { display: block; margin: 10px 0; padding: 8px; width: 100%; box-sizing: border-box; }
+    button { padding: 10px 20px; margin: 10px 0; cursor: pointer; }
+    #status { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Anonymous Feedback</h1>
+  <p>Tests that auto-identify does NOT trigger when no email field is present.</p>
+
+  <form id="feedback-form" onsubmit="event.preventDefault();">
+    <h3>Share your feedback</h3>
+    <select name="rating">
+      <option value="5">Excellent</option>
+      <option value="4">Good</option>
+      <option value="3">Average</option>
+      <option value="2">Poor</option>
+      <option value="1">Terrible</option>
+    </select>
+    <input name="topic" type="text" placeholder="Topic" value="Product Quality" />
+    <textarea name="feedback" placeholder="Your feedback">The product works great!</textarea>
+    <button type="submit">Submit Feedback</button>
+  </form>
+
+  <div id="status">
+    <strong>Status:</strong> <span id="status-text">Loading SDK...</span>
+  </div>
+
+  <!-- Load the SDK -->
+  <script>
+    !function(w,d,src,key,auto){
+      if(w.outlit&&w.outlit._loaded)return;
+      w.outlit=w.outlit||{_q:[]};
+      ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId"].forEach(function(m){
+        w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
+      });
+      var s=d.createElement("script");s.async=1;s.src=src;
+      s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
+      (d.body||d.head).appendChild(s);
+    }(window,document,"https://cdn.outlit.ai/canary/outlit.js","pk_test_key_12345");
+  </script>
+
+  <script>
+    function waitForOutlit(callback) {
+      if (window.outlit && window.outlit._initialized) {
+        callback();
+      } else {
+        setTimeout(() => waitForOutlit(callback), 50);
+      }
+    }
+
+    waitForOutlit(() => {
+      document.getElementById('status-text').textContent = 
+        'SDK Initialized. Visitor ID: ' + (window.outlit.getVisitorId() || 'none');
+    });
+  </script>
+</body>
+</html>
+

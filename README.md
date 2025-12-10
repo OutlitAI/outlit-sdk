@@ -77,57 +77,128 @@ app.use(outlit.createMiddleware());
 
 ## Features
 
-- 🚀 **Modern TypeScript** - Full TypeScript support with type definitions
-- 📦 **Tree-shakeable** - Optimized bundle size with dual ESM/CJS exports
-- 🔄 **Event Queueing** - Automatic batching and flushing of events
-- 🌐 **Multi-platform** - Separate packages for browser and Node.js
-- 🎯 **Auto-tracking** - Automatic page view tracking in browser
-- 🔌 **Middleware Support** - Easy integration with Express and similar frameworks
-- 💾 **Persistent Identity** - User and anonymous ID persistence
-- ⚡ **High Performance** - Minimal overhead and efficient batching
-- 🛡️ **Type Safe** - Full TypeScript support with strict types
+- **Modern TypeScript** - Full TypeScript support with type definitions
+- **Tree-shakeable** - Optimized bundle size with dual ESM/CJS exports
+- **Event Queueing** - Automatic batching and flushing of events
+- **Multi-platform** - Separate packages for browser and Node.js
+- **Auto-tracking** - Automatic page view tracking in browser
+- **Middleware Support** - Easy integration with Express and similar frameworks
+- **Persistent Identity** - User and anonymous ID persistence
+- **High Performance** - Minimal overhead and efficient batching
+- **Type Safe** - Full TypeScript support with strict types
 
 ## Development
 
 This project uses a modern monorepo setup with the following tools:
 
+- **[pnpm](https://pnpm.io/)** - Fast, disk space efficient package manager
 - **[Turbo](https://turbo.build/)** - Build system for monorepo orchestration
 - **[TypeScript](https://www.typescriptlang.org/)** - Type-safe JavaScript
 - **[tsup](https://tsup.egoist.dev/)** - Fast TypeScript bundler
-- **[Vitest](https://vitest.dev/)** - Fast unit test framework
-- **[ESLint](https://eslint.org/)** & **[Prettier](https://prettier.io/)** - Code quality and formatting
+- **[Biome](https://biomejs.dev/)** - Fast linter and formatter
+- **[Playwright](https://playwright.dev/)** - End-to-end testing
 - **[Changesets](https://github.com/changesets/changesets)** - Version management and changelogs
 
 ### Setup
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Build all packages
-npm run build
+pnpm build
 
 # Run tests
-npm run test
+pnpm test
 
 # Lint code
-npm run lint
+pnpm lint
+
+# Type check
+pnpm typecheck
 
 # Format code
-npm run format
+pnpm format
 ```
 
 ### Project Structure
 
 ```
 outlit-sdk/
+├── .github/workflows/   # CI/CD workflows
 ├── packages/
-│   ├── core/          # Core SDK functionality
-│   ├── browser/       # Browser-specific SDK
-│   └── node/          # Node.js SDK
-├── package.json       # Root package with workspace config
-├── turbo.json         # Turbo build configuration
-└── tsconfig.json      # Shared TypeScript config
+│   ├── browser/         # Browser SDK with React bindings
+│   ├── core/            # Shared types and utilities
+│   ├── node/            # Node.js SDK
+│   └── typescript-config/  # Shared TypeScript configs
+├── package.json         # Root package with workspace config
+├── pnpm-workspace.yaml  # pnpm workspace configuration
+├── turbo.json           # Turbo build configuration
+└── biome.json           # Biome linter/formatter config
+```
+
+### Creating a Changeset
+
+When making changes that should be released, create a changeset:
+
+```bash
+pnpm changeset
+```
+
+This will prompt you to:
+1. Select which packages are affected
+2. Choose the version bump type (patch, minor, major)
+3. Write a description of the change
+
+The changeset file will be committed with your PR and used to generate changelogs on release.
+
+## CI/CD
+
+### Workflows
+
+- **CI** (`ci.yml`) - Runs on PRs: lint, typecheck, build, test, deploy canary IIFE
+- **Release** (`release.yml`) - Runs on main: creates version PR or publishes to npm + CDN
+
+### Required Secrets
+
+For maintainers setting up the repository:
+
+| Secret | Description |
+|--------|-------------|
+| `NPM_TOKEN` | npm access token with publish permission for `@outlit` scope |
+| `GCP_CREDENTIALS` | Service account JSON key with Storage Object Admin on `cdn.outlit.ai` bucket |
+
+#### Creating NPM_TOKEN
+
+1. Go to [npmjs.com](https://www.npmjs.com/) and sign in
+2. Navigate to Access Tokens → Generate New Token → Granular Access Token
+3. Set permissions: Read and write for `@outlit` packages
+4. Copy the token and add as `NPM_TOKEN` secret in GitHub
+
+#### Creating GCP_CREDENTIALS
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Navigate to IAM & Admin → Service Accounts
+3. Create a new service account (e.g., `github-actions-deployer`)
+4. Grant "Storage Object Admin" role on the `cdn.outlit.ai` bucket
+5. Create a JSON key for the service account
+6. Copy the entire JSON content and add as `GCP_CREDENTIALS` secret in GitHub
+
+### CDN Deployment
+
+The browser SDK IIFE bundle is deployed to Google Cloud Storage:
+
+| Path | Description |
+|------|-------------|
+| `/canary/outlit.js` | Deployed on every PR for testing (5 min cache) |
+| `/stable/outlit.js` | Latest stable release (1 year cache) |
+| `/v{version}/outlit.js` | Immutable versioned release (1 year cache) |
+
+Manual deployment (requires gcloud CLI):
+```bash
+pnpm --filter @outlit/browser deploy:canary   # Deploy to canary
+pnpm --filter @outlit/browser deploy:stable   # Deploy to stable (requires confirmation)
+pnpm --filter @outlit/browser deploy:version  # Deploy versioned release
 ```
 
 ## Documentation
@@ -146,6 +217,5 @@ Apache-2.0 - see [LICENSE](./LICENSE) for details.
 
 ## Support
 
-- 📧 Email: support@outlit.ai
-- 🐛 Issues: [GitHub Issues](https://github.com/OutlitAI/outlit-sdk/issues)
-- 📖 Docs: [Documentation](https://docs.outlit.ai)
+- Issues: [GitHub Issues](https://github.com/OutlitAI/outlit-sdk/issues)
+- Docs: [Documentation](https://docs.outlit.ai)

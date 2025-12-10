@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDK Test Page - Navigation</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+    a { display: block; margin: 10px 0; padding: 10px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+    a:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <h1>Navigation Test Page</h1>
+  <p>Click links to test pageview tracking on SPA navigation.</p>
+
+  <a href="/test-page.html">Go to Test Page</a>
+  <a href="/test-page-consent.html">Go to Consent Page</a>
+  <a href="#section-1" id="hash-link">Hash Link (no navigation)</a>
+
+  <!-- Load the SDK using the recommended stub snippet -->
+  <script>
+    !function(w,d,src,key,auto){
+      if(w.outlit&&w.outlit._loaded)return;
+      w.outlit=w.outlit||{_q:[]};
+      ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId"].forEach(function(m){
+        w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
+      });
+      var s=d.createElement("script");s.async=1;s.src=src;
+      s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
+      (d.body||d.head).appendChild(s);
+    }(window,document,"https://cdn.outlit.ai/canary/outlit.js","pk_test_key_12345");
+  </script>
+</body>
+</html>
+

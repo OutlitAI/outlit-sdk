@@ -1,11 +1,11 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@2.3.0/schema.json",
-  "changelog": "@changesets/cli/changelog",
+  "changelog": ["@changesets/changelog-github", { "repo": "OutlitAI/outlit-sdk" }],
   "commit": false,
   "fixed": [],
-  "linked": [],
+  "linked": [["@outlit/core", "@outlit/browser", "@outlit/node"]],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": ["@outlit/typescript-config"]
 }

@@ -1,167 +1,228 @@
-import { OutlitClient, OutlitConfig, EventProperties, UserProperties } from '@outlit/core';
+import {
+  DEFAULT_API_HOST,
+  type IngestPayload,
+  type ServerIdentifyOptions,
+  type ServerTrackOptions,
+  type TrackerEvent,
+  buildCustomEvent,
+  buildIdentifyEvent,
+  validateServerIdentity,
+} from "@outlit/core"
+import { EventQueue } from "./queue"
+import { HttpTransport } from "./transport"
 
-/**
- * Node.js-specific configuration
- */
-export interface NodeConfig extends OutlitConfig {
-  enableShutdownHooks?: boolean;
+// ============================================
+// OUTLIT CLIENT
+// ============================================
+
+export interface OutlitOptions {
+  /**
+   * Your Outlit public key.
+   */
+  publicKey: string
+
+  /**
+   * API host URL.
+   * @default "https://app.outlit.ai"
+   */
+  apiHost?: string
+
+  /**
+   * How often to flush events (in milliseconds).
+   * @default 10000 (10 seconds)
+   */
+  flushInterval?: number
+
+  /**
+   * Maximum number of events to batch before flushing.
+   * @default 100
+   */
+  maxBatchSize?: number
+
+  /**
+   * Request timeout in milliseconds.
+   * @default 10000 (10 seconds)
+   */
+  timeout?: number
 }
 
 /**
- * Node.js SDK client
+ * Outlit server-side tracking client.
+ *
+ * Unlike the browser SDK, this requires identity (email or userId) for all calls.
+ * Anonymous tracking is not supported server-side.
+ *
+ * @example
+ * ```typescript
+ * import { Outlit } from '@outlit/tracker-node'
+ *
+ * const outlit = new Outlit({ publicKey: 'pk_xxx' })
+ *
+ * // Track a custom event
+ * outlit.track({
+ *   email: 'user@example.com',
+ *   eventName: 'subscription_created',
+ *   properties: { plan: 'pro' }
+ * })
+ *
+ * // Identify/update user
+ * outlit.identify({
+ *   email: 'user@example.com',
+ *   userId: 'usr_123',
+ *   traits: { name: 'John Doe' }
+ * })
+ *
+ * // Flush before shutdown (important for serverless)
+ * await outlit.flush()
+ * ```
  */
-export class OutlitNode extends OutlitClient {
-  private nodeConfig: NodeConfig;
-  private shutdownHandlersRegistered = false;
+export class Outlit {
+  private transport: HttpTransport
+  private queue: EventQueue
+  private flushTimer: ReturnType<typeof setInterval> | null = null
+  private flushInterval: number
+  private isShutdown = false
 
-  constructor(config: NodeConfig) {
-    super(config);
-    this.nodeConfig = {
-      enableShutdownHooks: true,
-      ...config,
-    };
+  constructor(options: OutlitOptions) {
+    const apiHost = options.apiHost ?? DEFAULT_API_HOST
+    this.flushInterval = options.flushInterval ?? 10000
 
-    this.init();
+    this.transport = new HttpTransport({
+      apiHost,
+      publicKey: options.publicKey,
+      timeout: options.timeout,
+    })
+
+    this.queue = new EventQueue({
+      maxSize: options.maxBatchSize ?? 100,
+      onFlush: async (events) => {
+        await this.sendEvents(events)
+      },
+    })
+
+    // Start flush timer
+    this.startFlushTimer()
   }
 
   /**
-   * Initialize Node.js-specific functionality
+   * Track a custom event.
+   *
+   * Requires either `email` or `userId` to identify the user.
+   *
+   * @throws Error if neither email nor userId is provided
    */
-  private init(): void {
-    if (this.nodeConfig.enableShutdownHooks && !this.shutdownHandlersRegistered) {
-      this.registerShutdownHandlers();
-    }
+  track(options: ServerTrackOptions): void {
+    this.ensureNotShutdown()
+    validateServerIdentity(options.email, options.userId)
+
+    const event = buildCustomEvent({
+      url: `server://${options.email ?? options.userId}`,
+      timestamp: options.timestamp,
+      eventName: options.eventName,
+      properties: {
+        ...options.properties,
+        // Include identity in properties for server-side resolution
+        __email: options.email ?? null,
+        __userId: options.userId ?? null,
+      },
+    })
+
+    this.queue.enqueue(event)
   }
 
   /**
-   * Register shutdown handlers to flush events before exit
+   * Identify or update a user.
+   *
+   * Requires either `email` or `userId` to identify the user.
+   *
+   * @throws Error if neither email nor userId is provided
    */
-  private registerShutdownHandlers(): void {
-    const shutdownHandler = async () => {
-      await this.shutdown();
-    };
+  identify(options: ServerIdentifyOptions): void {
+    this.ensureNotShutdown()
+    validateServerIdentity(options.email, options.userId)
 
-    // Handle graceful shutdown
-    process.on('SIGTERM', shutdownHandler);
-    process.on('SIGINT', shutdownHandler);
+    const event = buildIdentifyEvent({
+      url: `server://${options.email ?? options.userId}`,
+      email: options.email,
+      userId: options.userId,
+      traits: options.traits,
+    })
 
-    // Handle uncaught exceptions
-    process.on('beforeExit', shutdownHandler);
-
-    this.shutdownHandlersRegistered = true;
+    this.queue.enqueue(event)
   }
 
   /**
-   * Track a server-side event with additional context
+   * Flush all pending events immediately.
+   *
+   * Important: Call this before your serverless function exits!
    */
-  trackServer(eventName: string, properties?: EventProperties, context?: EventContext): void {
-    const enrichedProperties = {
-      ...properties,
-      ...(context && this.extractContextProperties(context)),
-    };
-
-    this.track(eventName, enrichedProperties);
+  async flush(): Promise<void> {
+    await this.queue.flush()
   }
 
   /**
-   * Extract relevant properties from context (e.g., HTTP request)
+   * Shutdown the client gracefully.
+   *
+   * Flushes remaining events and stops the flush timer.
    */
-  private extractContextProperties(context: EventContext): EventProperties {
-    const properties: EventProperties = {};
+  async shutdown(): Promise<void> {
+    if (this.isShutdown) return
 
-    if (context.ip) {
-      properties.ip = context.ip;
+    this.isShutdown = true
+
+    if (this.flushTimer) {
+      clearInterval(this.flushTimer)
+      this.flushTimer = null
     }
 
-    if (context.userAgent) {
-      properties.user_agent = context.userAgent;
-    }
-
-    if (context.url) {
-      properties.url = context.url;
-    }
-
-    if (context.method) {
-      properties.method = context.method;
-    }
-
-    if (context.headers) {
-      // Only include safe headers as string array
-      const safeHeaders = ['content-type', 'accept', 'accept-language'];
-      const headerValues: string[] = [];
-
-      safeHeaders.forEach((header) => {
-        const value = context.headers?.[header];
-        if (value) {
-          headerValues.push(`${header}: ${value}`);
-        }
-      });
-
-      if (headerValues.length > 0) {
-        properties.headers = headerValues;
-      }
-    }
-
-    return properties;
+    await this.flush()
   }
 
   /**
-   * Create a middleware function for Express/Koa/etc.
+   * Get the number of events waiting to be sent.
    */
-  createMiddleware() {
-    return (req: MiddlewareRequest, _res: unknown, next: NextFunction) => {
-      const context: EventContext = {
-        ip: req.ip || req.connection?.remoteAddress,
-        userAgent: req.get?.('user-agent'),
-        url: req.originalUrl || req.url,
-        method: req.method,
-        headers: req.headers,
-      };
+  get queueSize(): number {
+    return this.queue.size
+  }
 
-      // Attach tracking function to request
-      req.outlit = {
-        track: (eventName: string, properties?: EventProperties) => {
-          this.trackServer(eventName, properties, context);
-        },
-        identify: (userId: string, properties?: UserProperties) => {
-          this.identify(userId, properties);
-        },
-      };
+  // ============================================
+  // INTERNAL METHODS
+  // ============================================
 
-      next();
-    };
+  private startFlushTimer(): void {
+    if (this.flushTimer) return
+
+    this.flushTimer = setInterval(() => {
+      this.flush().catch((error) => {
+        console.error("[Outlit] Flush error:", error)
+      })
+    }, this.flushInterval)
+
+    // Don't block process exit
+    if (this.flushTimer.unref) {
+      this.flushTimer.unref()
+    }
+  }
+
+  private async sendEvents(events: TrackerEvent[]): Promise<void> {
+    if (events.length === 0) return
+
+    // For server events, we don't use visitorId - the API resolves identity
+    // directly from the event data (email/userId)
+    const payload: IngestPayload = {
+      source: "server",
+      events,
+      // visitorId is intentionally omitted for server events
+    }
+
+    await this.transport.send(payload)
+  }
+
+  private ensureNotShutdown(): void {
+    if (this.isShutdown) {
+      throw new Error(
+        "[Outlit] Client has been shutdown. Create a new instance to continue tracking.",
+      )
+    }
   }
 }
-
-/**
- * Event context for server-side tracking
- */
-export interface EventContext {
-  ip?: string;
-  userAgent?: string;
-  url?: string;
-  method?: string;
-  headers?: Record<string, string>;
-}
-
-/**
- * Minimal request interface for middleware
- */
-interface MiddlewareRequest {
-  ip?: string;
-  connection?: { remoteAddress?: string };
-  get?: (header: string) => string | undefined;
-  originalUrl?: string;
-  url?: string;
-  method?: string;
-  headers?: Record<string, string>;
-  outlit?: {
-    track: (eventName: string, properties?: EventProperties) => void;
-    identify: (userId: string, properties?: UserProperties) => void;
-  };
-}
-
-/**
- * Minimal next function for middleware
- */
-type NextFunction = () => void;

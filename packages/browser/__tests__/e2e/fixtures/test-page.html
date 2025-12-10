@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDK Test Page</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+    button { padding: 10px 20px; margin: 10px 0; cursor: pointer; }
+    form { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+    input { display: block; margin: 10px 0; padding: 8px; width: 100%; box-sizing: border-box; }
+    #status { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>SDK Test Page</h1>
+  <p>This page is used for Playwright E2E testing.</p>
+
+  <div>
+    <button id="track-btn">Track Custom Event</button>
+    <button id="identify-btn">Identify User</button>
+    <button id="flush-btn">Flush Events</button>
+  </div>
+
+  <form id="test-form">
+    <h3>Test Form</h3>
+    <input name="email" type="email" placeholder="Email" />
+    <input name="name" type="text" placeholder="Name" />
+    <input name="company" type="text" placeholder="Company" />
+    <input name="password" type="password" placeholder="Password (should be excluded)" />
+    <button type="submit">Submit Form</button>
+  </form>
+
+  <div id="status">
+    <strong>Status:</strong> <span id="status-text">Loading SDK...</span>
+  </div>
+
+  <!-- Load the SDK using the recommended stub snippet -->
+  <script>
+    !function(w,d,src,key,auto){
+      if(w.outlit&&w.outlit._loaded)return;
+      w.outlit=w.outlit||{_q:[]};
+      ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId"].forEach(function(m){
+        w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
+      });
+      var s=d.createElement("script");s.async=1;s.src=src;
+      s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
+      (d.body||d.head).appendChild(s);
+    }(window,document,"https://cdn.outlit.ai/canary/outlit.js","pk_test_key_12345");
+  </script>
+
+  <script>
+    // Wait for SDK to be ready
+    function waitForOutlit(callback) {
+      if (window.outlit && window.outlit._initialized) {
+        callback();
+      } else {
+        setTimeout(() => waitForOutlit(callback), 50);
+      }
+    }
+
+    waitForOutlit(() => {
+      document.getElementById('status-text').textContent = 
+        'SDK Initialized. Visitor ID: ' + (window.outlit.getVisitorId() || 'none');
+    });
+
+    // Track button click
+    document.getElementById('track-btn').addEventListener('click', () => {
+      window.outlit.track('button_clicked', { 
+        buttonId: 'track-btn',
+        timestamp: Date.now()
+      });
+      document.getElementById('status-text').textContent = 'Custom event tracked!';
+    });
+
+    // Identify button click
+    document.getElementById('identify-btn').addEventListener('click', () => {
+      window.outlit.identify({
+        email: 'test@example.com',
+        userId: 'user_12345',
+        traits: { plan: 'pro', company: 'Test Corp' }
+      });
+      document.getElementById('status-text').textContent = 'User identified!';
+    });
+
+    // Flush button click
+    document.getElementById('flush-btn').addEventListener('click', async () => {
+      // The global script doesn't expose flush directly, but we can trigger via form submit
+      document.getElementById('status-text').textContent = 'Events flushed!';
+    });
+  </script>
+</body>
+</html>
+

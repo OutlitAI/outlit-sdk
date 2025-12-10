@@ -1,38 +1,9 @@
 {
   "name": "@outlit/node",
   "version": "0.1.0",
-  "description": "Node.js SDK for Outlit events ingestion API",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
-    }
-  },
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-    "test": "echo \"No tests yet\"",
-    "test:watch": "vitest",
-    "lint": "eslint src --ext .ts",
-    "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
-  },
-  "keywords": [
-    "outlit",
-    "analytics",
-    "events",
-    "tracking",
-    "node",
-    "sdk"
-  ],
-  "author": "Outlit AI",
+  "description": "Outlit server-side tracking SDK for Node.js",
   "license": "Apache-2.0",
+  "author": "Outlit AI",
   "repository": {
     "type": "git",
     "url": "https://github.com/OutlitAI/outlit-sdk.git",
@@ -42,7 +13,40 @@
     "url": "https://github.com/OutlitAI/outlit-sdk/issues"
   },
   "homepage": "https://github.com/OutlitAI/outlit-sdk#readme",
+  "keywords": ["outlit", "analytics", "tracking", "sdk", "node", "server"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist .turbo node_modules",
+    "lint": "biome check . --write",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build"
+  },
   "dependencies": {
-    "@outlit/core": "*"
+    "@outlit/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@outlit/typescript-config": "workspace:*",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
   }
 }

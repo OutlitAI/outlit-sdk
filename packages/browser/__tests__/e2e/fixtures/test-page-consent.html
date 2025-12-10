@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDK Test Page - Consent Required</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+    button { padding: 10px 20px; margin: 10px 0; cursor: pointer; }
+    .consent-banner { 
+      background: #333; 
+      color: white; 
+      padding: 20px; 
+      border-radius: 8px; 
+      margin: 20px 0;
+    }
+    .consent-banner button { background: #4CAF50; color: white; border: none; }
+    #status { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>SDK Test Page - Consent Mode</h1>
+  <p>This page loads the SDK with <code>autoTrack=false</code>.</p>
+
+  <div class="consent-banner" id="consent-banner">
+    <p>🍪 We use cookies to track your activity. Do you accept?</p>
+    <button id="accept-cookies">Accept Cookies</button>
+    <button id="reject-cookies" style="background: #f44336;">Reject</button>
+  </div>
+
+  <div>
+    <button id="track-btn">Track Custom Event</button>
+  </div>
+
+  <div id="status">
+    <strong>Status:</strong> <span id="status-text">SDK loaded but tracking disabled</span>
+  </div>
+
+  <!-- Load the SDK with autoTrack=false using the recommended stub snippet -->
+  <script>
+    !function(w,d,src,key,auto){
+      if(w.outlit&&w.outlit._loaded)return;
+      w.outlit=w.outlit||{_q:[]};
+      ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId"].forEach(function(m){
+        w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
+      });
+      var s=d.createElement("script");s.async=1;s.src=src;
+      s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
+      (d.body||d.head).appendChild(s);
+    }(window,document,"https://cdn.outlit.ai/canary/outlit.js","pk_test_key_12345",false);
+  </script>
+
+  <script>
+    function updateStatus() {
+      const enabled = window.outlit.isTrackingEnabled ? window.outlit.isTrackingEnabled() : false;
+      const visitorId = window.outlit.getVisitorId ? window.outlit.getVisitorId() : null;
+      document.getElementById('status-text').textContent = 
+        `Tracking: ${enabled ? 'ENABLED' : 'DISABLED'}, Visitor ID: ${visitorId || 'none'}`;
+    }
+
+    // Wait for SDK
+    function waitForOutlit(callback) {
+      if (window.outlit && window.outlit._initialized) {
+        callback();
+      } else {
+        setTimeout(() => waitForOutlit(callback), 50);
+      }
+    }
+
+    waitForOutlit(updateStatus);
+
+    // Accept cookies - enable tracking
+    document.getElementById('accept-cookies').addEventListener('click', () => {
+      window.outlit.enableTracking();
+      document.getElementById('consent-banner').style.display = 'none';
+      updateStatus();
+    });
+
+    // Reject cookies
+    document.getElementById('reject-cookies').addEventListener('click', () => {
+      document.getElementById('consent-banner').style.display = 'none';
+      document.getElementById('status-text').textContent = 'User rejected cookies. Tracking remains disabled.';
+    });
+
+    // Track button click
+    document.getElementById('track-btn').addEventListener('click', () => {
+      window.outlit.track('button_clicked', { buttonId: 'track-btn' });
+      // Status will show if it worked or if tracking is disabled
+      const enabled = window.outlit.isTrackingEnabled ? window.outlit.isTrackingEnabled() : false;
+      if (!enabled) {
+        document.getElementById('status-text').textContent = 'Track called but tracking is disabled!';
+      } else {
+        document.getElementById('status-text').textContent = 'Event tracked successfully!';
+      }
+    });
+  </script>
+</body>
+</html>
+

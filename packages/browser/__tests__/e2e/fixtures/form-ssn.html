@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Form Test - SSN Pattern</title>
+</head>
+<body>
+  <h1>Form With SSN Pattern in Value</h1>
+  
+  <form id="ssn-form">
+    <input name="email" type="email" value="test@example.com" />
+    <input name="id_number" type="text" value="123-45-6789" />
+    <button type="submit">Submit</button>
+  </form>
+
+  <script>
+    !function(w,d,src,key){
+      if(w.outlit&&w.outlit._loaded)return;
+      w.outlit=w.outlit||{_q:[]};
+      ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId"].forEach(function(m){
+        w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
+      });
+      var s=d.createElement("script");s.async=1;s.src=src;
+      s.dataset.publicKey=key;
+      (d.body||d.head).appendChild(s);
+    }(window,document,"https://cdn.outlit.ai/canary/outlit.js","pk_test_key_12345");
+  </script>
+  <script>
+    document.querySelector('form').addEventListener('submit', e => e.preventDefault());
+  </script>
+</body>
+</html>
+
