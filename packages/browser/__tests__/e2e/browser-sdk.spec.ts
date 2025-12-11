@@ -544,7 +544,7 @@ test.describe("Simple Async Script (Alternative Approach)", () => {
 test.describe("Stub Snippet (Recommended Approach)", () => {
   test("stub exists immediately before SDK loads", async ({ page }) => {
     // Navigate but block the SDK from loading
-    await page.route("**/outlit.js", (route) => route.abort())
+    await page.route("**/outlit.global.js", (route) => route.abort())
 
     await page.goto("/test-page.html")
 
