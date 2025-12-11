@@ -2,7 +2,9 @@
 // EVENT TYPES
 // ============================================
 
-export type EventType = "pageview" | "form" | "identify" | "custom"
+export type EventType = "pageview" | "form" | "identify" | "custom" | "calendar"
+
+export type CalendarProvider = "cal.com" | "calendly" | "unknown"
 
 export type SourceType = "client" | "server" | "integration"
 
@@ -100,7 +102,20 @@ export interface CustomEvent extends BaseEvent {
   properties?: Record<string, string | number | boolean | null>
 }
 
-export type TrackerEvent = PageviewEvent | FormEvent | IdentifyEvent | CustomEvent
+export interface CalendarEvent extends BaseEvent {
+  type: "calendar"
+  provider: CalendarProvider
+  eventType?: string // e.g., "30 Minute Meeting"
+  startTime?: string // ISO timestamp
+  endTime?: string // ISO timestamp
+  duration?: number // Duration in minutes
+  isRecurring?: boolean
+  /** Available when identity is passed via webhooks or manual integration */
+  inviteeEmail?: string
+  inviteeName?: string
+}
+
+export type TrackerEvent = PageviewEvent | FormEvent | IdentifyEvent | CustomEvent | CalendarEvent
 
 // ============================================
 // INGEST PAYLOAD

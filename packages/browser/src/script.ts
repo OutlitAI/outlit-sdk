@@ -169,6 +169,7 @@ function autoInit(): void {
   const trackForms = script.getAttribute("data-track-forms") !== "false"
   const autoTrack = script.getAttribute("data-auto-track") !== "false"
   const autoIdentify = script.getAttribute("data-auto-identify") !== "false"
+  const trackCalendarEmbeds = script.getAttribute("data-track-calendar-embeds") !== "false"
 
   // Initialize
   outlit.init({
@@ -178,6 +179,7 @@ function autoInit(): void {
     trackForms,
     autoTrack,
     autoIdentify,
+    trackCalendarEmbeds,
   })
 }
 

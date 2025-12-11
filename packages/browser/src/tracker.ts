@@ -4,6 +4,7 @@ import {
   DEFAULT_API_HOST,
   type TrackerConfig,
   type TrackerEvent,
+  buildCalendarEvent,
   buildCustomEvent,
   buildFormEvent,
   buildIdentifyEvent,
@@ -11,6 +12,11 @@ import {
   buildPageviewEvent,
 } from "@outlit/core"
 import { initFormTracking, initPageviewTracking, stopAutocapture } from "./autocapture"
+import {
+  type CalendarBookingEvent,
+  initCalendarTracking,
+  stopCalendarTracking,
+} from "./embed-integrations"
 import { getOrCreateVisitorId } from "./storage"
 
 // ============================================
@@ -35,6 +41,18 @@ export interface OutlitOptions extends TrackerConfig {
    * @default true
    */
   autoIdentify?: boolean
+  /**
+   * Track booking events from calendar embeds (Cal.com, Calendly).
+   * When enabled, fires a "calendar_booked" custom event when bookings are detected.
+   *
+   * NOTE: Due to privacy restrictions in Cal.com and Calendly, their postMessage
+   * events do NOT include PII (email, name). Auto-identify is NOT possible with
+   * these embeds using client-side tracking alone.
+   *
+   * For auto-identify with calendar bookings, use server-side webhooks.
+   * @default true
+   */
+  trackCalendarEmbeds?: boolean
 }
 
 export class Outlit {
@@ -100,6 +118,11 @@ export class Outlit {
 
     if (this.options.trackForms !== false) {
       this.initFormTracking(this.options.formFieldDenylist)
+    }
+
+    // Initialize calendar embed tracking if enabled
+    if (this.options.trackCalendarEmbeds !== false) {
+      this.initCalendarTracking()
     }
 
     this.isTrackingEnabled = true
@@ -179,6 +202,7 @@ export class Outlit {
       this.flushTimer = null
     }
     stopAutocapture()
+    stopCalendarTracking()
     await this.flush()
   }
 
@@ -224,6 +248,30 @@ export class Outlit {
       denylist,
       identityCallback,
     )
+  }
+
+  private initCalendarTracking(): void {
+    initCalendarTracking({
+      onCalendarBooked: (bookingEvent: CalendarBookingEvent) => {
+        // Track the calendar booking as a first-class calendar event
+        // Note: Due to privacy restrictions, Cal.com and Calendly do NOT expose
+        // invitee email/name in their postMessage events, so auto-identify
+        // is not possible here. Customers need server-side webhooks for that.
+        const event = buildCalendarEvent({
+          url: window.location.href,
+          referrer: document.referrer,
+          provider: bookingEvent.provider,
+          eventType: bookingEvent.eventType,
+          startTime: bookingEvent.startTime,
+          endTime: bookingEvent.endTime,
+          duration: bookingEvent.duration,
+          isRecurring: bookingEvent.isRecurring,
+          inviteeEmail: bookingEvent.inviteeEmail,
+          inviteeName: bookingEvent.inviteeName,
+        })
+        this.enqueue(event)
+      },
+    })
   }
 
   private enqueue(event: TrackerEvent): void {

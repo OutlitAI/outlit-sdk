@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendar Embed Tracking Disabled</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+    button { padding: 10px 20px; margin: 10px 0; cursor: pointer; }
+    .calendar-placeholder { 
+      margin: 20px 0; 
+      padding: 40px; 
+      border: 2px dashed #ccc; 
+      border-radius: 8px;
+      text-align: center;
+      background: #f9f9f9;
+    }
+    #status { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Calendar Embed Tracking Disabled</h1>
+  <p>This page has calendar embed tracking disabled via data-track-calendar-embeds="false".</p>
+
+  <div class="calendar-placeholder">
+    <h3>📅 Calendar Widget (Tracking Disabled)</h3>
+    <p>Booking events should NOT be tracked.</p>
+    <button id="simulate-booking">Simulate Booking</button>
+  </div>
+
+  <div id="status">
+    <strong>Status:</strong> <span id="status-text">Loading SDK...</span>
+  </div>
+
+  <!-- Mock Cal.com's Cal() API -->
+  <script>
+    window.Cal = function(method, options) {
+      if (method === 'on' && options.action === 'bookingSuccessfulV2') {
+        window._calBookingCallback = options.callback;
+      }
+    };
+
+    window.triggerCalBookingViaApi = function(bookingData) {
+      if (window._calBookingCallback) {
+        window._calBookingCallback({
+          detail: {
+            data: bookingData,
+            type: 'bookingSuccessfulV2',
+            namespace: 'default'
+          }
+        });
+      }
+    };
+  </script>
+
+  <!-- Load the SDK from local test server with calendar embed tracking DISABLED -->
+  <script src="/outlit.global.js" data-public-key="pk_test_key_12345" data-track-calendar-embeds="false"></script>
+
+  <script>
+    function waitForOutlit(callback) {
+      if (window.outlit && window.outlit._initialized) {
+        callback();
+      } else {
+        setTimeout(() => waitForOutlit(callback), 50);
+      }
+    }
+
+    waitForOutlit(() => {
+      document.getElementById('status-text').textContent = 
+        'SDK Initialized. Visitor ID: ' + (window.outlit.getVisitorId() || 'none');
+    });
+
+    document.getElementById('simulate-booking').addEventListener('click', () => {
+      window.triggerCalBookingViaApi({
+        uid: 'booking-should-not-track',
+        title: 'Should Not Track',
+        startTime: '2025-01-15T14:00:00.000Z',
+        endTime: '2025-01-15T14:30:00.000Z',
+        eventTypeId: 42,
+        status: 'ACCEPTED',
+        paymentRequired: false,
+        isRecurring: false
+      });
+      
+      document.getElementById('status-text').textContent = 'Booking simulated (should NOT be tracked)!';
+    });
+  </script>
+</body>
+</html>

@@ -1,4 +1,6 @@
 import type {
+  CalendarEvent,
+  CalendarProvider,
   CustomEvent,
   FormEvent,
   IdentifyEvent,
@@ -101,6 +103,52 @@ export function buildCustomEvent(
     utm: extractUtmParams(url),
     eventName,
     properties,
+  }
+}
+
+/**
+ * Build a calendar booking event.
+ */
+export function buildCalendarEvent(
+  params: BaseEventParams & {
+    provider: CalendarProvider
+    eventType?: string
+    startTime?: string
+    endTime?: string
+    duration?: number
+    isRecurring?: boolean
+    inviteeEmail?: string
+    inviteeName?: string
+  },
+): CalendarEvent {
+  const {
+    url,
+    referrer,
+    timestamp,
+    provider,
+    eventType,
+    startTime,
+    endTime,
+    duration,
+    isRecurring,
+    inviteeEmail,
+    inviteeName,
+  } = params
+  return {
+    type: "calendar",
+    timestamp: timestamp ?? Date.now(),
+    url,
+    path: extractPathFromUrl(url),
+    referrer,
+    utm: extractUtmParams(url),
+    provider,
+    eventType,
+    startTime,
+    endTime,
+    duration,
+    isRecurring,
+    inviteeEmail,
+    inviteeName,
   }
 }
 
