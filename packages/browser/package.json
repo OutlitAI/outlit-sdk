@@ -13,14 +13,7 @@
     "url": "https://github.com/OutlitAI/outlit-sdk/issues"
   },
   "homepage": "https://github.com/OutlitAI/outlit-sdk#readme",
-  "keywords": [
-    "outlit",
-    "analytics",
-    "tracking",
-    "sdk",
-    "browser",
-    "react"
-  ],
+  "keywords": ["outlit", "analytics", "tracking", "sdk", "browser", "react"],
   "publishConfig": {
     "access": "public"
   },
@@ -41,9 +34,7 @@
       "default": "./dist/react/index.mjs"
     }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
