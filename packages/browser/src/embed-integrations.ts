@@ -98,7 +98,7 @@ function parseCalComBooking(data: CalComBookingData): CalendarBookingEvent {
     event.eventType = data.title
     // Extract invitee name from title: "Meeting between Host and Guest"
     const nameMatch = data.title.match(/between .+ and (.+)$/i)
-    if (nameMatch) {
+    if (nameMatch && nameMatch[1]) {
       event.inviteeName = nameMatch[1].trim()
     }
   }
