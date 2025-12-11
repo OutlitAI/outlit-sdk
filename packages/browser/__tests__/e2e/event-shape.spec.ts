@@ -157,6 +157,98 @@ test.describe("Pageview Event Shape", () => {
     // Referrer should be empty string or undefined for direct traffic
     expect(pageview?.referrer === "" || pageview?.referrer === undefined).toBe(true)
   })
+
+  test("SPA navigation captures correct title after async title update", async ({ page }) => {
+    const apiCalls = await interceptApiCalls(page)
+
+    // Load initial page
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Simulate SPA navigation: pushState first, then update title asynchronously
+    // This mimics how React/Next.js/Framer update titles AFTER navigation
+    // Real frameworks typically update within 5ms, but we use a small delay
+    // to simulate the async nature of SPA title updates
+    await page.evaluate(() => {
+      // Navigate to new URL
+      history.pushState({}, "", "/about")
+      // Update title asynchronously (like SPAs do - usually within a few ms)
+      setTimeout(() => {
+        document.title = "About Page"
+      }, 5)
+    })
+
+    // Wait for the delayed pageview capture to complete (SDK waits 10ms)
+    await page.waitForTimeout(100)
+
+    // Force flush
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event("beforeunload"))
+    })
+    await page.waitForTimeout(500)
+
+    const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
+    const pageviews = allEvents.filter((e) => e.type === "pageview")
+
+    // Should have 2 pageviews: initial + SPA navigation
+    expect(pageviews.length).toBe(2)
+
+    // First pageview should be initial page
+    expect(pageviews[0]?.path).toBe("/test-page.html")
+    expect(pageviews[0]?.title).toBe("SDK Test Page")
+
+    // Second pageview should have the NEW title, not the old one
+    expect(pageviews[1]?.path).toBe("/about")
+    expect(pageviews[1]?.title).toBe("About Page")
+  })
+
+  test("SPA navigation does NOT capture stale title from previous page", async ({ page }) => {
+    const apiCalls = await interceptApiCalls(page)
+
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Simulate multiple rapid SPA navigations (like clicking through a site quickly)
+    // Each navigation updates the title within 5ms (simulating real SPA behavior)
+    // The SDK waits 10ms before capturing, so titles should be correct
+    await page.evaluate(() => {
+      // First navigation
+      history.pushState({}, "", "/terms")
+      setTimeout(() => {
+        document.title = "Terms of Service"
+      }, 5)
+
+      // Second navigation after first one has time to complete (50ms gap)
+      setTimeout(() => {
+        history.pushState({}, "", "/privacy")
+        setTimeout(() => {
+          document.title = "Privacy Policy"
+        }, 5)
+      }, 50)
+    })
+
+    // Wait for all navigations to complete (50ms + 10ms SDK delay + buffer)
+    await page.waitForTimeout(200)
+
+    // Force flush
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event("beforeunload"))
+    })
+    await page.waitForTimeout(500)
+
+    const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
+    const pageviews = allEvents.filter((e) => e.type === "pageview")
+
+    // Should have 3 pageviews
+    expect(pageviews.length).toBe(3)
+
+    // Verify each pageview has the CORRECT title for its path
+    const termsPageview = pageviews.find((p) => p.path === "/terms")
+    const privacyPageview = pageviews.find((p) => p.path === "/privacy")
+
+    expect(termsPageview?.title).toBe("Terms of Service")
+    expect(privacyPageview?.title).toBe("Privacy Policy")
+  })
 })
 
 // ============================================

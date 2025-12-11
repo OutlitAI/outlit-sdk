@@ -41,12 +41,29 @@ function capturePageview(): void {
 }
 
 /**
+ * Capture pageview after a small delay.
+ * SPAs update document.title asynchronously after navigation,
+ * so we need to wait for the title to be updated.
+ *
+ * Different frameworks update titles at different times:
+ * - React: after commit phase (typically after rAF)
+ * - Next.js: after route change completes
+ * - Framer: after page transition completes
+ *
+ * A small delay (10ms) reliably captures the updated title
+ * while being imperceptible to users.
+ */
+function capturePageviewDelayed(): void {
+  setTimeout(capturePageview, 10)
+}
+
+/**
  * Set up listeners for SPA navigation.
  */
 function setupSpaListeners(): void {
   // Listen for popstate (browser back/forward)
   window.addEventListener("popstate", () => {
-    capturePageview()
+    capturePageviewDelayed()
   })
 
   // Monkey-patch pushState and replaceState
@@ -55,12 +72,12 @@ function setupSpaListeners(): void {
 
   history.pushState = function (...args) {
     originalPushState.apply(this, args)
-    capturePageview()
+    capturePageviewDelayed()
   }
 
   history.replaceState = function (...args) {
     originalReplaceState.apply(this, args)
-    capturePageview()
+    capturePageviewDelayed()
   }
 }
 
