@@ -86,6 +86,14 @@ let calCallbackRegistered = false
 let lastBookingUid: string | null = null // Prevent duplicate events
 
 // ============================================
+// CONFIG
+// ============================================
+
+const CAL_MAX_RETRY_ATTEMPTS = 10 // Max attempts to find Cal() API
+const CAL_INITIAL_DELAY_MS = 200 // Start with short delay
+const CAL_MAX_DELAY_MS = 2000 // Cap retry delay at 2s
+
+// ============================================
 // CAL.COM BOOKING PARSER
 // ============================================
 
@@ -132,32 +140,31 @@ function parseCalComBooking(data: CalComBookingData): CalendarBookingEvent {
  */
 function setupCalComListener(): void {
   if (typeof window === "undefined") return
-  if (calCallbackRegistered) return // Already registered
+  if (calCallbackRegistered) return
 
   calSetupAttempts++
 
   // Check if Cal() API exists
   if ("Cal" in window) {
     const Cal = (window as unknown as { Cal: CalFunction }).Cal
+
     if (typeof Cal === "function") {
       try {
-        // Register our booking callback
         Cal("on", {
           action: "bookingSuccessfulV2",
           callback: handleCalComBooking,
         })
         calCallbackRegistered = true
-        console.debug("[Outlit] Cal.com booking listener registered")
         return
-      } catch (e) {
-        console.debug("[Outlit] Cal.com registration failed, will retry", e)
+      } catch (_e) {
+        // Registration failed, will retry
       }
     }
   }
 
   // Cal() not ready yet, retry with backoff
-  if (calSetupAttempts < 20) {
-    const delay = Math.min(500 * calSetupAttempts, 3000)
+  if (calSetupAttempts < CAL_MAX_RETRY_ATTEMPTS) {
+    const delay = Math.min(CAL_INITIAL_DELAY_MS * calSetupAttempts, CAL_MAX_DELAY_MS)
     setTimeout(setupCalComListener, delay)
   }
 }
@@ -169,15 +176,9 @@ function handleCalComBooking(e: { detail: CalComEventDetail }): void {
   if (!data) return
 
   // Prevent duplicate events for the same booking
-  if (data.uid && data.uid === lastBookingUid) {
-    console.debug("[Outlit] Duplicate booking event, skipping", data.uid)
-    return
-  }
-
-  console.debug("[Outlit] Cal.com booking event received", e.detail)
+  if (data.uid && data.uid === lastBookingUid) return
   lastBookingUid = data.uid || null
 
-  // Parse and send the event
   const bookingEvent = parseCalComBooking(data)
   callbacks.onCalendarBooked(bookingEvent)
 }
@@ -198,7 +199,7 @@ function handlePostMessage(event: MessageEvent): void {
     return
   }
 
-  // Check for Cal.com postMessages (fallback)
+  // Check for Cal.com postMessages (fallback if Cal() API not available)
   if (isCalComRawMessage(event)) {
     const bookingData = extractCalComBookingFromMessage(event.data)
     if (bookingData) {
@@ -213,19 +214,17 @@ function handlePostMessage(event: MessageEvent): void {
 }
 
 function isCalComRawMessage(event: MessageEvent): boolean {
-  // Cal.com iframes are at app.cal.com
-  if (!event.origin.includes("cal.com")) {
-    return false
-  }
+  if (!event.origin.includes("cal.com")) return false
 
   const data = event.data
+  if (!data || typeof data !== "object") return false
+
+  // Cal.com sends type: 'bookingSuccessfulV2' for successful bookings
+  const messageType = data.type || data.action
   return (
-    data &&
-    typeof data === "object" &&
-    (data.type === "booking_successful" ||
-      data.action === "bookingSuccessfulV2" ||
-      data.action === "bookingSuccessful" ||
-      data.type === "__routeChanged")
+    messageType === "bookingSuccessfulV2" ||
+    messageType === "bookingSuccessful" ||
+    messageType === "booking_successful"
   )
 }
 
@@ -234,6 +233,7 @@ function extractCalComBookingFromMessage(data: unknown): CalComBookingData | nul
 
   const messageData = data as Record<string, unknown>
 
+  // Cal.com sends: { originator: 'CAL', type: 'bookingSuccessfulV2', data: { uid, title, ... } }
   if (messageData.data && typeof messageData.data === "object") {
     return messageData.data as CalComBookingData
   }
