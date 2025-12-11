@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendly Embed Test Page</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+    button { padding: 10px 20px; margin: 10px 0; cursor: pointer; }
+    .calendar-placeholder { 
+      margin: 20px 0; 
+      padding: 40px; 
+      border: 2px dashed #ccc; 
+      border-radius: 8px;
+      text-align: center;
+      background: #f9f9f9;
+    }
+    #status { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Calendly Embed Test Page</h1>
+  <p>This page simulates a Calendly embed for testing.</p>
+
+  <div class="calendar-placeholder">
+    <h3>📅 Calendly Booking Widget (Simulated)</h3>
+    <p>Click the button below to simulate a booking completion.</p>
+    <button id="simulate-calendly-booking">Simulate Calendly Booking</button>
+  </div>
+
+  <div id="status">
+    <strong>Status:</strong> <span id="status-text">Loading SDK...</span>
+  </div>
+
+  <!-- Simulated Calendly iframe for testing -->
+  <iframe id="calendly-iframe" src="about:blank" style="display: none;"></iframe>
+
+  <!-- Load the SDK from local test server (not CDN) -->
+  <script src="/outlit.global.js" data-public-key="pk_test_key_12345"></script>
+
+  <script>
+    // Wait for SDK to be ready
+    function waitForOutlit(callback) {
+      if (window.outlit && window.outlit._initialized) {
+        callback();
+      } else {
+        setTimeout(() => waitForOutlit(callback), 50);
+      }
+    }
+
+    waitForOutlit(() => {
+      document.getElementById('status-text').textContent = 
+        'SDK Initialized. Visitor ID: ' + (window.outlit.getVisitorId() || 'none');
+    });
+
+    // Helper to simulate Calendly postMessage
+    // In real scenarios, this would come from the Calendly iframe at calendly.com
+    window.simulateCalendlyEvent = function(eventType, payload) {
+      // We'll dispatch the event as if it came from our window
+      // In tests, we'll override the origin check
+      window.postMessage({
+        event: eventType,
+        payload: payload
+      }, '*');
+    };
+
+    // Simulate Calendly booking
+    document.getElementById('simulate-calendly-booking').addEventListener('click', () => {
+      // Simulate the calendly.event_scheduled postMessage
+      // Note: In reality, this comes from the Calendly iframe
+      // Calendly only provides URIs, not actual PII
+      window.simulateCalendlyEvent('calendly.event_scheduled', {
+        event: {
+          uri: 'https://api.calendly.com/scheduled_events/abc123'
+        },
+        invitee: {
+          uri: 'https://api.calendly.com/scheduled_events/abc123/invitees/def456'
+        }
+      });
+      
+      document.getElementById('status-text').textContent = 'Calendly booking simulated!';
+    });
+  </script>
+</body>
+</html>

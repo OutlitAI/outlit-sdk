@@ -2,6 +2,7 @@
 export type {
   EventType,
   SourceType,
+  CalendarProvider,
   UtmParams,
   TrackerConfig,
   BrowserTrackOptions,
@@ -12,6 +13,7 @@ export type {
   FormEvent,
   IdentifyEvent,
   CustomEvent,
+  CalendarEvent,
   TrackerEvent,
   IngestPayload,
   IngestResponse,
@@ -43,6 +45,7 @@ export {
   buildFormEvent,
   buildIdentifyEvent,
   buildCustomEvent,
+  buildCalendarEvent,
   buildIngestPayload,
   batchEvents,
   MAX_BATCH_SIZE,
