@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cal.com Embed Test Page (Mock)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+    button { padding: 10px 20px; margin: 10px 0; cursor: pointer; }
+    .calendar-placeholder { 
+      margin: 20px 0; 
+      padding: 40px; 
+      border: 2px dashed #ccc; 
+      border-radius: 8px;
+      text-align: center;
+      background: #f9f9f9;
+    }
+    #status { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Cal.com Embed Test Page (Mock)</h1>
+  <p>This page simulates Cal.com embed for automated testing (no network required).</p>
+
+  <div class="calendar-placeholder">
+    <h3>📅 Cal.com Booking Widget (Mock)</h3>
+    <p>Click the button below to simulate a booking completion.</p>
+    <button id="simulate-cal-booking">Simulate Cal.com Booking</button>
+    <button id="simulate-cal-booking-api">Simulate via Cal() API</button>
+  </div>
+
+  <div id="status">
+    <strong>Status:</strong> <span id="status-text">Loading SDK...</span>
+  </div>
+
+  <!-- 
+    Mock Cal.com's Cal() API for testing.
+    This simulates the Cal.com embed without loading the real script.
+  -->
+  <script type="text/javascript">
+    // Store registered callbacks
+    window.__calCallbacks = { bookingSuccessfulV2: [] };
+    window.__calendarEventReceived = false;
+    
+    // Mock Cal.com Cal() API
+    window.Cal = function(method, options) {
+      console.log('[Cal Mock] Called with:', method, options);
+      
+      // Capture "on" callbacks for bookingSuccessfulV2
+      if (method === 'on' && options && options.action === 'bookingSuccessfulV2') {
+        console.log('[Cal Mock] Storing booking callback');
+        window.__calCallbacks.bookingSuccessfulV2.push(options.callback);
+      }
+    };
+    
+    // Mark Cal as loaded
+    window.Cal.loaded = true;
+    window.Cal.q = [];
+    window.Cal.ns = {};
+
+    // Helper to trigger a Cal.com booking event
+    window.triggerCalBooking = function(bookingData) {
+      console.log('[Cal Mock] Triggering booking with callbacks:', window.__calCallbacks.bookingSuccessfulV2.length);
+      const eventDetail = {
+        detail: {
+          data: bookingData,
+          type: 'bookingSuccessfulV2',
+          namespace: 'default'
+        }
+      };
+      
+      window.__calendarEventReceived = true;
+      window.__lastBookingData = bookingData;
+      
+      // Trigger all registered callbacks
+      window.__calCallbacks.bookingSuccessfulV2.forEach(function(cb) {
+        try {
+          cb(eventDetail);
+        } catch (e) {
+          console.error('[Cal Mock] Callback error:', e);
+        }
+      });
+    };
+  </script>
+
+  <!-- Load Outlit SDK after Cal() mock is set up -->
+  <script src="/outlit.global.js" data-public-key="pk_test_key_12345"></script>
+
+  <script>
+    // Wait for SDK to be ready
+    function waitForOutlit(callback) {
+      if (window.outlit && window.outlit._initialized) {
+        callback();
+      } else {
+        setTimeout(() => waitForOutlit(callback), 50);
+      }
+    }
+
+    waitForOutlit(() => {
+      const callbackCount = window.__calCallbacks.bookingSuccessfulV2.length;
+      document.getElementById('status-text').textContent = 
+        'SDK Initialized. Cal.com callbacks: ' + callbackCount + '. Visitor ID: ' + (window.outlit.getVisitorId() || 'none');
+    });
+
+    // Simulate Cal.com booking via postMessage
+    document.getElementById('simulate-cal-booking').addEventListener('click', () => {
+      window.postMessage({
+        type: 'booking_successful',
+        action: 'bookingSuccessfulV2',
+        data: {
+          uid: 'booking-123-abc',
+          title: '30 Minute Demo Call',
+          startTime: '2025-01-15T14:00:00.000Z',
+          endTime: '2025-01-15T14:30:00.000Z',
+          eventTypeId: 42,
+          status: 'ACCEPTED',
+          paymentRequired: false,
+          isRecurring: false
+        }
+      }, '*');
+      
+      document.getElementById('status-text').textContent = 'Cal.com booking simulated via postMessage!';
+    });
+
+    // Simulate Cal.com booking via Cal() API
+    document.getElementById('simulate-cal-booking-api').addEventListener('click', () => {
+      window.triggerCalBooking({
+        uid: 'booking-456-def',
+        title: 'Product Demo',
+        startTime: '2025-01-16T10:00:00.000Z',
+        endTime: '2025-01-16T10:45:00.000Z',
+        eventTypeId: 43,
+        status: 'ACCEPTED',
+        paymentRequired: false,
+        isRecurring: false
+      });
+      
+      document.getElementById('status-text').textContent = 'Cal.com booking simulated via Cal() API!';
+    });
+  </script>
+</body>
+</html>
