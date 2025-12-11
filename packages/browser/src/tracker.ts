@@ -254,9 +254,8 @@ export class Outlit {
     initCalendarTracking({
       onCalendarBooked: (bookingEvent: CalendarBookingEvent) => {
         // Track the calendar booking as a first-class calendar event
-        // Note: Due to privacy restrictions, Cal.com and Calendly do NOT expose
-        // invitee email/name in their postMessage events, so auto-identify
-        // is not possible here. Customers need server-side webhooks for that.
+        // Note: Email is NOT available from Cal.com/Calendly client-side events
+        // Use server-side webhooks for identify()
         const event = buildCalendarEvent({
           url: window.location.href,
           referrer: document.referrer,

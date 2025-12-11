@@ -4,20 +4,20 @@
  * This module handles automatic tracking of booking events from
  * third-party calendar embeds like Cal.com and Calendly.
  *
- * IMPORTANT: Due to privacy restrictions in Cal.com and Calendly,
- * the postMessage events they emit do NOT include PII (email, name).
- * This means auto-identify is NOT possible with these embeds using
- * client-side tracking alone.
+ * Cal.com Integration:
+ * - Hooks into Cal() API for booking events via Cal("on", { action: "bookingSuccessfulV2" })
+ * - Captures booking details: event type, time, duration, invitee name (from title)
  *
- * For auto-identify functionality with calendar bookings, customers need to:
- * 1. Set up webhooks on their Cal.com/Calendly account
- * 2. Create a server endpoint to receive the webhook
- * 3. Call the Outlit API or use the SDK's identify() when they receive the webhook
+ * IMPORTANT - Email Limitation:
+ * Cal.com does NOT expose invitee email in their client-side events for privacy.
+ * The email IS in the success page URL, but:
+ * 1. iframe.src attribute doesn't update (Cal.com uses client-side routing)
+ * 2. contentWindow.location.href is blocked by cross-origin policy
  *
- * What this module DOES provide:
- * - Automatic tracking of first-class "calendar" events when bookings are detected
- * - Extraction of non-PII data (event type, duration, etc.) when available
- * - A hook for customers who want to manually trigger identify after getting PII elsewhere
+ * To get email from Cal.com bookings, you need SERVER-SIDE WEBHOOKS:
+ * 1. Set up Cal.com webhook: Settings → Developer → Webhooks
+ * 2. Point it to your server endpoint
+ * 3. Server calls Outlit identify() API with the email from webhook payload
  */
 
 import type { CalendarProvider } from "@outlit/core"
@@ -33,38 +33,19 @@ export interface CalendarBookingEvent {
   endTime?: string
   duration?: number
   isRecurring?: boolean
-  /** Only available if customer passes it manually via onCalendarBooked callback */
   inviteeEmail?: string
   inviteeName?: string
 }
 
 export interface CalendarIntegrationCallbacks {
-  /** Called when a calendar booking is detected */
   onCalendarBooked: (event: CalendarBookingEvent) => void
-  /** Optional: Called when identity info is available (via manual integration) */
   onIdentity?: (identity: { email: string; name?: string }) => void
 }
 
 // ============================================
-// CAL.COM INTEGRATION
+// CAL.COM TYPES
 // ============================================
 
-/**
- * Cal.com embed events structure.
- * These come through the Cal() API or as raw postMessages.
- *
- * The bookingSuccessfulV2 event includes:
- * - uid: string - Unique booking ID
- * - title: string - Booking title
- * - startTime: string - ISO timestamp
- * - endTime: string - ISO timestamp
- * - eventTypeId: number
- * - status: string
- * - paymentRequired: boolean
- * - isRecurring: boolean
- *
- * NOTE: It does NOT include invitee email or name (privacy protection)
- */
 interface CalComBookingData {
   uid?: string
   title?: string
@@ -82,6 +63,32 @@ interface CalComEventDetail {
   namespace: string
 }
 
+// Cal.com's Cal() function type
+type CalFunction = {
+  (
+    method: "on",
+    options: { action: string; callback: (e: { detail: CalComEventDetail }) => void },
+  ): void
+  (method: string, ...args: unknown[]): void
+  loaded?: boolean
+  q?: unknown[][]
+  ns?: Record<string, unknown>
+}
+
+// ============================================
+// STATE
+// ============================================
+
+let callbacks: CalendarIntegrationCallbacks | null = null
+let isListening = false
+let calSetupAttempts = 0
+let calCallbackRegistered = false
+let lastBookingUid: string | null = null // Prevent duplicate events
+
+// ============================================
+// CAL.COM BOOKING PARSER
+// ============================================
+
 function parseCalComBooking(data: CalComBookingData): CalendarBookingEvent {
   const event: CalendarBookingEvent = {
     provider: "cal.com",
@@ -89,55 +96,162 @@ function parseCalComBooking(data: CalComBookingData): CalendarBookingEvent {
 
   if (data.title) {
     event.eventType = data.title
+    // Extract invitee name from title: "Meeting between Host and Guest"
+    const nameMatch = data.title.match(/between .+ and (.+)$/i)
+    if (nameMatch) {
+      event.inviteeName = nameMatch[1].trim()
+    }
   }
 
-  if (data.startTime) {
-    event.startTime = data.startTime
-  }
-
-  if (data.endTime) {
-    event.endTime = data.endTime
-  }
+  if (data.startTime) event.startTime = data.startTime
+  if (data.endTime) event.endTime = data.endTime
 
   if (data.startTime && data.endTime) {
     const start = new Date(data.startTime)
     const end = new Date(data.endTime)
-    event.duration = Math.round((end.getTime() - start.getTime()) / 60000) // minutes
+    event.duration = Math.round((end.getTime() - start.getTime()) / 60000)
   }
 
   if (data.isRecurring !== undefined) {
     event.isRecurring = data.isRecurring
   }
 
+  // Note: Email is NOT available from Cal.com client-side events
+  // Use server-side webhooks to get email for identify()
+
   return event
+}
+
+// ============================================
+// CAL.COM API INTEGRATION
+// ============================================
+
+/**
+ * Set up listener for Cal.com's Cal() API.
+ * Registers callback via Cal("on", ...) with retries.
+ */
+function setupCalComListener(): void {
+  if (typeof window === "undefined") return
+  if (calCallbackRegistered) return // Already registered
+
+  calSetupAttempts++
+
+  // Check if Cal() API exists
+  if ("Cal" in window) {
+    const Cal = (window as unknown as { Cal: CalFunction }).Cal
+    if (typeof Cal === "function") {
+      try {
+        // Register our booking callback
+        Cal("on", {
+          action: "bookingSuccessfulV2",
+          callback: handleCalComBooking,
+        })
+        calCallbackRegistered = true
+        console.debug("[Outlit] Cal.com booking listener registered")
+        return
+      } catch (e) {
+        console.debug("[Outlit] Cal.com registration failed, will retry", e)
+      }
+    }
+  }
+
+  // Cal() not ready yet, retry with backoff
+  if (calSetupAttempts < 20) {
+    const delay = Math.min(500 * calSetupAttempts, 3000)
+    setTimeout(setupCalComListener, delay)
+  }
+}
+
+function handleCalComBooking(e: { detail: CalComEventDetail }): void {
+  if (!callbacks) return
+
+  const data = e.detail?.data
+  if (!data) return
+
+  // Prevent duplicate events for the same booking
+  if (data.uid && data.uid === lastBookingUid) {
+    console.debug("[Outlit] Duplicate booking event, skipping", data.uid)
+    return
+  }
+
+  console.debug("[Outlit] Cal.com booking event received", e.detail)
+  lastBookingUid = data.uid || null
+
+  // Parse and send the event
+  const bookingEvent = parseCalComBooking(data)
+  callbacks.onCalendarBooked(bookingEvent)
+}
+
+// ============================================
+// POSTMESSAGE HANDLER (FALLBACK)
+// ============================================
+
+function handlePostMessage(event: MessageEvent): void {
+  if (!callbacks) return
+
+  // Check for Calendly events
+  if (isCalendlyEvent(event)) {
+    if (event.data.event === "calendly.event_scheduled") {
+      const bookingEvent = parseCalendlyBooking(event.data.payload)
+      callbacks.onCalendarBooked(bookingEvent)
+    }
+    return
+  }
+
+  // Check for Cal.com postMessages (fallback)
+  if (isCalComRawMessage(event)) {
+    const bookingData = extractCalComBookingFromMessage(event.data)
+    if (bookingData) {
+      // Prevent duplicates
+      if (bookingData.uid && bookingData.uid === lastBookingUid) return
+      lastBookingUid = bookingData.uid || null
+
+      const bookingEvent = parseCalComBooking(bookingData)
+      callbacks.onCalendarBooked(bookingEvent)
+    }
+  }
+}
+
+function isCalComRawMessage(event: MessageEvent): boolean {
+  // Cal.com iframes are at app.cal.com
+  if (!event.origin.includes("cal.com")) {
+    return false
+  }
+
+  const data = event.data
+  return (
+    data &&
+    typeof data === "object" &&
+    (data.type === "booking_successful" ||
+      data.action === "bookingSuccessfulV2" ||
+      data.action === "bookingSuccessful" ||
+      data.type === "__routeChanged")
+  )
+}
+
+function extractCalComBookingFromMessage(data: unknown): CalComBookingData | null {
+  if (!data || typeof data !== "object") return null
+
+  const messageData = data as Record<string, unknown>
+
+  if (messageData.data && typeof messageData.data === "object") {
+    return messageData.data as CalComBookingData
+  }
+
+  if (messageData.booking && typeof messageData.booking === "object") {
+    return messageData.booking as CalComBookingData
+  }
+
+  return null
 }
 
 // ============================================
 // CALENDLY INTEGRATION
 // ============================================
 
-/**
- * Calendly embed events come via postMessage.
- *
- * Event types:
- * - calendly.profile_page_viewed
- * - calendly.event_type_viewed
- * - calendly.date_and_time_selected
- * - calendly.event_scheduled
- *
- * The event_scheduled payload includes:
- * - event.uri: string - API URI for the event (requires auth to fetch)
- * - invitee.uri: string - API URI for the invitee (requires auth to fetch)
- *
- * NOTE: Email and name require authenticated API calls, not available client-side
- */
 interface CalendlyPayload {
-  event?: {
-    uri?: string
-  }
-  invitee?: {
-    uri?: string
-  }
+  event?: { uri?: string }
+  invitee?: { uri?: string }
 }
 
 interface CalendlyMessageData {
@@ -155,159 +269,31 @@ function isCalendlyEvent(e: MessageEvent): e is MessageEvent<CalendlyMessageData
 }
 
 function parseCalendlyBooking(_payload: CalendlyPayload): CalendarBookingEvent {
-  // Calendly doesn't provide booking details in the postMessage payload
-  // Only URIs that require API auth to fetch
   return {
     provider: "calendly",
-    // Note: eventType, startTime, etc. would require API calls to fetch
   }
 }
 
 // ============================================
-// MAIN INTEGRATION
+// PUBLIC API
 // ============================================
-
-let callbacks: CalendarIntegrationCallbacks | null = null
-let isListening = false
 
 /**
  * Initialize calendar embed tracking.
- * Listens for booking events from Cal.com and Calendly embeds.
  */
 export function initCalendarTracking(cbs: CalendarIntegrationCallbacks): void {
-  if (isListening) {
-    return // Already initialized
-  }
+  if (isListening) return
 
   callbacks = cbs
   isListening = true
+  calSetupAttempts = 0
 
-  // Listen for postMessage events (Calendly and potentially raw Cal.com messages)
+  // Listen for postMessage events (Calendly, fallback for Cal.com)
   window.addEventListener("message", handlePostMessage)
 
-  // Try to hook into Cal.com's Cal() API if it exists
+  // Set up Cal.com API listener
   setupCalComListener()
 }
-
-/**
- * Handle postMessage events from calendar embeds.
- */
-function handlePostMessage(event: MessageEvent): void {
-  if (!callbacks) return
-
-  // Check for Calendly events
-  if (isCalendlyEvent(event)) {
-    if (event.data.event === "calendly.event_scheduled") {
-      const bookingEvent = parseCalendlyBooking(event.data.payload)
-      callbacks.onCalendarBooked(bookingEvent)
-    }
-    return
-  }
-
-  // Check for raw Cal.com postMessages (they use a specific format)
-  // Cal.com embed messages have a specific structure when sent from their iframe
-  if (isCalComRawMessage(event)) {
-    const bookingData = extractCalComBookingFromMessage(event.data)
-    if (bookingData) {
-      const bookingEvent = parseCalComBooking(bookingData)
-      callbacks.onCalendarBooked(bookingEvent)
-    }
-  }
-}
-
-/**
- * Check if a message is from Cal.com embed.
- * Cal.com embeds are hosted on cal.com or app.cal.com domains.
- */
-function isCalComRawMessage(event: MessageEvent): boolean {
-  const calComOrigins = ["https://cal.com", "https://app.cal.com"]
-
-  if (!calComOrigins.some((origin) => event.origin.endsWith(origin.replace("https://", "")))) {
-    return false
-  }
-
-  // Cal.com sends messages with specific action types
-  const data = event.data
-  return (
-    data &&
-    typeof data === "object" &&
-    (data.type === "booking_successful" ||
-      data.action === "bookingSuccessfulV2" ||
-      data.action === "bookingSuccessful")
-  )
-}
-
-/**
- * Extract booking data from Cal.com raw postMessage.
- */
-function extractCalComBookingFromMessage(data: unknown): CalComBookingData | null {
-  if (!data || typeof data !== "object") {
-    return null
-  }
-
-  const messageData = data as Record<string, unknown>
-
-  // Cal.com sends booking data in different formats depending on embed version
-  if (messageData.data && typeof messageData.data === "object") {
-    return messageData.data as CalComBookingData
-  }
-
-  if (messageData.booking && typeof messageData.booking === "object") {
-    return messageData.booking as CalComBookingData
-  }
-
-  return null
-}
-
-/**
- * Set up listener for Cal.com's Cal() API if available.
- * This hooks into the official Cal.com embed API.
- */
-function setupCalComListener(): void {
-  // Check if Cal() API exists (loaded by Cal.com embed script)
-  if (typeof window !== "undefined" && "Cal" in window) {
-    const Cal = (window as unknown as { Cal: CalFunction }).Cal
-    if (typeof Cal === "function") {
-      try {
-        // Listen for the official booking event
-        Cal("on", {
-          action: "bookingSuccessfulV2",
-          callback: (e: { detail: CalComEventDetail }) => {
-            if (callbacks) {
-              const bookingEvent = parseCalComBooking(e.detail.data)
-              callbacks.onCalendarBooked(bookingEvent)
-            }
-          },
-        })
-      } catch {
-        // Cal() API might not be fully initialized yet, try again later
-        setTimeout(setupCalComListener, 1000)
-      }
-    }
-  } else {
-    // Cal.com script might load later, wait and retry
-    if (typeof window !== "undefined") {
-      const checkInterval = setInterval(() => {
-        if ("Cal" in window) {
-          clearInterval(checkInterval)
-          setupCalComListener()
-        }
-      }, 500)
-
-      // Stop checking after 10 seconds
-      setTimeout(() => clearInterval(checkInterval), 10000)
-    }
-  }
-}
-
-// Type for Cal.com's Cal() function
-type CalFunction = (
-  method: string,
-  options: {
-    action: string
-    callback: (e: { detail: CalComEventDetail }) => void
-  },
-) => void
 
 /**
  * Stop calendar embed tracking.
@@ -316,8 +302,12 @@ export function stopCalendarTracking(): void {
   if (!isListening) return
 
   window.removeEventListener("message", handlePostMessage)
+
   callbacks = null
   isListening = false
+  calCallbackRegistered = false
+  calSetupAttempts = 0
+  lastBookingUid = null
 }
 
 /**
