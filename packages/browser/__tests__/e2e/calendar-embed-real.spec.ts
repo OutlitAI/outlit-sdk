@@ -28,6 +28,8 @@ interface FullEvent {
   endTime?: string
   duration?: number
   isRecurring?: boolean
+  inviteeName?: string
+  inviteeEmail?: string
 }
 
 interface ApiCall {
@@ -104,6 +106,8 @@ async function fillSimpleBookingForm(
 }
 
 test.describe("Real Cal.com Booking Test", () => {
+  // Skip in CI - this creates REAL bookings and should only be run locally
+  test.skip(!!process.env.CI, "Skipping real Cal.com test in CI")
   test.setTimeout(120000) // 2 minutes
 
   test("completes a real booking on Cal.com and captures the calendar event", async ({ page }) => {
@@ -164,11 +168,4 @@ test.describe("Real Cal.com Booking Test", () => {
   })
 })
 
-declare global {
-  interface Window {
-    outlit?: {
-      _initialized?: boolean
-      getVisitorId: () => string | null
-    }
-  }
-}
+// Window.outlit type is declared in browser-sdk.spec.ts
