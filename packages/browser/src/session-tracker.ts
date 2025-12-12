@@ -22,10 +22,13 @@ const SESSION_TIMEOUT = 30 * 60 * 1000
 const TIME_UPDATE_INTERVAL = 1000
 
 /**
- * Minimum time threshold to emit an engagement event (1 second).
- * Prevents emitting events for very brief page visits.
+ * Minimum threshold to consider an engagement event spurious (50ms).
+ * Events with BOTH activeTimeMs < 50ms AND totalTimeMs < 50ms are likely
+ * caused by browser visibility quirks during page load and should be skipped.
+ * This prevents emitting events with activeTimeMs=1ms while still allowing
+ * legitimate events where the user was on the page for a meaningful duration.
  */
-const MIN_EMIT_THRESHOLD = 1000
+const MIN_SPURIOUS_THRESHOLD = 50
 
 /**
  * Storage keys for session data in sessionStorage.
@@ -120,8 +123,16 @@ export class SessionTracker {
     this.updateActiveTime()
 
     // 2. Create and emit event (only if we have meaningful data)
+    // Skip spurious events caused by browser visibility quirks during page load.
+    // These occur when a hidden→visible transition happens almost immediately after
+    // SDK initialization, resulting in activeTimeMs ≈ 1ms and totalTimeMs ≈ 5ms.
+    // We only skip if BOTH values are below the threshold - legitimate events will
+    // have at least one meaningful value (user was on page for some duration).
     const totalTimeMs = Date.now() - this.state.pageEntryTime
-    if (this.state.activeTimeMs > 0 || totalTimeMs > MIN_EMIT_THRESHOLD) {
+    const isSpuriousEvent =
+      this.state.activeTimeMs < MIN_SPURIOUS_THRESHOLD && totalTimeMs < MIN_SPURIOUS_THRESHOLD
+
+    if (!isSpuriousEvent) {
       const event = buildEngagementEvent({
         url: this.state.currentUrl,
         referrer: document.referrer,
