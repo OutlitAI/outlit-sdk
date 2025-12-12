@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDK Session Tracking Test Page</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+    #status { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Session Tracking Test Page</h1>
+  <p>This page is used for testing session tracking with a short idle timeout.</p>
+
+  <div id="status">
+    <strong>Status:</strong> <span id="status-text">Loading SDK...</span>
+  </div>
+
+  <!-- Load the SDK using the recommended stub snippet -->
+  <script>
+    !function(w,d,src,key,auto){
+      if(w.outlit&&w.outlit._loaded)return;
+      w.outlit=w.outlit||{_q:[]};
+      ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId"].forEach(function(m){
+        w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
+      });
+      var s=d.createElement("script");s.async=1;s.src=src;
+      // Don't set data-public-key to prevent auto-init - we'll init manually with custom options
+      (d.body||d.head).appendChild(s);
+    }(window,document,"/outlit.global.js");
+  </script>
+
+  <script>
+    // Wait for SDK to load then manually initialize with short idle timeout
+    function waitForOutlit(callback) {
+      if (window.outlit && window.outlit._loaded) {
+        callback();
+      } else {
+        setTimeout(() => waitForOutlit(callback), 50);
+      }
+    }
+
+    waitForOutlit(() => {
+      // Initialize with a very short idle timeout (500ms) for testing
+      window.outlit.init({
+        publicKey: 'pk_test_key_12345',
+        autoTrack: true,
+        idleTimeout: 500, // 500ms idle timeout for faster testing
+      });
+
+      document.getElementById('status-text').textContent = 
+        'SDK Initialized. Visitor ID: ' + (window.outlit.getVisitorId() || 'none');
+    });
+  </script>
+</body>
+</html>

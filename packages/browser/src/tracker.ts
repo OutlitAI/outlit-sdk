@@ -17,6 +17,7 @@ import {
   initCalendarTracking,
   stopCalendarTracking,
 } from "./embed-integrations"
+import { type SessionTracker, initSessionTracking, stopSessionTracking } from "./session-tracker"
 import { getOrCreateVisitorId } from "./storage"
 
 // ============================================
@@ -53,6 +54,20 @@ export interface OutlitOptions extends TrackerConfig {
    * @default true
    */
   trackCalendarEmbeds?: boolean
+  /**
+   * Track engagement metrics (active time on page).
+   * When enabled, emits "engagement" events on page exit and SPA navigation
+   * capturing how long users actively engaged with each page.
+   * @default true
+   */
+  trackEngagement?: boolean
+  /**
+   * Idle timeout in milliseconds for engagement tracking.
+   * After this period of no user interaction, the user is considered idle
+   * and active time stops accumulating.
+   * @default 30000 (30 seconds)
+   */
+  idleTimeout?: number
 }
 
 export class Outlit {
@@ -65,6 +80,8 @@ export class Outlit {
   private isInitialized = false
   private isTrackingEnabled = false
   private options: OutlitOptions
+  private hasHandledExit = false
+  private sessionTracker: SessionTracker | null = null
 
   constructor(options: OutlitOptions) {
     this.publicKey = options.publicKey
@@ -72,11 +89,35 @@ export class Outlit {
     this.flushInterval = options.flushInterval ?? 5000
     this.options = options
 
-    // Set up beforeunload handler
+    // Set up exit handlers for reliable flushing
+    // Uses multiple events because beforeunload is unreliable on mobile
     if (typeof window !== "undefined") {
-      window.addEventListener("beforeunload", () => {
+      const handleExit = () => {
+        if (this.hasHandledExit) return
+        this.hasHandledExit = true
+
+        // 1. Emit engagement event for current page (if session tracking enabled)
+        this.sessionTracker?.emitEngagement()
+
+        // 2. Flush the queue (now includes engagement event)
         this.flush()
+      }
+
+      // visibilitychange is most reliable - fires when tab is hidden
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+          handleExit()
+        } else {
+          // Reset when user returns to allow next exit to flush
+          this.hasHandledExit = false
+        }
       })
+
+      // pagehide is reliable and bfcache-friendly
+      window.addEventListener("pagehide", handleExit)
+
+      // beforeunload as fallback for older browsers
+      window.addEventListener("beforeunload", handleExit)
     }
 
     this.isInitialized = true
@@ -110,6 +151,11 @@ export class Outlit {
 
     // Start the flush timer
     this.startFlushTimer()
+
+    // Initialize session/engagement tracking if enabled (before pageview tracking)
+    if (this.options.trackEngagement !== false) {
+      this.initSessionTracking()
+    }
 
     // Initialize autocapture if enabled
     if (this.options.trackPageviews !== false) {
@@ -203,6 +249,8 @@ export class Outlit {
     }
     stopAutocapture()
     stopCalendarTracking()
+    stopSessionTracking()
+    this.sessionTracker = null
     await this.flush()
   }
 
@@ -210,8 +258,22 @@ export class Outlit {
   // INTERNAL METHODS
   // ============================================
 
+  private initSessionTracking(): void {
+    this.sessionTracker = initSessionTracking({
+      onEngagement: (event) => {
+        this.enqueue(event)
+      },
+      idleTimeout: this.options.idleTimeout,
+    })
+  }
+
   private initPageviewTracking(): void {
     initPageviewTracking((url, referrer, title) => {
+      // Notify session tracker FIRST (emits engagement for OLD page using stored state)
+      // This must happen before enqueueing the new pageview
+      this.sessionTracker?.onNavigation(url)
+
+      // Then enqueue pageview for NEW page
       const event = buildPageviewEvent({ url, referrer, title })
       this.enqueue(event)
     })

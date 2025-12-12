@@ -2,7 +2,7 @@
 // EVENT TYPES
 // ============================================
 
-export type EventType = "pageview" | "form" | "identify" | "custom" | "calendar"
+export type EventType = "pageview" | "form" | "identify" | "custom" | "calendar" | "engagement"
 
 export type CalendarProvider = "cal.com" | "calendly" | "unknown"
 
@@ -115,7 +115,23 @@ export interface CalendarEvent extends BaseEvent {
   inviteeName?: string
 }
 
-export type TrackerEvent = PageviewEvent | FormEvent | IdentifyEvent | CustomEvent | CalendarEvent
+export interface EngagementEvent extends BaseEvent {
+  type: "engagement"
+  /** Time in milliseconds the user was actively engaged (visible tab + user interactions) */
+  activeTimeMs: number
+  /** Total wall-clock time in milliseconds on the page */
+  totalTimeMs: number
+  /** Session ID for grouping engagement events. Resets after 30 min of inactivity or tab close. */
+  sessionId: string
+}
+
+export type TrackerEvent =
+  | PageviewEvent
+  | FormEvent
+  | IdentifyEvent
+  | CustomEvent
+  | CalendarEvent
+  | EngagementEvent
 
 // ============================================
 // INGEST PAYLOAD
