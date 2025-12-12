@@ -179,7 +179,7 @@ test.describe("Event Queue Behavior", () => {
     expect(unloadEvents.length).toBe(2)
   })
 
-  test("empty queue does not trigger API call", async ({ page }) => {
+  test("empty queue triggers only engagement event on exit", async ({ page }) => {
     const apiCalls = await interceptApiCalls(page)
 
     await page.goto("/test-page.html")
@@ -190,14 +190,21 @@ test.describe("Event Queue Behavior", () => {
 
     const callsBeforeFlush = apiCalls.length
 
-    // Trigger flush with empty queue
+    // Trigger flush - with engagement tracking enabled, this will emit an engagement event
     await page.evaluate(() => {
       window.dispatchEvent(new Event("beforeunload"))
     })
     await page.waitForTimeout(500)
 
-    // Should not have made additional API calls
-    expect(apiCalls.length).toBe(callsBeforeFlush)
+    // Should have exactly one additional API call (for the engagement event)
+    // The engagement event is always emitted on exit to capture time-on-page
+    expect(apiCalls.length).toBe(callsBeforeFlush + 1)
+
+    // Verify it's an engagement event
+    const lastCall = apiCalls[apiCalls.length - 1]
+    const events = lastCall?.payload?.events || []
+    const engagementEvents = events.filter((e: { type?: string }) => e.type === "engagement")
+    expect(engagementEvents.length).toBe(1)
   })
 })
 

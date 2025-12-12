@@ -2,6 +2,7 @@ import type {
   CalendarEvent,
   CalendarProvider,
   CustomEvent,
+  EngagementEvent,
   FormEvent,
   IdentifyEvent,
   IngestPayload,
@@ -149,6 +150,31 @@ export function buildCalendarEvent(
     isRecurring,
     inviteeEmail,
     inviteeName,
+  }
+}
+
+/**
+ * Build an engagement event.
+ * Captures active time on page for session analytics.
+ */
+export function buildEngagementEvent(
+  params: BaseEventParams & {
+    activeTimeMs: number
+    totalTimeMs: number
+    sessionId: string
+  },
+): EngagementEvent {
+  const { url, referrer, timestamp, activeTimeMs, totalTimeMs, sessionId } = params
+  return {
+    type: "engagement",
+    timestamp: timestamp ?? Date.now(),
+    url,
+    path: extractPathFromUrl(url),
+    referrer,
+    utm: extractUtmParams(url),
+    activeTimeMs,
+    totalTimeMs,
+    sessionId,
   }
 }
 
