@@ -353,12 +353,18 @@ export class SessionTracker {
    */
   private handleVisibilityChange(): void {
     const wasVisible = this.state.isPageVisible
-    this.state.isPageVisible = document.visibilityState === "visible"
+    const isNowVisible = document.visibilityState === "visible"
 
-    if (wasVisible && !this.state.isPageVisible) {
-      // Tab is being hidden - capture any pending active time
+    if (wasVisible && !isNowVisible) {
+      // Tab is being hidden - capture any pending active time BEFORE updating state
+      // (updateActiveTime checks isPageVisible, so we must call it first)
       this.updateActiveTime()
-    } else if (!wasVisible && this.state.isPageVisible) {
+    }
+
+    // Update state after capturing time
+    this.state.isPageVisible = isNowVisible
+
+    if (!wasVisible && isNowVisible) {
       // Tab is becoming visible - check if session expired while away
       this.checkSessionExpiry()
       // Reset last active time
