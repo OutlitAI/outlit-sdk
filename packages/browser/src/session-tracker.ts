@@ -59,6 +59,8 @@ interface SessionState {
   idleTimeoutId: ReturnType<typeof setTimeout> | null
   /** Session ID for grouping engagement events */
   sessionId: string
+  /** Whether we've already emitted an engagement event for this page session */
+  hasEmittedEngagement: boolean
 }
 
 export interface SessionTrackerOptions {
@@ -119,10 +121,20 @@ export class SessionTracker {
    * 3. Resets state for the next session
    */
   emitEngagement(): void {
-    // 1. Finalize any pending active time
+    // 1. Check if we've already handled exit for this page session (deduplication)
+    // This prevents duplicate events from multiple exit handlers (visibilitychange,
+    // pagehide, beforeunload) firing for the same page exit.
+    if (this.state.hasEmittedEngagement) {
+      return
+    }
+
+    // 2. Mark as handled FIRST to prevent any concurrent/reentrant calls
+    this.state.hasEmittedEngagement = true
+
+    // 3. Finalize any pending active time
     this.updateActiveTime()
 
-    // 2. Create and emit event (only if we have meaningful data)
+    // 4. Create and emit event (only if we have meaningful data)
     // Skip spurious events caused by browser visibility quirks during page load.
     // These occur when a hidden→visible transition happens almost immediately after
     // SDK initialization, resulting in activeTimeMs ≈ 1ms and totalTimeMs ≈ 5ms.
@@ -143,7 +155,7 @@ export class SessionTracker {
       this.options.onEngagement(event)
     }
 
-    // 3. Reset state for next session (preserves sessionId)
+    // 5. Reset state for next engagement period (preserves sessionId and hasEmittedEngagement)
     this.resetState()
   }
 
@@ -166,6 +178,8 @@ export class SessionTracker {
     this.state.activeTimeMs = 0
     this.state.lastActiveTime = Date.now()
     this.state.isUserActive = true
+    // Reset the engagement flag for the new page session
+    this.state.hasEmittedEngagement = false
 
     // Reset idle timer
     this.resetIdleTimer()
@@ -207,6 +221,7 @@ export class SessionTracker {
       isUserActive: true, // Assume active on page load
       idleTimeoutId: null,
       sessionId: this.getOrCreateSessionId(),
+      hasEmittedEngagement: false,
     }
   }
 
@@ -216,6 +231,8 @@ export class SessionTracker {
     this.state.lastActiveTime = now
     this.state.activeTimeMs = 0
     this.state.isUserActive = true
+    // Note: hasEmittedEngagement is NOT reset here - it's only reset in onNavigation
+    // when a new page session begins. This prevents duplicate events on the same page.
     // Note: sessionId is preserved across page navigations within the same session
 
     // Reset idle timer
@@ -380,6 +397,8 @@ export class SessionTracker {
       this.checkSessionExpiry()
       // Reset last active time
       this.state.lastActiveTime = Date.now()
+      // Reset engagement flag to allow new engagement event on next exit
+      this.state.hasEmittedEngagement = false
     }
   }
 
