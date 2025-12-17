@@ -1,5 +1,14 @@
 # @outlit/browser
 
+## 0.2.1
+
+### Patch Changes
+
+- [#3](https://github.com/OutlitAI/outlit-sdk/pull/3) [`26ff67c`](https://github.com/OutlitAI/outlit-sdk/commit/26ff67c7f595a774af1ced95fd78ba813ffcecc9) Thanks [@leo-paz](https://github.com/leo-paz)! - changing github workflows
+
+- Updated dependencies [[`26ff67c`](https://github.com/OutlitAI/outlit-sdk/commit/26ff67c7f595a774af1ced95fd78ba813ffcecc9)]:
+  - @outlit/core@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes
