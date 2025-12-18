@@ -8,80 +8,9 @@ on:
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  # Always publish canary to npm on every main push
-  canary:
-    name: Publish Canary
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: ".nvmrc"
-          cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: pnpm build
-
-      - name: Create canary versions
-        run: |
-          # Generate snapshot version like 0.1.0-canary-20231210-abc1234
-          TIMESTAMP=$(date +%Y%m%d%H%M)
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          pnpm changeset version --snapshot canary-${TIMESTAMP}-${SHORT_SHA}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish canary to npm
-        run: pnpm changeset publish --tag canary --no-git-tag
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-
-      - name: Setup gcloud
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Deploy canary IIFE to CDN
-        run: |
-          gcloud storage cp packages/browser/dist/outlit.global.js \
-            gs://cdn.outlit.ai/canary/outlit.js \
-            --cache-control="public, max-age=300" \
-            --content-type="application/javascript"
-
-      - name: Summary
-        run: |
-          echo "## Canary Published" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**npm:**" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "npm install @outlit/browser@canary" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**CDN:**" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`html" >> $GITHUB_STEP_SUMMARY
-          echo '<script src="https://storage.googleapis.com/cdn.outlit.ai/canary/outlit.js"></script>' >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-
   # Handle stable releases via Changesets
   release:
     name: Release
-    needs: canary
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -116,6 +45,117 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # Publish canary snapshots from main when there are unreleased changesets.
+  #
+  # IMPORTANT:
+  # - Canary must NEVER publish a stable semver (e.g. 0.2.1) under the canary dist-tag.
+  # - Stable publishing is handled by the `release` job (changesets/action). This avoids the
+  #   "canary stole the version so stable publish is skipped" problem you saw.
+  canary:
+    name: Publish Canary
+    needs: release
+    if: needs.release.outputs.published != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for unreleased changesets
+        id: changesets
+        run: |
+          set -euo pipefail
+          COUNT=$(git ls-files ".changeset/*.md" | grep -v "^.changeset/README.md$" | wc -l | tr -d ' ')
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          if [ "$COUNT" -eq 0 ]; then
+            echo "No unreleased changesets found - skipping canary publish."
+          else
+            echo "Found $COUNT unreleased changeset(s) - will publish canary snapshot."
+          fi
+
+      - name: Setup pnpm
+        if: steps.changesets.outputs.count != '0'
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        if: steps.changesets.outputs.count != '0'
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        if: steps.changesets.outputs.count != '0'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        if: steps.changesets.outputs.count != '0'
+        run: pnpm build
+
+      - name: Create canary snapshot versions
+        if: steps.changesets.outputs.count != '0'
+        run: |
+          # Generate snapshot version like 0.1.0-canary-20231210-abc1234
+          TIMESTAMP=$(date +%Y%m%d%H%M)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          pnpm changeset version --snapshot canary-${TIMESTAMP}-${SHORT_SHA}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Guard: ensure canary versions are snapshots"
+        if: steps.changesets.outputs.count != '0'
+        run: |
+          set -euo pipefail
+          BROWSER_VERSION=$(node -p "require('./packages/browser/package.json').version")
+          if echo "$BROWSER_VERSION" | grep -q -- "-canary-"; then
+            echo "Canary snapshot version detected: $BROWSER_VERSION"
+            exit 0
+          fi
+          echo "Refusing to publish canary: version is not a snapshot (got: $BROWSER_VERSION)"
+          exit 1
+
+      - name: Publish canary to npm
+        if: steps.changesets.outputs.count != '0'
+        run: pnpm changeset publish --tag canary --no-git-tag
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Authenticate to Google Cloud
+        if: steps.changesets.outputs.count != '0'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Setup gcloud
+        if: steps.changesets.outputs.count != '0'
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy canary IIFE to CDN
+        if: steps.changesets.outputs.count != '0'
+        run: |
+          gcloud storage cp packages/browser/dist/outlit.global.js \
+            gs://cdn.outlit.ai/canary/outlit.js \
+            --cache-control="public, max-age=300" \
+            --content-type="application/javascript"
+
+      - name: Summary
+        if: steps.changesets.outputs.count != '0'
+        run: |
+          echo "## Canary Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**npm:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "npm install @outlit/browser@canary" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**CDN:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`html" >> $GITHUB_STEP_SUMMARY
+          echo '<script src="https://storage.googleapis.com/cdn.outlit.ai/canary/outlit.js"></script>' >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
   deploy-cdn:
     name: Deploy to CDN
