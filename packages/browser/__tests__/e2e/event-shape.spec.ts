@@ -574,4 +574,4 @@ test.describe("Form Event Shape", () => {
   })
 })
 
-// Window.outlit type is declared in browser-sdk.spec.ts
+// Window.outlit type is declared in global.d.ts

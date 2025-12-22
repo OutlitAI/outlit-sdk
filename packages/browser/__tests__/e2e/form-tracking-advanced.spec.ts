@@ -222,4 +222,4 @@ test.describe("Form Tracking - Edge Cases", () => {
   })
 })
 
-// Window.outlit type is declared in browser-sdk.spec.ts
+// Window.outlit type is declared in global.d.ts
