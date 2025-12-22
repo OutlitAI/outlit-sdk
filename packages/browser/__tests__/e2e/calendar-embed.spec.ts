@@ -518,4 +518,4 @@ test.describe("Calendar Embed: Auto-Identify Limitation", () => {
   })
 })
 
-// Window.outlit type is declared in browser-sdk.spec.ts
+// Window.outlit type is declared in global.d.ts

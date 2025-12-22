@@ -320,4 +320,4 @@ test.describe("Custom formFieldDenylist Configuration", () => {
   })
 })
 
-// Window.outlit type is declared in browser-sdk.spec.ts
+// Window.outlit type is declared in global.d.ts

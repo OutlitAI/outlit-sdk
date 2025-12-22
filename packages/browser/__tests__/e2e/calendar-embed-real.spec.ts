@@ -168,4 +168,4 @@ test.describe("Real Cal.com Booking Test", () => {
   })
 })
 
-// Window.outlit type is declared in browser-sdk.spec.ts
+// Window.outlit type is declared in global.d.ts

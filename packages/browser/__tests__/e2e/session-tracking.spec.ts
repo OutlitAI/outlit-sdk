@@ -201,8 +201,7 @@ test.describe("Session Tracking - SPA Navigation", () => {
     // Instead, we wait for the flush interval or check the queue directly
     await page.evaluate(() => {
       // Access the instance and flush manually (cast to any for internal API access)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- accessing internal SDK API for testing
-      ;(window.outlit as any)?._instance?.flush()
+      window.outlit?._instance?.flush()
     })
     await page.waitForTimeout(300)
 
@@ -243,8 +242,7 @@ test.describe("Session Tracking - SPA Navigation", () => {
 
     // Trigger flush to send any queued events
     await page.evaluate(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- accessing internal SDK API for testing
-      ;(window.outlit as any)?._instance?.flush()
+      window.outlit?._instance?.flush()
     })
     await page.waitForTimeout(300)
 
@@ -281,8 +279,7 @@ test.describe("Session Tracking - SPA Navigation", () => {
 
     // Flush events after navigation (without triggering exit)
     await page.evaluate(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- accessing internal SDK API for testing
-      ;(window.outlit as any)?._instance?.flush()
+      window.outlit?._instance?.flush()
     })
     await page.waitForTimeout(300)
 
@@ -347,8 +344,7 @@ test.describe("Session Tracking - SPA Navigation", () => {
 
     // Flush events
     await page.evaluate(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- accessing internal SDK API for testing
-      ;(window.outlit as any)?._instance?.flush()
+      window.outlit?._instance?.flush()
     })
     await page.waitForTimeout(300)
 
@@ -407,8 +403,7 @@ test.describe("Session Tracking - SPA Navigation", () => {
 
     // Flush events
     await page.evaluate(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- accessing internal SDK API for testing
-      ;(window.outlit as any)?._instance?.flush()
+      window.outlit?._instance?.flush()
     })
     await page.waitForTimeout(300)
 

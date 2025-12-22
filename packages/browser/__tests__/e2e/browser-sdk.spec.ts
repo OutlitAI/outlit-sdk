@@ -607,25 +607,4 @@ test.describe("Stub Snippet (Recommended Approach)", () => {
   })
 })
 
-// ============================================
-// TYPE DECLARATIONS
-// ============================================
-
-declare global {
-  interface Window {
-    outlit: {
-      _initialized: boolean
-      _q?: Array<[string, unknown[]]> // Stub queue before SDK loads
-      init: (options: { publicKey: string; apiHost?: string }) => void
-      track: (eventName: string, properties?: Record<string, unknown>) => void
-      identify: (options: {
-        email?: string
-        userId?: string
-        traits?: Record<string, unknown>
-      }) => void
-      getVisitorId: () => string | null
-      enableTracking: () => void
-      isTrackingEnabled: () => boolean
-    }
-  }
-}
+// Type declarations moved to global.d.ts

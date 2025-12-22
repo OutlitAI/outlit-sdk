@@ -230,4 +230,4 @@ test.describe("UTM Parameter Tracking", () => {
   })
 })
 
-// Window.outlit type is declared in browser-sdk.spec.ts
+// Window.outlit type is declared in global.d.ts
