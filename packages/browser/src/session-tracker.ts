@@ -31,6 +31,15 @@ const TIME_UPDATE_INTERVAL = 1000
 const MIN_SPURIOUS_THRESHOLD = 50
 
 /**
+ * Minimum time on a page before engagement can be emitted (500ms).
+ * This prevents spurious engagement events when visibility toggles occur
+ * shortly after SPA navigation (e.g., Framer page transitions).
+ * Without this, navigating from /terms to / and then quickly toggling
+ * visibility would incorrectly emit engagement for "/" immediately.
+ */
+const MIN_PAGE_TIME_FOR_ENGAGEMENT = 500
+
+/**
  * Storage keys for session data in sessionStorage.
  */
 const SESSION_ID_KEY = "outlit_session_id"
@@ -135,16 +144,24 @@ export class SessionTracker {
     this.updateActiveTime()
 
     // 4. Create and emit event (only if we have meaningful data)
+    const totalTimeMs = Date.now() - this.state.pageEntryTime
+
     // Skip spurious events caused by browser visibility quirks during page load.
     // These occur when a hidden→visible transition happens almost immediately after
     // SDK initialization, resulting in activeTimeMs ≈ 1ms and totalTimeMs ≈ 5ms.
     // We only skip if BOTH values are below the threshold - legitimate events will
     // have at least one meaningful value (user was on page for some duration).
-    const totalTimeMs = Date.now() - this.state.pageEntryTime
     const isSpuriousEvent =
       this.state.activeTimeMs < MIN_SPURIOUS_THRESHOLD && totalTimeMs < MIN_SPURIOUS_THRESHOLD
 
-    if (!isSpuriousEvent) {
+    // Skip events if user hasn't been on the page long enough.
+    // This prevents spurious engagement events when visibility toggles occur
+    // shortly after SPA navigation (e.g., during Framer page transitions).
+    // Without this check, navigating then quickly toggling visibility would
+    // incorrectly emit engagement for the new page immediately.
+    const isTooSoonAfterNavigation = totalTimeMs < MIN_PAGE_TIME_FOR_ENGAGEMENT
+
+    if (!isSpuriousEvent && !isTooSoonAfterNavigation) {
       const event = buildEngagementEvent({
         url: this.state.currentUrl,
         referrer: document.referrer,
