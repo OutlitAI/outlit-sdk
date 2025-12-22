@@ -873,8 +873,8 @@ test.describe("Session Tracking - Session ID", () => {
     expect(newSessionId).toBeDefined()
     expect(newSessionId).not.toBe(initialSessionId)
 
-    // Wait to exceed MIN_PAGE_TIME_FOR_ENGAGEMENT before emitting
-    await page.waitForTimeout(300)
+    // Wait at least 600ms to exceed the MIN_PAGE_TIME_FOR_ENGAGEMENT threshold (500ms)
+    await page.waitForTimeout(600)
 
     // Emit another engagement event
     await page.evaluate(() => {
