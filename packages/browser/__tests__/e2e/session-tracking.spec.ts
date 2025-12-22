@@ -174,6 +174,258 @@ test.describe("Session Tracking - SPA Navigation", () => {
     expect(engagementEvents.length).toBeGreaterThanOrEqual(1)
   })
 
+  test("engagement event path matches OLD page, not new page, during SPA navigation", async ({
+    page,
+  }) => {
+    const apiCalls = await interceptApiCalls(page)
+
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Ensure page is visible
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", { value: "visible", writable: true })
+      document.dispatchEvent(new Event("visibilitychange"))
+    })
+    await page.waitForTimeout(500)
+
+    // Navigate to new page via pushState (SPA navigation)
+    // This should emit engagement for /test-page.html, NOT /new-page
+    await page.evaluate(() => {
+      history.pushState({}, "", "/new-page")
+    })
+    await page.waitForTimeout(300)
+
+    // Trigger flush to send any queued events (without triggering exit behavior)
+    // Note: We can't use beforeunload/visibilitychange as those trigger exit handlers
+    // Instead, we wait for the flush interval or check the queue directly
+    await page.evaluate(() => {
+      // Access the instance and flush manually
+      if (window.outlit && window.outlit._instance) {
+        window.outlit._instance.flush()
+      }
+    })
+    await page.waitForTimeout(300)
+
+    // Get engagement events after flush (should have engagement for old page)
+    const engagementAfterNavigation = getEngagementEvents(apiCalls)
+
+    // There should be exactly 1 engagement event at this point (for the OLD page)
+    expect(engagementAfterNavigation.length).toBe(1)
+
+    // The engagement event should have the OLD page path
+    expect(engagementAfterNavigation[0]?.path).toBe("/test-page.html")
+    expect(engagementAfterNavigation[0]?.url).toContain("/test-page.html")
+
+    // It should NOT have the new page path
+    expect(engagementAfterNavigation[0]?.path).not.toBe("/new-page")
+  })
+
+  test("no spurious engagement event for new page immediately after navigation", async ({
+    page,
+  }) => {
+    const apiCalls = await interceptApiCalls(page)
+
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Ensure page is visible
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", { value: "visible", writable: true })
+      document.dispatchEvent(new Event("visibilitychange"))
+    })
+    await page.waitForTimeout(500)
+
+    // Navigate to new page via pushState
+    await page.evaluate(() => {
+      history.pushState({}, "", "/new-page")
+    })
+    await page.waitForTimeout(300)
+
+    // Trigger flush to send any queued events
+    await page.evaluate(() => {
+      if (window.outlit && window.outlit._instance) {
+        window.outlit._instance.flush()
+      }
+    })
+    await page.waitForTimeout(300)
+
+    // Get all engagement events so far
+    const engagementEvents = getEngagementEvents(apiCalls)
+
+    // There should be ONLY engagement for old page, not for new page
+    const newPageEngagements = engagementEvents.filter((e) => e.path === "/new-page")
+    expect(newPageEngagements.length).toBe(0)
+
+    // Only old page engagement should exist
+    const oldPageEngagements = engagementEvents.filter((e) => e.path === "/test-page.html")
+    expect(oldPageEngagements.length).toBe(1)
+  })
+
+  test("engagement for new page only emits on exit", async ({ page }) => {
+    const apiCalls = await interceptApiCalls(page)
+
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Ensure page is visible
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", { value: "visible", writable: true })
+      document.dispatchEvent(new Event("visibilitychange"))
+    })
+    await page.waitForTimeout(500)
+
+    // Navigate to new page
+    await page.evaluate(() => {
+      history.pushState({}, "", "/new-page")
+    })
+    await page.waitForTimeout(300)
+
+    // Flush events after navigation (without triggering exit)
+    await page.evaluate(() => {
+      if (window.outlit && window.outlit._instance) {
+        window.outlit._instance.flush()
+      }
+    })
+    await page.waitForTimeout(300)
+
+    // Count engagements before exit - should only have old page
+    const engagementsBeforeExit = getEngagementEvents(apiCalls)
+    expect(engagementsBeforeExit.length).toBe(1) // Only old page engagement
+    expect(engagementsBeforeExit[0]?.path).toBe("/test-page.html")
+
+    // Now trigger exit (this will emit engagement for new page AND flush)
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", { value: "hidden", writable: true })
+      document.dispatchEvent(new Event("visibilitychange"))
+    })
+    await page.waitForTimeout(300)
+
+    // After exit, should have engagement for new page too
+    const engagementsAfterExit = getEngagementEvents(apiCalls)
+    expect(engagementsAfterExit.length).toBe(2)
+
+    // Verify the paths are correct
+    const paths = engagementsAfterExit.map((e) => e.path)
+    expect(paths).toContain("/test-page.html")
+    expect(paths).toContain("/new-page")
+  })
+
+  /**
+   * This test simulates the Framer/SPA scenario where visibility changes
+   * happen during page transitions, which can cause spurious engagement events.
+   */
+  test("no spurious engagement when visibility toggles during SPA navigation (Framer-like)", async ({
+    page,
+  }) => {
+    const apiCalls = await interceptApiCalls(page)
+
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Ensure page is visible
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", { value: "visible", writable: true })
+      document.dispatchEvent(new Event("visibilitychange"))
+    })
+    await page.waitForTimeout(500)
+
+    // Simulate Framer-like navigation:
+    // 1. Navigate to new page via pushState
+    // 2. Immediately after, visibility briefly toggles (Framer animation/transition)
+    await page.evaluate(() => {
+      // Step 1: SPA navigation
+      history.pushState({}, "", "/new-page")
+
+      // Step 2: Framer-like visibility toggle during page transition
+      // This simulates what might happen during animated page transitions
+      Object.defineProperty(document, "visibilityState", { value: "hidden", writable: true })
+      document.dispatchEvent(new Event("visibilitychange"))
+
+      // Step 3: Visibility restored after transition
+      Object.defineProperty(document, "visibilityState", { value: "visible", writable: true })
+      document.dispatchEvent(new Event("visibilitychange"))
+    })
+    await page.waitForTimeout(300)
+
+    // Flush events
+    await page.evaluate(() => {
+      if (window.outlit && window.outlit._instance) {
+        window.outlit._instance.flush()
+      }
+    })
+    await page.waitForTimeout(300)
+
+    const engagementEvents = getEngagementEvents(apiCalls)
+
+    // We should have AT MOST 1 engagement event (for the old page /test-page.html)
+    // There should NOT be an engagement for /new-page since we haven't truly "exited" it
+    const newPageEngagements = engagementEvents.filter((e) => e.path === "/new-page")
+
+    // BUG CHECK: If this fails, we have the spurious engagement issue
+    expect(newPageEngagements.length).toBe(0)
+
+    // Old page engagement should exist
+    const oldPageEngagements = engagementEvents.filter((e) => e.path === "/test-page.html")
+    expect(oldPageEngagements.length).toBeGreaterThanOrEqual(1)
+  })
+
+  /**
+   * This test simulates a scenario with delays between visibility changes.
+   * In real Framer pages, there might be actual time gaps between events.
+   */
+  test("no spurious engagement with delayed visibility toggle after SPA navigation", async ({
+    page,
+  }) => {
+    const apiCalls = await interceptApiCalls(page)
+
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Ensure page is visible
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", { value: "visible", writable: true })
+      document.dispatchEvent(new Event("visibilitychange"))
+    })
+    await page.waitForTimeout(500)
+
+    // Step 1: Navigate to new page
+    await page.evaluate(() => {
+      history.pushState({}, "", "/new-page")
+    })
+    await page.waitForTimeout(100)
+
+    // Step 2: Simulate tab briefly going hidden (e.g., Framer transition overlay)
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", { value: "hidden", writable: true })
+      document.dispatchEvent(new Event("visibilitychange"))
+    })
+    await page.waitForTimeout(100)
+
+    // Step 3: Tab becomes visible again
+    await page.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", { value: "visible", writable: true })
+      document.dispatchEvent(new Event("visibilitychange"))
+    })
+    await page.waitForTimeout(300)
+
+    // Flush events
+    await page.evaluate(() => {
+      if (window.outlit && window.outlit._instance) {
+        window.outlit._instance.flush()
+      }
+    })
+    await page.waitForTimeout(300)
+
+    const engagementEvents = getEngagementEvents(apiCalls)
+
+    // Check for spurious new page engagement
+    const newPageEngagements = engagementEvents.filter((e) => e.path === "/new-page")
+
+    // BUG CHECK: If this fails, the visibility toggle is causing spurious engagement
+    expect(newPageEngagements.length).toBe(0)
+  })
+
   test("emits engagement events for each page in multi-page journey", async ({ page }) => {
     const apiCalls = await interceptApiCalls(page)
 
@@ -578,7 +830,8 @@ test.describe("Session Tracking - Session ID", () => {
     // Use the session test page with 500ms idle timeout for faster testing
     await page.goto("/test-page-session.html")
     await page.waitForFunction(() => window.outlit?._initialized)
-    await page.waitForTimeout(300)
+    // Wait at least 600ms to exceed the MIN_PAGE_TIME_FOR_ENGAGEMENT threshold (500ms)
+    await page.waitForTimeout(600)
 
     // Get the initial sessionId
     const initialSessionId = await page.evaluate(() => {
@@ -598,7 +851,8 @@ test.describe("Session Tracking - Session ID", () => {
       Object.defineProperty(document, "visibilityState", { value: "visible", writable: true })
       document.dispatchEvent(new Event("visibilitychange"))
     })
-    await page.waitForTimeout(300)
+    // Wait at least 600ms to exceed MIN_PAGE_TIME_FOR_ENGAGEMENT for the second engagement
+    await page.waitForTimeout(600)
 
     // Wait for idle timeout to kick in (500ms in test page)
     // After this, isUserActive will be false
@@ -628,6 +882,9 @@ test.describe("Session Tracking - Session ID", () => {
     // The sessionId should have changed because 30+ minutes of inactivity passed
     expect(newSessionId).toBeDefined()
     expect(newSessionId).not.toBe(initialSessionId)
+
+    // Wait to exceed MIN_PAGE_TIME_FOR_ENGAGEMENT before emitting
+    await page.waitForTimeout(300)
 
     // Emit another engagement event
     await page.evaluate(() => {
