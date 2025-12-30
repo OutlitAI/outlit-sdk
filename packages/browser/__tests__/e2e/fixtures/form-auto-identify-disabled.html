@@ -32,7 +32,7 @@
     !function(w,d,src,key,auto){
       if(w.outlit&&w.outlit._loaded)return;
       w.outlit=w.outlit||{_q:[]};
-      ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId"].forEach(function(m){
+      ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser","activate","engaged","paid","churned"].forEach(function(m){
         w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
       });
       var s=d.createElement("script");s.async=1;s.src=src;
