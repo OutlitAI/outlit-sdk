@@ -1,15 +1,38 @@
 import {
   DEFAULT_API_HOST,
+  type ExplicitJourneyStage,
   type IngestPayload,
   type ServerIdentifyOptions,
   type ServerTrackOptions,
   type TrackerEvent,
   buildCustomEvent,
   buildIdentifyEvent,
+  buildStageEvent,
   validateServerIdentity,
 } from "@outlit/core"
 import { EventQueue } from "./queue"
 import { HttpTransport } from "./transport"
+
+// ============================================
+// STAGE OPTIONS
+// ============================================
+
+export interface StageOptions {
+  /**
+   * User's email address. Required if userId is not provided.
+   */
+  email?: string
+
+  /**
+   * User's unique ID. Required if email is not provided.
+   */
+  userId?: string
+
+  /**
+   * Optional properties for context.
+   */
+  properties?: Record<string, string | number | boolean | null>
+}
 
 // ============================================
 // OUTLIT CLIENT
@@ -146,6 +169,89 @@ export class Outlit {
       email: options.email,
       userId: options.userId,
       traits: options.traits,
+    })
+
+    this.queue.enqueue(event)
+  }
+
+  /**
+   * Mark a user as activated.
+   *
+   * Typically called after a user completes onboarding or a key activation milestone.
+   * Requires either `email` or `userId` to identify the user.
+   *
+   * @throws Error if neither email nor userId is provided
+   *
+   * @example
+   * ```typescript
+   * outlit.activate({
+   *   email: 'user@example.com',
+   *   properties: { flow: 'onboarding' }
+   * })
+   * ```
+   */
+  activate(options: StageOptions): void {
+    this.sendStageEvent("activated", options)
+  }
+
+  /**
+   * Mark a user as engaged.
+   *
+   * Typically called when a user reaches a usage milestone.
+   * Can also be computed automatically by the engagement cron.
+   * Requires either `email` or `userId` to identify the user.
+   *
+   * @throws Error if neither email nor userId is provided
+   *
+   * @example
+   * ```typescript
+   * outlit.engaged({
+   *   userId: 'usr_123',
+   *   properties: { milestone: 'first_project_created' }
+   * })
+   * ```
+   */
+  engaged(options: StageOptions): void {
+    this.sendStageEvent("engaged", options)
+  }
+
+  /**
+   * Mark a user as paid.
+   *
+   * Typically called after a successful payment or subscription.
+   * Can also be triggered by Stripe integration.
+   * Requires either `email` or `userId` to identify the user.
+   *
+   * @throws Error if neither email nor userId is provided
+   *
+   * @example
+   * ```typescript
+   * outlit.paid({
+   *   email: 'user@example.com',
+   *   properties: { plan: 'pro', amount: 99 }
+   * })
+   * ```
+   */
+  paid(options: StageOptions): void {
+    this.sendStageEvent("paid", options)
+  }
+
+  /**
+   * Internal method to send a stage event.
+   */
+  private sendStageEvent(stage: ExplicitJourneyStage, options: StageOptions): void {
+    this.ensureNotShutdown()
+    validateServerIdentity(options.email, options.userId)
+
+    const event = buildStageEvent({
+      url: `server://${options.email ?? options.userId}`,
+      stage,
+      properties: {
+        ...options.properties,
+        // Include identity in properties for server-side resolution
+        __email: options.email ?? null,
+        __userId: options.userId ?? null,
+      },
     })
 
     this.queue.enqueue(event)

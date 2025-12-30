@@ -1,5 +1,10 @@
-import type { BrowserIdentifyOptions, BrowserTrackOptions } from "@outlit/core"
+import type {
+  BrowserIdentifyOptions,
+  BrowserTrackOptions,
+  ExplicitJourneyStage,
+} from "@outlit/core"
 import { useCallback, useContext } from "react"
+import type { UserIdentity } from "../tracker"
 import { OutlitContext } from "./provider"
 
 // ============================================
@@ -23,6 +28,41 @@ export interface UseOutlitReturn {
    * Returns null if tracking is not enabled.
    */
   getVisitorId: () => string | null
+
+  /**
+   * Set the current user identity.
+   * Use this for persistent identity after login.
+   */
+  setUser: (identity: UserIdentity) => void
+
+  /**
+   * Clear the current user identity (on logout).
+   */
+  clearUser: () => void
+
+  /**
+   * Mark the current user as activated.
+   * Call after a user completes onboarding or activation milestone.
+   */
+  activate: (properties?: Record<string, string | number | boolean | null>) => void
+
+  /**
+   * Mark the current user as engaged.
+   * Call when user reaches a usage milestone.
+   */
+  engaged: (properties?: Record<string, string | number | boolean | null>) => void
+
+  /**
+   * Mark the current user as paid.
+   * Call after successful payment/subscription.
+   */
+  paid: (properties?: Record<string, string | number | boolean | null>) => void
+
+  /**
+   * Mark the current user as churned.
+   * Call when subscription is cancelled.
+   */
+  churned: (properties?: Record<string, string | number | boolean | null>) => void
 
   /**
    * Whether Outlit is initialized.
@@ -107,10 +147,79 @@ export function useOutlit(): UseOutlitReturn {
     return outlit.getVisitorId()
   }, [outlit])
 
+  const setUser = useCallback(
+    (identity: UserIdentity) => {
+      if (!outlit) {
+        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
+        return
+      }
+      outlit.setUser(identity)
+    },
+    [outlit],
+  )
+
+  const clearUser = useCallback(() => {
+    if (!outlit) {
+      console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
+      return
+    }
+    outlit.clearUser()
+  }, [outlit])
+
+  const activate = useCallback(
+    (properties?: Record<string, string | number | boolean | null>) => {
+      if (!outlit) {
+        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
+        return
+      }
+      outlit.activate(properties)
+    },
+    [outlit],
+  )
+
+  const engaged = useCallback(
+    (properties?: Record<string, string | number | boolean | null>) => {
+      if (!outlit) {
+        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
+        return
+      }
+      outlit.engaged(properties)
+    },
+    [outlit],
+  )
+
+  const paid = useCallback(
+    (properties?: Record<string, string | number | boolean | null>) => {
+      if (!outlit) {
+        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
+        return
+      }
+      outlit.paid(properties)
+    },
+    [outlit],
+  )
+
+  const churned = useCallback(
+    (properties?: Record<string, string | number | boolean | null>) => {
+      if (!outlit) {
+        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
+        return
+      }
+      outlit.churned(properties)
+    },
+    [outlit],
+  )
+
   return {
     track,
     identify,
     getVisitorId,
+    setUser,
+    clearUser,
+    activate,
+    engaged,
+    paid,
+    churned,
     isInitialized,
     isTrackingEnabled,
     enableTracking,

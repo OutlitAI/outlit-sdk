@@ -15,9 +15,12 @@ export type {
   CustomEvent,
   CalendarEvent,
   EngagementEvent,
+  StageEvent,
+  ExplicitJourneyStage,
   TrackerEvent,
   IngestPayload,
   IngestResponse,
+  PayloadUserIdentity,
 } from "./types"
 
 // Constants
@@ -48,6 +51,7 @@ export {
   buildCustomEvent,
   buildCalendarEvent,
   buildEngagementEvent,
+  buildStageEvent,
   buildIngestPayload,
   batchEvents,
   MAX_BATCH_SIZE,
