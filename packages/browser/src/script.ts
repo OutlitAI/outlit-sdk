@@ -148,7 +148,8 @@ const outlit: OutlitGlobal & { _loaded?: boolean } = {
       this._queue.push(() => this.setUser(userId, traits))
       return
     }
-    this._instance.setUser(userId, traits)
+    // Convert string userId to UserIdentity object format
+    this._instance.setUser({ userId })
   },
 
   /**

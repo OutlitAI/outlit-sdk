@@ -43,6 +43,7 @@
     "format": "biome format --write .",
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
+    "test:unit": "vitest run",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "serve:test": "tsx ./__tests__/e2e/serve.ts",
@@ -56,12 +57,16 @@
   "devDependencies": {
     "@outlit/typescript-config": "workspace:*",
     "@playwright/test": "^1.48.0",
+    "@testing-library/react": "^14.0.0",
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
+    "jsdom": "^24.0.0",
     "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tsup": "^8.0.1",
     "tsx": "^4.0.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.1"
   },
   "peerDependencies": {
     "react": ">=17.0.0"
