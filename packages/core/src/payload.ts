@@ -3,11 +3,14 @@ import type {
   CalendarProvider,
   CustomEvent,
   EngagementEvent,
+  ExplicitJourneyStage,
   FormEvent,
   IdentifyEvent,
   IngestPayload,
   PageviewEvent,
+  PayloadUserIdentity,
   SourceType,
+  StageEvent,
   TrackerEvent,
   UtmParams,
 } from "./types"
@@ -178,23 +181,63 @@ export function buildEngagementEvent(
   }
 }
 
+/**
+ * Build a stage event.
+ * Used to explicitly set customer journey stage (activated, engaged, paid, churned).
+ * discovered/signed_up stages are inferred from identify calls.
+ */
+export function buildStageEvent(
+  params: BaseEventParams & {
+    stage: ExplicitJourneyStage
+    properties?: Record<string, string | number | boolean | null>
+  },
+): StageEvent {
+  const { url, referrer, timestamp, stage, properties } = params
+  return {
+    type: "stage",
+    timestamp: timestamp ?? Date.now(),
+    url,
+    path: extractPathFromUrl(url),
+    referrer,
+    utm: extractUtmParams(url),
+    stage,
+    properties,
+  }
+}
+
 // ============================================
 // PAYLOAD BUILDER
 // ============================================
 
 /**
  * Build an ingest payload from events.
+ *
+ * @param visitorId - The anonymous visitor ID from browser cookie/storage
+ * @param source - The event source (client, server, integration)
+ * @param events - Array of events to send
+ * @param userIdentity - Optional user identity for immediate resolution (from setUser in SPA)
  */
 export function buildIngestPayload(
   visitorId: string,
   source: SourceType,
   events: TrackerEvent[],
+  userIdentity?: PayloadUserIdentity,
 ): IngestPayload {
-  return {
+  const payload: IngestPayload = {
     visitorId,
     source,
     events,
   }
+
+  // Only include userIdentity if it has actual values
+  if (userIdentity && (userIdentity.email || userIdentity.userId)) {
+    payload.userIdentity = {
+      ...(userIdentity.email && { email: userIdentity.email }),
+      ...(userIdentity.userId && { userId: userIdentity.userId }),
+    }
+  }
+
+  return payload
 }
 
 // ============================================

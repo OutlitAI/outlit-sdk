@@ -6,7 +6,7 @@
  *   !function(w,d,src,key,auto){
  *     if(w.outlit&&w.outlit._loaded)return;
  *     w.outlit=w.outlit||{_q:[]};
- *     ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId"].forEach(function(m){
+ *     ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser","activate","engaged","paid","churned"].forEach(function(m){
  *       w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
  *     });
  *     var s=d.createElement("script");s.async=1;s.src=src;
@@ -47,6 +47,12 @@ interface OutlitGlobal {
   getVisitorId: () => string | null
   enableTracking: () => void
   isTrackingEnabled: () => boolean
+  setUser: (userId: string, traits?: Record<string, string | number | boolean | null>) => void
+  clearUser: () => void
+  activate: (properties?: Record<string, string | number | boolean | null>) => void
+  engaged: (properties?: Record<string, string | number | boolean | null>) => void
+  paid: (properties?: Record<string, string | number | boolean | null>) => void
+  churned: (properties?: Record<string, string | number | boolean | null>) => void
 }
 
 // ============================================
@@ -132,6 +138,72 @@ const outlit: OutlitGlobal & { _loaded?: boolean } = {
   isTrackingEnabled() {
     if (!this._instance) return false
     return this._instance.isEnabled()
+  },
+
+  /**
+   * Set the user identity for attribution.
+   */
+  setUser(userId: string, traits?: Record<string, string | number | boolean | null>) {
+    if (!this._initialized || !this._instance) {
+      this._queue.push(() => this.setUser(userId, traits))
+      return
+    }
+    this._instance.setUser(userId, traits)
+  },
+
+  /**
+   * Clear the current user identity (logout).
+   */
+  clearUser() {
+    if (!this._initialized || !this._instance) {
+      this._queue.push(() => this.clearUser())
+      return
+    }
+    this._instance.clearUser()
+  },
+
+  /**
+   * Mark the current user as activated.
+   */
+  activate(properties?: Record<string, string | number | boolean | null>) {
+    if (!this._initialized || !this._instance) {
+      this._queue.push(() => this.activate(properties))
+      return
+    }
+    this._instance.activate(properties)
+  },
+
+  /**
+   * Mark the current user as engaged.
+   */
+  engaged(properties?: Record<string, string | number | boolean | null>) {
+    if (!this._initialized || !this._instance) {
+      this._queue.push(() => this.engaged(properties))
+      return
+    }
+    this._instance.engaged(properties)
+  },
+
+  /**
+   * Mark the current user as paid.
+   */
+  paid(properties?: Record<string, string | number | boolean | null>) {
+    if (!this._initialized || !this._instance) {
+      this._queue.push(() => this.paid(properties))
+      return
+    }
+    this._instance.paid(properties)
+  },
+
+  /**
+   * Mark the current user as churned.
+   */
+  churned(properties?: Record<string, string | number | boolean | null>) {
+    if (!this._initialized || !this._instance) {
+      this._queue.push(() => this.churned(properties))
+      return
+    }
+    this._instance.churned(properties)
   },
 }
 

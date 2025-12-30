@@ -1,5 +1,5 @@
 import { type ReactNode, createContext, useCallback, useEffect, useRef, useState } from "react"
-import { Outlit, type OutlitOptions } from "../tracker"
+import { Outlit, type OutlitOptions, type UserIdentity } from "../tracker"
 
 // ============================================
 // CONTEXT
@@ -37,6 +37,29 @@ export interface OutlitProviderProps extends Omit<OutlitOptions, "trackPageviews
    * @default true
    */
   autoTrack?: boolean
+  /**
+   * Current user identity.
+   * When provided with email or userId, calls setUser() to identify the user.
+   * When null, undefined, or missing identity fields, calls clearUser().
+   *
+   * This is the recommended way to handle user identity in server-rendered apps:
+   * pass the user from your auth system as a prop.
+   *
+   * @example
+   * ```tsx
+   * // Server component (layout.tsx)
+   * const session = await auth()
+   * return (
+   *   <OutlitProvider
+   *     publicKey="pk_xxx"
+   *     user={session?.user ? { email: session.user.email, userId: session.user.id } : null}
+   *   >
+   *     {children}
+   *   </OutlitProvider>
+   * )
+   * ```
+   */
+  user?: UserIdentity | null
 }
 
 /**
@@ -89,6 +112,7 @@ export function OutlitProvider({
   flushInterval,
   autoTrack = true,
   autoIdentify = true,
+  user,
 }: OutlitProviderProps) {
   const outlitRef = useRef<Outlit | null>(null)
   const initializedRef = useRef(false)
@@ -126,6 +150,19 @@ export function OutlitProvider({
     autoTrack,
     autoIdentify,
   ])
+
+  // Handle user prop changes (login/logout)
+  useEffect(() => {
+    if (!outlitRef.current) return
+
+    if (user && (user.email || user.userId)) {
+      // User is logged in - set user identity
+      outlitRef.current.setUser({ email: user.email, userId: user.userId })
+    } else {
+      // User logged out (null/undefined) or has no valid identity - clear
+      outlitRef.current.clearUser()
+    }
+  }, [user])
 
   const enableTracking = useCallback(() => {
     if (outlitRef.current) {

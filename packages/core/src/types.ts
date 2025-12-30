@@ -2,7 +2,17 @@
 // EVENT TYPES
 // ============================================
 
-export type EventType = "pageview" | "form" | "identify" | "custom" | "calendar" | "engagement"
+export type EventType =
+  | "pageview"
+  | "form"
+  | "identify"
+  | "custom"
+  | "calendar"
+  | "engagement"
+  | "stage"
+
+// Only explicit stages - discovered/signed_up are inferred from identify calls
+export type ExplicitJourneyStage = "activated" | "engaged" | "paid" | "churned"
 
 export type CalendarProvider = "cal.com" | "calendly" | "unknown"
 
@@ -125,6 +135,14 @@ export interface EngagementEvent extends BaseEvent {
   sessionId: string
 }
 
+export interface StageEvent extends BaseEvent {
+  type: "stage"
+  /** The journey stage to set (only explicit stages, discovered/signed_up are inferred) */
+  stage: ExplicitJourneyStage
+  /** Optional properties for context */
+  properties?: Record<string, string | number | boolean | null>
+}
+
 export type TrackerEvent =
   | PageviewEvent
   | FormEvent
@@ -132,16 +150,35 @@ export type TrackerEvent =
   | CustomEvent
   | CalendarEvent
   | EngagementEvent
+  | StageEvent
 
 // ============================================
 // INGEST PAYLOAD
 // This is what gets sent to the API
 // ============================================
 
+/**
+ * User identity for payload-level resolution.
+ * Used by browser SDK when user is logged in (via setUser).
+ */
+export interface PayloadUserIdentity {
+  email?: string
+  userId?: string
+}
+
 export interface IngestPayload {
   visitorId?: string // Required for pixel, optional for server
   source: SourceType
   events: TrackerEvent[]
+  /**
+   * User identity for this batch of events.
+   * When present, the server can resolve directly to CustomerContact
+   * instead of relying on anonymous visitor flow.
+   *
+   * This is set by the browser SDK when setUser() has been called,
+   * allowing immediate identity resolution for SPA/React apps.
+   */
+  userIdentity?: PayloadUserIdentity
 }
 
 // ============================================
@@ -162,6 +199,9 @@ export interface IngestResponse {
 // ============================================
 
 export const DEFAULT_API_HOST = "https://app.outlit.ai"
+
+// Re-export for convenience
+export type { PayloadUserIdentity as UserIdentity }
 
 export const DEFAULT_DENIED_FORM_FIELDS = [
   "password",

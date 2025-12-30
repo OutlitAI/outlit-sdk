@@ -2,6 +2,7 @@ import {
   type BrowserIdentifyOptions,
   type BrowserTrackOptions,
   DEFAULT_API_HOST,
+  type ExplicitJourneyStage,
   type TrackerConfig,
   type TrackerEvent,
   buildCalendarEvent,
@@ -10,6 +11,7 @@ import {
   buildIdentifyEvent,
   buildIngestPayload,
   buildPageviewEvent,
+  buildStageEvent,
 } from "@outlit/core"
 import { initFormTracking, initPageviewTracking, stopAutocapture } from "./autocapture"
 import {
@@ -70,6 +72,11 @@ export interface OutlitOptions extends TrackerConfig {
   idleTimeout?: number
 }
 
+export interface UserIdentity {
+  email?: string
+  userId?: string
+}
+
 export class Outlit {
   private publicKey: string
   private apiHost: string
@@ -82,6 +89,9 @@ export class Outlit {
   private options: OutlitOptions
   private hasHandledExit = false
   private sessionTracker: SessionTracker | null = null
+  // User identity state for stage events
+  private currentUser: UserIdentity | null = null
+  private pendingUser: UserIdentity | null = null
 
   constructor(options: OutlitOptions) {
     this.publicKey = options.publicKey
@@ -172,6 +182,12 @@ export class Outlit {
     }
 
     this.isTrackingEnabled = true
+
+    // Apply any pending user identity that was set before tracking was enabled
+    if (this.pendingUser) {
+      this.applyUser(this.pendingUser)
+      this.pendingUser = null
+    }
   }
 
   /**
@@ -202,11 +218,23 @@ export class Outlit {
   /**
    * Identify the current visitor.
    * Links the anonymous visitor to a known user.
+   *
+   * When email or userId is provided, also sets the current user identity
+   * for stage events (activate, engaged, paid).
    */
   identify(options: BrowserIdentifyOptions): void {
     if (!this.isTrackingEnabled) {
       console.warn("[Outlit] Tracking not enabled. Call enableTracking() first.")
       return
+    }
+
+    // Update currentUser if email or userId is provided
+    // This enables stage events after identify() is called
+    if (options.email || options.userId) {
+      this.currentUser = {
+        email: options.email,
+        userId: options.userId,
+      }
     }
 
     const event = buildIdentifyEvent({
@@ -215,6 +243,113 @@ export class Outlit {
       email: options.email,
       userId: options.userId,
       traits: options.traits,
+    })
+    this.enqueue(event)
+  }
+
+  /**
+   * Set the current user identity.
+   * This is useful for SPA applications where you know the user's identity
+   * after authentication. Calls identify() under the hood.
+   *
+   * If called before tracking is enabled, the identity is stored as pending
+   * and applied automatically when enableTracking() is called.
+   *
+   * Note: Both setUser() and identify() enable stage events. The difference is
+   * setUser() can be called before tracking is enabled (identity is queued),
+   * while identify() requires tracking to be enabled first.
+   */
+  setUser(identity: UserIdentity): void {
+    if (!identity.email && !identity.userId) {
+      console.warn("[Outlit] setUser requires at least email or userId")
+      return
+    }
+
+    if (!this.isTrackingEnabled) {
+      this.pendingUser = identity
+      return
+    }
+
+    this.applyUser(identity)
+  }
+
+  /**
+   * Clear the current user identity.
+   * Call this when the user logs out.
+   */
+  clearUser(): void {
+    this.currentUser = null
+    this.pendingUser = null
+  }
+
+  /**
+   * Apply user identity and send identify event.
+   */
+  private applyUser(identity: UserIdentity): void {
+    this.currentUser = identity
+    this.identify({ email: identity.email, userId: identity.userId })
+  }
+
+  /**
+   * Mark the current user as activated.
+   * This is typically called after a user completes onboarding or a key activation milestone.
+   * Requires the user to be identified (via setUser or identify with userId).
+   */
+  activate(properties?: Record<string, string | number | boolean | null>): void {
+    this.sendStageEvent("activated", properties)
+  }
+
+  /**
+   * Mark the current user as engaged.
+   * This is typically called when a user reaches a usage milestone.
+   * Can also be computed automatically by the engagement cron.
+   */
+  engaged(properties?: Record<string, string | number | boolean | null>): void {
+    this.sendStageEvent("engaged", properties)
+  }
+
+  /**
+   * Mark the current user as paid.
+   * This is typically called after a successful payment/subscription.
+   * Can also be triggered by Stripe integration.
+   */
+  paid(properties?: Record<string, string | number | boolean | null>): void {
+    this.sendStageEvent("paid", properties)
+  }
+
+  /**
+   * Mark the current user as churned.
+   * This is typically called when a subscription is cancelled.
+   * Can also be triggered by Stripe integration.
+   */
+  churned(properties?: Record<string, string | number | boolean | null>): void {
+    this.sendStageEvent("churned", properties)
+  }
+
+  /**
+   * Internal method to send a stage event.
+   */
+  private sendStageEvent(
+    stage: ExplicitJourneyStage,
+    properties?: Record<string, string | number | boolean | null>,
+  ): void {
+    if (!this.isTrackingEnabled) {
+      console.warn("[Outlit] Tracking not enabled. Call enableTracking() first.")
+      return
+    }
+
+    if (!this.currentUser) {
+      console.warn(
+        `[Outlit] Cannot call ${stage}() without setting user identity. Call setUser() or identify() first.`,
+      )
+      return
+    }
+
+    const event = buildStageEvent({
+      url: window.location.href,
+      referrer: document.referrer,
+      stage,
+      properties,
     })
     this.enqueue(event)
   }
@@ -356,7 +491,11 @@ export class Outlit {
     if (events.length === 0) return
     if (!this.visitorId) return // Can't send without a visitor ID
 
-    const payload = buildIngestPayload(this.visitorId, "client", events)
+    // Include current user identity in payload for direct resolution
+    // This allows the server to resolve identity immediately for SPA apps
+    // instead of waiting for the anonymous visitor flow
+    const userIdentity = this.currentUser ?? undefined
+    const payload = buildIngestPayload(this.visitorId, "client", events, userIdentity)
     const url = `${this.apiHost}/api/i/v1/${this.publicKey}/events`
 
     try {
@@ -445,4 +584,52 @@ export function enableTracking(): void {
  */
 export function isTrackingEnabled(): boolean {
   return getInstance().isEnabled()
+}
+
+/**
+ * Set the current user identity.
+ * Convenience method that uses the singleton instance.
+ */
+export function setUser(identity: UserIdentity): void {
+  getInstance().setUser(identity)
+}
+
+/**
+ * Clear the current user identity (on logout).
+ * Convenience method that uses the singleton instance.
+ */
+export function clearUser(): void {
+  getInstance().clearUser()
+}
+
+/**
+ * Mark the current user as activated.
+ * Convenience method that uses the singleton instance.
+ */
+export function activate(properties?: Record<string, string | number | boolean | null>): void {
+  getInstance().activate(properties)
+}
+
+/**
+ * Mark the current user as engaged.
+ * Convenience method that uses the singleton instance.
+ */
+export function engaged(properties?: Record<string, string | number | boolean | null>): void {
+  getInstance().engaged(properties)
+}
+
+/**
+ * Mark the current user as paid.
+ * Convenience method that uses the singleton instance.
+ */
+export function paid(properties?: Record<string, string | number | boolean | null>): void {
+  getInstance().paid(properties)
+}
+
+/**
+ * Mark the current user as churned.
+ * Convenience method that uses the singleton instance.
+ */
+export function churned(properties?: Record<string, string | number | boolean | null>): void {
+  getInstance().churned(properties)
 }
