@@ -23,7 +23,11 @@ declare global {
       getVisitorId: () => string | null
       enableTracking: () => void
       isTrackingEnabled: () => boolean
-      setUser: (userId: string, traits?: Record<string, unknown>) => void
+      setUser: (identity: {
+        email?: string
+        userId?: string
+        traits?: Record<string, string | number | boolean | null>
+      }) => void
       clearUser: () => void
       activate: (properties?: Record<string, unknown>) => void
       engaged: (properties?: Record<string, unknown>) => void
