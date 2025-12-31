@@ -58,7 +58,7 @@ test.describe("Stage Methods", () => {
     await page.waitForFunction(() => window.outlit?._initialized)
 
     await page.evaluate(() => {
-      window.outlit.setUser("user-123")
+      window.outlit.setUser({ userId: "user-123" })
       window.outlit.churned({ reason: "cancelled", plan: "pro" })
     })
 
@@ -106,7 +106,7 @@ test.describe("Stage Methods", () => {
     await page.waitForFunction(() => window.outlit?._initialized)
 
     await page.evaluate(() => {
-      window.outlit.setUser("user-activate")
+      window.outlit.setUser({ userId: "user-activate" })
       window.outlit.activate({ milestone: "onboarding_complete" })
     })
 
@@ -130,7 +130,7 @@ test.describe("Stage Methods", () => {
     await page.waitForFunction(() => window.outlit?._initialized)
 
     await page.evaluate(() => {
-      window.outlit.setUser("user-engaged")
+      window.outlit.setUser({ userId: "user-engaged" })
       window.outlit.engaged({ sessions: 10 })
     })
 
@@ -154,7 +154,7 @@ test.describe("Stage Methods", () => {
     await page.waitForFunction(() => window.outlit?._initialized)
 
     await page.evaluate(() => {
-      window.outlit.setUser("user-paid")
+      window.outlit.setUser({ userId: "user-paid" })
       window.outlit.paid({ plan: "enterprise", mrr: 999 })
     })
 
@@ -179,7 +179,7 @@ test.describe("Stage Methods", () => {
     await page.waitForFunction(() => window.outlit?._initialized)
 
     await page.evaluate(() => {
-      window.outlit.setUser("user-lifecycle")
+      window.outlit.setUser({ userId: "user-lifecycle" })
       window.outlit.activate()
       window.outlit.engaged()
       window.outlit.paid()
@@ -206,7 +206,7 @@ test.describe("Stage Methods", () => {
     await page.waitForFunction(() => window.outlit?._initialized)
 
     await page.evaluate(() => {
-      window.outlit.setUser("user-no-props")
+      window.outlit.setUser({ userId: "user-no-props" })
       window.outlit.churned()
     })
 

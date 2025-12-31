@@ -75,6 +75,7 @@ export interface OutlitOptions extends TrackerConfig {
 export interface UserIdentity {
   email?: string
   userId?: string
+  traits?: Record<string, string | number | boolean | null>
 }
 
 export class Outlit {
@@ -287,7 +288,7 @@ export class Outlit {
    */
   private applyUser(identity: UserIdentity): void {
     this.currentUser = identity
-    this.identify({ email: identity.email, userId: identity.userId })
+    this.identify({ email: identity.email, userId: identity.userId, traits: identity.traits })
   }
 
   /**

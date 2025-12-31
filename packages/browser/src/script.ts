@@ -23,7 +23,7 @@
  */
 
 import type { BrowserIdentifyOptions, BrowserTrackOptions } from "@outlit/core"
-import { Outlit, type OutlitOptions } from "./tracker"
+import { Outlit, type OutlitOptions, type UserIdentity } from "./tracker"
 
 // ============================================
 // TYPES
@@ -47,7 +47,7 @@ interface OutlitGlobal {
   getVisitorId: () => string | null
   enableTracking: () => void
   isTrackingEnabled: () => boolean
-  setUser: (userId: string, traits?: Record<string, string | number | boolean | null>) => void
+  setUser: (identity: UserIdentity) => void
   clearUser: () => void
   activate: (properties?: Record<string, string | number | boolean | null>) => void
   engaged: (properties?: Record<string, string | number | boolean | null>) => void
@@ -143,13 +143,12 @@ const outlit: OutlitGlobal & { _loaded?: boolean } = {
   /**
    * Set the user identity for attribution.
    */
-  setUser(userId: string, traits?: Record<string, string | number | boolean | null>) {
+  setUser(identity: UserIdentity) {
     if (!this._initialized || !this._instance) {
-      this._queue.push(() => this.setUser(userId, traits))
+      this._queue.push(() => this.setUser(identity))
       return
     }
-    // Convert string userId to UserIdentity object format
-    this._instance.setUser({ userId })
+    this._instance.setUser(identity)
   },
 
   /**
