@@ -192,7 +192,7 @@ describe("Stage methods behavior", () => {
     // Should not throw when called without properties
     act(() => {
       result.current.enableTracking()
-      result.current.setUser("test-user")
+      result.current.setUser({ userId: "test-user" })
     })
 
     // This should not throw
@@ -214,7 +214,7 @@ describe("Stage methods behavior", () => {
 
     act(() => {
       result.current.enableTracking()
-      result.current.setUser("test-user")
+      result.current.setUser({ userId: "test-user" })
     })
 
     // This should not throw

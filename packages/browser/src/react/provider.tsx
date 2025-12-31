@@ -156,8 +156,8 @@ export function OutlitProvider({
     if (!outlitRef.current) return
 
     if (user && (user.email || user.userId)) {
-      // User is logged in - set user identity
-      outlitRef.current.setUser({ email: user.email, userId: user.userId })
+      // User is logged in - set user identity (pass full object to include traits)
+      outlitRef.current.setUser(user)
     } else {
       // User logged out (null/undefined) or has no valid identity - clear
       outlitRef.current.clearUser()
