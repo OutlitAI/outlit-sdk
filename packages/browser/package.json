@@ -1,6 +1,6 @@
 {
   "name": "@outlit/browser",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Outlit browser tracking SDK with React bindings",
   "license": "Apache-2.0",
   "author": "Outlit AI",
