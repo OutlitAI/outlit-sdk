@@ -1,6 +1,6 @@
 {
   "name": "@outlit/node",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Outlit server-side tracking SDK for Node.js",
   "license": "Apache-2.0",
   "author": "Outlit AI",
@@ -13,14 +13,7 @@
     "url": "https://github.com/OutlitAI/outlit-sdk/issues"
   },
   "homepage": "https://github.com/OutlitAI/outlit-sdk#readme",
-  "keywords": [
-    "outlit",
-    "analytics",
-    "tracking",
-    "sdk",
-    "node",
-    "server"
-  ],
+  "keywords": ["outlit", "analytics", "tracking", "sdk", "node", "server"],
   "publishConfig": {
     "access": "public"
   },
@@ -35,9 +28,7 @@
       "default": "./dist/index.mjs"
     }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "engines": {
     "node": ">=18.0.0"
   },

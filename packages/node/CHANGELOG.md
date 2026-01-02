@@ -1,5 +1,16 @@
 # @outlit/node
 
+## 0.3.0
+
+### Minor Changes
+
+- [`e09ca38`](https://github.com/OutlitAI/outlit-sdk/commit/e09ca38da6373c961cc572cc05a792922a6150f6) Thanks [@leo-paz](https://github.com/leo-paz)! - New sdk events for discovered, signed up, activated, engaged, paid, churned
+
+### Patch Changes
+
+- Updated dependencies [[`e09ca38`](https://github.com/OutlitAI/outlit-sdk/commit/e09ca38da6373c961cc572cc05a792922a6150f6)]:
+  - @outlit/core@0.3.0
+
 ## 0.2.2
 
 ### Patch Changes
