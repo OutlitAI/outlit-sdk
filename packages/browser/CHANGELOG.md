@@ -1,5 +1,11 @@
 # @outlit/browser
 
+## 0.4.1
+
+### Patch Changes
+
+- [#17](https://github.com/OutlitAI/outlit-sdk/pull/17) [`7c11805`](https://github.com/OutlitAI/outlit-sdk/commit/7c11805290b20d71c524e0c79522f77bf9c44db8) Thanks [@rafa-thayto](https://github.com/rafa-thayto)! - Add typesVersions for legacy moduleResolution support
+
 ## 0.4.0
 
 ### Minor Changes
