@@ -1,5 +1,12 @@
 # @outlit/node
 
+## 0.4.0
+
+### Patch Changes
+
+- Updated dependencies [[`3feb1db`](https://github.com/OutlitAI/outlit-sdk/commit/3feb1dbbbd7dc73b0b7b6cd8bc3060a878ed1c73)]:
+  - @outlit/core@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes

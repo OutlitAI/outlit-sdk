@@ -1,5 +1,16 @@
 # @outlit/browser
 
+## 0.4.0
+
+### Minor Changes
+
+- [#14](https://github.com/OutlitAI/outlit-sdk/pull/14) [`3feb1db`](https://github.com/OutlitAI/outlit-sdk/commit/3feb1dbbbd7dc73b0b7b6cd8bc3060a878ed1c73) Thanks [@leo-paz](https://github.com/leo-paz)! - Add sessionId to all browser events at the batch level, enabling session tracking from pageviews, forms, and custom events (not just engagement). Session tracking is now always initialized for sessionId management, even when engagement events are disabled.
+
+### Patch Changes
+
+- Updated dependencies [[`3feb1db`](https://github.com/OutlitAI/outlit-sdk/commit/3feb1dbbbd7dc73b0b7b6cd8bc3060a878ed1c73)]:
+  - @outlit/core@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes
