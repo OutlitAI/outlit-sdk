@@ -216,17 +216,24 @@ export function buildStageEvent(
  * @param source - The event source (client, server, integration)
  * @param events - Array of events to send
  * @param userIdentity - Optional user identity for immediate resolution (from setUser in SPA)
+ * @param sessionId - Optional session ID for grouping events (browser SDK only)
  */
 export function buildIngestPayload(
   visitorId: string,
   source: SourceType,
   events: TrackerEvent[],
   userIdentity?: PayloadUserIdentity,
+  sessionId?: string,
 ): IngestPayload {
   const payload: IngestPayload = {
     visitorId,
     source,
     events,
+  }
+
+  // Only include sessionId if provided (browser SDK only)
+  if (sessionId) {
+    payload.sessionId = sessionId
   }
 
   // Only include userIdentity if it has actual values

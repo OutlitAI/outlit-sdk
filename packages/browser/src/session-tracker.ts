@@ -416,6 +416,8 @@ export class SessionTracker {
       this.state.lastActiveTime = Date.now()
       // Reset engagement flag to allow new engagement event on next exit
       this.state.hasEmittedEngagement = false
+      // Keep session alive when returning to tab
+      this.updateSessionActivity()
     }
   }
 

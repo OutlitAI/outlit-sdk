@@ -163,10 +163,9 @@ export class Outlit {
     // Start the flush timer
     this.startFlushTimer()
 
-    // Initialize session/engagement tracking if enabled (before pageview tracking)
-    if (this.options.trackEngagement !== false) {
-      this.initSessionTracking()
-    }
+    // Always initialize session tracking for session ID management
+    // Engagement events are only emitted when trackEngagement is enabled
+    this.initSessionTracking()
 
     // Initialize autocapture if enabled
     if (this.options.trackPageviews !== false) {
@@ -396,9 +395,9 @@ export class Outlit {
 
   private initSessionTracking(): void {
     this.sessionTracker = initSessionTracking({
-      onEngagement: (event) => {
-        this.enqueue(event)
-      },
+      // Only emit engagement events when trackEngagement is enabled (default: true)
+      onEngagement:
+        this.options.trackEngagement !== false ? (event) => this.enqueue(event) : () => {},
       idleTimeout: this.options.idleTimeout,
     })
   }
@@ -496,7 +495,9 @@ export class Outlit {
     // This allows the server to resolve identity immediately for SPA apps
     // instead of waiting for the anonymous visitor flow
     const userIdentity = this.currentUser ?? undefined
-    const payload = buildIngestPayload(this.visitorId, "client", events, userIdentity)
+    // Include session ID for grouping all events in this batch
+    const sessionId = this.sessionTracker?.getSessionId()
+    const payload = buildIngestPayload(this.visitorId, "client", events, userIdentity, sessionId)
     const url = `${this.apiHost}/api/i/v1/${this.publicKey}/events`
 
     try {

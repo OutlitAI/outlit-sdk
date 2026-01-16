@@ -171,6 +171,13 @@ export interface IngestPayload {
   source: SourceType
   events: TrackerEvent[]
   /**
+   * Session ID for grouping all events in this batch.
+   * Only present for browser (client) source events.
+   * Used to correlate pageviews, forms, custom events, and engagement
+   * within the same browsing session.
+   */
+  sessionId?: string
+  /**
    * User identity for this batch of events.
    * When present, the server can resolve directly to CustomerContact
    * instead of relying on anonymous visitor flow.
