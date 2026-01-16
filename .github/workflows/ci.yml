@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
     branches:
       - main
 
@@ -10,6 +11,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changeset:
+    name: Changeset Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for changeset
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
+        run: |
+          pnpm changeset status --since=origin/main
+          echo "✅ Changeset found"
+
+      - name: Skip changeset check
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
+        run: echo "⏭️ Changeset check skipped via 'skip-changelog' label"
+
   ci:
     name: Lint, Build & Test
     runs-on: ubuntu-latest
