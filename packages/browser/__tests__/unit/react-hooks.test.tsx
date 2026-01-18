@@ -1,9 +1,9 @@
 /**
  * React Hooks Unit Tests
  *
- * Tests the React hooks (useOutlit, useTrack, useIdentify) to ensure they:
+ * Tests the React hooks (useOutlit) to ensure they:
  * - Warn when used outside OutlitProvider
- * - Expose all expected methods including churned
+ * - Expose user namespace (activate, engaged, inactive) and customer namespace (trialing, paid, churned)
  * - Handle consent flow correctly
  *
  * Run with: pnpm test:unit

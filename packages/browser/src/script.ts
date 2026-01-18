@@ -5,9 +5,16 @@
  * <script>
  *   !function(w,d,src,key,auto){
  *     if(w.outlit&&w.outlit._loaded)return;
- *     w.outlit=w.outlit||{_q:[]};
- *     ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser","user","customer"].forEach(function(m){
- *       w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
+ *     var o=w.outlit=w.outlit||{_q:[]};
+ *     ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"].forEach(function(m){
+ *       o[m]=o[m]||function(){o._q.push([m,[].slice.call(arguments)])};
+ *     });
+ *     o.user=o.user||{};o.customer=o.customer||{};
+ *     ["identify","activate","engaged","inactive"].forEach(function(m){
+ *       o.user[m]=o.user[m]||function(){o._q.push(["user."+m,[].slice.call(arguments)])};
+ *     });
+ *     ["trialing","paid","churned"].forEach(function(m){
+ *       o.customer[m]=o.customer[m]||function(){o._q.push(["customer."+m,[].slice.call(arguments)])};
  *     });
  *     var s=d.createElement("script");s.async=1;s.src=src;
  *     s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
@@ -91,7 +98,19 @@ const outlit: OutlitGlobal & { _loaded?: boolean } = {
     for (const [method, args] of stubQueue) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const self = this as any
-      if (method in self && typeof self[method] === "function") {
+
+      // Handle namespace methods like "user.activate" or "customer.paid"
+      if (method.includes(".")) {
+        const [namespace, methodName] = method.split(".")
+        if (
+          namespace &&
+          methodName &&
+          namespace in self &&
+          typeof self[namespace][methodName] === "function"
+        ) {
+          self[namespace][methodName](...args)
+        }
+      } else if (method in self && typeof self[method] === "function") {
         self[method](...args)
       }
     }
