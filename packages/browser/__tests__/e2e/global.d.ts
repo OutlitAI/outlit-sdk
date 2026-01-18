@@ -30,7 +30,11 @@ declare global {
       }) => void
       clearUser: () => void
       user: {
-        identify: (options: { email?: string; userId?: string }) => void
+        identify: (options: {
+          email?: string
+          userId?: string
+          traits?: Record<string, unknown>
+        }) => void
         activate: (properties?: Record<string, unknown>) => void
         engaged: (properties?: Record<string, unknown>) => void
         inactive: (properties?: Record<string, unknown>) => void
@@ -40,12 +44,19 @@ declare global {
           domain?: string
           customerId?: string
           stripeCustomerId?: string
+          properties?: Record<string, unknown>
         }) => void
-        paid: (options: { domain?: string; customerId?: string; stripeCustomerId?: string }) => void
+        paid: (options: {
+          domain?: string
+          customerId?: string
+          stripeCustomerId?: string
+          properties?: Record<string, unknown>
+        }) => void
         churned: (options: {
           domain?: string
           customerId?: string
           stripeCustomerId?: string
+          properties?: Record<string, unknown>
         }) => void
       }
 

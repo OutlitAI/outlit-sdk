@@ -65,7 +65,7 @@ describe("useOutlit hook", () => {
     consoleSpy.mockRestore()
   })
 
-  it("exposes all stage methods including churned", () => {
+  it("exposes user namespace with stage methods", () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <OutlitProvider publicKey="pk_test" autoTrack={false}>
         {children}
@@ -74,11 +74,26 @@ describe("useOutlit hook", () => {
 
     const { result } = renderHook(() => useOutlit(), { wrapper })
 
-    // Verify all stage methods exist and are functions
-    expect(typeof result.current.activate).toBe("function")
-    expect(typeof result.current.engaged).toBe("function")
-    expect(typeof result.current.paid).toBe("function")
-    expect(typeof result.current.churned).toBe("function")
+    // Verify user namespace methods exist and are functions
+    expect(typeof result.current.user.activate).toBe("function")
+    expect(typeof result.current.user.engaged).toBe("function")
+    expect(typeof result.current.user.inactive).toBe("function")
+    expect(typeof result.current.user.identify).toBe("function")
+  })
+
+  it("exposes customer namespace with billing methods", () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <OutlitProvider publicKey="pk_test" autoTrack={false}>
+        {children}
+      </OutlitProvider>
+    )
+
+    const { result } = renderHook(() => useOutlit(), { wrapper })
+
+    // Verify customer namespace methods exist and are functions
+    expect(typeof result.current.customer.trialing).toBe("function")
+    expect(typeof result.current.customer.paid).toBe("function")
+    expect(typeof result.current.customer.churned).toBe("function")
   })
 
   it("exposes track, identify, and user management methods", () => {
