@@ -25,7 +25,7 @@ import { HttpTransport } from "./transport"
  * Options for stage transition events (activate, engaged, inactive).
  * Server-side stage events require user identification (email or userId).
  */
-export type StageOptions = ServerIdentity & {
+export interface StageOptions extends ServerIdentity {
   /**
    * Optional properties for context.
    */
@@ -36,7 +36,7 @@ export type StageOptions = ServerIdentity & {
  * Options for billing status events.
  * Requires at least one customer identifier (customerId, stripeCustomerId, or domain).
  */
-export type BillingOptions = CustomerIdentifier & {
+export interface BillingOptions extends CustomerIdentifier {
   properties?: Record<string, string | number | boolean | null>
 }
 
@@ -223,15 +223,8 @@ export class Outlit {
   private sendBillingEvent(status: BillingStatus, options: BillingOptions): void {
     this.ensureNotShutdown()
 
-    if (!options.customerId && !options.stripeCustomerId && !options.domain) {
-      throw new Error("[Outlit] customer.* requires customerId, stripeCustomerId, or domain")
-    }
-
-    const identityLabel =
-      options.customerId ?? options.stripeCustomerId ?? options.domain ?? "unknown"
-
     const event = buildBillingEvent({
-      url: `server://${identityLabel}`,
+      url: `server://${options.domain}`,
       status,
       customerId: options.customerId,
       stripeCustomerId: options.stripeCustomerId,

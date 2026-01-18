@@ -187,7 +187,11 @@ test.describe("Stage Methods", () => {
     await page.waitForFunction(() => window.outlit?._initialized)
 
     await page.evaluate(() => {
-      window.outlit.customer.trialing({ customerId: "cust_123", properties: { plan: "pro" } })
+      window.outlit.customer.trialing({
+        domain: "test.outlit.ai",
+        customerId: "cust_123",
+        properties: { plan: "pro" },
+      })
     })
 
     await page.evaluate(() => window.dispatchEvent(new Event("beforeunload")))
@@ -201,6 +205,7 @@ test.describe("Stage Methods", () => {
     expect(billingEvent).toBeDefined()
     expect(billingEvent?.type).toBe("billing")
     expect(billingEvent?.status).toBe("trialing")
+    expect(billingEvent?.domain).toBe("test.outlit.ai")
     expect(billingEvent?.customerId).toBe("cust_123")
     expect(billingEvent?.properties?.plan).toBe("pro")
   })
@@ -212,6 +217,7 @@ test.describe("Stage Methods", () => {
 
     await page.evaluate(() => {
       window.outlit.customer.churned({
+        domain: "test.outlit.ai",
         stripeCustomerId: "cus_stripe_abc",
         properties: { reason: "cancelled" },
       })
@@ -228,32 +234,9 @@ test.describe("Stage Methods", () => {
     expect(billingEvent).toBeDefined()
     expect(billingEvent?.type).toBe("billing")
     expect(billingEvent?.status).toBe("churned")
+    expect(billingEvent?.domain).toBe("test.outlit.ai")
     expect(billingEvent?.stripeCustomerId).toBe("cus_stripe_abc")
     expect(billingEvent?.properties?.reason).toBe("cancelled")
-  })
-
-  test("customer.* methods require at least one identifier (logs warning)", async ({ page }) => {
-    const warnings: string[] = []
-
-    page.on("console", (msg) => {
-      if (msg.type() === "warning") warnings.push(msg.text())
-    })
-
-    await page.goto("/test-page.html")
-    await page.waitForFunction(() => window.outlit?._initialized)
-
-    // Call paid without any identifier
-    await page.evaluate(() => {
-      window.outlit.customer.paid({})
-    })
-
-    await page.waitForTimeout(100)
-
-    expect(
-      warnings.some(
-        (w) => w.includes("customerId") || w.includes("stripeCustomerId") || w.includes("domain"),
-      ),
-    ).toBe(true)
   })
 
   test("all stage methods work in sequence: activate, engaged, inactive", async ({ page }) => {

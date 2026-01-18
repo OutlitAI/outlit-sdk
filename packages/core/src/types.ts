@@ -65,28 +65,36 @@ export interface BrowserIdentifyOptions {
 
 /**
  * Server identity - requires at least email OR userId.
- * This is enforced at the type level using a discriminated union.
+ * This is validated at runtime to avoid complex union types that
+ * cause TypeScript memory issues during type checking.
  */
-export type ServerIdentity = { email: string; userId?: string } | { email?: string; userId: string }
+export interface ServerIdentity {
+  email?: string
+  userId?: string
+}
 
-export type ServerTrackOptions = ServerIdentity & {
+export interface ServerTrackOptions extends ServerIdentity {
   eventName: string
   properties?: Record<string, string | number | boolean | null>
   timestamp?: number
 }
 
-export type ServerIdentifyOptions = ServerIdentity & {
+export interface ServerIdentifyOptions extends ServerIdentity {
   traits?: Record<string, string | number | boolean | null>
 }
 
 /**
- * Customer identity - requires at least one of customerId, stripeCustomerId, or domain.
- * This is enforced at the type level using a discriminated union.
+ * Customer identity for SDK billing methods.
+ * Domain is required as the primary identifier; additional identifiers are optional.
  */
-export type CustomerIdentifier =
-  | { customerId: string; stripeCustomerId?: string; domain?: string }
-  | { customerId?: string; stripeCustomerId: string; domain?: string }
-  | { customerId?: string; stripeCustomerId?: string; domain: string }
+export interface CustomerIdentifier {
+  /** Required: The customer's domain (e.g., "acme.com") */
+  domain: string
+  /** Optional: Your internal customer ID */
+  customerId?: string
+  /** Optional: Stripe customer ID (e.g., "cus_xxx") */
+  stripeCustomerId?: string
+}
 
 // ============================================
 // INTERNAL EVENT TYPES
