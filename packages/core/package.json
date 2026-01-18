@@ -1,6 +1,6 @@
 {
   "name": "@outlit/core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Shared types and utilities for Outlit tracking SDKs",
   "license": "Apache-2.0",
   "author": "Outlit AI",
