@@ -6,16 +6,18 @@
  *   !function(w,d,src,key,auto){
  *     if(w.outlit&&w.outlit._loaded)return;
  *     var o=w.outlit=w.outlit||{_q:[]};
- *     ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"].forEach(function(m){
- *       o[m]=o[m]||function(){o._q.push([m,[].slice.call(arguments)])};
- *     });
+ *     function stub(target,prefix,methods){
+ *       for(var i=0;i<methods.length;i++){
+ *         var m=methods[i];
+ *         target[m]=target[m]||function(mm){
+ *           return function(){o._q.push([prefix?prefix+"."+mm:mm,[].slice.call(arguments)])};
+ *         }(m);
+ *       }
+ *     }
+ *     stub(o,"",["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
  *     o.user=o.user||{};o.customer=o.customer||{};
- *     ["identify","activate","engaged","inactive"].forEach(function(m){
- *       o.user[m]=o.user[m]||function(){o._q.push(["user."+m,[].slice.call(arguments)])};
- *     });
- *     ["trialing","paid","churned"].forEach(function(m){
- *       o.customer[m]=o.customer[m]||function(){o._q.push(["customer."+m,[].slice.call(arguments)])};
- *     });
+ *     stub(o.user,"user",["identify","activate","engaged","inactive"]);
+ *     stub(o.customer,"customer",["trialing","paid","churned"]);
  *     var s=d.createElement("script");s.async=1;s.src=src;
  *     s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
  *     (d.body||d.head).appendChild(s);
