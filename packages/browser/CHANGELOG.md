@@ -1,5 +1,11 @@
 # @outlit/browser
 
+## 1.0.2
+
+### Patch Changes
+
+- [#23](https://github.com/OutlitAI/outlit-sdk/pull/23) [`22be5d0`](https://github.com/OutlitAI/outlit-sdk/commit/22be5d01bdd639d2d4621543340415c1333814ce) Thanks [@leo-paz](https://github.com/leo-paz)! - Update the script tag stub snippet to use a helper for cleaner method stubs.
+
 ## 1.0.1
 
 ### Patch Changes
