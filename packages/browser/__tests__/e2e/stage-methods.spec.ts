@@ -14,6 +14,16 @@ interface StageEvent {
   properties?: Record<string, unknown>
 }
 
+interface BillingEvent {
+  type: "billing"
+  status: string
+  domain?: string
+  customerId?: string
+  stripeCustomerId?: string
+  path?: string
+  properties?: Record<string, unknown>
+}
+
 interface ApiCall {
   url: string
   payload: {
@@ -162,13 +172,13 @@ test.describe("Stage Methods", () => {
 
     const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
     const billingEvent = allEvents.find(
-      (e): e is StageEvent => e.type === "billing" && (e as { status?: string }).status === "paid",
+      (e): e is BillingEvent => e.type === "billing" && (e as BillingEvent).status === "paid",
     )
 
     expect(billingEvent).toBeDefined()
     expect(billingEvent?.type).toBe("billing")
-    expect((billingEvent as { status?: string })?.status).toBe("paid")
-    expect((billingEvent as { domain?: string })?.domain).toBe("outlit.ai")
+    expect(billingEvent?.status).toBe("paid")
+    expect(billingEvent?.domain).toBe("outlit.ai")
   })
 
   test("trialing() sends billing event with customerId", async ({ page }) => {
@@ -185,14 +195,13 @@ test.describe("Stage Methods", () => {
 
     const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
     const billingEvent = allEvents.find(
-      (e): e is StageEvent =>
-        e.type === "billing" && (e as { status?: string }).status === "trialing",
+      (e): e is BillingEvent => e.type === "billing" && (e as BillingEvent).status === "trialing",
     )
 
     expect(billingEvent).toBeDefined()
     expect(billingEvent?.type).toBe("billing")
-    expect((billingEvent as { status?: string })?.status).toBe("trialing")
-    expect((billingEvent as { customerId?: string })?.customerId).toBe("cust_123")
+    expect(billingEvent?.status).toBe("trialing")
+    expect(billingEvent?.customerId).toBe("cust_123")
     expect(billingEvent?.properties?.plan).toBe("pro")
   })
 
@@ -213,14 +222,13 @@ test.describe("Stage Methods", () => {
 
     const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
     const billingEvent = allEvents.find(
-      (e): e is StageEvent =>
-        e.type === "billing" && (e as { status?: string }).status === "churned",
+      (e): e is BillingEvent => e.type === "billing" && (e as BillingEvent).status === "churned",
     )
 
     expect(billingEvent).toBeDefined()
     expect(billingEvent?.type).toBe("billing")
-    expect((billingEvent as { status?: string })?.status).toBe("churned")
-    expect((billingEvent as { stripeCustomerId?: string })?.stripeCustomerId).toBe("cus_stripe_abc")
+    expect(billingEvent?.status).toBe("churned")
+    expect(billingEvent?.stripeCustomerId).toBe("cus_stripe_abc")
     expect(billingEvent?.properties?.reason).toBe("cancelled")
   })
 
