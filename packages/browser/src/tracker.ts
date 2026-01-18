@@ -81,7 +81,7 @@ export interface UserIdentity {
   traits?: Record<string, string | number | boolean | null>
 }
 
-export type BillingOptions = CustomerIdentifier & {
+export interface BillingOptions extends CustomerIdentifier {
   properties?: Record<string, string | number | boolean | null>
 }
 
@@ -350,11 +350,6 @@ export class Outlit {
   private sendBillingEvent(status: BillingStatus, options: BillingOptions): void {
     if (!this.isTrackingEnabled) {
       console.warn("[Outlit] Tracking not enabled. Call enableTracking() first.")
-      return
-    }
-
-    if (!options.customerId && !options.stripeCustomerId && !options.domain) {
-      console.warn("[Outlit] customer.* requires customerId, stripeCustomerId, or domain")
       return
     }
 

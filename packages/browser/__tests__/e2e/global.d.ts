@@ -41,19 +41,19 @@ declare global {
       }
       customer: {
         trialing: (options: {
-          domain?: string
+          domain: string
           customerId?: string
           stripeCustomerId?: string
           properties?: Record<string, unknown>
         }) => void
         paid: (options: {
-          domain?: string
+          domain: string
           customerId?: string
           stripeCustomerId?: string
           properties?: Record<string, unknown>
         }) => void
         churned: (options: {
-          domain?: string
+          domain: string
           customerId?: string
           stripeCustomerId?: string
           properties?: Record<string, unknown>
