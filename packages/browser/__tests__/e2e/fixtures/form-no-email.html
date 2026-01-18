@@ -38,10 +38,19 @@
   <script>
     !function(w,d,src,key,auto){
       if(w.outlit&&w.outlit._loaded)return;
-      w.outlit=w.outlit||{_q:[]};
-      ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser","activate","engaged","paid","churned"].forEach(function(m){
-        w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
-      });
+      var o=w.outlit=w.outlit||{_q:[]};
+      function stub(target,prefix,methods){
+        for(var i=0;i<methods.length;i++){
+          var m=methods[i];
+          target[m]=target[m]||function(mm){
+            return function(){o._q.push([prefix?prefix+"."+mm:mm,[].slice.call(arguments)])};
+          }(m);
+        }
+      }
+      stub(o,"",["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
+      o.user=o.user||{};o.customer=o.customer||{};
+      stub(o.user,"user",["identify","activate","engaged","inactive"]);
+      stub(o.customer,"customer",["trialing","paid","churned"]);
       var s=d.createElement("script");s.async=1;s.src=src;
       s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
       (d.body||d.head).appendChild(s);
