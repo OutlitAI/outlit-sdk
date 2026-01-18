@@ -39,7 +39,7 @@ const outlit = new Outlit({
 })
 
 // Identify a user
-outlit.identify({
+outlit.user.identify({
   email: 'user@example.com',
   traits: { name: 'John Doe' },
 })
@@ -49,19 +49,26 @@ outlit.track('button_clicked', {
   button_id: 'signup',
   page: '/homepage',
 })
+
+// Mark billing status on a customer
+outlit.customer.trialing({
+  domain: 'acme.com',
+  properties: { plan: 'pro' },
+})
 ```
 
 #### Using the singleton API
 
 ```typescript
-import { init, track, identify } from '@outlit/browser'
+import { init, track, user, customer } from '@outlit/browser'
 
 // Initialize once at app startup
 init({ publicKey: 'pk_xxx' })
 
 // Then use anywhere
 track('page_viewed', { page: '/home' })
-identify({ email: 'user@example.com' })
+user().identify({ email: 'user@example.com' })
+customer().paid({ domain: 'acme.com', properties: { plan: 'pro' } })
 ```
 
 #### Using with React
@@ -80,10 +87,10 @@ function App() {
 
 // Use in components
 function MyComponent() {
-  const { track, identify } = useOutlit()
+  const { track, user } = useOutlit()
   
   return (
-    <button onClick={() => track('button_clicked')}>
+    <button onClick={() => user.activate({ milestone: 'onboarding' })}>
       Click me
     </button>
   )
@@ -110,9 +117,15 @@ outlit.track('api_request', {
 })
 
 // Identify a user
-outlit.identify({
+outlit.user.identify({
   email: 'user@example.com',
   traits: { plan: 'pro' },
+})
+
+// Mark customer billing status
+outlit.customer.paid({
+  customerId: 'cust_123',
+  properties: { plan: 'pro' },
 })
 
 // Flush events before shutdown

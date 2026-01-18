@@ -482,7 +482,7 @@ test.describe("Identify Event Shape", () => {
     await page.waitForFunction(() => window.outlit?._initialized)
 
     await page.evaluate(() => {
-      window.outlit.identify({
+      window.outlit.user.identify({
         email: "traits@example.com",
         traits: {
           name: "John Doe",

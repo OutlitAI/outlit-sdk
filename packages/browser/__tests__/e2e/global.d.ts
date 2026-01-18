@@ -29,10 +29,25 @@ declare global {
         traits?: Record<string, string | number | boolean | null>
       }) => void
       clearUser: () => void
-      activate: (properties?: Record<string, unknown>) => void
-      engaged: (properties?: Record<string, unknown>) => void
-      paid: (properties?: Record<string, unknown>) => void
-      churned: (properties?: Record<string, unknown>) => void
+      user: {
+        identify: (options: { email?: string; userId?: string }) => void
+        activate: (properties?: Record<string, unknown>) => void
+        engaged: (properties?: Record<string, unknown>) => void
+        inactive: (properties?: Record<string, unknown>) => void
+      }
+      customer: {
+        trialing: (options: {
+          domain?: string
+          customerId?: string
+          stripeCustomerId?: string
+        }) => void
+        paid: (options: { domain?: string; customerId?: string; stripeCustomerId?: string }) => void
+        churned: (options: {
+          domain?: string
+          customerId?: string
+          stripeCustomerId?: string
+        }) => void
+      }
 
       // Internal properties (for testing)
       _initialized: boolean

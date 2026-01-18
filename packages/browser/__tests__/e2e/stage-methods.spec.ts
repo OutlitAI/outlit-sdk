@@ -1,7 +1,7 @@
 /**
  * Stage Methods E2E Tests
  *
- * Tests the stage tracking methods (activate, engaged, paid, churned)
+ * Tests the stage tracking methods (activate, engaged, inactive)
  * to ensure they correctly send stage events to the API.
  */
 
@@ -52,14 +52,14 @@ async function interceptApiCalls(page: import("@playwright/test").Page): Promise
 // ============================================
 
 test.describe("Stage Methods", () => {
-  test("churned() sends stage event with properties", async ({ page }) => {
+  test("inactive() sends stage event with properties", async ({ page }) => {
     const apiCalls = await interceptApiCalls(page)
     await page.goto("/test-page.html")
     await page.waitForFunction(() => window.outlit?._initialized)
 
     await page.evaluate(() => {
       window.outlit.setUser({ userId: "user-123" })
-      window.outlit.churned({ reason: "cancelled", plan: "pro" })
+      window.outlit.user.inactive({ reason: "cancelled", plan: "pro" })
     })
 
     // Force flush
@@ -68,17 +68,17 @@ test.describe("Stage Methods", () => {
 
     const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
     const stageEvent = allEvents.find(
-      (e): e is StageEvent => e.type === "stage" && (e as StageEvent).stage === "churned",
+      (e): e is StageEvent => e.type === "stage" && (e as StageEvent).stage === "inactive",
     )
 
     expect(stageEvent).toBeDefined()
     expect(stageEvent?.type).toBe("stage")
-    expect(stageEvent?.stage).toBe("churned")
+    expect(stageEvent?.stage).toBe("inactive")
     expect(stageEvent?.properties?.reason).toBe("cancelled")
     expect(stageEvent?.properties?.plan).toBe("pro")
   })
 
-  test("churned() requires user identity (logs warning)", async ({ page }) => {
+  test("inactive() requires user identity (logs warning)", async ({ page }) => {
     const warnings: string[] = []
 
     // Set up console listener before navigation
@@ -89,9 +89,9 @@ test.describe("Stage Methods", () => {
     await page.goto("/test-page.html")
     await page.waitForFunction(() => window.outlit?._initialized)
 
-    // Call churned without setting user identity
+    // Call inactive without setting user identity
     await page.evaluate(() => {
-      window.outlit.churned({ reason: "test" })
+      window.outlit.user.inactive({ reason: "test" })
     })
 
     // Wait for warning to be logged
@@ -107,7 +107,7 @@ test.describe("Stage Methods", () => {
 
     await page.evaluate(() => {
       window.outlit.setUser({ userId: "user-activate" })
-      window.outlit.activate({ milestone: "onboarding_complete" })
+      window.outlit.user.activate({ milestone: "onboarding_complete" })
     })
 
     await page.evaluate(() => window.dispatchEvent(new Event("beforeunload")))
@@ -131,7 +131,7 @@ test.describe("Stage Methods", () => {
 
     await page.evaluate(() => {
       window.outlit.setUser({ userId: "user-engaged" })
-      window.outlit.engaged({ sessions: 10 })
+      window.outlit.user.engaged({ sessions: 10 })
     })
 
     await page.evaluate(() => window.dispatchEvent(new Event("beforeunload")))
@@ -148,42 +148,116 @@ test.describe("Stage Methods", () => {
     expect(stageEvent?.properties?.sessions).toBe(10)
   })
 
-  test("paid() sends stage event", async ({ page }) => {
+  test("paid() sends billing event", async ({ page }) => {
     const apiCalls = await interceptApiCalls(page)
     await page.goto("/test-page.html")
     await page.waitForFunction(() => window.outlit?._initialized)
 
     await page.evaluate(() => {
-      window.outlit.setUser({ userId: "user-paid" })
-      window.outlit.paid({ plan: "enterprise", mrr: 999 })
+      window.outlit.customer.paid({ domain: "outlit.ai", properties: { plan: "enterprise" } })
     })
 
     await page.evaluate(() => window.dispatchEvent(new Event("beforeunload")))
     await page.waitForTimeout(500)
 
     const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
-    const stageEvent = allEvents.find(
-      (e): e is StageEvent => e.type === "stage" && (e as StageEvent).stage === "paid",
+    const billingEvent = allEvents.find(
+      (e): e is StageEvent => e.type === "billing" && (e as { status?: string }).status === "paid",
     )
 
-    expect(stageEvent).toBeDefined()
-    expect(stageEvent?.type).toBe("stage")
-    expect(stageEvent?.stage).toBe("paid")
-    expect(stageEvent?.properties?.plan).toBe("enterprise")
-    expect(stageEvent?.properties?.mrr).toBe(999)
+    expect(billingEvent).toBeDefined()
+    expect(billingEvent?.type).toBe("billing")
+    expect((billingEvent as { status?: string })?.status).toBe("paid")
+    expect((billingEvent as { domain?: string })?.domain).toBe("outlit.ai")
   })
 
-  test("all stage methods work in sequence: activate, engaged, paid, churned", async ({ page }) => {
+  test("trialing() sends billing event with customerId", async ({ page }) => {
+    const apiCalls = await interceptApiCalls(page)
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    await page.evaluate(() => {
+      window.outlit.customer.trialing({ customerId: "cust_123", properties: { plan: "pro" } })
+    })
+
+    await page.evaluate(() => window.dispatchEvent(new Event("beforeunload")))
+    await page.waitForTimeout(500)
+
+    const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
+    const billingEvent = allEvents.find(
+      (e): e is StageEvent =>
+        e.type === "billing" && (e as { status?: string }).status === "trialing",
+    )
+
+    expect(billingEvent).toBeDefined()
+    expect(billingEvent?.type).toBe("billing")
+    expect((billingEvent as { status?: string })?.status).toBe("trialing")
+    expect((billingEvent as { customerId?: string })?.customerId).toBe("cust_123")
+    expect(billingEvent?.properties?.plan).toBe("pro")
+  })
+
+  test("churned() sends billing event with stripeCustomerId", async ({ page }) => {
+    const apiCalls = await interceptApiCalls(page)
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    await page.evaluate(() => {
+      window.outlit.customer.churned({
+        stripeCustomerId: "cus_stripe_abc",
+        properties: { reason: "cancelled" },
+      })
+    })
+
+    await page.evaluate(() => window.dispatchEvent(new Event("beforeunload")))
+    await page.waitForTimeout(500)
+
+    const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
+    const billingEvent = allEvents.find(
+      (e): e is StageEvent =>
+        e.type === "billing" && (e as { status?: string }).status === "churned",
+    )
+
+    expect(billingEvent).toBeDefined()
+    expect(billingEvent?.type).toBe("billing")
+    expect((billingEvent as { status?: string })?.status).toBe("churned")
+    expect((billingEvent as { stripeCustomerId?: string })?.stripeCustomerId).toBe("cus_stripe_abc")
+    expect(billingEvent?.properties?.reason).toBe("cancelled")
+  })
+
+  test("customer.* methods require at least one identifier (logs warning)", async ({ page }) => {
+    const warnings: string[] = []
+
+    page.on("console", (msg) => {
+      if (msg.type() === "warning") warnings.push(msg.text())
+    })
+
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Call paid without any identifier
+    await page.evaluate(() => {
+      window.outlit.customer.paid({})
+    })
+
+    await page.waitForTimeout(100)
+
+    expect(
+      warnings.some(
+        (w) => w.includes("customerId") || w.includes("stripeCustomerId") || w.includes("domain"),
+      ),
+    ).toBe(true)
+  })
+
+  test("all stage methods work in sequence: activate, engaged, inactive", async ({ page }) => {
     const apiCalls = await interceptApiCalls(page)
     await page.goto("/test-page.html")
     await page.waitForFunction(() => window.outlit?._initialized)
 
     await page.evaluate(() => {
       window.outlit.setUser({ userId: "user-lifecycle" })
-      window.outlit.activate()
-      window.outlit.engaged()
-      window.outlit.paid()
-      window.outlit.churned()
+      window.outlit.user.activate()
+      window.outlit.user.engaged()
+      window.outlit.user.inactive()
     })
 
     await page.evaluate(() => window.dispatchEvent(new Event("beforeunload")))
@@ -195,9 +269,8 @@ test.describe("Stage Methods", () => {
 
     expect(stages).toContain("activated")
     expect(stages).toContain("engaged")
-    expect(stages).toContain("paid")
-    expect(stages).toContain("churned")
-    expect(stageEvents.length).toBe(4)
+    expect(stages).toContain("inactive")
+    expect(stageEvents.length).toBe(3)
   })
 
   test("stage methods without properties send events correctly", async ({ page }) => {
@@ -207,7 +280,7 @@ test.describe("Stage Methods", () => {
 
     await page.evaluate(() => {
       window.outlit.setUser({ userId: "user-no-props" })
-      window.outlit.churned()
+      window.outlit.user.inactive()
     })
 
     await page.evaluate(() => window.dispatchEvent(new Event("beforeunload")))
@@ -215,11 +288,11 @@ test.describe("Stage Methods", () => {
 
     const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
     const stageEvent = allEvents.find(
-      (e): e is StageEvent => e.type === "stage" && (e as StageEvent).stage === "churned",
+      (e): e is StageEvent => e.type === "stage" && (e as StageEvent).stage === "inactive",
     )
 
     expect(stageEvent).toBeDefined()
     expect(stageEvent?.type).toBe("stage")
-    expect(stageEvent?.stage).toBe("churned")
+    expect(stageEvent?.stage).toBe("inactive")
   })
 })

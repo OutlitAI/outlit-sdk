@@ -1,10 +1,14 @@
 import {
+  type BillingStatus,
+  type CustomerIdentifier,
   DEFAULT_API_HOST,
   type ExplicitJourneyStage,
   type IngestPayload,
   type ServerIdentifyOptions,
+  type ServerIdentity,
   type ServerTrackOptions,
   type TrackerEvent,
+  buildBillingEvent,
   buildCustomEvent,
   buildIdentifyEvent,
   buildStageEvent,
@@ -17,20 +21,22 @@ import { HttpTransport } from "./transport"
 // STAGE OPTIONS
 // ============================================
 
-export interface StageOptions {
-  /**
-   * User's email address. Required if userId is not provided.
-   */
-  email?: string
-
-  /**
-   * User's unique ID. Required if email is not provided.
-   */
-  userId?: string
-
+/**
+ * Options for stage transition events (activate, engaged, inactive).
+ * Server-side stage events require user identification (email or userId).
+ */
+export type StageOptions = ServerIdentity & {
   /**
    * Optional properties for context.
    */
+  properties?: Record<string, string | number | boolean | null>
+}
+
+/**
+ * Options for billing status events.
+ * Requires at least one customer identifier (customerId, stripeCustomerId, or domain).
+ */
+export type BillingOptions = CustomerIdentifier & {
   properties?: Record<string, string | number | boolean | null>
 }
 
@@ -77,7 +83,7 @@ export interface OutlitOptions {
  *
  * @example
  * ```typescript
- * import { Outlit } from '@outlit/tracker-node'
+ * import { Outlit } from '@outlit/node'
  *
  * const outlit = new Outlit({ publicKey: 'pk_xxx' })
  *
@@ -175,65 +181,22 @@ export class Outlit {
   }
 
   /**
-   * Mark a user as activated.
-   *
-   * Typically called after a user completes onboarding or a key activation milestone.
-   * Requires either `email` or `userId` to identify the user.
-   *
-   * @throws Error if neither email nor userId is provided
-   *
-   * @example
-   * ```typescript
-   * outlit.activate({
-   *   email: 'user@example.com',
-   *   properties: { flow: 'onboarding' }
-   * })
-   * ```
+   * User namespace methods for contact journey stages.
    */
-  activate(options: StageOptions): void {
-    this.sendStageEvent("activated", options)
+  readonly user = {
+    identify: (options: ServerIdentifyOptions) => this.identify(options),
+    activate: (options: StageOptions) => this.sendStageEvent("activated", options),
+    engaged: (options: StageOptions) => this.sendStageEvent("engaged", options),
+    inactive: (options: StageOptions) => this.sendStageEvent("inactive", options),
   }
 
   /**
-   * Mark a user as engaged.
-   *
-   * Typically called when a user reaches a usage milestone.
-   * Can also be computed automatically by the engagement cron.
-   * Requires either `email` or `userId` to identify the user.
-   *
-   * @throws Error if neither email nor userId is provided
-   *
-   * @example
-   * ```typescript
-   * outlit.engaged({
-   *   userId: 'usr_123',
-   *   properties: { milestone: 'first_project_created' }
-   * })
-   * ```
+   * Customer namespace methods for billing status.
    */
-  engaged(options: StageOptions): void {
-    this.sendStageEvent("engaged", options)
-  }
-
-  /**
-   * Mark a user as paid.
-   *
-   * Typically called after a successful payment or subscription.
-   * Can also be triggered by Stripe integration.
-   * Requires either `email` or `userId` to identify the user.
-   *
-   * @throws Error if neither email nor userId is provided
-   *
-   * @example
-   * ```typescript
-   * outlit.paid({
-   *   email: 'user@example.com',
-   *   properties: { plan: 'pro', amount: 99 }
-   * })
-   * ```
-   */
-  paid(options: StageOptions): void {
-    this.sendStageEvent("paid", options)
+  readonly customer = {
+    trialing: (options: BillingOptions) => this.sendBillingEvent("trialing", options),
+    paid: (options: BillingOptions) => this.sendBillingEvent("paid", options),
+    churned: (options: BillingOptions) => this.sendBillingEvent("churned", options),
   }
 
   /**
@@ -252,6 +215,28 @@ export class Outlit {
         __email: options.email ?? null,
         __userId: options.userId ?? null,
       },
+    })
+
+    this.queue.enqueue(event)
+  }
+
+  private sendBillingEvent(status: BillingStatus, options: BillingOptions): void {
+    this.ensureNotShutdown()
+
+    if (!options.customerId && !options.stripeCustomerId && !options.domain) {
+      throw new Error("[Outlit] customer.* requires customerId, stripeCustomerId, or domain")
+    }
+
+    const identityLabel =
+      options.customerId ?? options.stripeCustomerId ?? options.domain ?? "unknown"
+
+    const event = buildBillingEvent({
+      url: `server://${identityLabel}`,
+      status,
+      customerId: options.customerId,
+      stripeCustomerId: options.stripeCustomerId,
+      domain: options.domain,
+      properties: options.properties,
     })
 
     this.queue.enqueue(event)

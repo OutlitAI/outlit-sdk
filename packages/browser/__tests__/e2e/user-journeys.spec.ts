@@ -88,7 +88,7 @@ test.describe("Multi-Action User Flows", () => {
 
     // Step 6: Identify the user
     await page.evaluate(() => {
-      window.outlit.identify({
+      window.outlit.user.identify({
         email: "journey@example.com",
         userId: "user_journey_123",
         traits: { source: "pricing_page", plan_interest: "enterprise" },
@@ -236,7 +236,7 @@ test.describe("Rapid Button Interactions", () => {
     // Rapidly perform different actions
     await page.evaluate(() => {
       window.outlit.track("action_track", { type: "track" })
-      window.outlit.identify({ email: "rapid@example.com", traits: { fast: true } })
+      window.outlit.user.identify({ email: "rapid@example.com", traits: { fast: true } })
       window.outlit.track("action_after_identify", { type: "after-identify" })
     })
 

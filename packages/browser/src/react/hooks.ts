@@ -1,10 +1,6 @@
-import type {
-  BrowserIdentifyOptions,
-  BrowserTrackOptions,
-  ExplicitJourneyStage,
-} from "@outlit/core"
+import type { BrowserIdentifyOptions, BrowserTrackOptions } from "@outlit/core"
 import { useCallback, useContext } from "react"
-import type { UserIdentity } from "../tracker"
+import type { BillingOptions, UserIdentity } from "../tracker"
 import { OutlitContext } from "./provider"
 
 // ============================================
@@ -41,28 +37,23 @@ export interface UseOutlitReturn {
   clearUser: () => void
 
   /**
-   * Mark the current user as activated.
-   * Call after a user completes onboarding or activation milestone.
+   * User namespace methods for contact journey stages.
    */
-  activate: (properties?: Record<string, string | number | boolean | null>) => void
+  user: {
+    identify: (options: BrowserIdentifyOptions) => void
+    activate: (properties?: Record<string, string | number | boolean | null>) => void
+    engaged: (properties?: Record<string, string | number | boolean | null>) => void
+    inactive: (properties?: Record<string, string | number | boolean | null>) => void
+  }
 
   /**
-   * Mark the current user as engaged.
-   * Call when user reaches a usage milestone.
+   * Customer namespace methods for billing status.
    */
-  engaged: (properties?: Record<string, string | number | boolean | null>) => void
-
-  /**
-   * Mark the current user as paid.
-   * Call after successful payment/subscription.
-   */
-  paid: (properties?: Record<string, string | number | boolean | null>) => void
-
-  /**
-   * Mark the current user as churned.
-   * Call when subscription is cancelled.
-   */
-  churned: (properties?: Record<string, string | number | boolean | null>) => void
+  customer: {
+    trialing: (options: BillingOptions) => void
+    paid: (options: BillingOptions) => void
+    churned: (options: BillingOptions) => void
+  }
 
   /**
    * Whether Outlit is initialized.
@@ -90,10 +81,10 @@ export interface UseOutlitReturn {
  * import { useOutlit } from '@outlit/browser/react'
  *
  * function MyComponent() {
- *   const { track, identify } = useOutlit()
+ *   const { track, user } = useOutlit()
  *
  *   return (
- *     <button onClick={() => track('button_clicked', { id: 'cta' })}>
+ *     <button onClick={() => user.activate({ milestone: 'onboarding_complete' })}>
  *       Click me
  *     </button>
  *   )
@@ -142,6 +133,17 @@ export function useOutlit(): UseOutlitReturn {
     [outlit],
   )
 
+  const userIdentify = useCallback(
+    (options: BrowserIdentifyOptions) => {
+      if (!outlit) {
+        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
+        return
+      }
+      outlit.user.identify(options)
+    },
+    [outlit],
+  )
+
   const getVisitorId = useCallback(() => {
     if (!outlit) return null
     return outlit.getVisitorId()
@@ -172,7 +174,7 @@ export function useOutlit(): UseOutlitReturn {
         console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
         return
       }
-      outlit.activate(properties)
+      outlit.user.activate(properties)
     },
     [outlit],
   )
@@ -183,29 +185,51 @@ export function useOutlit(): UseOutlitReturn {
         console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
         return
       }
-      outlit.engaged(properties)
+      outlit.user.engaged(properties)
+    },
+    [outlit],
+  )
+
+  const inactive = useCallback(
+    (properties?: Record<string, string | number | boolean | null>) => {
+      if (!outlit) {
+        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
+        return
+      }
+      outlit.user.inactive(properties)
+    },
+    [outlit],
+  )
+
+  const trialing = useCallback(
+    (options: BillingOptions) => {
+      if (!outlit) {
+        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
+        return
+      }
+      outlit.customer.trialing(options)
     },
     [outlit],
   )
 
   const paid = useCallback(
-    (properties?: Record<string, string | number | boolean | null>) => {
+    (options: BillingOptions) => {
       if (!outlit) {
         console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
         return
       }
-      outlit.paid(properties)
+      outlit.customer.paid(options)
     },
     [outlit],
   )
 
   const churned = useCallback(
-    (properties?: Record<string, string | number | boolean | null>) => {
+    (options: BillingOptions) => {
       if (!outlit) {
         console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
         return
       }
-      outlit.churned(properties)
+      outlit.customer.churned(options)
     },
     [outlit],
   )
@@ -216,10 +240,17 @@ export function useOutlit(): UseOutlitReturn {
     getVisitorId,
     setUser,
     clearUser,
-    activate,
-    engaged,
-    paid,
-    churned,
+    user: {
+      identify: userIdentify,
+      activate,
+      engaged,
+      inactive,
+    },
+    customer: {
+      trialing,
+      paid,
+      churned,
+    },
     isInitialized,
     isTrackingEnabled,
     enableTracking,
