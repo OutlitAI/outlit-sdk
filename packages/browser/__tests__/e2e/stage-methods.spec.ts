@@ -29,7 +29,7 @@ interface ApiCall {
   payload: {
     visitorId?: string
     source?: string
-    events?: Array<StageEvent | Record<string, unknown>>
+    events?: Array<StageEvent | BillingEvent | Record<string, unknown>>
   }
 }
 
