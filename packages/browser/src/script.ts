@@ -6,7 +6,7 @@
  *   !function(w,d,src,key,auto){
  *     if(w.outlit&&w.outlit._loaded)return;
  *     w.outlit=w.outlit||{_q:[]};
- *     ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser","activate","engaged","paid","churned"].forEach(function(m){
+ *     ["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser","user","customer"].forEach(function(m){
  *       w.outlit[m]=w.outlit[m]||function(){w.outlit._q.push([m,[].slice.call(arguments)])};
  *     });
  *     var s=d.createElement("script");s.async=1;s.src=src;
@@ -23,7 +23,7 @@
  */
 
 import type { BrowserIdentifyOptions, BrowserTrackOptions } from "@outlit/core"
-import { Outlit, type OutlitOptions, type UserIdentity } from "./tracker"
+import { type BillingOptions, Outlit, type OutlitOptions, type UserIdentity } from "./tracker"
 
 // ============================================
 // TYPES
@@ -49,10 +49,17 @@ interface OutlitGlobal {
   isTrackingEnabled: () => boolean
   setUser: (identity: UserIdentity) => void
   clearUser: () => void
-  activate: (properties?: Record<string, string | number | boolean | null>) => void
-  engaged: (properties?: Record<string, string | number | boolean | null>) => void
-  paid: (properties?: Record<string, string | number | boolean | null>) => void
-  churned: (properties?: Record<string, string | number | boolean | null>) => void
+  user: {
+    identify: (options: BrowserIdentifyOptions) => void
+    activate: (properties?: Record<string, string | number | boolean | null>) => void
+    engaged: (properties?: Record<string, string | number | boolean | null>) => void
+    inactive: (properties?: Record<string, string | number | boolean | null>) => void
+  }
+  customer: {
+    trialing: (options: BillingOptions) => void
+    paid: (options: BillingOptions) => void
+    churned: (options: BillingOptions) => void
+  }
 }
 
 // ============================================
@@ -163,47 +170,64 @@ const outlit: OutlitGlobal & { _loaded?: boolean } = {
   },
 
   /**
-   * Mark the current user as activated.
+   * User namespace helpers.
    */
-  activate(properties?: Record<string, string | number | boolean | null>) {
-    if (!this._initialized || !this._instance) {
-      this._queue.push(() => this.activate(properties))
-      return
-    }
-    this._instance.activate(properties)
+  user: {
+    identify(options: BrowserIdentifyOptions) {
+      if (!outlit._initialized || !outlit._instance) {
+        outlit._queue.push(() => outlit.user.identify(options))
+        return
+      }
+      outlit._instance.user.identify(options)
+    },
+    activate(properties?: Record<string, string | number | boolean | null>) {
+      if (!outlit._initialized || !outlit._instance) {
+        outlit._queue.push(() => outlit.user.activate(properties))
+        return
+      }
+      outlit._instance.user.activate(properties)
+    },
+    engaged(properties?: Record<string, string | number | boolean | null>) {
+      if (!outlit._initialized || !outlit._instance) {
+        outlit._queue.push(() => outlit.user.engaged(properties))
+        return
+      }
+      outlit._instance.user.engaged(properties)
+    },
+    inactive(properties?: Record<string, string | number | boolean | null>) {
+      if (!outlit._initialized || !outlit._instance) {
+        outlit._queue.push(() => outlit.user.inactive(properties))
+        return
+      }
+      outlit._instance.user.inactive(properties)
+    },
   },
 
   /**
-   * Mark the current user as engaged.
+   * Customer namespace helpers.
    */
-  engaged(properties?: Record<string, string | number | boolean | null>) {
-    if (!this._initialized || !this._instance) {
-      this._queue.push(() => this.engaged(properties))
-      return
-    }
-    this._instance.engaged(properties)
-  },
-
-  /**
-   * Mark the current user as paid.
-   */
-  paid(properties?: Record<string, string | number | boolean | null>) {
-    if (!this._initialized || !this._instance) {
-      this._queue.push(() => this.paid(properties))
-      return
-    }
-    this._instance.paid(properties)
-  },
-
-  /**
-   * Mark the current user as churned.
-   */
-  churned(properties?: Record<string, string | number | boolean | null>) {
-    if (!this._initialized || !this._instance) {
-      this._queue.push(() => this.churned(properties))
-      return
-    }
-    this._instance.churned(properties)
+  customer: {
+    trialing(options: BillingOptions) {
+      if (!outlit._initialized || !outlit._instance) {
+        outlit._queue.push(() => outlit.customer.trialing(options))
+        return
+      }
+      outlit._instance.customer.trialing(options)
+    },
+    paid(options: BillingOptions) {
+      if (!outlit._initialized || !outlit._instance) {
+        outlit._queue.push(() => outlit.customer.paid(options))
+        return
+      }
+      outlit._instance.customer.paid(options)
+    },
+    churned(options: BillingOptions) {
+      if (!outlit._initialized || !outlit._instance) {
+        outlit._queue.push(() => outlit.customer.churned(options))
+        return
+      }
+      outlit._instance.customer.churned(options)
+    },
   },
 }
 

@@ -7,7 +7,7 @@ export { useOutlit, useTrack, useIdentify } from "./hooks"
 export type { UseOutlitReturn } from "./hooks"
 
 // Re-export useful types from tracker
-export type { UserIdentity } from "../tracker"
+export type { UserIdentity, BillingOptions } from "../tracker"
 
 // Re-export useful types from core for convenience
 export type {
@@ -15,4 +15,5 @@ export type {
   BrowserIdentifyOptions,
   TrackerConfig,
   ExplicitJourneyStage,
+  CustomerIdentifier,
 } from "@outlit/core"

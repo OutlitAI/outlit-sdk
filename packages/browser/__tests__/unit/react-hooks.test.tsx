@@ -180,7 +180,7 @@ describe("OutlitProvider", () => {
 })
 
 describe("Stage methods behavior", () => {
-  it("churned method can be called without properties", () => {
+  it("inactive method can be called without properties", () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <OutlitProvider publicKey="pk_test" autoTrack={false}>
         {children}
@@ -198,12 +198,12 @@ describe("Stage methods behavior", () => {
     // This should not throw
     expect(() => {
       act(() => {
-        result.current.churned()
+        result.current.user.inactive()
       })
     }).not.toThrow()
   })
 
-  it("churned method can be called with properties", () => {
+  it("inactive method can be called with properties", () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <OutlitProvider publicKey="pk_test" autoTrack={false}>
         {children}
@@ -220,7 +220,7 @@ describe("Stage methods behavior", () => {
     // This should not throw
     expect(() => {
       act(() => {
-        result.current.churned({ reason: "cancelled", plan: "pro" })
+        result.current.user.inactive({ reason: "cancelled", plan: "pro" })
       })
     }).not.toThrow()
   })

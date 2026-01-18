@@ -1,4 +1,6 @@
 import type {
+  BillingEvent,
+  BillingStatus,
   CalendarEvent,
   CalendarProvider,
   CustomEvent,
@@ -183,7 +185,7 @@ export function buildEngagementEvent(
 
 /**
  * Build a stage event.
- * Used to explicitly set customer journey stage (activated, engaged, paid, churned).
+ * Used to explicitly set customer journey stage (activated, engaged, inactive).
  * discovered/signed_up stages are inferred from identify calls.
  */
 export function buildStageEvent(
@@ -201,6 +203,36 @@ export function buildStageEvent(
     referrer,
     utm: extractUtmParams(url),
     stage,
+    properties,
+  }
+}
+
+/**
+ * Build a billing event.
+ * Used to set customer billing status (trialing, paid, churned).
+ */
+export function buildBillingEvent(
+  params: BaseEventParams & {
+    status: BillingStatus
+    customerId?: string
+    stripeCustomerId?: string
+    domain?: string
+    properties?: Record<string, string | number | boolean | null>
+  },
+): BillingEvent {
+  const { url, referrer, timestamp, status, customerId, stripeCustomerId, domain, properties } =
+    params
+  return {
+    type: "billing",
+    timestamp: timestamp ?? Date.now(),
+    url,
+    path: extractPathFromUrl(url),
+    referrer,
+    utm: extractUtmParams(url),
+    status,
+    customerId,
+    stripeCustomerId,
+    domain,
     properties,
   }
 }

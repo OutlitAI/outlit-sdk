@@ -1,10 +1,13 @@
 import {
+  type BillingStatus,
   type BrowserIdentifyOptions,
   type BrowserTrackOptions,
+  type CustomerIdentifier,
   DEFAULT_API_HOST,
   type ExplicitJourneyStage,
   type TrackerConfig,
   type TrackerEvent,
+  buildBillingEvent,
   buildCalendarEvent,
   buildCustomEvent,
   buildFormEvent,
@@ -76,6 +79,10 @@ export interface UserIdentity {
   email?: string
   userId?: string
   traits?: Record<string, string | number | boolean | null>
+}
+
+export type BillingOptions = CustomerIdentifier & {
+  properties?: Record<string, string | number | boolean | null>
 }
 
 export class Outlit {
@@ -220,7 +227,7 @@ export class Outlit {
    * Links the anonymous visitor to a known user.
    *
    * When email or userId is provided, also sets the current user identity
-   * for stage events (activate, engaged, paid).
+   * for stage events (activate, engaged, inactive).
    */
   identify(options: BrowserIdentifyOptions): void {
     if (!this.isTrackingEnabled) {
@@ -291,39 +298,25 @@ export class Outlit {
   }
 
   /**
-   * Mark the current user as activated.
-   * This is typically called after a user completes onboarding or a key activation milestone.
-   * Requires the user to be identified (via setUser or identify with userId).
+   * User namespace methods for contact journey stages.
    */
-  activate(properties?: Record<string, string | number | boolean | null>): void {
-    this.sendStageEvent("activated", properties)
+  readonly user = {
+    identify: (options: BrowserIdentifyOptions) => this.identify(options),
+    activate: (properties?: Record<string, string | number | boolean | null>) =>
+      this.sendStageEvent("activated", properties),
+    engaged: (properties?: Record<string, string | number | boolean | null>) =>
+      this.sendStageEvent("engaged", properties),
+    inactive: (properties?: Record<string, string | number | boolean | null>) =>
+      this.sendStageEvent("inactive", properties),
   }
 
   /**
-   * Mark the current user as engaged.
-   * This is typically called when a user reaches a usage milestone.
-   * Can also be computed automatically by the engagement cron.
+   * Customer namespace methods for billing status.
    */
-  engaged(properties?: Record<string, string | number | boolean | null>): void {
-    this.sendStageEvent("engaged", properties)
-  }
-
-  /**
-   * Mark the current user as paid.
-   * This is typically called after a successful payment/subscription.
-   * Can also be triggered by Stripe integration.
-   */
-  paid(properties?: Record<string, string | number | boolean | null>): void {
-    this.sendStageEvent("paid", properties)
-  }
-
-  /**
-   * Mark the current user as churned.
-   * This is typically called when a subscription is cancelled.
-   * Can also be triggered by Stripe integration.
-   */
-  churned(properties?: Record<string, string | number | boolean | null>): void {
-    this.sendStageEvent("churned", properties)
+  readonly customer = {
+    trialing: (options: BillingOptions) => this.sendBillingEvent("trialing", options),
+    paid: (options: BillingOptions) => this.sendBillingEvent("paid", options),
+    churned: (options: BillingOptions) => this.sendBillingEvent("churned", options),
   }
 
   /**
@@ -350,6 +343,29 @@ export class Outlit {
       referrer: document.referrer,
       stage,
       properties,
+    })
+    this.enqueue(event)
+  }
+
+  private sendBillingEvent(status: BillingStatus, options: BillingOptions): void {
+    if (!this.isTrackingEnabled) {
+      console.warn("[Outlit] Tracking not enabled. Call enableTracking() first.")
+      return
+    }
+
+    if (!options.customerId && !options.stripeCustomerId && !options.domain) {
+      console.warn("[Outlit] customer.* requires customerId, stripeCustomerId, or domain")
+      return
+    }
+
+    const event = buildBillingEvent({
+      url: window.location.href,
+      referrer: document.referrer,
+      status,
+      customerId: options.customerId,
+      stripeCustomerId: options.stripeCustomerId,
+      domain: options.domain,
+      properties: options.properties,
     })
     this.enqueue(event)
   }
@@ -506,10 +522,14 @@ export class Outlit {
         const blob = new Blob([JSON.stringify(payload)], { type: "application/json" })
         const sent = navigator.sendBeacon(url, blob)
         if (sent) return
+        // sendBeacon failed (quota exceeded, etc.) - fall through to fetch
+        console.warn(
+          `[Outlit] sendBeacon failed for ${events.length} events, falling back to fetch`,
+        )
       }
 
       // Fallback to fetch
-      await fetch(url, {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -517,9 +537,15 @@ export class Outlit {
         body: JSON.stringify(payload),
         keepalive: true,
       })
+
+      if (!response.ok) {
+        console.warn(
+          `[Outlit] Server returned ${response.status} when sending ${events.length} events`,
+        )
+      }
     } catch (error) {
-      // Silently fail - we don't want to break the user's site
-      console.warn("[Outlit] Failed to send events:", error)
+      // Log with context, but don't break the user's site
+      console.warn(`[Outlit] Failed to send ${events.length} events:`, error)
     }
   }
 }
@@ -605,33 +631,13 @@ export function clearUser(): void {
 }
 
 /**
- * Mark the current user as activated.
+ * Access user and customer namespaces.
  * Convenience method that uses the singleton instance.
  */
-export function activate(properties?: Record<string, string | number | boolean | null>): void {
-  getInstance().activate(properties)
+export function user(): Outlit["user"] {
+  return getInstance().user
 }
 
-/**
- * Mark the current user as engaged.
- * Convenience method that uses the singleton instance.
- */
-export function engaged(properties?: Record<string, string | number | boolean | null>): void {
-  getInstance().engaged(properties)
-}
-
-/**
- * Mark the current user as paid.
- * Convenience method that uses the singleton instance.
- */
-export function paid(properties?: Record<string, string | number | boolean | null>): void {
-  getInstance().paid(properties)
-}
-
-/**
- * Mark the current user as churned.
- * Convenience method that uses the singleton instance.
- */
-export function churned(properties?: Record<string, string | number | boolean | null>): void {
-  getInstance().churned(properties)
+export function customer(): Outlit["customer"] {
+  return getInstance().customer
 }

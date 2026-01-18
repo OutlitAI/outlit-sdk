@@ -158,7 +158,7 @@ test.describe("UTM Parameter Tracking", () => {
 
     // Identify a user
     await page.evaluate(() => {
-      window.outlit.identify({ email: "test@example.com" })
+      window.outlit.user.identify({ email: "test@example.com" })
     })
 
     // Force flush

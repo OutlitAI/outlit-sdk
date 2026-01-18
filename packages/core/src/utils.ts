@@ -21,7 +21,8 @@ export function extractUtmParams(url: string): UtmParams | undefined {
     if (params.has("utm_content")) utm.content = params.get("utm_content") ?? undefined
 
     return Object.keys(utm).length > 0 ? utm : undefined
-  } catch {
+  } catch (error) {
+    console.warn(`[Outlit] Failed to parse URL for UTM extraction: "${url}"`, error)
     return undefined
   }
 }
@@ -33,7 +34,11 @@ export function extractPathFromUrl(url: string): string {
   try {
     const urlObj = new URL(url)
     return urlObj.pathname
-  } catch {
+  } catch (error) {
+    console.warn(
+      `[Outlit] Failed to parse URL for path extraction: "${url}", defaulting to "/"`,
+      error,
+    )
     return "/"
   }
 }

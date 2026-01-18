@@ -10,9 +10,12 @@ export type EventType =
   | "calendar"
   | "engagement"
   | "stage"
+  | "billing"
 
 // Only explicit stages - discovered/signed_up are inferred from identify calls
-export type ExplicitJourneyStage = "activated" | "engaged" | "paid" | "churned"
+export type ExplicitJourneyStage = "activated" | "engaged" | "inactive"
+
+export type BillingStatus = "trialing" | "paid" | "churned"
 
 export type CalendarProvider = "cal.com" | "calendly" | "unknown"
 
@@ -60,19 +63,30 @@ export interface BrowserIdentifyOptions {
 // No anonymous tracking - must identify the user
 // ============================================
 
-export interface ServerTrackOptions {
-  email?: string // At least one of email/userId required
-  userId?: string // At least one of email/userId required
+/**
+ * Server identity - requires at least email OR userId.
+ * This is enforced at the type level using a discriminated union.
+ */
+export type ServerIdentity = { email: string; userId?: string } | { email?: string; userId: string }
+
+export type ServerTrackOptions = ServerIdentity & {
   eventName: string
   properties?: Record<string, string | number | boolean | null>
   timestamp?: number
 }
 
-export interface ServerIdentifyOptions {
-  email?: string // At least one of email/userId required
-  userId?: string // At least one of email/userId required
+export type ServerIdentifyOptions = ServerIdentity & {
   traits?: Record<string, string | number | boolean | null>
 }
+
+/**
+ * Customer identity - requires at least one of customerId, stripeCustomerId, or domain.
+ * This is enforced at the type level using a discriminated union.
+ */
+export type CustomerIdentifier =
+  | { customerId: string; stripeCustomerId?: string; domain?: string }
+  | { customerId?: string; stripeCustomerId: string; domain?: string }
+  | { customerId?: string; stripeCustomerId?: string; domain: string }
 
 // ============================================
 // INTERNAL EVENT TYPES
@@ -143,6 +157,18 @@ export interface StageEvent extends BaseEvent {
   properties?: Record<string, string | number | boolean | null>
 }
 
+export interface BillingEvent extends BaseEvent {
+  type: "billing"
+  /** The billing status to set for a customer */
+  status: BillingStatus
+  /** Optional customer identifiers */
+  customerId?: string
+  stripeCustomerId?: string
+  domain?: string
+  /** Optional properties for context */
+  properties?: Record<string, string | number | boolean | null>
+}
+
 export type TrackerEvent =
   | PageviewEvent
   | FormEvent
@@ -151,6 +177,7 @@ export type TrackerEvent =
   | CalendarEvent
   | EngagementEvent
   | StageEvent
+  | BillingEvent
 
 // ============================================
 // INGEST PAYLOAD

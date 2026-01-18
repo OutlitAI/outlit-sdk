@@ -1,6 +1,6 @@
 // Main export
 export { Outlit } from "./client"
-export type { OutlitOptions, StageOptions } from "./client"
+export type { OutlitOptions, StageOptions, BillingOptions } from "./client"
 
 // Re-export useful types from core
 export type {

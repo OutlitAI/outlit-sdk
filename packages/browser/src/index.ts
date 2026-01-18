@@ -9,12 +9,10 @@ export {
   isTrackingEnabled,
   setUser,
   clearUser,
-  activate,
-  engaged,
-  paid,
-  churned,
+  user,
+  customer,
 } from "./tracker"
-export type { OutlitOptions, UserIdentity } from "./tracker"
+export type { OutlitOptions, UserIdentity, BillingOptions } from "./tracker"
 
 // Re-export useful types from core
 export type {
@@ -23,23 +21,22 @@ export type {
   TrackerConfig,
   UtmParams,
   ExplicitJourneyStage,
+  CustomerIdentifier,
 } from "@outlit/core"
 
 // Default export for simple import
 import {
   Outlit,
-  activate,
-  churned,
   clearUser,
+  customer,
   enableTracking,
-  engaged,
   getInstance,
   identify,
   init,
   isTrackingEnabled,
-  paid,
   setUser,
   track,
+  user,
 } from "./tracker"
 
 export default {
@@ -52,8 +49,6 @@ export default {
   isTrackingEnabled,
   setUser,
   clearUser,
-  activate,
-  engaged,
-  paid,
-  churned,
+  user,
+  customer,
 }
