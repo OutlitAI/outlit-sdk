@@ -1,5 +1,11 @@
 # @outlit/browser
 
+## 1.0.3
+
+### Patch Changes
+
+- [#25](https://github.com/OutlitAI/outlit-sdk/pull/25) [`066f8d3`](https://github.com/OutlitAI/outlit-sdk/commit/066f8d31032f75f913aea094a332215c45369bd5) Thanks [@leo-paz](https://github.com/leo-paz)! - Update E2E test fixtures to use new namespace-based IIFE stub pattern with user and customer namespaces
+
 ## 1.0.2
 
 ### Patch Changes
