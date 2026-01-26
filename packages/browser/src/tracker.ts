@@ -16,6 +16,8 @@ import {
   buildPageviewEvent,
   buildStageEvent,
 } from "@outlit/core"
+
+const MAX_PENDING_STAGE_EVENTS = 10
 import { initFormTracking, initPageviewTracking, stopAutocapture } from "./autocapture"
 import {
   type CalendarBookingEvent,
@@ -100,6 +102,10 @@ export class Outlit {
   // User identity state for stage events
   private currentUser: UserIdentity | null = null
   private pendingUser: UserIdentity | null = null
+  private pendingStageEvents: Array<{
+    stage: ExplicitJourneyStage
+    properties?: Record<string, string | number | boolean | null>
+  }> = []
 
   constructor(options: OutlitOptions) {
     this.publicKey = options.publicKey
@@ -238,9 +244,13 @@ export class Outlit {
     // Update currentUser if email or userId is provided
     // This enables stage events after identify() is called
     if (options.email || options.userId) {
+      const hadNoUser = !this.currentUser
       this.currentUser = {
         email: options.email,
         userId: options.userId,
+      }
+      if (hadNoUser) {
+        this.flushPendingStageEvents()
       }
     }
 
@@ -287,6 +297,7 @@ export class Outlit {
   clearUser(): void {
     this.currentUser = null
     this.pendingUser = null
+    this.pendingStageEvents = []
   }
 
   /**
@@ -295,6 +306,27 @@ export class Outlit {
   private applyUser(identity: UserIdentity): void {
     this.currentUser = identity
     this.identify({ email: identity.email, userId: identity.userId, traits: identity.traits })
+    this.flushPendingStageEvents()
+  }
+
+  /**
+   * Flush any pending stage events that were queued before user identity was set.
+   */
+  private flushPendingStageEvents(): void {
+    if (this.pendingStageEvents.length === 0) return
+
+    const events = [...this.pendingStageEvents]
+    this.pendingStageEvents = []
+
+    for (const { stage, properties } of events) {
+      const event = buildStageEvent({
+        url: window.location.href,
+        referrer: document.referrer,
+        stage,
+        properties,
+      })
+      this.enqueue(event)
+    }
   }
 
   /**
@@ -332,9 +364,13 @@ export class Outlit {
     }
 
     if (!this.currentUser) {
-      console.warn(
-        `[Outlit] Cannot call ${stage}() without setting user identity. Call setUser() or identify() first.`,
-      )
+      if (this.pendingStageEvents.length >= MAX_PENDING_STAGE_EVENTS) {
+        console.warn(
+          `[Outlit] Pending stage event queue full (${MAX_PENDING_STAGE_EVENTS}). Call setUser() or identify() to flush queued events.`,
+        )
+        return
+      }
+      this.pendingStageEvents.push({ stage, properties })
       return
     }
 
