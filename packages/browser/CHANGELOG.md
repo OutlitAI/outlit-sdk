@@ -1,5 +1,11 @@
 # @outlit/browser
 
+## 1.0.4
+
+### Patch Changes
+
+- [#27](https://github.com/OutlitAI/outlit-sdk/pull/27) [`dc430ec`](https://github.com/OutlitAI/outlit-sdk/commit/dc430ec4750f240350dd298a8f142f5e57531664) Thanks [@leo-paz](https://github.com/leo-paz)! - Fix race condition where stage events (activate, engaged, inactive) were silently dropped when called before user identity was established. Events are now queued and flushed when setUser() or identify() is called.
+
 ## 1.0.3
 
 ### Patch Changes
