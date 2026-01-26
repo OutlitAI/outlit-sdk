@@ -88,7 +88,7 @@ test.describe("Stage Methods", () => {
     expect(stageEvent?.properties?.plan).toBe("pro")
   })
 
-  test("inactive() requires user identity (logs warning)", async ({ page }) => {
+  test("inactive() queues event when user identity not set (no warning)", async ({ page }) => {
     const warnings: string[] = []
 
     // Set up console listener before navigation
@@ -99,15 +99,16 @@ test.describe("Stage Methods", () => {
     await page.goto("/test-page.html")
     await page.waitForFunction(() => window.outlit?._initialized)
 
-    // Call inactive without setting user identity
+    // Call inactive without setting user identity - should queue silently
     await page.evaluate(() => {
       window.outlit.user.inactive({ reason: "test" })
     })
 
-    // Wait for warning to be logged
+    // Wait a bit to ensure no warning is logged
     await page.waitForTimeout(100)
 
-    expect(warnings.some((w) => w.includes("setUser") || w.includes("identify"))).toBe(true)
+    // Should NOT log a warning when queuing (only when queue is full)
+    expect(warnings.some((w) => w.includes("setUser") || w.includes("identify"))).toBe(false)
   })
 
   test("activate() sends stage event", async ({ page }) => {
@@ -285,5 +286,166 @@ test.describe("Stage Methods", () => {
     expect(stageEvent).toBeDefined()
     expect(stageEvent?.type).toBe("stage")
     expect(stageEvent?.stage).toBe("inactive")
+  })
+})
+
+// ============================================
+// PENDING STAGE EVENTS TESTS
+// ============================================
+
+test.describe("Pending Stage Events", () => {
+  test("stage events queued when user not set, flushed on setUser()", async ({ page }) => {
+    const apiCalls = await interceptApiCalls(page)
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Call stage method BEFORE setting user identity
+    await page.evaluate(() => {
+      window.outlit.user.activate({ milestone: "onboarding_complete" })
+    })
+
+    // Verify no events sent yet (no flush triggered)
+    await page.waitForTimeout(100)
+    let allEvents = apiCalls.flatMap((c) => c.payload.events || [])
+    const stageEvents = allEvents.filter((e): e is StageEvent => e.type === "stage")
+    expect(stageEvents.length).toBe(0)
+
+    // Now set user identity - should flush pending events
+    await page.evaluate(() => {
+      window.outlit.setUser({ userId: "user-delayed" })
+    })
+
+    // Force flush
+    await page.evaluate(() => window.dispatchEvent(new Event("beforeunload")))
+    await page.waitForTimeout(500)
+
+    allEvents = apiCalls.flatMap((c) => c.payload.events || [])
+    const activateEvent = allEvents.find(
+      (e): e is StageEvent => e.type === "stage" && (e as StageEvent).stage === "activated",
+    )
+
+    expect(activateEvent).toBeDefined()
+    expect(activateEvent?.properties?.milestone).toBe("onboarding_complete")
+  })
+
+  test("stage events queued when user not set, flushed on identify()", async ({ page }) => {
+    const apiCalls = await interceptApiCalls(page)
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Call stage method BEFORE identifying
+    await page.evaluate(() => {
+      window.outlit.user.engaged({ sessions: 5 })
+    })
+
+    // Now identify - should flush pending events
+    await page.evaluate(() => {
+      window.outlit.identify({ email: "test@example.com" })
+    })
+
+    // Force flush
+    await page.evaluate(() => window.dispatchEvent(new Event("beforeunload")))
+    await page.waitForTimeout(500)
+
+    const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
+    const engagedEvent = allEvents.find(
+      (e): e is StageEvent => e.type === "stage" && (e as StageEvent).stage === "engaged",
+    )
+
+    expect(engagedEvent).toBeDefined()
+    expect(engagedEvent?.properties?.sessions).toBe(5)
+  })
+
+  test("queue limit warning when exceeding MAX_PENDING_STAGE_EVENTS", async ({ page }) => {
+    const warnings: string[] = []
+
+    page.on("console", (msg) => {
+      if (msg.type() === "warning") warnings.push(msg.text())
+    })
+
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Queue 11 events (limit is 10)
+    await page.evaluate(() => {
+      for (let i = 0; i < 11; i++) {
+        window.outlit.user.activate({ attempt: i })
+      }
+    })
+
+    await page.waitForTimeout(100)
+
+    expect(warnings.some((w) => w.includes("queue full") || w.includes("10"))).toBe(true)
+  })
+
+  test("pending events cleared on clearUser()", async ({ page }) => {
+    const apiCalls = await interceptApiCalls(page)
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Queue a stage event
+    await page.evaluate(() => {
+      window.outlit.user.activate({ milestone: "should_be_cleared" })
+    })
+
+    // Clear user (simulating logout) - should clear pending events
+    await page.evaluate(() => {
+      window.outlit.clearUser()
+    })
+
+    // Set a new user
+    await page.evaluate(() => {
+      window.outlit.setUser({ userId: "new-user" })
+    })
+
+    // Force flush
+    await page.evaluate(() => window.dispatchEvent(new Event("beforeunload")))
+    await page.waitForTimeout(500)
+
+    const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
+    const activateEvent = allEvents.find(
+      (e): e is StageEvent =>
+        e.type === "stage" &&
+        (e as StageEvent).stage === "activated" &&
+        (e as StageEvent).properties?.milestone === "should_be_cleared",
+    )
+
+    // The event should NOT be present (it was cleared)
+    expect(activateEvent).toBeUndefined()
+  })
+
+  test("multiple pending events preserve order and properties when flushed", async ({ page }) => {
+    const apiCalls = await interceptApiCalls(page)
+    await page.goto("/test-page.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Queue multiple events before setting user
+    await page.evaluate(() => {
+      window.outlit.user.activate({ step: 1 })
+      window.outlit.user.engaged({ step: 2 })
+      window.outlit.user.inactive({ step: 3 })
+    })
+
+    // Set user to flush
+    await page.evaluate(() => {
+      window.outlit.setUser({ userId: "user-multi" })
+    })
+
+    // Force flush
+    await page.evaluate(() => window.dispatchEvent(new Event("beforeunload")))
+    await page.waitForTimeout(500)
+
+    const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
+    const stageEvents = allEvents.filter((e): e is StageEvent => e.type === "stage")
+
+    expect(stageEvents.length).toBe(3)
+
+    const activateEvent = stageEvents.find((e) => e.stage === "activated")
+    const engagedEvent = stageEvents.find((e) => e.stage === "engaged")
+    const inactiveEvent = stageEvents.find((e) => e.stage === "inactive")
+
+    expect(activateEvent?.properties?.step).toBe(1)
+    expect(engagedEvent?.properties?.step).toBe(2)
+    expect(inactiveEvent?.properties?.step).toBe(3)
   })
 })
