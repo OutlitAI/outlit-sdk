@@ -1,0 +1,778 @@
+---
+title: "React Integration"
+description: "First-class React support with Provider and hooks"
+---
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install --save @outlit/browser
+```
+
+```bash pnpm
+pnpm add @outlit/browser
+```
+
+```bash yarn
+yarn add @outlit/browser
+```
+
+```bash bun
+bun add @outlit/browser
+```
+</CodeGroup>
+
+## Quick Start
+
+Wrap your app with `OutlitProvider` and use the `useOutlit` hook in components.
+
+<Tabs>
+  <Tab title="With Authentication (Recommended)">
+If your app has user authentication, pass the user identity via the `user` prop. This is the recommended approach as it automatically handles login/logout transitions.
+
+```tsx
+// app/providers.tsx (Client Component)
+'use client'
+
+import { OutlitProvider } from '@outlit/browser/react'
+import { useUser } from '@clerk/nextjs' // or useAuth0, useSession, etc.
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const { user, isLoaded } = useUser()
+
+  // Build user identity from your auth provider
+  const outlitUser = isLoaded && user ? {
+    email: user.primaryEmailAddress?.emailAddress,
+    userId: user.id,
+    traits: {
+      name: user.fullName,
+    }
+  } : null
+
+  return (
+    <OutlitProvider 
+      publicKey="pk_your_key" 
+      trackPageviews
+      user={outlitUser}
+    >
+      {children}
+    </OutlitProvider>
+  )
+}
+```
+
+```tsx
+// app/layout.tsx
+import { Providers } from './providers'
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  )
+}
+```
+  </Tab>
+  <Tab title="Anonymous Only">
+For marketing sites without authentication, just add the provider:
+
+```tsx
+// app/layout.tsx (Next.js App Router)
+import { OutlitProvider } from '@outlit/browser/react'
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <OutlitProvider publicKey="pk_your_key" trackPageviews>
+          {children}
+        </OutlitProvider>
+      </body>
+    </html>
+  )
+}
+```
+  </Tab>
+</Tabs>
+
+### Using the Hook
+
+Track custom events with the `useOutlit` hook:
+
+```tsx
+// components/pricing-button.tsx
+'use client'
+
+import { useOutlit } from '@outlit/browser/react'
+
+export function PricingButton() {
+  const { track } = useOutlit()
+
+  return (
+    <button onClick={() => track('pricing_clicked', { plan: 'pro' })}>
+      View Pricing
+    </button>
+  )
+}
+```
+
+## Provider Configuration
+
+### OutlitProvider
+
+The `OutlitProvider` initializes tracking and provides context to child components.
+
+```tsx
+import { OutlitProvider } from '@outlit/browser/react'
+
+<OutlitProvider
+  publicKey="pk_xxx"
+  apiHost="https://app.outlit.ai"
+  trackPageviews={true}
+  trackForms={true}
+  trackEngagement={true}
+  formFieldDenylist={['custom_secret_field']}
+  flushInterval={5000}
+>
+  {children}
+</OutlitProvider>
+```
+
+### Props
+
+<ParamField path="publicKey" type="string" required>
+  Your organization's public key.
+</ParamField>
+
+<ParamField path="apiHost" type="string" default="https://app.outlit.ai">
+  API endpoint for sending events.
+</ParamField>
+
+<ParamField path="trackPageviews" type="boolean" default="true">
+  Automatically track pageviews on route changes.
+</ParamField>
+
+<ParamField path="trackForms" type="boolean" default="true">
+  Automatically capture form submissions.
+</ParamField>
+
+<ParamField path="formFieldDenylist" type="string[]">
+  Additional field names to exclude from form capture.
+</ParamField>
+
+<ParamField path="flushInterval" type="number" default="5000">
+  How often to flush queued events (ms).
+</ParamField>
+
+<ParamField path="autoTrack" type="boolean" default="true">
+  Whether to start tracking automatically. Set to `false` to wait for user consent. Use `enableTracking()` from the `useOutlit` hook after consent.
+</ParamField>
+
+<ParamField path="autoIdentify" type="boolean" default="true">
+  Automatically identify users when they submit forms containing an email field. Extracts email and name (first name, last name, full name) using field name heuristics. Set to `false` to disable and call `identify()` manually. See [Auto-Identify](/tracking/identity/overview#auto-identify) for details.
+</ParamField>
+
+<ParamField path="trackEngagement" type="boolean" default="true">
+  Track engagement metrics (active time on page). Emits engagement events on page exit and navigation.
+</ParamField>
+
+<ParamField path="idleTimeout" type="number" default="30000">
+  Idle timeout in milliseconds for engagement tracking. After this period of no user interaction, the user is considered idle.
+</ParamField>
+
+<ParamField path="trackCalendarEmbeds" type="boolean" default="true">
+  Track booking events from calendar embeds (Cal.com, Calendly).
+</ParamField>
+
+<ParamField path="user" type="UserIdentity | null">
+  Current user identity. When provided with email or userId, identifies the user. When null or undefined, clears the user identity. This is the recommended way to handle user identity in server-rendered apps.
+</ParamField>
+
+## User Identity Patterns
+
+The `user` prop is the **recommended** way to handle user identity. It's simpler and more reliable than manual `identify()` calls because:
+
+- **Automatic lifecycle management**: Login/logout transitions are handled automatically
+- **No timing issues**: Identity is set before any events are tracked
+- **Cleaner code**: No need for useEffect + identify() synchronization
+
+### Pattern 1: Client-Side Auth (Clerk, Auth0, etc.)
+
+For auth libraries that provide React hooks:
+
+```tsx
+// app/providers.tsx
+'use client'
+
+import { OutlitProvider } from '@outlit/browser/react'
+import { useUser } from '@clerk/nextjs' // or useAuth0, useSession, etc.
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const { user, isLoaded } = useUser()
+
+  const outlitUser = isLoaded && user ? {
+    email: user.primaryEmailAddress?.emailAddress,
+    userId: user.id,
+    traits: { name: user.fullName }
+  } : null
+
+  return (
+    <OutlitProvider publicKey="pk_xxx" user={outlitUser}>
+      {children}
+    </OutlitProvider>
+  )
+}
+```
+
+### Pattern 2: Server-Side Auth (NextAuth, Lucia, etc.)
+
+For auth systems where session is available server-side:
+
+```tsx
+// app/layout.tsx (Server Component)
+import { OutlitProvider } from '@outlit/browser/react'
+import { auth } from '@/auth' // Your auth library
+
+export default async function RootLayout({ children }) {
+  const session = await auth()
+
+  return (
+    <html>
+      <body>
+        <OutlitProvider 
+          publicKey={process.env.NEXT_PUBLIC_OUTLIT_KEY!}
+          user={session?.user ? {
+            email: session.user.email,
+            userId: session.user.id,
+            traits: { name: session.user.name }
+          } : null}
+        >
+          {children}
+        </OutlitProvider>
+      </body>
+    </html>
+  )
+}
+```
+
+<Tip>
+  **Which pattern should I use?**
+  
+  - **Client-side auth hooks** (Clerk, Auth0): Use Pattern 1 with a client providers component
+  - **Server-side sessions** (NextAuth, Lucia, custom JWT): Use Pattern 2 directly in the layout
+  
+  Both patterns work equally well - choose based on how your auth library provides user data.
+</Tip>
+
+<Info>
+  When the `user` prop changes (login/logout), the provider automatically calls `setUser()` or `clearUser()` internally. You don't need to call these methods manually.
+</Info>
+
+## Consent Management
+
+If you need to wait for user consent before tracking:
+
+```tsx
+// app/layout.tsx
+import { OutlitProvider } from '@outlit/browser/react'
+
+export default function RootLayout({ children }) {
+  return (
+    <OutlitProvider publicKey="pk_xxx" autoTrack={false}>
+      {children}
+    </OutlitProvider>
+  )
+}
+```
+
+```tsx
+// components/cookie-banner.tsx
+'use client'
+
+import { useOutlit } from '@outlit/browser/react'
+
+export function CookieBanner() {
+  const { enableTracking, isTrackingEnabled } = useOutlit()
+
+  // Don't show if already tracking (user previously accepted)
+  if (isTrackingEnabled) return null
+
+  return (
+    <div className="fixed bottom-4 left-4 right-4 bg-white p-4 shadow-lg rounded-lg">
+      <p>We use cookies to improve your experience.</p>
+      <div className="flex gap-2 mt-2">
+        <button
+          onClick={enableTracking}
+          className="px-4 py-2 bg-indigo-600 text-white rounded"
+        >
+          Accept
+        </button>
+        <button className="px-4 py-2 border rounded">
+          Decline
+        </button>
+      </div>
+    </div>
+  )
+}
+```
+
+### With Third-Party CMPs
+
+<Tabs>
+  <Tab title="Cookiebot">
+```tsx
+'use client'
+
+import { useOutlit } from '@outlit/browser/react'
+import { useEffect } from 'react'
+
+export function CookiebotListener() {
+  const { enableTracking } = useOutlit()
+
+  useEffect(() => {
+    const handleConsent = () => {
+      // @ts-ignore - Cookiebot global
+      const consent = window.Cookiebot?.consent
+      if (consent?.marketing || consent?.analytics) {
+        enableTracking()
+      }
+    }
+
+    window.addEventListener('CookiebotOnAccept', handleConsent)
+    return () => window.removeEventListener('CookiebotOnAccept', handleConsent)
+  }, [enableTracking])
+
+  return null
+}
+```
+  </Tab>
+  <Tab title="OneTrust">
+```tsx
+'use client'
+
+import { useOutlit } from '@outlit/browser/react'
+import { useEffect } from 'react'
+
+export function OneTrustListener() {
+  const { enableTracking } = useOutlit()
+
+  useEffect(() => {
+    // @ts-ignore - OneTrust global
+    const groups = window.OnetrustActiveGroups || ''
+    // C0002 = Performance, C0004 = Targeting/Marketing
+    if (groups.includes('C0004') || groups.includes('C0002')) {
+      enableTracking()
+    }
+
+    // Also listen for changes
+    const handleConsent = () => {
+      // @ts-ignore
+      const updatedGroups = window.OnetrustActiveGroups || ''
+      if (updatedGroups.includes('C0004') || updatedGroups.includes('C0002')) {
+        enableTracking()
+      }
+    }
+
+    window.addEventListener('consent.onetrust', handleConsent)
+    return () => window.removeEventListener('consent.onetrust', handleConsent)
+  }, [enableTracking])
+
+  return null
+}
+```
+  </Tab>
+</Tabs>
+
+## Hooks
+
+### useOutlit
+
+The primary hook for tracking events and identifying users.
+
+```tsx
+import { useOutlit } from '@outlit/browser/react'
+
+function MyComponent() {
+  const {
+    track,
+    identify,
+    setUser,
+    clearUser,
+    user,       // User stage methods: identify, activate, engaged, inactive
+    customer,   // Customer billing methods: trialing, paid, churned
+    getVisitorId,
+    isInitialized,
+    isTrackingEnabled,
+    enableTracking,
+  } = useOutlit()
+
+  // Track an event
+  track('button_clicked', { buttonId: 'cta' })
+
+  // Identify the user
+  identify({ email: 'user@example.com', traits: { plan: 'pro' } })
+
+  // User stage methods
+  user.activate({ flow: 'onboarding' })
+  user.engaged({ milestone: 'first_project' })
+
+  // Customer billing methods (requires account identifier)
+  customer.paid({ domain: 'acme.com', plan: 'pro' })
+
+  // Get visitor ID (null if tracking not enabled)
+  const visitorId = getVisitorId()
+
+  // Check if tracking is active
+  if (!isTrackingEnabled) {
+    return <button onClick={enableTracking}>Accept Tracking</button>
+  }
+}
+```
+
+#### Returns
+
+<ParamField path="track" type="(eventName: string, properties?: object) => void">
+  Track a custom event.
+</ParamField>
+
+<ParamField path="identify" type="(options: IdentifyOptions) => void">
+  Identify the current visitor.
+</ParamField>
+
+<ParamField path="setUser" type="(identity: UserIdentity) => void">
+  Set the current user identity. Ideal for SPA authentication flows.
+</ParamField>
+
+<ParamField path="clearUser" type="() => void">
+  Clear the current user identity (on logout).
+</ParamField>
+
+<ParamField path="user" type="object">
+  User stage methods namespace:
+  - `user.identify(options)` - Identify the user
+  - `user.activate(properties?)` - Mark user as activated
+  - `user.engaged(properties?)` - Mark user as engaged
+  - `user.inactive(properties?)` - Mark user as inactive
+</ParamField>
+
+<ParamField path="customer" type="object">
+  Customer billing methods namespace. Requires at least one of `domain`, `customerId`, or `stripeCustomerId`:
+  - `customer.trialing(options)` - Mark account as trialing
+  - `customer.paid(options)` - Mark account as paid
+  - `customer.churned(options)` - Mark account as churned
+</ParamField>
+
+<ParamField path="getVisitorId" type="() => string | null">
+  Get the current visitor's ID. Returns `null` if tracking is not enabled.
+</ParamField>
+
+<ParamField path="isTrackingEnabled" type="boolean">
+  Whether tracking is currently enabled. Will be `false` if `autoTrack` is `false` and `enableTracking()` hasn't been called.
+</ParamField>
+
+<ParamField path="enableTracking" type="() => void">
+  Enable tracking. Call this after obtaining user consent. Only needed if `autoTrack` is `false`.
+</ParamField>
+
+<ParamField path="isInitialized" type="boolean">
+  Whether the tracker is ready.
+</ParamField>
+
+### useTrack
+
+A convenience hook that returns just the `track` function:
+
+```tsx
+import { useTrack } from '@outlit/browser/react'
+
+function FeatureButton({ featureId }) {
+  const track = useTrack()
+
+  return (
+    <button onClick={() => track('feature_clicked', { featureId })}>
+      Try Feature
+    </button>
+  )
+}
+```
+
+### useIdentify
+
+A convenience hook that returns just the `identify` function:
+
+```tsx
+import { useIdentify } from '@outlit/browser/react'
+
+function LoginForm() {
+  const identify = useIdentify()
+
+  const onLogin = async (email, password) => {
+    const user = await login(email, password)
+    
+    identify({
+      email: user.email,
+      userId: user.id,
+      traits: {
+        name: user.name,
+        plan: user.plan
+      }
+    })
+  }
+}
+```
+
+## Journey Stage Events
+
+Track user progression through your product lifecycle:
+
+```tsx
+'use client'
+
+import { useOutlit } from '@outlit/browser/react'
+
+function OnboardingComplete() {
+  const { user } = useOutlit()
+
+  const handleComplete = () => {
+    user.activate({ flow: 'onboarding', step: 'completed' })
+  }
+
+  return <button onClick={handleComplete}>Complete Setup</button>
+}
+```
+
+```tsx
+// Track engagement milestone
+function FirstProjectCreated() {
+  const { user } = useOutlit()
+
+  useEffect(() => {
+    user.engaged({ milestone: 'first_project' })
+  }, [user])
+
+  return <div>Congratulations on your first project!</div>
+}
+```
+
+<Warning>
+  User stage methods (`user.activate`, `user.engaged`, `user.inactive`) require the user to be identified first. Use `setUser()`, `identify()`, or the `user` prop before calling stage methods.
+</Warning>
+
+<Info>
+  Account billing status (`customer.paid`, `customer.churned`, `customer.trialing`) is tracked separately at the account level. If you've connected Stripe, this is handled automatically. For manual billing tracking from your server, see [Stages & Billing](/tracking/stages).
+</Info>
+
+## Framework Examples
+
+### Next.js App Router
+
+```tsx
+// app/layout.tsx
+import { OutlitProvider } from '@outlit/browser/react'
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <OutlitProvider 
+          publicKey={process.env.NEXT_PUBLIC_OUTLIT_KEY!}
+          trackPageviews
+        >
+          {children}
+        </OutlitProvider>
+      </body>
+    </html>
+  )
+}
+```
+
+```tsx
+// app/dashboard/page.tsx
+'use client'
+
+import { useOutlit } from '@outlit/browser/react'
+import { useEffect } from 'react'
+
+export default function Dashboard() {
+  const { track } = useOutlit()
+
+  useEffect(() => {
+    track('dashboard_viewed')
+  }, [track])
+
+  return <div>Dashboard</div>
+}
+```
+
+### Next.js Pages Router
+
+```tsx
+// pages/_app.tsx
+import { OutlitProvider } from '@outlit/browser/react'
+
+export default function App({ Component, pageProps }) {
+  return (
+    <OutlitProvider publicKey={process.env.NEXT_PUBLIC_OUTLIT_KEY!}>
+      <Component {...pageProps} />
+    </OutlitProvider>
+  )
+}
+```
+
+### Remix
+
+```tsx
+// app/root.tsx
+import { OutlitProvider } from '@outlit/browser/react'
+
+export default function App() {
+  return (
+    <html>
+      <body>
+        <OutlitProvider publicKey={window.ENV.OUTLIT_KEY}>
+          <Outlet />
+        </OutlitProvider>
+      </body>
+    </html>
+  )
+}
+```
+
+## Common Patterns
+
+### Track on Mount
+
+Track when a component mounts (e.g., page viewed):
+
+```tsx
+import { useOutlit } from '@outlit/browser/react'
+import { useEffect } from 'react'
+
+function ProductPage({ productId }) {
+  const { track } = useOutlit()
+
+  useEffect(() => {
+    track('product_viewed', { productId })
+  }, [productId, track])
+
+  return <div>Product {productId}</div>
+}
+```
+
+### Track Form Submission
+
+Track custom form events:
+
+```tsx
+import { useOutlit } from '@outlit/browser/react'
+
+function ContactForm() {
+  const { track, identify } = useOutlit()
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const formData = new FormData(e.target)
+    
+    track('contact_form_submitted', {
+      subject: formData.get('subject')
+    })
+
+    identify({
+      email: formData.get('email'),
+      traits: {
+        name: formData.get('name'),
+        company: formData.get('company')
+      }
+    })
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input name="email" type="email" required />
+      <input name="name" type="text" />
+      <input name="company" type="text" />
+      <input name="subject" type="text" />
+      <button type="submit">Send</button>
+    </form>
+  )
+}
+```
+
+### Identify After Auth
+
+<Warning>
+  **Prefer the `user` prop instead.** The pattern below works, but using the `user` prop on `OutlitProvider` is cleaner and handles the lifecycle automatically. See [User Identity Patterns](#user-identity-patterns) above.
+</Warning>
+
+If you can't use the `user` prop (e.g., the provider is in a different part of the tree), you can sync manually:
+
+```tsx
+import { useOutlit } from '@outlit/browser/react'
+import { useUser } from '@/hooks/use-user' // Your auth hook
+
+function AuthObserver() {
+  const { setUser, clearUser } = useOutlit()
+  const { user, isLoading } = useUser()
+
+  useEffect(() => {
+    if (isLoading) return
+
+    if (user) {
+      setUser({
+        email: user.email,
+        userId: user.id,
+        traits: {
+          name: user.name,
+          plan: user.subscription?.plan
+        }
+      })
+    } else {
+      clearUser()
+    }
+  }, [user, isLoading, setUser, clearUser])
+
+  return null
+}
+```
+
+## TypeScript
+
+Full TypeScript support is included:
+
+```tsx
+import {
+  useOutlit,
+  OutlitProvider,
+  type OutlitProviderProps,
+  type UseOutlitReturn,
+  type UserIdentity,
+} from '@outlit/browser/react'
+
+// Types are inferred
+const { track, identify, setUser } = useOutlit()
+
+// Or explicitly typed
+const outlit: UseOutlitReturn = useOutlit()
+
+// User identity type
+const user: UserIdentity = {
+  email: 'user@example.com',
+  userId: 'usr_123',
+  traits: { name: 'Jane' }
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+    Track events from your backend
+  </Card>
+  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
+    Learn how profiles are merged
+  </Card>
+</CardGroup>

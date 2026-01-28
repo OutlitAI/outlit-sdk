@@ -1,0 +1,83 @@
+---
+title: "API Overview"
+description: "Direct API access for custom integrations"
+---
+
+## Base URL
+
+All API requests should be made to:
+
+```
+https://app.outlit.ai/api/i/v1
+```
+
+## Authentication
+
+The Ingest API uses your **public key** in the URL path. No additional authentication headers are required for ingestion.
+
+```
+POST /api/i/v1/{publicKey}/events
+```
+
+<Warning>
+  Your public key is **not secret** and is safe to include in client-side code. It's designed to be visible in your website's source code.
+</Warning>
+
+## Rate Limits
+
+| Limit | Value |
+|-------|-------|
+| Requests per second | 100 |
+| Events per request | 100 |
+| Request body size | 1 MB |
+
+Rate limit headers are included in responses:
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1699999999
+```
+
+## Error Responses
+
+All error responses follow this format:
+
+```json
+{
+  "success": false,
+  "message": "Error description",
+  "errors": [
+    {
+      "path": ["events", 0, "type"],
+      "message": "Invalid event type"
+    }
+  ]
+}
+```
+
+### HTTP Status Codes
+
+| Code | Description |
+|------|-------------|
+| 200 | Success |
+| 400 | Invalid request body or parameters |
+| 403 | Invalid public key or unauthorized domain |
+| 429 | Rate limit exceeded |
+| 500 | Internal server error |
+
+## CORS
+
+The API supports CORS for browser requests. Allowed origins are configured in your tracking settings ([Settings → Website Tracking](https://app.outlit.ai/workspace-profile/tracking) → Enabled Domains).
+
+```
+Access-Control-Allow-Origin: https://your-domain.com
+Access-Control-Allow-Methods: POST, OPTIONS
+Access-Control-Allow-Headers: Content-Type
+```
+
+## Available Endpoints
+
+<Card title="POST /events" icon="arrow-right" href="/api-reference/ingest">
+  Send tracking events (pageviews, custom events, identify, engagement, calendar, and stage events)
+</Card>

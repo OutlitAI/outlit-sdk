@@ -1,0 +1,452 @@
+---
+title: "SvelteKit Integration"
+description: "Integrate Outlit tracking with SvelteKit applications"
+---
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install --save @outlit/browser
+```
+
+```bash pnpm
+pnpm add @outlit/browser
+```
+
+```bash yarn
+yarn add @outlit/browser
+```
+
+```bash bun
+bun add @outlit/browser
+```
+</CodeGroup>
+
+## Quick Start
+
+Initialize Outlit in your root layout:
+
+```typescript
+// src/routes/+layout.ts
+import outlit from '@outlit/browser'
+import { browser } from '$app/environment'
+import { PUBLIC_OUTLIT_KEY } from '$env/static/public'
+
+if (browser) {
+  outlit.init({
+    publicKey: PUBLIC_OUTLIT_KEY,
+    trackPageviews: true,
+  })
+}
+
+export const prerender = true
+export const ssr = false
+```
+
+<Tip>
+  Add your public key to `.env`:
+  ```
+  PUBLIC_OUTLIT_KEY=pk_your_public_key_here
+  ```
+</Tip>
+
+## Alternative: Layout Component
+
+Initialize in the layout component:
+
+```svelte
+<!-- src/routes/+layout.svelte -->
+<script>
+  import { browser } from '$app/environment'
+  import { PUBLIC_OUTLIT_KEY } from '$env/static/public'
+  import outlit from '@outlit/browser'
+  import { onMount } from 'svelte'
+
+  onMount(() => {
+    if (browser) {
+      outlit.init({
+        publicKey: PUBLIC_OUTLIT_KEY,
+        trackPageviews: true,
+      })
+    }
+  })
+</script>
+
+<slot />
+```
+
+## Tracking Events
+
+Track events in your components:
+
+```svelte
+<!-- src/routes/pricing/+page.svelte -->
+<script>
+  import outlit from '@outlit/browser'
+
+  function handleCheckout() {
+    outlit.track('checkout_started', {
+      plan: 'pro',
+      amount: 99
+    })
+  }
+</script>
+
+<button on:click={handleCheckout}>
+  Start Free Trial
+</button>
+```
+
+## Identifying Users
+
+Identify users after authentication:
+
+```svelte
+<!-- src/routes/login/+page.svelte -->
+<script>
+  import { goto } from '$app/navigation'
+  import outlit from '@outlit/browser'
+
+  let email = ''
+  let password = ''
+
+  async function handleLogin() {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    })
+
+    const user = await response.json()
+
+    outlit.identify({
+      email: user.email,
+      userId: user.id,
+      traits: {
+        name: user.name,
+        plan: user.plan
+      }
+    })
+
+    goto('/dashboard')
+  }
+</script>
+
+<form on:submit|preventDefault={handleLogin}>
+  <input bind:value={email} type="email" placeholder="Email" />
+  <input bind:value={password} type="password" placeholder="Password" />
+  <button type="submit">Login</button>
+</form>
+```
+
+## Navigation Tracking
+
+Track navigation with SvelteKit's stores:
+
+```svelte
+<!-- src/routes/+layout.svelte -->
+<script>
+  import { afterNavigate } from '$app/navigation'
+  import { browser } from '$app/environment'
+  import outlit from '@outlit/browser'
+  import { onMount } from 'svelte'
+
+  onMount(() => {
+    if (browser) {
+      outlit.init({
+        publicKey: PUBLIC_OUTLIT_KEY,
+        trackPageviews: false, // Manual tracking
+      })
+    }
+  })
+
+  afterNavigate(({ to }) => {
+    if (browser && to) {
+      outlit.track('pageview', {
+        path: to.url.pathname,
+        params: to.params
+      })
+    }
+  })
+</script>
+
+<slot />
+```
+
+## Load Function Integration
+
+Track events from load functions:
+
+```typescript
+// src/routes/product/[id]/+page.ts
+import type { PageLoad } from './$types'
+
+export const load: PageLoad = async ({ params, fetch }) => {
+  const product = await fetch(`/api/products/${params.id}`).then(r => r.json())
+
+  // Track on server
+  await fetch('/api/track', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      event: 'product_viewed',
+      properties: { productId: params.id }
+    })
+  })
+
+  return { product }
+}
+```
+
+## Server-Side Tracking
+
+Track events from API routes:
+
+```typescript
+// src/routes/api/track/+server.ts
+import { json } from '@sveltejs/kit'
+import type { RequestHandler } from './$types'
+import { Outlit } from '@outlit/node'
+import { OUTLIT_PRIVATE_KEY } from '$env/static/private'
+
+const outlit = new Outlit({
+  privateKey: OUTLIT_PRIVATE_KEY
+})
+
+export const POST: RequestHandler = async ({ request }) => {
+  const { event, properties, visitorId } = await request.json()
+
+  await outlit.track({
+    visitorId,
+    event,
+    properties
+  })
+
+  return json({ success: true })
+}
+```
+
+<Info>
+  For server-side tracking, see the [Node.js integration guide](/tracking/server/nodejs).
+</Info>
+
+## Auth Integration
+
+### With Lucia
+
+```svelte
+<!-- src/routes/+layout.svelte -->
+<script>
+  import { browser } from '$app/environment'
+  import { page } from '$app/stores'
+  import outlit from '@outlit/browser'
+  import { onMount } from 'svelte'
+
+  onMount(() => {
+    if (browser) {
+      outlit.init({
+        publicKey: PUBLIC_OUTLIT_KEY,
+        trackPageviews: true,
+      })
+    }
+  })
+
+  $: if (browser && $page.data.user) {
+    outlit.setUser({
+      email: $page.data.user.email,
+      userId: $page.data.user.id,
+      traits: {
+        name: $page.data.user.name
+      }
+    })
+  } else if (browser && !$page.data.user) {
+    outlit.clearUser()
+  }
+</script>
+
+<slot />
+```
+
+## Contact Stage Events
+
+Track contact lifecycle events:
+
+```svelte
+<script>
+  import outlit from '@outlit/browser'
+  import { onMount } from 'svelte'
+
+  onMount(() => {
+    // Track activation after onboarding
+    outlit.user.activate({ flow: 'onboarding', step: 'completed' })
+  })
+
+  function handleEngagementMilestone() {
+    outlit.user.engaged({ milestone: 'first_project' })
+  }
+</script>
+
+<button on:click={handleEngagementMilestone}>
+  Complete First Project
+</button>
+```
+
+<Warning>
+  Stage methods (`user.activate`, `user.engaged`) require the user to be identified first using `setUser()` or `identify()`.
+</Warning>
+
+<Info>
+  Account billing (`paid`, `churned`, `trialing`) is tracked separately. If you've connected Stripe, billing is automatic. For manual billing, see [Stages & Billing](/tracking/stages).
+</Info>
+
+## Consent Management
+
+Handle user consent:
+
+```svelte
+<!-- src/lib/components/CookieBanner.svelte -->
+<script>
+  import { browser } from '$app/environment'
+  import outlit from '@outlit/browser'
+  import { onMount } from 'svelte'
+
+  let showBanner = false
+
+  onMount(() => {
+    if (browser) {
+      const hasConsent = localStorage.getItem('tracking-consent')
+      showBanner = hasConsent !== 'true'
+    }
+  })
+
+  function acceptTracking() {
+    localStorage.setItem('tracking-consent', 'true')
+    outlit.enableTracking()
+    showBanner = false
+  }
+</script>
+
+{#if showBanner}
+  <div class="cookie-banner">
+    <p>We use cookies to improve your experience.</p>
+    <button on:click={acceptTracking}>Accept</button>
+  </div>
+{/if}
+```
+
+Initialize without auto-tracking:
+
+```typescript
+// src/routes/+layout.ts
+import outlit from '@outlit/browser'
+import { browser } from '$app/environment'
+import { PUBLIC_OUTLIT_KEY } from '$env/static/public'
+
+if (browser) {
+  outlit.init({
+    publicKey: PUBLIC_OUTLIT_KEY,
+    autoTrack: false, // Wait for consent
+  })
+}
+```
+
+## Stores Integration
+
+Create a store for Outlit:
+
+```typescript
+// src/lib/stores/outlit.ts
+import { writable } from 'svelte/store'
+import outlit from '@outlit/browser'
+
+function createOutlitStore() {
+  const { subscribe } = writable(outlit)
+
+  return {
+    subscribe,
+    track: (eventName: string, properties?: Record<string, any>) => {
+      outlit.track(eventName, properties)
+    },
+    identify: (options: { email?: string; userId?: string; traits?: Record<string, any> }) => {
+      outlit.identify(options)
+    },
+    setUser: (identity: { email?: string; userId?: string; traits?: Record<string, any> }) => {
+      outlit.setUser(identity)
+    },
+    clearUser: () => {
+      outlit.clearUser()
+    },
+    user: outlit.user,
+  }
+}
+
+export const outlitStore = createOutlitStore()
+```
+
+Use in components:
+
+```svelte
+<script>
+  import { outlitStore } from '$lib/stores/outlit'
+
+  function handleClick() {
+    outlitStore.track('button_clicked', { button: 'cta' })
+  }
+</script>
+
+<button on:click={handleClick}>
+  Click Me
+</button>
+```
+
+## Environment Variables
+
+Configure environment variables:
+
+```bash
+# .env
+
+# Public key (used in browser)
+PUBLIC_OUTLIT_KEY=pk_your_public_key_here
+
+# Private key (used in server API routes)
+OUTLIT_PRIVATE_KEY=sk_your_private_key_here
+```
+
+<Warning>
+  Never expose your private key in client-side code. Only use it in server-side API routes.
+</Warning>
+
+## TypeScript Support
+
+Full TypeScript support is included:
+
+```typescript
+import outlit, { type OutlitOptions } from '@outlit/browser'
+
+const options: OutlitOptions = {
+  publicKey: PUBLIC_OUTLIT_KEY,
+  trackPageviews: true,
+  flushInterval: 5000
+}
+
+outlit.init(options)
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+    Track events from your backend
+  </Card>
+  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
+    Learn how profiles are merged
+  </Card>
+  <Card title="NPM Package" icon="npm" href="/tracking/browser/npm">
+    Full API reference
+  </Card>
+  <Card title="React Integration" icon="react" href="/tracking/browser/react">
+    Use Outlit with React
+  </Card>
+</CardGroup>

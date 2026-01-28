@@ -1,0 +1,240 @@
+---
+title: "Quick Start"
+description: "Set up customer journey tracking in under 5 minutes"
+---
+
+## Prerequisites
+
+Before you begin, you'll need:
+
+- An Outlit account with an organization
+- Your public key from [Settings → Website Tracking](https://app.outlit.ai/workspace-profile/tracking)
+
+## Step 1: Add the Tracker
+
+Choose your preferred integration method:
+
+<Tabs>
+  <Tab title="Script Tag">
+    Add this snippet before the closing `</body>` tag on every page:
+
+    ```html
+    <script>
+      !function(w,d,src,key,auto){
+        if(w.outlit&&w.outlit._loaded)return;
+        var o=w.outlit=w.outlit||{_q:[]};
+        function stub(target,prefix,methods){
+          for(var i=0;i<methods.length;i++){
+            var m=methods[i];
+            target[m]=target[m]||function(mm){
+              return function(){o._q.push([prefix?prefix+"."+mm:mm,[].slice.call(arguments)])};
+            }(m);
+          }
+        }
+        stub(o,"",["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
+        o.user=o.user||{};o.customer=o.customer||{};
+        stub(o.user,"user",["identify","activate","engaged","inactive"]);
+        stub(o.customer,"customer",["trialing","paid","churned"]);
+        var s=d.createElement("script");s.async=1;s.src=src;
+        s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
+        (d.body||d.head).appendChild(s);
+      }(window,document,"https://cdn.outlit.ai/stable/outlit.js","pk_your_public_key_here");
+    </script>
+    ```
+
+    <Tip>
+      Replace `pk_your_public_key_here` with your actual public key from Settings. This snippet queues any tracking calls made before the SDK loads, so you can safely call `outlit.track()` anywhere on the page.
+    </Tip>
+  </Tab>
+  <Tab title="NPM">
+    Install the package:
+
+    <CodeGroup>
+    ```bash npm
+    npm install --save @outlit/browser
+    ```
+
+    ```bash pnpm
+    pnpm add @outlit/browser
+    ```
+
+    ```bash yarn
+    yarn add @outlit/browser
+    ```
+
+    ```bash bun
+    bun add @outlit/browser
+    ```
+    </CodeGroup>
+
+    Initialize once at app startup:
+
+    ```typescript
+    import outlit from '@outlit/browser'
+
+    outlit.init({ publicKey: 'pk_your_public_key_here' })
+    ```
+  </Tab>
+  <Tab title="React">
+    Install the package:
+
+    <CodeGroup>
+    ```bash npm
+    npm install --save @outlit/browser
+    ```
+
+    ```bash pnpm
+    pnpm add @outlit/browser
+    ```
+
+    ```bash yarn
+    yarn add @outlit/browser
+    ```
+
+    ```bash bun
+    bun add @outlit/browser
+    ```
+    </CodeGroup>
+
+    Wrap your app with the provider:
+
+    ```tsx
+    // app/layout.tsx or _app.tsx
+    import { OutlitProvider } from '@outlit/browser/react'
+
+    export default function RootLayout({ children }) {
+      return (
+        <OutlitProvider publicKey="pk_your_public_key_here" trackPageviews>
+          {children}
+        </OutlitProvider>
+      )
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Step 2: Verify Installation
+
+After adding the tracker, visit your website and:
+
+1. Open browser DevTools → Network tab
+2. Filter by "outlit" or "events"
+3. You should see requests to `app.outlit.ai/api/i/v1/...`
+
+<Note>
+  Look for requests to `app.outlit.ai/api/i/v1/` with a 200 status code.
+</Note>
+
+<Info>
+  If you don't see requests, check that your public key is correct and the domain is allowed in your tracking settings.
+</Info>
+
+## Step 3: Track Custom Events
+
+Beyond automatic pageviews and form captures, track events that matter to your business:
+
+<CodeGroup>
+```typescript Script Tag / NPM
+// After a user views pricing
+window.outlit.track('pricing_viewed', {
+  plan: 'enterprise'
+})
+
+// After a user starts a trial
+window.outlit.track('trial_started', {
+  plan: 'pro',
+  source: 'pricing_page'
+})
+```
+
+```tsx React
+import { useOutlit } from '@outlit/browser/react'
+
+function PricingButton() {
+  const { track } = useOutlit()
+
+  return (
+    <button onClick={() => track('pricing_clicked', { plan: 'pro' })}>
+      Start Free Trial
+    </button>
+  )
+}
+```
+</CodeGroup>
+
+## Step 4: Identify Visitors
+
+When a visitor signs up, logs in, or submits a form with their email, identify them:
+
+<CodeGroup>
+```typescript Script Tag / NPM
+// After login or signup
+outlit.identify({
+  email: 'user@example.com',
+  userId: 'usr_abc123', // Your internal user ID (optional)
+  traits: {
+    name: 'Jane Doe',
+    company: 'Acme Inc',
+    plan: 'pro'
+  }
+})
+```
+
+```tsx React
+import { useOutlit } from '@outlit/browser/react'
+
+function LoginForm() {
+  const { identify } = useOutlit()
+
+  const handleLogin = async (email: string) => {
+    // ... your login logic
+    
+    identify({
+      email,
+      traits: { lastLogin: new Date().toISOString() }
+    })
+  }
+}
+```
+</CodeGroup>
+
+<Info>
+  **Good news:** If your signup/login uses a standard HTML form with an email field, auto-identify handles this automatically! Manual `identify()` calls are only needed for:
+  - JavaScript-based auth (OAuth, magic links)
+  - Server-side authentication
+  - Adding additional traits after login
+</Info>
+
+## What's Captured Automatically
+
+With the default configuration, Outlit automatically captures:
+
+| Event | Trigger | Data |
+|-------|---------|------|
+| **Pageview** | Every navigation | URL, path, title, referrer, UTM params |
+| **Form Submit** | Form submission | Form ID, field values (sensitive fields removed) |
+| **Auto-Identify** | Form with email | Email + name extracted, visitor linked to profile |
+| **Engagement** | Page exit/navigation | Active time, total time on page |
+| **Calendar Booking** | Cal.com/Calendly embed | Provider, event type, scheduled time |
+
+<Tip>
+  **Zero-code identification:** When a visitor submits a form with an email field (signup, contact, demo request), they're automatically identified and linked to a customer profile. No manual `identify()` call needed! [Learn more](/tracking/identity/overview#auto-identify)
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Browser Integration" icon="browser" href="/tracking/browser/script">
+    Deep dive into browser tracking options
+  </Card>
+  <Card title="React Integration" icon="react" href="/tracking/browser/react">
+    Learn about React hooks and providers
+  </Card>
+  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+    Track events from your backend
+  </Card>
+  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
+    Understand how profiles are merged
+  </Card>
+</CardGroup>
+

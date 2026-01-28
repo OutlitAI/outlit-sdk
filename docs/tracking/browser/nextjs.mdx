@@ -1,0 +1,479 @@
+---
+title: "Next.js Integration"
+description: "Integrate Outlit tracking with Next.js App Router and Pages Router"
+---
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install --save @outlit/browser
+```
+
+```bash pnpm
+pnpm add @outlit/browser
+```
+
+```bash yarn
+yarn add @outlit/browser
+```
+
+```bash bun
+bun add @outlit/browser
+```
+</CodeGroup>
+
+## Quick Start
+
+<Tabs>
+  <Tab title="App Router">
+Create a client component to initialize Outlit:
+
+```typescript
+// app/providers.tsx
+'use client'
+
+import { useEffect } from 'react'
+import outlit from '@outlit/browser'
+
+export function OutlitProvider() {
+  useEffect(() => {
+    outlit.init({
+      publicKey: process.env.NEXT_PUBLIC_OUTLIT_KEY!,
+      trackPageviews: true,
+    })
+  }, [])
+
+  return null
+}
+```
+
+Add to your root layout:
+
+```typescript
+// app/layout.tsx
+import { OutlitProvider } from './providers'
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html>
+      <body>
+        <OutlitProvider />
+        {children}
+      </body>
+    </html>
+  )
+}
+```
+  </Tab>
+
+  <Tab title="Pages Router">
+Initialize in `_app.tsx`:
+
+```typescript
+// pages/_app.tsx
+import { useEffect } from 'react'
+import type { AppProps } from 'next/app'
+import outlit from '@outlit/browser'
+
+export default function App({ Component, pageProps }: AppProps) {
+  useEffect(() => {
+    outlit.init({
+      publicKey: process.env.NEXT_PUBLIC_OUTLIT_KEY!,
+      trackPageviews: true,
+    })
+  }, [])
+
+  return <Component {...pageProps} />
+}
+```
+  </Tab>
+</Tabs>
+
+<Tip>
+  Add your public key to `.env.local`:
+  ```
+  NEXT_PUBLIC_OUTLIT_KEY=pk_your_public_key_here
+  ```
+</Tip>
+
+## Using the React Provider (Recommended)
+
+For a better experience with React hooks, use the React provider:
+
+```typescript
+// app/providers.tsx
+'use client'
+
+import { OutlitProvider } from '@outlit/browser/react'
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <OutlitProvider
+      publicKey={process.env.NEXT_PUBLIC_OUTLIT_KEY!}
+      trackPageviews
+    >
+      {children}
+    </OutlitProvider>
+  )
+}
+```
+
+```typescript
+// app/layout.tsx
+import { Providers } from './providers'
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  )
+}
+```
+
+See the [React integration guide](/tracking/browser/react) for full React provider documentation.
+
+## Tracking Events
+
+Track custom events in client components:
+
+```typescript
+// app/dashboard/page.tsx
+'use client'
+
+import { useEffect } from 'react'
+import outlit from '@outlit/browser'
+
+export default function Dashboard() {
+  useEffect(() => {
+    outlit.track('dashboard_viewed')
+  }, [])
+
+  function handleExport() {
+    outlit.track('data_exported', {
+      format: 'csv',
+      rows: 1500
+    })
+  }
+
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      <button onClick={handleExport}>Export Data</button>
+    </div>
+  )
+}
+```
+
+### With React Provider
+
+```typescript
+'use client'
+
+import { useOutlit } from '@outlit/browser/react'
+
+export default function PricingButton() {
+  const { track } = useOutlit()
+
+  return (
+    <button onClick={() => track('pricing_clicked', { plan: 'pro' })}>
+      View Pricing
+    </button>
+  )
+}
+```
+
+## Identifying Users
+
+Identify users after authentication:
+
+```typescript
+// app/login/page.tsx
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import outlit from '@outlit/browser'
+
+export default function LoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
+
+    const user = await login(email, password)
+
+    outlit.identify({
+      email: user.email,
+      userId: user.id,
+      traits: {
+        name: user.name,
+        plan: user.plan
+      }
+    })
+
+    router.push('/dashboard')
+  }
+
+  return (
+    <form onSubmit={handleLogin}>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+      />
+      <button type="submit">Login</button>
+    </form>
+  )
+}
+```
+
+## Server-Side Auth Integration
+
+### With NextAuth
+
+```typescript
+// app/providers.tsx
+'use client'
+
+import { OutlitProvider } from '@outlit/browser/react'
+import { useSession } from 'next-auth/react'
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession()
+
+  const user = status === 'authenticated' && session?.user ? {
+    email: session.user.email!,
+    userId: session.user.id,
+    traits: {
+      name: session.user.name
+    }
+  } : null
+
+  return (
+    <OutlitProvider
+      publicKey={process.env.NEXT_PUBLIC_OUTLIT_KEY!}
+      user={user}
+      trackPageviews
+    >
+      {children}
+    </OutlitProvider>
+  )
+}
+```
+
+### With Clerk
+
+```typescript
+// app/providers.tsx
+'use client'
+
+import { OutlitProvider } from '@outlit/browser/react'
+import { useUser } from '@clerk/nextjs'
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const { user, isLoaded } = useUser()
+
+  const outlitUser = isLoaded && user ? {
+    email: user.primaryEmailAddress?.emailAddress,
+    userId: user.id,
+    traits: {
+      name: user.fullName
+    }
+  } : null
+
+  return (
+    <OutlitProvider
+      publicKey={process.env.NEXT_PUBLIC_OUTLIT_KEY!}
+      user={outlitUser}
+      trackPageviews
+    >
+      {children}
+    </OutlitProvider>
+  )
+}
+```
+
+### With Supabase
+
+```typescript
+// app/providers.tsx
+'use client'
+
+import { OutlitProvider } from '@outlit/browser/react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useEffect, useState } from 'react'
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const supabase = createClientComponentClient()
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [supabase])
+
+  const outlitUser = user ? {
+    email: user.email,
+    userId: user.id,
+    traits: {
+      name: user.user_metadata?.name
+    }
+  } : null
+
+  return (
+    <OutlitProvider
+      publicKey={process.env.NEXT_PUBLIC_OUTLIT_KEY!}
+      user={outlitUser}
+      trackPageviews
+    >
+      {children}
+    </OutlitProvider>
+  )
+}
+```
+
+## Server Actions
+
+Track events from server actions:
+
+```typescript
+// app/actions.ts
+'use server'
+
+import { Outlit } from '@outlit/node'
+
+const outlit = new Outlit({
+  privateKey: process.env.OUTLIT_PRIVATE_KEY!
+})
+
+export async function trackServerEvent(userId: string) {
+  await outlit.track({
+    visitorId: userId,
+    event: 'server_action_completed',
+    properties: {
+      action: 'data_export',
+      timestamp: new Date().toISOString()
+    }
+  })
+}
+```
+
+<Info>
+  For server-side tracking, see the [Node.js integration guide](/tracking/server/nodejs).
+</Info>
+
+## API Routes
+
+Track events from API routes:
+
+```typescript
+// app/api/checkout/route.ts
+import { NextResponse } from 'next/server'
+import { Outlit } from '@outlit/node'
+
+const outlit = new Outlit({
+  privateKey: process.env.OUTLIT_PRIVATE_KEY!
+})
+
+export async function POST(request: Request) {
+  const { userId, amount } = await request.json()
+
+  await outlit.track({
+    visitorId: userId,
+    event: 'checkout_completed',
+    properties: { amount }
+  })
+
+  return NextResponse.json({ success: true })
+}
+```
+
+## Middleware Tracking
+
+Track pageviews from middleware:
+
+```typescript
+// middleware.ts
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next()
+
+  // Add tracking headers
+  response.headers.set('X-Outlit-Track', 'pageview')
+
+  return response
+}
+```
+
+## Environment Variables
+
+Set up your environment variables:
+
+```bash
+# .env.local
+
+# Public key (used in browser)
+NEXT_PUBLIC_OUTLIT_KEY=pk_your_public_key_here
+
+# Private key (used in server actions/API routes)
+OUTLIT_PRIVATE_KEY=sk_your_private_key_here
+```
+
+<Warning>
+  Never expose your private key in client-side code. Only use it in server components, API routes, or server actions.
+</Warning>
+
+## TypeScript Support
+
+Full TypeScript support is included:
+
+```typescript
+import outlit, { type OutlitOptions } from '@outlit/browser'
+
+const options: OutlitOptions = {
+  publicKey: process.env.NEXT_PUBLIC_OUTLIT_KEY!,
+  trackPageviews: true,
+  flushInterval: 5000
+}
+
+outlit.init(options)
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="React Provider" icon="react" href="/tracking/browser/react">
+    Full React integration guide
+  </Card>
+  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+    Track events from your backend
+  </Card>
+  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
+    Learn how profiles are merged
+  </Card>
+  <Card title="NPM Package" icon="npm" href="/tracking/browser/npm">
+    Full API reference
+  </Card>
+</CardGroup>

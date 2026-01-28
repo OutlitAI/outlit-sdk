@@ -1,0 +1,458 @@
+---
+title: "Nuxt Integration"
+description: "Integrate Outlit tracking with Nuxt 3 applications"
+---
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install --save @outlit/browser
+```
+
+```bash pnpm
+pnpm add @outlit/browser
+```
+
+```bash yarn
+yarn add @outlit/browser
+```
+
+```bash bun
+bun add @outlit/browser
+```
+</CodeGroup>
+
+## Quick Start
+
+Create a Nuxt plugin to initialize Outlit:
+
+```typescript
+// plugins/outlit.client.ts
+import outlit from '@outlit/browser'
+
+export default defineNuxtPlugin(() => {
+  const config = useRuntimeConfig()
+
+  outlit.init({
+    publicKey: config.public.outlitKey,
+    trackPageviews: true,
+  })
+
+  return {
+    provide: {
+      outlit
+    }
+  }
+})
+```
+
+Configure your runtime config:
+
+```typescript
+// nuxt.config.ts
+export default defineNuxtConfig({
+  runtimeConfig: {
+    public: {
+      outlitKey: process.env.NUXT_PUBLIC_OUTLIT_KEY
+    }
+  }
+})
+```
+
+<Tip>
+  Add your public key to `.env`:
+  ```
+  NUXT_PUBLIC_OUTLIT_KEY=pk_your_public_key_here
+  ```
+</Tip>
+
+## Tracking Events
+
+Track events using the provided instance:
+
+```vue
+<script setup>
+const { $outlit } = useNuxtApp()
+
+function handleClick() {
+  $outlit.track('button_clicked', {
+    button: 'cta',
+    page: 'pricing'
+  })
+}
+</script>
+
+<template>
+  <button @click="handleClick">
+    Get Started
+  </button>
+</template>
+```
+
+## Creating a Composable
+
+Create a reusable composable for better DX:
+
+```typescript
+// composables/useOutlit.ts
+export function useOutlit() {
+  const { $outlit } = useNuxtApp()
+
+  function track(eventName: string, properties?: Record<string, any>) {
+    $outlit.track(eventName, properties)
+  }
+
+  function identify(options: { email?: string; userId?: string; traits?: Record<string, any> }) {
+    $outlit.identify(options)
+  }
+
+  function setUser(identity: { email?: string; userId?: string; traits?: Record<string, any> }) {
+    $outlit.setUser(identity)
+  }
+
+  function clearUser() {
+    $outlit.clearUser()
+  }
+
+  return {
+    track,
+    identify,
+    setUser,
+    clearUser,
+    user: $outlit.user,
+  }
+}
+```
+
+Use in components:
+
+```vue
+<script setup>
+const { track } = useOutlit()
+
+function handleFeatureClick() {
+  track('feature_used', { feature: 'export' })
+}
+</script>
+
+<template>
+  <button @click="handleFeatureClick">
+    Export Data
+  </button>
+</template>
+```
+
+## Identifying Users
+
+Identify users after authentication:
+
+```vue
+<script setup>
+const { setUser } = useOutlit()
+const router = useRouter()
+
+async function handleLogin(email: string, password: string) {
+  const user = await $fetch('/api/auth/login', {
+    method: 'POST',
+    body: { email, password }
+  })
+
+  setUser({
+    email: user.email,
+    userId: user.id,
+    traits: {
+      name: user.name,
+      plan: user.plan
+    }
+  })
+
+  router.push('/dashboard')
+}
+</script>
+```
+
+## Auth Integration
+
+### With Nuxt Auth
+
+```typescript
+// plugins/outlit.client.ts
+import outlit from '@outlit/browser'
+
+export default defineNuxtPlugin(() => {
+  const config = useRuntimeConfig()
+  const { data: auth } = useAuth()
+
+  outlit.init({
+    publicKey: config.public.outlitKey,
+    trackPageviews: true,
+  })
+
+  // Sync user identity with auth state
+  watch(
+    () => auth.value,
+    (session) => {
+      if (session?.user) {
+        outlit.setUser({
+          email: session.user.email,
+          userId: session.user.id,
+          traits: {
+            name: session.user.name
+          }
+        })
+      } else {
+        outlit.clearUser()
+      }
+    },
+    { immediate: true }
+  )
+
+  return {
+    provide: { outlit }
+  }
+})
+```
+
+### With Supabase
+
+```typescript
+// plugins/outlit.client.ts
+import outlit from '@outlit/browser'
+
+export default defineNuxtPlugin(async () => {
+  const config = useRuntimeConfig()
+  const supabase = useSupabaseClient()
+  const user = useSupabaseUser()
+
+  outlit.init({
+    publicKey: config.public.outlitKey,
+    trackPageviews: true,
+  })
+
+  // Sync user identity
+  watch(
+    user,
+    (currentUser) => {
+      if (currentUser) {
+        outlit.setUser({
+          email: currentUser.email!,
+          userId: currentUser.id,
+          traits: {
+            name: currentUser.user_metadata?.name
+          }
+        })
+      } else {
+        outlit.clearUser()
+      }
+    },
+    { immediate: true }
+  )
+
+  return {
+    provide: { outlit }
+  }
+})
+```
+
+## Router Integration
+
+Track route changes:
+
+```typescript
+// plugins/outlit.client.ts
+import outlit from '@outlit/browser'
+
+export default defineNuxtPlugin(() => {
+  const config = useRuntimeConfig()
+  const router = useRouter()
+
+  outlit.init({
+    publicKey: config.public.outlitKey,
+    trackPageviews: false, // Manual pageview tracking
+  })
+
+  // Track pageviews on route change
+  router.afterEach((to) => {
+    outlit.track('pageview', {
+      path: to.path,
+      name: to.name,
+      params: to.params,
+      query: to.query
+    })
+  })
+
+  return {
+    provide: { outlit }
+  }
+})
+```
+
+## Server-Side Tracking
+
+Track events from server API routes:
+
+```typescript
+// server/api/checkout.post.ts
+import { Outlit } from '@outlit/node'
+
+const outlit = new Outlit({
+  privateKey: process.env.OUTLIT_PRIVATE_KEY!
+})
+
+export default defineEventHandler(async (event) => {
+  const body = await readBody(event)
+
+  await outlit.track({
+    visitorId: body.userId,
+    event: 'checkout_completed',
+    properties: {
+      amount: body.amount,
+      plan: body.plan
+    }
+  })
+
+  return { success: true }
+})
+```
+
+<Info>
+  For server-side tracking, see the [Node.js integration guide](/tracking/server/nodejs).
+</Info>
+
+## Journey Stage Events
+
+Track user lifecycle:
+
+```vue
+<script setup>
+const { user } = useOutlit()
+
+function handleOnboardingComplete() {
+  user.activate({ flow: 'onboarding', step: 'completed' })
+}
+
+function handleEngagementMilestone() {
+  user.engaged({ milestone: 'first_project' })
+}
+</script>
+```
+
+<Warning>
+  Stage methods (`user.activate`, `user.engaged`) require the user to be identified first using `setUser()` or `identify()`.
+</Warning>
+
+<Info>
+  Account billing (`paid`, `churned`, `trialing`) is tracked separately. If you've connected Stripe, billing is automatic. For manual billing, see [Stages & Billing](/tracking/stages).
+</Info>
+
+## Consent Management
+
+Handle user consent:
+
+```vue
+<script setup>
+const showBanner = ref(false)
+const { $outlit } = useNuxtApp()
+
+onMounted(() => {
+  const hasConsent = localStorage.getItem('tracking-consent')
+  if (hasConsent !== 'true') {
+    showBanner.value = true
+  }
+})
+
+function acceptTracking() {
+  localStorage.setItem('tracking-consent', 'true')
+  $outlit.enableTracking()
+  showBanner.value = false
+}
+</script>
+
+<template>
+  <div v-if="showBanner" class="cookie-banner">
+    <p>We use cookies to improve your experience.</p>
+    <button @click="acceptTracking">Accept</button>
+  </div>
+</template>
+```
+
+Initialize without auto-tracking:
+
+```typescript
+// plugins/outlit.client.ts
+import outlit from '@outlit/browser'
+
+export default defineNuxtPlugin(() => {
+  const config = useRuntimeConfig()
+
+  outlit.init({
+    publicKey: config.public.outlitKey,
+    autoTrack: false, // Wait for consent
+  })
+
+  return {
+    provide: { outlit }
+  }
+})
+```
+
+## Environment Variables
+
+Configure environment variables:
+
+```bash
+# .env
+
+# Public key (used in browser)
+NUXT_PUBLIC_OUTLIT_KEY=pk_your_public_key_here
+
+# Private key (used in server API routes)
+OUTLIT_PRIVATE_KEY=sk_your_private_key_here
+```
+
+<Warning>
+  Never expose your private key in client-side code. Only use it in server API routes.
+</Warning>
+
+## TypeScript Support
+
+Full TypeScript support is included:
+
+```typescript
+// plugins/outlit.client.ts
+import outlit, { type OutlitOptions } from '@outlit/browser'
+
+export default defineNuxtPlugin(() => {
+  const config = useRuntimeConfig()
+
+  const options: OutlitOptions = {
+    publicKey: config.public.outlitKey,
+    trackPageviews: true,
+    flushInterval: 5000
+  }
+
+  outlit.init(options)
+
+  return {
+    provide: { outlit }
+  }
+})
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Vue Integration" icon="vuejs" href="/tracking/browser/vue">
+    Use Outlit with Vue 3
+  </Card>
+  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+    Track events from your backend
+  </Card>
+  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
+    Learn how profiles are merged
+  </Card>
+  <Card title="NPM Package" icon="npm" href="/tracking/browser/npm">
+    Full API reference
+  </Card>
+</CardGroup>
