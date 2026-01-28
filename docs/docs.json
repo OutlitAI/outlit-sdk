@@ -85,7 +85,7 @@
 			},
 			{
 				"label": "Support",
-				"href": "mailto:support@outlit.ai"
+				"href": "mailto:leo@outlit.ai"
 			}
 		],
 		"primary": {
@@ -96,6 +96,7 @@
 	},
 	"footer": {
 		"socials": {
+			"x": "https://x.com/Outlit_ai",
 			"github": "https://github.com/OutlitAI",
 			"linkedin": "https://linkedin.com/company/outlit"
 		}
