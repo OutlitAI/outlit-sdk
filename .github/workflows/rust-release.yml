@@ -61,6 +61,8 @@ jobs:
     needs: check-changes
     runs-on: ubuntu-latest
     environment: release
+    outputs:
+      published: ${{ steps.version-check.outputs.should_publish }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -121,4 +123,57 @@ jobs:
           echo "**Install:**" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "cargo add outlit" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # Publish canary on every push to main (when Rust files change and no stable release)
+  canary:
+    name: Publish Canary
+    needs: [check-changes, release]
+    # Only run if Rust changed AND no stable release happened
+    if: |
+      needs.check-changes.outputs.rust_changed == 'true' &&
+      needs.release.outputs.published == 'false'
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run tests
+        run: cargo test --all-features
+
+      - name: Set canary version
+        id: version
+        run: |
+          BASE_VERSION=$(cargo metadata --no-deps --format-version=1 | jq -r '.packages[] | select(.name == "outlit") | .version')
+          TIMESTAMP=$(date +%Y%m%d%H%M)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          CANARY_VERSION="${BASE_VERSION}-canary.${TIMESTAMP}.${SHORT_SHA}"
+          echo "canary_version=$CANARY_VERSION" >> $GITHUB_OUTPUT
+
+          # Update Cargo.toml with canary version
+          sed -i "s/^version = \"${BASE_VERSION}\"/version = \"${CANARY_VERSION}\"/" crates/outlit/Cargo.toml
+
+      - name: Authenticate with crates.io
+        uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+
+      - name: Publish canary to crates.io
+        run: cargo publish -p outlit --allow-dirty
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Summary
+        run: |
+          echo "## Rust Canary Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Package:** outlit" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.canary_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Install:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "cargo add outlit@${{ steps.version.outputs.canary_version }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
