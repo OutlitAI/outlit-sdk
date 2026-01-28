@@ -79,6 +79,11 @@
 	"navbar": {
 		"links": [
 			{
+				"label": "GitHub",
+				"href": "https://github.com/OutlitAI/outlit-sdk",
+				"icon": "github"
+			},
+			{
 				"label": "Support",
 				"href": "mailto:support@outlit.ai"
 			}
