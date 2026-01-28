@@ -65,6 +65,7 @@ jobs:
   release:
     name: Release
     needs: check-changes
+    if: needs.check-changes.outputs.rust_changed == 'true'
     runs-on: ubuntu-latest
     environment: release
     outputs:
