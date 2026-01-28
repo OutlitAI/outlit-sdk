@@ -18,17 +18,13 @@ The Rust SDK is designed for native applications where you need tracking outside
 
 ## Installation
 
-<CodeGroup>
-```bash cargo
-cargo add outlit tokio --features tokio/full
+```bash
+cargo add outlit
 ```
 
-```toml Cargo.toml
-[dependencies]
-outlit = "*"
-tokio = { version = "1", features = ["full"] }
-```
-</CodeGroup>
+<Info>
+  The SDK is async and requires a tokio runtime. Most async frameworks (Tauri, Axum, Actix) already include tokio.
+</Info>
 
 ## Quick Start
 
