@@ -11,6 +11,8 @@ export type {
   ServerIdentifyOptions,
   ServerIdentity,
   CustomerIdentifier,
+  CustomerTraits,
+  IdentifyTraits,
   PageviewEvent,
   FormEvent,
   IdentifyEvent,
