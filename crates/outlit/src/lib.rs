@@ -22,31 +22,42 @@
 //! }
 //! ```
 
+mod config;
 mod error;
 mod types;
 
+pub use config::{Config, OutlitBuilder};
 pub use error::Error;
 pub use types::{
     BillingStatus, IngestPayload, IngestResponse, JourneyStage, SourceType, TrackerEvent,
 };
 
-/// Placeholder - will be implemented in subsequent tasks
-pub struct Outlit;
+/// Outlit analytics client.
+pub struct Outlit {
+    config: Config,
+}
 
 impl Outlit {
-    pub fn builder(_public_key: &str) -> OutlitBuilder {
-        OutlitBuilder
+    /// Create a new builder with the given public key.
+    pub fn builder(public_key: impl Into<String>) -> OutlitBuilder {
+        OutlitBuilder::new(public_key)
+    }
+
+    /// Get the client configuration.
+    pub fn config(&self) -> &Config {
+        &self.config
     }
 }
-
-pub struct OutlitBuilder;
 
 impl OutlitBuilder {
+    /// Build the Outlit client.
     pub fn build(self) -> Result<Outlit, Error> {
-        Ok(Outlit)
+        let config = self.build_config()?;
+        Ok(Outlit { config })
     }
 }
 
+// Re-export identity helpers
 /// Create an email identity.
 pub fn email(e: impl Into<String>) -> Email {
     Email(e.into())
@@ -67,6 +78,12 @@ impl Email {
     }
 }
 
+impl From<Email> for String {
+    fn from(e: Email) -> String {
+        e.0
+    }
+}
+
 /// User ID identity wrapper.
 #[derive(Debug, Clone)]
 pub struct UserId(pub(crate) String);
@@ -74,5 +91,11 @@ pub struct UserId(pub(crate) String);
 impl UserId {
     pub fn as_str(&self) -> &str {
         &self.0
+    }
+}
+
+impl From<UserId> for String {
+    fn from(id: UserId) -> String {
+        id.0
     }
 }
