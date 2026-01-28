@@ -243,23 +243,17 @@ When merging two contacts:
     ```
   </Tab>
   <Tab title="Server Tracking">
-    **Identity or fingerprint required**
+    **Identity required**
 
-    - Use `fingerprint` for anonymous tracking
-    - Use `email` or `userId` for immediate resolution
-    - Anonymous events backfill when identity is established
+    - Every call needs `email` or `userId`
+    - Events go directly to the contact
+    - For device/app tracking, use `fingerprint` ([learn more](/tracking/identity/anonymous-visitors#device-tracking-non-browser))
 
     ```typescript
-    // Anonymous tracking with fingerprint
+    // Email or userId required
     outlit.track({
-      fingerprint: deviceId,
-      eventName: 'feature_used'
-    })
-
-    // Later, link fingerprint to user
-    outlit.identify({
       email: 'user@example.com',
-      fingerprint: deviceId
+      eventName: 'subscription_created'
     })
     ```
   </Tab>

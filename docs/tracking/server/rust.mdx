@@ -1,0 +1,344 @@
+---
+title: "Rust SDK"
+description: "Native tracking for desktop apps, CLI tools, and embedded systems"
+---
+
+## Overview
+
+The Rust SDK is designed for native applications where you need tracking outside of a browser context:
+
+- **Desktop apps** - Tauri, native GUI applications
+- **CLI tools** - Command-line applications
+- **Embedded systems** - IoT devices, kiosks
+- **Backend services** - Rust-based APIs
+
+<Info>
+  For anonymous tracking before user sign-in, use `fingerprint`. See [Device Tracking](/tracking/identity/anonymous-visitors#device-tracking-non-browser) for details.
+</Info>
+
+## Installation
+
+<CodeGroup>
+```bash cargo
+cargo add outlit tokio --features tokio/full
+```
+
+```toml Cargo.toml
+[dependencies]
+outlit = "*"
+tokio = { version = "1", features = ["full"] }
+```
+</CodeGroup>
+
+## Quick Start
+
+```rust
+use outlit::{Outlit, email, fingerprint};
+
+#[tokio::main]
+async fn main() -> Result<(), outlit::Error> {
+    let client = Outlit::builder("pk_your_public_key")
+        .build()?;
+
+    // Track with email (resolves immediately)
+    client.track("feature_used", email("user@example.com"))
+        .property("feature", "export")
+        .send()
+        .await?;
+
+    // Flush before exit
+    client.shutdown().await?;
+    Ok(())
+}
+```
+
+## Configuration
+
+```rust
+use std::time::Duration;
+
+let client = Outlit::builder("pk_xxx")
+    .api_host("https://app.outlit.ai")  // optional
+    .flush_interval(Duration::from_secs(10))
+    .max_batch_size(100)
+    .timeout(Duration::from_secs(10))
+    .build()?;
+```
+
+### Options
+
+<ParamField path="public_key" type="&str" required>
+  Your organization's public key.
+</ParamField>
+
+<ParamField path="api_host" type="&str" default="https://app.outlit.ai">
+  API endpoint for sending events.
+</ParamField>
+
+<ParamField path="flush_interval" type="Duration" default="10s">
+  How often to automatically flush events.
+</ParamField>
+
+<ParamField path="max_batch_size" type="usize" default="100">
+  Maximum events per batch before auto-flush.
+</ParamField>
+
+<ParamField path="timeout" type="Duration" default="10s">
+  HTTP request timeout.
+</ParamField>
+
+## API Reference
+
+### `client.track(event_name, identity)`
+
+Track a custom event.
+
+```rust
+// With email
+client.track("subscription_upgraded", email("user@example.com"))
+    .property("plan", "pro")
+    .property("mrr", 99)
+    .send()
+    .await?;
+
+// With user_id
+client.track_by_user_id("feature_used", user_id("usr_123"))
+    .email("user@example.com")  // optional, for linking
+    .property("feature", "export")
+    .send()
+    .await?;
+
+// With fingerprint (device tracking)
+client.track_by_fingerprint("app_opened", fingerprint("device_abc123"))
+    .property("version", "1.2.0")
+    .send()
+    .await?;
+```
+
+#### Builder Methods
+
+<ParamField path=".email()" type="&str">
+  Add email to the event (if not primary identity).
+</ParamField>
+
+<ParamField path=".user_id()" type="&str">
+  Add user ID to the event.
+</ParamField>
+
+<ParamField path=".fingerprint()" type="&str">
+  Add device fingerprint for linking.
+</ParamField>
+
+<ParamField path=".property()" type="(&str, impl Into<Value>)">
+  Add a property to the event. Call multiple times for multiple properties.
+</ParamField>
+
+<ParamField path=".timestamp()" type="i64">
+  Set custom timestamp (milliseconds since epoch).
+</ParamField>
+
+### `client.identify(identity)`
+
+Identify a user and optionally link device events.
+
+```rust
+client.identify(email("user@example.com"))
+    .user_id("usr_123")
+    .fingerprint("device_abc123")  // Links this device's events
+    .trait_("name", "Jane Doe")
+    .trait_("plan", "enterprise")
+    .send()
+    .await?;
+```
+
+<ParamField path=".fingerprint()" type="&str">
+  Device identifier. All events tracked with this fingerprint are retroactively linked to the user.
+</ParamField>
+
+<ParamField path=".user_id()" type="&str">
+  Your internal user ID.
+</ParamField>
+
+<ParamField path=".trait_()" type="(&str, impl Into<Value>)">
+  Add a trait to the user profile.
+</ParamField>
+
+### Contact Stage Methods
+
+Track contact progression through your product lifecycle.
+
+```rust
+// Mark user as activated
+client.user()
+    .activate(email("user@example.com"))
+    .property("flow", "onboarding")
+    .send()
+    .await?;
+
+// Mark user as engaged
+client.user()
+    .engaged(email("user@example.com"))
+    .send()
+    .await?;
+
+// Mark user as inactive
+client.user()
+    .inactive(email("user@example.com"))
+    .property("reason", "no_login_30_days")
+    .send()
+    .await?;
+
+// With fingerprint
+client.user()
+    .activate_by_fingerprint(fingerprint("device_abc123"))
+    .send()
+    .await?;
+```
+
+### Account Billing Methods
+
+Track account billing status by domain.
+
+```rust
+// Mark account as paid
+client.customer()
+    .paid("acme.com")
+    .property("plan", "pro")
+    .property("amount", 99)
+    .send()
+    .await?;
+
+// Mark account as trialing
+client.customer()
+    .trialing("acme.com")
+    .property("trial_ends", "2024-02-15")
+    .send()
+    .await?;
+
+// Mark account as churned
+client.customer()
+    .churned("acme.com")
+    .property("reason", "cancelled")
+    .send()
+    .await?;
+```
+
+### `client.flush()`
+
+Immediately send all queued events.
+
+```rust
+client.flush().await?;
+```
+
+### `client.shutdown()`
+
+Gracefully shutdown: flushes remaining events and stops the timer.
+
+```rust
+client.shutdown().await?;
+```
+
+<Warning>
+  Always call `shutdown()` or `flush()` before your application exits to ensure all events are sent.
+</Warning>
+
+## Tauri Integration
+
+For Tauri desktop apps, initialize the client in your Rust backend:
+
+```rust
+use outlit::{Outlit, email, fingerprint};
+use tauri::Manager;
+use std::sync::Arc;
+
+// Store device fingerprint persistently
+fn get_or_create_device_id(app: &tauri::AppHandle) -> String {
+    let config_dir = app.path().app_config_dir().unwrap();
+    let id_file = config_dir.join("device_id");
+
+    if let Ok(id) = std::fs::read_to_string(&id_file) {
+        return id;
+    }
+
+    let id = uuid::Uuid::new_v4().to_string();
+    std::fs::create_dir_all(&config_dir).ok();
+    std::fs::write(&id_file, &id).ok();
+    id
+}
+
+#[tauri::command]
+async fn track_event(
+    app: tauri::AppHandle,
+    event_name: String,
+    properties: serde_json::Value,
+    email: Option<String>,
+) -> Result<(), String> {
+    let client = app.state::<Arc<Outlit>>();
+    let device_id = get_or_create_device_id(&app);
+
+    if let Some(email) = email {
+        // User is signed in
+        client.track(&event_name, outlit::email(&email))
+            .fingerprint(&device_id)
+            .property("data", properties)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+    } else {
+        // Anonymous tracking
+        client.track_by_fingerprint(&event_name, fingerprint(&device_id))
+            .property("data", properties)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
+fn main() {
+    let client = Arc::new(
+        Outlit::builder("pk_xxx")
+            .build()
+            .expect("Failed to create Outlit client")
+    );
+
+    tauri::Builder::default()
+        .manage(client.clone())
+        .invoke_handler(tauri::generate_handler![track_event])
+        .build(tauri::generate_context!())
+        .expect("error building tauri app")
+        .run(|app, event| {
+            if let tauri::RunEvent::Exit = event {
+                // Flush on exit
+                let client = app.state::<Arc<Outlit>>();
+                futures::executor::block_on(client.shutdown()).ok();
+            }
+        });
+}
+```
+
+## Error Handling
+
+The SDK returns `Result<(), outlit::Error>` for operations that can fail:
+
+```rust
+match client.track("event", email("user@test.com")).send().await {
+    Ok(()) => println!("Event tracked"),
+    Err(outlit::Error::Network(e)) => eprintln!("Network error: {}", e),
+    Err(outlit::Error::Shutdown) => eprintln!("Client was shutdown"),
+    Err(e) => eprintln!("Error: {}", e),
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Device Tracking" icon="mobile" href="/tracking/identity/anonymous-visitors#device-tracking-non-browser">
+    Anonymous tracking before user identification
+  </Card>
+  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
+    How profiles are merged across identifiers
+  </Card>
+</CardGroup>

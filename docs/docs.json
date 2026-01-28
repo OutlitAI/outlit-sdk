@@ -1,104 +1,101 @@
 {
-	"$schema": "https://mintlify.com/docs.json",
-	"theme": "mint",
-	"name": "Outlit Docs",
-	"colors": {
-		"primary": "#6366F1",
-		"light": "#818CF8",
-		"dark": "#4F46E5"
-	},
-	"appearance": {
-		"default": "system",
-		"strict": false
-	},
-	"favicon": "/favicon.svg",
-	"contextual": {
-		"options": ["copy", "chatgpt", "claude"]
-	},
-	"navigation": {
-		"tabs": [
-			{
-				"tab": "Documentation",
-				"groups": [
-					{
-						"group": "Getting Started",
-						"pages": ["index", "tracking/overview", "tracking/quickstart", "tracking/stages"]
-					},
-					{
-						"group": "Browser Tracking",
-						"pages": [
-							"tracking/browser/script",
-							"tracking/browser/npm",
-							"tracking/browser/react",
-							"tracking/browser/vue",
-							"tracking/browser/nextjs",
-							"tracking/browser/nuxt",
-							"tracking/browser/sveltekit",
-							"tracking/browser/astro",
-							"tracking/browser/angular",
-							"tracking/browser/calendar-embeds"
-						]
-					},
-					{
-						"group": "Server-Side Tracking",
-						"pages": ["tracking/server/nodejs"]
-					},
-					{
-						"group": "Identity & Resolution",
-						"pages": [
-							"tracking/identity/overview",
-							"tracking/identity/anonymous-visitors"
-						]
-					}
-				]
-			},
-			{
-				"tab": "API Reference",
-				"groups": [
-					{
-						"group": "Ingest API",
-						"pages": ["api-reference/introduction", "api-reference/ingest"]
-					}
-				]
-			}
-		],
-		"global": {
-			"anchors": [
-				{
-					"anchor": "GitHub",
-					"href": "https://github.com/OutlitAI",
-					"icon": "github"
-				}
-			]
-		}
-	},
-	"logo": {
-		"light": "/logo/light.svg",
-		"dark": "/logo/dark.svg"
-	},
-	"navbar": {
-		"links": [
-			{
-				"label": "GitHub",
-				"href": "https://github.com/OutlitAI/outlit-sdk",
-				"icon": "github"
-			},
-			{
-				"label": "Support",
-				"href": "mailto:leo@outlit.ai"
-			}
-		],
-		"primary": {
-			"type": "button",
-			"label": "Dashboard",
-			"href": "https://app.outlit.ai"
-		}
-	},
-	"footer": {
-		"socials": {
-			"x": "https://x.com/Outlit_ai",
-			"github": "https://github.com/OutlitAI",
-			"linkedin": "https://linkedin.com/company/outlit"
-		}
-	}
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Outlit Docs",
+  "colors": {
+    "primary": "#6366F1",
+    "light": "#818CF8",
+    "dark": "#4F46E5"
+  },
+  "appearance": {
+    "default": "system",
+    "strict": false
+  },
+  "favicon": "/favicon.svg",
+  "contextual": {
+    "options": ["copy", "chatgpt", "claude"]
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": ["index", "tracking/overview", "tracking/quickstart", "tracking/stages"]
+          },
+          {
+            "group": "Browser Tracking",
+            "pages": [
+              "tracking/browser/script",
+              "tracking/browser/npm",
+              "tracking/browser/react",
+              "tracking/browser/vue",
+              "tracking/browser/nextjs",
+              "tracking/browser/nuxt",
+              "tracking/browser/sveltekit",
+              "tracking/browser/astro",
+              "tracking/browser/angular",
+              "tracking/browser/calendar-embeds"
+            ]
+          },
+          {
+            "group": "Server-Side Tracking",
+            "pages": ["tracking/server/nodejs", "tracking/server/rust"]
+          },
+          {
+            "group": "Identity & Resolution",
+            "pages": ["tracking/identity/overview", "tracking/identity/anonymous-visitors"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Ingest API",
+            "pages": ["api-reference/introduction", "api-reference/ingest"]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/OutlitAI",
+          "icon": "github"
+        }
+      ]
+    }
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/OutlitAI/outlit-sdk",
+        "icon": "github"
+      },
+      {
+        "label": "Support",
+        "href": "mailto:leo@outlit.ai"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Dashboard",
+      "href": "https://app.outlit.ai"
+    }
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/Outlit_ai",
+      "github": "https://github.com/OutlitAI",
+      "linkedin": "https://linkedin.com/company/outlit"
+    }
+  }
 }

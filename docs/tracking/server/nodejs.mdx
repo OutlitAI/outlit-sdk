@@ -1,19 +1,18 @@
 ---
 title: "Node.js SDK"
-description: "Server-side tracking with identity resolution"
+description: "Server-side tracking for backend applications"
 ---
 
 ## Overview
 
-The Node.js SDK is designed for server-side tracking. It supports:
+The Node.js SDK is designed for server-side tracking where you have user identity. It supports:
 
 - **Identified tracking** - Use `email` or `userId` for immediate resolution
-- **Anonymous tracking** - Use `fingerprint` for events before user identification
-- **Automatic backfill** - Anonymous events are linked when identity is established
 - **Efficient batching** - Events are queued and sent in batches
+- **Device tracking** - Use `fingerprint` for desktop/mobile apps ([learn more](/tracking/identity/anonymous-visitors#device-tracking-non-browser))
 
 <Info>
-  Use server-side tracking for events that happen in your backend: subscription changes, feature usage from APIs, background jobs, desktop apps, etc.
+  Use server-side tracking for events that happen in your backend: subscription changes, feature usage from APIs, background jobs, etc.
 </Info>
 
 ## Installation
@@ -45,24 +44,15 @@ const outlit = new Outlit({
   publicKey: 'pk_your_public_key'
 })
 
-// Track with email (resolves immediately)
+// Track an event
 outlit.track({
   email: 'user@example.com',
   eventName: 'subscription_upgraded',
-  properties: { plan: 'pro' }
-})
-
-// Track with fingerprint (anonymous, linked later)
-outlit.track({
-  fingerprint: deviceId,
-  eventName: 'feature_used',
-  properties: { feature: 'export' }
-})
-
-// Link fingerprint to user
-outlit.identify({
-  email: 'user@example.com',
-  fingerprint: deviceId
+  properties: {
+    fromPlan: 'starter',
+    toPlan: 'pro',
+    mrr: 99
+  }
 })
 
 // Important: flush before process exits
@@ -107,13 +97,12 @@ const outlit = new Outlit({
 
 ### `outlit.track(options)`
 
-Track a custom event.
+Track a custom event for an identified user.
 
 ```typescript
 outlit.track({
   email: 'jane@acme.com',
-  userId: 'usr_12345',
-  fingerprint: 'device_abc123',
+  userId: 'usr_12345', // optional if email provided
   eventName: 'report_exported',
   properties: {
     reportType: 'sales',
@@ -124,16 +113,16 @@ outlit.track({
 })
 ```
 
-<ParamField path="fingerprint" type="string">
-  Device identifier for anonymous tracking. Events are linked to a user when `identify()` is called with the same fingerprint.
-</ParamField>
-
 <ParamField path="email" type="string">
   User's email address. Resolves immediately to a customer profile.
 </ParamField>
 
 <ParamField path="userId" type="string">
   Your internal user ID.
+</ParamField>
+
+<ParamField path="fingerprint" type="string">
+  Device identifier for anonymous tracking. See [Device Tracking](/tracking/identity/anonymous-visitors#device-tracking-non-browser).
 </ParamField>
 
 <ParamField path="eventName" type="string" required>
@@ -149,22 +138,22 @@ outlit.track({
 </ParamField>
 
 <Info>
-  At least one of `fingerprint`, `email`, or `userId` is required. Use `fingerprint` for anonymous tracking, `email` for immediate resolution.
+  At least one of `email`, `userId`, or `fingerprint` is required.
 </Info>
 
 ### `outlit.identify(options)`
 
-Identify a user and optionally link anonymous events.
+Update user traits without tracking an event.
 
 ```typescript
 outlit.identify({
   email: 'jane@acme.com',
   userId: 'usr_12345',
-  fingerprint: 'device_abc123', // Links this device's events to the user
   traits: {
     name: 'Jane Doe',
     company: 'Acme Inc',
-    plan: 'enterprise'
+    plan: 'enterprise',
+    role: 'admin'
   }
 })
 ```
@@ -173,21 +162,17 @@ outlit.identify({
   User's email address. Required to establish identity.
 </ParamField>
 
-<ParamField path="fingerprint" type="string">
-  Device identifier. If provided, all events tracked with this fingerprint are retroactively linked to the user.
-</ParamField>
-
 <ParamField path="userId" type="string">
   Your internal user ID.
+</ParamField>
+
+<ParamField path="fingerprint" type="string">
+  Device identifier for linking anonymous events. See [Device Tracking](/tracking/identity/anonymous-visitors#device-tracking-non-browser).
 </ParamField>
 
 <ParamField path="traits" type="Record<string, any>">
   Properties to update on the user profile.
 </ParamField>
-
-<Tip>
-  Use `fingerprint` to link anonymous events to a user. When a user signs in, call `identify()` with both their email and the device fingerprint to backfill their anonymous activity.
-</Tip>
 
 ### Contact Stage Methods
 
