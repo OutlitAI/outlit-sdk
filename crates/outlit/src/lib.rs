@@ -23,8 +23,12 @@
 //! ```
 
 mod error;
+mod types;
 
 pub use error::Error;
+pub use types::{
+    BillingStatus, IngestPayload, IngestResponse, JourneyStage, SourceType, TrackerEvent,
+};
 
 /// Placeholder - will be implemented in subsequent tasks
 pub struct Outlit;
