@@ -181,6 +181,27 @@ This ID:
 - Persists across sessions (same browser)
 - Gets linked to CustomerContact after identify
 
+### Fingerprint (Device ID)
+
+For native apps without browser storage (desktop, mobile, CLI), use a fingerprint—a stable device identifier you generate and manage:
+
+```rust
+// Rust SDK
+client.track_by_fingerprint("app_opened", fingerprint("device_abc123"))
+    .send()
+    .await?;
+
+// Later, link to user
+client.identify(email("user@example.com"))
+    .fingerprint("device_abc123")
+    .send()
+    .await?;
+```
+
+<Tip>
+  See [Device Tracking](/tracking/identity/anonymous-visitors#device-tracking-non-browser) for implementation details.
+</Tip>
+
 ## Profile Merging
 
 When Outlit detects the same person with different identifiers, profiles are merged:

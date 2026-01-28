@@ -241,7 +241,11 @@ client.shutdown().await?;
 
 ## Tauri Integration
 
-For Tauri desktop apps, initialize the client in your Rust backend:
+For Tauri desktop apps, initialize the client in your Rust backend.
+
+<Note>
+  This example uses the `uuid` crate for generating device IDs. Add it with `cargo add uuid --features v4`.
+</Note>
 
 ```rust
 use outlit::{Outlit, email, fingerprint};
@@ -309,7 +313,7 @@ fn main() {
             if let tauri::RunEvent::Exit = event {
                 // Flush on exit
                 let client = app.state::<Arc<Outlit>>();
-                futures::executor::block_on(client.shutdown()).ok();
+                tauri::async_runtime::block_on(client.shutdown()).ok();
             }
         });
 }
