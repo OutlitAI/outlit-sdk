@@ -100,7 +100,11 @@ impl Outlit {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn track(&self, event_name: impl Into<String>, identity: impl Into<Email>) -> SendableTrack<'_> {
+    pub fn track(
+        &self,
+        event_name: impl Into<String>,
+        identity: impl Into<Email>,
+    ) -> SendableTrack<'_> {
         SendableTrack {
             builder: TrackBuilder::new(event_name, identity.into()),
             client: self,

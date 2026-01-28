@@ -23,7 +23,7 @@ async fn test_track_sends_correct_payload() {
         .await;
 
     let client = Outlit::builder("pk_test")
-        .api_host(&mock_server.uri())
+        .api_host(mock_server.uri())
         .flush_interval(Duration::from_secs(100)) // Don't auto-flush
         .build()
         .unwrap();
@@ -53,7 +53,7 @@ async fn test_identify_sends_correct_payload() {
         .await;
 
     let client = Outlit::builder("pk_test")
-        .api_host(&mock_server.uri())
+        .api_host(mock_server.uri())
         .flush_interval(Duration::from_secs(100))
         .build()
         .unwrap();
@@ -83,7 +83,7 @@ async fn test_stage_events() {
         .await;
 
     let client = Outlit::builder("pk_test")
-        .api_host(&mock_server.uri())
+        .api_host(mock_server.uri())
         .max_batch_size(1) // Flush after each event
         .build()
         .unwrap();
@@ -124,17 +124,12 @@ async fn test_billing_events() {
         .await;
 
     let client = Outlit::builder("pk_test")
-        .api_host(&mock_server.uri())
+        .api_host(mock_server.uri())
         .max_batch_size(1)
         .build()
         .unwrap();
 
-    client
-        .customer()
-        .trialing("acme.com")
-        .send()
-        .await
-        .unwrap();
+    client.customer().trialing("acme.com").send().await.unwrap();
 
     client
         .customer()
@@ -182,7 +177,7 @@ async fn test_flush_on_shutdown() {
         .await;
 
     let client = Outlit::builder("pk_test")
-        .api_host(&mock_server.uri())
+        .api_host(mock_server.uri())
         .flush_interval(Duration::from_secs(100)) // Don't auto-flush
         .build()
         .unwrap();
@@ -216,7 +211,7 @@ async fn test_batch_flush_at_max_size() {
         .await;
 
     let client = Outlit::builder("pk_test")
-        .api_host(&mock_server.uri())
+        .api_host(mock_server.uri())
         .max_batch_size(5)
         .flush_interval(Duration::from_secs(100))
         .build()
@@ -225,7 +220,7 @@ async fn test_batch_flush_at_max_size() {
     // Add 5 events - should trigger flush
     for i in 0..5 {
         client
-            .track(&format!("event_{}", i), email("user@test.com"))
+            .track(format!("event_{i}"), email("user@test.com"))
             .send()
             .await
             .unwrap();
@@ -250,16 +245,13 @@ async fn test_shutdown_prevents_further_tracking() {
         .await;
 
     let client = Outlit::builder("pk_test")
-        .api_host(&mock_server.uri())
+        .api_host(mock_server.uri())
         .build()
         .unwrap();
 
     client.shutdown().await.unwrap();
 
-    let result = client
-        .track("event", email("user@test.com"))
-        .send()
-        .await;
+    let result = client.track("event", email("user@test.com")).send().await;
 
     assert!(result.is_err());
 }
@@ -278,7 +270,7 @@ async fn test_track_by_user_id() {
         .await;
 
     let client = Outlit::builder("pk_test")
-        .api_host(&mock_server.uri())
+        .api_host(mock_server.uri())
         .flush_interval(Duration::from_secs(100))
         .build()
         .unwrap();
@@ -308,7 +300,7 @@ async fn test_flush_empty_queue_is_noop() {
         .await;
 
     let client = Outlit::builder("pk_test")
-        .api_host(&mock_server.uri())
+        .api_host(mock_server.uri())
         .flush_interval(Duration::from_secs(100))
         .build()
         .unwrap();
@@ -332,7 +324,7 @@ async fn test_periodic_flush_timer() {
 
     // Set a very short flush interval
     let client = Outlit::builder("pk_test")
-        .api_host(&mock_server.uri())
+        .api_host(mock_server.uri())
         .flush_interval(Duration::from_millis(50))
         .max_batch_size(100) // Large batch size so it doesn't trigger size-based flush
         .build()
@@ -372,7 +364,7 @@ async fn test_shutdown_idempotent() {
         .await;
 
     let client = Outlit::builder("pk_test")
-        .api_host(&mock_server.uri())
+        .api_host(mock_server.uri())
         .flush_interval(Duration::from_secs(100))
         .build()
         .unwrap();
@@ -402,7 +394,7 @@ async fn test_flush_http_error_returns_error() {
         .await;
 
     let client = Outlit::builder("pk_test")
-        .api_host(&mock_server.uri())
+        .api_host(mock_server.uri())
         .flush_interval(Duration::from_secs(100))
         .build()
         .unwrap();
@@ -431,7 +423,7 @@ async fn test_multiple_batches_flush_correctly() {
         .await;
 
     let client = Outlit::builder("pk_test")
-        .api_host(&mock_server.uri())
+        .api_host(mock_server.uri())
         .max_batch_size(3)
         .flush_interval(Duration::from_secs(100))
         .build()
@@ -440,7 +432,7 @@ async fn test_multiple_batches_flush_correctly() {
     // Add 7 events - should trigger 2 flushes (at 3 and 6), with 1 remaining
     for i in 0..7 {
         client
-            .track(&format!("event_{}", i), email("user@test.com"))
+            .track(format!("event_{i}"), email("user@test.com"))
             .send()
             .await
             .unwrap();
