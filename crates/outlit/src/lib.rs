@@ -25,9 +25,11 @@
 mod config;
 mod error;
 mod queue;
+mod transport;
 mod types;
 
 pub(crate) use queue::EventQueue;
+pub(crate) use transport::HttpTransport;
 
 pub use config::{Config, OutlitBuilder};
 pub use error::Error;
