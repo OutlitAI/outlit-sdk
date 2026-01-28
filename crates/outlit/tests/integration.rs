@@ -292,3 +292,171 @@ async fn test_track_by_user_id() {
 
     client.flush().await.unwrap();
 }
+
+#[tokio::test]
+async fn test_flush_empty_queue_is_noop() {
+    let mock_server = MockServer::start().await;
+
+    // Expect NO calls - flush on empty queue should not hit the server
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "success": true,
+            "processed": 0
+        })))
+        .expect(0)
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_test")
+        .api_host(&mock_server.uri())
+        .flush_interval(Duration::from_secs(100))
+        .build()
+        .unwrap();
+
+    // Flush with no events should succeed without hitting server
+    client.flush().await.unwrap();
+    client.flush().await.unwrap(); // Multiple calls should also work
+}
+
+#[tokio::test]
+async fn test_periodic_flush_timer() {
+    let mock_server = MockServer::start().await;
+    let received = Arc::new(AtomicUsize::new(0));
+
+    Mock::given(method("POST"))
+        .respond_with(CountingResponder {
+            counter: received.clone(),
+        })
+        .mount(&mock_server)
+        .await;
+
+    // Set a very short flush interval
+    let client = Outlit::builder("pk_test")
+        .api_host(&mock_server.uri())
+        .flush_interval(Duration::from_millis(50))
+        .max_batch_size(100) // Large batch size so it doesn't trigger size-based flush
+        .build()
+        .unwrap();
+
+    // Add an event
+    client
+        .track("event", email("user@test.com"))
+        .send()
+        .await
+        .unwrap();
+
+    // Should not be flushed immediately
+    assert_eq!(received.load(Ordering::SeqCst), 0);
+
+    // Wait for periodic flush to trigger (50ms interval + some buffer)
+    tokio::time::sleep(Duration::from_millis(100)).await;
+
+    // Should have been flushed by timer
+    assert_eq!(received.load(Ordering::SeqCst), 1);
+    assert_eq!(client.pending_event_count().await, 0);
+
+    client.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn test_shutdown_idempotent() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "success": true,
+            "processed": 1
+        })))
+        .expect(1) // Only one flush should happen despite multiple shutdowns
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_test")
+        .api_host(&mock_server.uri())
+        .flush_interval(Duration::from_secs(100))
+        .build()
+        .unwrap();
+
+    client
+        .track("event", email("user@test.com"))
+        .send()
+        .await
+        .unwrap();
+
+    // Multiple shutdowns should be safe
+    client.shutdown().await.unwrap();
+    client.shutdown().await.unwrap();
+    client.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn test_flush_http_error_returns_error() {
+    let mock_server = MockServer::start().await;
+
+    // Server returns 500 error
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(500).set_body_json(json!({
+            "error": "Internal server error"
+        })))
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_test")
+        .api_host(&mock_server.uri())
+        .flush_interval(Duration::from_secs(100))
+        .build()
+        .unwrap();
+
+    client
+        .track("event", email("user@test.com"))
+        .send()
+        .await
+        .unwrap();
+
+    // Flush should return error on HTTP failure
+    let result = client.flush().await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_multiple_batches_flush_correctly() {
+    let mock_server = MockServer::start().await;
+    let received = Arc::new(AtomicUsize::new(0));
+
+    Mock::given(method("POST"))
+        .respond_with(CountingResponder {
+            counter: received.clone(),
+        })
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_test")
+        .api_host(&mock_server.uri())
+        .max_batch_size(3)
+        .flush_interval(Duration::from_secs(100))
+        .build()
+        .unwrap();
+
+    // Add 7 events - should trigger 2 flushes (at 3 and 6), with 1 remaining
+    for i in 0..7 {
+        client
+            .track(&format!("event_{}", i), email("user@test.com"))
+            .send()
+            .await
+            .unwrap();
+    }
+
+    // Give time for async flushes
+    tokio::time::sleep(Duration::from_millis(50)).await;
+
+    // Should have flushed twice (at 3 events, and at 6 events)
+    assert_eq!(received.load(Ordering::SeqCst), 2);
+
+    // 1 event should remain pending
+    assert_eq!(client.pending_event_count().await, 1);
+
+    // Final flush
+    client.flush().await.unwrap();
+    assert_eq!(received.load(Ordering::SeqCst), 3);
+    assert_eq!(client.pending_event_count().await, 0);
+}
