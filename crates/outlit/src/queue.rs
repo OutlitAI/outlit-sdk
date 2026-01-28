@@ -48,6 +48,18 @@ impl EventQueue {
         let mut events = self.events.lock().await;
         std::mem::take(&mut *events)
     }
+
+    /// Prepend events to the front of the queue.
+    /// Used to requeue events after a failed send.
+    pub async fn requeue(&self, events_to_add: Vec<TrackerEvent>) {
+        if events_to_add.is_empty() {
+            return;
+        }
+        let mut events = self.events.lock().await;
+        let mut combined = events_to_add;
+        combined.append(&mut *events);
+        *events = combined;
+    }
 }
 
 #[cfg(test)]
@@ -124,5 +136,46 @@ mod tests {
         }
 
         assert_eq!(queue.len().await, 100);
+    }
+
+    #[tokio::test]
+    async fn test_requeue_prepends_events() {
+        let queue = EventQueue::new(10);
+
+        // Add some events
+        queue.enqueue(make_test_event(3)).await;
+        queue.enqueue(make_test_event(4)).await;
+
+        // Requeue earlier events
+        let to_requeue = vec![make_test_event(1), make_test_event(2)];
+        queue.requeue(to_requeue).await;
+
+        // Events should be in order: 1, 2, 3, 4
+        let events = queue.drain().await;
+        assert_eq!(events.len(), 4);
+
+        // Verify order by checking the url field
+        if let TrackerEvent::Custom(e) = &events[0] {
+            assert_eq!(e.url, "server://test1");
+        }
+        if let TrackerEvent::Custom(e) = &events[1] {
+            assert_eq!(e.url, "server://test2");
+        }
+        if let TrackerEvent::Custom(e) = &events[2] {
+            assert_eq!(e.url, "server://test3");
+        }
+        if let TrackerEvent::Custom(e) = &events[3] {
+            assert_eq!(e.url, "server://test4");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_requeue_empty_is_noop() {
+        let queue = EventQueue::new(10);
+        queue.enqueue(make_test_event(1)).await;
+
+        queue.requeue(vec![]).await;
+
+        assert_eq!(queue.len().await, 1);
     }
 }

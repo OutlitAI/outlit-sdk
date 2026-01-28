@@ -51,7 +51,10 @@ impl HttpTransport {
                 .await
                 .unwrap_or_else(|_| "Unknown error".into());
             warn!(status = %status, body = %body, "API request failed");
-            return Err(Error::Config(format!("HTTP {}: {}", status, body)));
+            return Err(Error::Api {
+                status: status.as_u16(),
+                message: body,
+            });
         }
 
         let result = response.json::<IngestResponse>().await?;
