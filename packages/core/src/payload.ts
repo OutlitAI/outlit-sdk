@@ -8,6 +8,7 @@ import type {
   ExplicitJourneyStage,
   FormEvent,
   IdentifyEvent,
+  IdentifyTraits,
   IngestPayload,
   PageviewEvent,
   PayloadUserIdentity,
@@ -73,7 +74,7 @@ export function buildIdentifyEvent(
   params: BaseEventParams & {
     email?: string
     userId?: string
-    traits?: Record<string, string | number | boolean | null>
+    traits?: IdentifyTraits
   },
 ): IdentifyEvent {
   const { url, referrer, timestamp, email, userId, traits } = params
