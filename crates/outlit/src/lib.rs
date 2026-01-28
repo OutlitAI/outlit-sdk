@@ -24,7 +24,10 @@
 
 mod config;
 mod error;
+mod queue;
 mod types;
+
+pub(crate) use queue::EventQueue;
 
 pub use config::{Config, OutlitBuilder};
 pub use error::Error;
