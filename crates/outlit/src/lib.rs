@@ -28,7 +28,7 @@ mod config;
 mod error;
 mod queue;
 mod transport;
-mod types;
+pub mod types;
 
 pub use client::{
     CustomerMethods, Outlit, SendableBilling, SendableIdentify, SendableStage, SendableTrack,
