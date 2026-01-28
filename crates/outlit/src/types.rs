@@ -137,15 +137,13 @@ mod tests {
             url: "server://user@example.com".into(),
             path: "/".into(),
             event_name: "signup".into(),
-            properties: Some(HashMap::from([
-                ("plan".into(), json!("pro")),
-            ])),
+            properties: Some(HashMap::from([("plan".into(), json!("pro"))])),
         });
 
         let json = serde_json::to_value(&event).unwrap();
 
         assert_eq!(json["type"], "custom");
-        assert_eq!(json["eventName"], "signup");  // camelCase
+        assert_eq!(json["eventName"], "signup"); // camelCase
         assert!(json.get("event_name").is_none()); // not snake_case
     }
 
@@ -163,7 +161,7 @@ mod tests {
         let json = serde_json::to_value(&event).unwrap();
 
         assert_eq!(json["type"], "identify");
-        assert_eq!(json["userId"], "usr_123");  // camelCase
+        assert_eq!(json["userId"], "usr_123"); // camelCase
     }
 
     #[test]
@@ -199,8 +197,8 @@ mod tests {
 
         assert_eq!(json["type"], "billing");
         assert_eq!(json["status"], "paid");
-        assert_eq!(json["customerId"], "cust_123");  // camelCase
-        assert_eq!(json["stripeCustomerId"], "cus_xxx");  // camelCase
+        assert_eq!(json["customerId"], "cust_123"); // camelCase
+        assert_eq!(json["stripeCustomerId"], "cus_xxx"); // camelCase
     }
 
     #[test]
@@ -229,6 +227,6 @@ mod tests {
 
         assert_eq!(json["source"], "server");
         assert!(json["events"].is_array());
-        assert!(json.get("visitorId").is_none());  // server events don't have visitorId
+        assert!(json.get("visitorId").is_none()); // server events don't have visitorId
     }
 }

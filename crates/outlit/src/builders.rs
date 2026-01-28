@@ -111,8 +111,16 @@ impl TrackBuilder {
 
     /// Build the event.
     pub(crate) fn build(self) -> TrackerEvent {
-        let email = self.identity.email().map(String::from).or(self.additional_email);
-        let user_id = self.identity.user_id().map(String::from).or(self.additional_user_id);
+        let email = self
+            .identity
+            .email()
+            .map(String::from)
+            .or(self.additional_email);
+        let user_id = self
+            .identity
+            .user_id()
+            .map(String::from)
+            .or(self.additional_user_id);
 
         let mut properties = self.properties;
         // Include identity in properties for server-side resolution
@@ -172,8 +180,16 @@ impl IdentifyBuilder {
 
     /// Build the event.
     pub(crate) fn build(self) -> TrackerEvent {
-        let email = self.identity.email().map(String::from).or(self.additional_email);
-        let user_id = self.identity.user_id().map(String::from).or(self.additional_user_id);
+        let email = self
+            .identity
+            .email()
+            .map(String::from)
+            .or(self.additional_email);
+        let user_id = self
+            .identity
+            .user_id()
+            .map(String::from)
+            .or(self.additional_user_id);
 
         TrackerEvent::Identify(IdentifyEventData {
             timestamp: now_ms(),
@@ -235,8 +251,16 @@ impl StageBuilder {
 
     /// Build the event.
     pub(crate) fn build(self) -> TrackerEvent {
-        let email = self.identity.email().map(String::from).or(self.additional_email);
-        let user_id = self.identity.user_id().map(String::from).or(self.additional_user_id);
+        let email = self
+            .identity
+            .email()
+            .map(String::from)
+            .or(self.additional_email);
+        let user_id = self
+            .identity
+            .user_id()
+            .map(String::from)
+            .or(self.additional_user_id);
 
         let mut properties = self.properties;
         // Include identity in properties for server-side resolution
@@ -344,7 +368,7 @@ mod tests {
     #[test]
     fn test_track_builder_with_user_id() {
         let event = TrackBuilder::new("signup", user_id("usr_123"))
-            .email("user@example.com")  // add email too
+            .email("user@example.com") // add email too
             .build();
 
         if let TrackerEvent::Custom(data) = event {
