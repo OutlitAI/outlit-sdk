@@ -22,6 +22,7 @@
 //! }
 //! ```
 
+mod builders;
 mod config;
 mod error;
 mod queue;
@@ -31,6 +32,7 @@ mod types;
 pub(crate) use queue::EventQueue;
 pub(crate) use transport::HttpTransport;
 
+pub use builders::{BillingBuilder, IdentifyBuilder, StageBuilder, TrackBuilder};
 pub use config::{Config, OutlitBuilder};
 pub use error::Error;
 pub use types::{
