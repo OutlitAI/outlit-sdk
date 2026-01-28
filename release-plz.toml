@@ -1,0 +1,21 @@
+# release-plz configuration
+# Docs: https://release-plz.dev/docs/config
+
+[workspace]
+# PR settings
+pr_draft = false
+pr_labels = ["rust-release"]
+
+# Git tag format (matches our existing convention)
+git_tag_name = "outlit-v{{ version }}"
+
+# Don't publish via release-plz (we use trusted publishing in the workflow)
+publish = false
+
+# Changelog settings
+changelog_update = true
+
+[[package]]
+name = "outlit"
+# Generate changelog in the crate directory
+changelog_path = "crates/outlit/CHANGELOG.md"
