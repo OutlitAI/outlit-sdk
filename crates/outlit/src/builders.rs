@@ -534,8 +534,8 @@ mod tests {
 
     #[test]
     fn test_stage_builder_with_fingerprint_identity() {
-        let event = StageBuilder::new(JourneyStage::Activated, fingerprint("device_abc123"))
-            .build();
+        let event =
+            StageBuilder::new(JourneyStage::Activated, fingerprint("device_abc123")).build();
 
         if let TrackerEvent::Stage(data) = event {
             assert!(matches!(data.stage, JourneyStage::Activated));
