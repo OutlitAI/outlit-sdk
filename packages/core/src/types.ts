@@ -55,7 +55,7 @@ export interface BrowserTrackOptions {
 export interface BrowserIdentifyOptions {
   email?: string
   userId?: string
-  traits?: Record<string, string | number | boolean | null>
+  traits?: IdentifyTraits
 }
 
 // ============================================
@@ -73,6 +73,32 @@ export interface ServerIdentity {
   userId?: string
 }
 
+// ============================================
+// IDENTIFY TRAITS (with optional customer nesting)
+// ============================================
+
+/**
+ * Customer-level traits that can be nested under `customer` in identify.
+ * These are applied to the customer/account, not the individual user.
+ */
+export interface CustomerTraits {
+  /** Customer's billing plan */
+  plan?: string
+  /** Allow additional custom properties */
+  [key: string]: string | number | boolean | null | undefined
+}
+
+/**
+ * Traits for identify calls, supporting both user-level
+ * and nested customer-level properties.
+ */
+export interface IdentifyTraits {
+  /** Nested customer/account-level traits */
+  customer?: CustomerTraits
+  /** User-level traits */
+  [key: string]: string | number | boolean | null | CustomerTraits | undefined
+}
+
 export interface ServerTrackOptions extends ServerIdentity {
   eventName: string
   properties?: Record<string, string | number | boolean | null>
@@ -80,7 +106,7 @@ export interface ServerTrackOptions extends ServerIdentity {
 }
 
 export interface ServerIdentifyOptions extends ServerIdentity {
-  traits?: Record<string, string | number | boolean | null>
+  traits?: IdentifyTraits
 }
 
 /**
@@ -125,7 +151,7 @@ export interface IdentifyEvent extends BaseEvent {
   type: "identify"
   email?: string
   userId?: string
-  traits?: Record<string, string | number | boolean | null>
+  traits?: IdentifyTraits
 }
 
 export interface CustomEvent extends BaseEvent {
