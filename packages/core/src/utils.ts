@@ -149,12 +149,21 @@ export function deriveVisitorIdFromIdentity(email?: string, userId?: string): st
 /**
  * Validate that at least one identity field is provided.
  * Used by the server SDK to enforce identity requirements.
+ *
+ * Valid identities:
+ * - fingerprint: Device identifier (for anonymous tracking, can be linked later)
+ * - email: User's email (definitive identity)
+ * - userId: App's internal user ID
  */
-export function validateServerIdentity(email?: string, userId?: string): void {
-  if (!email && !userId) {
+export function validateServerIdentity(
+  fingerprint?: string,
+  email?: string,
+  userId?: string,
+): void {
+  if (!fingerprint && !email && !userId) {
     throw new Error(
-      "Server SDK requires either email or userId for all track/identify calls. " +
-        "Anonymous tracking is only supported in the browser SDK.",
+      "Server SDK requires at least one of: fingerprint, email, or userId for all track calls. " +
+        "Use fingerprint for anonymous tracking that can be linked to users later via identify().",
     )
   }
 }

@@ -52,6 +52,11 @@ pub fn user_id(id: impl Into<String>) -> UserId {
     UserId(id.into())
 }
 
+/// Create a fingerprint identity (device identifier).
+pub fn fingerprint(fp: impl Into<String>) -> Fingerprint {
+    Fingerprint(fp.into())
+}
+
 /// Email identity wrapper.
 #[derive(Debug, Clone)]
 pub struct Email(pub(crate) String);
@@ -83,6 +88,23 @@ impl UserId {
 impl From<UserId> for String {
     fn from(id: UserId) -> String {
         id.0
+    }
+}
+
+/// Fingerprint identity wrapper (device identifier).
+#[derive(Debug, Clone)]
+pub struct Fingerprint(pub(crate) String);
+
+impl Fingerprint {
+    /// Get the fingerprint as a string slice.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl From<Fingerprint> for String {
+    fn from(fp: Fingerprint) -> String {
+        fp.0
     }
 }
 

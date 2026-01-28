@@ -23,7 +23,7 @@ import { HttpTransport } from "./transport"
 
 /**
  * Options for stage transition events (activate, engaged, inactive).
- * Server-side stage events require user identification (email or userId).
+ * Server-side stage events require at least one identifier (fingerprint, email, or userId).
  */
 export interface StageOptions extends ServerIdentity {
   /**
@@ -78,8 +78,8 @@ export interface OutlitOptions {
 /**
  * Outlit server-side tracking client.
  *
- * Unlike the browser SDK, this requires identity (email or userId) for all calls.
- * Anonymous tracking is not supported server-side.
+ * Supports tracking with fingerprint (device ID), email, or userId.
+ * Use fingerprint for anonymous tracking that can be linked to users later.
  *
  * @example
  * ```typescript
@@ -87,16 +87,24 @@ export interface OutlitOptions {
  *
  * const outlit = new Outlit({ publicKey: 'pk_xxx' })
  *
- * // Track a custom event
+ * // Track with fingerprint only (anonymous, stored for later backfill)
+ * outlit.track({
+ *   fingerprint: deviceId,
+ *   eventName: 'page_view',
+ *   properties: { page: '/pricing' }
+ * })
+ *
+ * // Track with email (resolves immediately)
  * outlit.track({
  *   email: 'user@example.com',
  *   eventName: 'subscription_created',
  *   properties: { plan: 'pro' }
  * })
  *
- * // Identify/update user
+ * // Identify user and link fingerprint to email
  * outlit.identify({
  *   email: 'user@example.com',
+ *   fingerprint: deviceId,  // Links this device to the user
  *   userId: 'usr_123',
  *   traits: { name: 'John Doe' }
  * })
@@ -136,21 +144,26 @@ export class Outlit {
   /**
    * Track a custom event.
    *
-   * Requires either `email` or `userId` to identify the user.
+   * Requires at least one of: `fingerprint`, `email`, or `userId`.
    *
-   * @throws Error if neither email nor userId is provided
+   * - Use `fingerprint` for anonymous tracking (events linked later via identify)
+   * - Use `email` for immediate user resolution
+   * - Use `userId` for app-specific user identification
+   *
+   * @throws Error if no identity is provided
    */
   track(options: ServerTrackOptions): void {
     this.ensureNotShutdown()
-    validateServerIdentity(options.email, options.userId)
+    validateServerIdentity(options.fingerprint, options.email, options.userId)
 
     const event = buildCustomEvent({
-      url: `server://${options.email ?? options.userId}`,
+      url: `server://${options.email ?? options.userId ?? options.fingerprint}`,
       timestamp: options.timestamp,
       eventName: options.eventName,
       properties: {
         ...options.properties,
         // Include identity in properties for server-side resolution
+        __fingerprint: options.fingerprint ?? null,
         __email: options.email ?? null,
         __userId: options.userId ?? null,
       },
@@ -162,18 +175,36 @@ export class Outlit {
   /**
    * Identify or update a user.
    *
-   * Requires either `email` or `userId` to identify the user.
+   * Requires `email` to establish definitive identity.
+   * Optionally include `fingerprint` and/or `userId` to link them to this email.
    *
-   * @throws Error if neither email nor userId is provided
+   * This is how you link anonymous fingerprint-tracked events to a real user:
+   * ```typescript
+   * outlit.identify({
+   *   email: 'user@example.com',
+   *   fingerprint: deviceId,  // Links this device to the user
+   *   userId: 'usr_123',      // Links this app user ID to the user
+   * });
+   * ```
+   *
+   * @throws Error if email is not provided
    */
   identify(options: ServerIdentifyOptions): void {
     this.ensureNotShutdown()
-    validateServerIdentity(options.email, options.userId)
+
+    // Identify requires email (definitive identity)
+    if (!options.email) {
+      throw new Error(
+        "identify() requires email to establish definitive identity. " +
+          "Use fingerprint and/or userId as optional fields to link them to the email.",
+      )
+    }
 
     const event = buildIdentifyEvent({
-      url: `server://${options.email ?? options.userId}`,
+      url: `server://${options.email}`,
       email: options.email,
       userId: options.userId,
+      fingerprint: options.fingerprint,
       traits: options.traits,
     })
 
@@ -204,14 +235,15 @@ export class Outlit {
    */
   private sendStageEvent(stage: ExplicitJourneyStage, options: StageOptions): void {
     this.ensureNotShutdown()
-    validateServerIdentity(options.email, options.userId)
+    validateServerIdentity(options.fingerprint, options.email, options.userId)
 
     const event = buildStageEvent({
-      url: `server://${options.email ?? options.userId}`,
+      url: `server://${options.email ?? options.userId ?? options.fingerprint}`,
       stage,
       properties: {
         ...options.properties,
         // Include identity in properties for server-side resolution
+        __fingerprint: options.fingerprint ?? null,
         __email: options.email ?? null,
         __userId: options.userId ?? null,
       },
