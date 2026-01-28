@@ -122,7 +122,8 @@ When multiple identifiers exist, Outlit uses this priority order:
 | 2 | External User ID | `usr_12345` | Auth provider (Supabase, Auth0) |
 | 3 | Stripe Customer ID | `cus_abc123` | Stripe integration |
 | 4 | Phone Number | `+1-555-1234` | Form submission |
-| 5 (Lowest) | Anonymous ID | `abc-def-123` | Browser visitor ID |
+| 5 | Fingerprint | `device_abc123` | Server SDK (device identifier) |
+| 6 (Lowest) | Anonymous ID | `abc-def-123` | Browser visitor ID |
 
 ### Resolution Process
 
@@ -242,17 +243,23 @@ When merging two contacts:
     ```
   </Tab>
   <Tab title="Server Tracking">
-    **Identity is required**
-    
-    - No anonymous tracking
-    - Every call needs email or userId
-    - Events go directly to the contact
-    
+    **Identity or fingerprint required**
+
+    - Use `fingerprint` for anonymous tracking
+    - Use `email` or `userId` for immediate resolution
+    - Anonymous events backfill when identity is established
+
     ```typescript
-    // Email or userId REQUIRED
+    // Anonymous tracking with fingerprint
     outlit.track({
+      fingerprint: deviceId,
+      eventName: 'feature_used'
+    })
+
+    // Later, link fingerprint to user
+    outlit.identify({
       email: 'user@example.com',
-      eventName: 'subscription_created'
+      fingerprint: deviceId
     })
     ```
   </Tab>
