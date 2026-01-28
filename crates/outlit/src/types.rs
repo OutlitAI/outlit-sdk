@@ -52,6 +52,8 @@ pub struct IdentifyEventData {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub fingerprint: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub traits: Option<HashMap<String, serde_json::Value>>,
 }
 
@@ -155,6 +157,7 @@ mod tests {
             path: "/".into(),
             email: Some("user@example.com".into()),
             user_id: Some("usr_123".into()),
+            fingerprint: None,
             traits: None,
         });
 
@@ -162,6 +165,43 @@ mod tests {
 
         assert_eq!(json["type"], "identify");
         assert_eq!(json["userId"], "usr_123"); // camelCase
+    }
+
+    #[test]
+    fn test_identify_event_with_fingerprint() {
+        let event = TrackerEvent::Identify(IdentifyEventData {
+            timestamp: 1706400000000,
+            url: "server://user@example.com".into(),
+            path: "/".into(),
+            email: Some("user@example.com".into()),
+            user_id: Some("usr_123".into()),
+            fingerprint: Some("device_abc123".into()),
+            traits: None,
+        });
+
+        let json = serde_json::to_value(&event).unwrap();
+
+        assert_eq!(json["type"], "identify");
+        assert_eq!(json["fingerprint"], "device_abc123");
+        assert_eq!(json["email"], "user@example.com");
+        assert_eq!(json["userId"], "usr_123");
+    }
+
+    #[test]
+    fn test_fingerprint_omitted_when_none() {
+        let event = TrackerEvent::Identify(IdentifyEventData {
+            timestamp: 1706400000000,
+            url: "server://user@example.com".into(),
+            path: "/".into(),
+            email: Some("user@example.com".into()),
+            user_id: None,
+            fingerprint: None,
+            traits: None,
+        });
+
+        let json_str = serde_json::to_string(&event).unwrap();
+
+        assert!(!json_str.contains("fingerprint"));
     }
 
     #[test]

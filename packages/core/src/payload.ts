@@ -74,10 +74,11 @@ export function buildIdentifyEvent(
   params: BaseEventParams & {
     email?: string
     userId?: string
+    fingerprint?: string
     traits?: IdentifyTraits
   },
 ): IdentifyEvent {
-  const { url, referrer, timestamp, email, userId, traits } = params
+  const { url, referrer, timestamp, email, userId, fingerprint, traits } = params
   return {
     type: "identify",
     timestamp: timestamp ?? Date.now(),
@@ -87,6 +88,7 @@ export function buildIdentifyEvent(
     utm: extractUtmParams(url),
     email,
     userId,
+    fingerprint,
     traits,
   }
 }
@@ -250,6 +252,7 @@ export function buildBillingEvent(
  * @param events - Array of events to send
  * @param userIdentity - Optional user identity for immediate resolution (from setUser in SPA)
  * @param sessionId - Optional session ID for grouping events (browser SDK only)
+ * @param fingerprint - Optional device identifier for server-side anonymous tracking
  */
 export function buildIngestPayload(
   visitorId: string,
@@ -257,11 +260,17 @@ export function buildIngestPayload(
   events: TrackerEvent[],
   userIdentity?: PayloadUserIdentity,
   sessionId?: string,
+  fingerprint?: string,
 ): IngestPayload {
   const payload: IngestPayload = {
     visitorId,
     source,
     events,
+  }
+
+  // Only include fingerprint if provided (server SDK only)
+  if (fingerprint) {
+    payload.fingerprint = fingerprint
   }
 
   // Only include sessionId if provided (browser SDK only)

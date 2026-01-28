@@ -1,6 +1,6 @@
 //! Integration tests for the Outlit SDK.
 
-use outlit::{email, user_id, Outlit};
+use outlit::{email, fingerprint, user_id, Outlit};
 use serde_json::json;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -451,4 +451,163 @@ async fn test_multiple_batches_flush_correctly() {
     client.flush().await.unwrap();
     assert_eq!(received.load(Ordering::SeqCst), 3);
     assert_eq!(client.pending_event_count().await, 0);
+}
+
+// ============================================
+// FINGERPRINT TESTS
+// ============================================
+
+#[tokio::test]
+async fn test_track_with_fingerprint_only() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path("/api/i/v1/pk_test/events"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "success": true,
+            "processed": 1
+        })))
+        .expect(1)
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_test")
+        .api_host(mock_server.uri())
+        .flush_interval(Duration::from_secs(100))
+        .build()
+        .unwrap();
+
+    // Track with fingerprint only (anonymous user)
+    client
+        .track_by_fingerprint("page_view", fingerprint("device_abc123"))
+        .property("page", "/pricing")
+        .send()
+        .await
+        .unwrap();
+
+    client.flush().await.unwrap();
+}
+
+#[tokio::test]
+async fn test_track_with_fingerprint_and_email() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path("/api/i/v1/pk_test/events"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "success": true,
+            "processed": 1
+        })))
+        .expect(1)
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_test")
+        .api_host(mock_server.uri())
+        .flush_interval(Duration::from_secs(100))
+        .build()
+        .unwrap();
+
+    // Track with email + fingerprint (links device to user)
+    client
+        .track("signup", email("user@test.com"))
+        .fingerprint("device_abc123")
+        .property("plan", "pro")
+        .send()
+        .await
+        .unwrap();
+
+    client.flush().await.unwrap();
+}
+
+#[tokio::test]
+async fn test_track_with_fingerprint_and_user_id() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "success": true,
+            "processed": 1
+        })))
+        .expect(1)
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_test")
+        .api_host(mock_server.uri())
+        .flush_interval(Duration::from_secs(100))
+        .build()
+        .unwrap();
+
+    // Track with fingerprint + user_id
+    client
+        .track_by_fingerprint("feature_used", fingerprint("device_abc123"))
+        .user_id("usr_123")
+        .send()
+        .await
+        .unwrap();
+
+    client.flush().await.unwrap();
+}
+
+#[tokio::test]
+async fn test_identify_with_fingerprint_links_device() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "success": true,
+            "processed": 1
+        })))
+        .expect(1)
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_test")
+        .api_host(mock_server.uri())
+        .flush_interval(Duration::from_secs(100))
+        .build()
+        .unwrap();
+
+    // Identify with email + fingerprint to link device
+    client
+        .identify(email("user@test.com"))
+        .fingerprint("device_abc123")
+        .user_id("usr_123")
+        .trait_("name", "John")
+        .send()
+        .await
+        .unwrap();
+
+    client.flush().await.unwrap();
+}
+
+#[tokio::test]
+async fn test_stage_with_fingerprint() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "success": true,
+            "processed": 1
+        })))
+        .expect(1)
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_test")
+        .api_host(mock_server.uri())
+        .flush_interval(Duration::from_secs(100))
+        .build()
+        .unwrap();
+
+    // Stage event with fingerprint identity
+    client
+        .user()
+        .activate_by_fingerprint(fingerprint("device_abc123"))
+        .send()
+        .await
+        .unwrap();
+
+    client.flush().await.unwrap();
 }

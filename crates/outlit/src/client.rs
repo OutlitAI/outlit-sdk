@@ -5,7 +5,7 @@ use crate::config::{Config, OutlitBuilder};
 use crate::queue::EventQueue;
 use crate::transport::HttpTransport;
 use crate::types::{BillingStatus, IngestPayload, JourneyStage, SourceType};
-use crate::{Email, Error, UserId};
+use crate::{Email, Error, Fingerprint, UserId};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -14,13 +14,14 @@ use tracing::{debug, error, info, instrument};
 
 /// Outlit analytics client.
 ///
-/// Unlike the browser SDK, this requires identity (email or userId) for all calls.
-/// Anonymous tracking is not supported server-side.
+/// Supports tracking with email, user_id, or fingerprint identity.
+/// Events tracked with fingerprint only can be linked to users later
+/// via an identify call with the same fingerprint.
 ///
 /// # Example
 ///
 /// ```rust,no_run
-/// use outlit::{Outlit, email};
+/// use outlit::{Outlit, email, fingerprint};
 /// use std::time::Duration;
 ///
 /// #[tokio::main]
@@ -29,8 +30,21 @@ use tracing::{debug, error, info, instrument};
 ///         .flush_interval(Duration::from_secs(5))
 ///         .build()?;
 ///
+///     // Track with email (resolves immediately)
 ///     client.track("signup", email("user@example.com"))
 ///         .property("plan", "pro")
+///         .send()
+///         .await?;
+///
+///     // Track with fingerprint only (stored for later backfill)
+///     client.track_by_fingerprint("page_view", fingerprint("device_abc123"))
+///         .property("page", "/pricing")
+///         .send()
+///         .await?;
+///
+///     // Link fingerprint to user
+///     client.identify(email("user@example.com"))
+///         .fingerprint("device_abc123")
 ///         .send()
 ///         .await?;
 ///
@@ -116,6 +130,34 @@ impl Outlit {
         &self,
         event_name: impl Into<String>,
         identity: impl Into<UserId>,
+    ) -> SendableTrack<'_> {
+        SendableTrack {
+            builder: TrackBuilder::new(event_name, identity.into()),
+            client: self,
+        }
+    }
+
+    /// Track a custom event with fingerprint (device identifier).
+    ///
+    /// Use this for anonymous tracking before the user is identified.
+    /// Events can be linked to a user later via `identify()` with the same fingerprint.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// # use outlit::{Outlit, fingerprint};
+    /// # async fn example(client: &Outlit) -> Result<(), outlit::Error> {
+    /// client.track_by_fingerprint("page_view", fingerprint("device_abc123"))
+    ///     .property("page", "/pricing")
+    ///     .send()
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn track_by_fingerprint(
+        &self,
+        event_name: impl Into<String>,
+        identity: impl Into<Fingerprint>,
     ) -> SendableTrack<'_> {
         SendableTrack {
             builder: TrackBuilder::new(event_name, identity.into()),
@@ -347,15 +389,21 @@ pub struct SendableTrack<'a> {
 }
 
 impl<'a> SendableTrack<'a> {
-    /// Add email (if identity was user_id).
+    /// Add email (if identity was user_id or fingerprint).
     pub fn email(mut self, email: impl Into<String>) -> Self {
         self.builder = self.builder.email(email);
         self
     }
 
-    /// Add user_id (if identity was email).
+    /// Add user_id (if identity was email or fingerprint).
     pub fn user_id(mut self, user_id: impl Into<String>) -> Self {
         self.builder = self.builder.user_id(user_id);
+        self
+    }
+
+    /// Add fingerprint (device identifier) to link this event to a device.
+    pub fn fingerprint(mut self, fingerprint: impl Into<String>) -> Self {
+        self.builder = self.builder.fingerprint(fingerprint);
         self
     }
 
@@ -396,6 +444,12 @@ impl<'a> SendableIdentify<'a> {
         self
     }
 
+    /// Add fingerprint (device identifier) to link this device to the user.
+    pub fn fingerprint(mut self, fingerprint: impl Into<String>) -> Self {
+        self.builder = self.builder.fingerprint(fingerprint);
+        self
+    }
+
     /// Add a trait.
     pub fn trait_(mut self, key: impl Into<String>, value: impl Into<serde_json::Value>) -> Self {
         self.builder = self.builder.trait_(key, value);
@@ -424,6 +478,12 @@ impl<'a> SendableStage<'a> {
     /// Add user_id.
     pub fn user_id(mut self, user_id: impl Into<String>) -> Self {
         self.builder = self.builder.user_id(user_id);
+        self
+    }
+
+    /// Add fingerprint (device identifier).
+    pub fn fingerprint(mut self, fingerprint: impl Into<String>) -> Self {
+        self.builder = self.builder.fingerprint(fingerprint);
         self
     }
 
@@ -496,6 +556,14 @@ impl<'a> UserMethods<'a> {
         }
     }
 
+    /// Mark user as activated by fingerprint.
+    pub fn activate_by_fingerprint(&self, identity: impl Into<Fingerprint>) -> SendableStage<'a> {
+        SendableStage {
+            builder: StageBuilder::new(JourneyStage::Activated, identity.into()),
+            client: self.client,
+        }
+    }
+
     /// Mark user as engaged.
     pub fn engaged(&self, identity: impl Into<Email>) -> SendableStage<'a> {
         SendableStage {
@@ -512,6 +580,14 @@ impl<'a> UserMethods<'a> {
         }
     }
 
+    /// Mark user as engaged by fingerprint.
+    pub fn engaged_by_fingerprint(&self, identity: impl Into<Fingerprint>) -> SendableStage<'a> {
+        SendableStage {
+            builder: StageBuilder::new(JourneyStage::Engaged, identity.into()),
+            client: self.client,
+        }
+    }
+
     /// Mark user as inactive.
     pub fn inactive(&self, identity: impl Into<Email>) -> SendableStage<'a> {
         SendableStage {
@@ -522,6 +598,14 @@ impl<'a> UserMethods<'a> {
 
     /// Mark user as inactive by user_id.
     pub fn inactive_by_user_id(&self, identity: impl Into<UserId>) -> SendableStage<'a> {
+        SendableStage {
+            builder: StageBuilder::new(JourneyStage::Inactive, identity.into()),
+            client: self.client,
+        }
+    }
+
+    /// Mark user as inactive by fingerprint.
+    pub fn inactive_by_fingerprint(&self, identity: impl Into<Fingerprint>) -> SendableStage<'a> {
         SendableStage {
             builder: StageBuilder::new(JourneyStage::Inactive, identity.into()),
             client: self.client,

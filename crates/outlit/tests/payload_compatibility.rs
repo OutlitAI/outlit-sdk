@@ -42,6 +42,7 @@ fn test_identify_event_json_structure() {
         path: "/".into(),
         email: Some("user@test.com".into()),
         user_id: Some("usr_123".into()),
+        fingerprint: None,
         traits: Some([("name".to_string(), json!("John"))].into_iter().collect()),
     });
 
@@ -52,6 +53,26 @@ fn test_identify_event_json_structure() {
     assert!(json.get("user_id").is_none()); // snake_case should NOT exist
     assert_eq!(json["email"], "user@test.com");
     assert!(json.get("traits").is_some());
+}
+
+#[test]
+fn test_identify_event_with_fingerprint_json_structure() {
+    let event = TrackerEvent::Identify(IdentifyEventData {
+        timestamp: 1706400000000,
+        url: "server://user@test.com".into(),
+        path: "/".into(),
+        email: Some("user@test.com".into()),
+        user_id: Some("usr_123".into()),
+        fingerprint: Some("device_abc123".into()),
+        traits: None,
+    });
+
+    let json = serde_json::to_value(&event).unwrap();
+
+    assert_eq!(json["type"], "identify");
+    assert_eq!(json["fingerprint"], "device_abc123");
+    assert_eq!(json["email"], "user@test.com");
+    assert_eq!(json["userId"], "usr_123");
 }
 
 #[test]
@@ -117,6 +138,7 @@ fn test_nested_customer_traits_structure() {
         path: "/".into(),
         email: Some("user@test.com".into()),
         user_id: None,
+        fingerprint: None,
         traits: Some(
             [
                 ("name".to_string(), json!("John")),

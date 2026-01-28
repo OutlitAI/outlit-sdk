@@ -64,11 +64,16 @@ export interface BrowserIdentifyOptions {
 // ============================================
 
 /**
- * Server identity - requires at least email OR userId.
+ * Server identity - requires at least one of fingerprint, email, or userId.
  * This is validated at runtime to avoid complex union types that
  * cause TypeScript memory issues during type checking.
+ *
+ * - fingerprint: Device identifier for anonymous tracking (can be linked later)
+ * - email: User's email address (definitive identity, resolves immediately)
+ * - userId: App's internal user ID
  */
 export interface ServerIdentity {
+  fingerprint?: string
   email?: string
   userId?: string
 }
@@ -151,6 +156,7 @@ export interface IdentifyEvent extends BaseEvent {
   type: "identify"
   email?: string
   userId?: string
+  fingerprint?: string
   traits?: IdentifyTraits
 }
 
@@ -231,6 +237,12 @@ export interface IngestPayload {
   visitorId?: string // Required for pixel, optional for server
   source: SourceType
   events: TrackerEvent[]
+  /**
+   * Device identifier for anonymous tracking.
+   * Events with fingerprint can be linked to users later via identify.
+   * Only present for server-side events.
+   */
+  fingerprint?: string
   /**
    * Session ID for grouping all events in this batch.
    * Only present for browser (client) source events.
