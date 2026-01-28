@@ -204,7 +204,12 @@ impl Outlit {
             events,
         };
 
-        self.transport.send(&payload).await?;
+        if let Err(e) = self.transport.send(&payload).await {
+            // Requeue events on failure to prevent data loss
+            error!(error = %e, "flush failed, requeuing events");
+            self.queue.requeue(payload.events).await;
+            return Err(e);
+        }
 
         Ok(())
     }
@@ -276,7 +281,8 @@ impl Outlit {
                 };
 
                 if let Err(e) = transport.send(&payload).await {
-                    error!(error = %e, "flush failed");
+                    error!(error = %e, "periodic flush failed, requeuing events");
+                    queue.requeue(payload.events).await;
                 }
             }
         });

@@ -99,8 +99,14 @@ impl OutlitBuilder {
 
     /// Build the configuration.
     pub(crate) fn build_config(self) -> Result<Config, crate::Error> {
-        if self.public_key.is_empty() {
+        if self.public_key.trim().is_empty() {
             return Err(crate::Error::Config("public_key cannot be empty".into()));
+        }
+
+        if let Some(ref host) = self.api_host {
+            if host.trim().is_empty() {
+                return Err(crate::Error::Config("api_host cannot be empty".into()));
+            }
         }
 
         Ok(Config {
@@ -147,6 +153,18 @@ mod tests {
     #[test]
     fn test_builder_empty_public_key_fails() {
         let result = OutlitBuilder::new("").build_config();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_builder_whitespace_public_key_fails() {
+        let result = OutlitBuilder::new("   ").build_config();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_builder_whitespace_api_host_fails() {
+        let result = OutlitBuilder::new("pk_test").api_host("   ").build_config();
         assert!(result.is_err());
     }
 
