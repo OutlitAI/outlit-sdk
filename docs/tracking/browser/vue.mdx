@@ -1,0 +1,419 @@
+---
+title: "Vue Integration"
+description: "Integrate Outlit tracking with Vue 3 applications"
+---
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install --save @outlit/browser
+```
+
+```bash pnpm
+pnpm add @outlit/browser
+```
+
+```bash yarn
+yarn add @outlit/browser
+```
+
+```bash bun
+bun add @outlit/browser
+```
+</CodeGroup>
+
+## Quick Start
+
+Initialize Outlit in your app's entry point:
+
+```typescript
+// main.ts
+import { createApp } from 'vue'
+import App from './App.vue'
+import outlit from '@outlit/browser'
+
+outlit.init({
+  publicKey: import.meta.env.VITE_OUTLIT_KEY,
+  trackPageviews: true,
+})
+
+createApp(App).mount('#app')
+```
+
+<Tip>
+  Set your public key in `.env`:
+  ```
+  VITE_OUTLIT_KEY=pk_your_public_key_here
+  ```
+</Tip>
+
+## Tracking Events
+
+Track custom events using the Composition API:
+
+```vue
+<script setup>
+import outlit from '@outlit/browser'
+
+function handleCheckout() {
+  outlit.track('checkout_started', {
+    plan: 'pro',
+    amount: 99
+  })
+}
+</script>
+
+<template>
+  <button @click="handleCheckout">
+    Checkout
+  </button>
+</template>
+```
+
+### With Options API
+
+```vue
+<script>
+import outlit from '@outlit/browser'
+
+export default {
+  methods: {
+    handleCheckout() {
+      outlit.track('checkout_started', {
+        plan: 'pro',
+        amount: 99
+      })
+    }
+  }
+}
+</script>
+
+<template>
+  <button @click="handleCheckout">
+    Checkout
+  </button>
+</template>
+```
+
+## Identifying Users
+
+Call `identify()` after authentication:
+
+```vue
+<script setup>
+import { ref } from 'vue'
+import outlit from '@outlit/browser'
+
+const email = ref('')
+const password = ref('')
+
+async function handleLogin() {
+  const user = await login(email.value, password.value)
+
+  outlit.identify({
+    email: user.email,
+    userId: user.id,
+    traits: {
+      name: user.name,
+      plan: user.plan
+    }
+  })
+}
+</script>
+
+<template>
+  <form @submit.prevent="handleLogin">
+    <input v-model="email" type="email" placeholder="Email" />
+    <input v-model="password" type="password" placeholder="Password" />
+    <button type="submit">Login</button>
+  </form>
+</template>
+```
+
+## Vue Router Integration
+
+Track pageviews automatically with Vue Router:
+
+```typescript
+// router/index.ts
+import { createRouter, createWebHistory } from 'vue-router'
+import outlit from '@outlit/browser'
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [...]
+})
+
+// Track pageviews on route change
+router.afterEach((to) => {
+  outlit.track('pageview', {
+    path: to.path,
+    name: to.name,
+    params: to.params
+  })
+})
+
+export default router
+```
+
+<Info>
+  If you set `trackPageviews: true` during init, pageviews are tracked automatically. The above example is only needed if you want custom pageview logic.
+</Info>
+
+## Composables
+
+Create a reusable composable for tracking:
+
+```typescript
+// composables/useOutlit.ts
+import outlit from '@outlit/browser'
+
+export function useOutlit() {
+  function track(eventName: string, properties?: Record<string, any>) {
+    outlit.track(eventName, properties)
+  }
+
+  function identify(options: { email?: string; userId?: string; traits?: Record<string, any> }) {
+    outlit.identify(options)
+  }
+
+  function setUser(identity: { email?: string; userId?: string; traits?: Record<string, any> }) {
+    outlit.setUser(identity)
+  }
+
+  function clearUser() {
+    outlit.clearUser()
+  }
+
+  return {
+    track,
+    identify,
+    setUser,
+    clearUser,
+    user: outlit.user,
+  }
+}
+```
+
+Use in components:
+
+```vue
+<script setup>
+import { useOutlit } from '@/composables/useOutlit'
+
+const { track, setUser, clearUser } = useOutlit()
+
+function handleFeatureClick() {
+  track('feature_clicked', { feature: 'export' })
+}
+
+// After authentication
+function onLogin(user) {
+  setUser({
+    email: user.email,
+    userId: user.id,
+    traits: { name: user.name, plan: user.plan }
+  })
+}
+
+// On logout
+function onLogout() {
+  clearUser()
+}
+</script>
+```
+
+## Pinia Integration
+
+Track state changes with Pinia:
+
+```typescript
+// stores/user.ts
+import { defineStore } from 'pinia'
+import outlit from '@outlit/browser'
+
+export const useUserStore = defineStore('user', {
+  state: () => ({
+    user: null
+  }),
+
+  actions: {
+    async login(email: string, password: string) {
+      const user = await api.login(email, password)
+      this.user = user
+
+      // Set user identity after login
+      outlit.setUser({
+        email: user.email,
+        userId: user.id,
+        traits: {
+          name: user.name,
+          plan: user.plan
+        }
+      })
+    },
+
+    logout() {
+      this.user = null
+      outlit.clearUser()
+    }
+  }
+})
+```
+
+## Auth Integration
+
+Sync user identity with your auth state using Vue's reactivity:
+
+```typescript
+// main.ts or App.vue
+import { watch } from 'vue'
+import outlit from '@outlit/browser'
+import { useAuthStore } from './stores/auth'
+
+const auth = useAuthStore()
+
+// Sync user identity with auth state
+watch(
+  () => auth.user,
+  (user) => {
+    if (user) {
+      outlit.setUser({
+        email: user.email,
+        userId: user.id,
+        traits: {
+          name: user.name,
+          plan: user.plan
+        }
+      })
+    } else {
+      outlit.clearUser()
+    }
+  },
+  { immediate: true }
+)
+```
+
+<Info>
+  Using `setUser()` with a watcher ensures the user identity is always in sync with your auth state, including handling page refreshes where the user is already logged in.
+</Info>
+
+## SSR with Nuxt
+
+For Nuxt applications, see the dedicated [Nuxt integration guide](/tracking/browser/nuxt).
+
+## Contact Stage Events
+
+Track contact lifecycle events:
+
+```vue
+<script setup>
+import outlit from '@outlit/browser'
+import { onMounted } from 'vue'
+
+onMounted(() => {
+  // After onboarding completion
+  outlit.user.activate({ flow: 'onboarding' })
+})
+
+function handleEngagementMilestone() {
+  outlit.user.engaged({ milestone: 'first_project' })
+}
+</script>
+```
+
+<Warning>
+  Stage methods (`activate`, `engaged`) require the user to be identified first using `identify()` or `setUser()`.
+</Warning>
+
+<Info>
+  Account billing (`paid`, `churned`, `trialing`) is tracked separately. If you've connected Stripe, billing is automatic. For manual billing, see [Stages & Billing](/tracking/stages).
+</Info>
+
+## Consent Management
+
+Handle user consent before tracking:
+
+```vue
+<script setup>
+import { ref, onMounted } from 'vue'
+import outlit from '@outlit/browser'
+
+const showBanner = ref(false)
+
+onMounted(() => {
+  // Initialize without auto-tracking
+  outlit.init({
+    publicKey: import.meta.env.VITE_OUTLIT_KEY,
+    autoTrack: false
+  })
+
+  // Check if user has already consented
+  const hasConsent = localStorage.getItem('tracking-consent')
+  if (hasConsent === 'true') {
+    outlit.enableTracking()
+  } else {
+    showBanner.value = true
+  }
+})
+
+function acceptTracking() {
+  localStorage.setItem('tracking-consent', 'true')
+  outlit.enableTracking()
+  showBanner.value = false
+}
+</script>
+
+<template>
+  <div v-if="showBanner" class="cookie-banner">
+    <p>We use cookies to improve your experience.</p>
+    <button @click="acceptTracking">Accept</button>
+  </div>
+</template>
+```
+
+## TypeScript Support
+
+Full TypeScript support is included:
+
+```typescript
+import outlit, {
+  type OutlitOptions,
+  type BrowserTrackOptions,
+  type BrowserIdentifyOptions
+} from '@outlit/browser'
+
+// Type-safe initialization
+const options: OutlitOptions = {
+  publicKey: import.meta.env.VITE_OUTLIT_KEY,
+  trackPageviews: true,
+  flushInterval: 5000
+}
+
+outlit.init(options)
+
+// Type-safe tracking
+outlit.track('purchase_completed', {
+  orderId: 'ord_123',
+  amount: 99.99,
+  currency: 'USD'
+})
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Nuxt Integration" icon="layer-group" href="/tracking/browser/nuxt">
+    Use Outlit with Nuxt 3
+  </Card>
+  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+    Track events from your backend
+  </Card>
+  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
+    Learn how profiles are merged
+  </Card>
+  <Card title="NPM Package" icon="npm" href="/tracking/browser/npm">
+    Full API reference
+  </Card>
+</CardGroup>

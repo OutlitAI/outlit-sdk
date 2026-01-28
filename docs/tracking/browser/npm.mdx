@@ -1,0 +1,454 @@
+---
+title: "NPM Package"
+description: "Full control over tracking with the npm package"
+---
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install --save @outlit/browser
+```
+
+```bash pnpm
+pnpm add @outlit/browser
+```
+
+```bash yarn
+yarn add @outlit/browser
+```
+
+```bash bun
+bun add @outlit/browser
+```
+</CodeGroup>
+
+## Initialization
+
+Initialize the tracker once at app startup, typically in your entry point:
+
+```typescript
+import outlit from '@outlit/browser'
+
+outlit.init({
+  publicKey: 'pk_your_public_key',
+  // Optional configuration
+  apiHost: 'https://app.outlit.ai',
+  trackPageviews: true,
+  trackForms: true,
+  trackEngagement: true,
+  flushInterval: 5000, // ms
+})
+```
+
+### Configuration Options
+
+<ParamField path="publicKey" type="string" required>
+  Your organization's public key from [Settings → Website Tracking](https://app.outlit.ai/workspace-profile/tracking).
+</ParamField>
+
+<ParamField path="apiHost" type="string" default="https://app.outlit.ai">
+  The API endpoint for sending events. Override for self-hosted or proxy setups.
+</ParamField>
+
+<ParamField path="trackPageviews" type="boolean" default="true">
+  Automatically track pageviews on navigation.
+</ParamField>
+
+<ParamField path="trackForms" type="boolean" default="true">
+  Automatically capture form submissions.
+</ParamField>
+
+<ParamField path="formFieldDenylist" type="string[]">
+  Additional field names to exclude from form capture.
+</ParamField>
+
+<ParamField path="flushInterval" type="number" default="5000">
+  How often to send batched events (in milliseconds).
+</ParamField>
+
+<ParamField path="autoTrack" type="boolean" default="true">
+  Whether to start tracking automatically on init. Set to `false` if you need to wait for user consent. Call `enableTracking()` after consent is obtained.
+</ParamField>
+
+<ParamField path="autoIdentify" type="boolean" default="true">
+  Automatically identify users when they submit forms containing an email field. Extracts email and name using field name heuristics. Set to `false` to call `identify()` manually. See [Auto-Identify](/tracking/identity/overview#auto-identify) for details.
+</ParamField>
+
+<ParamField path="trackEngagement" type="boolean" default="true">
+  Track engagement metrics (active time on page). Emits engagement events on page exit and SPA navigation capturing how long users actively engaged with each page.
+</ParamField>
+
+<ParamField path="idleTimeout" type="number" default="30000">
+  Idle timeout in milliseconds for engagement tracking. After this period of no user interaction, the user is considered idle and active time stops accumulating.
+</ParamField>
+
+<ParamField path="trackCalendarEmbeds" type="boolean" default="true">
+  Track booking events from calendar embeds (Cal.com, Calendly). Fires a calendar event when bookings are detected.
+</ParamField>
+
+## Consent Management
+
+If you need to wait for user consent before tracking:
+
+```typescript
+import outlit from '@outlit/browser'
+
+// Initialize without auto-tracking
+outlit.init({
+  publicKey: 'pk_your_public_key',
+  autoTrack: false, // Don't track until consent
+})
+
+// Later, when user accepts cookies/tracking
+function onConsentAccepted() {
+  outlit.enableTracking()
+}
+```
+
+### Check Tracking Status
+
+```typescript
+import { isTrackingEnabled } from '@outlit/browser'
+
+if (isTrackingEnabled()) {
+  console.log('Tracking is active')
+}
+```
+
+## API Reference
+
+### `outlit.init(options)`
+
+Initialize the tracker. Must be called before other methods.
+
+```typescript
+import outlit from '@outlit/browser'
+
+outlit.init({ publicKey: 'pk_xxx' })
+```
+
+### `outlit.track(eventName, properties?)`
+
+Track a custom event.
+
+```typescript
+outlit.track('feature_used', {
+  feature: 'export',
+  format: 'csv',
+  rowCount: 1500
+})
+```
+
+<ParamField path="eventName" type="string" required>
+  A descriptive name for the event. Use `snake_case`.
+</ParamField>
+
+<ParamField path="properties" type="Record<string, string | number | boolean | null>">
+  Additional data to attach to the event.
+</ParamField>
+
+### `outlit.identify(options)`
+
+Identify the current visitor. Links their anonymous history to a known profile.
+
+```typescript
+outlit.identify({
+  email: 'jane@acme.com',
+  userId: 'usr_12345',
+  traits: {
+    name: 'Jane Doe',
+    company: 'Acme Inc',
+    role: 'Engineering Manager',
+    plan: 'enterprise'
+  }
+})
+```
+
+<ParamField path="email" type="string">
+  The visitor's email address. Primary identifier.
+</ParamField>
+
+<ParamField path="userId" type="string">
+  Your internal user ID (from Supabase, Auth0, etc.).
+</ParamField>
+
+<ParamField path="traits" type="Record<string, string | number | boolean | null>">
+  Additional properties about the user.
+</ParamField>
+
+### `outlit.setUser(identity)`
+
+Set the current user identity. Ideal for SPA applications where you know the user's identity after authentication. Can be called before tracking is enabled—the identity is queued and applied when `enableTracking()` is called.
+
+```typescript
+// After user logs in
+outlit.setUser({
+  email: 'jane@acme.com',
+  userId: 'usr_12345',
+  traits: {
+    name: 'Jane Doe',
+    plan: 'pro'
+  }
+})
+```
+
+<Info>
+  Both `setUser()` and `identify()` link the visitor to a known profile. The difference is `setUser()` can be called before tracking is enabled (identity is queued), while `identify()` requires tracking to be enabled first.
+</Info>
+
+### `outlit.clearUser()`
+
+Clear the current user identity. Call this when the user logs out.
+
+```typescript
+// On logout
+outlit.clearUser()
+```
+
+### Contact Stage Methods
+
+Track contact progression through your product lifecycle. These require the user to be identified first (via `setUser()` or `identify()`).
+
+#### `outlit.user.activate(properties?)`
+
+Mark the current user as activated. Typically called after a user completes onboarding or a key activation milestone.
+
+```typescript
+outlit.user.activate({ flow: 'onboarding', step: 'completed' })
+```
+
+#### `outlit.user.engaged(properties?)`
+
+Mark the current user as engaged. Typically called when a user reaches a usage milestone.
+
+```typescript
+outlit.user.engaged({ milestone: 'first_project_created' })
+```
+
+#### `outlit.user.inactive(properties?)`
+
+Mark the current user as inactive. Use this when a user's engagement lapses.
+
+```typescript
+outlit.user.inactive({ reason: 'no_login_30_days' })
+```
+
+<Warning>
+  Stage methods require the user to be identified first. If called without a user identity, a warning is logged and the event is not sent.
+</Warning>
+
+<Info>
+  Account billing status (`paid`, `churned`, `trialing`) is tracked separately at the account level. If you've connected Stripe, this is handled automatically. For manual billing tracking from your server, see [Stages & Billing](/tracking/stages).
+</Info>
+
+### `outlit.getInstance()`
+
+Get the singleton tracker instance.
+
+```typescript
+const tracker = outlit.getInstance()
+const visitorId = tracker.getVisitorId()
+```
+
+### `outlit.enableTracking()`
+
+Enable tracking after consent. Only needed if `autoTrack: false` was set during init.
+
+```typescript
+import outlit, { enableTracking } from '@outlit/browser'
+
+// Initialize with autoTrack: false
+outlit.init({ publicKey: 'pk_xxx', autoTrack: false })
+
+// Later, after consent
+enableTracking()
+// or
+outlit.enableTracking()
+```
+
+### `outlit.isTrackingEnabled()`
+
+Check if tracking is currently enabled.
+
+```typescript
+import { isTrackingEnabled } from '@outlit/browser'
+
+if (isTrackingEnabled()) {
+  // Tracking is active
+}
+```
+
+## TypeScript Support
+
+The package is written in TypeScript and includes full type definitions:
+
+```typescript
+import outlit, {
+  type OutlitOptions,
+  type BrowserTrackOptions,
+  type BrowserIdentifyOptions,
+  type UserIdentity,
+} from '@outlit/browser'
+
+// Full type safety
+outlit.init({
+  publicKey: 'pk_xxx',
+  trackPageviews: true,
+})
+
+outlit.track('purchase_completed', {
+  orderId: 'ord_123',
+  amount: 99.99,
+  currency: 'USD',
+})
+```
+
+## Framework Examples
+
+### Next.js (App Router)
+
+```typescript
+// app/providers.tsx
+'use client'
+
+import { useEffect } from 'react'
+import outlit from '@outlit/browser'
+
+export function OutlitInit() {
+  useEffect(() => {
+    outlit.init({ publicKey: process.env.NEXT_PUBLIC_OUTLIT_KEY! })
+  }, [])
+
+  return null
+}
+
+// app/layout.tsx
+import { OutlitInit } from './providers'
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <OutlitInit />
+        {children}
+      </body>
+    </html>
+  )
+}
+```
+
+### Vue.js
+
+```typescript
+// main.ts
+import { createApp } from 'vue'
+import App from './App.vue'
+import outlit from '@outlit/browser'
+
+outlit.init({ publicKey: import.meta.env.VITE_OUTLIT_KEY })
+
+createApp(App).mount('#app')
+```
+
+```vue
+<!-- Component.vue -->
+<script setup>
+import outlit from '@outlit/browser'
+
+function handleClick() {
+  outlit.track('button_clicked', { id: 'cta' })
+}
+</script>
+```
+
+### Svelte
+
+```typescript
+// +layout.ts
+import outlit from '@outlit/browser'
+
+outlit.init({ publicKey: import.meta.env.VITE_OUTLIT_KEY })
+```
+
+```svelte
+<!-- Component.svelte -->
+<script>
+import outlit from '@outlit/browser'
+
+function handleClick() {
+  outlit.track('button_clicked', { id: 'cta' })
+}
+</script>
+```
+
+## Advanced Usage
+
+### Manual Flush
+
+Force immediate sending of queued events:
+
+```typescript
+await outlit.getInstance().flush()
+```
+
+### Shutdown
+
+Gracefully shutdown the tracker (flushes remaining events):
+
+```typescript
+await outlit.getInstance().shutdown()
+```
+
+### Access Visitor ID
+
+Get the current visitor's ID for server-side correlation:
+
+```typescript
+const visitorId = outlit.getInstance().getVisitorId()
+
+// Send to your backend
+fetch('/api/correlate', {
+  body: JSON.stringify({ visitorId, data: '...' })
+})
+```
+
+## Engagement Tracking
+
+Engagement tracking captures how long users actively spend on each page. It's enabled by default and works automatically.
+
+### How It Works
+
+- **Active time** is tracked when the page is visible and the user is interacting (mouse movement, clicks, scrolling, typing)
+- **Idle detection** pauses active time after 30 seconds of no interaction (configurable via `idleTimeout`)
+- **Engagement events** are automatically sent when the user navigates to a new page or leaves the site
+
+### Engagement Data
+
+Each engagement event includes:
+
+| Property | Description |
+|----------|-------------|
+| `activeTimeMs` | Time in milliseconds the user was actively engaged |
+| `totalTimeMs` | Total wall-clock time on the page |
+| `sessionId` | Session ID for grouping page views |
+
+### Disabling Engagement Tracking
+
+```typescript
+outlit.init({
+  publicKey: 'pk_xxx',
+  trackEngagement: false, // Disable engagement tracking
+})
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="React Integration" icon="react" href="/tracking/browser/react">
+    Use the React provider and hooks
+  </Card>
+  <Card title="Server-Side" icon="server" href="/tracking/server/nodejs">
+    Track events from your backend
+  </Card>
+</CardGroup>

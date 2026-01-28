@@ -1,0 +1,558 @@
+---
+title: "Astro Integration"
+description: "Integrate Outlit tracking with Astro applications"
+---
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install --save @outlit/browser
+```
+
+```bash pnpm
+pnpm add @outlit/browser
+```
+
+```bash yarn
+yarn add @outlit/browser
+```
+
+```bash bun
+bun add @outlit/browser
+```
+</CodeGroup>
+
+## Quick Start
+
+Add Outlit to your base layout:
+
+```astro
+---
+// src/layouts/BaseLayout.astro
+const PUBLIC_OUTLIT_KEY = import.meta.env.PUBLIC_OUTLIT_KEY
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>My Site</title>
+  </head>
+  <body>
+    <slot />
+
+    <script>
+      import outlit from '@outlit/browser'
+
+      outlit.init({
+        publicKey: import.meta.env.PUBLIC_OUTLIT_KEY,
+        trackPageviews: true,
+      })
+    </script>
+  </body>
+</html>
+```
+
+<Tip>
+  Add your public key to `.env`:
+  ```
+  PUBLIC_OUTLIT_KEY=pk_your_public_key_here
+  ```
+</Tip>
+
+## Alternative: Inline Script
+
+Use an inline script for better performance:
+
+```astro
+---
+// src/layouts/BaseLayout.astro
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>My Site</title>
+  </head>
+  <body>
+    <slot />
+
+    <script>
+      import outlit from '@outlit/browser'
+
+      outlit.init({
+        publicKey: import.meta.env.PUBLIC_OUTLIT_KEY,
+        trackPageviews: true,
+      })
+    </script>
+  </body>
+</html>
+```
+
+## Tracking Events
+
+Track events in Astro components:
+
+```astro
+---
+// src/components/PricingButton.astro
+---
+
+<button id="pricing-btn" data-plan="pro">
+  View Pricing
+</button>
+
+<script>
+  import outlit from '@outlit/browser'
+
+  const button = document.getElementById('pricing-btn')
+
+  button?.addEventListener('click', () => {
+    const plan = button.getAttribute('data-plan')
+    outlit.track('pricing_clicked', { plan })
+  })
+</script>
+```
+
+### With Client Directives
+
+Use client directives for interactive components:
+
+```astro
+---
+// src/pages/index.astro
+import PricingButton from '../components/PricingButton.jsx'
+---
+
+<html>
+  <body>
+    <PricingButton client:load />
+  </body>
+</html>
+```
+
+## Framework Islands
+
+### React Island
+
+```jsx
+// src/components/PricingButton.jsx
+import { useEffect } from 'react'
+import outlit from '@outlit/browser'
+
+export default function PricingButton() {
+  function handleClick() {
+    outlit.track('pricing_clicked', { plan: 'pro' })
+  }
+
+  return (
+    <button onClick={handleClick}>
+      View Pricing
+    </button>
+  )
+}
+```
+
+### Vue Island
+
+```vue
+<!-- src/components/PricingButton.vue -->
+<script setup>
+import outlit from '@outlit/browser'
+
+function handleClick() {
+  outlit.track('pricing_clicked', { plan: 'pro' })
+}
+</script>
+
+<template>
+  <button @click="handleClick">
+    View Pricing
+  </button>
+</template>
+```
+
+### Svelte Island
+
+```svelte
+<!-- src/components/PricingButton.svelte -->
+<script>
+  import outlit from '@outlit/browser'
+
+  function handleClick() {
+    outlit.track('pricing_clicked', { plan: 'pro' })
+  }
+</script>
+
+<button on:click={handleClick}>
+  View Pricing
+</button>
+```
+
+## Identifying Users
+
+Identify users after authentication:
+
+```astro
+---
+// src/components/LoginForm.astro
+---
+
+<form id="login-form">
+  <input type="email" name="email" placeholder="Email" />
+  <input type="password" name="password" placeholder="Password" />
+  <button type="submit">Login</button>
+</form>
+
+<script>
+  import outlit from '@outlit/browser'
+
+  const form = document.getElementById('login-form')
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault()
+
+    const formData = new FormData(e.target)
+    const email = formData.get('email')
+    const password = formData.get('password')
+
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    })
+
+    const user = await response.json()
+
+    outlit.identify({
+      email: user.email,
+      userId: user.id,
+      traits: {
+        name: user.name,
+        plan: user.plan
+      }
+    })
+
+    window.location.href = '/dashboard'
+  })
+</script>
+```
+
+## Auth State Management
+
+For apps with authentication, use `setUser()` and `clearUser()` to sync user identity:
+
+```astro
+---
+// src/components/AuthObserver.astro
+---
+
+<script>
+  import outlit from '@outlit/browser'
+
+  // Check for existing auth session on page load
+  async function checkAuth() {
+    const response = await fetch('/api/auth/session')
+    const session = await response.json()
+
+    if (session?.user) {
+      outlit.setUser({
+        email: session.user.email,
+        userId: session.user.id,
+        traits: {
+          name: session.user.name,
+          plan: session.user.plan
+        }
+      })
+    }
+  }
+
+  checkAuth()
+
+  // Listen for auth state changes (e.g., from Supabase, Firebase)
+  window.addEventListener('auth-state-changed', (event) => {
+    const user = event.detail?.user
+    if (user) {
+      outlit.setUser({
+        email: user.email,
+        userId: user.id
+      })
+    } else {
+      outlit.clearUser()
+    }
+  })
+</script>
+```
+
+<Info>
+  Using `setUser()` ensures the user identity persists across page navigations and is properly set when users return to your site already logged in.
+</Info>
+
+## View Transitions
+
+Track navigation with Astro's View Transitions:
+
+```astro
+---
+// src/layouts/BaseLayout.astro
+import { ViewTransitions } from 'astro:transitions'
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <ViewTransitions />
+  </head>
+  <body>
+    <slot />
+
+    <script>
+      import outlit from '@outlit/browser'
+
+      outlit.init({
+        publicKey: import.meta.env.PUBLIC_OUTLIT_KEY,
+        trackPageviews: false, // Manual tracking
+      })
+
+      // Track pageviews (fires on initial load and navigation with View Transitions)
+      document.addEventListener('astro:page-load', () => {
+        outlit.track('pageview', {
+          path: window.location.pathname
+        })
+      })
+    </script>
+  </body>
+</html>
+```
+
+## API Routes
+
+Track events from API endpoints:
+
+```typescript
+// src/pages/api/checkout.ts
+import type { APIRoute } from 'astro'
+import { Outlit } from '@outlit/node'
+
+const outlit = new Outlit({
+  privateKey: import.meta.env.OUTLIT_PRIVATE_KEY
+})
+
+export const POST: APIRoute = async ({ request }) => {
+  const body = await request.json()
+
+  await outlit.track({
+    visitorId: body.userId,
+    event: 'checkout_completed',
+    properties: {
+      amount: body.amount,
+      plan: body.plan
+    }
+  })
+
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' }
+  })
+}
+```
+
+<Info>
+  For server-side tracking, see the [Node.js integration guide](/tracking/server/nodejs).
+</Info>
+
+## SSR Pages
+
+For SSR pages, ensure tracking runs client-side:
+
+```astro
+---
+// src/pages/products/[id].astro
+export const prerender = false // SSR mode
+
+const { id } = Astro.params
+const product = await fetchProduct(id)
+---
+
+<html>
+  <body>
+    <h1>{product.name}</h1>
+    <div id="product-data" data-product-id={id} style="display: none;"></div>
+
+    <script>
+      import outlit from '@outlit/browser'
+
+      // Track product view
+      const productId = document.getElementById('product-data')?.dataset.productId
+      outlit.track('product_viewed', {
+        productId
+      })
+    </script>
+  </body>
+</html>
+```
+
+## Content Collections
+
+Track interactions with content:
+
+```astro
+---
+// src/pages/blog/[...slug].astro
+import { getEntry } from 'astro:content'
+
+const entry = await getEntry('blog', Astro.params.slug)
+---
+
+<article>
+  <h1>{entry.data.title}</h1>
+  <div set:html={entry.body} />
+  <div id="blog-data" data-slug={Astro.params.slug} data-title={entry.data.title} style="display: none;"></div>
+</article>
+
+<script>
+  import outlit from '@outlit/browser'
+
+  const blogData = document.getElementById('blog-data')
+  outlit.track('blog_post_viewed', {
+    slug: blogData?.dataset.slug,
+    title: blogData?.dataset.title
+  })
+</script>
+```
+
+## Contact Stage Events
+
+Track contact lifecycle events:
+
+```astro
+---
+// src/components/OnboardingComplete.astro
+---
+
+<button id="complete-onboarding">Complete Setup</button>
+
+<script>
+  import outlit from '@outlit/browser'
+
+  document.getElementById('complete-onboarding')?.addEventListener('click', () => {
+    outlit.user.activate({ flow: 'onboarding', step: 'completed' })
+  })
+</script>
+```
+
+<Warning>
+  Stage methods (`user.activate`, `user.engaged`) require the user to be identified first using `setUser()` or `identify()`.
+</Warning>
+
+<Info>
+  Account billing (`paid`, `churned`, `trialing`) is tracked separately. If you've connected Stripe, billing is automatic. For manual billing, see [Stages & Billing](/tracking/stages).
+</Info>
+
+## Consent Management
+
+Handle user consent:
+
+```astro
+---
+// src/components/CookieBanner.astro
+---
+
+<div id="cookie-banner" style="display: none;">
+  <p>We use cookies to improve your experience.</p>
+  <button id="accept-btn">Accept</button>
+</div>
+
+<script>
+  import outlit from '@outlit/browser'
+
+  // Initialize without auto-tracking
+  outlit.init({
+    publicKey: import.meta.env.PUBLIC_OUTLIT_KEY,
+    autoTrack: false
+  })
+
+  // Check consent
+  const hasConsent = localStorage.getItem('tracking-consent')
+  if (hasConsent === 'true') {
+    outlit.enableTracking()
+  } else {
+    document.getElementById('cookie-banner').style.display = 'block'
+  }
+
+  // Handle accept
+  document.getElementById('accept-btn')?.addEventListener('click', () => {
+    localStorage.setItem('tracking-consent', 'true')
+    outlit.enableTracking()
+    document.getElementById('cookie-banner').style.display = 'none'
+  })
+</script>
+
+<style>
+  #cookie-banner {
+    position: fixed;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    padding: 1rem;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem;
+  }
+</style>
+```
+
+## Environment Variables
+
+Configure environment variables:
+
+```bash
+# .env
+
+# Public key (used in browser)
+PUBLIC_OUTLIT_KEY=pk_your_public_key_here
+
+# Private key (used in API routes)
+OUTLIT_PRIVATE_KEY=sk_your_private_key_here
+```
+
+<Warning>
+  Never expose your private key in client-side code. Only use it in API routes.
+</Warning>
+
+## TypeScript Support
+
+Full TypeScript support is included:
+
+```typescript
+import outlit, { type OutlitOptions } from '@outlit/browser'
+
+const options: OutlitOptions = {
+  publicKey: import.meta.env.PUBLIC_OUTLIT_KEY,
+  trackPageviews: true,
+  flushInterval: 5000
+}
+
+outlit.init(options)
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+    Track events from your backend
+  </Card>
+  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
+    Learn how profiles are merged
+  </Card>
+  <Card title="NPM Package" icon="npm" href="/tracking/browser/npm">
+    Full API reference
+  </Card>
+  <Card title="React Integration" icon="react" href="/tracking/browser/react">
+    Use Outlit with React
+  </Card>
+</CardGroup>

@@ -1,0 +1,111 @@
+---
+title: "Welcome to Outlit"
+description: "Track and understand your complete customer journey from anonymous visitor to paid customer"
+---
+
+## The Complete Customer Journey Platform
+
+Outlit helps you understand how prospects discover, evaluate, and become customers. Track every touchpoint across websites, apps, and backend systems to build a complete picture of customer behavior.
+
+<Card
+  title="Get Started with Tracking"
+  icon="rocket"
+  href="/tracking/quickstart"
+  horizontal
+>
+  Set up customer journey tracking in under 5 minutes.
+</Card>
+
+## Why Outlit?
+
+Traditional analytics tools show you what happened on your website. Outlit shows you the complete customer journey:
+
+<Columns cols={2}>
+  <Card title="Anonymous to Known" icon="user-plus">
+    Track visitors before they identify themselves, then seamlessly connect their history when they sign up or log in.
+  </Card>
+  <Card title="Cross-Platform" icon="arrows-to-circle">
+    Unify customer behavior across your website, app, and backend systems into a single timeline.
+  </Card>
+  <Card title="Identity Resolution" icon="fingerprint">
+    Automatically merge customer profiles when the same person uses different devices or emails.
+  </Card>
+  <Card title="Sales Intelligence" icon="chart-line">
+    Surface the signals that matter—see which prospects are actively evaluating before they reach out.
+  </Card>
+</Columns>
+
+## Choose Your Integration
+
+<Tabs>
+  <Tab title="Script Tag" icon="code">
+    The fastest way to start. Add a single script tag to your website.
+    
+    ```html
+    <script
+      src="https://cdn.outlit.ai/stable/outlit.js"
+      data-public-key="pk_your_key"
+      async
+    ></script>
+    ```
+    
+    <Card title="Script Tag Guide" icon="arrow-right" href="/tracking/browser/script">
+      Learn more about script tag integration
+    </Card>
+  </Tab>
+  <Tab title="React" icon="react">
+    First-class React support with hooks and context.
+    
+    ```tsx
+    import { OutlitProvider } from '@outlit/browser/react'
+
+    export default function App({ children }) {
+      return (
+        <OutlitProvider publicKey="pk_your_key" trackPageviews>
+          {children}
+        </OutlitProvider>
+      )
+    }
+    ```
+    
+    <Card title="React Integration" icon="arrow-right" href="/tracking/browser/react">
+      Learn more about React integration
+    </Card>
+  </Tab>
+  <Tab title="Node.js" icon="node-js">
+    Server-side tracking for authenticated users.
+    
+    ```typescript
+    import { Outlit } from '@outlit/browser-node'
+
+    const outlit = new Outlit({ publicKey: 'pk_your_key' })
+
+    outlit.track({
+      email: 'user@example.com',
+      eventName: 'subscription_created',
+      properties: { plan: 'pro' }
+    })
+    ```
+    
+    <Card title="Node.js SDK" icon="arrow-right" href="/tracking/server/nodejs">
+      Learn more about server-side tracking
+    </Card>
+  </Tab>
+</Tabs>
+
+## How It Works
+
+<Steps>
+  <Step title="Install the Tracker">
+    Add our lightweight tracker to your website or app using a script tag, npm package, or React provider.
+  </Step>
+  <Step title="Track Events">
+    Automatically capture pageviews, form submissions, and engagement time. Track custom events that matter to your business.
+  </Step>
+  <Step title="Identify Visitors">
+    When visitors sign up or log in, call `identify()` or `setUser()` to connect their anonymous history to their profile.
+  </Step>
+  <Step title="Track the Journey">
+    Mark key milestones with `activate()`, `engaged()`, `paid()`, and `churned()` to track the full customer lifecycle.
+  </Step>
+</Steps>

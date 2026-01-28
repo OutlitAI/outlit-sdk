@@ -1,0 +1,534 @@
+---
+title: "Angular Integration"
+description: "Integrate Outlit tracking with Angular applications"
+---
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install --save @outlit/browser
+```
+
+```bash pnpm
+pnpm add @outlit/browser
+```
+
+```bash yarn
+yarn add @outlit/browser
+```
+
+```bash bun
+bun add @outlit/browser
+```
+</CodeGroup>
+
+## Quick Start
+
+Initialize Outlit using an `APP_INITIALIZER`:
+
+```typescript
+// src/app/app.config.ts
+import { ApplicationConfig, APP_INITIALIZER } from '@angular/core'
+import outlit from '@outlit/browser'
+import { environment } from '../environments/environment'
+
+function initializeOutlit() {
+  return () => {
+    outlit.init({
+      publicKey: environment.outlitPublicKey,
+      trackPageviews: true,
+    })
+  }
+}
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeOutlit,
+      multi: true
+    }
+  ]
+}
+```
+
+Configure your environment:
+
+```typescript
+// src/environments/environment.ts
+export const environment = {
+  production: false,
+  outlitPublicKey: 'pk_your_public_key_here'
+}
+```
+
+<Tip>
+  For production, create `environment.prod.ts` with your production key.
+</Tip>
+
+## Creating a Service
+
+Create a service for better DX:
+
+```typescript
+// src/app/services/outlit.service.ts
+import { Injectable } from '@angular/core'
+import outlit from '@outlit/browser'
+
+@Injectable({
+  providedIn: 'root'
+})
+export class OutlitService {
+  track(eventName: string, properties?: Record<string, any>): void {
+    outlit.track(eventName, properties)
+  }
+
+  identify(email: string, traits?: Record<string, any>): void {
+    outlit.identify({ email, traits })
+  }
+
+  setUser(identity: { email?: string; userId?: string; traits?: Record<string, any> }): void {
+    outlit.setUser(identity)
+  }
+
+  clearUser(): void {
+    outlit.clearUser()
+  }
+
+  activate(properties?: Record<string, any>): void {
+    outlit.user.activate(properties)
+  }
+
+  engaged(properties?: Record<string, any>): void {
+    outlit.user.engaged(properties)
+  }
+
+  inactive(properties?: Record<string, any>): void {
+    outlit.user.inactive(properties)
+  }
+
+  getVisitorId(): string | null {
+    return outlit.getInstance().getVisitorId()
+  }
+}
+```
+
+## Tracking Events
+
+Inject and use the service in components:
+
+```typescript
+// src/app/components/pricing/pricing.component.ts
+import { Component } from '@angular/core'
+import { OutlitService } from '../../services/outlit.service'
+
+@Component({
+  selector: 'app-pricing',
+  templateUrl: './pricing.component.html'
+})
+export class PricingComponent {
+  constructor(private outlit: OutlitService) {}
+
+  handleCheckout(plan: string): void {
+    this.outlit.track('checkout_started', {
+      plan,
+      amount: 99
+    })
+  }
+}
+```
+
+```html
+<!-- src/app/components/pricing/pricing.component.html -->
+<button (click)="handleCheckout('pro')">
+  Start Free Trial
+</button>
+```
+
+## Identifying Users
+
+Identify users after authentication:
+
+```typescript
+// src/app/components/login/login.component.ts
+import { Component } from '@angular/core'
+import { Router } from '@angular/router'
+import { OutlitService } from '../../services/outlit.service'
+import { AuthService } from '../../services/auth.service'
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html'
+})
+export class LoginComponent {
+  email = ''
+  password = ''
+
+  constructor(
+    private auth: AuthService,
+    private outlit: OutlitService,
+    private router: Router
+  ) {}
+
+  async handleLogin(): Promise<void> {
+    const user = await this.auth.login(this.email, this.password)
+
+    this.outlit.identify(user.email, {
+      name: user.name,
+      plan: user.plan
+    })
+
+    this.router.navigate(['/dashboard'])
+  }
+}
+```
+
+## Router Integration
+
+Track navigation with Angular Router:
+
+```typescript
+// src/app/app.config.ts
+import { ApplicationConfig, APP_INITIALIZER } from '@angular/core'
+import { provideRouter, Router, NavigationEnd } from '@angular/router'
+import { OutlitService } from './services/outlit.service'
+import { routes } from './app.routes'
+
+function setupRouterTracking(router: Router, outlit: OutlitService) {
+  return () => {
+    router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        outlit.track('pageview', {
+          path: event.url
+        })
+      }
+    })
+  }
+}
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: setupRouterTracking,
+      deps: [Router, OutlitService],
+      multi: true
+    }
+  ]
+}
+```
+
+<Info>
+  If you set `trackPageviews: true` during init, pageviews are tracked automatically. The above example is only needed for custom pageview logic.
+</Info>
+
+## Auth Guard Integration
+
+Track authentication events:
+
+```typescript
+// src/app/guards/auth.guard.ts
+import { inject } from '@angular/core'
+import { Router, CanActivateFn } from '@angular/router'
+import { OutlitService } from '../services/outlit.service'
+import { AuthService } from '../services/auth.service'
+
+export const authGuard: CanActivateFn = (route, state) => {
+  const auth = inject(AuthService)
+  const outlit = inject(OutlitService)
+  const router = inject(Router)
+
+  if (auth.isLoggedIn()) {
+    const user = auth.getUser()
+    outlit.setUser({
+      email: user.email,
+      userId: user.id,
+      traits: {
+        name: user.name
+      }
+    })
+    return true
+  }
+
+  outlit.track('auth_required', {
+    path: state.url
+  })
+
+  return router.parseUrl('/login')
+}
+```
+
+## RxJS Integration
+
+Track with observables:
+
+```typescript
+// src/app/components/dashboard/dashboard.component.ts
+import { Component, OnInit } from '@angular/core'
+import { tap } from 'rxjs/operators'
+import { OutlitService } from '../../services/outlit.service'
+import { DashboardService } from '../../services/dashboard.service'
+
+@Component({
+  selector: 'app-dashboard',
+  templateUrl: './dashboard.component.html'
+})
+export class DashboardComponent implements OnInit {
+  data$ = this.dashboard.getData().pipe(
+    tap(() => this.outlit.track('dashboard_loaded'))
+  )
+
+  constructor(
+    private dashboard: DashboardService,
+    private outlit: OutlitService
+  ) {}
+
+  ngOnInit(): void {
+    this.outlit.track('dashboard_viewed')
+  }
+
+  handleExport(): void {
+    this.outlit.track('data_exported', {
+      format: 'csv'
+    })
+  }
+}
+```
+
+## Lifecycle Hooks
+
+Track component lifecycle events:
+
+```typescript
+// src/app/components/feature/feature.component.ts
+import { Component, OnInit, OnDestroy } from '@angular/core'
+import { OutlitService } from '../../services/outlit.service'
+
+@Component({
+  selector: 'app-feature',
+  templateUrl: './feature.component.html'
+})
+export class FeatureComponent implements OnInit, OnDestroy {
+  private startTime: number
+
+  constructor(private outlit: OutlitService) {}
+
+  ngOnInit(): void {
+    this.startTime = Date.now()
+    this.outlit.track('feature_viewed', {
+      feature: 'export'
+    })
+  }
+
+  ngOnDestroy(): void {
+    const duration = Date.now() - this.startTime
+    this.outlit.track('feature_time', {
+      feature: 'export',
+      duration
+    })
+  }
+}
+```
+
+## Interceptor for API Tracking
+
+Track API calls:
+
+```typescript
+// src/app/interceptors/tracking.interceptor.ts
+import { HttpInterceptorFn, HttpEventType } from '@angular/common/http'
+import { tap } from 'rxjs/operators'
+import outlit from '@outlit/browser'
+
+export const trackingInterceptor: HttpInterceptorFn = (req, next) => {
+  return next(req).pipe(
+    tap({
+      next: (event) => {
+        if (event.type === HttpEventType.Response) {
+          outlit.track('api_success', {
+            url: req.url,
+            method: req.method
+          })
+        }
+      },
+      error: (error) => {
+        outlit.track('api_error', {
+          url: req.url,
+          method: req.method,
+          status: error.status
+        })
+      }
+    })
+  )
+}
+```
+
+Register the interceptor:
+
+```typescript
+// src/app/app.config.ts
+import { ApplicationConfig } from '@angular/core'
+import { provideHttpClient, withInterceptors } from '@angular/common/http'
+import { trackingInterceptor } from './interceptors/tracking.interceptor'
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideHttpClient(
+      withInterceptors([trackingInterceptor])
+    )
+  ]
+}
+```
+
+## Contact Stage Events
+
+Track contact lifecycle:
+
+```typescript
+// src/app/components/onboarding/onboarding.component.ts
+import { Component } from '@angular/core'
+import { Router } from '@angular/router'
+import { OutlitService } from '../../services/outlit.service'
+
+@Component({
+  selector: 'app-onboarding',
+  templateUrl: './onboarding.component.html'
+})
+export class OnboardingComponent {
+  constructor(
+    private outlit: OutlitService,
+    private router: Router
+  ) {}
+
+  handleComplete(): void {
+    this.outlit.activate({
+      flow: 'onboarding',
+      step: 'completed'
+    })
+
+    this.router.navigate(['/dashboard'])
+  }
+}
+```
+
+<Warning>
+  Stage methods (`activate`, `engaged`) require the user to be identified first using `setUser()` or `identify()`.
+</Warning>
+
+<Info>
+  Account billing (`paid`, `churned`, `trialing`) is tracked separately. If you've connected Stripe, billing is automatic. For manual billing, see [Stages & Billing](/tracking/stages).
+</Info>
+
+## Consent Management
+
+Handle user consent:
+
+```typescript
+// src/app/services/consent.service.ts
+import { Injectable } from '@angular/core'
+import { BehaviorSubject } from 'rxjs'
+import outlit from '@outlit/browser'
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ConsentService {
+  private consentGiven = new BehaviorSubject<boolean>(false)
+  consent$ = this.consentGiven.asObservable()
+
+  constructor() {
+    const hasConsent = localStorage.getItem('tracking-consent') === 'true'
+    if (hasConsent) {
+      this.acceptTracking()
+    }
+  }
+
+  acceptTracking(): void {
+    localStorage.setItem('tracking-consent', 'true')
+    outlit.enableTracking()
+    this.consentGiven.next(true)
+  }
+
+  declineTracking(): void {
+    localStorage.setItem('tracking-consent', 'false')
+    this.consentGiven.next(false)
+  }
+}
+```
+
+```typescript
+// src/app/components/cookie-banner/cookie-banner.component.ts
+import { Component } from '@angular/core'
+import { ConsentService } from '../../services/consent.service'
+
+@Component({
+  selector: 'app-cookie-banner',
+  templateUrl: './cookie-banner.component.html'
+})
+export class CookieBannerComponent {
+  showBanner = true
+
+  constructor(private consent: ConsentService) {
+    this.consent.consent$.subscribe((hasConsent) => {
+      this.showBanner = !hasConsent
+    })
+  }
+
+  accept(): void {
+    this.consent.acceptTracking()
+  }
+
+  decline(): void {
+    this.consent.declineTracking()
+  }
+}
+```
+
+Initialize without auto-tracking:
+
+```typescript
+// src/app/app.config.ts
+function initializeOutlit() {
+  return () => {
+    outlit.init({
+      publicKey: environment.outlitPublicKey,
+      autoTrack: false, // Wait for consent
+    })
+  }
+}
+```
+
+## TypeScript Support
+
+Full TypeScript support is included:
+
+```typescript
+import outlit, { type OutlitOptions, type BrowserTrackOptions } from '@outlit/browser'
+
+const options: OutlitOptions = {
+  publicKey: environment.outlitPublicKey,
+  trackPageviews: true,
+  flushInterval: 5000
+}
+
+outlit.init(options)
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+    Track events from your backend
+  </Card>
+  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
+    Learn how profiles are merged
+  </Card>
+  <Card title="NPM Package" icon="npm" href="/tracking/browser/npm">
+    Full API reference
+  </Card>
+  <Card title="React Integration" icon="react" href="/tracking/browser/react">
+    Use Outlit with React
+  </Card>
+</CardGroup>

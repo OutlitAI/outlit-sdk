@@ -1,0 +1,81 @@
+---
+title: "Calendar Embed Tracking"
+description: "Automatically track when visitors book meetings via Cal.com or Calendly"
+---
+
+## Overview
+
+Outlit automatically detects when visitors complete bookings through embedded calendar widgets from **Cal.com** and **Calendly**. No extra code required—just install the tracking snippet and booking events are captured.
+
+## Supported Platforms
+
+| Platform | Detection Method |
+|----------|-----------------|
+| Cal.com | Cal.com embed API |
+| Calendly | Calendly postMessage events |
+
+## What Gets Tracked
+
+When a visitor books a meeting, Outlit captures:
+
+| Property | Description |
+|----------|-------------|
+| `provider` | `"cal.com"` or `"calendly"` |
+| `eventType` | Meeting title (e.g., "30 Minute Demo") |
+| `startTime` | Scheduled start time (ISO format) |
+| `endTime` | Scheduled end time (ISO format) |
+| `duration` | Meeting length in minutes |
+
+<Info>
+  Calendar booking events appear in your timeline as "Meeting Requested" activities—distinct from calendar sync events, so you won't see duplicates.
+</Info>
+
+## Configuration
+
+Calendar embed tracking is **enabled by default**. To disable it:
+
+```html
+<script
+  src="https://cdn.outlit.ai/stable/outlit.js"
+  data-public-key="pk_your_public_key"
+  data-track-calendar-embeds="false"
+  async
+></script>
+```
+
+<ParamField path="data-track-calendar-embeds" type="string">
+  Set to `"false"` to disable automatic calendar booking detection.
+</ParamField>
+
+## Limitations
+
+<Warning>
+  **Auto-identify is not available** for calendar embed bookings. Cal.com and Calendly do not expose attendee email or name in their client-side events for privacy reasons.
+</Warning>
+
+To identify visitors who book meetings, use **webhooks** from your calendar provider:
+
+1. Set up a webhook in Cal.com or Calendly
+2. Receive the booking details (including email) on your server
+3. Call the Outlit API to identify the visitor
+
+```javascript
+// Server-side: after receiving webhook
+await outlit.identify({
+  email: webhookData.attendee.email,
+  traits: {
+    name: webhookData.attendee.name,
+    bookedMeeting: webhookData.eventType
+  }
+})
+```
+
+## Example Timeline
+
+A typical visitor journey with calendar booking:
+
+1. **Pageview** — Visitor lands on `/demo`
+2. **Calendar Booking** — Visitor books "30 Minute Demo" via Cal.com embed
+3. **Identify** — Your webhook handler identifies the visitor with their email
+
+All three events are linked to the same visitor, giving you full context.

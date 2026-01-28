@@ -1,0 +1,388 @@
+---
+title: "Identity Resolution"
+description: "How Outlit connects anonymous visitors to known customers"
+---
+
+## Auto-Identify
+
+By default, Outlit **automatically identifies visitors** when they submit a form containing an email field—no code required.
+
+### How It Works
+
+When a form is submitted, Outlit:
+
+1. **Detects email** by looking for:
+   - Field names: `email`, `e-mail`, `user_email`, `emailAddress`
+   - Input type: `type="email"`
+   - Any field with a valid email value (fallback)
+
+2. **Extracts name** by looking for:
+   - Full name: `name`, `full_name`, `fullname`, `your_name`
+   - First name: `first_name`, `fname`, `firstname`, `given_name`
+   - Last name: `last_name`, `lname`, `surname`, `family_name`
+
+3. **Calls `identify()` automatically**:
+
+```typescript
+// This happens behind the scenes when a form with email is submitted
+identify({
+  email: 'jane@acme.com',
+  traits: {
+    name: 'Jane Doe',      // If full name found
+    firstName: 'Jane',     // If first name found
+    lastName: 'Doe'        // If last name found
+  }
+})
+```
+
+<Info>
+  The form submission event is still captured separately. Auto-identify adds an additional `identify` event when an email is found.
+</Info>
+
+### Supported Form Types
+
+Auto-identify works with common form patterns:
+
+| Form Type | Fields Detected |
+|-----------|-----------------|
+| Newsletter signup | `email` |
+| Contact form | `email`, `name`, `company` |
+| Demo request | `email`, `first_name`, `last_name`, `company` |
+| Lead magnet | `email`, `name` |
+| Account signup | `email`, `password` (password excluded from capture) |
+
+### Disabling Auto-Identify
+
+If you prefer to handle identification manually (e.g., for custom validation or delayed identification):
+
+<Tabs>
+  <Tab title="Script Tag">
+```html
+<script
+  src="https://cdn.outlit.ai/stable/outlit.js"
+  data-public-key="pk_xxx"
+  data-auto-identify="false"
+  async
+></script>
+```
+  </Tab>
+  <Tab title="React">
+```tsx
+<OutlitProvider publicKey="pk_xxx" autoIdentify={false}>
+  {children}
+</OutlitProvider>
+```
+  </Tab>
+  <Tab title="NPM">
+```typescript
+outlit.init({
+  publicKey: 'pk_xxx',
+  autoIdentify: false
+})
+```
+  </Tab>
+</Tabs>
+
+<Warning>
+  When auto-identify is disabled, form submissions are still captured. Only the automatic `identify()` call is skipped. You'll need to call `identify()` manually when appropriate.
+</Warning>
+
+---
+
+## The Identity Challenge
+
+Modern customers interact with your business across multiple touchpoints:
+
+- Multiple devices (phone, laptop, tablet)
+- Different browsers
+- Various email addresses
+- Social logins vs email logins
+- Website visits before signup
+
+Outlit automatically resolves these identities into unified customer profiles.
+
+## How Identity Resolution Works
+
+```mermaid
+%%{init: {'theme': 'dark', 'flowchart': {'nodeSpacing': 30, 'rankSpacing': 50, 'curve': 'basis', 'padding': 15}}}%%
+flowchart TD
+    A([Anonymous Visit<br/>visitorId: abc-123]) -->|identify email| B([CustomerContact<br/>email: jane@acme.com])
+    C([Anonymous Visit<br/>visitorId: xyz-789]) -->|identify same email| B
+    D([Server Event<br/>userId: usr_456]) -->|same email| B
+    B --> E([Unified Customer Timeline])
+```
+
+### Identity Priority
+
+When multiple identifiers exist, Outlit uses this priority order:
+
+| Priority | Identifier Type | Example | Source |
+|----------|----------------|---------|--------|
+| 1 (Highest) | Email | `jane@acme.com` | Identify call, form submission |
+| 2 | External User ID | `usr_12345` | Auth provider (Supabase, Auth0) |
+| 3 | Stripe Customer ID | `cus_abc123` | Stripe integration |
+| 4 | Phone Number | `+1-555-1234` | Form submission |
+| 5 (Lowest) | Anonymous ID | `abc-def-123` | Browser visitor ID |
+
+### Resolution Process
+
+When you call `identify()`:
+
+1. **Search existing contacts** by provided identifiers
+2. **Match found?** Link the anonymous visitor to existing contact
+3. **No match?** Create new CustomerContact and Customer
+4. **Multiple matches?** Merge profiles, keeping the most complete one
+
+## Identifier Types
+
+### Email (Primary)
+
+Email is the most reliable identifier because:
+- Unique per person (usually)
+- Verified through login/signup
+- Works across devices
+
+```typescript
+outlit.identify({
+  email: 'jane@acme.com', // Primary identifier
+  traits: { name: 'Jane' }
+})
+```
+
+### External User ID
+
+Your application's internal user ID (from Supabase, Auth0, Firebase, etc.):
+
+```typescript
+outlit.identify({
+  userId: 'usr_12345', // Your auth system's ID
+  email: 'jane@acme.com',
+  traits: { authProvider: 'auth0' }
+})
+```
+
+<Tip>
+  Always send both `email` and `userId` when available. This creates the strongest identity link.
+</Tip>
+
+### Anonymous Visitor ID
+
+Automatically generated for browser visitors:
+
+```typescript
+// Generated and stored automatically
+const visitorId = outlit.getVisitorId()
+// "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+```
+
+This ID:
+- Is stored in localStorage and cookies
+- Persists across sessions (same browser)
+- Gets linked to CustomerContact after identify
+
+## Profile Merging
+
+When Outlit detects the same person with different identifiers, profiles are merged:
+
+### Merge Triggers
+
+<AccordionGroup>
+  <Accordion title="Same email, different visitor IDs">
+    User visits on phone (visitorId: A), then laptop (visitorId: B), identifies with same email on both.
+    
+    **Result:** Both visitor histories merge into one CustomerContact.
+  </Accordion>
+  
+  <Accordion title="Email change / correction">
+    User identifies as `jane@old-company.com`, later updates to `jane@new-company.com` while logged into same account (userId).
+    
+    **Result:** New email added to contact identifiers, profiles linked.
+  </Accordion>
+  
+  <Accordion title="Multiple auth methods">
+    User signs up with email, later links Google OAuth which has different email.
+    
+    **Result:** Both emails link to same contact via shared userId.
+  </Accordion>
+</AccordionGroup>
+
+### Merge Rules
+
+When merging two contacts:
+
+| Data | Rule |
+|------|------|
+| Events/Activities | Combined into unified timeline |
+| Traits | Newer values overwrite older |
+| Identifiers | All identifiers preserved |
+| Anonymous history | All visitor events included |
+
+## Browser vs Server Identity
+
+<Tabs>
+  <Tab title="Browser Tracking">
+    **Anonymous visitors are supported**
+    
+    - visitorId auto-generated
+    - Events stored until identification
+    - Later linked via identify() or setUser()
+    
+    ```typescript
+    // Works without identity
+    outlit.track('page_viewed', { page: '/pricing' })
+    
+    // Later, when they sign up
+    outlit.identify({ email: 'user@example.com' })
+    
+    // Or for SPAs, use setUser after authentication
+    outlit.setUser({ 
+      email: 'user@example.com',
+      userId: 'usr_123'
+    })
+    ```
+  </Tab>
+  <Tab title="Server Tracking">
+    **Identity is required**
+    
+    - No anonymous tracking
+    - Every call needs email or userId
+    - Events go directly to the contact
+    
+    ```typescript
+    // Email or userId REQUIRED
+    outlit.track({
+      email: 'user@example.com',
+      eventName: 'subscription_created'
+    })
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+### 1. Identify Early
+
+Call `identify()` as soon as you have user information:
+
+```typescript
+// After login
+onLogin(user) {
+  outlit.identify({
+    email: user.email,
+    userId: user.id,
+    traits: { plan: user.plan }
+  })
+}
+
+// After form submission
+onFormSubmit(data) {
+  outlit.identify({
+    email: data.email,
+    traits: { source: 'contact_form' }
+  })
+}
+```
+
+### 2. Always Send Both Identifiers
+
+When you have both email and userId, send both:
+
+```typescript
+// Good - creates strong identity link
+outlit.identify({
+  email: user.email,
+  userId: user.id,
+  traits: { ... }
+})
+
+// Less good - single identifier
+outlit.identify({
+  email: user.email,
+  traits: { ... }
+})
+```
+
+### 3. Update Traits on Changes
+
+Re-identify when user data changes:
+
+```typescript
+// User upgraded their plan
+onPlanChange(user, newPlan) {
+  outlit.identify({
+    email: user.email,
+    traits: { plan: newPlan, upgradedAt: new Date().toISOString() }
+  })
+}
+```
+
+### 4. Handle Multiple Emails
+
+If users can have multiple emails, use a primary:
+
+```typescript
+outlit.identify({
+  email: user.primaryEmail, // The one they log in with
+  traits: {
+    secondaryEmails: user.otherEmails // For reference
+  }
+})
+```
+
+## Debugging Identity Issues
+
+### Check Current Visitor ID
+
+```typescript
+// Browser
+console.log('Visitor ID:', outlit.getVisitorId())
+```
+
+### Verify Identify Calls
+
+Check the Network tab for `/api/i/v1/` requests:
+
+```json
+{
+  "visitorId": "abc-123",
+  "events": [{
+    "type": "identify",
+    "email": "jane@acme.com",
+    "userId": "usr_456"
+  }]
+}
+```
+
+### Common Issues
+
+<AccordionGroup>
+  <Accordion title="Events not linking to user">
+    - Ensure `identify()` is called **after** the user authenticates
+    - Check that email/userId matches what you expect
+    - Verify the domain is in your allowlist
+  </Accordion>
+  
+  <Accordion title="Duplicate customer profiles">
+    - Same person using different emails
+    - Missing `userId` that would link them
+    - Contact support for manual merge
+  </Accordion>
+  
+  <Accordion title="Anonymous history not appearing">
+    - `identify()` must be called from the same browser/device
+    - Check visitorId is consistent (not cleared)
+    - Background job processes links periodically (up to 5 min delay)
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Anonymous Visitors" icon="user-secret" href="/tracking/identity/anonymous-visitors">
+    Deep dive into the anonymous phase
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/ingest">
+    Direct API for custom integrations
+  </Card>
+</CardGroup>
+

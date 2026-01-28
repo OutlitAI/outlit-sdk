@@ -1,0 +1,544 @@
+---
+title: "Node.js SDK"
+description: "Server-side tracking for authenticated users"
+---
+
+## Overview
+
+The Node.js SDK is designed for server-side tracking where users are already authenticated. Unlike browser tracking, server events:
+
+- **Require identity** - Email or user ID must be provided on every call
+- **Skip anonymous phase** - Events go directly to the customer profile
+- **Support batching** - Events are queued and sent efficiently
+
+<Info>
+  Use server-side tracking for events that happen in your backend: subscription changes, feature usage from APIs, background jobs, etc.
+</Info>
+
+## Installation
+
+<CodeGroup>
+```bash npm
+npm install --save @outlit/node
+```
+
+```bash pnpm
+pnpm add @outlit/node
+```
+
+```bash yarn
+yarn add @outlit/node
+```
+
+```bash bun
+bun add @outlit/node
+```
+</CodeGroup>
+
+## Quick Start
+
+```typescript
+import { Outlit } from '@outlit/node'
+
+const outlit = new Outlit({
+  publicKey: 'pk_your_public_key'
+})
+
+// Track an event
+outlit.track({
+  email: 'user@example.com',
+  eventName: 'subscription_upgraded',
+  properties: {
+    fromPlan: 'starter',
+    toPlan: 'pro',
+    mrr: 99
+  }
+})
+
+// Important: flush before process exits
+await outlit.flush()
+```
+
+## Configuration
+
+```typescript
+const outlit = new Outlit({
+  publicKey: 'pk_xxx',
+  apiHost: 'https://app.outlit.ai', // optional
+  flushInterval: 10000, // ms, default 10s
+  maxBatchSize: 100, // events per batch
+  timeout: 10000, // request timeout ms
+})
+```
+
+### Options
+
+<ParamField path="publicKey" type="string" required>
+  Your organization's public key.
+</ParamField>
+
+<ParamField path="apiHost" type="string" default="https://app.outlit.ai">
+  API endpoint for sending events.
+</ParamField>
+
+<ParamField path="flushInterval" type="number" default="10000">
+  How often to automatically flush events (milliseconds).
+</ParamField>
+
+<ParamField path="maxBatchSize" type="number" default="100">
+  Maximum events per batch before auto-flush.
+</ParamField>
+
+<ParamField path="timeout" type="number" default="10000">
+  HTTP request timeout in milliseconds.
+</ParamField>
+
+## API Reference
+
+### `outlit.track(options)`
+
+Track a custom event for an identified user.
+
+```typescript
+outlit.track({
+  email: 'jane@acme.com',
+  userId: 'usr_12345', // optional if email provided
+  eventName: 'report_exported',
+  properties: {
+    reportType: 'sales',
+    format: 'pdf',
+    rowCount: 1500
+  },
+  timestamp: Date.now() // optional, defaults to now
+})
+```
+
+<ParamField path="email" type="string">
+  User's email address. At least one of `email` or `userId` is required.
+</ParamField>
+
+<ParamField path="userId" type="string">
+  Your internal user ID. At least one of `email` or `userId` is required.
+</ParamField>
+
+<ParamField path="eventName" type="string" required>
+  Name of the event. Use `snake_case`.
+</ParamField>
+
+<ParamField path="properties" type="Record<string, any>">
+  Additional data to attach to the event.
+</ParamField>
+
+<ParamField path="timestamp" type="number">
+  Unix timestamp in milliseconds. Defaults to current time.
+</ParamField>
+
+<Warning>
+  Unlike browser tracking, **identity is required** on every `track()` call. The SDK throws an error if neither `email` nor `userId` is provided.
+</Warning>
+
+### `outlit.identify(options)`
+
+Update user traits without tracking an event.
+
+```typescript
+outlit.identify({
+  email: 'jane@acme.com',
+  userId: 'usr_12345',
+  traits: {
+    name: 'Jane Doe',
+    company: 'Acme Inc',
+    plan: 'enterprise',
+    role: 'admin',
+    lastActiveAt: new Date().toISOString()
+  }
+})
+```
+
+<ParamField path="email" type="string">
+  User's email address.
+</ParamField>
+
+<ParamField path="userId" type="string">
+  Your internal user ID.
+</ParamField>
+
+<ParamField path="traits" type="Record<string, any>">
+  Properties to update on the user profile.
+</ParamField>
+
+### Contact Stage Methods
+
+Track contact progression through your product lifecycle. These methods require either `email` or `userId`.
+
+#### `outlit.user.activate(options)`
+
+Mark a contact as activated. Typically called after a user completes onboarding or a key activation milestone.
+
+```typescript
+outlit.user.activate({
+  email: 'user@example.com',
+  properties: { flow: 'onboarding' }
+})
+```
+
+#### `outlit.user.engaged(options)`
+
+Mark a contact as engaged. Typically called when a user reaches a usage milestone. Can also be computed automatically based on activity.
+
+```typescript
+outlit.user.engaged({
+  userId: 'usr_123',
+  properties: { milestone: 'first_project_created' }
+})
+```
+
+#### `outlit.user.inactive(options)`
+
+Mark a contact as inactive. Use this when a user's engagement has lapsed.
+
+```typescript
+outlit.user.inactive({
+  email: 'user@example.com',
+  properties: { reason: 'no_login_30_days' }
+})
+```
+
+<Info>
+  The `discovered` and `signed_up` stages are automatically inferred from identify calls.
+</Info>
+
+### Account Billing Methods
+
+Track account billing status. These methods target the account (by domain), not individual contacts. If you've connected Stripe, billing is handled automatically.
+
+#### `outlit.customer.trialing(options)`
+
+Mark an account as trialing.
+
+```typescript
+outlit.customer.trialing({
+  domain: 'acme.com',
+  properties: { trialEndsAt: '2024-02-15' }
+})
+```
+
+#### `outlit.customer.paid(options)`
+
+Mark an account as paying.
+
+```typescript
+outlit.customer.paid({
+  domain: 'acme.com',
+  properties: { plan: 'pro', amount: 99 }
+})
+```
+
+#### `outlit.customer.churned(options)`
+
+Mark an account as churned.
+
+```typescript
+outlit.customer.churned({
+  domain: 'acme.com',
+  properties: { reason: 'cancelled_by_user' }
+})
+```
+
+<Info>
+  Billing methods target accounts by domain. All contacts under that domain share the same billing status. See [Stages & Billing](/tracking/stages) for details on how contact stages and account billing work together.
+</Info>
+
+### `outlit.flush()`
+
+Immediately send all queued events. **Call this before your process exits.**
+
+```typescript
+await outlit.flush()
+```
+
+### `outlit.shutdown()`
+
+Gracefully shutdown: flushes remaining events and stops the timer.
+
+```typescript
+await outlit.shutdown()
+```
+
+### `outlit.queueSize`
+
+Get the number of events waiting to be sent.
+
+```typescript
+console.log(`Pending events: ${outlit.queueSize}`)
+```
+
+## Framework Examples
+
+### Express.js
+
+```typescript
+import express from 'express'
+import { Outlit } from '@outlit/node'
+
+const app = express()
+const outlit = new Outlit({ publicKey: 'pk_xxx' })
+
+// Middleware to attach tracker to request
+app.use((req, res, next) => {
+  req.outlit = outlit
+  next()
+})
+
+app.post('/api/reports/export', async (req, res) => {
+  const { user, format } = req.body
+
+  // Your export logic
+  const report = await generateReport(format)
+
+  // Track the event
+  req.outlit.track({
+    email: user.email,
+    eventName: 'report_exported',
+    properties: { format, size: report.size }
+  })
+
+  res.json({ success: true })
+})
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  await outlit.shutdown()
+  process.exit(0)
+})
+```
+
+### Next.js API Routes
+
+```typescript
+// app/api/subscription/upgrade/route.ts
+import { Outlit } from '@outlit/node'
+
+const outlit = new Outlit({ publicKey: process.env.OUTLIT_KEY! })
+
+export async function POST(request: Request) {
+  const { userId, email, newPlan, amount, domain } = await request.json()
+
+  // Your upgrade logic
+  await upgradeSubscription(userId, newPlan)
+
+  // Track the event
+  outlit.track({
+    email,
+    userId,
+    eventName: 'subscription_upgraded',
+    properties: { plan: newPlan }
+  })
+
+  // Update account billing status
+  outlit.customer.paid({
+    domain,
+    properties: { plan: newPlan, amount }
+  })
+
+  // Flush immediately (serverless)
+  await outlit.flush()
+
+  return Response.json({ success: true })
+}
+```
+
+### Serverless Functions (AWS Lambda, Vercel)
+
+<Warning>
+  In serverless environments, **always call `flush()` before returning**. The function may be terminated before the background flush runs.
+</Warning>
+
+```typescript
+import { Outlit } from '@outlit/node'
+
+const outlit = new Outlit({ publicKey: process.env.OUTLIT_KEY! })
+
+export async function handler(event) {
+  const { email, action } = JSON.parse(event.body)
+
+  outlit.track({
+    email,
+    eventName: action,
+    properties: { source: 'lambda' }
+  })
+
+  // Critical: flush before returning
+  await outlit.flush()
+
+  return { statusCode: 200, body: 'OK' }
+}
+```
+
+### Stripe Webhooks
+
+<Info>
+  If you've connected Stripe to Outlit, billing status is handled automatically—you don't need to implement webhook handling yourself. The example below is only needed for custom billing logic.
+</Info>
+
+Track payment and subscription events from Stripe:
+
+```typescript
+import { Outlit } from '@outlit/node'
+import Stripe from 'stripe'
+
+const outlit = new Outlit({ publicKey: process.env.OUTLIT_KEY! })
+
+export async function handleStripeWebhook(event: Stripe.Event) {
+  switch (event.type) {
+    case 'checkout.session.completed': {
+      const session = event.data.object as Stripe.Checkout.Session
+      // Get account domain from your database
+      const domain = await getAccountDomain(session.customer)
+      if (domain) {
+        outlit.customer.paid({
+          domain,
+          properties: {
+            amount: session.amount_total ? session.amount_total / 100 : undefined,
+            currency: session.currency,
+          }
+        })
+      }
+      break
+    }
+
+    case 'customer.subscription.deleted': {
+      const subscription = event.data.object as Stripe.Subscription
+      // Get account domain from your database
+      const domain = await getAccountDomain(subscription.customer)
+      if (domain) {
+        outlit.customer.churned({
+          domain,
+          properties: {
+            reason: subscription.cancellation_details?.reason,
+          }
+        })
+      }
+      break
+    }
+  }
+
+  await outlit.flush()
+}
+```
+
+### Background Jobs (Bull, Agenda)
+
+```typescript
+import { Queue, Worker } from 'bullmq'
+import { Outlit } from '@outlit/node'
+
+const outlit = new Outlit({ publicKey: 'pk_xxx' })
+
+const worker = new Worker('emails', async (job) => {
+  const { email, templateId } = job.data
+
+  // Your job logic
+  await sendEmail(email, templateId)
+
+  // Track completion
+  outlit.track({
+    email,
+    eventName: 'email_sent',
+    properties: { templateId, jobId: job.id }
+  })
+})
+
+// Periodic flush (events batch automatically)
+// No need to flush per job unless critical
+```
+
+## Common Events to Track
+
+Here are recommended server-side events:
+
+| Event | When | Properties |
+|-------|------|------------|
+| `subscription_created` | New subscription | `plan`, `price`, `interval` |
+| `subscription_upgraded` | Plan upgrade | `fromPlan`, `toPlan`, `mrr` |
+| `subscription_cancelled` | Cancellation | `reason`, `mrr_lost` |
+| `payment_succeeded` | Payment received | `amount`, `currency` |
+| `payment_failed` | Payment failed | `amount`, `error_code` |
+| `feature_used` | Feature usage | `feature`, `count` |
+| `api_key_created` | API key created | `keyName`, `permissions` |
+| `export_completed` | Data export | `format`, `rowCount`, `size` |
+| `invite_sent` | Team invite | `inviteeEmail`, `role` |
+| `user_role_changed` | Permission change | `fromRole`, `toRole` |
+
+## Error Handling
+
+The SDK silently handles errors to not disrupt your application. For debugging:
+
+```typescript
+const outlit = new Outlit({ publicKey: 'pk_xxx' })
+
+// Events are queued even if the network is down
+outlit.track({ email: 'user@test.com', eventName: 'test' })
+
+// Check queue size to detect potential issues
+if (outlit.queueSize > 500) {
+  console.warn('Outlit queue backing up - possible connectivity issue')
+}
+```
+
+## TypeScript Support
+
+Full TypeScript support is included:
+
+```typescript
+import {
+  Outlit,
+  type OutlitOptions,
+  type ServerTrackOptions,
+  type ServerIdentifyOptions,
+  type ContactStageOptions,
+  type AccountBillingOptions,
+} from '@outlit/node'
+
+const options: OutlitOptions = {
+  publicKey: 'pk_xxx',
+  flushInterval: 5000,
+}
+
+const outlit = new Outlit(options)
+
+const trackOptions: ServerTrackOptions = {
+  email: 'user@test.com',
+  eventName: 'test',
+  properties: { key: 'value' }
+}
+
+outlit.track(trackOptions)
+
+// Contact stage options
+const stageOptions: ContactStageOptions = {
+  email: 'user@test.com',
+  properties: { flow: 'onboarding' }
+}
+
+outlit.user.activate(stageOptions)
+
+// Account billing options
+const billingOptions: AccountBillingOptions = {
+  domain: 'acme.com',
+  properties: { plan: 'pro' }
+}
+
+outlit.customer.paid(billingOptions)
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
+    Learn how profiles are merged across sources
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/ingest">
+    Direct API access for custom integrations
+  </Card>
+</CardGroup>
