@@ -60,7 +60,7 @@ export interface BrowserIdentifyOptions {
 
 // ============================================
 // SERVER-SPECIFIC TYPES (identity required)
-// No anonymous tracking - must identify the user
+// At least one of fingerprint, email, or userId required
 // ============================================
 
 /**

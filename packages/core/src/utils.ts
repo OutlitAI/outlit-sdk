@@ -160,7 +160,11 @@ export function validateServerIdentity(
   email?: string,
   userId?: string,
 ): void {
-  if (!fingerprint && !email && !userId) {
+  const hasFingerprint = fingerprint && fingerprint.trim().length > 0
+  const hasEmail = email && email.trim().length > 0
+  const hasUserId = userId && userId.trim().length > 0
+
+  if (!hasFingerprint && !hasEmail && !hasUserId) {
     throw new Error(
       "Server SDK requires at least one of: fingerprint, email, or userId for all track calls. " +
         "Use fingerprint for anonymous tracking that can be linked to users later via identify().",
