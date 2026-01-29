@@ -205,36 +205,20 @@ function LoginForm() {
   - Adding additional traits after login
 </Info>
 
-## What's Captured Automatically
-
-With the default configuration, Outlit automatically captures:
-
-| Event | Trigger | Data |
-|-------|---------|------|
-| **Pageview** | Every navigation | URL, path, title, referrer, UTM params |
-| **Form Submit** | Form submission | Form ID, field values (sensitive fields removed) |
-| **Auto-Identify** | Form with email | Email + name extracted, visitor linked to profile |
-| **Engagement** | Page exit/navigation | Active time, total time on page |
-| **Calendar Booking** | Cal.com/Calendly embed | Provider, event type, scheduled time |
-
-<Tip>
-  **Zero-code identification:** When a visitor submits a form with an email field (signup, contact, demo request), they're automatically identified and linked to a customer profile. No manual `identify()` call needed! [Learn more](/tracking/identity/overview#auto-identify)
-</Tip>
-
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Browser Integration" icon="browser" href="/tracking/browser/script">
-    Deep dive into browser tracking options
+  <Card title="How It Works" icon="circle-info" href="/tracking/how-it-works">
+    Understand the tracking flow
   </Card>
-  <Card title="React Integration" icon="react" href="/tracking/browser/react">
-    Learn about React hooks and providers
+  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
+    Learn how profiles are merged
   </Card>
-  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+  <Card title="Browser SDKs" icon="browser" href="/tracking/browser/script">
+    Deep dive into browser integration
+  </Card>
+  <Card title="Server SDKs" icon="server" href="/tracking/server/nodejs">
     Track events from your backend
-  </Card>
-  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
-    Understand how profiles are merged
   </Card>
 </CardGroup>
 

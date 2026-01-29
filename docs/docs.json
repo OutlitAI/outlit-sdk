@@ -3,9 +3,12 @@
   "theme": "mint",
   "name": "Outlit Docs",
   "colors": {
-    "primary": "#6366F1",
-    "light": "#818CF8",
-    "dark": "#4F46E5"
+    "primary": "#255577",
+    "light": "#3a7799",
+    "dark": "#1a3d55",
+    "background": {
+      "dark": "#000000"
+    }
   },
   "appearance": {
     "default": "system",
@@ -22,10 +25,18 @@
         "groups": [
           {
             "group": "Getting Started",
-            "pages": ["index", "tracking/overview", "tracking/quickstart", "tracking/stages"]
+            "pages": ["index", "tracking/quickstart", "tracking/how-it-works"]
           },
           {
-            "group": "Browser Tracking",
+            "group": "Concepts",
+            "pages": [
+              "concepts/customer-journey",
+              "concepts/identity-resolution",
+              "concepts/anonymous-tracking"
+            ]
+          },
+          {
+            "group": "Browser SDKs",
             "pages": [
               "tracking/browser/script",
               "tracking/browser/npm",
@@ -40,12 +51,8 @@
             ]
           },
           {
-            "group": "Server-Side Tracking",
+            "group": "Server SDKs",
             "pages": ["tracking/server/nodejs", "tracking/server/rust"]
-          },
-          {
-            "group": "Identity & Resolution",
-            "pages": ["tracking/identity/overview", "tracking/identity/anonymous-visitors"]
           }
         ]
       },

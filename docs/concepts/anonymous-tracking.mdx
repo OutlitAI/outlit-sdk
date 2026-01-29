@@ -1,11 +1,11 @@
 ---
-title: "Anonymous Visitors"
-description: "Track website visitors before they identify themselves"
+title: "Anonymous Tracking"
+description: "How Outlit tracks visitors before they identify themselves"
 ---
 
-## Overview
+## TL;DR
 
-Before visitors sign up or log in, they're anonymous. Outlit tracks their behavior and later connects it to their profile when they identify themselves.
+Most visitors browse your site anonymously before signing up or logging in. Outlit tracks their behavior from the first pageview and automatically connects that history to their profile when they identify themselves. This gives you complete visibility into the customer journey—from first touch to conversion.
 
 ## The Anonymous Phase
 
@@ -38,7 +38,7 @@ sequenceDiagram
     O->>O: Convert events to timeline
 ```
 
-## What's Captured
+## What's Captured?
 
 ### Automatic Attribution
 
@@ -84,32 +84,7 @@ Form submissions are captured with automatic sanitization:
   Sensitive fields (password, credit_card, SSN, etc.) are automatically removed from form data.
 </Note>
 
-## Visitor ID Storage
-
-The visitor ID is stored in two places for redundancy:
-
-### localStorage
-
-```javascript
-// Key: outlit_visitor_id
-// Value: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-localStorage.getItem('outlit_visitor_id')
-```
-
-### Cookie
-
-```
-outlit_visitor_id=a1b2c3d4-e5f6-7890-abcd-ef1234567890; 
-expires=<1 year>; 
-path=/; 
-SameSite=Lax
-```
-
-<Info>
-  The cookie enables cross-subdomain tracking (e.g., `www.example.com` → `app.example.com`) and works when localStorage is blocked.
-</Info>
-
-## Identity Resolution
+## What Triggers Identity Resolution?
 
 When `identify()` is called, the anonymous history is linked:
 
@@ -121,7 +96,7 @@ outlit.identify({
 })
 ```
 
-### What Happens
+Here's what happens:
 
 1. **Find or create contact** with the provided email
 2. **Link the anonymous visitor** to the contact
@@ -143,34 +118,13 @@ Jane Doe (jane@acme.com) - Customer Timeline
 └── Mar 3, 2:25pm  - Created account
 ```
 
-## Cross-Device Behavior
+## How Does Cross-Device Tracking Work?
 
-Anonymous tracking is per-browser. The same person on different devices has different visitor IDs until identified:
+Anonymous tracking is per-browser. The same person on different devices has different visitor IDs until identified. Once someone calls `identify()` with the same email on multiple devices, all those histories merge into a single unified profile.
 
-```
-Phone Browser:    visitorId: "phone-abc-123"
-Laptop Browser:   visitorId: "laptop-xyz-789"
-
-After identify(email: "jane@acme.com") on both:
-→ Both histories merge into Jane's profile
-```
-
-## Session Management
-
-### New Sessions
-
-A new session starts when:
-- 30+ minutes of inactivity (configurable)
-- Browser closed and reopened
-- New day (midnight UTC)
-
-### Session Data
-
-Each session tracks:
-- Session start time
-- Pages viewed in session
-- Session duration
-- Conversion events
+<Tip>
+  **Edge cases**: If visitors clear cookies, use incognito mode, or share browsers, they may generate new visitor IDs. Call `identify()` immediately after login—even for returning users—to ensure continuity and accurate tracking.
+</Tip>
 
 ## Company Enrichment
 
@@ -233,85 +187,6 @@ Visitors from residential ISPs, coffee shops, VPNs, or hosting providers are int
 <Note>
   Company enrichment is available on certain plans. Contact us to enable it for your workspace.
 </Note>
-
-## Handling Edge Cases
-
-### Cleared Cookies/Storage
-
-If a visitor clears their browser data:
-- New visitorId generated
-- Previous anonymous history orphaned
-- Can only link if they identify again
-
-<Tip>
-  Consider using `identify()` immediately after login, even for returning users, to ensure continuity.
-</Tip>
-
-### Private/Incognito Browsing
-
-- New visitorId per session
-- localStorage may be cleared on close
-- Cookie may not persist
-- History captured but may not link
-
-### Multiple People, Same Browser
-
-If multiple people use the same browser:
-- Same visitorId used
-- Events mixed together
-- Identify separates them (by email)
-
-Best practice: Encourage users to log in for accurate tracking.
-
-## Accessing Anonymous Data
-
-### Get Current Visitor ID
-
-```typescript
-// Browser SDK
-const visitorId = outlit.getVisitorId()
-```
-
-### Send to Your Backend
-
-```typescript
-// Send visitor ID for server-side correlation
-fetch('/api/track', {
-  headers: {
-    'X-Outlit-Visitor-ID': outlit.getVisitorId()
-  },
-  body: JSON.stringify({ action: 'viewed_pricing' })
-})
-```
-
-## Privacy Considerations
-
-### Data Retention
-
-Anonymous visitor data is retained for:
-- **Unidentified visitors**: 90 days (configurable)
-- **Identified visitors**: Linked to customer, retained per your policy
-
-### GDPR Compliance
-
-- Anonymous data can be deleted on request
-- Visitor ID is pseudonymous (not directly identifying)
-- IP addresses used only for company lookup
-- No cross-site tracking
-
-### Opt-Out
-
-Respect user preferences:
-
-```typescript
-// Check for opt-out preference
-if (!hasTrackingConsent()) {
-  // Don't initialize tracker
-  return
-}
-
-outlit.init({ publicKey: 'pk_xxx' })
-```
 
 ## Device Tracking (Non-Browser)
 
@@ -395,41 +270,33 @@ outlit.identify({
   </Tab>
 </Tabs>
 
-### How Linking Works
-
-```mermaid
-%%{init: {'theme': 'dark', 'sequence': {'mirrorActors': false, 'messageMargin': 40}}}%%
-sequenceDiagram
-    participant A as App
-    participant O as Outlit
-
-    A->>A: Generate fingerprint
-    A->>O: track(fingerprint, "app_opened")
-    O->>O: Store as pending event
-
-    A->>O: track(fingerprint, "feature_used")
-    O->>O: Store as pending event
-
-    Note over A: User signs in
-
-    A->>O: identify(email + fingerprint)
-    O->>O: Create/find contact
-    O->>O: Link fingerprint → contact
-    O->>O: Backfill pending events
-```
-
 <Info>
   Events tracked with only a fingerprint are stored but not visible in customer timelines until linked via `identify()`. Once linked, they appear with their original timestamps.
 </Info>
 
+## Privacy Considerations
+
+Anonymous visitor data is retained for 90 days (configurable) for unidentified visitors. Once identified, data is linked to the customer and retained per your policy.
+
+For GDPR compliance: anonymous data can be deleted on request, visitor IDs are pseudonymous (not directly identifying), IP addresses are used only for company lookup and not stored afterward, and there is no cross-site tracking.
+
+To respect opt-out preferences, check for consent before initializing:
+
+```typescript
+if (!hasTrackingConsent()) {
+  return // Don't initialize tracker
+}
+
+outlit.init({ publicKey: 'pk_xxx' })
+```
+
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
+  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
     How profiles are merged across identifiers
   </Card>
   <Card title="Browser Tracking" icon="browser" href="/tracking/browser/script">
     Detailed browser integration guide
   </Card>
 </CardGroup>
-

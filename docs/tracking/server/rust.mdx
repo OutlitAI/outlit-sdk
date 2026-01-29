@@ -13,7 +13,7 @@ The Rust SDK is designed for native applications where you need tracking outside
 - **Backend services** - Rust-based APIs
 
 <Info>
-  For anonymous tracking before user sign-in, use `fingerprint`. See [Device Tracking](/tracking/identity/anonymous-visitors#device-tracking-non-browser) for details.
+  For anonymous tracking before user sign-in, use `fingerprint`. See [Device Tracking](/concepts/anonymous-tracking#device-tracking-non-browser) for details.
 </Info>
 
 ## Installation
@@ -335,10 +335,10 @@ match client.track("event", email("user@test.com")).send().await {
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Device Tracking" icon="mobile" href="/tracking/identity/anonymous-visitors#device-tracking-non-browser">
+  <Card title="Device Tracking" icon="mobile" href="/concepts/anonymous-tracking#device-tracking-non-browser">
     Anonymous tracking before user identification
   </Card>
-  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
+  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
     How profiles are merged across identifiers
   </Card>
 </CardGroup>
