@@ -30,68 +30,55 @@ Traditional analytics tools show you what happened on your website. Outlit shows
   <Card title="Identity Resolution" icon="fingerprint">
     Automatically merge customer profiles when the same person uses different devices or emails.
   </Card>
-  <Card title="Sales Intelligence" icon="chart-line">
-    Surface the signals that matter—see which prospects are actively evaluating before they reach out.
+  <Card title="Journey Intelligence" icon="sparkles">
+    AI analyzes customer journeys and surfaces what's driving conversions—no dashboard building required.
   </Card>
 </Columns>
 
 ## Choose Your Integration
 
-<Tabs>
-  <Tab title="Script Tag" icon="code">
-    The fastest way to start. Add a single script tag to your website.
-    
-    ```html
-    <script
-      src="https://cdn.outlit.ai/stable/outlit.js"
-      data-public-key="pk_your_key"
-      async
-    ></script>
-    ```
-    
-    <Card title="Script Tag Guide" icon="arrow-right" href="/tracking/browser/script">
-      Learn more about script tag integration
-    </Card>
-  </Tab>
-  <Tab title="React" icon="react">
-    First-class React support with hooks and context.
-    
-    ```tsx
-    import { OutlitProvider } from '@outlit/browser/react'
+### Browser SDKs
 
-    export default function App({ children }) {
-      return (
-        <OutlitProvider publicKey="pk_your_key" trackPageviews>
-          {children}
-        </OutlitProvider>
-      )
-    }
-    ```
-    
-    <Card title="React Integration" icon="arrow-right" href="/tracking/browser/react">
-      Learn more about React integration
-    </Card>
-  </Tab>
-  <Tab title="Node.js" icon="node-js">
-    Server-side tracking for authenticated users.
-    
-    ```typescript
-    import { Outlit } from '@outlit/browser-node'
+<CardGroup cols={3}>
+  <Card title="Script Tag" icon="code" href="/tracking/browser/script">
+    Fastest setup—just add a script tag
+  </Card>
+  <Card title="React" icon="react" href="/tracking/browser/react">
+    Hooks and context provider
+  </Card>
+  <Card title="Next.js" icon="n" href="/tracking/browser/nextjs">
+    App Router and Pages Router
+  </Card>
+  <Card title="Vue" icon="vuejs" href="/tracking/browser/vue">
+    Composition API plugin
+  </Card>
+  <Card title="Nuxt" icon="n" href="/tracking/browser/nuxt">
+    Auto-imported composables
+  </Card>
+  <Card title="SvelteKit" icon="s" href="/tracking/browser/sveltekit">
+    Stores and lifecycle hooks
+  </Card>
+  <Card title="Astro" icon="a" href="/tracking/browser/astro">
+    Islands and SSR support
+  </Card>
+  <Card title="Angular" icon="angular" href="/tracking/browser/angular">
+    Injectable service
+  </Card>
+  <Card title="NPM" icon="npm" href="/tracking/browser/npm">
+    Vanilla JS/TS package
+  </Card>
+</CardGroup>
 
-    const outlit = new Outlit({ publicKey: 'pk_your_key' })
+### Server SDKs
 
-    outlit.track({
-      email: 'user@example.com',
-      eventName: 'subscription_created',
-      properties: { plan: 'pro' }
-    })
-    ```
-    
-    <Card title="Node.js SDK" icon="arrow-right" href="/tracking/server/nodejs">
-      Learn more about server-side tracking
-    </Card>
-  </Tab>
-</Tabs>
+<CardGroup cols={3}>
+  <Card title="Node.js" icon="node-js" href="/tracking/server/nodejs">
+    Express, Next.js API routes, serverless
+  </Card>
+  <Card title="Rust" icon="rust" href="/tracking/server/rust">
+    Async client for Tauri and native apps
+  </Card>
+</CardGroup>
 
 ## How It Works
 
