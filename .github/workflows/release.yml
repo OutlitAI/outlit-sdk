@@ -68,7 +68,7 @@ jobs:
         id: changesets
         run: |
           set -euo pipefail
-          COUNT=$(git ls-files ".changeset/*.md" | grep -v "^.changeset/README.md$" | wc -l | tr -d ' ')
+          COUNT=$(git ls-files ".changeset/*.md" | { grep -v "^.changeset/README.md$" || true; } | wc -l | tr -d ' ')
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
           if [ "$COUNT" -eq 0 ]; then
             echo "No unreleased changesets found - skipping canary publish."
