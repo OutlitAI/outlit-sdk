@@ -6,7 +6,7 @@ members = ["crates/*"]
 version = "0.2.0"
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/anthropics/outlit-sdk"
+repository = "https://github.com/OutlitAI/outlit-sdk"
 rust-version = "1.75"
 
 [workspace.dependencies]
