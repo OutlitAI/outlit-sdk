@@ -1,5 +1,17 @@
 # @outlit/core
 
+## 1.1.0
+
+### Minor Changes
+
+- [#29](https://github.com/OutlitAI/outlit-sdk/pull/29) [`4404a04`](https://github.com/OutlitAI/outlit-sdk/commit/4404a04739e5a8b3de7e077ae39aa9c9daa01abf) Thanks [@leo-paz](https://github.com/leo-paz)! - Add `CustomerTraits` and `IdentifyTraits` type exports for nested customer properties in identify calls
+
+- [#35](https://github.com/OutlitAI/outlit-sdk/pull/35) [`09b09d6`](https://github.com/OutlitAI/outlit-sdk/commit/09b09d6ba718c34244215e9c2a6891f7ec30e5b9) Thanks [@leo-paz](https://github.com/leo-paz)! - Add fingerprint support for anonymous event tracking
+
+  - Add `fingerprint` field to `ServerIdentity`, `IdentifyEvent`, and `IngestPayload`
+  - Update `validateServerIdentity()` to accept fingerprint as valid identity
+  - Enable fingerprint-only tracking that can be linked to users later via identify()
+
 ## 1.0.1
 
 ### Patch Changes
