@@ -1,5 +1,12 @@
 # @outlit/browser
 
+## 1.1.0
+
+### Patch Changes
+
+- Updated dependencies [[`4404a04`](https://github.com/OutlitAI/outlit-sdk/commit/4404a04739e5a8b3de7e077ae39aa9c9daa01abf), [`09b09d6`](https://github.com/OutlitAI/outlit-sdk/commit/09b09d6ba718c34244215e9c2a6891f7ec30e5b9)]:
+  - @outlit/core@1.1.0
+
 ## 1.0.4
 
 ### Patch Changes
