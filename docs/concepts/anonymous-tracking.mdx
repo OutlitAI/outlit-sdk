@@ -139,15 +139,14 @@ When a visitor lands on your site:
 3. **If a company is identified**, a new customer record is created in your dashboard
 4. **Browsing activity is linked** so you can see what pages they viewed
 
-<Frame>
 ```mermaid
+%%{init: {'theme': 'dark', 'flowchart': {'nodeSpacing': 50, 'rankSpacing': 60, 'curve': 'basis', 'padding': 15}}}%%
 flowchart LR
-    A[Anonymous Visitor] -->|IP address| B[IPinfo Lookup]
-    B -->|Company identified| C[Customer Created]
-    C --> D[See in Dashboard]
-    B -->|No company match| E[Stays Anonymous]
+    A([Anonymous Visitor]) -->|IP address| B([IPinfo Lookup])
+    B -->|Company identified| C([Customer Created])
+    C --> D([See in Dashboard])
+    B -->|No company match| E([Stays Anonymous])
 ```
-</Frame>
 
 ### What You'll See
 

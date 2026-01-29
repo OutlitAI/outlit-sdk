@@ -5,13 +5,15 @@
   "colors": {
     "primary": "#255577",
     "light": "#3a7799",
-    "dark": "#1a3d55",
-    "background": {
+    "dark": "#1a3d55"
+  },
+  "background": {
+    "color": {
       "dark": "#000000"
     }
   },
   "appearance": {
-    "default": "system",
+    "default": "dark",
     "strict": false
   },
   "favicon": "/favicon.svg",
