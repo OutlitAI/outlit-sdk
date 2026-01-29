@@ -173,7 +173,7 @@ import { OutlitProvider } from '@outlit/browser/react'
 </ParamField>
 
 <ParamField path="autoIdentify" type="boolean" default="true">
-  Automatically identify users when they submit forms containing an email field. Extracts email and name (first name, last name, full name) using field name heuristics. Set to `false` to disable and call `identify()` manually. See [Auto-Identify](/tracking/identity/overview#auto-identify) for details.
+  Automatically identify users when they submit forms containing an email field. Extracts email and name (first name, last name, full name) using field name heuristics. Set to `false` to disable and call `identify()` manually. See [Auto-Identify](/concepts/identity-resolution#auto-identify) for details.
 </ParamField>
 
 <ParamField path="trackEngagement" type="boolean" default="true">
@@ -563,7 +563,7 @@ function FirstProjectCreated() {
 </Warning>
 
 <Info>
-  Account billing status (`customer.paid`, `customer.churned`, `customer.trialing`) is tracked separately at the account level. If you've connected Stripe, this is handled automatically. For manual billing tracking from your server, see [Stages & Billing](/tracking/stages).
+  Account billing status (`customer.paid`, `customer.churned`, `customer.trialing`) is tracked separately at the account level. If you've connected Stripe, this is handled automatically. For manual billing tracking from your server, see [Stages & Billing](/concepts/customer-journey).
 </Info>
 
 ## Framework Examples
@@ -772,7 +772,7 @@ const user: UserIdentity = {
   <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
     Track events from your backend
   </Card>
-  <Card title="Identity Resolution" icon="fingerprint" href="/tracking/identity/overview">
+  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
     Learn how profiles are merged
   </Card>
 </CardGroup>

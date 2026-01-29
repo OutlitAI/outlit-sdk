@@ -72,7 +72,7 @@ outlit.init({
 </ParamField>
 
 <ParamField path="autoIdentify" type="boolean" default="true">
-  Automatically identify users when they submit forms containing an email field. Extracts email and name using field name heuristics. Set to `false` to call `identify()` manually. See [Auto-Identify](/tracking/identity/overview#auto-identify) for details.
+  Automatically identify users when they submit forms containing an email field. Extracts email and name using field name heuristics. Set to `false` to call `identify()` manually. See [Auto-Identify](/concepts/identity-resolution#auto-identify) for details.
 </ParamField>
 
 <ParamField path="trackEngagement" type="boolean" default="true">
@@ -239,7 +239,7 @@ outlit.user.inactive({ reason: 'no_login_30_days' })
 </Warning>
 
 <Info>
-  Account billing status (`paid`, `churned`, `trialing`) is tracked separately at the account level. If you've connected Stripe, this is handled automatically. For manual billing tracking from your server, see [Stages & Billing](/tracking/stages).
+  Account billing status (`paid`, `churned`, `trialing`) is tracked separately at the account level. If you've connected Stripe, this is handled automatically. For manual billing tracking from your server, see [Stages & Billing](/concepts/customer-journey).
 </Info>
 
 ### `outlit.getInstance()`
