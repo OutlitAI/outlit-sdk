@@ -1,7 +1,7 @@
 {
   "name": "@outlit/browser",
   "version": "1.1.0",
-  "description": "Outlit browser tracking SDK with React bindings",
+  "description": "Outlit browser tracking SDK with React and Vue bindings",
   "license": "Apache-2.0",
   "author": "Outlit AI",
   "repository": {
@@ -13,7 +13,7 @@
     "url": "https://github.com/OutlitAI/outlit-sdk/issues"
   },
   "homepage": "https://github.com/OutlitAI/outlit-sdk#readme",
-  "keywords": ["outlit", "analytics", "tracking", "sdk", "browser", "react"],
+  "keywords": ["outlit", "analytics", "tracking", "sdk", "browser", "react", "vue"],
   "publishConfig": {
     "access": "public"
   },
@@ -22,7 +22,8 @@
   "types": "./dist/index.d.ts",
   "typesVersions": {
     "*": {
-      "react": ["./dist/react/index.d.ts"]
+      "react": ["./dist/react/index.d.ts"],
+      "vue": ["./dist/vue/index.d.ts"]
     }
   },
   "exports": {
@@ -37,6 +38,12 @@
       "import": "./dist/react/index.mjs",
       "require": "./dist/react/index.js",
       "default": "./dist/react/index.mjs"
+    },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts",
+      "import": "./dist/vue/index.mjs",
+      "require": "./dist/vue/index.js",
+      "default": "./dist/vue/index.mjs"
     }
   },
   "files": ["dist"],
@@ -71,13 +78,18 @@
     "tsup": "^8.0.1",
     "tsx": "^4.0.0",
     "typescript": "^5.3.3",
-    "vitest": "^1.2.1"
+    "vitest": "^1.2.1",
+    "vue": "^3.5.27"
   },
   "peerDependencies": {
-    "react": ">=17.0.0"
+    "react": ">=17.0.0",
+    "vue": ">=3.0.0"
   },
   "peerDependenciesMeta": {
     "react": {
+      "optional": true
+    },
+    "vue": {
       "optional": true
     }
   }
