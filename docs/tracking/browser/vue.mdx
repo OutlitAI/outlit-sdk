@@ -1,6 +1,6 @@
 ---
 title: "Vue Integration"
-description: "Integrate Outlit tracking with Vue 3 applications"
+description: "First-class Vue 3 support with plugin and composables"
 ---
 
 ## Installation
@@ -25,21 +25,79 @@ bun add @outlit/browser
 
 ## Quick Start
 
-Initialize Outlit in your app's entry point:
+Install the `OutlitPlugin` in your app's entry point and use composables in components.
+
+<Tabs>
+  <Tab title="With Authentication (Recommended)">
+If your app has user authentication, use the `useOutlitUser` composable to automatically sync user identity. This is the recommended approach as it automatically handles login/logout transitions.
 
 ```typescript
 // main.ts
 import { createApp } from 'vue'
+import { OutlitPlugin } from '@outlit/browser/vue'
 import App from './App.vue'
-import outlit from '@outlit/browser'
 
-outlit.init({
+const app = createApp(App)
+
+app.use(OutlitPlugin, {
   publicKey: import.meta.env.VITE_OUTLIT_KEY,
   trackPageviews: true,
 })
 
-createApp(App).mount('#app')
+app.mount('#app')
 ```
+
+```vue
+<!-- App.vue -->
+<script setup>
+import { computed } from 'vue'
+import { useOutlitUser } from '@outlit/browser/vue'
+import { useAuthStore } from '@/stores/auth'
+
+const auth = useAuthStore()
+
+// Build user identity from your auth state
+const outlitUser = computed(() => {
+  if (!auth.user) return null
+  return {
+    email: auth.user.email,
+    userId: auth.user.id,
+    traits: {
+      name: auth.user.name,
+      plan: auth.user.plan
+    }
+  }
+})
+
+// Auto-sync user identity with Outlit
+useOutlitUser(outlitUser)
+</script>
+
+<template>
+  <router-view />
+</template>
+```
+  </Tab>
+  <Tab title="Anonymous Only">
+For marketing sites without authentication, just install the plugin:
+
+```typescript
+// main.ts
+import { createApp } from 'vue'
+import { OutlitPlugin } from '@outlit/browser/vue'
+import App from './App.vue'
+
+const app = createApp(App)
+
+app.use(OutlitPlugin, {
+  publicKey: import.meta.env.VITE_OUTLIT_KEY,
+  trackPageviews: true,
+})
+
+app.mount('#app')
+```
+  </Tab>
+</Tabs>
 
 <Tip>
   Set your public key in `.env`:
@@ -48,70 +106,279 @@ createApp(App).mount('#app')
   ```
 </Tip>
 
-## Tracking Events
+### Using the Composable
 
-Track custom events using the Composition API:
+Track custom events with the `useOutlit` composable:
 
 ```vue
 <script setup>
-import outlit from '@outlit/browser'
+import { useOutlit } from '@outlit/browser/vue'
 
-function handleCheckout() {
-  outlit.track('checkout_started', {
-    plan: 'pro',
-    amount: 99
-  })
+const { track } = useOutlit()
+
+function handlePricingClick() {
+  track('pricing_clicked', { plan: 'pro' })
 }
 </script>
 
 <template>
-  <button @click="handleCheckout">
-    Checkout
+  <button @click="handlePricingClick">
+    View Pricing
   </button>
 </template>
 ```
 
-### With Options API
+## Plugin Configuration
+
+### OutlitPlugin
+
+The `OutlitPlugin` initializes tracking and provides context to all components.
+
+```typescript
+import { OutlitPlugin } from '@outlit/browser/vue'
+
+app.use(OutlitPlugin, {
+  publicKey: 'pk_xxx',
+  apiHost: 'https://app.outlit.ai',
+  trackPageviews: true,
+  trackForms: true,
+  trackEngagement: true,
+  formFieldDenylist: ['custom_secret_field'],
+  flushInterval: 5000,
+})
+```
+
+### Options
+
+<ParamField path="publicKey" type="string" required>
+  Your organization's public key.
+</ParamField>
+
+<ParamField path="apiHost" type="string" default="https://app.outlit.ai">
+  API endpoint for sending events.
+</ParamField>
+
+<ParamField path="trackPageviews" type="boolean" default="true">
+  Automatically track pageviews on route changes.
+</ParamField>
+
+<ParamField path="trackForms" type="boolean" default="true">
+  Automatically capture form submissions.
+</ParamField>
+
+<ParamField path="formFieldDenylist" type="string[]">
+  Additional field names to exclude from form capture.
+</ParamField>
+
+<ParamField path="flushInterval" type="number" default="5000">
+  How often to flush queued events (ms).
+</ParamField>
+
+<ParamField path="autoTrack" type="boolean" default="true">
+  Whether to start tracking automatically. Set to `false` to wait for user consent. Use `enableTracking()` from the `useOutlit` composable after consent.
+</ParamField>
+
+<ParamField path="autoIdentify" type="boolean" default="true">
+  Automatically identify users when they submit forms containing an email field. Set to `false` to disable and call `identify()` manually.
+</ParamField>
+
+<ParamField path="trackEngagement" type="boolean" default="true">
+  Track engagement metrics (active time on page).
+</ParamField>
+
+<ParamField path="idleTimeout" type="number" default="30000">
+  Idle timeout in milliseconds for engagement tracking.
+</ParamField>
+
+<ParamField path="trackCalendarEmbeds" type="boolean" default="true">
+  Track booking events from calendar embeds (Cal.com, Calendly).
+</ParamField>
+
+## User Identity Patterns
+
+The `useOutlitUser` composable is the **recommended** way to handle user identity. It's simpler and more reliable than manual `identify()` calls because:
+
+- **Automatic lifecycle management**: Login/logout transitions are handled automatically
+- **Reactive**: Uses Vue's reactivity system to sync with your auth state
+- **Cleaner code**: No need for watchers with manual `setUser()` calls
+
+### Pattern 1: With Pinia Store
 
 ```vue
-<script>
-import outlit from '@outlit/browser'
+<!-- App.vue or a top-level component -->
+<script setup>
+import { computed } from 'vue'
+import { useOutlitUser } from '@outlit/browser/vue'
+import { useUserStore } from '@/stores/user'
 
-export default {
-  methods: {
-    handleCheckout() {
-      outlit.track('checkout_started', {
-        plan: 'pro',
-        amount: 99
-      })
+const userStore = useUserStore()
+
+const outlitUser = computed(() => {
+  if (!userStore.user) return null
+  return {
+    email: userStore.user.email,
+    userId: userStore.user.id,
+    traits: {
+      name: userStore.user.name,
+      plan: userStore.user.plan
     }
   }
-}
+})
+
+// Automatically syncs when userStore.user changes
+useOutlitUser(outlitUser)
+</script>
+```
+
+### Pattern 2: With Composable Auth
+
+```vue
+<script setup>
+import { computed } from 'vue'
+import { useOutlitUser } from '@outlit/browser/vue'
+import { useAuth } from '@/composables/useAuth'
+
+const { user, isAuthenticated } = useAuth()
+
+const outlitUser = computed(() => {
+  if (!isAuthenticated.value || !user.value) return null
+  return {
+    email: user.value.email,
+    userId: user.value.id,
+    traits: { name: user.value.name }
+  }
+})
+
+useOutlitUser(outlitUser)
+</script>
+```
+
+<Info>
+  When the user ref changes (login/logout), `useOutlitUser` automatically calls `setUser()` or `clearUser()` internally. You don't need to call these methods manually.
+</Info>
+
+## Composables
+
+### useOutlit
+
+The primary composable for tracking events and identifying users.
+
+```vue
+<script setup>
+import { useOutlit } from '@outlit/browser/vue'
+
+const {
+  track,
+  identify,
+  setUser,
+  clearUser,
+  user,       // User stage methods: identify, activate, engaged, inactive
+  customer,   // Customer billing methods: trialing, paid, churned
+  getVisitorId,
+  isInitialized,
+  isTrackingEnabled,
+  enableTracking,
+} = useOutlit()
+
+// Track an event
+track('button_clicked', { buttonId: 'cta' })
+
+// Identify the user
+identify({ email: 'user@example.com', traits: { plan: 'pro' } })
+
+// User stage methods
+user.activate({ flow: 'onboarding' })
+user.engaged({ milestone: 'first_project' })
+
+// Customer billing methods (requires account identifier)
+customer.paid({ domain: 'acme.com', plan: 'pro' })
+
+// Get visitor ID (null if tracking not enabled)
+const visitorId = getVisitorId()
+</script>
+```
+
+#### Returns
+
+<ParamField path="track" type="(eventName: string, properties?: object) => void">
+  Track a custom event.
+</ParamField>
+
+<ParamField path="identify" type="(options: IdentifyOptions) => void">
+  Identify the current visitor.
+</ParamField>
+
+<ParamField path="setUser" type="(identity: UserIdentity) => void">
+  Set the current user identity. Ideal for SPA authentication flows.
+</ParamField>
+
+<ParamField path="clearUser" type="() => void">
+  Clear the current user identity (on logout).
+</ParamField>
+
+<ParamField path="user" type="object">
+  User stage methods namespace:
+  - `user.identify(options)` - Identify the user
+  - `user.activate(properties?)` - Mark user as activated
+  - `user.engaged(properties?)` - Mark user as engaged
+  - `user.inactive(properties?)` - Mark user as inactive
+</ParamField>
+
+<ParamField path="customer" type="object">
+  Customer billing methods namespace. Requires at least one of `domain`, `customerId`, or `stripeCustomerId`:
+  - `customer.trialing(options)` - Mark account as trialing
+  - `customer.paid(options)` - Mark account as paid
+  - `customer.churned(options)` - Mark account as churned
+</ParamField>
+
+<ParamField path="getVisitorId" type="() => string | null">
+  Get the current visitor's ID. Returns `null` if tracking is not enabled.
+</ParamField>
+
+<ParamField path="isTrackingEnabled" type="Ref<boolean>">
+  Whether tracking is currently enabled. Will be `false` if `autoTrack` is `false` and `enableTracking()` hasn't been called.
+</ParamField>
+
+<ParamField path="enableTracking" type="() => void">
+  Enable tracking. Call this after obtaining user consent. Only needed if `autoTrack` is `false`.
+</ParamField>
+
+<ParamField path="isInitialized" type="Ref<boolean>">
+  Whether the tracker is ready.
+</ParamField>
+
+### useTrack
+
+A convenience composable that returns just the `track` function:
+
+```vue
+<script setup>
+import { useTrack } from '@outlit/browser/vue'
+
+const track = useTrack()
 </script>
 
 <template>
-  <button @click="handleCheckout">
-    Checkout
+  <button @click="track('feature_clicked', { featureId: '123' })">
+    Try Feature
   </button>
 </template>
 ```
 
-## Identifying Users
+### useIdentify
 
-Call `identify()` after authentication:
+A convenience composable that returns just the `identify` function:
 
 ```vue
 <script setup>
-import { ref } from 'vue'
-import outlit from '@outlit/browser'
+import { useIdentify } from '@outlit/browser/vue'
 
-const email = ref('')
-const password = ref('')
+const identify = useIdentify()
 
-async function handleLogin() {
-  const user = await login(email.value, password.value)
+async function handleLogin(email, password) {
+  const user = await login(email, password)
 
-  outlit.identify({
+  identify({
     email: user.email,
     userId: user.id,
     traits: {
@@ -121,15 +388,113 @@ async function handleLogin() {
   })
 }
 </script>
+```
+
+### useOutlitUser
+
+Automatically syncs a reactive user ref with Outlit:
+
+```vue
+<script setup>
+import { ref, computed } from 'vue'
+import { useOutlitUser } from '@outlit/browser/vue'
+
+// Your auth state
+const currentUser = ref(null)
+
+// Auto-sync with Outlit - handles login/logout automatically
+useOutlitUser(currentUser)
+
+// When user logs in
+async function onLogin(credentials) {
+  const user = await api.login(credentials)
+  currentUser.value = {
+    email: user.email,
+    userId: user.id,
+    traits: { name: user.name, plan: user.plan }
+  }
+}
+
+// When user logs out
+function onLogout() {
+  currentUser.value = null
+}
+</script>
+```
+
+## Consent Management
+
+If you need to wait for user consent before tracking:
+
+```typescript
+// main.ts
+app.use(OutlitPlugin, {
+  publicKey: import.meta.env.VITE_OUTLIT_KEY,
+  autoTrack: false, // Don't track until consent
+})
+```
+
+```vue
+<!-- CookieBanner.vue -->
+<script setup>
+import { useOutlit } from '@outlit/browser/vue'
+
+const { enableTracking, isTrackingEnabled } = useOutlit()
+
+function acceptTracking() {
+  localStorage.setItem('tracking-consent', 'true')
+  enableTracking()
+}
+</script>
 
 <template>
-  <form @submit.prevent="handleLogin">
-    <input v-model="email" type="email" placeholder="Email" />
-    <input v-model="password" type="password" placeholder="Password" />
-    <button type="submit">Login</button>
-  </form>
+  <div v-if="!isTrackingEnabled" class="cookie-banner">
+    <p>We use cookies to improve your experience.</p>
+    <div class="flex gap-2">
+      <button @click="acceptTracking" class="btn-primary">
+        Accept
+      </button>
+      <button class="btn-secondary">
+        Decline
+      </button>
+    </div>
+  </div>
 </template>
 ```
+
+## Journey Stage Events
+
+Track user progression through your product lifecycle:
+
+```vue
+<script setup>
+import { useOutlit } from '@outlit/browser/vue'
+
+const { user } = useOutlit()
+
+function handleOnboardingComplete() {
+  user.activate({ flow: 'onboarding', step: 'completed' })
+}
+
+function handleFirstProjectCreated() {
+  user.engaged({ milestone: 'first_project' })
+}
+</script>
+
+<template>
+  <button @click="handleOnboardingComplete">
+    Complete Setup
+  </button>
+</template>
+```
+
+<Warning>
+  User stage methods (`user.activate`, `user.engaged`, `user.inactive`) require the user to be identified first. Use `useOutlitUser()`, `setUser()`, or `identify()` before calling stage methods.
+</Warning>
+
+<Info>
+  Account billing status (`customer.paid`, `customer.churned`, `customer.trialing`) is tracked separately at the account level. If you've connected Stripe, this is handled automatically.
+</Info>
 
 ## Vue Router Integration
 
@@ -138,91 +503,18 @@ Track pageviews automatically with Vue Router:
 ```typescript
 // router/index.ts
 import { createRouter, createWebHistory } from 'vue-router'
-import outlit from '@outlit/browser'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [...]
 })
 
-// Track pageviews on route change
-router.afterEach((to) => {
-  outlit.track('pageview', {
-    path: to.path,
-    name: to.name,
-    params: to.params
-  })
-})
-
 export default router
 ```
 
 <Info>
-  If you set `trackPageviews: true` during init, pageviews are tracked automatically. The above example is only needed if you want custom pageview logic.
+  If you set `trackPageviews: true` during plugin install (default), pageviews are tracked automatically. Vue Router's History API changes are detected by the SDK.
 </Info>
-
-## Composables
-
-Create a reusable composable for tracking:
-
-```typescript
-// composables/useOutlit.ts
-import outlit from '@outlit/browser'
-
-export function useOutlit() {
-  function track(eventName: string, properties?: Record<string, any>) {
-    outlit.track(eventName, properties)
-  }
-
-  function identify(options: { email?: string; userId?: string; traits?: Record<string, any> }) {
-    outlit.identify(options)
-  }
-
-  function setUser(identity: { email?: string; userId?: string; traits?: Record<string, any> }) {
-    outlit.setUser(identity)
-  }
-
-  function clearUser() {
-    outlit.clearUser()
-  }
-
-  return {
-    track,
-    identify,
-    setUser,
-    clearUser,
-    user: outlit.user,
-  }
-}
-```
-
-Use in components:
-
-```vue
-<script setup>
-import { useOutlit } from '@/composables/useOutlit'
-
-const { track, setUser, clearUser } = useOutlit()
-
-function handleFeatureClick() {
-  track('feature_clicked', { feature: 'export' })
-}
-
-// After authentication
-function onLogin(user) {
-  setUser({
-    email: user.email,
-    userId: user.id,
-    traits: { name: user.name, plan: user.plan }
-  })
-}
-
-// On logout
-function onLogout() {
-  clearUser()
-}
-</script>
-```
 
 ## Pinia Integration
 
@@ -231,146 +523,25 @@ Track state changes with Pinia:
 ```typescript
 // stores/user.ts
 import { defineStore } from 'pinia'
-import outlit from '@outlit/browser'
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    user: null
+    user: null as User | null
   }),
 
   actions: {
     async login(email: string, password: string) {
       const user = await api.login(email, password)
       this.user = user
-
-      // Set user identity after login
-      outlit.setUser({
-        email: user.email,
-        userId: user.id,
-        traits: {
-          name: user.name,
-          plan: user.plan
-        }
-      })
+      // Identity is synced automatically via useOutlitUser()
     },
 
     logout() {
       this.user = null
-      outlit.clearUser()
+      // Identity is cleared automatically via useOutlitUser()
     }
   }
 })
-```
-
-## Auth Integration
-
-Sync user identity with your auth state using Vue's reactivity:
-
-```typescript
-// main.ts or App.vue
-import { watch } from 'vue'
-import outlit from '@outlit/browser'
-import { useAuthStore } from './stores/auth'
-
-const auth = useAuthStore()
-
-// Sync user identity with auth state
-watch(
-  () => auth.user,
-  (user) => {
-    if (user) {
-      outlit.setUser({
-        email: user.email,
-        userId: user.id,
-        traits: {
-          name: user.name,
-          plan: user.plan
-        }
-      })
-    } else {
-      outlit.clearUser()
-    }
-  },
-  { immediate: true }
-)
-```
-
-<Info>
-  Using `setUser()` with a watcher ensures the user identity is always in sync with your auth state, including handling page refreshes where the user is already logged in.
-</Info>
-
-## SSR with Nuxt
-
-For Nuxt applications, see the dedicated [Nuxt integration guide](/tracking/browser/nuxt).
-
-## Contact Stage Events
-
-Track contact lifecycle events:
-
-```vue
-<script setup>
-import outlit from '@outlit/browser'
-import { onMounted } from 'vue'
-
-onMounted(() => {
-  // After onboarding completion
-  outlit.user.activate({ flow: 'onboarding' })
-})
-
-function handleEngagementMilestone() {
-  outlit.user.engaged({ milestone: 'first_project' })
-}
-</script>
-```
-
-<Warning>
-  Stage methods (`activate`, `engaged`) require the user to be identified first using `identify()` or `setUser()`.
-</Warning>
-
-<Info>
-  Account billing (`paid`, `churned`, `trialing`) is tracked separately. If you've connected Stripe, billing is automatic. For manual billing, see [Stages & Billing](/concepts/customer-journey).
-</Info>
-
-## Consent Management
-
-Handle user consent before tracking:
-
-```vue
-<script setup>
-import { ref, onMounted } from 'vue'
-import outlit from '@outlit/browser'
-
-const showBanner = ref(false)
-
-onMounted(() => {
-  // Initialize without auto-tracking
-  outlit.init({
-    publicKey: import.meta.env.VITE_OUTLIT_KEY,
-    autoTrack: false
-  })
-
-  // Check if user has already consented
-  const hasConsent = localStorage.getItem('tracking-consent')
-  if (hasConsent === 'true') {
-    outlit.enableTracking()
-  } else {
-    showBanner.value = true
-  }
-})
-
-function acceptTracking() {
-  localStorage.setItem('tracking-consent', 'true')
-  outlit.enableTracking()
-  showBanner.value = false
-}
-</script>
-
-<template>
-  <div v-if="showBanner" class="cookie-banner">
-    <p>We use cookies to improve your experience.</p>
-    <button @click="acceptTracking">Accept</button>
-  </div>
-</template>
 ```
 
 ## TypeScript Support
@@ -378,28 +549,32 @@ function acceptTracking() {
 Full TypeScript support is included:
 
 ```typescript
-import outlit, {
-  type OutlitOptions,
-  type BrowserTrackOptions,
-  type BrowserIdentifyOptions
-} from '@outlit/browser'
+import {
+  useOutlit,
+  useTrack,
+  useIdentify,
+  useOutlitUser,
+  OutlitPlugin,
+  type OutlitPluginOptions,
+  type UseOutlitReturn,
+} from '@outlit/browser/vue'
 
-// Type-safe initialization
-const options: OutlitOptions = {
-  publicKey: import.meta.env.VITE_OUTLIT_KEY,
-  trackPageviews: true,
-  flushInterval: 5000
+import type { UserIdentity } from '@outlit/browser'
+
+// Types are inferred
+const { track, identify, setUser } = useOutlit()
+
+// User identity type
+const user: UserIdentity = {
+  email: 'user@example.com',
+  userId: 'usr_123',
+  traits: { name: 'Jane' }
 }
-
-outlit.init(options)
-
-// Type-safe tracking
-outlit.track('purchase_completed', {
-  orderId: 'ord_123',
-  amount: 99.99,
-  currency: 'USD'
-})
 ```
+
+## SSR with Nuxt
+
+For Nuxt applications, see the dedicated [Nuxt integration guide](/tracking/browser/nuxt).
 
 ## Next Steps
 
