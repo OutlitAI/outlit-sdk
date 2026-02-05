@@ -63,16 +63,21 @@ export const OutlitPlugin = {
     const isTrackingEnabled = ref(false)
     const currentUser = ref<UserIdentity | null>(null)
 
-    // Initialize Outlit
+    // Initialize Outlit - forward all options with defaults
+    const {
+      trackPageviews = true,
+      trackForms = true,
+      autoTrack = true,
+      autoIdentify = true,
+      ...rest
+    } = options
+
     outlitRef.value = new Outlit({
-      publicKey: options.publicKey,
-      apiHost: options.apiHost,
-      trackPageviews: options.trackPageviews ?? true,
-      trackForms: options.trackForms ?? true,
-      formFieldDenylist: options.formFieldDenylist,
-      flushInterval: options.flushInterval,
-      autoTrack: options.autoTrack ?? true,
-      autoIdentify: options.autoIdentify ?? true,
+      ...rest,
+      trackPageviews,
+      trackForms,
+      autoTrack,
+      autoIdentify,
     })
 
     isInitialized.value = true
