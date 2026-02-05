@@ -16,6 +16,10 @@ import { OutlitPlugin, useIdentify, useOutlit, useOutlitUser, useTrack } from ".
 // Mock document.cookie for visitor ID storage
 const mockCookies: Record<string, string> = {}
 
+// Store original values for restoration
+let originalFetch: typeof fetch | undefined
+let originalCookieDescriptor: PropertyDescriptor | undefined
+
 // Helper to mount a component with the plugin
 function mountWithPlugin(
   component: ReturnType<typeof defineComponent>,
@@ -43,6 +47,10 @@ function mountWithPlugin(
 }
 
 beforeEach(() => {
+  // Store original values for restoration
+  originalFetch = global.fetch
+  originalCookieDescriptor = Object.getOwnPropertyDescriptor(document, "cookie")
+
   // Reset cookies before each test
   for (const key of Object.keys(mockCookies)) {
     delete mockCookies[key]
@@ -72,6 +80,17 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  // Restore original document.cookie descriptor
+  if (originalCookieDescriptor) {
+    Object.defineProperty(document, "cookie", originalCookieDescriptor)
+  }
+  // Restore original fetch
+  if (originalFetch) {
+    global.fetch = originalFetch
+  } else {
+    // @ts-expect-error - restoring undefined fetch
+    global.fetch = undefined
+  }
   vi.restoreAllMocks()
 })
 

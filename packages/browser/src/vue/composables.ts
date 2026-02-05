@@ -266,7 +266,7 @@ export function useOutlitUser(userRef: Ref<UserIdentity | null | undefined>) {
         outlit.value.clearUser()
       }
     },
-    { immediate: true },
+    { immediate: true, deep: true },
   )
 }
 
