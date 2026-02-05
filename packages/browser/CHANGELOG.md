@@ -1,5 +1,17 @@
 # @outlit/browser
 
+## 1.2.0
+
+### Minor Changes
+
+- [#39](https://github.com/OutlitAI/outlit-sdk/pull/39) [`788b6b5`](https://github.com/OutlitAI/outlit-sdk/commit/788b6b58ebab4477399d8d424cea708326291d79) Thanks [@leo-paz](https://github.com/leo-paz)! - Add Vue 3 support with plugin and composables
+
+  - `OutlitPlugin` for easy Vue app installation with automatic pageview tracking
+  - `useOutlit` composable for accessing the Outlit instance
+  - `useOutlitUser` composable for reactive user identity sync
+  - `useTrack` composable for event tracking
+  - New `@outlit/browser/vue` entry point
+
 ## 1.1.0
 
 ### Patch Changes
