@@ -1,0 +1,96 @@
+---
+title: "MCP Integration"
+description: "Connect AI agents like Claude and Cursor to Outlit to query customer data, revenue metrics, and activity timelines using the Model Context Protocol"
+---
+
+## What is the Outlit MCP Server?
+
+Outlit's MCP server lets AI agents query your customer data directly through the [Model Context Protocol](https://modelcontextprotocol.io) (MCP), an open standard for connecting AI tools to external data sources. Supported agents include Claude Code, Claude Desktop, Cursor, and any MCP-compatible client.
+
+Once connected, your AI agent can search customers, pull revenue metrics, inspect activity timelines, and run SQL analytics — all from within your conversation.
+
+## Install the Claude Code Skill
+
+For Claude Code users, install the [Outlit MCP skill](https://github.com/OutlitAI/outlit-agent-skills) to give your agent deeper context about query patterns, best practices, and the ability to help you complete the setup below:
+
+```bash
+npx skills add OutlitAI/outlit-agent-skills
+```
+
+## How to Connect Your AI Tool
+
+<Steps>
+  <Step title="Get your API key">
+    Go to [Settings > MCP Integration](https://app.outlit.ai/workspace-profile/mcp) in the Outlit dashboard. Click **Generate API Key**, give it a descriptive name, and copy it immediately — it won't be shown again.
+  </Step>
+  <Step title="Connect your AI tool">
+    <Tabs>
+      <Tab title="Claude Code">
+        ```bash
+        claude mcp add outlit-mcp https://mcp.outlit.ai/sse -- \
+          --header "Authorization: Bearer YOUR_API_KEY"
+        ```
+      </Tab>
+      <Tab title="Claude Desktop">
+        Add to your config file (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+
+        ```json
+        {
+          "mcpServers": {
+            "outlit-mcp": {
+              "url": "https://mcp.outlit.ai/sse",
+              "headers": {
+                "Authorization": "Bearer YOUR_API_KEY"
+              }
+            }
+          }
+        }
+        ```
+
+        Restart Claude Desktop after saving.
+      </Tab>
+      <Tab title="Cursor">
+        Add to `.cursor/mcp.json` in your project root:
+
+        ```json
+        {
+          "mcpServers": {
+            "outlit-mcp": {
+              "url": "https://mcp.outlit.ai/sse",
+              "headers": {
+                "Authorization": "Bearer YOUR_API_KEY"
+              }
+            }
+          }
+        }
+        ```
+      </Tab>
+    </Tabs>
+
+    Replace `YOUR_API_KEY` with the key from Step 1.
+  </Step>
+  <Step title="Verify the connection">
+    Ask your AI tool:
+
+    ```
+    Show me the available Outlit analytics tables.
+    ```
+
+    You should see a list of available analytics tables. If you get an authentication error, double-check your API key.
+  </Step>
+</Steps>
+
+<Warning>
+  Treat your MCP API key like a password. It grants read access to your customer data. You can revoke keys at any time from the [MCP Integration settings](https://app.outlit.ai/workspace-profile/mcp).
+</Warning>
+
+## What Tools Are Available?
+
+| Tool | What it does | Example prompt |
+|------|-------------|----------------|
+| `outlit_list_customers` | Filter customers by billing status, activity recency, and revenue | "Show me paying customers with MRR above $100 who haven't been active in 30 days" |
+| `outlit_list_users` | Filter users by journey stage, activity, and customer | "Find all signed-up users at Acme Corp who went inactive this week" |
+| `outlit_get_customer` | Get a complete customer profile with users, revenue, timeline, and metrics | "Get the full profile for acme.com including their users and revenue" |
+| `outlit_get_timeline` | Get the activity timeline for a customer, filtered by channel and event type | "Show me Acme Corp's email and Slack activity from the last 7 days" |
+| `outlit_query` | Run read-only SQL queries against your customer data | "Which channels lead to the most revenue?" |
+| `outlit_schema` | Get table schemas to help write accurate SQL queries | "Show me the available analytics tables" |
