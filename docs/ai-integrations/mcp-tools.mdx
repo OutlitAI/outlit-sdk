@@ -1,0 +1,220 @@
+---
+title: "MCP Tools Reference"
+description: "Complete reference for all Outlit MCP tools, parameters, and response formats"
+---
+
+## outlit_list_customers
+
+Filter and paginate customers with activity, billing, and revenue filters.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `billingStatus` | string | No | Filter by billing status. One of: `NONE`, `TRIALING`, `PAYING`, `CHURNED` |
+| `hasActivityInLast` | string | No | Only customers with activity in this window. One of: `7d`, `14d`, `30d`, `90d` |
+| `noActivityInLast` | string | No | Only customers without activity in this window. One of: `7d`, `14d`, `30d`, `90d` |
+| `mrrAbove` | number | No | Minimum MRR in cents (e.g., `5000` for $50.00) |
+| `mrrBelow` | number | No | Maximum MRR in cents |
+| `search` | string | No | Search customers by name or domain |
+| `orderBy` | string | No | Sort field. One of: `last_activity_at`, `first_seen_at`, `name`, `mrr_cents` |
+| `orderDirection` | string | No | Sort direction. One of: `asc`, `desc` |
+| `limit` | number | No | Results per page (1-1000, default: 20) |
+| `cursor` | string | No | Pagination cursor from a previous response |
+
+### Example
+
+```
+Show me paying customers with MRR above $100 who haven't been active in 30 days.
+```
+
+The AI agent will call:
+```json
+{
+  "billingStatus": "PAYING",
+  "mrrAbove": 10000,
+  "noActivityInLast": "30d"
+}
+```
+
+---
+
+## outlit_list_users
+
+Filter and paginate users with journey stage and activity filters.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `journeyStage` | string | No | Filter by journey stage. One of: `DISCOVERED`, `SIGNED_UP`, `ACTIVATED`, `ENGAGED`, `INACTIVE` |
+| `customerId` | string | No | Filter users belonging to a specific customer |
+| `hasActivityInLast` | string | No | Only users with activity in this window. Flexible format: `Nd`, `Nh`, `Nm` (e.g., `7d`, `24h`, `30m`) |
+| `noActivityInLast` | string | No | Only users without activity in this window. Same format as above |
+| `search` | string | No | Search users by email or name |
+| `orderBy` | string | No | Sort field. One of: `last_activity_at`, `first_seen_at`, `user_email` |
+| `orderDirection` | string | No | Sort direction. One of: `asc`, `desc` |
+| `limit` | number | No | Results per page (1-1000, default: 20) |
+| `cursor` | string | No | Pagination cursor from a previous response |
+
+### Example
+
+```
+Find all signed-up users at Acme Corp who haven't been active in the last 24 hours.
+```
+
+The AI agent will call:
+```json
+{
+  "journeyStage": "SIGNED_UP",
+  "customerId": "cust_abc123",
+  "noActivityInLast": "24h"
+}
+```
+
+<Note>
+  The `hasActivityInLast` and `noActivityInLast` parameters for users accept flexible time formats (`Nd`, `Nh`, `Nm`), unlike the customer list which only accepts fixed windows (`7d`, `14d`, `30d`, `90d`).
+</Note>
+
+---
+
+## outlit_get_customer
+
+Get a complete customer profile with optional related data.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `customer` | string | Yes | Customer identifier: an ID, domain, or name |
+| `include` | string[] | No | Related data to include. Any combination of: `users`, `revenue`, `recentTimeline`, `behaviorMetrics` |
+| `timeframe` | string | No | Time window for included data. One of: `7d`, `14d`, `30d`, `90d` (default: `30d`) |
+
+### Include Options
+
+| Include | What it returns |
+|---------|----------------|
+| `users` | List of users associated with this customer |
+| `revenue` | MRR, billing status, and revenue history |
+| `recentTimeline` | Recent activity events |
+| `behaviorMetrics` | Engagement scores, session counts, and activity patterns |
+
+### Example
+
+```
+Get the full profile for acme.com including their users and revenue.
+```
+
+The AI agent will call:
+```json
+{
+  "customer": "acme.com",
+  "include": ["users", "revenue"]
+}
+```
+
+---
+
+## outlit_get_timeline
+
+Get the activity timeline for a customer, filtered by channel and event type.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `customer` | string | Yes | Customer identifier: an ID, domain, or name |
+| `channels` | string[] | No | Filter by channel. Any combination of: `SDK`, `EMAIL`, `SLACK`, `CALL`, `CRM`, `BILLING`, `SUPPORT`, `INTERNAL` |
+| `eventTypes` | string[] | No | Filter by specific event types |
+| `timeframe` | string | No | Time window. One of: `7d`, `14d`, `30d`, `90d`, `all` (default: `30d`) |
+| `startDate` | string | No | Start date in ISO 8601 format. Mutually exclusive with `timeframe` |
+| `endDate` | string | No | End date in ISO 8601 format. Mutually exclusive with `timeframe` |
+| `limit` | number | No | Results per page (1-1000, default: 50) |
+| `cursor` | string | No | Pagination cursor from a previous response |
+
+<Warning>
+  `timeframe` and `startDate`/`endDate` are mutually exclusive. Use one or the other, not both.
+</Warning>
+
+### Example
+
+```
+Show me Acme Corp's email and Slack activity from the last 7 days.
+```
+
+The AI agent will call:
+```json
+{
+  "customer": "acme.com",
+  "channels": ["EMAIL", "SLACK"],
+  "timeframe": "7d"
+}
+```
+
+---
+
+## outlit_query
+
+Execute read-only SQL SELECT queries against ClickHouse analytics data.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `sql` | string | Yes | A SQL SELECT query |
+| `limit` | number | No | Maximum rows to return (1-10000, default: 1000) |
+
+### Available Tables
+
+| Table | Description |
+|-------|-------------|
+| `events` | Raw event data from SDK tracking, integrations, and other sources |
+| `customer_dimensions` | Denormalized customer attributes and metrics |
+| `user_dimensions` | Denormalized user attributes and metrics |
+| `mrr_snapshots` | Monthly recurring revenue snapshots over time |
+
+<Warning>
+  Only SELECT queries are allowed. INSERT, UPDATE, DELETE, and DDL statements will be rejected.
+</Warning>
+
+### Example
+
+```
+What are the top 10 most common events in the last 7 days?
+```
+
+The AI agent will call:
+```json
+{
+  "sql": "SELECT event_type, count() AS total FROM events WHERE timestamp >= now() - INTERVAL 7 DAY GROUP BY event_type ORDER BY total DESC LIMIT 10"
+}
+```
+
+<Tip>
+  Use `outlit_schema` first to see the exact column names and types before writing queries.
+</Tip>
+
+---
+
+## outlit_schema
+
+Get the schema for available analytics tables. Use this to understand column names and types before writing SQL queries with `outlit_query`.
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `table` | string | No | A specific table name to get the schema for. If omitted, returns schemas for all tables. |
+
+### Example
+
+```
+Show me the schema for the events table.
+```
+
+The AI agent will call:
+```json
+{
+  "table": "events"
+}
+```

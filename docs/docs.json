@@ -55,6 +55,15 @@
           {
             "group": "Server SDKs",
             "pages": ["tracking/server/nodejs", "tracking/server/rust"]
+          },
+          {
+            "group": "AI Integrations",
+            "pages": [
+              "ai-integrations/mcp-overview",
+              "ai-integrations/mcp-setup",
+              "ai-integrations/mcp-tools",
+              "ai-integrations/mcp-skill-installation"
+            ]
           }
         ]
       },
