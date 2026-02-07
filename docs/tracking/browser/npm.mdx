@@ -100,9 +100,14 @@ outlit.init({
   autoTrack: false, // Don't track until consent
 })
 
-// Later, when user accepts cookies/tracking
+// When user accepts cookies/tracking
 function onConsentAccepted() {
   outlit.enableTracking()
+}
+
+// When user declines
+function onConsentDeclined() {
+  outlit.disableTracking()
 }
 ```
 
@@ -265,6 +270,15 @@ outlit.init({ publicKey: 'pk_xxx', autoTrack: false })
 enableTracking()
 // or
 outlit.enableTracking()
+```
+
+### `outlit.disableTracking()`
+
+Disable tracking and flush any pending events. Use this when a user declines or revokes consent.
+
+```typescript
+// When user declines or revokes consent
+outlit.disableTracking()
 ```
 
 ### `outlit.isTrackingEnabled()`
