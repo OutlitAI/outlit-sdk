@@ -25,7 +25,7 @@ import {
   stopCalendarTracking,
 } from "./embed-integrations"
 import { type SessionTracker, initSessionTracking, stopSessionTracking } from "./session-tracker"
-import { getOrCreateVisitorId } from "./storage"
+import { getConsentState, getOrCreateVisitorId, setConsentState } from "./storage"
 
 // ============================================
 // OUTLIT CLIENT
@@ -146,8 +146,9 @@ export class Outlit {
 
     this.isInitialized = true
 
-    // Start tracking immediately unless autoTrack is explicitly false
-    if (options.autoTrack !== false) {
+    // Check persisted consent state, falling back to autoTrack option
+    const consent = getConsentState()
+    if (consent === true || (consent === null && options.autoTrack !== false)) {
       this.enableTracking()
     }
   }
@@ -196,11 +197,47 @@ export class Outlit {
 
     this.isTrackingEnabled = true
 
+    // Persist the opt-in decision
+    setConsentState(true)
+
     // Apply any pending user identity that was set before tracking was enabled
     if (this.pendingUser) {
       this.applyUser(this.pendingUser)
       this.pendingUser = null
     }
+  }
+
+  /**
+   * Disable tracking. Call this when a user revokes consent.
+   * This will:
+   * - Flush any pending events (captured while user had consent)
+   * - Stop the flush timer, pageview tracking, form tracking, and session tracking
+   * - Persist the opt-out decision so it's remembered across sessions
+   *
+   * The SDK instance remains usable — enableTracking() can be called again to re-enable.
+   */
+  async disableTracking(): Promise<void> {
+    if (!this.isTrackingEnabled) {
+      // Even if tracking isn't enabled, persist the opt-out decision
+      setConsentState(false)
+      return
+    }
+
+    // Flush pending events — they were captured while user had consent
+    if (this.flushTimer) {
+      clearInterval(this.flushTimer)
+      this.flushTimer = null
+    }
+    stopAutocapture()
+    stopCalendarTracking()
+    stopSessionTracking()
+    this.sessionTracker = null
+    await this.flush()
+
+    this.isTrackingEnabled = false
+
+    // Persist the opt-out decision
+    setConsentState(false)
   }
 
   /**
