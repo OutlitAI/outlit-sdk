@@ -1,5 +1,11 @@
 # @outlit/browser
 
+## 1.4.0
+
+### Minor Changes
+
+- [#44](https://github.com/OutlitAI/outlit-sdk/pull/44) [`778f449`](https://github.com/OutlitAI/outlit-sdk/commit/778f44982e2168c40804d5cc2c442249b5b7cba5) Thanks [@leo-paz](https://github.com/leo-paz)! - Add `client` prop to `OutlitProvider` for sharing a single Outlit instance between imperative usage and React context. When provided, the provider uses the existing instance directly and does not call `shutdown()` on unmount. Uses a discriminated union type to enforce mutual exclusivity with config props at compile time.
+
 ## 1.3.0
 
 ### Minor Changes
