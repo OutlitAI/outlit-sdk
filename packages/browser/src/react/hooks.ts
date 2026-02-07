@@ -71,6 +71,12 @@ export interface UseOutlitReturn {
    * Only needed if you initialized with autoTrack: false.
    */
   enableTracking: () => void
+
+  /**
+   * Disable tracking and persist the opt-out decision.
+   * Call this when a user revokes consent.
+   */
+  disableTracking: () => void
 }
 
 /**
@@ -109,7 +115,8 @@ export interface UseOutlitReturn {
  * ```
  */
 export function useOutlit(): UseOutlitReturn {
-  const { outlit, isInitialized, isTrackingEnabled, enableTracking } = useContext(OutlitContext)
+  const { outlit, isInitialized, isTrackingEnabled, enableTracking, disableTracking } =
+    useContext(OutlitContext)
 
   const track = useCallback(
     (eventName: string, properties?: BrowserTrackOptions["properties"]) => {
@@ -254,6 +261,7 @@ export function useOutlit(): UseOutlitReturn {
     isInitialized,
     isTrackingEnabled,
     enableTracking,
+    disableTracking,
   }
 }
 
