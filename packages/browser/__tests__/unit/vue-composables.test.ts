@@ -47,6 +47,9 @@ function mountWithPlugin(
 }
 
 beforeEach(() => {
+  // Clear localStorage to prevent consent state leaking between tests
+  localStorage.clear()
+
   // Store original values for restoration
   originalFetch = global.fetch
   originalCookieDescriptor = Object.getOwnPropertyDescriptor(document, "cookie")
@@ -240,6 +243,46 @@ describe("useOutlit composable", () => {
     await nextTick()
 
     expect(result!.isTrackingEnabled.value).toBe(true)
+
+    unmount()
+  })
+
+  it("exposes disableTracking method", () => {
+    let result: ReturnType<typeof useOutlit> | null = null
+
+    const TestComponent = defineComponent({
+      setup() {
+        result = useOutlit()
+        return () => h("div")
+      },
+    })
+
+    const { unmount } = mountWithPlugin(TestComponent)
+
+    expect(typeof result!.disableTracking).toBe("function")
+
+    unmount()
+  })
+
+  it("disableTracking updates isTrackingEnabled to false", async () => {
+    let result: ReturnType<typeof useOutlit> | null = null
+
+    const TestComponent = defineComponent({
+      setup() {
+        result = useOutlit()
+        return () => h("div")
+      },
+    })
+
+    const { unmount } = mountWithPlugin(TestComponent, { publicKey: "pk_test", autoTrack: false })
+
+    result!.enableTracking()
+    await nextTick()
+    expect(result!.isTrackingEnabled.value).toBe(true)
+
+    result!.disableTracking()
+    await nextTick()
+    expect(result!.isTrackingEnabled.value).toBe(false)
 
     unmount()
   })

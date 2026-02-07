@@ -70,6 +70,12 @@ export interface UseOutlitReturn {
    * Enable tracking. Call this after obtaining user consent.
    */
   enableTracking: () => void
+
+  /**
+   * Disable tracking and persist the opt-out decision.
+   * Call this when a user revokes consent.
+   */
+  disableTracking: () => void
 }
 
 /**
@@ -95,7 +101,7 @@ export function useOutlit(): UseOutlitReturn {
     throw new Error("[Outlit] Not initialized. Make sure to install OutlitPlugin in your Vue app.")
   }
 
-  const { outlit, isInitialized, isTrackingEnabled, enableTracking } = instance
+  const { outlit, isInitialized, isTrackingEnabled, enableTracking, disableTracking } = instance
 
   const track = (eventName: string, properties?: BrowserTrackOptions["properties"]) => {
     if (!outlit.value) {
@@ -154,6 +160,7 @@ export function useOutlit(): UseOutlitReturn {
     isInitialized,
     isTrackingEnabled,
     enableTracking,
+    disableTracking,
   }
 }
 
