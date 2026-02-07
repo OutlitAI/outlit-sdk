@@ -278,6 +278,7 @@ const {
   isInitialized,
   isTrackingEnabled,
   enableTracking,
+  disableTracking,
 } = useOutlit()
 
 // Track an event
@@ -341,6 +342,10 @@ const visitorId = getVisitorId()
 
 <ParamField path="enableTracking" type="() => void">
   Enable tracking. Call this after obtaining user consent. Only needed if `autoTrack` is `false`.
+</ParamField>
+
+<ParamField path="disableTracking" type="() => void">
+  Disable tracking and flush any pending events. Use this when a user declines or revokes consent.
 </ParamField>
 
 <ParamField path="isInitialized" type="Ref<boolean>">
@@ -439,7 +444,7 @@ app.use(OutlitPlugin, {
 <script setup>
 import { useOutlit } from '@outlit/browser/vue'
 
-const { enableTracking, isTrackingEnabled } = useOutlit()
+const { enableTracking, disableTracking, isTrackingEnabled } = useOutlit()
 
 function acceptTracking() {
   localStorage.setItem('tracking-consent', 'true')
@@ -454,7 +459,7 @@ function acceptTracking() {
       <button @click="acceptTracking" class="btn-primary">
         Accept
       </button>
-      <button class="btn-secondary">
+      <button @click="disableTracking" class="btn-secondary">
         Decline
       </button>
     </div>

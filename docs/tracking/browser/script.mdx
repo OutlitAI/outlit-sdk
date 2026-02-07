@@ -24,7 +24,7 @@ Add this snippet before the closing `</body>` tag. This creates a lightweight st
         }(m);
       }
     }
-    stub(o,"",["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
+    stub(o,"",["init","track","identify","enableTracking","disableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
     o.user=o.user||{};o.customer=o.customer||{};
     stub(o.user,"user",["identify","activate","engaged","inactive"]);
     stub(o.customer,"customer",["trialing","paid","churned"]);
@@ -104,7 +104,7 @@ If you're using a consent management platform (CMP) or need to wait for user con
         }(m);
       }
     }
-    stub(o,"",["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
+    stub(o,"",["init","track","identify","enableTracking","disableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
     o.user=o.user||{};o.customer=o.customer||{};
     stub(o.user,"user",["identify","activate","engaged","inactive"]);
     stub(o.customer,"customer",["trialing","paid","churned"]);
@@ -160,13 +160,16 @@ function OptanonWrapper() {
   <Tab title="Custom Banner">
 ```javascript
 document.getElementById('accept-cookies').addEventListener('click', function() {
-  localStorage.setItem('cookie_consent', 'accepted')
   window.outlit.enableTracking()
 })
 
-// Check on page load
-if (localStorage.getItem('cookie_consent') === 'accepted') {
-  window.outlit.enableTracking()
+document.getElementById('decline-cookies').addEventListener('click', function() {
+  window.outlit.disableTracking()
+})
+
+// Check on page load — consent state is persisted automatically by the SDK
+if (window.outlit.isTrackingEnabled()) {
+  console.log('Tracking is active')
 }
 ```
   </Tab>
@@ -337,7 +340,7 @@ The IIFE snippet creates stub methods that queue all tracking calls until the SD
         }(m);
       }
     }
-    stub(o,"",["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
+    stub(o,"",["init","track","identify","enableTracking","disableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
     o.user=o.user||{};o.customer=o.customer||{};
     stub(o.user,"user",["identify","activate","engaged","inactive"]);
     stub(o.customer,"customer",["trialing","paid","churned"]);
@@ -411,7 +414,7 @@ For performance, events are batched and sent:
           }(m);
         }
       }
-      stub(o,"",["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
+      stub(o,"",["init","track","identify","enableTracking","disableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
       o.user=o.user||{};o.customer=o.customer||{};
       stub(o.user,"user",["identify","activate","engaged","inactive"]);
       stub(o.customer,"customer",["trialing","paid","churned"]);

@@ -192,6 +192,36 @@ import { OutlitProvider } from '@outlit/browser/react'
   Current user identity. When provided with email or userId, identifies the user. When null or undefined, clears the user identity. This is the recommended way to handle user identity in server-rendered apps.
 </ParamField>
 
+<ParamField path="client" type="Outlit">
+  An existing `Outlit` instance to use instead of creating one internally. When provided, config props (`publicKey`, `apiHost`, etc.) are ignored and `shutdown()` is **not** called on unmount — the caller owns the instance lifecycle. Useful for sharing a single instance between imperative usage and React context.
+</ParamField>
+
+### Client Mode
+
+If you need to use the same Outlit instance both imperatively and via React context, pass an existing instance with the `client` prop:
+
+```tsx
+import { Outlit } from '@outlit/browser'
+import { OutlitProvider } from '@outlit/browser/react'
+
+const outlit = new Outlit({ publicKey: 'pk_xxx' })
+
+// Imperative usage outside React
+outlit.track('app_loaded')
+
+function App() {
+  return (
+    <OutlitProvider client={outlit}>
+      {children}
+    </OutlitProvider>
+  )
+}
+```
+
+<Info>
+  When using `client`, the provider does not call `shutdown()` on unmount — you own the instance lifecycle. Config props like `publicKey` and `trackPageviews` are ignored.
+</Info>
+
 ## User Identity Patterns
 
 The `user` prop is the **recommended** way to handle user identity. It's simpler and more reliable than manual `identify()` calls because:
@@ -296,7 +326,7 @@ export default function RootLayout({ children }) {
 import { useOutlit } from '@outlit/browser/react'
 
 export function CookieBanner() {
-  const { enableTracking, isTrackingEnabled } = useOutlit()
+  const { enableTracking, disableTracking, isTrackingEnabled } = useOutlit()
 
   // Don't show if already tracking (user previously accepted)
   if (isTrackingEnabled) return null
@@ -311,7 +341,10 @@ export function CookieBanner() {
         >
           Accept
         </button>
-        <button className="px-4 py-2 border rounded">
+        <button
+          onClick={disableTracking}
+          className="px-4 py-2 border rounded"
+        >
           Decline
         </button>
       </div>
@@ -408,6 +441,7 @@ function MyComponent() {
     isInitialized,
     isTrackingEnabled,
     enableTracking,
+    disableTracking,
   } = useOutlit()
 
   // Track an event
@@ -476,6 +510,10 @@ function MyComponent() {
 
 <ParamField path="enableTracking" type="() => void">
   Enable tracking. Call this after obtaining user consent. Only needed if `autoTrack` is `false`.
+</ParamField>
+
+<ParamField path="disableTracking" type="() => void">
+  Disable tracking and flush any pending events. Use this when a user declines or revokes consent.
 </ParamField>
 
 <ParamField path="isInitialized" type="boolean">
