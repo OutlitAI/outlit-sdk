@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDK Test Page - Consent Persistence</title>
+</head>
+<body>
+  <h1>Consent Persistence Test</h1>
+
+  <div id="consent-banner">
+    <button id="accept-cookies">Accept Cookies</button>
+    <button id="reject-cookies">Reject Cookies</button>
+  </div>
+
+  <button id="revoke-consent">Revoke Consent</button>
+  <button id="track-btn">Track Event</button>
+
+  <div id="status">
+    <span id="tracking-status">unknown</span>
+  </div>
+
+  <script>
+    !function(w,d,src,key,auto){
+      if(w.outlit&&w.outlit._loaded)return;
+      var o=w.outlit=w.outlit||{_q:[]};
+      function stub(target,prefix,methods){
+        for(var i=0;i<methods.length;i++){
+          var m=methods[i];
+          target[m]=target[m]||function(mm){
+            return function(){o._q.push([prefix?prefix+"."+mm:mm,[].slice.call(arguments)])};
+          }(m);
+        }
+      }
+      stub(o,"",["init","track","identify","enableTracking","disableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
+      o.user=o.user||{};o.customer=o.customer||{};
+      stub(o.user,"user",["identify","activate","engaged","inactive"]);
+      stub(o.customer,"customer",["trialing","paid","churned"]);
+      var s=d.createElement("script");s.async=1;s.src=src;
+      s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
+      (d.body||d.head).appendChild(s);
+    }(window,document,"/outlit.global.js","pk_test_key_12345",false);
+  </script>
+
+  <script>
+    function updateStatus() {
+      var enabled = window.outlit.isTrackingEnabled ? window.outlit.isTrackingEnabled() : false;
+      document.getElementById('tracking-status').textContent = enabled ? 'enabled' : 'disabled';
+    }
+
+    function waitForOutlit(callback) {
+      if (window.outlit && window.outlit._initialized) {
+        callback();
+      } else {
+        setTimeout(function() { waitForOutlit(callback); }, 50);
+      }
+    }
+
+    waitForOutlit(updateStatus);
+
+    document.getElementById('accept-cookies').addEventListener('click', function() {
+      window.outlit.enableTracking();
+      updateStatus();
+    });
+
+    document.getElementById('reject-cookies').addEventListener('click', function() {
+      window.outlit.disableTracking();
+      updateStatus();
+    });
+
+    document.getElementById('revoke-consent').addEventListener('click', function() {
+      window.outlit.disableTracking();
+      updateStatus();
+    });
+
+    document.getElementById('track-btn').addEventListener('click', function() {
+      window.outlit.track('button_clicked', { buttonId: 'track-btn' });
+    });
+  </script>
+</body>
+</html>
