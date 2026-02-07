@@ -14,7 +14,7 @@
  *         }(m);
  *       }
  *     }
- *     stub(o,"",["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
+ *     stub(o,"",["init","track","identify","enableTracking","disableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
  *     o.user=o.user||{};o.customer=o.customer||{};
  *     stub(o.user,"user",["identify","activate","engaged","inactive"]);
  *     stub(o.customer,"customer",["trialing","paid","churned"]);
