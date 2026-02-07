@@ -25,6 +25,7 @@ export interface OutlitInstance {
   isInitialized: Readonly<Ref<boolean>>
   isTrackingEnabled: Readonly<Ref<boolean>>
   enableTracking: () => void
+  disableTracking: () => void
   /**
    * Set the current user. Automatically calls identify when user changes.
    * Pass null to clear the user (logout).
@@ -90,6 +91,13 @@ export const OutlitPlugin = {
       }
     }
 
+    const disableTracking = () => {
+      if (outlitRef.value) {
+        outlitRef.value.disableTracking()
+        isTrackingEnabled.value = false
+      }
+    }
+
     const setUser = (user: UserIdentity | null) => {
       currentUser.value = user
     }
@@ -116,6 +124,7 @@ export const OutlitPlugin = {
       isInitialized: readonly(isInitialized),
       isTrackingEnabled: readonly(isTrackingEnabled),
       enableTracking,
+      disableTracking,
       setUser,
     })
 
