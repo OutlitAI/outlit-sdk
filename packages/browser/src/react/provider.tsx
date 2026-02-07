@@ -10,6 +10,7 @@ export interface OutlitContextValue {
   isInitialized: boolean
   isTrackingEnabled: boolean
   enableTracking: () => void
+  disableTracking: () => void
 }
 
 export const OutlitContext = createContext<OutlitContextValue>({
@@ -17,6 +18,7 @@ export const OutlitContext = createContext<OutlitContextValue>({
   isInitialized: false,
   isTrackingEnabled: false,
   enableTracking: () => {},
+  disableTracking: () => {},
 })
 
 // ============================================
@@ -171,6 +173,13 @@ export function OutlitProvider({
     }
   }, [])
 
+  const disableTracking = useCallback(() => {
+    if (outlitRef.current) {
+      outlitRef.current.disableTracking()
+      setIsTrackingEnabled(false)
+    }
+  }, [])
+
   return (
     <OutlitContext.Provider
       value={{
@@ -178,6 +187,7 @@ export function OutlitProvider({
         isInitialized: initializedRef.current,
         isTrackingEnabled,
         enableTracking,
+        disableTracking,
       }}
     >
       {children}

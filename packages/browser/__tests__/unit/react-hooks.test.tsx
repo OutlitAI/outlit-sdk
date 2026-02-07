@@ -18,6 +18,9 @@ import { OutlitProvider, useOutlit } from "../../src/react"
 const mockCookies: Record<string, string> = {}
 
 beforeEach(() => {
+  // Clear localStorage to reset consent state (outlit_consent key)
+  localStorage.clear()
+
   // Reset cookies before each test
   for (const key of Object.keys(mockCookies)) {
     delete mockCookies[key]
@@ -166,6 +169,40 @@ describe("useOutlit hook", () => {
 
     // isInitialized should be a boolean (may be false initially, true after SDK loads)
     expect(typeof result.current.isInitialized).toBe("boolean")
+  })
+
+  it("exposes disableTracking method", () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <OutlitProvider publicKey="pk_test" autoTrack={false}>
+        {children}
+      </OutlitProvider>
+    )
+
+    const { result } = renderHook(() => useOutlit(), { wrapper })
+
+    expect(typeof result.current.disableTracking).toBe("function")
+  })
+
+  it("disableTracking updates isTrackingEnabled to false", async () => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <OutlitProvider publicKey="pk_test" autoTrack={false}>
+        {children}
+      </OutlitProvider>
+    )
+
+    const { result } = renderHook(() => useOutlit(), { wrapper })
+
+    // Enable first
+    act(() => {
+      result.current.enableTracking()
+    })
+    expect(result.current.isTrackingEnabled).toBe(true)
+
+    // Then disable
+    await act(async () => {
+      result.current.disableTracking()
+    })
+    expect(result.current.isTrackingEnabled).toBe(false)
   })
 })
 
