@@ -675,6 +675,14 @@ export function enableTracking(): void {
 }
 
 /**
+ * Disable tracking and persist the opt-out decision.
+ * Convenience method that uses the singleton instance.
+ */
+export async function disableTracking(): Promise<void> {
+  await getInstance().disableTracking()
+}
+
+/**
  * Check if tracking is currently enabled.
  * Convenience method that uses the singleton instance.
  */

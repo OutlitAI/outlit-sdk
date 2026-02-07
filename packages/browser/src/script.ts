@@ -55,6 +55,7 @@ interface OutlitGlobal {
   identify: (options: BrowserIdentifyOptions) => void
   getVisitorId: () => string | null
   enableTracking: () => void
+  disableTracking: () => Promise<void>
   isTrackingEnabled: () => boolean
   setUser: (identity: UserIdentity) => void
   clearUser: () => void
@@ -158,6 +159,17 @@ const outlit: OutlitGlobal & { _loaded?: boolean } = {
       return
     }
     this._instance.enableTracking()
+  },
+
+  /**
+   * Disable tracking and persist the opt-out decision.
+   */
+  async disableTracking() {
+    if (!this._initialized || !this._instance) {
+      this._queue.push(() => this.disableTracking())
+      return
+    }
+    await this._instance.disableTracking()
   },
 
   /**
