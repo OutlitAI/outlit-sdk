@@ -146,3 +146,60 @@ function setCookie(name: string, value: string, days: number): void {
 
   document.cookie = cookie
 }
+
+// ============================================
+// CONSENT STATE STORAGE
+// ============================================
+
+const CONSENT_KEY = "outlit_consent"
+
+/**
+ * Get the persisted consent state.
+ * Returns true (opted in), false (opted out), or null (no decision recorded).
+ */
+export function getConsentState(): boolean | null {
+  // Try localStorage first
+  try {
+    const stored = localStorage.getItem(CONSENT_KEY)
+    if (stored === "1") return true
+    if (stored === "0") return false
+  } catch {
+    // localStorage not available
+  }
+
+  // Try cookie fallback
+  const cookieValue = getCookie(CONSENT_KEY)
+  if (cookieValue === "1") return true
+  if (cookieValue === "0") return false
+
+  return null
+}
+
+/**
+ * Persist consent state to both localStorage and cookie.
+ */
+export function setConsentState(granted: boolean): void {
+  const value = granted ? "1" : "0"
+
+  try {
+    localStorage.setItem(CONSENT_KEY, value)
+  } catch {
+    // localStorage not available
+  }
+
+  setCookie(CONSENT_KEY, value, 365)
+}
+
+/**
+ * Clear persisted consent state.
+ */
+export function clearConsentState(): void {
+  try {
+    localStorage.removeItem(CONSENT_KEY)
+  } catch {
+    // localStorage not available
+  }
+
+  // Clear cookie by setting expiry in the past
+  setCookie(CONSENT_KEY, "", -1)
+}
