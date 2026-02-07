@@ -1,38 +1,4 @@
-import { type Request, type Route, expect, test } from "@playwright/test"
-
-interface ApiCall {
-  url: string
-  payload: {
-    visitorId?: string
-    source?: string
-    events?: Array<{
-      type: string
-      eventName?: string
-    }>
-  }
-}
-
-async function interceptApiCalls(page: import("@playwright/test").Page): Promise<ApiCall[]> {
-  const apiCalls: ApiCall[] = []
-
-  await page.route("**/api/i/v1/**/events", async (route: Route) => {
-    const request: Request = route.request()
-    const postData = request.postData()
-
-    apiCalls.push({
-      url: request.url(),
-      payload: postData ? JSON.parse(postData) : {},
-    })
-
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ success: true, processed: 1 }),
-    })
-  })
-
-  return apiCalls
-}
+import { expect, test } from "@playwright/test"
 
 test.describe("Consent Persistence", () => {
   test.beforeEach(async ({ context }) => {

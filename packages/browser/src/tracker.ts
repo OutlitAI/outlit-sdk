@@ -231,8 +231,8 @@ export class Outlit {
     stopAutocapture()
     stopCalendarTracking()
     stopSessionTracking()
-    this.sessionTracker = null
     await this.flush()
+    this.sessionTracker = null
 
     this.isTrackingEnabled = false
 
