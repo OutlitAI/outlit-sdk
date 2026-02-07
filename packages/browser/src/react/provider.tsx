@@ -22,23 +22,11 @@ export const OutlitContext = createContext<OutlitContextValue>({
 })
 
 // ============================================
-// PROVIDER
+// PROVIDER PROPS
 // ============================================
 
-export interface OutlitProviderProps extends Omit<OutlitOptions, "trackPageviews"> {
+interface OutlitProviderBaseProps {
   children: ReactNode
-  /**
-   * Whether to automatically track pageviews.
-   * When true (default), tracks pageviews on route changes.
-   */
-  trackPageviews?: boolean
-  /**
-   * Whether to start tracking automatically on mount.
-   * Set to false if you need to wait for user consent.
-   * Call enableTracking() (from useOutlit hook) after consent is obtained.
-   * @default true
-   */
-  autoTrack?: boolean
   /**
    * Current user identity.
    * When provided with email or userId, calls setUser() to identify the user.
@@ -65,93 +53,166 @@ export interface OutlitProviderProps extends Omit<OutlitOptions, "trackPageviews
 }
 
 /**
- * Outlit Provider component.
- * Initializes the client and provides it to child components via context.
+ * Props for using a pre-existing Outlit instance.
+ * The provider will use this instance directly without creating a new one.
+ * The caller owns the instance lifecycle — shutdown() will NOT be called on unmount.
  *
  * @example
  * ```tsx
- * // layout.tsx - Auto tracking (default)
+ * import { Outlit } from '@outlit/browser'
  * import { OutlitProvider } from '@outlit/browser/react'
  *
- * export default function RootLayout({ children }) {
+ * const outlit = new Outlit({ publicKey: 'pk_xxx', trackPageviews: false })
+ *
+ * function App() {
+ *   const user = useAuth()
  *   return (
- *     <OutlitProvider publicKey="pk_xxx" trackPageviews>
+ *     <OutlitProvider client={outlit} user={user ? { email: user.email } : null}>
  *       {children}
  *     </OutlitProvider>
  *   )
- * }
- * ```
- *
- * @example
- * ```tsx
- * // layout.tsx - With consent management
- * import { OutlitProvider } from '@outlit/browser/react'
- *
- * export default function RootLayout({ children }) {
- *   return (
- *     <OutlitProvider publicKey="pk_xxx" autoTrack={false}>
- *       {children}
- *     </OutlitProvider>
- *   )
- * }
- *
- * // ConsentBanner.tsx
- * import { useOutlit } from '@outlit/browser/react'
- *
- * function ConsentBanner() {
- *   const { enableTracking } = useOutlit()
- *   return <button onClick={enableTracking}>Accept Cookies</button>
  * }
  * ```
  */
-export function OutlitProvider({
-  children,
-  publicKey,
-  apiHost,
-  trackPageviews = true,
-  trackForms = true,
-  formFieldDenylist,
-  flushInterval,
-  autoTrack = true,
-  autoIdentify = true,
-  user,
-}: OutlitProviderProps) {
+type NeverOutlitOptions = { [K in keyof OutlitOptions]?: never }
+
+interface OutlitProviderClientProps extends OutlitProviderBaseProps, NeverOutlitOptions {
+  /** An existing Outlit instance to use. Config props are ignored when this is provided. */
+  client: Outlit
+}
+
+/**
+ * Props for creating a new Outlit instance internally.
+ * This is the default behavior — the provider creates and owns the instance.
+ */
+interface OutlitProviderConfigProps
+  extends OutlitProviderBaseProps,
+    Omit<OutlitOptions, "trackPageviews"> {
+  client?: never
+  /**
+   * Whether to automatically track pageviews.
+   * When true (default), tracks pageviews on route changes.
+   */
+  trackPageviews?: boolean
+  /**
+   * Whether to start tracking automatically on mount.
+   * Set to false if you need to wait for user consent.
+   * Call enableTracking() (from useOutlit hook) after consent is obtained.
+   * @default true
+   */
+  autoTrack?: boolean
+}
+
+export type OutlitProviderProps = OutlitProviderClientProps | OutlitProviderConfigProps
+
+// ============================================
+// PROVIDER
+// ============================================
+
+/**
+ * Outlit Provider component.
+ * Initializes the client and provides it to child components via context.
+ *
+ * Can be used in two ways:
+ *
+ * 1. **Config mode** (default): Pass `publicKey` and config options to create a new instance.
+ * 2. **Client mode**: Pass an existing `client` instance for shared imperative + React usage.
+ *
+ * @example
+ * ```tsx
+ * // Config mode — provider creates and owns the instance
+ * <OutlitProvider publicKey="pk_xxx" trackPageviews>
+ *   {children}
+ * </OutlitProvider>
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Client mode — use an existing instance
+ * const outlit = new Outlit({ publicKey: 'pk_xxx' })
+ * outlit.track('pageview') // imperative usage
+ *
+ * <OutlitProvider client={outlit} user={user}>
+ *   {children}
+ * </OutlitProvider>
+ * ```
+ */
+export function OutlitProvider(props: OutlitProviderProps) {
+  const { children, user } = props
+
   const outlitRef = useRef<Outlit | null>(null)
   const initializedRef = useRef(false)
+  const isExternalClientRef = useRef(false)
+  const [isInitialized, setIsInitialized] = useState(false)
   const [isTrackingEnabled, setIsTrackingEnabled] = useState(false)
 
-  // Initialize Outlit once
+  // Initialize Outlit once (guarded by initializedRef to run exactly once)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally runs once on mount — initializedRef guard prevents re-execution
   useEffect(() => {
     if (initializedRef.current) return
 
-    outlitRef.current = new Outlit({
-      publicKey,
-      apiHost,
-      trackPageviews,
-      trackForms,
-      formFieldDenylist,
-      flushInterval,
-      autoTrack,
-      autoIdentify,
-    })
+    if (props.client) {
+      // Client mode: use the provided instance
+      if (process.env.NODE_ENV !== "production") {
+        const configKeys = [
+          "publicKey",
+          "apiHost",
+          "trackPageviews",
+          "trackForms",
+          "formFieldDenylist",
+          "flushInterval",
+          "autoTrack",
+          "autoIdentify",
+          "trackCalendarEmbeds",
+          "trackEngagement",
+          "idleTimeout",
+        ] as const
+        const conflicting = configKeys.filter(
+          (k) => k in props && (props as unknown as Record<string, unknown>)[k] !== undefined,
+        )
+        if (conflicting.length > 0) {
+          console.warn(
+            `[Outlit] Both \`client\` and config props (${conflicting.join(", ")}) were provided to OutlitProvider. The \`client\` instance will be used and config props will be ignored.`,
+          )
+        }
+      }
+      outlitRef.current = props.client
+      isExternalClientRef.current = true
+    } else {
+      // Config mode: create a new instance
+      const {
+        publicKey,
+        apiHost,
+        trackPageviews = true,
+        trackForms = true,
+        formFieldDenylist,
+        flushInterval,
+        autoTrack = true,
+        autoIdentify = true,
+      } = props
+      outlitRef.current = new Outlit({
+        publicKey,
+        apiHost,
+        trackPageviews,
+        trackForms,
+        formFieldDenylist,
+        flushInterval,
+        autoTrack,
+        autoIdentify,
+      })
+    }
 
     initializedRef.current = true
+    setIsInitialized(true)
     setIsTrackingEnabled(outlitRef.current.isEnabled())
 
-    // Cleanup on unmount
+    // Cleanup on unmount — only shutdown instances we created
     return () => {
-      outlitRef.current?.shutdown()
+      if (!isExternalClientRef.current) {
+        outlitRef.current?.shutdown()
+      }
     }
-  }, [
-    publicKey,
-    apiHost,
-    trackPageviews,
-    trackForms,
-    formFieldDenylist,
-    flushInterval,
-    autoTrack,
-    autoIdentify,
-  ])
+  }, [])
 
   // Handle user prop changes (login/logout)
   useEffect(() => {
@@ -184,7 +245,7 @@ export function OutlitProvider({
     <OutlitContext.Provider
       value={{
         outlit: outlitRef.current,
-        isInitialized: initializedRef.current,
+        isInitialized,
         isTrackingEnabled,
         enableTracking,
         disableTracking,
