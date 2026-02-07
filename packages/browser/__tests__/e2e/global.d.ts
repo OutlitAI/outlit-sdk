@@ -22,6 +22,7 @@ declare global {
       }) => void
       getVisitorId: () => string | null
       enableTracking: () => void
+      disableTracking: () => void
       isTrackingEnabled: () => boolean
       setUser: (identity: {
         email?: string
