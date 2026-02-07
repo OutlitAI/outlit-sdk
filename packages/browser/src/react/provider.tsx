@@ -189,6 +189,9 @@ export function OutlitProvider(props: OutlitProviderProps) {
         flushInterval,
         autoTrack = true,
         autoIdentify = true,
+        trackCalendarEmbeds,
+        trackEngagement,
+        idleTimeout,
       } = props
       outlitRef.current = new Outlit({
         publicKey,
@@ -199,6 +202,9 @@ export function OutlitProvider(props: OutlitProviderProps) {
         flushInterval,
         autoTrack,
         autoIdentify,
+        trackCalendarEmbeds,
+        trackEngagement,
+        idleTimeout,
       })
     }
 
