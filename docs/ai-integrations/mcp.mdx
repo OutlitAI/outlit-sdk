@@ -27,7 +27,7 @@ npx skills add OutlitAI/outlit-agent-skills
     <Tabs>
       <Tab title="Claude Code">
         ```bash
-        claude mcp add outlit-mcp https://mcp.outlit.ai/sse -- \
+        claude mcp add outlit https://mcp.outlit.ai/mcp -- \
           --header "Authorization: Bearer YOUR_API_KEY"
         ```
       </Tab>
@@ -37,8 +37,8 @@ npx skills add OutlitAI/outlit-agent-skills
         ```json
         {
           "mcpServers": {
-            "outlit-mcp": {
-              "url": "https://mcp.outlit.ai/sse",
+            "outlit": {
+              "url": "https://mcp.outlit.ai/mcp",
               "headers": {
                 "Authorization": "Bearer YOUR_API_KEY"
               }
@@ -55,8 +55,8 @@ npx skills add OutlitAI/outlit-agent-skills
         ```json
         {
           "mcpServers": {
-            "outlit-mcp": {
-              "url": "https://mcp.outlit.ai/sse",
+            "outlit": {
+              "url": "https://mcp.outlit.ai/mcp",
               "headers": {
                 "Authorization": "Bearer YOUR_API_KEY"
               }
