@@ -157,7 +157,22 @@ function handleFormSubmit(event: Event): void {
   // Auto-identify if callback is set and we find identity fields
   // Use unsanitized fields for identity extraction (email might be in there)
   if (identityCallback) {
-    const identity = extractIdentityFromForm(fields, inputTypes)
+    // Also check unnamed inputs for identity extraction.
+    // Many React/JSX forms use controlled components without name attributes,
+    // so FormData won't capture their values. Read directly from the DOM.
+    const identityFields = { ...fields }
+    const identityInputTypes = new Map(inputTypes)
+
+    for (let i = 0; i < inputs.length; i++) {
+      const input = inputs[i]
+      if (input instanceof HTMLInputElement && !input.name && input.value) {
+        const syntheticKey = `_unnamed_${i}`
+        identityFields[syntheticKey] = input.value
+        identityInputTypes.set(syntheticKey, input.type)
+      }
+    }
+
+    const identity = extractIdentityFromForm(identityFields, identityInputTypes)
     if (identity) {
       identityCallback(identity)
     }
