@@ -1,5 +1,11 @@
 # @outlit/browser
 
+## 1.4.1
+
+### Patch Changes
+
+- [#46](https://github.com/OutlitAI/outlit-sdk/pull/46) [`32e8206`](https://github.com/OutlitAI/outlit-sdk/commit/32e8206f3f807d6773adff42d012225fb77f0fe4) Thanks [@leo-paz](https://github.com/leo-paz)! - Fix auto-identify for forms where email inputs lack a `name` attribute. React/JSX controlled components often omit name attributes, causing FormData to miss their values. Now reads unnamed inputs directly from the DOM during identity extraction so auto-identify works on these forms.
+
 ## 1.4.0
 
 ### Minor Changes
