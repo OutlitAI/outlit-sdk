@@ -146,6 +146,61 @@ test.describe("Auto-Identify: Email Detection", () => {
     expect(identifyEvent?.email).toBe("fallback@company.com")
   })
 
+  test("auto-identifies when email input has no name attribute (React pattern)", async ({
+    page,
+  }) => {
+    const apiCalls = await interceptApiCalls(page)
+
+    await page.goto("/form-email-no-name.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Submit the form
+    await page.click('#waitlist-form button[type="submit"]')
+
+    // Force flush
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event("beforeunload"))
+    })
+    await page.waitForTimeout(500)
+
+    const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
+    const identifyEvent = allEvents.find((e) => e.type === "identify")
+
+    expect(identifyEvent).toBeDefined()
+    expect(identifyEvent?.email).toBe("waitlist@example.com")
+  })
+
+  test("auto-identifies unnamed email input even with other named fields", async ({ page }) => {
+    const apiCalls = await interceptApiCalls(page)
+
+    await page.goto("/form-email-no-name.html")
+    await page.waitForFunction(() => window.outlit?._initialized)
+
+    // Add a named non-email field to the form
+    await page.evaluate(() => {
+      const form = document.getElementById("waitlist-form")
+      const input = document.createElement("input")
+      input.name = "company"
+      input.value = "Acme Inc"
+      form?.insertBefore(input, form.querySelector('button[type="submit"]'))
+    })
+
+    // Submit the form
+    await page.click('#waitlist-form button[type="submit"]')
+
+    // Force flush
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event("beforeunload"))
+    })
+    await page.waitForTimeout(500)
+
+    const allEvents = apiCalls.flatMap((c) => c.payload.events || [])
+    const identifyEvent = allEvents.find((e) => e.type === "identify")
+
+    expect(identifyEvent).toBeDefined()
+    expect(identifyEvent?.email).toBe("waitlist@example.com")
+  })
+
   test("does NOT auto-identify when no email present", async ({ page }) => {
     const apiCalls = await interceptApiCalls(page)
 

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waitlist Form - No Name Attribute</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+    form { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+    input { display: block; margin: 10px 0; padding: 8px; width: 100%; box-sizing: border-box; }
+    button { padding: 10px 20px; margin: 10px 0; cursor: pointer; }
+    #status { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Waitlist Signup</h1>
+  <p>Tests auto-identify with email input that has no name attribute (React controlled component pattern).</p>
+
+  <form id="waitlist-form" onsubmit="event.preventDefault();">
+    <h3>Join our waitlist</h3>
+    <!-- No name attribute, only type="email" - common in React/JSX controlled components -->
+    <input type="email" placeholder="Enter your email" value="waitlist@example.com" />
+    <button type="submit">Join Waitlist</button>
+  </form>
+
+  <div id="status">
+    <strong>Status:</strong> <span id="status-text">Loading SDK...</span>
+  </div>
+
+  <!-- Load the SDK -->
+  <script>
+    !function(w,d,src,key,auto){
+      if(w.outlit&&w.outlit._loaded)return;
+      var o=w.outlit=w.outlit||{_q:[]};
+      function stub(target,prefix,methods){
+        for(var i=0;i<methods.length;i++){
+          var m=methods[i];
+          target[m]=target[m]||function(mm){
+            return function(){o._q.push([prefix?prefix+"."+mm:mm,[].slice.call(arguments)])};
+          }(m);
+        }
+      }
+      stub(o,"",["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
+      o.user=o.user||{};o.customer=o.customer||{};
+      stub(o.user,"user",["identify","activate","engaged","inactive"]);
+      stub(o.customer,"customer",["trialing","paid","churned"]);
+      var s=d.createElement("script");s.async=1;s.src=src;
+      s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
+      (d.body||d.head).appendChild(s);
+    }(window,document,"/outlit.global.js","pk_test_key_12345");
+  </script>
+
+  <script>
+    function waitForOutlit(callback) {
+      if (window.outlit && window.outlit._initialized) {
+        callback();
+      } else {
+        setTimeout(() => waitForOutlit(callback), 50);
+      }
+    }
+
+    waitForOutlit(() => {
+      document.getElementById('status-text').textContent =
+        'SDK Initialized. Visitor ID: ' + (window.outlit.getVisitorId() || 'none');
+    });
+  </script>
+</body>
+</html>
