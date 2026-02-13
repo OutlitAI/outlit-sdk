@@ -492,6 +492,9 @@ export class Outlit {
       cleanup()
     }
     this.exitCleanups = []
+    if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+      delete (window as Record<string, unknown>)[`__outlit_${this.publicKey}`]
+    }
     await this.flush()
   }
 
