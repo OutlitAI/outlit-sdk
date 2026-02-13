@@ -117,14 +117,14 @@ export class Outlit {
     // Warn in dev if multiple instances are created with the same key
     if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
       const key = `__outlit_${options.publicKey}`
-      if ((window as Record<string, unknown>)[key]) {
+      if ((window as unknown as Record<string, unknown>)[key]) {
         console.warn(
           "[Outlit] Multiple instances created with the same key. " +
             "If using HMR, this is expected. Otherwise, use init() for singleton behavior " +
             "or call shutdown() on the previous instance.",
         )
       }
-      ;(window as Record<string, unknown>)[key] = true
+      ;(window as unknown as Record<string, unknown>)[key] = true
     }
 
     // Set up exit handlers for reliable flushing
@@ -493,7 +493,7 @@ export class Outlit {
     }
     this.exitCleanups = []
     if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
-      delete (window as Record<string, unknown>)[`__outlit_${this.publicKey}`]
+      delete (window as unknown as Record<string, unknown>)[`__outlit_${this.publicKey}`]
     }
     await this.flush()
   }
