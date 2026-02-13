@@ -106,12 +106,26 @@ export class Outlit {
     stage: ExplicitJourneyStage
     properties?: Record<string, string | number | boolean | null>
   }> = []
+  private exitCleanups: Array<() => void> = []
 
   constructor(options: OutlitOptions) {
     this.publicKey = options.publicKey
     this.apiHost = options.apiHost ?? DEFAULT_API_HOST
     this.flushInterval = options.flushInterval ?? 5000
     this.options = options
+
+    // Warn in dev if multiple instances are created with the same key
+    if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+      const key = `__outlit_${options.publicKey}`
+      if ((window as Record<string, unknown>)[key]) {
+        console.warn(
+          "[Outlit] Multiple instances created with the same key. " +
+            "If using HMR, this is expected. Otherwise, use init() for singleton behavior " +
+            "or call shutdown() on the previous instance.",
+        )
+      }
+      ;(window as Record<string, unknown>)[key] = true
+    }
 
     // Set up exit handlers for reliable flushing
     // Uses multiple events because beforeunload is unreliable on mobile
@@ -128,20 +142,24 @@ export class Outlit {
       }
 
       // visibilitychange is most reliable - fires when tab is hidden
-      document.addEventListener("visibilitychange", () => {
+      const visibilityHandler = () => {
         if (document.visibilityState === "hidden") {
           handleExit()
         } else {
           // Reset when user returns to allow next exit to flush
           this.hasHandledExit = false
         }
-      })
+      }
 
-      // pagehide is reliable and bfcache-friendly
+      document.addEventListener("visibilitychange", visibilityHandler)
       window.addEventListener("pagehide", handleExit)
-
-      // beforeunload as fallback for older browsers
       window.addEventListener("beforeunload", handleExit)
+
+      this.exitCleanups = [
+        () => document.removeEventListener("visibilitychange", visibilityHandler),
+        () => window.removeEventListener("pagehide", handleExit),
+        () => window.removeEventListener("beforeunload", handleExit),
+      ]
     }
 
     this.isInitialized = true
@@ -470,6 +488,10 @@ export class Outlit {
     stopCalendarTracking()
     stopSessionTracking()
     this.sessionTracker = null
+    for (const cleanup of this.exitCleanups) {
+      cleanup()
+    }
+    this.exitCleanups = []
     await this.flush()
   }
 
