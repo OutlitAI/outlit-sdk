@@ -115,7 +115,11 @@ export class Outlit {
     this.options = options
 
     // Warn in dev if multiple instances are created with the same key
-    if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+    const isDev =
+      typeof window !== "undefined" &&
+      typeof process !== "undefined" &&
+      process.env?.NODE_ENV !== "production"
+    if (isDev) {
       const key = `__outlit_${options.publicKey}`
       if ((window as unknown as Record<string, unknown>)[key]) {
         console.warn(
@@ -492,7 +496,11 @@ export class Outlit {
       cleanup()
     }
     this.exitCleanups = []
-    if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+    if (
+      typeof window !== "undefined" &&
+      typeof process !== "undefined" &&
+      process.env?.NODE_ENV !== "production"
+    ) {
       delete (window as unknown as Record<string, unknown>)[`__outlit_${this.publicKey}`]
     }
     await this.flush()
