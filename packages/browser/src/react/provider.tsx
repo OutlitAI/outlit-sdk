@@ -153,7 +153,7 @@ export function OutlitProvider(props: OutlitProviderProps) {
 
     if (props.client) {
       // Client mode: use the provided instance
-      if (process.env.NODE_ENV !== "production") {
+      if (typeof process !== "undefined" && process.env?.NODE_ENV !== "production") {
         const configKeys = [
           "publicKey",
           "apiHost",
