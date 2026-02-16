@@ -7,7 +7,7 @@ description: "Connect AI agents like Claude and Cursor to Outlit to query custom
 
 Outlit's MCP server lets AI agents query your customer data directly through the [Model Context Protocol](https://modelcontextprotocol.io) (MCP), an open standard for connecting AI tools to external data sources. Supported agents include Claude Code, Claude Desktop, Cursor, and any MCP-compatible client.
 
-Once connected, your AI agent can search customers, pull revenue metrics, inspect activity timelines, and run SQL analytics — all from within your conversation.
+Once connected, your AI agent can search customers, pull revenue metrics, inspect activity timelines, search customer context using natural language, and run SQL analytics — all from within your conversation.
 
 ## Install the Claude Code Skill
 
@@ -27,8 +27,7 @@ npx skills add OutlitAI/outlit-agent-skills
     <Tabs>
       <Tab title="Claude Code">
         ```bash
-        claude mcp add outlit https://mcp.outlit.ai/mcp -- \
-          --header "Authorization: Bearer YOUR_API_KEY"
+        claude mcp add --transport http outlit https://mcp.outlit.ai/mcp --header "Authorization: Bearer YOUR_API_KEY"
         ```
       </Tab>
       <Tab title="Claude Desktop">
@@ -92,5 +91,7 @@ npx skills add OutlitAI/outlit-agent-skills
 | `outlit_list_users` | Filter users by journey stage, activity, and customer | "Find all signed-up users at Acme Corp who went inactive this week" |
 | `outlit_get_customer` | Get a complete customer profile with users, revenue, timeline, and metrics | "Get the full profile for acme.com including their users and revenue" |
 | `outlit_get_timeline` | Get the activity timeline for a customer, filtered by channel and event type | "Show me Acme Corp's email and Slack activity from the last 7 days" |
+| `outlit_search_customer_context` | Search across customer facts and emails using natural language | "What pricing concerns does Acme have?" |
+| `outlit_get_facts` | Retrieve structured customer facts with status and time filters | "Show me all active facts for acme.com from the last 30 days" |
 | `outlit_query` | Run read-only SQL queries against your customer data | "Which channels lead to the most revenue?" |
 | `outlit_schema` | Get table schemas to help write accurate SQL queries | "Show me the available analytics tables" |
