@@ -91,7 +91,7 @@ npx skills add OutlitAI/outlit-agent-skills
 | `outlit_list_users` | Filter users by journey stage, activity, and customer | "Find all signed-up users at Acme Corp who went inactive this week" |
 | `outlit_get_customer` | Get a complete customer profile with users, revenue, timeline, and metrics | "Get the full profile for acme.com including their users and revenue" |
 | `outlit_get_timeline` | Get the activity timeline for a customer, filtered by channel and event type | "Show me Acme Corp's email and Slack activity from the last 7 days" |
-| `outlit_search_customer_context` | Search across customer facts and emails using natural language | "What pricing concerns does Acme have?" |
-| `outlit_get_facts` | Retrieve structured customer facts with status and time filters | "Show me all active facts for acme.com from the last 30 days" |
+| `outlit_search_customer_context` | Search across customer facts and emails using natural language. Optionally scope to a single customer or search org-wide | "What pricing concerns does Acme have?" |
+| `outlit_get_facts` | Retrieve structured customer facts with time filters and pagination | "Show me facts for acme.com from the last 30 days" |
 | `outlit_query` | Run read-only SQL queries against your customer data | "Which channels lead to the most revenue?" |
 | `outlit_schema` | Get table schemas to help write accurate SQL queries | "Show me the available analytics tables" |
