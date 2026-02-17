@@ -30,6 +30,11 @@ npx skills add OutlitAI/outlit-agent-skills
         claude mcp add --transport http outlit https://mcp.outlit.ai/mcp --header "Authorization: Bearer YOUR_API_KEY"
         ```
       </Tab>
+      <Tab title="Codex">
+        ```bash
+        codex mcp add outlit -- npx -y mcp-remote@latest https://mcp.outlit.ai/mcp --header "Authorization: Bearer YOUR_API_KEY"
+        ```
+      </Tab>
       <Tab title="Claude Desktop">
         Add to your config file (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
 
