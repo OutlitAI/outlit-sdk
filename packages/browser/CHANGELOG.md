@@ -1,5 +1,11 @@
 # @outlit/browser
 
+## 1.4.2
+
+### Patch Changes
+
+- [#48](https://github.com/OutlitAI/outlit-sdk/pull/48) [`ebe4d15`](https://github.com/OutlitAI/outlit-sdk/commit/ebe4d15c37dcd9ef9874b786794ae9c6bfcbe0d2) Thanks [@leo-paz](https://github.com/leo-paz)! - Clean up exit event listeners (visibilitychange, pagehide, beforeunload) on shutdown to prevent leaks during HMR and instance recreation. Adds dev-mode warning for duplicate instances with the same public key.
+
 ## 1.4.1
 
 ### Patch Changes
