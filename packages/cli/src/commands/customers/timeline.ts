@@ -84,7 +84,7 @@ export default defineCommand({
     if (args["event-types"]) {
       params.eventTypes = splitCsv(args["event-types"])
     }
-    applyPagination(params, args)
+    applyPagination(params, args, json)
 
     return runTool(client, "outlit_get_timeline", params, json)
   },

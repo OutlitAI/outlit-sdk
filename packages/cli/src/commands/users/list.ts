@@ -53,7 +53,7 @@ export default defineCommand({
     if (args["journey-stage"]) params.journeyStage = args["journey-stage"]
     if (args["customer-id"]) params.customerId = args["customer-id"]
     applyListFilters(params, args)
-    applyPagination(params, args)
+    applyPagination(params, args, json)
 
     return runTool(client, "outlit_list_users", params, json, {
       spinnerMessage: "Fetching users...",
