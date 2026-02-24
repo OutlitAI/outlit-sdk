@@ -1,6 +1,6 @@
 {
   "name": "@outlit/cli",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "CLI for Outlit customer intelligence platform",
   "license": "Apache-2.0",
   "repository": {
@@ -13,7 +13,9 @@
     "access": "public"
   },
   "type": "module",
-  "bin": { "outlit": "./dist/cli.js" },
+  "bin": {
+    "outlit": "./dist/cli.js"
+  },
   "files": ["dist"],
   "scripts": {
     "dev": "bun run src/cli.ts",
