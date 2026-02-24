@@ -33,7 +33,11 @@ export default defineCommand({
     }
 
     try {
-      execFileSync(openBrowserCmd(), [OUTLIT_SIGNUP_URL], { stdio: "ignore" })
+      if (process.platform === "win32") {
+        execFileSync("cmd", ["/c", "start", "", OUTLIT_SIGNUP_URL], { stdio: "ignore" })
+      } else {
+        execFileSync(openBrowserCmd(), [OUTLIT_SIGNUP_URL], { stdio: "ignore" })
+      }
     } catch {
       // Browser open is best-effort
     }

@@ -228,16 +228,25 @@ function detectAgents(): CheckResult[] {
       })
       continue
     }
-    const config = readJsonConfig(path)
-    const configured = !!(config[key] as Record<string, unknown> | undefined)?.outlit
-    results.push({
-      name: meta.name,
-      status: configured ? "pass" : "warn",
-      message: configured
-        ? "Installed, Outlit MCP configured"
-        : "Installed, but Outlit MCP not configured",
-      detail: configured ? undefined : `Run \`outlit setup ${agentId}\` to configure`,
-    })
+    try {
+      const config = readJsonConfig(path)
+      const configured = !!(config[key] as Record<string, unknown> | undefined)?.outlit
+      results.push({
+        name: meta.name,
+        status: configured ? "pass" : "warn",
+        message: configured
+          ? "Installed, Outlit MCP configured"
+          : "Installed, but Outlit MCP not configured",
+        detail: configured ? undefined : `Run \`outlit setup ${agentId}\` to configure`,
+      })
+    } catch {
+      results.push({
+        name: meta.name,
+        status: "warn",
+        message: "Installed, but config file is malformed",
+        detail: `Check ${path} for JSON syntax errors`,
+      })
+    }
   }
 
   return results

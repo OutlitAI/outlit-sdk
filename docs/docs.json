@@ -58,12 +58,7 @@
           },
           {
             "group": "CLI",
-            "pages": [
-              "cli/overview",
-              "cli/commands",
-              "cli/ai-agents",
-              "cli/configuration"
-            ]
+            "pages": ["cli/overview", "cli/commands", "cli/ai-agents", "cli/configuration"]
           },
           {
             "group": "AI Integrations",

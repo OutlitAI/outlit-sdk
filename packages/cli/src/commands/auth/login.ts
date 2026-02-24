@@ -68,7 +68,11 @@ export default defineCommand({
 
       if (method === "browser") {
         try {
-          execFileSync(openBrowserCmd(), [OUTLIT_DASHBOARD_URL], { stdio: "ignore" })
+          if (process.platform === "win32") {
+            execFileSync("cmd", ["/c", "start", "", OUTLIT_DASHBOARD_URL], { stdio: "ignore" })
+          } else {
+            execFileSync(openBrowserCmd(), [OUTLIT_DASHBOARD_URL], { stdio: "ignore" })
+          }
         } catch {
           // Browser open is best-effort — user can copy URL from the prompt
         }
@@ -114,7 +118,18 @@ export default defineCommand({
       )
     }
 
-    const credPath = storeApiKey(apiKey)
+    let credPath: string
+    try {
+      credPath = storeApiKey(apiKey)
+    } catch (err) {
+      return outputError(
+        {
+          message: `Failed to store credentials: ${errorMessage(err, "unknown error")}`,
+          code: "write_error",
+        },
+        json,
+      )
+    }
 
     if (isJsonMode(json)) {
       return outputResult({ success: true, config_path: credPath })

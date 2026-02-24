@@ -58,6 +58,7 @@ describe("logout", () => {
   })
 
   test("logout — warns about OUTLIT_API_KEY env var", async () => {
+    const prevApiKey = process.env.OUTLIT_API_KEY
     process.env.OUTLIT_API_KEY = "ok_test_env_key_1234567890123456"
     const rmSpy = spyOn(fs, "rmSync").mockImplementation(() => undefined)
     const stdoutSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
@@ -71,7 +72,11 @@ describe("logout", () => {
 
       stderrWritten = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
     } finally {
-      Reflect.deleteProperty(process.env, "OUTLIT_API_KEY")
+      if (prevApiKey === undefined) {
+        Reflect.deleteProperty(process.env, "OUTLIT_API_KEY")
+      } else {
+        process.env.OUTLIT_API_KEY = prevApiKey
+      }
       rmSpy.mockRestore()
       stdoutSpy.mockRestore()
       stderrSpy.mockRestore()

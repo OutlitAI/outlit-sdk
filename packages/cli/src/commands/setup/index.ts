@@ -126,6 +126,9 @@ export default defineCommand({
       return outputResult({ detected, configured, failed })
     }
 
-    console.log("\nDone.")
+    if (failed.length > 0) {
+      console.log(`\n  ${failed.length} agent(s) failed: ${failed.join(", ")}`)
+    }
+    console.log(`\nDone. ${configured.length}/${detected.length} agent(s) configured successfully.`)
   },
 })
