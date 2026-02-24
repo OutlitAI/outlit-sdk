@@ -17,6 +17,8 @@ describe("isInteractive()", () => {
       GITHUB_ACTIONS: process.env.GITHUB_ACTIONS,
       TERM: process.env.TERM,
     }
+    // Reset to known baseline so tests are not affected by prior state
+    setTTY(true, true)
     Reflect.deleteProperty(process.env, "CI")
     Reflect.deleteProperty(process.env, "GITHUB_ACTIONS")
     Reflect.deleteProperty(process.env, "TERM")

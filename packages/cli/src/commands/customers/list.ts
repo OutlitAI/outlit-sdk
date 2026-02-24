@@ -81,7 +81,7 @@ export default defineCommand({
       params.mrrBelow = value
     }
     applyListFilters(params, args)
-    applyPagination(params, args)
+    applyPagination(params, args, json)
     if (args.status) params.status = args.status
     if (args.type) params.type = args.type
 

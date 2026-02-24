@@ -1,4 +1,5 @@
 import type { ArgsDef } from "citty"
+import { outputError } from "../lib/output"
 
 export const paginationArgs = {
   limit: {
@@ -17,11 +18,19 @@ export const paginationArgs = {
 export function applyPagination(
   params: Record<string, unknown>,
   args: { limit?: string; cursor?: string },
+  json: boolean,
 ): void {
   if (args.limit) {
     const n = Number(args.limit)
     if (Number.isNaN(n) || n < 1 || n > 100) {
-      throw new Error(`--limit must be an integer between 1 and 100 (got: ${args.limit})`)
+      outputError(
+        {
+          message: `--limit must be an integer between 1 and 100 (got: ${args.limit})`,
+          code: "invalid_input",
+        },
+        json,
+      )
+      return
     }
     params.limit = n
   }

@@ -44,7 +44,7 @@ export default defineCommand({
       customer: args.customer,
       timeframe: args.timeframe,
     }
-    applyPagination(params, args)
+    applyPagination(params, args, json)
 
     return runTool(client, "outlit_get_facts", params, json)
   },
