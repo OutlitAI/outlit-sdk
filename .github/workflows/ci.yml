@@ -20,22 +20,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.0"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
-          cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Check for changeset
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
         run: |
-          pnpm changeset status --since=origin/main
+          bunx changeset status --since=origin/main
           echo "✅ Changeset found"
 
       - name: Skip changeset check
@@ -49,30 +49,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.0"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
-          cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Lint
-        run: pnpm lint
+        run: bun run lint
 
       - name: Typecheck
-        run: pnpm typecheck
+        run: bun run typecheck
 
       - name: Build
-        run: pnpm build
+        run: bun run build
 
       - name: Get Playwright version
         id: playwright-version
-        run: echo "version=$(pnpm --filter @outlit/browser exec playwright --version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
+        run: echo "version=$(cd packages/browser && bunx playwright --version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
@@ -83,14 +83,17 @@ jobs:
 
       - name: Install Playwright
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm --filter @outlit/browser exec playwright install --with-deps chromium
+        run: cd packages/browser && bunx playwright install --with-deps chromium
 
       - name: Install Playwright deps only (when cached)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm --filter @outlit/browser exec playwright install-deps chromium
+        run: cd packages/browser && bunx playwright install-deps chromium
 
-      - name: Run tests
-        run: pnpm --filter @outlit/browser test
+      - name: Run browser tests
+        run: cd packages/browser && bun run test
+
+      - name: Run CLI tests
+        run: cd packages/cli && bun test
 
   rust:
     name: Rust CI
