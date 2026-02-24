@@ -37,7 +37,7 @@ export function runMcpCliSetup(
         "--header",
         `Authorization: Bearer ${key}`,
       ],
-      { stdio: !isJsonMode(json) ? "inherit" : "ignore" },
+      { stdio: "pipe" },
     )
   } catch (err) {
     if (exitOnError) {
