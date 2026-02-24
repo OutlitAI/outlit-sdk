@@ -20,6 +20,9 @@ export function mockExitThrow(): ReturnType<typeof spyOn> {
   return spyOn(process, "exit").mockImplementation(impl)
 }
 
+/** Saved CI env vars — restored by setNonInteractive() after setInteractive() clears them. */
+let savedCiEnv: { CI?: string; GITHUB_ACTIONS?: string; TERM?: string } | null = null
+
 export function setNonInteractive(): void {
   Object.defineProperty(process.stdin, "isTTY", {
     value: undefined,
@@ -31,6 +34,17 @@ export function setNonInteractive(): void {
     writable: true,
     configurable: true,
   })
+  // Restore CI env vars if setInteractive() saved them
+  if (savedCiEnv) {
+    for (const [key, value] of Object.entries(savedCiEnv)) {
+      if (value === undefined) {
+        Reflect.deleteProperty(process.env, key)
+      } else {
+        process.env[key] = value
+      }
+    }
+    savedCiEnv = null
+  }
 }
 
 export function setInteractive(): void {
@@ -44,6 +58,15 @@ export function setInteractive(): void {
     writable: true,
     configurable: true,
   })
+  // Save and clear CI env vars so isInteractive() returns true
+  savedCiEnv = {
+    CI: process.env.CI,
+    GITHUB_ACTIONS: process.env.GITHUB_ACTIONS,
+    TERM: process.env.TERM,
+  }
+  Reflect.deleteProperty(process.env, "CI")
+  Reflect.deleteProperty(process.env, "GITHUB_ACTIONS")
+  Reflect.deleteProperty(process.env, "TERM")
 }
 
 /**
