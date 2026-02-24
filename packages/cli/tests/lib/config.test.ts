@@ -1,0 +1,163 @@
+import { beforeEach, describe, expect, spyOn, test } from "bun:test"
+import { existsSync, writeFileSync } from "node:fs"
+import { join } from "node:path"
+import { TEST_API_KEY, expectErrorExit, mockExitThrow, useTempEnv } from "../helpers"
+
+describe("getConfigDir()", () => {
+  test('returns platform-appropriate config path containing "outlit"', async () => {
+    const { getConfigDir } = await import("../../src/lib/config")
+    const dir = getConfigDir()
+    expect(typeof dir).toBe("string")
+    expect(dir.length).toBeGreaterThan(0)
+    expect(dir).toMatch(/outlit/)
+  })
+
+  test("uses XDG_CONFIG_HOME when set on non-Windows", async () => {
+    if (process.platform === "win32") return
+    const { getConfigDir } = await import("../../src/lib/config")
+    const original = process.env.XDG_CONFIG_HOME
+    process.env.XDG_CONFIG_HOME = "/custom/config"
+    expect(getConfigDir()).toBe("/custom/config/outlit")
+    if (original !== undefined) process.env.XDG_CONFIG_HOME = original
+    else Reflect.deleteProperty(process.env, "XDG_CONFIG_HOME")
+  })
+})
+
+describe("maskKey()", () => {
+  test("returns key as-is when 9 chars or fewer", async () => {
+    const { maskKey } = await import("../../src/lib/config")
+    expect(maskKey("ok_short")).toBe("ok_short") // 8 chars
+    expect(maskKey("123456789")).toBe("123456789") // exactly 9 chars
+  })
+
+  test("masks key with first 5, ellipsis, last 4", async () => {
+    const { maskKey } = await import("../../src/lib/config")
+    expect(maskKey("ok_testabc1234")).toBe("ok_te...1234")
+    expect(maskKey(TEST_API_KEY)).toBe("ok_aa...aaaa")
+  })
+})
+
+describe("readJsonConfig()", () => {
+  const testDir = useTempEnv("config-readjson")
+
+  test("returns {} for a missing file", async () => {
+    const { readJsonConfig } = await import("../../src/lib/config")
+    expect(readJsonConfig(join(testDir, "nonexistent.json"))).toEqual({})
+  })
+
+  test("returns parsed object for a valid JSON file", async () => {
+    const { readJsonConfig } = await import("../../src/lib/config")
+    const path = join(testDir, "valid.json")
+    writeFileSync(path, JSON.stringify({ mcpServers: { outlit: {} } }))
+    expect(readJsonConfig(path)).toEqual({ mcpServers: { outlit: {} } })
+  })
+
+  test("returns {} for a malformed JSON file", async () => {
+    const { readJsonConfig } = await import("../../src/lib/config")
+    const path = join(testDir, "bad.json")
+    writeFileSync(path, "NOT JSON AT ALL")
+    expect(readJsonConfig(path)).toEqual({})
+  })
+})
+
+describe("requireCredential()", () => {
+  useTempEnv("config-require-cred")
+
+  test("returns the credential when a key is present", async () => {
+    const { requireCredential } = await import("../../src/lib/config")
+    const exitSpy = mockExitThrow()
+    let result: ReturnType<typeof requireCredential> | undefined
+    try {
+      result = requireCredential(undefined, false)
+    } finally {
+      exitSpy.mockRestore()
+    }
+    expect(result?.key).toBe(TEST_API_KEY)
+    expect(result?.source).toBe("env")
+  })
+
+  test("exits with not_authenticated when no credential found", async () => {
+    Reflect.deleteProperty(process.env, "OUTLIT_API_KEY")
+    const { requireCredential } = await import("../../src/lib/config")
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    const exitSpy = mockExitThrow()
+    let thrown: unknown
+    let written = ""
+    try {
+      requireCredential(undefined, true)
+    } catch (e) {
+      thrown = e
+    } finally {
+      written = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
+      stderrSpy.mockRestore()
+      exitSpy.mockRestore()
+    }
+    expectErrorExit(thrown, written, "not_authenticated")
+  })
+})
+
+describe("storeApiKey() and resolveApiKey()", () => {
+  useTempEnv("config-store-resolve")
+
+  beforeEach(() => {
+    Reflect.deleteProperty(process.env, "OUTLIT_API_KEY")
+  })
+
+  test("storeApiKey writes credentials.json and returns the path", async () => {
+    const { storeApiKey, getConfigDir } = await import("../../src/lib/config")
+    const path = storeApiKey(TEST_API_KEY)
+    expect(existsSync(path)).toBe(true)
+    expect(path).toBe(join(getConfigDir(), "credentials.json"))
+  })
+
+  test("storeApiKey creates file with 0600 permissions on non-Windows", async () => {
+    if (process.platform === "win32") return
+    const { storeApiKey } = await import("../../src/lib/config")
+    const { statSync } = await import("node:fs")
+    const path = storeApiKey(TEST_API_KEY)
+    const stat = statSync(path)
+    expect(stat.mode & 0o777).toBe(0o600)
+  })
+
+  test("resolveApiKey returns null when no key exists", async () => {
+    const { resolveApiKey } = await import("../../src/lib/config")
+    const result = resolveApiKey()
+    expect(result).toBeNull()
+  })
+
+  test("resolveApiKey returns stored key with source=config", async () => {
+    const { storeApiKey, resolveApiKey } = await import("../../src/lib/config")
+    storeApiKey(TEST_API_KEY)
+    const result = resolveApiKey()
+    expect(result).not.toBeNull()
+    expect(result?.key).toBe(TEST_API_KEY)
+    expect(result?.source).toBe("config")
+  })
+
+  test("resolveApiKey prioritizes flag over env and config", async () => {
+    const { storeApiKey, resolveApiKey } = await import("../../src/lib/config")
+    storeApiKey("ok_configkey12345678901234567890123")
+    process.env.OUTLIT_API_KEY = "ok_envkey12345678901234567890123456"
+    const result = resolveApiKey("ok_flagkey12345678901234567890123456")
+    expect(result?.key).toBe("ok_flagkey12345678901234567890123456")
+    expect(result?.source).toBe("flag")
+  })
+
+  test("resolveApiKey prioritizes env over config", async () => {
+    const { storeApiKey, resolveApiKey } = await import("../../src/lib/config")
+    storeApiKey("ok_configkey12345678901234567890123")
+    process.env.OUTLIT_API_KEY = "ok_envkey12345678901234567890123456"
+    const result = resolveApiKey()
+    expect(result?.key).toBe("ok_envkey12345678901234567890123456")
+    expect(result?.source).toBe("env")
+  })
+
+  test("resolveApiKey returns null if credentials.json is corrupted", async () => {
+    const { getConfigDir, resolveApiKey } = await import("../../src/lib/config")
+    const { mkdirSync: mkdir, writeFileSync } = await import("node:fs")
+    mkdir(getConfigDir(), { recursive: true })
+    writeFileSync(join(getConfigDir(), "credentials.json"), "NOT JSON", { mode: 0o600 })
+    const result = resolveApiKey()
+    expect(result).toBeNull()
+  })
+})
