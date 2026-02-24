@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test"
+import { createClient } from "../../src/lib/client"
 import { TEST_API_KEY } from "../helpers"
 
 describe("createClient()", () => {
@@ -28,24 +29,20 @@ describe("createClient()", () => {
   })
 
   test("throws when no API key is found", async () => {
-    const { createClient } = await import("../../src/lib/client")
     await expect(createClient()).rejects.toThrow("No API key found")
   })
 
   test("throws when API key has invalid format", async () => {
-    const { createClient } = await import("../../src/lib/client")
     process.env.OUTLIT_API_KEY = "invalid_key_no_ok_prefix"
     await expect(createClient()).rejects.toThrow("Invalid API key format")
   })
 
   test("throws when API key is too short (prefix only)", async () => {
-    const { createClient } = await import("../../src/lib/client")
     process.env.OUTLIT_API_KEY = "ok_short"
     await expect(createClient()).rejects.toThrow("Invalid API key format")
   })
 
   test("returns client with key and baseUrl when key is valid", async () => {
-    const { createClient } = await import("../../src/lib/client")
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const client = await createClient()
@@ -54,7 +51,6 @@ describe("createClient()", () => {
   })
 
   test("uses OUTLIT_API_URL env var to override base URL", async () => {
-    const { createClient } = await import("../../src/lib/client")
     process.env.OUTLIT_API_KEY = TEST_API_KEY
     process.env.OUTLIT_API_URL = "http://localhost:3000"
 
@@ -80,7 +76,6 @@ describe("client.callTool()", () => {
   })
 
   test("sends GET with query params for list endpoints", async () => {
-    const { createClient } = await import("../../src/lib/client")
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const mockData = { items: [{ id: "1", name: "Acme" }], pagination: { hasMore: false } }
@@ -104,7 +99,6 @@ describe("client.callTool()", () => {
   })
 
   test("sends POST with JSON body for detail endpoints", async () => {
-    const { createClient } = await import("../../src/lib/client")
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const mockData = { customer: { id: "1", name: "Acme" } }
@@ -133,7 +127,6 @@ describe("client.callTool()", () => {
   })
 
   test("includes Authorization header with Bearer token", async () => {
-    const { createClient } = await import("../../src/lib/client")
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
@@ -151,7 +144,6 @@ describe("client.callTool()", () => {
   })
 
   test("throws on HTTP error response", async () => {
-    const { createClient } = await import("../../src/lib/client")
     process.env.OUTLIT_API_KEY = TEST_API_KEY
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response("Unauthorized", { status: 401 }),
@@ -163,7 +155,6 @@ describe("client.callTool()", () => {
   })
 
   test("throws on unknown tool name", async () => {
-    const { createClient } = await import("../../src/lib/client")
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const client = await createClient()
@@ -171,7 +162,6 @@ describe("client.callTool()", () => {
   })
 
   test("skips null/undefined params in GET query string", async () => {
-    const { createClient } = await import("../../src/lib/client")
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
