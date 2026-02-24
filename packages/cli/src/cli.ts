@@ -13,7 +13,7 @@ const main = defineCommand({
     name: "outlit",
     version: CLI_VERSION,
     description:
-      "Outlit CLI — customer intelligence from the terminal.\n\nUsage examples:\n  outlit customers list --billing-status PAYING --no-activity-in 30d\n  outlit customers get acme.com --include users,revenue\n  outlit customers timeline acme.com --timeframe 90d\n  outlit users list --journey-stage CHAMPION\n  outlit facts acme.com --timeframe 90d\n  outlit search 'pricing objections last quarter'\n  outlit sql 'SELECT * FROM events LIMIT 10'\n  outlit schema events\n  outlit doctor --json\n\nFor AI agents: commands auto-output JSON when stdout is piped. No --json flag needed.",
+      "Outlit CLI -- customer intelligence from the terminal.\n\nUsage examples:\n  outlit customers list --billing-status PAYING --no-activity-in 30d\n  outlit customers get acme.com --include users,revenue\n  outlit customers timeline acme.com --timeframe 90d\n  outlit users list --journey-stage CHAMPION\n  outlit facts acme.com --timeframe 90d\n  outlit search 'pricing objections last quarter'\n  outlit sql 'SELECT * FROM events LIMIT 10'\n  outlit schema events\n  outlit doctor --json\n\nFor AI agents: commands auto-output JSON when stdout is piped. No --json flag needed.",
   },
   subCommands: {
     auth: () => import("./commands/auth/index").then((m) => m.default),

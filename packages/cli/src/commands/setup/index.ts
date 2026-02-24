@@ -105,7 +105,7 @@ export default defineCommand({
       console.log("Detected agents:")
       for (const agentId of detected) {
         const { label, hint } = agentLabels[agentId]
-        console.log(`  ${TICK} ${label.padEnd(14)} — ${hint}`)
+        console.log(`  ${TICK} ${label.padEnd(14)} -- ${hint}`)
       }
       console.log("\nConfiguring...")
     }

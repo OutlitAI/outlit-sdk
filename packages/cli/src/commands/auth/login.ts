@@ -43,7 +43,7 @@ export default defineCommand({
         )
       }
 
-      p.intro("Outlit CLI — Login")
+      p.intro("Outlit CLI -- Login")
 
       const existing = resolveApiKey()
       if (existing) {

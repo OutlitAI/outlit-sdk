@@ -12,7 +12,7 @@ export default defineCommand({
       "Remove the stored Outlit API key.",
       "",
       "Deletes ~/.config/outlit/credentials.json.",
-      "Idempotent — safe to run even if not logged in.",
+      "Idempotent -- safe to run even if not logged in.",
       "",
       "Note: If OUTLIT_API_KEY env var is set, it continues to work after logout.",
     ].join("\n"),

@@ -10,7 +10,7 @@ export default defineCommand({
       "Query and filter users across your customer base.",
       "",
       "Subcommands:",
-      "  list  — list users with filters",
+      "  list  -- list users with filters",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
