@@ -7,10 +7,10 @@
  * ⚠️  WARNING: This test creates REAL bookings on Cal.com!
  *
  * To run:
- *   pnpm test -- calendar-embed-real.spec.ts --headed
+ *   bun run test -- calendar-embed-real.spec.ts --headed
  *
  * To exclude from CI:
- *   pnpm test -- --grep-invert "Real Cal.com"
+ *   bun run test -- --grep-invert "Real Cal.com"
  *
  * Uses: https://cal.com/leo-paz/15min (simple form: name + email only)
  */

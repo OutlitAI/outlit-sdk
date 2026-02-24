@@ -6,7 +6,7 @@
  * - Expose user namespace (activate, engaged, inactive) and customer namespace (trialing, paid, churned)
  * - Handle consent flow correctly
  *
- * Run with: pnpm test:unit
+ * Run with: bun run test:unit
  */
 
 import { act, renderHook } from "@testing-library/react"
