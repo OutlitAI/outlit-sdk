@@ -3,10 +3,20 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test"
 describe("isInteractive()", () => {
   let originalStdinIsTTY: boolean | undefined
   let originalStdoutIsTTY: boolean | undefined
+  let originalEnv: {
+    CI: string | undefined
+    GITHUB_ACTIONS: string | undefined
+    TERM: string | undefined
+  }
 
   beforeEach(() => {
     originalStdinIsTTY = process.stdin.isTTY
     originalStdoutIsTTY = process.stdout.isTTY
+    originalEnv = {
+      CI: process.env.CI,
+      GITHUB_ACTIONS: process.env.GITHUB_ACTIONS,
+      TERM: process.env.TERM,
+    }
     Reflect.deleteProperty(process.env, "CI")
     Reflect.deleteProperty(process.env, "GITHUB_ACTIONS")
     Reflect.deleteProperty(process.env, "TERM")
@@ -23,9 +33,13 @@ describe("isInteractive()", () => {
       writable: true,
       configurable: true,
     })
-    Reflect.deleteProperty(process.env, "CI")
-    Reflect.deleteProperty(process.env, "GITHUB_ACTIONS")
-    Reflect.deleteProperty(process.env, "TERM")
+    for (const [key, value] of Object.entries(originalEnv)) {
+      if (value === undefined) {
+        Reflect.deleteProperty(process.env, key)
+      } else {
+        process.env[key] = value
+      }
+    }
   })
 
   function setTTY(stdin: boolean | undefined, stdout: boolean | undefined): void {

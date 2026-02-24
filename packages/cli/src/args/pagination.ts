@@ -18,6 +18,12 @@ export function applyPagination(
   params: Record<string, unknown>,
   args: { limit?: string; cursor?: string },
 ): void {
-  if (args.limit) params.limit = Number(args.limit)
+  if (args.limit) {
+    const n = Number(args.limit)
+    if (Number.isNaN(n) || n < 1 || n > 100) {
+      throw new Error(`--limit must be an integer between 1 and 100 (got: ${args.limit})`)
+    }
+    params.limit = n
+  }
   if (args.cursor) params.cursor = args.cursor
 }

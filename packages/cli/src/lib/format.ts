@@ -1,6 +1,6 @@
 /** Formats cents as a dollar string. Returns "--" for null/undefined/non-numeric. */
 export function formatCents(value: unknown): string {
-  if (value == null || typeof value !== "number") return "--"
+  if (value == null || typeof value !== "number" || Number.isNaN(value)) return "--"
   return `$${(value / 100).toFixed(2)}`
 }
 

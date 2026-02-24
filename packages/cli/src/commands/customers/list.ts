@@ -5,6 +5,7 @@ import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { formatCents, relativeDate, truncate } from "../../lib/format"
+import { outputError } from "../../lib/output"
 
 export default defineCommand({
   meta: {
@@ -65,8 +66,20 @@ export default defineCommand({
 
     const params: Record<string, unknown> = {}
     if (args["billing-status"]) params.billingStatus = args["billing-status"]
-    if (args["mrr-above"]) params.mrrAbove = Number(args["mrr-above"])
-    if (args["mrr-below"]) params.mrrBelow = Number(args["mrr-below"])
+    if (args["mrr-above"]) {
+      const value = Number(args["mrr-above"])
+      if (!Number.isFinite(value)) {
+        return outputError({ message: "--mrr-above must be a number", code: "invalid_input" }, json)
+      }
+      params.mrrAbove = value
+    }
+    if (args["mrr-below"]) {
+      const value = Number(args["mrr-below"])
+      if (!Number.isFinite(value)) {
+        return outputError({ message: "--mrr-below must be a number", code: "invalid_input" }, json)
+      }
+      params.mrrBelow = value
+    }
     applyListFilters(params, args)
     applyPagination(params, args)
     if (args.status) params.status = args.status

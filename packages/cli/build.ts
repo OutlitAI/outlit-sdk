@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { $ } from "bun"
+import { mkdirSync } from "node:fs"
 
 const targets = [
   { target: "bun-darwin-arm64", out: "dist/outlit-darwin-arm64" },
@@ -8,6 +9,8 @@ const targets = [
   { target: "bun-linux-arm64", out: "dist/outlit-linux-arm64" },
   { target: "bun-windows-x64", out: "dist/outlit-windows-x64.exe" },
 ]
+
+mkdirSync("dist", { recursive: true })
 
 for (const { target, out } of targets) {
   console.log(`Building ${target}...`)

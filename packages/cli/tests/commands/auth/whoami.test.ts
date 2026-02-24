@@ -18,7 +18,13 @@ mock.module("../../../src/lib/client", () => ({
 import { default as whoamiCmd } from "../../../src/commands/auth/whoami"
 import * as clientModule from "../../../src/lib/client"
 import * as configModule from "../../../src/lib/config"
-import { ExitError, expectErrorExit, mockExitThrow, setNonInteractive } from "../../helpers"
+import {
+  ExitError,
+  expectErrorExit,
+  mockExitThrow,
+  setInteractive,
+  setNonInteractive,
+} from "../../helpers"
 
 setNonInteractive()
 
@@ -78,6 +84,7 @@ describe("auth whoami", () => {
   })
 
   test("valid key — outputs single line for scripting (interactive mode)", async () => {
+    setInteractive()
     const resolveApiKeySpy = spyOn(configModule, "resolveApiKey").mockReturnValue({
       key: "ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
       source: "env",
@@ -97,6 +104,7 @@ describe("auth whoami", () => {
 
       stdoutOutput = stdoutSpy.mock.calls.map((c) => c[0] as string).join("")
     } finally {
+      setNonInteractive()
       resolveApiKeySpy.mockRestore()
       createClientSpy.mockRestore()
       stdoutSpy.mockRestore()

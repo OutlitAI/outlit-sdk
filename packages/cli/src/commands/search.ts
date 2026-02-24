@@ -2,6 +2,7 @@ import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
 import { getClientOrExit, runTool } from "../lib/api"
+import { outputError } from "../lib/output"
 
 export default defineCommand({
   meta: {
@@ -51,9 +52,17 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
+    const topK = Number(args["top-k"])
+    if (!Number.isFinite(topK) || topK <= 0) {
+      return outputError(
+        { message: "--top-k must be a positive number", code: "invalid_input" },
+        json,
+      )
+    }
+
     const params: Record<string, unknown> = {
       query: args.query,
-      topK: Number(args["top-k"]),
+      topK,
     }
     if (args.customer) params.customer = args.customer
     if (args.after) params.occurredAfter = args.after

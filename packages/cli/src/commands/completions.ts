@@ -25,7 +25,7 @@ const BASH_SCRIPT = `_outlit_completions() {
 complete -F _outlit_completions outlit
 `
 
-const zshCommands = COMMANDS.map((c) => `'${c.name}:${c.desc}'`).join(" ")
+const zshCommands = COMMANDS.map((c) => `'${c.name}:${c.desc.replace(/:/g, "")}'`).join(" ")
 
 const ZSH_SCRIPT = `#compdef outlit
 _outlit() {
@@ -37,7 +37,7 @@ compdef _outlit outlit
 `
 
 const FISH_SCRIPT = `# outlit completions for fish shell
-${COMMANDS.map((c) => `complete -c outlit -f -a ${c.name} -d '${c.desc}'`).join("\n")}
+${COMMANDS.map((c) => `complete -c outlit -f -a ${c.name} -d "${c.desc.replace(/"/g, '\\"')}"`).join("\n")}
 `
 
 const SCRIPTS: Record<string, string> = {
