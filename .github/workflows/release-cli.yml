@@ -1,8 +1,12 @@
 name: Release CLI
 
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "CLI version to release (e.g. 1.0.0)"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -17,6 +21,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: "@outlit/cli@${{ inputs.version }}"
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -59,6 +65,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: "@outlit/cli@${{ inputs.version }}"
+          name: "outlit CLI v${{ inputs.version }}"
           generate_release_notes: true
           body: |
             ## Install
@@ -94,7 +102,8 @@ jobs:
       - name: Dispatch publish-release workflow on tap
         env:
           GH_TOKEN: ${{ secrets.TAP_WORKFLOW_PAT }}
+          VERSION: ${{ inputs.version }}
         run: |
           gh workflow run publish-release.yml \
             --repo OutlitAI/homebrew-tap \
-            --field version="${GITHUB_REF_NAME}"
+            --field version="$VERSION"

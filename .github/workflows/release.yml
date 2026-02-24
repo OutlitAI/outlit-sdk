@@ -46,6 +46,30 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  # Dispatch CLI binary release when @outlit/cli is published.
+  release-cli:
+    name: Release CLI Binaries
+    needs: release
+    if: needs.release.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Dispatch CLI binary release
+        env:
+          GH_TOKEN: ${{ secrets.TAP_WORKFLOW_PAT }}
+          PUBLISHED: ${{ needs.release.outputs.publishedPackages }}
+        run: |
+          VERSION=$(echo "$PUBLISHED" | jq -r '.[] | select(.name == "@outlit/cli") | .version')
+          if [ -n "$VERSION" ]; then
+            echo "Dispatching CLI binary release for v$VERSION"
+            gh workflow run release-cli.yml \
+              --repo OutlitAI/outlit-sdk \
+              --field version="$VERSION"
+          else
+            echo "CLI was not published — skipping binary release"
+          fi
+
   # Publish canary snapshots from main when there are unreleased changesets.
   #
   # IMPORTANT:
