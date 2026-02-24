@@ -1,5 +1,17 @@
 import { describe, expect, test } from "bun:test"
 import { renderPaginationHint, renderTable } from "../../src/lib/table"
+import { isUnicodeSupported } from "../../src/lib/tty"
+
+// Match the runtime BOX characters so tests work on any platform
+const TL = isUnicodeSupported ? String.fromCodePoint(0x250c) : "+"
+const TR = isUnicodeSupported ? String.fromCodePoint(0x2510) : "+"
+const BL = isUnicodeSupported ? String.fromCodePoint(0x2514) : "+"
+const BR = isUnicodeSupported ? String.fromCodePoint(0x2518) : "+"
+const H = isUnicodeSupported ? String.fromCodePoint(0x2500) : "-"
+const V = isUnicodeSupported ? String.fromCodePoint(0x2502) : "|"
+const LT = isUnicodeSupported ? String.fromCodePoint(0x251c) : "+"
+const RT = isUnicodeSupported ? String.fromCodePoint(0x2524) : "+"
+const CR = isUnicodeSupported ? String.fromCodePoint(0x253c) : "+"
 
 describe("renderTable", () => {
   test("returns emptyMessage when rows is empty", () => {
@@ -9,12 +21,12 @@ describe("renderTable", () => {
 
   test("renders single row with box-drawing characters", () => {
     const output = renderTable(["Name", "Age"], [["Alice", "30"]])
-    expect(output).toContain("┌")
-    expect(output).toContain("┐")
-    expect(output).toContain("└")
-    expect(output).toContain("┘")
-    expect(output).toContain("│")
-    expect(output).toContain("─")
+    expect(output).toContain(TL)
+    expect(output).toContain(TR)
+    expect(output).toContain(BL)
+    expect(output).toContain(BR)
+    expect(output).toContain(V)
+    expect(output).toContain(H)
     expect(output).toContain("Alice")
     expect(output).toContain("30")
   })
@@ -49,9 +61,9 @@ describe("renderTable", () => {
 
   test("includes header separator", () => {
     const output = renderTable(["A", "B"], [["1", "2"]])
-    expect(output).toContain("├")
-    expect(output).toContain("┼")
-    expect(output).toContain("┤")
+    expect(output).toContain(LT)
+    expect(output).toContain(CR)
+    expect(output).toContain(RT)
   })
 })
 

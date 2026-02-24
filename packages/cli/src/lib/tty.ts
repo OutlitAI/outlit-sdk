@@ -1,3 +1,15 @@
+/**
+ * Detects whether the terminal can render Unicode characters.
+ *
+ * Returns false on Windows unless running inside Windows Terminal or VS Code,
+ * which are known to support Unicode. Matches the check used by yocto-spinner
+ * and is-unicode-supported.
+ */
+export const isUnicodeSupported: boolean =
+  process.platform !== "win32" ||
+  Boolean(process.env.WT_SESSION) ||
+  process.env.TERM_PROGRAM === "vscode"
+
 /** Returns the platform-specific command for opening URLs in a browser. */
 export function openBrowserCmd(): string {
   return process.platform === "darwin"

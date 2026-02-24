@@ -17,6 +17,7 @@ import {
 } from "../lib/config"
 import { errorMessage, isJsonMode, outputResult } from "../lib/output"
 import { type AgentId, detectAgents as detectInstalledAgents } from "./setup/index"
+import { isUnicodeSupported } from "../lib/tty"
 
 type Status = "pass" | "warn" | "fail"
 interface CheckResult {
@@ -26,10 +27,12 @@ interface CheckResult {
   detail?: string
 }
 
+const FAIL_SYMBOL = isUnicodeSupported ? String.fromCodePoint(0x2717) : "x"
+
 const STATUS_ICONS: Record<Status, string> = {
   pass: TICK,
   warn: "\x1b[33m!\x1b[0m",
-  fail: "\x1b[31m✗\x1b[0m",
+  fail: `\x1b[31m${FAIL_SYMBOL}\x1b[0m`,
 }
 
 export default defineCommand({
@@ -39,10 +42,10 @@ export default defineCommand({
       "Check CLI version, API key, connectivity, and agent detection.",
       "",
       "Runs four checks in sequence:",
-      "  1. CLI version — compares against npm registry",
-      "  2. API key — checks presence and format (ok_ prefix)",
-      "  3. API validation — makes a live test call to verify the key works",
-      "  4. Agent detection — detects OpenClaw, Cursor, Claude Desktop, VS Code",
+      "  1. CLI version -- compares against npm registry",
+      "  2. API key -- checks presence and format (ok_ prefix)",
+      "  3. API validation -- makes a live test call to verify the key works",
+      "  4. Agent detection -- detects OpenClaw, Cursor, Claude Desktop, VS Code",
       "",
       "Exit code: 0 if all checks pass or warn, 1 if any check fails.",
       "",
@@ -70,7 +73,7 @@ export default defineCommand({
     if (credential) {
       checks.push(await validateApiKey(credential.key))
     } else {
-      checks.push({ name: "API validation", status: "fail", message: "Skipped — no API key found" })
+      checks.push({ name: "API validation", status: "fail", message: "Skipped -- no API key found" })
     }
 
     checks.push(...detectAgents())
@@ -126,7 +129,7 @@ function checkApiKeyPresence(credential: CredentialResult | null): CheckResult {
     return {
       name: "API key",
       status: "fail",
-      message: `Invalid format — expected ok_ prefix, got "${credential.key.slice(0, 3)}..."`,
+      message: `Invalid format -- expected ok_ prefix, got "${credential.key.slice(0, 3)}..."`,
       detail: `Get a valid key at ${OUTLIT_DASHBOARD_URL}`,
     }
   }
