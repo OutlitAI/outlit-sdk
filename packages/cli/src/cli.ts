@@ -2,6 +2,12 @@
 import { defineCommand, runMain } from "citty"
 import { CLI_VERSION } from "./lib/config"
 
+// citty only handles --version; support -v as a short alias
+if (process.argv.includes("-v")) {
+  console.log(CLI_VERSION)
+  process.exit(0)
+}
+
 const main = defineCommand({
   meta: {
     name: "outlit",
