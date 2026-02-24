@@ -161,10 +161,12 @@ function generateBash(): string {
   const cmdNames = COMMANDS.map((c) => c.name).join(" ")
 
   // case entries for subcommand completions at position 2
+  // Merges parent flags (e.g. setup --yes) alongside subcommand names
   const subCases = cmdsWithSubs
     .map((c) => {
       const names = c.subs!.map((s) => s.name).join(" ")
-      return `      ${c.name}) COMPREPLY=(\$(compgen -W "${names}" -- "\$cur")) ;;`
+      const parentFlags = c.flags?.length ? ` ${flagNames(c.flags)}` : ""
+      return `      ${c.name}) COMPREPLY=(\$(compgen -W "${names}${parentFlags}" -- "\$cur")) ;;`
     })
     .join("\n")
 
@@ -174,12 +176,6 @@ function generateBash(): string {
     flagEntries.push(`      ${cmd.name}) COMPREPLY=(\$(compgen -W "${flagNames(cmd.flags!)}" -- "\$cur")) ;;`)
   }
   for (const cmd of cmdsWithSubs) {
-    // parent command flags (e.g. setup --yes)
-    if (cmd.flags?.length) {
-      flagEntries.push(
-        `      ${cmd.name}) COMPREPLY=(\$(compgen -W "${flagNames(cmd.flags)}" -- "\$cur")) ;;`,
-      )
-    }
     for (const sub of cmd.subs!) {
       if (sub.flags?.length) {
         flagEntries.push(
@@ -232,9 +228,12 @@ function zshDescribe(items: ReadonlyArray<{ name: string; desc: string }>): stri
 function generateZsh(): string {
   const topLevel = zshDescribe(COMMANDS)
 
-  // subcommand cases
+  // subcommand cases -- merges parent flags alongside subcommand names
   const subCases = cmdsWithSubs
-    .map((c) => `    ${c.name})\n      completions=(${zshDescribe(c.subs!)})\n      _describe 'subcommand' completions\n      ;;`)
+    .map((c) => {
+      const items = [...c.subs!.map((s) => ({ name: s.name, desc: s.desc })), ...(c.flags ?? []).map((f) => ({ name: f.name, desc: f.desc }))]
+      return `    ${c.name})\n      completions=(${zshDescribe(items)})\n      _describe 'subcommand' completions\n      ;;`
+    })
     .join("\n")
 
   // flag cases
@@ -245,11 +244,6 @@ function generateZsh(): string {
     )
   }
   for (const cmd of cmdsWithSubs) {
-    if (cmd.flags?.length) {
-      flagEntries.push(
-        `    ${cmd.name})\n      completions=(${zshDescribe(cmd.flags)})\n      _describe 'option' completions\n      ;;`,
-      )
-    }
     for (const sub of cmd.subs!) {
       if (sub.flags?.length) {
         flagEntries.push(

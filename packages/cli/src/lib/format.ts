@@ -27,5 +27,6 @@ export function truncate(value: unknown, maxLen: number): string {
   if (value == null) return "--"
   const str = String(value)
   if (str.length <= maxLen) return str
+  if (maxLen <= 3) return "...".slice(0, maxLen)
   return `${str.slice(0, maxLen - 3)}...`
 }

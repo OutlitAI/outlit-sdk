@@ -78,9 +78,9 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+          CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -v '^$' || true)
           # Root-level config changes (biome, tsconfig, lockfile, etc.) affect all packages
-          ROOT_CHANGED=$(echo "$CHANGED" | grep -v '^packages/' | grep -v '^docs/' | grep -v '^\.changeset/' | grep -v '^crates/' || true)
+          ROOT_CHANGED=$(echo "$CHANGED" | grep -v '^$' | grep -v '^packages/' | grep -v '^docs/' | grep -v '^\.changeset/' | grep -v '^crates/' || true)
           if [ -n "$ROOT_CHANGED" ] || echo "$CHANGED" | grep -q '^packages/browser/'; then
             echo "browser=true" >> "$GITHUB_OUTPUT"
           else
