@@ -1,0 +1,36 @@
+{
+  "name": "@outlit/cli",
+  "version": "0.1.0",
+  "description": "CLI for Outlit customer intelligence platform",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OutlitAI/outlit-sdk.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://outlit.ai",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "bin": { "outlit": "./dist/cli.js" },
+  "files": ["dist"],
+  "scripts": {
+    "dev": "bun run src/cli.ts",
+    "dev:watch": "bun --watch src/cli.ts",
+    "build": "bun build ./src/cli.ts --outdir ./dist --target node",
+    "build:binary": "bun build --compile --minify --sourcemap --bytecode src/cli.ts --outfile dist/outlit",
+    "build:all": "bun run build.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "citty": "^0.2.1",
+    "@clack/prompts": "^1.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "@types/bun": "latest"
+  }
+}
