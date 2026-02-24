@@ -8,10 +8,10 @@
  *   version - Creates an immutable versioned snapshot (e.g., v0.1.0)
  *
  * Usage:
- *   pnpm deploy:canary          # Deploy to /canary/outlit.js
- *   pnpm deploy:stable          # Deploy to /stable/outlit.js (requires confirmation)
- *   pnpm deploy:version         # Deploy to /v{version}/outlit.js
- *   pnpm deploy:version 1.2.3   # Deploy to /v1.2.3/outlit.js
+ *   bun run deploy:canary          # Deploy to /canary/outlit.js
+ *   bun run deploy:stable          # Deploy to /stable/outlit.js (requires confirmation)
+ *   bun run deploy:version         # Deploy to /v{version}/outlit.js
+ *   bun run deploy:version 1.2.3   # Deploy to /v1.2.3/outlit.js
  *
  * Options:
  *   --ci, --yes                 # Skip all confirmations (for CI environments)
@@ -64,7 +64,7 @@ function getPublicUrl(path: string): string {
 function checkBundleExists(): void {
   if (!existsSync(DIST_PATH)) {
     console.error(`\n Bundle not found at ${DIST_PATH}`)
-    console.error("   Run 'pnpm build' first.\n")
+    console.error("   Run 'bun run build' first.\n")
     process.exit(1)
   }
 }
@@ -148,10 +148,10 @@ async function main(): Promise<void> {
   if (!["canary", "stable", "version"].includes(config.environment)) {
     console.error("\n Invalid environment. Use: canary, stable, or version")
     console.error("\nUsage:")
-    console.error("  pnpm deploy:canary              # Deploy to /canary/")
-    console.error("  pnpm deploy:stable              # Deploy to /stable/ (production)")
-    console.error("  pnpm deploy:version             # Deploy to /v{pkg.version}/")
-    console.error("  pnpm deploy:version 1.2.3       # Deploy to /v1.2.3/")
+    console.error("  bun run deploy:canary              # Deploy to /canary/")
+    console.error("  bun run deploy:stable              # Deploy to /stable/ (production)")
+    console.error("  bun run deploy:version             # Deploy to /v{pkg.version}/")
+    console.error("  bun run deploy:version 1.2.3       # Deploy to /v1.2.3/")
     console.error("\nOptions:")
     console.error("  --ci, --yes                     # Skip all confirmations (for CI)\n")
     process.exit(1)

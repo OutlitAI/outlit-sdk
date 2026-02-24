@@ -59,9 +59,9 @@
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "serve:test": "tsx ./__tests__/e2e/serve.ts",
-    "deploy:canary": "pnpm build && tsx ./scripts/deploy.ts canary",
-    "deploy:stable": "pnpm build && tsx ./scripts/deploy.ts stable",
-    "deploy:version": "pnpm build && tsx ./scripts/deploy.ts version"
+    "deploy:canary": "bun run build && tsx ./scripts/deploy.ts canary",
+    "deploy:stable": "bun run build && tsx ./scripts/deploy.ts stable",
+    "deploy:version": "bun run build && tsx ./scripts/deploy.ts version"
   },
   "dependencies": {
     "@outlit/core": "workspace:*"
