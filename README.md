@@ -148,7 +148,7 @@ await outlit.flush()
 
 This project uses a modern monorepo setup with the following tools:
 
-- **[pnpm](https://pnpm.io/)** - Fast, disk space efficient package manager
+- **[Bun](https://bun.sh/)** - Fast all-in-one JavaScript runtime and package manager
 - **[Turbo](https://turbo.build/)** - Build system for monorepo orchestration
 - **[TypeScript](https://www.typescriptlang.org/)** - Type-safe JavaScript
 - **[tsup](https://tsup.egoist.dev/)** - Fast TypeScript bundler
@@ -160,22 +160,22 @@ This project uses a modern monorepo setup with the following tools:
 
 ```bash
 # Install dependencies
-pnpm install
+bun install
 
 # Build all packages
-pnpm build
+bun run build
 
 # Run tests
-pnpm test
+bun run test
 
 # Lint code
-pnpm lint
+bun run lint
 
 # Type check
-pnpm typecheck
+bun run typecheck
 
 # Format code
-pnpm format
+bun run format
 ```
 
 ### Project Structure
@@ -189,7 +189,7 @@ outlit-sdk/
 │   ├── node/            # Node.js SDK
 │   └── typescript-config/  # Shared TypeScript configs
 ├── package.json         # Root package with workspace config
-├── pnpm-workspace.yaml  # pnpm workspace configuration
+├── bun.lock             # Bun lockfile
 ├── turbo.json           # Turbo build configuration
 └── biome.json           # Biome linter/formatter config
 ```
@@ -199,7 +199,7 @@ outlit-sdk/
 When making changes that should be released, create a changeset:
 
 ```bash
-pnpm changeset
+bunx changeset
 ```
 
 This will prompt you to:
@@ -260,9 +260,9 @@ The browser SDK IIFE bundle is deployed to Google Cloud Storage:
 
 Manual deployment (requires gcloud CLI):
 ```bash
-pnpm --filter @outlit/browser deploy:canary   # Deploy to canary
-pnpm --filter @outlit/browser deploy:stable   # Deploy to stable (requires confirmation)
-pnpm --filter @outlit/browser deploy:version  # Deploy versioned release
+cd packages/browser && bun run deploy:canary   # Deploy to canary
+cd packages/browser && bun run deploy:stable   # Deploy to stable (requires confirmation)
+cd packages/browser && bun run deploy:version  # Deploy versioned release
 ```
 
 ## Documentation
