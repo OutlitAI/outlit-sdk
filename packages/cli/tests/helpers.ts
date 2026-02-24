@@ -74,8 +74,10 @@ export function setInteractive(): void {
  * Registers beforeEach/afterEach hooks automatically.
  * Returns the temp dir path for use in tests.
  */
+let tempEnvCounter = 0
+
 export function useTempEnv(label: string): string {
-  const testDir = join(tmpdir(), `outlit-cli-${label}-${Date.now()}`)
+  const testDir = join(tmpdir(), `outlit-cli-${label}-${process.pid}-${++tempEnvCounter}`)
 
   beforeEach(() => {
     mkdirSync(testDir, { recursive: true })
