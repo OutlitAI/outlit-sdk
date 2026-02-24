@@ -6,6 +6,5 @@
   "linked": [["@outlit/core", "@outlit/browser", "@outlit/node"]],
   "access": "public",
   "baseBranch": "main",
-  "updateInternalDependencies": "patch",
-  "ignore": []
+  "updateInternalDependencies": "patch"
 }
