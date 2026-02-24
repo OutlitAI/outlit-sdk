@@ -1,59 +1,72 @@
 import { beforeEach, describe, expect, spyOn, test } from "bun:test"
-import { existsSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, rmSync, statSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
 import { join } from "node:path"
+import {
+  getConfigDir,
+  maskKey,
+  readJsonConfig,
+  requireCredential,
+  resolveApiKey,
+  storeApiKey,
+} from "../../src/lib/config"
 import { TEST_API_KEY, expectErrorExit, mockExitThrow, useTempEnv } from "../helpers"
 
 describe("getConfigDir()", () => {
-  test('returns platform-appropriate config path containing "outlit"', async () => {
-    const { getConfigDir } = await import("../../src/lib/config")
+  test('returns platform-appropriate config path containing "outlit"', () => {
     const dir = getConfigDir()
     expect(typeof dir).toBe("string")
     expect(dir.length).toBeGreaterThan(0)
     expect(dir).toMatch(/outlit/)
   })
 
-  test("uses XDG_CONFIG_HOME when set on non-Windows", async () => {
+  test("uses XDG_CONFIG_HOME when set on non-Windows", () => {
     if (process.platform === "win32") return
-    const { getConfigDir } = await import("../../src/lib/config")
     const original = process.env.XDG_CONFIG_HOME
     process.env.XDG_CONFIG_HOME = "/custom/config"
-    expect(getConfigDir()).toBe("/custom/config/outlit")
-    if (original !== undefined) process.env.XDG_CONFIG_HOME = original
-    else Reflect.deleteProperty(process.env, "XDG_CONFIG_HOME")
+    try {
+      expect(getConfigDir()).toBe("/custom/config/outlit")
+    } finally {
+      if (original !== undefined) process.env.XDG_CONFIG_HOME = original
+      else Reflect.deleteProperty(process.env, "XDG_CONFIG_HOME")
+    }
   })
 })
 
 describe("maskKey()", () => {
-  test("returns key as-is when 9 chars or fewer", async () => {
-    const { maskKey } = await import("../../src/lib/config")
+  test("returns key as-is when 9 chars or fewer", () => {
     expect(maskKey("ok_short")).toBe("ok_short") // 8 chars
     expect(maskKey("123456789")).toBe("123456789") // exactly 9 chars
   })
 
-  test("masks key with first 5, ellipsis, last 4", async () => {
-    const { maskKey } = await import("../../src/lib/config")
+  test("masks key with first 5, ellipsis, last 4", () => {
     expect(maskKey("ok_testabc1234")).toBe("ok_te...1234")
     expect(maskKey(TEST_API_KEY)).toBe("ok_aa...aaaa")
   })
 })
 
 describe("readJsonConfig()", () => {
-  const testDir = useTempEnv("config-readjson")
+  // readJsonConfig takes an explicit path — no env vars needed.
+  // Use a manual temp dir to avoid process.env mutations that cause
+  // race conditions with Bun's parallel test file execution.
+  let testDir: string
 
-  test("returns {} for a missing file", async () => {
-    const { readJsonConfig } = await import("../../src/lib/config")
+  beforeEach(() => {
+    testDir = join(tmpdir(), `outlit-cli-readjson-${process.pid}-${Date.now()}`)
+    mkdirSync(testDir, { recursive: true })
+  })
+
+  test("returns {} for a missing file", () => {
     expect(readJsonConfig(join(testDir, "nonexistent.json"))).toEqual({})
   })
 
-  test("returns parsed object for a valid JSON file", async () => {
-    const { readJsonConfig } = await import("../../src/lib/config")
+  test("returns parsed object for a valid JSON file", () => {
     const path = join(testDir, "valid.json")
     writeFileSync(path, JSON.stringify({ mcpServers: { outlit: {} } }))
     expect(readJsonConfig(path)).toEqual({ mcpServers: { outlit: {} } })
   })
 
-  test("returns {} for a malformed JSON file", async () => {
-    const { readJsonConfig } = await import("../../src/lib/config")
+  test("returns {} for a malformed JSON file", () => {
     const path = join(testDir, "bad.json")
     writeFileSync(path, "NOT JSON AT ALL")
     expect(readJsonConfig(path)).toEqual({})
@@ -63,8 +76,7 @@ describe("readJsonConfig()", () => {
 describe("requireCredential()", () => {
   useTempEnv("config-require-cred")
 
-  test("returns the credential when a key is present", async () => {
-    const { requireCredential } = await import("../../src/lib/config")
+  test("returns the credential when a key is present", () => {
     const exitSpy = mockExitThrow()
     let result: ReturnType<typeof requireCredential> | undefined
     try {
@@ -76,9 +88,8 @@ describe("requireCredential()", () => {
     expect(result?.source).toBe("env")
   })
 
-  test("exits with not_authenticated when no credential found", async () => {
+  test("exits with not_authenticated when no credential found", () => {
     Reflect.deleteProperty(process.env, "OUTLIT_API_KEY")
-    const { requireCredential } = await import("../../src/lib/config")
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
     const exitSpy = mockExitThrow()
     let thrown: unknown
@@ -103,30 +114,25 @@ describe("storeApiKey() and resolveApiKey()", () => {
     Reflect.deleteProperty(process.env, "OUTLIT_API_KEY")
   })
 
-  test("storeApiKey writes credentials.json and returns the path", async () => {
-    const { storeApiKey, getConfigDir } = await import("../../src/lib/config")
+  test("storeApiKey writes credentials.json and returns the path", () => {
     const path = storeApiKey(TEST_API_KEY)
     expect(existsSync(path)).toBe(true)
     expect(path).toBe(join(getConfigDir(), "credentials.json"))
   })
 
-  test("storeApiKey creates file with 0600 permissions on non-Windows", async () => {
+  test("storeApiKey creates file with 0600 permissions on non-Windows", () => {
     if (process.platform === "win32") return
-    const { storeApiKey } = await import("../../src/lib/config")
-    const { statSync } = await import("node:fs")
     const path = storeApiKey(TEST_API_KEY)
     const stat = statSync(path)
     expect(stat.mode & 0o777).toBe(0o600)
   })
 
-  test("resolveApiKey returns null when no key exists", async () => {
-    const { resolveApiKey } = await import("../../src/lib/config")
+  test("resolveApiKey returns null when no key exists", () => {
     const result = resolveApiKey()
     expect(result).toBeNull()
   })
 
-  test("resolveApiKey returns stored key with source=config", async () => {
-    const { storeApiKey, resolveApiKey } = await import("../../src/lib/config")
+  test("resolveApiKey returns stored key with source=config", () => {
     storeApiKey(TEST_API_KEY)
     const result = resolveApiKey()
     expect(result).not.toBeNull()
@@ -134,8 +140,7 @@ describe("storeApiKey() and resolveApiKey()", () => {
     expect(result?.source).toBe("config")
   })
 
-  test("resolveApiKey prioritizes flag over env and config", async () => {
-    const { storeApiKey, resolveApiKey } = await import("../../src/lib/config")
+  test("resolveApiKey prioritizes flag over env and config", () => {
     storeApiKey("ok_configkey12345678901234567890123")
     process.env.OUTLIT_API_KEY = "ok_envkey12345678901234567890123456"
     const result = resolveApiKey("ok_flagkey12345678901234567890123456")
@@ -143,8 +148,7 @@ describe("storeApiKey() and resolveApiKey()", () => {
     expect(result?.source).toBe("flag")
   })
 
-  test("resolveApiKey prioritizes env over config", async () => {
-    const { storeApiKey, resolveApiKey } = await import("../../src/lib/config")
+  test("resolveApiKey prioritizes env over config", () => {
     storeApiKey("ok_configkey12345678901234567890123")
     process.env.OUTLIT_API_KEY = "ok_envkey12345678901234567890123456"
     const result = resolveApiKey()
@@ -152,10 +156,8 @@ describe("storeApiKey() and resolveApiKey()", () => {
     expect(result?.source).toBe("env")
   })
 
-  test("resolveApiKey returns null if credentials.json is corrupted", async () => {
-    const { getConfigDir, resolveApiKey } = await import("../../src/lib/config")
-    const { mkdirSync: mkdir, writeFileSync } = await import("node:fs")
-    mkdir(getConfigDir(), { recursive: true })
+  test("resolveApiKey returns null if credentials.json is corrupted", () => {
+    mkdirSync(getConfigDir(), { recursive: true })
     writeFileSync(join(getConfigDir(), "credentials.json"), "NOT JSON", { mode: 0o600 })
     const result = resolveApiKey()
     expect(result).toBeNull()
