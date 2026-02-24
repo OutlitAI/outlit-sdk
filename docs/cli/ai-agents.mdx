@@ -1,0 +1,218 @@
+---
+title: "AI Agent Setup"
+description: "Configure AI agents like Claude, Cursor, and Gemini to query Outlit data via MCP"
+---
+
+The `outlit setup` command registers Outlit as an [MCP](https://modelcontextprotocol.io) server with your AI agent tools. Once configured, your agents can query customers, pull revenue metrics, search context, and run SQL — all from within your conversation.
+
+<Tip>
+  If you already configured your agent manually using the [MCP Integration](/ai-integrations/mcp) guide, you don't need `outlit setup` — both approaches connect to the same MCP server.
+</Tip>
+
+## Supported Agents
+
+| Agent | Command | How it connects |
+|-------|---------|----------------|
+| Cursor | `outlit setup cursor` | Writes to `~/.cursor/mcp.json` |
+| Claude Code | `outlit setup claude-code` | Runs `claude mcp add` |
+| Claude Desktop | `outlit setup claude-desktop` | Writes to Claude Desktop config |
+| VS Code | `outlit setup vscode` | Writes to `.vscode/mcp.json` |
+| Gemini CLI | `outlit setup gemini` | Runs `gemini mcp add` |
+| OpenClaw | `outlit setup openclaw` | Writes skill to OpenClaw skills directory |
+
+## Auto-Setup
+
+Detect and configure all installed agents at once:
+
+```bash
+outlit setup --yes
+```
+
+Without `--yes`, the CLI shows which agents were detected and asks for confirmation.
+
+### JSON Output
+
+```json
+{
+  "detected": ["cursor", "claude-code", "claude-desktop"],
+  "configured": ["cursor", "claude-code", "claude-desktop"],
+  "failed": []
+}
+```
+
+## Individual Setup
+
+### Cursor
+
+```bash
+outlit setup cursor
+```
+
+Adds Outlit to `~/.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "outlit": {
+      "url": "https://mcp.outlit.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer ok_your_api_key"
+      }
+    }
+  }
+}
+```
+
+Restart Cursor after setup.
+
+### Claude Code
+
+```bash
+outlit setup claude-code
+```
+
+Registers the MCP server using the Claude CLI. Requires `claude` to be installed.
+
+### Claude Desktop
+
+```bash
+outlit setup claude-desktop
+```
+
+Writes to the platform-specific Claude Desktop config:
+
+| Platform | Config path |
+|----------|------------|
+| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Windows | `%APPDATA%/Claude/claude_desktop_config.json` |
+| Linux | `~/.config/Claude/claude_desktop_config.json` |
+
+Claude Desktop uses a command-based config (unlike Cursor's HTTP URL approach):
+
+```json
+{
+  "mcpServers": {
+    "outlit": {
+      "command": "outlit",
+      "args": ["mcp", "serve"],
+      "env": {
+        "OUTLIT_API_KEY": "ok_your_api_key"
+      }
+    }
+  }
+}
+```
+
+Restart Claude Desktop after setup.
+
+### VS Code
+
+```bash
+outlit setup vscode
+```
+
+Writes to `.vscode/mcp.json` in the current working directory. Creates the `.vscode/` directory if needed. Note: VS Code uses a `servers` key (not `mcpServers`).
+
+### Gemini CLI
+
+```bash
+outlit setup gemini
+```
+
+Registers the MCP server using the Gemini CLI. Requires `gemini` to be installed.
+
+### OpenClaw
+
+```bash
+outlit setup openclaw
+```
+
+Writes an Outlit intelligence skill to the OpenClaw skills directory. Checks `~/clawd/skills/` first, falls back to `~/.openclaw/skills/`. OpenClaw loads skills automatically.
+
+## Diagnostics
+
+The `doctor` command runs environment checks to verify your CLI and agent setup:
+
+```bash
+outlit doctor
+```
+
+### Checks Performed
+
+| Check | What it verifies |
+|-------|-----------------|
+| CLI version | Whether you're running the latest version |
+| API key | Presence and format of your API key |
+| API validation | Live test call to verify the key works |
+| Per-agent checks | Each detected agent gets its own check (e.g., "Cursor", "Claude Code") |
+
+### Example Output
+
+```
+  Outlit Doctor
+
+  ✓ CLI version: v0.1.0 (latest)
+  ✓ API key: Found (ok_ab...1234) via config
+  ✓ API validation: Key is valid
+  ✓ Cursor: Installed, Outlit MCP configured
+  ! Claude Code: Installed, but Outlit MCP not verified
+  ✓ Claude Desktop: Installed, Outlit MCP configured
+
+  Everything works, 1 suggestion(s).
+```
+
+### JSON Output
+
+```bash
+outlit doctor --json
+```
+
+```json
+{
+  "ok": true,
+  "checks": [
+    { "name": "CLI version", "status": "pass", "message": "v0.1.0 (latest)" },
+    { "name": "API key", "status": "pass", "message": "Found (ok_ab...1234) via config" },
+    { "name": "API validation", "status": "pass", "message": "Key is valid" },
+    { "name": "Cursor", "status": "pass", "message": "Installed, Outlit MCP configured" }
+  ]
+}
+```
+
+Filter for failures:
+
+```bash
+outlit doctor --json | jq '.checks[] | select(.status == "fail")'
+```
+
+### Exit Code
+
+`doctor` exits with code `1` if any check fails, making it useful in CI:
+
+```bash
+outlit doctor || echo "Setup issues detected"
+```
+
+## Shell Completions
+
+Generate completion scripts for your shell:
+
+<Tabs>
+  <Tab title="Bash">
+    ```bash
+    outlit completions bash >> ~/.bash_completion
+    source ~/.bash_completion
+    ```
+  </Tab>
+  <Tab title="Zsh">
+    ```bash
+    outlit completions zsh >> ~/.zshrc
+    exec zsh
+    ```
+  </Tab>
+  <Tab title="Fish">
+    ```bash
+    outlit completions fish > ~/.config/fish/completions/outlit.fish
+    ```
+  </Tab>
+</Tabs>

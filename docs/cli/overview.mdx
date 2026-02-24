@@ -1,0 +1,188 @@
+---
+title: "CLI Overview"
+description: "Query customer data, run analytics, and configure AI agents from the terminal"
+---
+
+The Outlit CLI gives you direct access to your customer intelligence data from the terminal. List customers, inspect activity timelines, run SQL queries, search with natural language, and configure AI agents — all without leaving your workflow.
+
+## Installation
+
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install -g @outlit/cli
+    ```
+  </Tab>
+  <Tab title="Homebrew">
+    ```bash
+    brew install outlitai/tap/outlit
+    ```
+  </Tab>
+  <Tab title="Binary Download">
+    Download the latest release for your platform from [GitHub Releases](https://github.com/OutlitAI/outlit-sdk/releases):
+
+    **macOS / Linux:**
+    ```bash
+    curl -fsSL https://outlit.ai/install.sh | bash
+    ```
+
+    **Windows (PowerShell):**
+    ```powershell
+    irm https://outlit.ai/install.ps1 | iex
+    ```
+  </Tab>
+</Tabs>
+
+Verify the installation:
+
+```bash
+outlit --version
+```
+
+## Quick Start
+
+<Steps>
+  <Step title="Get your API key">
+    Go to [Settings > MCP Integration](https://app.outlit.ai/workspace-profile/mcp) in the Outlit dashboard. Click **Generate API Key**, copy it, and keep it safe.
+
+    <Warning>
+      Treat your API key like a password. It grants read access to your customer data. You can revoke keys at any time from the dashboard.
+    </Warning>
+  </Step>
+  <Step title="Authenticate">
+    ```bash
+    outlit auth login
+    ```
+
+    The CLI will prompt you to enter your API key. It validates the key against the API and stores it securely at `~/.config/outlit/credentials.json` with `0600` permissions.
+
+    You can also pass the key directly:
+
+    ```bash
+    outlit auth login --key ok_your_api_key_here
+    ```
+  </Step>
+  <Step title="Query your data">
+    ```bash
+    # List paying customers
+    outlit customers list --billing-status PAYING
+
+    # Get a customer profile
+    outlit customers get acme.com --include users,revenue
+
+    # Search with natural language
+    outlit search "pricing objections last quarter"
+
+    # Run SQL
+    outlit sql "SELECT event_type, COUNT(*) FROM events GROUP BY 1"
+    ```
+  </Step>
+  <Step title="Set up AI agents (optional)">
+    Configure all detected AI agents with one command:
+
+    ```bash
+    outlit setup --yes
+    ```
+
+    Or target a specific agent (Cursor, Claude Code, Claude Desktop, VS Code, Gemini, OpenClaw):
+
+    ```bash
+    outlit setup cursor
+    outlit setup claude-code
+    outlit setup claude-desktop
+    ```
+
+    See [AI Agent Setup](/cli/ai-agents) for the full list of supported agents.
+  </Step>
+</Steps>
+
+## Authentication
+
+The CLI resolves your API key from the following sources, in order:
+
+| Priority | Source | How to set |
+|----------|--------|------------|
+| 1 | `--api-key` flag | `outlit customers list --api-key ok_...` |
+| 2 | `OUTLIT_API_KEY` env var | `export OUTLIT_API_KEY=ok_...` |
+| 3 | Config file | `outlit auth login` |
+
+### Auth Commands
+
+```bash
+outlit auth login           # Store API key (interactive or --key)
+outlit auth logout          # Remove stored credentials
+outlit auth signup          # Open sign-up page in browser
+outlit auth status          # Check authentication state and validate key
+outlit auth whoami          # Validate key and print masked key + source
+```
+
+`auth status` makes a live API call to validate your key:
+
+```bash
+$ outlit auth status
+✓ Authenticated
+  Key:    ok_ab...1234
+  Source: config
+```
+
+`auth whoami` validates your key and outputs a single line in TTY mode — useful for scripting:
+
+```bash
+$ outlit auth whoami
+ok_ab...1234 (config)
+```
+
+## Available Commands
+
+| Command | Description |
+|---------|-------------|
+| [`customers list`](/cli/commands#customers-list) | Filter and list customers by billing status, MRR, activity |
+| [`customers get`](/cli/commands#customers-get) | Get a detailed customer profile with optional sections (users, revenue, etc.) |
+| [`customers timeline`](/cli/commands#customers-timeline) | View activity timeline filtered by channel and event type |
+| [`users list`](/cli/commands#users-list) | Filter and list users by journey stage, activity, customer |
+| [`facts`](/cli/commands#facts) | Retrieve AI-generated facts and signals for a customer |
+| [`search`](/cli/commands#search) | Natural language search across customer context |
+| [`sql`](/cli/commands#sql) | Run SQL queries against analytics tables |
+| [`schema`](/cli/commands#schema) | Discover database tables and columns |
+| [`setup`](/cli/ai-agents) | Configure AI agent MCP integrations |
+| [`doctor`](/cli/ai-agents#diagnostics) | Run environment diagnostics |
+| [`completions`](/cli/ai-agents#shell-completions) | Generate shell completion scripts |
+
+## Output Modes
+
+The CLI has two output modes: **interactive** (tables, spinners, colors) and **JSON** (machine-readable).
+
+JSON mode activates automatically when:
+- stdout is piped (`outlit customers list | jq`)
+- `--json` flag is passed
+- Running in CI (`CI=true` or `GITHUB_ACTIONS` is set)
+- Terminal is dumb (`TERM=dumb`)
+
+<Info>
+  AI agents like Claude Code and Cursor run commands with piped stdout, so they automatically receive JSON output — no `--json` flag needed.
+</Info>
+
+```bash
+# Interactive table
+outlit customers list
+
+# JSON output (explicit)
+outlit customers list --json
+
+# JSON output (automatic via pipe)
+outlit customers list | jq '.items[].domain'
+```
+
+## What's Next
+
+<CardGroup cols={3}>
+  <Card title="Commands" icon="terminal" href="/cli/commands">
+    Full reference for all data commands
+  </Card>
+  <Card title="AI Agents" icon="robot" href="/cli/ai-agents">
+    Set up MCP for Claude, Cursor, and more
+  </Card>
+  <Card title="Configuration" icon="gear" href="/cli/configuration">
+    Environment variables and config paths
+  </Card>
+</CardGroup>

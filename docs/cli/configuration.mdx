@@ -1,0 +1,202 @@
+---
+title: "Configuration"
+description: "Environment variables, output behavior, and file paths for the Outlit CLI"
+---
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OUTLIT_API_KEY` | API key for authentication (overridden by `--api-key` flag) | — |
+| `OUTLIT_API_URL` | Override the API base URL | `https://app.outlit.ai` |
+| `XDG_CONFIG_HOME` | Override the config directory (Unix) | `~/.config` |
+| `CI` | Triggers JSON output mode when equal to exactly `"true"` or `"1"` | — |
+| `GITHUB_ACTIONS` | Triggers JSON output mode when set | — |
+| `TERM` | When set to `dumb`, disables ANSI colors | — |
+
+## Config Directory
+
+The CLI stores configuration in a platform-specific directory:
+
+| Platform | Path |
+|----------|------|
+| macOS / Linux | `~/.config/outlit/` (or `$XDG_CONFIG_HOME/outlit/`) |
+| Windows | `%APPDATA%\outlit\` |
+
+### Files
+
+| File | Purpose | Created by |
+|------|---------|------------|
+| `credentials.json` | Stored API key | `outlit auth login` |
+
+The credentials file has `0600` permissions (readable by owner only) and contains:
+
+```json
+{
+  "apiKey": "ok_your_api_key_here"
+}
+```
+
+## Output Behavior
+
+### TTY Mode (Interactive)
+
+When running in an interactive terminal, the CLI outputs:
+
+- **Tables** with Unicode box-drawing characters for list commands
+- **Spinners** on stderr during API calls
+- **Colored output** with green checkmarks for success
+- **Pagination hints** showing total count and next cursor
+
+Example:
+
+```
+┌──────────────────────────┬────────────┬─────────┬──────────┬────────────┐
+│ Name                     │ Domain     │ Billing │ MRR      │ Last Active│
+├──────────────────────────┼────────────┼─────────┼──────────┼────────────┤
+│ Acme Corp                │ acme.com   │ PAYING  │ $5000.00 │ 2d ago     │
+│ Globex Inc               │ globex.com │ TRIALING│ $0.00    │ 5h ago     │
+└──────────────────────────┴────────────┴─────────┴──────────┴────────────┘
+Showing 20 of 150 total. Next page: --cursor cursor_abc123
+```
+
+### JSON Mode
+
+When JSON mode is active, all output is pretty-printed JSON on stdout:
+
+```json
+{
+  "items": [...],
+  "pagination": {
+    "hasMore": true,
+    "nextCursor": "cursor_abc123",
+    "total": 150
+  }
+}
+```
+
+Errors are also JSON, written to stderr:
+
+```json
+{
+  "error": "Not authenticated. Run `outlit auth login` or pass --api-key.",
+  "code": "not_authenticated"
+}
+```
+
+### When JSON Mode Activates
+
+JSON mode activates automatically in any of these conditions:
+
+| Condition | Example |
+|-----------|---------|
+| `--json` flag | `outlit customers list --json` |
+| stdout is piped | `outlit customers list \| jq` |
+| `CI=true` or `CI=1` | GitHub Actions, CircleCI, etc. |
+| `GITHUB_ACTIONS` is set | GitHub Actions |
+| `TERM=dumb` | Terminals without ANSI support |
+
+<Info>
+  This means AI agents (Claude Code, Cursor, etc.) automatically get JSON output when they run CLI commands as subprocesses — no extra configuration needed.
+</Info>
+
+## Error Handling
+
+All errors exit with code `1`. The error format depends on the output mode:
+
+**TTY:**
+```
+Error: Not authenticated. Run `outlit auth login` or pass --api-key.
+```
+
+**JSON (stderr):**
+```json
+{
+  "error": "Not authenticated. Run `outlit auth login` or pass --api-key.",
+  "code": "not_authenticated"
+}
+```
+
+### Error Codes
+
+| Code | Description |
+|------|-------------|
+| `not_authenticated` | No API key found in any source |
+| `invalid_key_format` | API key doesn't match expected format (`ok_` prefix) |
+| `invalid_key` | API key rejected by the server |
+| `validation_failed` | Key failed server verification during `auth login` |
+| `auth_required` | Client creation failed (authentication error) |
+| `missing_key` | `--key` flag required but not provided (non-interactive `auth login`) |
+| `missing_input` | Required argument not provided |
+| `api_error` | API request failed (includes HTTP status) |
+| `write_error` | Failed to write a config file |
+| `unlink_error` | Failed to delete credentials file during `auth logout` |
+| `exec_error` | Subprocess execution failed (setup commands) |
+
+## Data Formatting
+
+The CLI formats values for readability in TTY mode:
+
+| Type | Raw value | Displayed as |
+|------|-----------|-------------|
+| MRR (cents) | `500000` | `$5000.00` |
+| Date | `2025-02-10T15:30:00Z` | `2d ago` |
+| Long names | `Very Long Customer Name Inc` | `Very Long Customer Na…` |
+| Missing values | `null` / `undefined` | `--` |
+
+### Relative Date Format
+
+| Time elapsed | Display |
+|-------------|---------|
+| < 1 minute | `just now` |
+| < 1 hour | `5m ago` |
+| < 1 day | `3h ago` |
+| < 30 days | `7d ago` |
+| < 1 year | `2mo ago` |
+| >= 1 year | `1y ago` |
+
+## Scripting Examples
+
+### Export All Customers
+
+```bash
+#!/bin/bash
+LIMIT=100
+CURSOR=""
+
+while true; do
+  if [ -z "$CURSOR" ]; then
+    PAGE=$(outlit customers list --limit $LIMIT --json)
+  else
+    PAGE=$(outlit customers list --limit $LIMIT --cursor "$CURSOR" --json)
+  fi
+
+  jq -r '.items[].domain' <<< "$PAGE" >> all_domains.txt
+
+  HAS_MORE=$(jq -r '.pagination.hasMore' <<< "$PAGE")
+  [ "$HAS_MORE" = "false" ] && break
+
+  CURSOR=$(jq -r '.pagination.nextCursor' <<< "$PAGE")
+done
+```
+
+### Export to CSV
+
+```bash
+outlit customers list --limit 100 --json \
+  | jq -r '.items[] | [.domain, .billingStatus, .currentMrr] | @csv'
+```
+
+### CI Health Check
+
+```bash
+# Validate API key and agent setup in CI
+outlit doctor --json | jq -e '.ok' > /dev/null || exit 1
+```
+
+### Filter Churned Users
+
+```bash
+outlit users list --journey-stage CHURNED --no-activity-in 30d --json \
+  | jq '.items[] | {email, customer: .customerId, lastSeen: .lastActivityAt}'
+```
