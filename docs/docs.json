@@ -57,6 +57,15 @@
             "pages": ["tracking/server/nodejs", "tracking/server/rust"]
           },
           {
+            "group": "CLI",
+            "pages": [
+              "cli/overview",
+              "cli/commands",
+              "cli/ai-agents",
+              "cli/configuration"
+            ]
+          },
+          {
             "group": "AI Integrations",
             "pages": ["ai-integrations/mcp"]
           }

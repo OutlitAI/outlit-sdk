@@ -1,0 +1,511 @@
+---
+title: "Command Reference"
+description: "Complete reference for all Outlit CLI data commands"
+---
+
+All data commands share these common flags:
+
+| Flag | Description |
+|------|-------------|
+| `--api-key <key>` | Override the active API key for this request |
+| `--json` | Force JSON output (auto-enabled when piped) |
+| `--help` | Show help for the command |
+
+## Customers List
+
+List and filter customers with pagination.
+
+```bash
+outlit customers list [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--billing-status` | string | — | Filter by billing status: `NONE`, `TRIALING`, `PAYING`, `CHURNED` |
+| `--mrr-above` | number | — | Filter by MRR >= amount (in cents, e.g. `10000` = $100/mo) |
+| `--mrr-below` | number | — | Filter by MRR <= amount (in cents) |
+| `--status` | string | — | Filter by customer status: `PROVISIONAL`, `ACTIVE`, `CHURNED`, `MERGED` |
+| `--type` | string | — | Filter by type: `COMPANY`, `INDIVIDUAL` |
+| `--no-activity-in` | string | — | Inactive for period: `7d`, `14d`, `30d`, `90d` |
+| `--has-activity-in` | string | — | Active within period: `7d`, `14d`, `30d`, `90d` |
+| `--search` | string | — | Search by name or domain |
+| `--order-by` | string | `last_activity_at` | Sort field |
+| `--order-direction` | string | `desc` | Sort direction: `asc`, `desc` |
+| `--limit` | number | `20` | Results per page (1–100) |
+| `--cursor` | string | — | Pagination cursor from a previous response |
+
+### Examples
+
+```bash
+# Paying customers inactive for 30 days
+outlit customers list --billing-status PAYING --no-activity-in 30d
+
+# High-MRR customers sorted by revenue
+outlit customers list --mrr-above 50000 --order-by mrr_cents --order-direction desc
+
+# Search for a customer
+outlit customers list --search "acme"
+
+# Pipe to jq
+outlit customers list --json | jq '.items[] | {domain, mrr: .currentMrr}'
+```
+
+### JSON Response
+
+```json
+{
+  "items": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Acme Corp",
+      "domain": "acme.com",
+      "billingStatus": "PAYING",
+      "currentMrr": 500000,
+      "lastActivityAt": "2025-02-10T15:30:00Z",
+      "status": "ACTIVE",
+      "type": "COMPANY"
+    }
+  ],
+  "pagination": {
+    "hasMore": true,
+    "nextCursor": "cursor_abc123",
+    "total": 150
+  }
+}
+```
+
+### Pagination
+
+Use `--cursor` to page through results:
+
+```bash
+# First page
+outlit customers list --limit 50 --json > page1.json
+
+# Next page
+CURSOR=$(jq -r '.pagination.nextCursor' page1.json)
+outlit customers list --limit 50 --cursor "$CURSOR" --json
+```
+
+In interactive mode, the CLI shows a hint after the table:
+
+```
+20 of 150 — use --cursor cursor_abc123 for next page
+```
+
+## Customers Get
+
+Get a detailed customer profile with optional sections.
+
+```bash
+outlit customers get <customer> [flags]
+```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `customer` | Yes | Customer domain (e.g. `acme.com`), UUID, or name |
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--include` | string | — | Comma-separated sections: `users`, `revenue`, `recentTimeline`, `behaviorMetrics` |
+| `--timeframe` | string | `30d` | Lookback window for included sections: `7d`, `14d`, `30d`, `90d` |
+
+### Examples
+
+```bash
+# Basic profile
+outlit customers get acme.com
+
+# Full profile with all sections
+outlit customers get acme.com --include users,revenue,recentTimeline --timeframe 90d
+
+# By UUID
+outlit customers get 550e8400-e29b-41d4-a716-446655440000
+```
+
+### JSON Response
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Acme Corp",
+  "domain": "acme.com",
+  "billingStatus": "PAYING",
+  "currentMrr": 500000,
+  "contacts": [
+    {
+      "id": "user-uuid",
+      "name": "Jane Doe",
+      "email": "jane@acme.com",
+      "journeyStage": "CHAMPION"
+    }
+  ],
+  "revenue": {
+    "currentMrr": 500000,
+    "historicalMrr": []
+  },
+  "recentTimeline": [
+    {
+      "type": "PAGE_VIEW",
+      "channel": "WEB",
+      "occurredAt": "2025-02-10T15:30:00Z"
+    }
+  ]
+}
+```
+
+<Info>
+  The `--include users` flag maps to the `contacts` key in the response, which contains user/contact data for that customer.
+</Info>
+
+## Customers Timeline
+
+View the activity timeline for a customer, filtered by channel and event type.
+
+```bash
+outlit customers timeline <customer> [flags]
+```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `customer` | Yes | Customer domain or UUID |
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--timeframe` | string | `30d` | Lookback window: `7d`, `14d`, `30d`, `90d` |
+| `--start-date` | string | — | Start date (YYYY-MM-DD) — overrides `--timeframe` |
+| `--end-date` | string | — | End date (YYYY-MM-DD) — overrides `--timeframe` |
+| `--channels` | string | — | Comma-separated channels: `EMAIL`, `SLACK`, `WEB`, etc. |
+| `--event-types` | string | — | Comma-separated types: `PAGE_VIEW`, `MEETING`, `SUPPORT_TICKET`, etc. |
+| `--limit` | number | `20` | Results per page (1–100) |
+| `--cursor` | string | — | Pagination cursor |
+
+<Note>
+  When `--start-date` or `--end-date` is provided, `--timeframe` is ignored.
+</Note>
+
+### Examples
+
+```bash
+# Last 30 days (default)
+outlit customers timeline acme.com
+
+# Last 90 days, email and Slack only
+outlit customers timeline acme.com --timeframe 90d --channels EMAIL,SLACK
+
+# Custom date range
+outlit customers timeline acme.com --start-date 2025-01-01 --end-date 2025-03-01
+
+# Page views and meetings only
+outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50
+```
+
+### JSON Response
+
+```json
+{
+  "items": [
+    {
+      "id": "event-uuid",
+      "customerId": "customer-uuid",
+      "type": "PAGE_VIEW",
+      "channel": "WEB",
+      "occurredAt": "2025-02-10T15:30:00Z",
+      "metadata": {
+        "url": "https://acme.com/pricing",
+        "title": "Pricing Page"
+      }
+    }
+  ],
+  "pagination": {
+    "hasMore": false,
+    "nextCursor": null,
+    "total": 45
+  }
+}
+```
+
+## Users List
+
+List and filter users across your customer base.
+
+```bash
+outlit users list [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--journey-stage` | string | — | Filter by stage: `CHAMPION`, `AT_RISK`, `CHURNED`, `ACTIVATED`, etc. |
+| `--customer-id` | string | — | Filter to users of a specific customer (UUID) |
+| `--no-activity-in` | string | — | Inactive for period: `7d`, `14d`, `30d`, `90d` |
+| `--has-activity-in` | string | — | Active within period: `7d`, `14d`, `30d`, `90d` |
+| `--search` | string | — | Search by name or email |
+| `--order-by` | string | `last_activity_at` | Sort field |
+| `--order-direction` | string | `desc` | Sort direction: `asc`, `desc` |
+| `--limit` | number | `20` | Results per page (1–100) |
+| `--cursor` | string | — | Pagination cursor |
+
+### Examples
+
+```bash
+# Find champions
+outlit users list --journey-stage CHAMPION
+
+# Inactive users from a specific customer
+outlit users list --customer-id 550e8400-... --no-activity-in 30d
+
+# Search by name
+outlit users list --search "alice" --order-by last_activity_at
+```
+
+### JSON Response
+
+```json
+{
+  "items": [
+    {
+      "id": "user-uuid",
+      "email": "jane@acme.com",
+      "name": "Jane Doe",
+      "customerId": "customer-uuid",
+      "journeyStage": "CHAMPION",
+      "lastActivityAt": "2025-02-10T15:30:00Z"
+    }
+  ],
+  "pagination": {
+    "hasMore": true,
+    "nextCursor": "cursor_abc",
+    "total": 500
+  }
+}
+```
+
+## Facts
+
+Retrieve AI-generated facts, signals, and insights for a customer.
+
+```bash
+outlit facts <customer> [flags]
+```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `customer` | Yes | Customer domain or UUID |
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--timeframe` | string | `30d` | Lookback window: `7d`, `14d`, `30d`, `90d` |
+| `--limit` | number | `20` | Results per page (1–100) |
+| `--cursor` | string | — | Pagination cursor |
+
+### Examples
+
+```bash
+# Facts from last 30 days
+outlit facts acme.com
+
+# Extended lookback
+outlit facts acme.com --timeframe 90d --limit 50
+
+# Pipe for processing
+outlit facts acme.com --json | jq '.items[] | select(.severity == "HIGH")'
+```
+
+### JSON Response
+
+```json
+{
+  "items": [
+    {
+      "id": "fact-uuid",
+      "customerId": "customer-uuid",
+      "type": "SIGNAL",
+      "title": "Budget concerns raised",
+      "severity": "HIGH",
+      "generatedAt": "2025-02-10T15:30:00Z"
+    }
+  ],
+  "pagination": {
+    "hasMore": false,
+    "nextCursor": null,
+    "total": 12
+  }
+}
+```
+
+## Search
+
+Semantic search across customer context — events, signals, emails, and facts.
+
+```bash
+outlit search <query> [flags]
+```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `query` | Yes | Natural language search query |
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--customer` | string | — | Scope to a specific customer (domain or UUID) |
+| `--top-k` | number | `20` | Maximum results to return |
+| `--after` | string | — | Filter to events after date (YYYY-MM-DD) |
+| `--before` | string | — | Filter to events before date (YYYY-MM-DD) |
+
+### Examples
+
+```bash
+# Organization-wide search
+outlit search "pricing objections"
+
+# Scoped to a customer
+outlit search "budget concerns" --customer acme.com
+
+# Time-bounded
+outlit search "expansion signals" --after 2025-01-01 --before 2025-03-31
+
+# More results
+outlit search "churn risk" --top-k 100 --json
+```
+
+### JSON Response
+
+```json
+{
+  "items": [
+    {
+      "customerId": "customer-uuid",
+      "snippet": "Customer mentioned pricing concerns in Q1 planning meeting",
+      "relevance": 0.92,
+      "source": "TIMELINE",
+      "timestamp": "2025-02-10T15:30:00Z"
+    }
+  ],
+  "total": 42
+}
+```
+
+<Note>
+  The search response uses a flat `total` field — not nested under `pagination` like other list commands.
+</Note>
+
+## SQL
+
+Execute read-only SQL queries against Outlit's analytics database.
+
+```bash
+outlit sql <query> [flags]
+outlit sql --query-file <path> [flags]
+```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `query` | Yes* | SQL query string (*or use `--query-file`) |
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--query-file` | string | — | Path to a `.sql` file (takes precedence over positional arg) |
+| `--limit` | number | `1000` | Maximum rows to return |
+
+### Examples
+
+```bash
+# Inline query
+outlit sql "SELECT event_type, COUNT(*) as cnt FROM events GROUP BY 1 ORDER BY cnt DESC"
+
+# From a file
+outlit sql --query-file ./queries/monthly-activity.sql
+
+# Pipe to jq
+outlit sql "SELECT domain, current_mrr FROM customer_dimensions ORDER BY current_mrr DESC LIMIT 10" | jq
+```
+
+### JSON Response
+
+```json
+{
+  "rows": [
+    { "event_type": "PAGE_VIEW", "cnt": 12500 },
+    { "event_type": "MEETING", "cnt": 340 }
+  ],
+  "rowCount": 2
+}
+```
+
+### Available Tables
+
+Use `outlit schema` to discover all tables and their columns. Common tables:
+
+| Table | Description |
+|-------|-------------|
+| `events` | Event stream (page views, meetings, emails, etc.) |
+| `customer_dimensions` | Denormalized customer attributes and metrics |
+| `user_dimensions` | Denormalized user attributes |
+| `mrr_snapshots` | Monthly recurring revenue snapshots |
+
+## Schema
+
+Discover database tables and their column definitions.
+
+```bash
+outlit schema [table]
+```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `table` | No | Specific table name — omit to list all tables |
+
+### Examples
+
+```bash
+# List all tables
+outlit schema
+
+# Describe a specific table
+outlit schema events
+
+# JSON output
+outlit schema customer_dimensions --json
+```
+
+### JSON Response
+
+```json
+{
+  "tables": [
+    {
+      "name": "events",
+      "columns": [
+        { "name": "id", "type": "uuid", "nullable": false },
+        { "name": "event_type", "type": "varchar", "nullable": false }
+      ]
+    }
+  ]
+}
+```
