@@ -33,7 +33,14 @@ jobs:
 
       - name: Run tests
         working-directory: packages/cli
-        run: bun test
+        run: |
+          # config and client tests use real (unmocked) modules.
+          # Run them in their own process so mock.module() calls from
+          # other test files don't leak and replace the real modules.
+          bun test tests/lib/config.test.ts tests/lib/client.test.ts
+          bun test $(find tests -name '*.test.ts' \
+            ! -path 'tests/lib/config.test.ts' \
+            ! -path 'tests/lib/client.test.ts' | tr '\n' ' ')
 
       - name: Build all binaries
         working-directory: packages/cli
