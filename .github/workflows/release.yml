@@ -65,11 +65,18 @@ jobs:
         run: |
           VERSION=$(echo "$PUBLISHED" | jq -r '.[] | select(.name == "@outlit/cli") | .version')
           if [ -n "$VERSION" ]; then
-            echo "Creating git tag @outlit/cli@$VERSION"
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git tag -a "@outlit/cli@$VERSION" -m "@outlit/cli v$VERSION"
-            git push origin "@outlit/cli@$VERSION"
+            TAG="@outlit/cli@$VERSION"
+
+            # Create and push tag only if it doesn't already exist
+            if git ls-remote --tags origin "$TAG" | grep -q "$TAG"; then
+              echo "Tag $TAG already exists — skipping tag creation"
+            else
+              echo "Creating git tag $TAG"
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git tag -a "$TAG" -m "@outlit/cli v$VERSION"
+              git push origin "$TAG"
+            fi
 
             echo "Dispatching CLI binary release for v$VERSION"
             gh workflow run release-cli.yml \
