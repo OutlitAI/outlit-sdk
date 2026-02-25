@@ -1,5 +1,11 @@
 # @outlit/cli
 
+## 1.1.0
+
+### Minor Changes
+
+- [#56](https://github.com/OutlitAI/outlit-sdk/pull/56) [`f435585`](https://github.com/OutlitAI/outlit-sdk/commit/f435585adc319efe1613b125ee570f6c408f5503) Thanks [@rafa-thayto](https://github.com/rafa-thayto)! - Add `-v` short flag as alias for `--version`, fix table formatting, and fix CLI binary release pipeline.
+
 ## 1.0.1
 
 ### Patch Changes
