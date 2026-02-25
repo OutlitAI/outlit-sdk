@@ -24,8 +24,8 @@ outlit customers list [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--billing-status` | string | — | Filter by billing status: `NONE`, `TRIALING`, `PAYING`, `CHURNED` |
-| `--mrr-above` | number | — | Filter by MRR >= amount (in cents, e.g. `10000` = $100/mo) |
-| `--mrr-below` | number | — | Filter by MRR <= amount (in cents) |
+| `--mrr-above` | number | — | MRR floor in cents (e.g. `10000` for $100/mo) |
+| `--mrr-below` | number | — | MRR ceiling in cents |
 | `--status` | string | — | Filter by customer status: `PROVISIONAL`, `ACTIVE`, `CHURNED`, `MERGED` |
 | `--type` | string | — | Filter by type: `COMPANY`, `INDIVIDUAL` |
 | `--no-activity-in` | string | — | Inactive for period: `7d`, `14d`, `30d`, `90d` |
