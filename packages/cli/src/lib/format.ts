@@ -22,10 +22,11 @@ export function relativeDate(value: unknown): string {
   return `${Math.floor(months / 12)}y ago`
 }
 
-/** Truncates a string to maxLen with "…". Returns "--" for null/undefined. */
+/** Truncates a string to maxLen with "...". Returns "--" for null/undefined. */
 export function truncate(value: unknown, maxLen: number): string {
   if (value == null) return "--"
   const str = String(value)
   if (str.length <= maxLen) return str
-  return `${str.slice(0, maxLen - 1)}…`
+  if (maxLen <= 3) return "...".slice(0, maxLen)
+  return `${str.slice(0, maxLen - 3)}...`
 }

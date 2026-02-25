@@ -44,8 +44,8 @@ describe("truncate", () => {
   })
 
   test("truncates long strings with ellipsis", () => {
-    expect(truncate("hello world", 8)).toBe("hello w…")
-    expect(truncate("abcdefghij", 5)).toBe("abcd…")
+    expect(truncate("hello world", 8)).toBe("hello...")
+    expect(truncate("abcdefghij", 6)).toBe("abc...")
   })
 
   test("returns -- for null, undefined", () => {

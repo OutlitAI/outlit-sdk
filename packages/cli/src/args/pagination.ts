@@ -4,7 +4,7 @@ import { outputError } from "../lib/output"
 export const paginationArgs = {
   limit: {
     type: "string",
-    description: "Max results to return (1–100). Default: 20.",
+    description: "Max results to return (1-100). Default: 20.",
     default: "20",
   },
   cursor: {

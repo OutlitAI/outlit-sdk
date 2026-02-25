@@ -48,6 +48,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -70,11 +72,33 @@ jobs:
       - name: Build
         run: bun run build
 
+      - name: Detect changed packages
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -v '^$' || true)
+          # Root-level config changes (biome, tsconfig, lockfile, etc.) affect all packages
+          ROOT_CHANGED=$(echo "$CHANGED" | grep -v '^$' | grep -v '^packages/' | grep -v '^docs/' | grep -v '^\.changeset/' | grep -v '^crates/' || true)
+          if [ -n "$ROOT_CHANGED" ] || echo "$CHANGED" | grep -q '^packages/browser/'; then
+            echo "browser=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "browser=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "$ROOT_CHANGED" ] || echo "$CHANGED" | grep -q '^packages/cli/'; then
+            echo "cli=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "cli=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Get Playwright version
+        if: steps.changes.outputs.browser == 'true'
         id: playwright-version
-        run: echo "version=$(cd packages/browser && bunx playwright --version | cut -d' ' -f2)" >> $GITHUB_OUTPUT
+        run: echo "version=$(cd packages/browser && bunx playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Playwright browsers
+        if: steps.changes.outputs.browser == 'true'
         uses: actions/cache@v4
         id: playwright-cache
         with:
@@ -82,17 +106,19 @@ jobs:
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
 
       - name: Install Playwright
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        if: steps.changes.outputs.browser == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
         run: cd packages/browser && bunx playwright install --with-deps chromium
 
       - name: Install Playwright deps only (when cached)
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        if: steps.changes.outputs.browser == 'true' && steps.playwright-cache.outputs.cache-hit == 'true'
         run: cd packages/browser && bunx playwright install-deps chromium
 
       - name: Run browser tests
+        if: steps.changes.outputs.browser == 'true'
         run: cd packages/browser && bun run test
 
       - name: Run CLI tests
+        if: steps.changes.outputs.cli == 'true'
         working-directory: packages/cli
         run: |
           # config and client tests use real (unmocked) modules.

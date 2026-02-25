@@ -29,7 +29,7 @@ export default defineCommand({
     }
 
     if (isInteractive()) {
-      p.intro("Outlit CLI — Sign Up")
+      p.intro("Outlit CLI -- Sign Up")
     }
 
     try {

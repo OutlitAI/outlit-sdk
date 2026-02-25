@@ -12,7 +12,7 @@ export default defineCommand({
       "Print the active API key (masked) and its source.",
       "",
       "Validates the key against the Outlit API.",
-      "Designed for shell scripting — outputs a single line in TTY mode.",
+      "Designed for shell scripting -- outputs a single line in TTY mode.",
       "",
       "Examples:",
       "  outlit auth whoami",

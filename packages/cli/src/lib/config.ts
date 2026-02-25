@@ -3,6 +3,7 @@ import { homedir } from "node:os"
 import { dirname, join } from "node:path"
 import pkg from "../../package.json"
 import { errorMessage, outputError } from "./output"
+import { isUnicodeSupported } from "./tty"
 
 /** CLI version — read from package.json, inlined at build time by Bun's bundler. */
 export const CLI_VERSION: string = pkg.version
@@ -16,8 +17,8 @@ export const DEFAULT_API_URL = "https://app.outlit.ai"
 /** Outlit dashboard URL for API key management. */
 export const OUTLIT_DASHBOARD_URL = "https://app.outlit.ai/workspace-profile"
 
-/** ANSI green checkmark for interactive terminal output. */
-export const TICK = "\x1b[32m✓\x1b[0m"
+/** ANSI green checkmark for interactive terminal output. Falls back to ASCII on Windows. */
+export const TICK = `\x1b[32m${isUnicodeSupported ? String.fromCodePoint(0x2713) : String.fromCodePoint(0x221a)}\x1b[0m`
 
 /** Checks if an error is a Node.js ENOENT (file/command not found). */
 export function isEnoentError(err: unknown): err is NodeJS.ErrnoException {
