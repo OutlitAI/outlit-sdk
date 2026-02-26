@@ -62,7 +62,7 @@
           },
           {
             "group": "AI Integrations",
-            "pages": ["ai-integrations/mcp"]
+            "pages": ["ai-integrations/mcp", "ai-integrations/skills"]
           }
         ]
       },

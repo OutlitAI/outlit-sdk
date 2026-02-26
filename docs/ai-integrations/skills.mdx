@@ -1,0 +1,49 @@
+---
+title: "Agent Skills"
+description: "Give AI agents deeper context for Outlit SDK integration and customer data queries"
+---
+
+Agent skills teach AI agents how to work with Outlit — best practices, decision frameworks, and integration patterns. The [MCP server](/ai-integrations/mcp) gives agents _tools_; skills give them _knowledge_ about how to use those tools well.
+
+Skills are open source at [github.com/OutlitAI/outlit-agent-skills](https://github.com/OutlitAI/outlit-agent-skills).
+
+## Install
+
+```bash
+outlit setup skills
+```
+
+Auto-detects your package runner and installs the `outlit-cli` skill. No API key required.
+
+Or install manually:
+
+```bash
+npx -y skills add https://github.com/OutlitAI/outlit-agent-skills --skill outlit-cli -y -g
+```
+
+## Verify
+
+```bash
+outlit doctor
+```
+
+```
+  ✓ Agent Skills: Outlit agent skills installed
+```
+
+## Available Skills
+
+| Skill | What it teaches |
+|-------|-----------------|
+| **outlit-cli** | CLI commands, AI agent setup, customer queries from the terminal |
+| **outlit-sdk** | SDK integration for any framework — detection, consent, auth, billing, events |
+| **outlit-mcp** | MCP tool usage, SQL patterns, analysis workflows, common pitfalls |
+
+## Recommended Setup
+
+For the best experience, set up both MCP and skills:
+
+```bash
+outlit setup claude-code   # MCP tools (requires API key)
+outlit setup skills        # Agent knowledge (no key needed)
+```
