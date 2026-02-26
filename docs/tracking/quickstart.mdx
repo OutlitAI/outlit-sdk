@@ -1,22 +1,57 @@
 ---
 title: "Quick Start"
-description: "Set up customer journey tracking in under 5 minutes"
+description: "Install the Outlit CLI, add tracking to your site, and query your first customer data in under 5 minutes"
 ---
 
-## Prerequisites
+## What is Outlit?
 
-Before you begin, you'll need:
+Outlit is a customer context layer that unifies website visits, product usage, and billing events into a single queryable graph. You install it with the CLI, add a lightweight tracker to your site, and immediately start querying customer data from the terminal or through AI agents.
 
-- An Outlit account with an organization
-- Your public key from [Settings → Website Tracking](https://app.outlit.ai/workspace-profile/tracking)
+## Step 1: Install the CLI
 
-## Step 1: Add the Tracker
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install -g @outlit/cli
+    ```
+  </Tab>
+  <Tab title="Homebrew">
+    ```bash
+    brew install outlitai/tap/outlit
+    ```
+  </Tab>
+  <Tab title="Binary">
+    Download the latest release from [GitHub Releases](https://github.com/OutlitAI/outlit-sdk/releases) and add it to your `PATH`.
+  </Tab>
+</Tabs>
 
-Choose your preferred integration method:
+## Step 2: Authenticate
+
+If you already have an account:
+
+```bash
+outlit auth login
+```
+
+New to Outlit? Sign up directly from the terminal:
+
+```bash
+outlit auth signup
+```
+
+<Info>
+  The CLI stores your API key securely at `~/.config/outlit/credentials.json` with `0600` permissions. You can also pass a key directly with `--key` or set the `OUTLIT_API_KEY` environment variable.
+</Info>
+
+## Step 3: Add Tracking to Your Site
+
+The browser SDK is your first data source — it captures website visits, form submissions, and engagement automatically.
+
+Get your public key from [Settings → Website Tracking](https://app.outlit.ai/workspace-profile/tracking), then choose your framework:
 
 <Tabs>
   <Tab title="Script Tag">
-    Add this snippet before the closing `</body>` tag on every page:
+    Add this before the closing `</body>` tag:
 
     ```html
     <script>
@@ -43,31 +78,15 @@ Choose your preferred integration method:
     ```
 
     <Tip>
-      Replace `pk_your_public_key_here` with your actual public key from Settings. This snippet queues any tracking calls made before the SDK loads, so you can safely call `outlit.track()` anywhere on the page.
+      Replace `pk_your_public_key_here` with your actual public key. This snippet queues calls made before the SDK loads, so you can call `outlit.track()` anywhere on the page.
     </Tip>
   </Tab>
   <Tab title="NPM">
-    Install the package:
-
-    <CodeGroup>
-    ```bash npm
+    ```bash
     npm install --save @outlit/browser
     ```
 
-    ```bash pnpm
-    pnpm add @outlit/browser
-    ```
-
-    ```bash yarn
-    yarn add @outlit/browser
-    ```
-
-    ```bash bun
-    bun add @outlit/browser
-    ```
-    </CodeGroup>
-
-    Initialize once at app startup:
+    Initialize at app startup:
 
     ```typescript
     import outlit from '@outlit/browser'
@@ -76,30 +95,13 @@ Choose your preferred integration method:
     ```
   </Tab>
   <Tab title="React">
-    Install the package:
-
-    <CodeGroup>
-    ```bash npm
+    ```bash
     npm install --save @outlit/browser
     ```
-
-    ```bash pnpm
-    pnpm add @outlit/browser
-    ```
-
-    ```bash yarn
-    yarn add @outlit/browser
-    ```
-
-    ```bash bun
-    bun add @outlit/browser
-    ```
-    </CodeGroup>
 
     Wrap your app with the provider:
 
     ```tsx
-    // app/layout.tsx or _app.tsx
     import { OutlitProvider } from '@outlit/browser/react'
 
     export default function RootLayout({ children }) {
@@ -114,115 +116,63 @@ Choose your preferred integration method:
 </Tabs>
 
 <Warning>
-  Outlit uses cookies to track visitors across pages. If you need GDPR compliance, show a cookie consent banner before loading the tracker. [See consent management →](/tracking/browser/script#consent-management)
+  Outlit uses cookies to track visitors across pages. If you need GDPR compliance, show a consent banner before loading the tracker. [See consent management →](/tracking/browser/script#consent-management)
 </Warning>
 
-## Step 2: Verify Installation
+## Step 4: Query Your Data
 
-After adding the tracker, visit your website and:
+Once the tracker is live and you have some traffic, use the CLI to explore:
 
-1. Open browser DevTools → Network tab
-2. Filter by "outlit" or "events"
-3. You should see requests to `app.outlit.ai/api/i/v1/...`
+```bash
+# List your customers
+outlit customers list
 
-<Note>
-  Look for requests to `app.outlit.ai/api/i/v1/` with a 200 status code.
-</Note>
+# See a customer's full timeline
+outlit customers timeline acme.com
 
-<Info>
-  If you don't see requests, check that your public key is correct and the domain is allowed in your tracking settings.
-</Info>
+# Search with natural language
+outlit search "who signed up this week"
 
-## Step 3: Track Custom Events
-
-Beyond automatic pageviews and form captures, track events that matter to your business:
-
-<CodeGroup>
-```typescript Script Tag / NPM
-// After a user views pricing
-window.outlit.track('pricing_viewed', {
-  plan: 'enterprise'
-})
-
-// After a user starts a trial
-window.outlit.track('trial_started', {
-  plan: 'pro',
-  source: 'pricing_page'
-})
+# Run SQL directly
+outlit sql "SELECT domain, billing_status, mrr_cents FROM customers ORDER BY mrr_cents DESC LIMIT 10"
 ```
 
-```tsx React
-import { useOutlit } from '@outlit/browser/react'
+<Tip>
+  **Set up AI agents** to query customer context directly from Cursor, Claude Code, or VS Code:
 
-function PricingButton() {
-  const { track } = useOutlit()
+  ```bash
+  outlit setup --yes
+  ```
 
-  return (
-    <button onClick={() => track('pricing_clicked', { plan: 'pro' })}>
-      Start Free Trial
-    </button>
-  )
-}
-```
-</CodeGroup>
+  This auto-detects installed agents and configures MCP access. See [AI Agent Setup →](/cli/ai-agents)
+</Tip>
 
-## Step 4: Identify Visitors
+## What happens automatically?
 
-When a visitor signs up, logs in, or submits a form with their email, identify them:
+Once the browser SDK is installed, Outlit captures without any additional code:
 
-<CodeGroup>
-```typescript Script Tag / NPM
-// After login or signup
-outlit.identify({
-  email: 'user@example.com',
-  userId: 'usr_abc123', // Your internal user ID (optional)
-  traits: {
-    name: 'Jane Doe',
-    company: 'Acme Inc',
-    plan: 'pro'
-  }
-})
-```
-
-```tsx React
-import { useOutlit } from '@outlit/browser/react'
-
-function LoginForm() {
-  const { identify } = useOutlit()
-
-  const handleLogin = async (email: string) => {
-    // ... your login logic
-    
-    identify({
-      email,
-      traits: { lastLogin: new Date().toISOString() }
-    })
-  }
-}
-```
-</CodeGroup>
-
-<Info>
-  **Good news:** If your signup/login uses a standard HTML form with an email field, auto-identify handles this automatically! Manual `identify()` calls are only needed for:
-  - JavaScript-based auth (OAuth, magic links)
-  - Server-side authentication
-  - Adding additional traits after login
-</Info>
+| What | How |
+|------|-----|
+| **Pageviews** | Every page navigation, with URL, title, and referrer |
+| **Form submissions** | Field values with automatic sensitive-field sanitization |
+| **Identity** | Auto-identifies visitors when forms contain an email field |
+| **Engagement time** | Active time on each page (not just tab-open time) |
+| **Attribution** | UTM parameters, referrer, and landing page on first visit |
+| **Company enrichment** | IP-based company identification for B2B visitor intelligence |
 
 ## Next Steps
 
 <CardGroup cols={2}>
   <Card title="How It Works" icon="circle-info" href="/tracking/how-it-works">
-    Understand the tracking flow
+    Understand how Outlit collects, resolves, and connects customer data
   </Card>
-  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
-    Learn how profiles are merged
+  <Card title="Customer Context Graph" icon="circle-nodes" href="/concepts/customer-context-graph">
+    Learn about the unified data model behind Outlit
+  </Card>
+  <Card title="CLI Commands" icon="terminal" href="/cli/commands">
+    Full reference for querying customer data
   </Card>
   <Card title="Browser SDKs" icon="browser" href="/tracking/browser/script">
-    Deep dive into browser integration
-  </Card>
-  <Card title="Server SDKs" icon="server" href="/tracking/server/nodejs">
-    Track events from your backend
+    Deep dive into browser integration options
   </Card>
 </CardGroup>
-
