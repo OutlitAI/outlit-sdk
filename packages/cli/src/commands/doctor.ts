@@ -16,8 +16,8 @@ import {
   resolveApiKey,
 } from "../lib/config"
 import { errorMessage, isJsonMode, outputResult } from "../lib/output"
-import { type AgentId, detectAgents as detectInstalledAgents } from "./setup/index"
 import { isUnicodeSupported } from "../lib/tty"
+import { type AgentId, detectAgents as detectInstalledAgents } from "./setup/index"
 
 type Status = "pass" | "warn" | "fail"
 interface CheckResult {
@@ -73,7 +73,11 @@ export default defineCommand({
     if (credential) {
       checks.push(await validateApiKey(credential.key))
     } else {
-      checks.push({ name: "API validation", status: "fail", message: "Skipped -- no API key found" })
+      checks.push({
+        name: "API validation",
+        status: "fail",
+        message: "Skipped -- no API key found",
+      })
     }
 
     checks.push(...detectAgents())
@@ -217,6 +221,24 @@ function detectAgents(): CheckResult[] {
         message: "Installed, but Outlit MCP not verified",
         detail: `Run \`outlit setup ${agentId}\` to configure`,
       })
+
+      // For Claude Code, also check if agent skills are installed
+      if (agentId === "claude-code") {
+        const skillsDir = join(home, ".claude", "skills")
+        const hasSkills =
+          existsSync(join(skillsDir, "outlit-cli")) ||
+          existsSync(join(skillsDir, "outlit-sdk")) ||
+          existsSync(join(skillsDir, "outlit-mcp"))
+        results.push({
+          name: "Agent Skills",
+          status: hasSkills ? "pass" : "warn",
+          message: hasSkills ? "Outlit agent skills installed" : "Outlit agent skills not found",
+          detail: hasSkills
+            ? undefined
+            : "Run `outlit setup skills` to install deeper AI agent context",
+        })
+      }
+
       continue
     }
 

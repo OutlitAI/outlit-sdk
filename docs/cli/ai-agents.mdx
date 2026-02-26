@@ -19,6 +19,7 @@ The `outlit setup` command registers Outlit as an [MCP](https://modelcontextprot
 | VS Code | `outlit setup vscode` | Writes to `.vscode/mcp.json` |
 | Gemini CLI | `outlit setup gemini` | Runs `gemini mcp add` |
 | OpenClaw | `outlit setup openclaw` | Writes skill to OpenClaw skills directory |
+| Agent Skills | `outlit setup skills` | Installs [Outlit agent skills](/ai-integrations/skills) via package runner |
 
 ## Auto-Setup
 
@@ -128,6 +129,14 @@ outlit setup openclaw
 ```
 
 Writes an Outlit intelligence skill to the OpenClaw skills directory. Checks `~/clawd/skills/` first, falls back to `~/.openclaw/skills/`. OpenClaw loads skills automatically.
+
+### Agent Skills
+
+```bash
+outlit setup skills
+```
+
+Installs Outlit [agent skills](/ai-integrations/skills) via your package runner. No API key required.
 
 ## Diagnostics
 

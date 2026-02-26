@@ -67,7 +67,7 @@ export default defineCommand({
       "Configure Outlit for AI agent tools.",
       "",
       "Without a subcommand, auto-detects installed agents and configures them all.",
-      "Subcommands: cursor, claude-code, claude-desktop, vscode, gemini, openclaw",
+      "Subcommands: cursor, claude-code, claude-desktop, vscode, gemini, openclaw, skills",
     ].join("\n"),
   },
   args: {
@@ -85,6 +85,7 @@ export default defineCommand({
     vscode: () => import("./vscode").then((m) => m.default),
     gemini: () => import("./gemini").then((m) => m.default),
     openclaw: () => import("./openclaw").then((m) => m.default),
+    skills: () => import("./skills").then((m) => m.default),
   },
   async run({ args }) {
     const json = !!args.json

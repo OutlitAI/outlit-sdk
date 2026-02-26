@@ -9,13 +9,15 @@ Outlit's MCP server lets AI agents query your customer data directly through the
 
 Once connected, your AI agent can search customers, pull revenue metrics, inspect activity timelines, search customer context using natural language, and run SQL analytics — all from within your conversation.
 
-## Install the Claude Code Skill
+## Install Agent Skills
 
-For Claude Code users, install the [Outlit MCP skill](https://github.com/OutlitAI/outlit-agent-skills) to give your agent deeper context about query patterns, best practices, and the ability to help you complete the setup below:
+For the best experience, install [Outlit agent skills](/ai-integrations/skills) to give your AI agent deeper context about query patterns, SDK integration, and best practices:
 
 ```bash
-npx skills add OutlitAI/outlit-agent-skills
+outlit setup skills
 ```
+
+Or install directly: `npx -y skills add https://github.com/OutlitAI/outlit-agent-skills --skill outlit-cli -y -g`. See [Agent Skills](/ai-integrations/skills) for details.
 
 ## How to Connect Your AI Tool
 
