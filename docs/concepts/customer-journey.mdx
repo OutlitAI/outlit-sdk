@@ -1,9 +1,9 @@
 ---
 title: "Customer Journey"
-description: "How Outlit tracks contact engagement and account billing as two independent dimensions"
+description: "How Outlit tracks contact journey stages and account billing status as dimensions of the customer context graph"
 ---
 
-Outlit tracks two independent dimensions of your customer relationships: **contact journey** (how engaged each person is with your product) and **account billing** (whether their company pays you). These are separate because a contact can be highly engaged while their company hasn't paid yet, or a company can be paying while a specific team member is inactive.
+Outlit tracks two independent dimensions of your customer relationships as part of the [customer context graph](/concepts/customer-context-graph): **contact journey** (how engaged each person is) and **account billing** (the commercial relationship). These are separate because a contact can be highly engaged while their company hasn't paid yet, or a company can be paying while a specific team member is inactive.
 
 ## How does Outlit model the customer journey?
 
@@ -40,11 +40,11 @@ Each person (contact) progresses through stages based on their product engagemen
 
 | Stage | Meaning | How It's Set |
 |-------|---------|--------------|
-| **Discovered** | Email known, hasn't signed up yet | Automatic |
-| **Signed Up** | Created an account | Automatic |
-| **Activated** | Completed onboarding or key milestone | Call `user.activate()` |
-| **Engaged** | Actively using the product | Automatic or `user.engaged()` |
-| **Inactive** | No activity for extended period | Automatic |
+| **Discovered** | Email known, hasn't signed up yet | Auto-detected by browser SDK when email is provided without userId |
+| **Signed Up** | Created an account | Auto-detected by browser SDK when both email and userId are provided |
+| **Activated** | Completed onboarding or key milestone | Manual — call `user.activate()` |
+| **Engaged** | Actively using the product | Auto-inferred from product activity via PostHog or your SDK (browser/server) |
+| **Inactive** | No activity for extended period | Auto-inferred when no activity detected for 30+ days |
 
 <Info>
   Contact stages track **product engagement**, not billing. A contact can be Engaged even if their company hasn't paid, or Inactive even if their company is actively paying.
@@ -96,7 +96,7 @@ The difference is determined by the identifiers you provide:
 
 ### Automatic engagement and inactivity
 
-Outlit monitors user activity and automatically advances contacts to Engaged when they show consistent usage—active on multiple distinct days within a rolling time window. When contacts haven't had any product activity for an extended period (default: 30 days), they're marked Inactive. When an inactive contact returns, they automatically recover to Engaged.
+Outlit monitors product activity and automatically advances contacts to Engaged when they show consistent usage — active on multiple distinct days within a rolling time window. Activity signals come from the browser SDK, server SDK, and connected integrations like PostHog. When contacts haven't had any product activity for an extended period (default: 30 days), they're marked Inactive. When an inactive contact returns, they automatically recover to Engaged.
 
 ---
 
@@ -187,13 +187,31 @@ outlit.customer.churned({ domain: 'acme.com', reason: 'too_expensive' })
 
 ## Best practices
 
-**Let automatic detection work.** Don't over-instrument. Outlit handles most stage transitions automatically—Discovered and Signed Up are determined by identifiers, engagement and inactivity are calculated from activity, and Stripe handles billing status.
+**Let integrations handle what they can.** Discovered and Signed Up are auto-detected by the browser SDK based on identifiers. Engaged and Inactive are auto-inferred from product activity via PostHog or your SDK. Stripe handles billing status. The main stage you need to instrument manually is Activated — call `user.activate()` when users complete your definition of activation.
 
 **Understand the separation.** Contact journey and account billing are independent. Jane can be Engaged while her company is on None, or Inactive while her company is Paying. When Jane returns after being Inactive, she auto-recovers to Engaged regardless of billing status.
 
 **Call stage methods at the right time.** Stage methods like `user.activate()` should be called when the action is confirmed complete, not when the user clicks a button. Wait for the backend to confirm success before tracking.
 
 **Include useful properties.** Properties help you analyze stage transitions. Include context like which onboarding flow was completed, time-to-activate, and which steps were skipped.
+
+---
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="What's the difference between contact journey and account billing?">
+    Contact journey tracks individual people's product engagement (Discovered through Inactive). Account billing tracks the commercial relationship (None through Churned). They're independent — Jane can be Engaged while her company is on a free plan, or Inactive while her company is actively paying.
+  </Accordion>
+
+  <Accordion title="Which stages require manual instrumentation?">
+    Activated is the main stage you instrument manually by calling `user.activate()`. Discovered and Signed Up are auto-detected by the browser SDK. Engaged and Inactive are auto-inferred from product activity. Billing statuses sync automatically from Stripe.
+  </Accordion>
+
+  <Accordion title="Can contacts move backward in journey stages?">
+    No. Contacts progress forward through Discovered, Signed Up, Activated, and Engaged. The one exception is the Engaged ↔ Inactive cycle: inactive contacts automatically return to Engaged when they show new activity.
+  </Accordion>
+</AccordionGroup>
 
 ---
 
