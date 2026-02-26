@@ -46,8 +46,8 @@ describe("setup skills", () => {
       expect(runnerArgs).toContain("skills")
       expect(runnerArgs).toContain("add")
       expect(runnerArgs).toContain("https://github.com/OutlitAI/outlit-agent-skills")
-      expect(runnerArgs).toContain("--skill")
       expect(runnerArgs).toContain("outlit-cli")
+      expect(runnerArgs).toContain("outlit-sdk")
 
       const written = (calls[0]?.[0] as string) ?? ""
       const result = JSON.parse(written) as Record<string, unknown>

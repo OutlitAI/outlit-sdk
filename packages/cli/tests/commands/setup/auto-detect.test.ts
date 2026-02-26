@@ -84,10 +84,12 @@ describe("setup auto-detect", () => {
       return false
     })
     mockExecFileSync.mockImplementation((cmd: string, args: string[], _opts?: unknown) => {
-      // which claude → found; everything else → not found
-      if (cmd === "which" && args[0] === "claude") return undefined
+      // which claude → found; which npx → found; everything else → not found
+      if (cmd === "which" && (args[0] === "claude" || args[0] === "npx")) return undefined
       // claude mcp add → succeeds
       if (cmd === "claude") return undefined
+      // npx skills add → succeeds
+      if (cmd === "npx") return undefined
       throw new Error("not found")
     })
 
@@ -109,6 +111,7 @@ describe("setup auto-detect", () => {
         detected: string[]
         configured: string[]
         failed: string[]
+        skills: { success: boolean; runner?: string }
       }
 
       expect(Array.isArray(result.detected)).toBe(true)
@@ -118,6 +121,10 @@ describe("setup auto-detect", () => {
       expect(result.configured).toContain("cursor")
       expect(result.configured).toContain("claude-code")
       expect(result.failed).toHaveLength(0)
+      // Skills should be installed as part of batch setup
+      expect(result.skills).toBeDefined()
+      expect(result.skills.success).toBe(true)
+      expect(result.skills.runner).toBe("npx")
     }
   })
 

@@ -5,7 +5,7 @@ import { TICK, isEnoentError } from "../../lib/config"
 import { errorMessage, isJsonMode, outputError, outputResult } from "../../lib/output"
 
 const SKILLS_REPO_URL = "https://github.com/OutlitAI/outlit-agent-skills"
-const SKILL_NAME = "outlit-cli"
+const SKILL_NAMES = ["outlit-cli", "outlit-sdk"]
 
 type PackageRunner = "npx" | "bunx" | "pnpx"
 
@@ -26,7 +26,11 @@ export function detectPackageRunner(): PackageRunner | null {
 /** Builds the argument list for the package runner. npx needs -y to auto-confirm package install. */
 function buildRunnerArgs(runner: PackageRunner): string[] {
   const args = runner === "npx" ? ["-y"] : []
-  args.push("skills", "add", SKILLS_REPO_URL, "--skill", SKILL_NAME, "-y", "-g")
+  args.push("skills", "add", SKILLS_REPO_URL)
+  for (const name of SKILL_NAMES) {
+    args.push("--skill", name)
+  }
+  args.push("-y", "-g")
   return args
 }
 
@@ -82,9 +86,7 @@ export function runSkillsInstall(
       outputResult({ success: true, agent: "skills", runner })
       return { success: true, runner }
     }
-    console.log(
-      `${TICK} Outlit agent skills installed via ${runner}. Your AI agents now have deeper context for Outlit integration and queries.`,
-    )
+    console.log(`${TICK} Agent skills installed (${SKILL_NAMES.join(", ")})`)
   }
 
   return { success: true, runner }
@@ -96,7 +98,7 @@ export default defineCommand({
     description: [
       "Install Outlit agent skills for Claude Code and other AI agents.",
       "",
-      "Downloads the outlit-cli skill from github.com/OutlitAI/outlit-agent-skills.",
+      "Downloads outlit-cli and outlit-sdk skills from github.com/OutlitAI/outlit-agent-skills.",
       "No API key required.",
     ].join("\n"),
   },
