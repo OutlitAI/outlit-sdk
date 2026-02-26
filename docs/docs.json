@@ -32,9 +32,10 @@
           {
             "group": "Concepts",
             "pages": [
+              "concepts/customer-context-graph",
               "concepts/customer-journey",
               "concepts/identity-resolution",
-              "concepts/anonymous-tracking"
+              "concepts/website-visitors"
             ]
           },
           {
