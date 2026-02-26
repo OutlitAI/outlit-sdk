@@ -96,7 +96,7 @@ export default defineCommand({
 
     if (detected.length === 0) {
       if (isJsonMode(json)) {
-        return outputResult({ detected: [], configured: [], failed: [] })
+        return outputResult({ detected: [], configured: [], failed: [], skills: null })
       }
       console.log("No supported agent tools detected.")
       return
@@ -126,6 +126,11 @@ export default defineCommand({
 
     // Install agent skills (best-effort, never blocks batch setup)
     const skills = runSkillsInstall(json, false)
+
+    if (!isJsonMode(json) && !skills.success) {
+      console.log(`\n  ! Agent skills installation failed: ${skills.error ?? "unknown error"}`)
+      console.log("    Run `outlit setup skills` to retry.")
+    }
 
     if (isJsonMode(json)) {
       return outputResult({ detected, configured, failed, skills })

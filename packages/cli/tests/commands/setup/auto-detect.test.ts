@@ -148,11 +148,13 @@ describe("setup auto-detect", () => {
         detected: string[]
         configured: string[]
         failed: string[]
+        skills: unknown
       }
 
       expect(result.detected).toHaveLength(0)
       expect(result.configured).toHaveLength(0)
       expect(result.failed).toHaveLength(0)
+      expect(result.skills).toBeNull()
     }
   })
 
