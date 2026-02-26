@@ -1,47 +1,62 @@
 ---
 title: "Welcome to Outlit"
-description: "Track and understand your complete customer journey from anonymous visitor to paid customer"
+description: "Outlit is the customer context layer that unifies every customer interaction into a structured, queryable graph — from anonymous website visit to paid subscription"
 ---
 
-## The Complete Customer Journey Platform
+## The Customer Context Layer
 
-Outlit helps you understand how prospects discover, evaluate, and become customers. Track every touchpoint across websites, apps, and backend systems to build a complete picture of customer behavior.
+Outlit unifies every customer interaction — website visits, product usage, billing events — into a single [customer context graph](/concepts/customer-context-graph). Query the complete picture from the CLI, through AI agents, or via API.
 
 <Card
-  title="Get Started with Tracking"
+  title="Get Started"
   icon="rocket"
   href="/tracking/quickstart"
   horizontal
 >
-  Set up customer journey tracking in under 5 minutes.
+  Install the CLI and connect your first data source in under 5 minutes.
 </Card>
+
+## How It Works
+
+<Steps>
+  <Step title="Collect">
+    Add the Outlit browser SDK to capture website visits, form submissions, and engagement. Connect Stripe for billing data and PostHog for product usage.
+  </Step>
+  <Step title="Resolve">
+    Identity resolution automatically links anonymous visitors to known contacts when they sign up, log in, or submit a form. The same person across devices merges into one profile.
+  </Step>
+  <Step title="Build the Graph">
+    Outlit connects visitors, contacts, and accounts into a structured graph with journey stages, billing statuses, and unified activity timelines.
+  </Step>
+  <Step title="Query">
+    Use the CLI, AI agents (via MCP), or the API to query your complete customer context — no dashboard required.
+  </Step>
+</Steps>
 
 ## Why Outlit?
 
-Traditional analytics tools show you what happened on your website. Outlit shows you the complete customer journey:
-
 <Columns cols={2}>
-  <Card title="Anonymous to Known" icon="user-plus">
-    Track visitors before they identify themselves, then seamlessly connect their history when they sign up or log in.
-  </Card>
-  <Card title="Cross-Platform" icon="arrows-to-circle">
-    Unify customer behavior across your website, app, and backend systems into a single timeline.
+  <Card title="Unified Context" icon="circle-nodes">
+    One graph connecting website analytics, product usage, and billing — instead of siloed tools that each show a fragment.
   </Card>
   <Card title="Identity Resolution" icon="fingerprint">
-    Automatically merge customer profiles when the same person uses different devices or emails.
+    Automatically merge customer profiles across devices, emails, and auth providers into a single contact.
+  </Card>
+  <Card title="CLI-First" icon="terminal">
+    Query customer data, run SQL, and search with natural language — all from the terminal. AI agents get the same access via MCP.
   </Card>
   <Card title="Journey Intelligence" icon="sparkles">
-    AI analyzes customer journeys and surfaces what's driving conversions—no dashboard building required.
+    Outlit tracks where each contact and account is in their lifecycle, from first visit through activation to churn risk.
   </Card>
 </Columns>
 
 ## Choose Your Integration
 
-### Browser SDKs
+### Data Sources
 
 <CardGroup cols={3}>
   <Card title="Script Tag" icon="code" href="/tracking/browser/script">
-    Fastest setup—just add a script tag
+    Fastest setup — one snippet
   </Card>
   <Card title="React" icon="react" href="/tracking/browser/react">
     Hooks and context provider
@@ -64,43 +79,21 @@ Traditional analytics tools show you what happened on your website. Outlit shows
   <Card title="Angular" icon="angular" href="/tracking/browser/angular">
     Injectable service
   </Card>
-  <Card title="NPM" icon="npm" href="/tracking/browser/npm">
-    Vanilla JS/TS package
-  </Card>
-</CardGroup>
-
-### Server SDKs
-
-<CardGroup cols={3}>
   <Card title="Node.js" icon="node-js" href="/tracking/server/nodejs">
-    Express, Next.js API routes, serverless
-  </Card>
-  <Card title="Rust" icon="rust" href="/tracking/server/rust">
-    Async client for Tauri and native apps
+    Express, Next.js, serverless
   </Card>
 </CardGroup>
 
-### AI Integrations
+### Query & AI
 
 <CardGroup cols={3}>
+  <Card title="CLI" icon="terminal" href="/cli/overview">
+    Query customer data from the terminal
+  </Card>
   <Card title="MCP Integration" icon="robot" href="/ai-integrations/mcp">
-    Query customer data with AI agents
+    Query context from AI agents
+  </Card>
+  <Card title="REST API" icon="code" href="/api-reference/introduction">
+    Programmatic access
   </Card>
 </CardGroup>
-
-## How It Works
-
-<Steps>
-  <Step title="Install the Tracker">
-    Add our lightweight tracker to your website or app using a script tag, npm package, or React provider.
-  </Step>
-  <Step title="Track Events">
-    Automatically capture pageviews, form submissions, and engagement time. Track custom events that matter to your business.
-  </Step>
-  <Step title="Identify Visitors">
-    When visitors sign up or log in, call `identify()` or `setUser()` to connect their anonymous history to their profile.
-  </Step>
-  <Step title="Track the Journey">
-    Mark key milestones with `activate()`, `engaged()`, `paid()`, and `churned()` to track the full customer lifecycle.
-  </Step>
-</Steps>
