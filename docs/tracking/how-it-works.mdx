@@ -1,81 +1,107 @@
 ---
 title: "How It Works"
-description: "A conceptual overview of how Outlit captures and connects customer journey data"
+description: "How Outlit collects customer activity, resolves identities, builds the context graph, and makes it queryable"
 ---
 
-Outlit tracks visitors from their first anonymous pageview through to becoming paying customers. It assigns each visitor a unique ID, captures their behavior automatically, and links everything together when they identify themselves via form submission, login, or signup.
+Outlit builds a [customer context graph](/concepts/customer-context-graph) from every customer interaction — website visits, product usage, billing events, and more. Here's how data flows from collection to queryable context.
 
-## Why unified tracking matters
+## 1. Collect
 
-Most businesses track customer data in silos:
-
-- **Website analytics** shows anonymous pageviews
-- **Product analytics** shows authenticated user behavior
-- **Billing** shows payment events
-
-These disconnected systems make it impossible to answer questions like "Which marketing channel brings customers who actually pay?" or "What content did our best customers engage with before signing up?"
-
-Outlit connects all of these into a unified customer timeline.
-
-## How the pieces fit together
+Data enters the graph from multiple sources:
 
 ```mermaid
 %%{init: {'theme': 'dark', 'flowchart': {'nodeSpacing': 40, 'rankSpacing': 50, 'curve': 'basis', 'padding': 15}}}%%
 flowchart LR
-    A([Anonymous Visitor]) -->|pageviews, forms| B([Visitor Record])
-    B -->|identify call| C([Known Contact])
-    C --> D([Customer Timeline])
-    E([Server Events]) -->|email/userId| C
-    F([Billing Events]) --> D
+    A([Browser SDK]) -->|pageviews, forms, engagement| D([Customer Context Graph])
+    B([Server SDK]) -->|backend events| D
+    C([Stripe]) -->|billing events| D
+    E([PostHog]) -->|product usage| D
 ```
 
-## What happens when a visitor lands on your site?
+**Browser SDK** — The primary data source for most teams. Once installed, it automatically captures pageviews, form submissions, engagement time, UTM attribution, and company enrichment via IP lookup. No additional code needed for these basics.
 
-When someone visits your website, Outlit immediately begins tracking:
+**Server SDK** — For backend events where users are already authenticated: subscription lifecycle events, API usage, report generation, and anything that happens outside the browser.
 
-1. **Generates a visitor ID** - A unique identifier stored in localStorage and cookies that persists across sessions
-2. **Captures behavior automatically**:
-   - Pageviews (URL, title, referrer)
-   - Form submissions (with sensitive field sanitization)
-   - UTM parameters and first-touch attribution
-   - Engagement time (active time on each page)
-3. **Stores events** linked to the anonymous visitor ID
+**Stripe** — When connected, billing events sync automatically. Subscription status changes (trialing, active, canceled) update account billing status in real time.
 
-At this stage, you know *what* visitors do, but not *who* they are. All events are tied to the anonymous visitor ID, waiting to be linked to a real person.
+**PostHog** — When connected, product usage sessions feed into the graph, contributing to automatic engagement and inactivity detection.
 
-## How does Outlit connect anonymous visitors to known users?
+## 2. Resolve
 
-When a visitor identifies themselves—through signup, login, or submitting a form with their email—Outlit resolves their identity:
+Most visitors browse your site anonymously before identifying themselves. [Identity resolution](/concepts/identity-resolution) bridges that gap:
 
-1. **Creates or finds a contact** using the email or user ID provided
-2. **Links the anonymous visitor** to that contact
-3. **Converts historical events** into the customer timeline
-4. **Merges profiles** if the same person used different devices or browsers
+1. **Anonymous phase** — Outlit generates a visitor ID and tracks behavior from the first pageview
+2. **Identification trigger** — A visitor submits a form with their email, signs up, or logs in
+3. **Profile linking** — The anonymous visitor's entire history is connected to their contact profile
+4. **Cross-device merging** — When the same person identifies on multiple devices, profiles merge automatically
 
-This happens automatically when forms contain an email field, or manually when you call `identify()` in your code.
+This happens without code when forms contain an email field (auto-identify). For JavaScript-based auth, call `identify()` after login.
 
 <Info>
-  For a deep dive into how identity resolution works, including handling multiple devices and profile merging, see [Identity Resolution](/concepts/identity-resolution).
+  For details on the anonymous phase — what's captured, how visitor IDs work, and company enrichment — see [Website Visitors](/concepts/website-visitors).
 </Info>
 
-## What about server-side tracking?
+## 3. Build the Graph
 
-For backend events where users are already authenticated:
+As data flows in and identities resolve, Outlit structures it into entities and relationships:
 
-1. **Skip the anonymous phase** - Users are already known to your system
-2. **Emit events directly** to the contact using their email or user ID
-3. **Every call requires identity** - No anonymous server events
+**Entities:**
+- **Visitors** — Anonymous browsing sessions, identified by visitor ID or device fingerprint
+- **Contacts** — Known people, identified by email and/or user ID
+- **Accounts** — Companies, identified by domain, with billing status from Stripe
 
-Server-side tracking is ideal for:
-- Subscription lifecycle events (trial started, payment received, churned)
-- Backend actions (report generated, export completed)
-- Events from systems without browser access
+**Relationships:**
+- Visitors link to contacts via identity resolution
+- Contacts belong to accounts via email domain matching
+- All activity flows into a unified timeline per contact and account
+
+**Journey stages** are properties maintained on these entities:
+- Contacts carry a journey stage: Discovered → Signed Up → Activated → Engaged → Inactive
+- Accounts carry a billing status: None → Trialing → Paying → Churned
+
+The Outlit browser SDK auto-detects **Discovered** (email known, no userId) and **Signed Up** (both email and userId provided). **Engaged** and **Inactive** are auto-inferred from product activity via PostHog or your SDK. **Activated** is the one stage you call manually — `user.activate()` — because the definition of activation is specific to your product. Billing statuses update automatically when Stripe is connected.
 
 <Info>
-  See [Server-Side Tracking](/tracking/server/nodejs) for implementation details and SDK options.
+  For the full breakdown of journey stages and billing statuses, see [Customer Journey](/concepts/customer-journey).
 </Info>
 
-## Privacy and security
+## 4. Query
+
+The complete graph is accessible through three interfaces:
+
+### CLI
+
+```bash
+# List paying customers sorted by revenue
+outlit customers list --billing-status PAYING --sort mrr
+
+# Get a customer profile with timeline
+outlit customers get acme.com --include users,revenue,timeline
+
+# Natural language search
+outlit search "customers who signed up from Google Ads last month"
+
+# SQL
+outlit sql "SELECT domain, mrr_cents FROM customers WHERE billing_status = 'PAYING'"
+```
+
+### AI Agents (MCP)
+
+Configure your AI agent to query customer context directly:
+
+```bash
+outlit setup --yes
+```
+
+Then in Cursor, Claude Code, or VS Code, your AI agent can ask questions about customers, get timelines, search context, and run SQL — all powered by the same graph.
+
+### REST API
+
+For custom integrations, the [Ingest API](/api-reference/ingest) accepts events from any source, and query endpoints expose the graph programmatically.
+
+---
+
+## Privacy and Security
 
 <CardGroup cols={2}>
   <Card title="Form Sanitization" icon="shield">
@@ -88,23 +114,43 @@ Server-side tracking is ideal for:
     Query parameters with sensitive patterns are automatically redacted.
   </Card>
   <Card title="GDPR Ready" icon="scale-balanced">
-    Built-in support for data deletion and export requests.
+    Built-in support for consent management, data deletion, and export requests.
   </Card>
 </CardGroup>
 
-## Next steps
+---
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="What does Outlit track automatically vs what do I need to instrument?">
+    The browser SDK automatically captures pageviews, form submissions, engagement time, UTM attribution, and company enrichment. Identity is auto-detected from forms with email fields. You only need to manually call `identify()` for JavaScript-based auth (OAuth, magic links), `user.activate()` for activation milestones, and `track()` for custom business events.
+  </Accordion>
+
+  <Accordion title="How long before data appears in the graph?">
+    Browser and server SDK events appear within seconds. Stripe webhooks process within minutes. PostHog syncs run on a configurable schedule.
+  </Accordion>
+
+  <Accordion title="Can I use Outlit without Stripe or PostHog?">
+    Yes. The browser SDK alone gives you website tracking, identity resolution, and journey stages. Each integration adds more signal but none are required.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
 
 <CardGroup cols={2}>
   <Card title="Quick Start" icon="rocket" href="/tracking/quickstart">
-    Set up tracking in 5 minutes
+    Install the CLI and add tracking in 5 minutes
+  </Card>
+  <Card title="Customer Context Graph" icon="circle-nodes" href="/concepts/customer-context-graph">
+    Deep dive into the unified data model
   </Card>
   <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
-    Deep dive into how profiles are connected
+    How profiles are linked across devices and sources
   </Card>
-  <Card title="Anonymous Visitors" icon="user-secret" href="/concepts/anonymous-tracking">
-    Understand the pre-identification phase
-  </Card>
-  <Card title="Stages & Billing" icon="chart-line" href="/concepts/customer-journey">
-    Track customer lifecycle progression
+  <Card title="Customer Journey" icon="route" href="/concepts/customer-journey">
+    Journey stages and billing statuses explained
   </Card>
 </CardGroup>
