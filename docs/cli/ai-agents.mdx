@@ -29,7 +29,7 @@ Detect and configure all installed agents at once:
 outlit setup --yes
 ```
 
-Without `--yes`, the CLI shows which agents were detected and asks for confirmation.
+Without `--yes`, the CLI shows which agents were detected and asks for confirmation. [Agent skills](/ai-integrations/skills) are also installed automatically.
 
 ### JSON Output
 
@@ -37,7 +37,8 @@ Without `--yes`, the CLI shows which agents were detected and asks for confirmat
 {
   "detected": ["cursor", "claude-code", "claude-desktop"],
   "configured": ["cursor", "claude-code", "claude-desktop"],
-  "failed": []
+  "failed": [],
+  "skills": { "success": true, "runner": "npx" }
 }
 ```
 
