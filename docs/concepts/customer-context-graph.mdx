@@ -1,0 +1,156 @@
+---
+title: "Customer Context Graph"
+description: "How Outlit unifies customer data from every source into a single queryable graph of entities, relationships, and signals"
+---
+
+The customer context graph is Outlit's unified data model. It connects every customer interaction — website visits, product usage, billing events, support conversations — into a structured graph of entities and relationships. Instead of customer data scattered across Stripe, PostHog, your app database, and email, the graph gives you (and your AI agents) one place to query the complete picture.
+
+## What is the customer context graph?
+
+The customer context graph is a structured representation of everything Outlit knows about your customers. It has three layers:
+
+1. **Entities** — The people and companies you do business with: anonymous visitors, known contacts, customer accounts, and devices
+2. **Relationships** — How entities connect: identity resolution links, account membership, cross-device associations
+3. **Signals** — Activity from every source: pageviews from your website, events from your product, charges from Stripe, sessions from PostHog
+
+```mermaid
+%%{init: {'theme': 'dark', 'flowchart': {'nodeSpacing': 40, 'rankSpacing': 50, 'curve': 'basis', 'padding': 15}}}%%
+flowchart TD
+    subgraph Sources
+        S1([Browser SDK])
+        S2([Server SDK])
+        S3([Stripe])
+        S4([PostHog])
+    end
+
+    subgraph Graph["Customer Context Graph"]
+        E1([Visitors])
+        E2([Contacts])
+        E3([Accounts])
+        E4([Timeline])
+    end
+
+    subgraph Consume
+        C1([CLI])
+        C2([MCP / AI Agents])
+        C3([API])
+    end
+
+    S1 --> E1
+    S1 --> E2
+    S2 --> E2
+    S3 --> E3
+    S4 --> E2
+
+    E1 -.->|identity resolution| E2
+    E2 -.->|membership| E3
+    E2 --> E4
+    E3 --> E4
+
+    E4 --> C1
+    E4 --> C2
+    E4 --> C3
+```
+
+## How does Outlit build the graph?
+
+Outlit builds the customer context graph in four stages:
+
+### 1. Collect
+
+Data flows in from multiple sources:
+
+| Source | What it captures | How to connect |
+|--------|-----------------|----------------|
+| **Browser SDK** | Pageviews, form submissions, engagement time, UTM attribution | Add the Outlit script or npm package to your site |
+| **Server SDK** | Backend events (API calls, exports, notifications) | Use the Node.js or Rust SDK |
+| **Stripe** | Subscriptions, charges, billing status changes | Connect via Outlit dashboard |
+| **PostHog** | Product usage sessions and feature engagement | Connect via Outlit dashboard |
+
+### 2. Resolve
+
+[Identity resolution](/concepts/identity-resolution) links activity to real people. When a visitor submits a form, signs up, or logs in, Outlit connects their anonymous browsing history to their profile. The same person on different devices gets merged into one contact.
+
+### 3. Connect
+
+Entities form relationships:
+- **Visitors → Contacts**: Via identity resolution (email, userId, device fingerprint)
+- **Contacts → Accounts**: Via email domain matching and explicit association
+- **Accounts → Billing**: Via Stripe integration or manual status updates
+
+Each contact carries a [journey stage](/concepts/customer-journey) (Discovered → Signed Up → Activated → Engaged → Inactive) and each account carries a billing status (None → Trialing → Paying → Churned).
+
+### 4. Query
+
+The graph is queryable through multiple interfaces:
+
+- **[CLI](/cli/overview)** — `outlit customers list`, `outlit search "..."`, `outlit sql "..."`
+- **[MCP](/ai-integrations/mcp)** — AI agents query customer context directly in Cursor, Claude Code, VS Code
+- **[API](/api-reference/introduction)** — Programmatic access for custom integrations
+
+## What makes this different from a CRM or analytics tool?
+
+Traditional tools capture one slice of the customer relationship:
+
+| Tool type | What it knows | What it misses |
+|-----------|--------------|----------------|
+| Web analytics | Anonymous pageviews | Who the visitor becomes |
+| Product analytics | Authenticated user sessions | Pre-signup journey |
+| CRM | Deal stages and contacts | Actual product usage |
+| Billing | Payment events | Everything before payment |
+
+Outlit's graph connects all of these. A single `outlit customers get acme.com --include timeline` shows the complete story: which pages Acme's team viewed before signing up, how they used the product after onboarding, and what their billing trajectory looks like.
+
+## How do journey stages fit into the graph?
+
+Journey stages are properties on graph nodes — structured labels that Outlit maintains as contacts and accounts progress:
+
+- **Contact journey stages** (Discovered, Signed Up, Activated, Engaged, Inactive) describe where each person is in their product engagement
+- **Account billing statuses** (None, Trialing, Paying, Churned) describe the commercial relationship
+
+Some stages are inferred automatically from integrations. The Outlit browser SDK auto-detects Discovered and Signed Up based on the identifiers provided. Engaged and Inactive are auto-inferred from product activity via PostHog or your SDK (browser or server). Activated is the one stage you instrument manually — since the definition of "activated" is specific to your product, you call `user.activate()` when a contact completes your onboarding or key milestone.
+
+Billing statuses update automatically when Stripe is connected.
+
+For full details, see [Customer Journey](/concepts/customer-journey).
+
+---
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="Do I need all the integrations to use Outlit?">
+    No. The browser SDK alone gives you website visitor tracking, identity resolution, and journey stages. Each additional integration (Stripe, PostHog, server SDK) adds more signal to the graph, but none are required to get started.
+  </Accordion>
+
+  <Accordion title="How is the graph different from a data warehouse?">
+    A data warehouse stores raw events. The customer context graph is entity-resolved and relationship-mapped — it knows that visitor abc-123, user jane@acme.com, and Stripe customer cus_456 are the same person at the same company, and it maintains that structure automatically.
+  </Accordion>
+
+  <Accordion title="Can AI agents access the full graph?">
+    Yes. The [MCP integration](/ai-integrations/mcp) exposes the graph to AI agents in Cursor, Claude Code, Claude Desktop, VS Code, and other supported environments. Agents can list customers, get timelines, search context, and run SQL queries.
+  </Accordion>
+
+  <Accordion title="How quickly does new data appear in the graph?">
+    Browser and server SDK events appear within seconds. Stripe webhook events appear within minutes. PostHog syncs run on a configurable schedule.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/tracking/quickstart">
+    Install the CLI and start building your graph in 5 minutes
+  </Card>
+  <Card title="Customer Journey" icon="route" href="/concepts/customer-journey">
+    Understand journey stages and billing statuses
+  </Card>
+  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
+    How Outlit links visitors to known contacts
+  </Card>
+  <Card title="Website Visitors" icon="globe" href="/concepts/website-visitors">
+    What Outlit captures before visitors identify themselves
+  </Card>
+</CardGroup>
