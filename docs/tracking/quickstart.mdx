@@ -43,77 +43,34 @@ outlit auth signup
   The CLI stores your API key securely at `~/.config/outlit/credentials.json` with `0600` permissions. You can also pass a key directly with `--key` or set the `OUTLIT_API_KEY` environment variable.
 </Info>
 
-## Step 3: Add Tracking to Your Site
+## Step 3: Connect a Data Source
 
-The browser SDK is your first data source — it captures website visits, form submissions, and engagement automatically.
+The browser SDK is the most common first integration — it captures website visits, form submissions, and engagement automatically. Choose your framework to get started:
 
-Get your public key from [Settings → Website Tracking](https://app.outlit.ai/workspace-profile/tracking), then choose your framework:
+<CardGroup cols={3}>
+  <Card title="Script Tag" icon="code" href="/tracking/browser/script">
+    Fastest setup — one snippet
+  </Card>
+  <Card title="React" icon="react" href="/tracking/browser/react">
+    Hooks and context provider
+  </Card>
+  <Card title="Next.js" icon="n" href="/tracking/browser/nextjs">
+    App Router and Pages Router
+  </Card>
+  <Card title="Vue" icon="vuejs" href="/tracking/browser/vue">
+    Composition API plugin
+  </Card>
+  <Card title="Nuxt" icon="n" href="/tracking/browser/nuxt">
+    Auto-imported composables
+  </Card>
+  <Card title="Node.js" icon="node-js" href="/tracking/server/nodejs">
+    Server-side tracking
+  </Card>
+</CardGroup>
 
-<Tabs>
-  <Tab title="Script Tag">
-    Add this before the closing `</body>` tag:
-
-    ```html
-    <script>
-      !function(w,d,src,key,auto){
-        if(w.outlit&&w.outlit._loaded)return;
-        var o=w.outlit=w.outlit||{_q:[]};
-        function stub(target,prefix,methods){
-          for(var i=0;i<methods.length;i++){
-            var m=methods[i];
-            target[m]=target[m]||function(mm){
-              return function(){o._q.push([prefix?prefix+"."+mm:mm,[].slice.call(arguments)])};
-            }(m);
-          }
-        }
-        stub(o,"",["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
-        o.user=o.user||{};o.customer=o.customer||{};
-        stub(o.user,"user",["identify","activate","engaged","inactive"]);
-        stub(o.customer,"customer",["trialing","paid","churned"]);
-        var s=d.createElement("script");s.async=1;s.src=src;
-        s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
-        (d.body||d.head).appendChild(s);
-      }(window,document,"https://cdn.outlit.ai/stable/outlit.js","pk_your_public_key_here");
-    </script>
-    ```
-
-    <Tip>
-      Replace `pk_your_public_key_here` with your actual public key. This snippet queues calls made before the SDK loads, so you can call `outlit.track()` anywhere on the page.
-    </Tip>
-  </Tab>
-  <Tab title="NPM">
-    ```bash
-    npm install --save @outlit/browser
-    ```
-
-    Initialize at app startup:
-
-    ```typescript
-    import outlit from '@outlit/browser'
-
-    outlit.init({ publicKey: 'pk_your_public_key_here' })
-    ```
-  </Tab>
-  <Tab title="React">
-    ```bash
-    npm install --save @outlit/browser
-    ```
-
-    Wrap your app with the provider:
-
-    ```tsx
-    import { OutlitProvider } from '@outlit/browser/react'
-
-    export default function RootLayout({ children }) {
-      return (
-        <OutlitProvider publicKey="pk_your_public_key_here" trackPageviews>
-          {children}
-        </OutlitProvider>
-      )
-    }
-    ```
-  </Tab>
-</Tabs>
+<Tip>
+  Looking for SvelteKit, Astro, Angular, or other integrations? See all available SDKs and connectors at [app.outlit.ai/integrations](https://app.outlit.ai/integrations).
+</Tip>
 
 <Warning>
   Outlit uses cookies to track visitors across pages. If you need GDPR compliance, show a consent banner before loading the tracker. [See consent management →](/tracking/browser/script#consent-management)
