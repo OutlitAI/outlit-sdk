@@ -12,19 +12,62 @@ Data enters the graph from multiple sources:
 ```mermaid
 %%{init: {'theme': 'dark', 'flowchart': {'nodeSpacing': 40, 'rankSpacing': 50, 'curve': 'basis', 'padding': 15}}}%%
 flowchart LR
-    A([Browser SDK]) -->|pageviews, forms, engagement| D([Customer Context Graph])
-    B([Server SDK]) -->|backend events| D
-    C([Stripe]) -->|billing events| D
-    E([PostHog]) -->|product usage| D
+    subgraph SDKs
+        A([Browser SDK])
+        B([Server SDK])
+    end
+
+    subgraph Integrations
+        C([Stripe])
+        E([PostHog])
+        F([Slack])
+        G([Gmail])
+        H([Fireflies.ai])
+        I([Google Calendar])
+    end
+
+    subgraph Auth
+        J([Supabase Auth])
+        K([Clerk])
+    end
+
+    A -->|pageviews, forms, engagement| D([Customer Context Graph])
+    B -->|backend events| D
+    C -->|billing events| D
+    E -->|product usage| D
+    F -->|messages, reactions| D
+    G -->|email threads| D
+    H -->|call transcripts| D
+    I -->|meetings, attendees| D
+    J -->|identity, auth events| D
+    K -->|profiles, login activity| D
 ```
 
-**Browser SDK** — The primary data source for most teams. Once installed, it automatically captures pageviews, form submissions, engagement time, UTM attribution, and company enrichment via IP lookup. No additional code needed for these basics.
+### Outlit SDKs (recommended)
+
+**Browser SDK** — The primary data source for most teams. Once installed, it automatically captures pageviews, form submissions, engagement time, UTM attribution, and company enrichment via IP lookup. No additional code needed for these basics. This is the only way to get [website visitor tracking](/concepts/website-visitors) — anonymous visit capture, auto-identification from forms, and pre-signup journey attribution.
 
 **Server SDK** — For backend events where users are already authenticated: subscription lifecycle events, API usage, report generation, and anything that happens outside the browser.
 
-**Stripe** — When connected, billing events sync automatically. Subscription status changes (trialing, active, canceled) update account billing status in real time.
+### Integrations
 
-**PostHog** — When connected, product usage sessions feed into the graph, contributing to automatic engagement and inactivity detection.
+**Stripe** — Billing events sync automatically. Subscription status changes (trialing, active, canceled) update account billing status in real time.
+
+**PostHog** — Product usage sessions feed into the graph, contributing to automatic engagement and inactivity detection. If you already use PostHog for product analytics, this is a great complement to the Outlit browser SDK. However, PostHog alone won't give you website visitor tracking — you need the Outlit browser SDK for anonymous visit capture, form auto-identification, and pre-signup attribution.
+
+**Slack** — Messages, reactions, and thread context from customer-facing channels.
+
+**Gmail** — Email threads, sender history, and attachment context.
+
+**Fireflies.ai** — Call transcripts, action items, and meeting summaries.
+
+**Google Calendar** — Meetings, attendees, and scheduling patterns.
+
+**Supabase Auth / Clerk** — User identity, sign-up source, org membership, and auth events. These complement the browser SDK's auto-identification with server-side identity signals.
+
+<Info>
+  Browse all available integrations and connect them from your dashboard at [app.outlit.ai/integrations](https://app.outlit.ai/integrations).
+</Info>
 
 ## 2. Resolve
 

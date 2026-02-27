@@ -62,10 +62,19 @@ Data flows in from multiple sources:
 
 | Source | What it captures | How to connect |
 |--------|-----------------|----------------|
-| **Browser SDK** | Pageviews, form submissions, engagement time, UTM attribution | Add the Outlit script or npm package to your site |
+| **Browser SDK** | Pageviews, form submissions, engagement time, UTM attribution, company enrichment | Add the Outlit script or npm package to your site |
 | **Server SDK** | Backend events (API calls, exports, notifications) | Use the Node.js or Rust SDK |
-| **Stripe** | Subscriptions, charges, billing status changes | Connect via Outlit dashboard |
-| **PostHog** | Product usage sessions and feature engagement | Connect via Outlit dashboard |
+| **Stripe** | Subscriptions, charges, billing status changes | Connect via [dashboard](https://app.outlit.ai/integrations) |
+| **PostHog** | Product usage sessions and feature engagement | Connect via [dashboard](https://app.outlit.ai/integrations) |
+| **Slack** | Messages, reactions, thread context | Connect via [dashboard](https://app.outlit.ai/integrations) |
+| **Gmail** | Email threads, sender history | Connect via [dashboard](https://app.outlit.ai/integrations) |
+| **Fireflies.ai** | Call transcripts, action items, summaries | Connect via [dashboard](https://app.outlit.ai/integrations) |
+| **Google Calendar** | Meetings, attendees, scheduling patterns | Connect via [dashboard](https://app.outlit.ai/integrations) |
+| **Supabase Auth / Clerk** | User identity, sign-up source, auth events | Connect via [dashboard](https://app.outlit.ai/integrations) |
+
+<Info>
+  We recommend the Outlit browser SDK as your primary data source — it's the only way to get [website visitor tracking](/concepts/website-visitors) (anonymous visits, form auto-identification, and pre-signup attribution). PostHog is a great complement for product usage data, but it won't capture the anonymous visitor journey.
+</Info>
 
 ### 2. Resolve
 
