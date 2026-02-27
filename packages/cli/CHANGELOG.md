@@ -1,5 +1,11 @@
 # @outlit/cli
 
+## 1.2.0
+
+### Minor Changes
+
+- [#58](https://github.com/OutlitAI/outlit-sdk/pull/58) [`d856a8d`](https://github.com/OutlitAI/outlit-sdk/commit/d856a8d0d4b3b63dac2641a4efe300edc3333316) Thanks [@rafa-thayto](https://github.com/rafa-thayto)! - Add `outlit setup skills` command to install the outlit-cli agent skill
+
 ## 1.1.0
 
 ### Minor Changes
