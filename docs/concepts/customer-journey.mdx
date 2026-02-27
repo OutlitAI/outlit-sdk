@@ -170,7 +170,7 @@ For non-Stripe payment processors or custom billing logic:
 
 ```typescript
 // When a trial starts
-outlit.customer.trialing({ domain: 'acme.com', trialEndsAt: '2024-02-15' })
+outlit.customer.trialing({ domain: 'acme.com', trialEndsAt: '2025-06-15' })
 
 // When payment succeeds
 outlit.customer.paid({ domain: 'acme.com', plan: 'pro', amount: 99 })
@@ -205,7 +205,7 @@ outlit.customer.churned({ domain: 'acme.com', reason: 'too_expensive' })
   </Accordion>
 
   <Accordion title="Which stages require manual instrumentation?">
-    Activated is the main stage you instrument manually by calling `user.activate()`. Discovered and Signed Up are auto-detected by the browser SDK. Engaged and Inactive are auto-inferred from product activity. Billing statuses sync automatically from Stripe.
+    Activated is the main stage you instrument manually by calling `user.activate()`. Discovered and Signed Up are auto-detected by the browser SDK. Engaged and Inactive are auto-inferred from product activity. If Stripe is connected, billing statuses sync automatically; otherwise, set billing status manually with the customer billing methods.
   </Accordion>
 
   <Accordion title="Can contacts move backward in journey stages?">

@@ -109,6 +109,12 @@
       "href": "https://app.outlit.ai"
     }
   },
+  "redirects": [
+    {
+      "source": "/concepts/anonymous-tracking",
+      "destination": "/concepts/website-visitors"
+    }
+  ],
   "footer": {
     "socials": {
       "x": "https://x.com/Outlit_ai",
