@@ -3,7 +3,7 @@ title: "Identity Resolution"
 description: "How Outlit connects anonymous visitors to known customers"
 ---
 
-**TL;DR:** Identity resolution is how Outlit links anonymous website visitors to known customer profiles. When someone browses your site anonymously and later signs up or logs in, Outlit automatically connects their entire history—giving you a complete picture of their journey from first visit to conversion.
+**TL;DR:** Identity resolution is how Outlit links anonymous website visitors to known contacts in the [customer context graph](/concepts/customer-context-graph). When someone browses your site anonymously and later signs up or logs in, Outlit automatically connects their entire history — giving you a complete picture of their journey from first visit to conversion.
 
 ## Auto-Identify
 
@@ -167,7 +167,7 @@ client.identify(email("user@example.com"))
 ```
 
 <Tip>
-  See [Device Tracking](/concepts/anonymous-tracking#device-tracking-non-browser) for implementation details.
+  See [Device Tracking](/concepts/website-visitors#device-tracking-non-browser) for implementation details.
 </Tip>
 
 ---
@@ -238,7 +238,7 @@ When Outlit detects the same person with different identifiers, profiles are mer
 
     - Every call needs `email` or `userId`
     - Events go directly to the contact
-    - For device/app tracking, use `fingerprint` ([learn more](/concepts/anonymous-tracking#device-tracking-non-browser))
+    - For device/app tracking, use `fingerprint` ([learn more](/concepts/website-visitors#device-tracking-non-browser))
 
     ```typescript
     // Email or userId required
@@ -312,7 +312,7 @@ outlit.identify({
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Anonymous Visitors" icon="user-secret" href="/concepts/anonymous-tracking">
+  <Card title="Website Visitors" icon="globe" href="/concepts/website-visitors">
     Deep dive into the anonymous phase
   </Card>
   <Card title="API Reference" icon="code" href="/api-reference/ingest">
