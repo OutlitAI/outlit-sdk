@@ -9,7 +9,7 @@ The Node.js SDK is designed for server-side tracking where you have user identit
 
 - **Identified tracking** - Use `email` or `userId` for immediate resolution
 - **Efficient batching** - Events are queued and sent in batches
-- **Device tracking** - Use `fingerprint` for desktop/mobile apps ([learn more](/concepts/anonymous-tracking#device-tracking-non-browser))
+- **Device tracking** - Use `fingerprint` for desktop/mobile apps ([learn more](/concepts/website-visitors#device-tracking-non-browser))
 
 <Info>
   Use server-side tracking for events that happen in your backend: subscription changes, feature usage from APIs, background jobs, etc.
@@ -122,7 +122,7 @@ outlit.track({
 </ParamField>
 
 <ParamField path="fingerprint" type="string">
-  Device identifier for anonymous tracking. See [Device Tracking](/concepts/anonymous-tracking#device-tracking-non-browser).
+  Device identifier for anonymous tracking. See [Device Tracking](/concepts/website-visitors#device-tracking-non-browser).
 </ParamField>
 
 <ParamField path="eventName" type="string" required>
@@ -167,7 +167,7 @@ outlit.identify({
 </ParamField>
 
 <ParamField path="fingerprint" type="string">
-  Device identifier for linking anonymous events. See [Device Tracking](/concepts/anonymous-tracking#device-tracking-non-browser).
+  Device identifier for linking anonymous events. See [Device Tracking](/concepts/website-visitors#device-tracking-non-browser).
 </ParamField>
 
 <ParamField path="traits" type="Record<string, any>">
