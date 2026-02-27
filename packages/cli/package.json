@@ -1,6 +1,6 @@
 {
   "name": "@outlit/cli",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "CLI for Outlit customer intelligence platform",
   "license": "Apache-2.0",
   "repository": {
