@@ -1,5 +1,11 @@
 # @outlit/cli
 
+## 1.3.0
+
+### Minor Changes
+
+- [#60](https://github.com/OutlitAI/outlit-sdk/pull/60) [`e0a2cf3`](https://github.com/OutlitAI/outlit-sdk/commit/e0a2cf3426bdf091e3df4cfa31c4acec8440ceb6) Thanks [@rafa-thayto](https://github.com/rafa-thayto)! - Install outlit-sdk skill alongside outlit-cli, and auto-install skills during batch setup
+
 ## 1.2.0
 
 ### Minor Changes
