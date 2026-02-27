@@ -86,19 +86,35 @@ This happens without code when forms contain an email field (auto-identify). For
 
 ## 3. Build the Graph
 
-As data flows in and identities resolve, Outlit structures it into entities and relationships:
+As data flows in and identities resolve, Outlit structures it into three layers:
 
-**Entities:**
+### Entities and relationships
+
 - **Visitors** — Anonymous browsing sessions, identified by visitor ID or device fingerprint
 - **Contacts** — Known people, identified by email and/or user ID
 - **Accounts** — Companies, identified by domain, with billing status from Stripe
 
-**Relationships:**
-- Visitors link to contacts via identity resolution
-- Contacts belong to accounts via email domain matching
-- All activity flows into a unified timeline per contact and account
+Visitors link to contacts via identity resolution. Contacts belong to accounts via email domain matching. All activity flows into a unified timeline per contact and account.
 
-**Journey stages** are properties maintained on these entities:
+### Activity timeline
+
+Every interaction from every source is stored chronologically — pageviews, form submissions, SDK events, Stripe charges, Slack messages, email threads, call transcripts. The timeline shows *what happened* with full detail and original timestamps.
+
+### Facts
+
+Facts are temporal assertions that Outlit maintains about each customer. While the activity timeline captures *what happened*, facts capture *what it means* — the reasoning layer that makes the graph intelligent.
+
+Outlit generates facts from three sources:
+
+- **Behavioral facts** — Automatically detected from activity patterns. When a customer's core usage drops, an activation rate changes, or an expected activity pattern breaks, Outlit surfaces it as a fact with severity and context.
+- **Extracted facts** — Parsed from unstructured sources like Slack messages, email threads, and call transcripts. Outlit identifies signals like churn risk, expansion opportunities, competitive evaluations, champion changes, and timeline commitments.
+- **Synthesized facts** — Derived by correlating multiple observations. For example, a key contact going quiet + a competitor mention in Slack + declining product usage = a churn risk fact with full reasoning.
+
+Every fact has **temporal validity** — a `validFrom` date and an optional expiration. As new activity flows in, facts are automatically validated or invalidated. A "contract renews in March" fact expires after March. A "customer is evaluating competitors" fact gets resolved when they renew. This temporal reasoning means the graph always reflects the *current* state of each customer relationship, not stale snapshots.
+
+### Journey stages
+
+Journey stages are properties maintained on graph entities:
 - Contacts carry a journey stage: Discovered → Signed Up → Activated → Engaged → Inactive
 - Accounts carry a billing status: None → Trialing → Paying → Churned
 

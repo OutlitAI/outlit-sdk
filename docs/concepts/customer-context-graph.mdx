@@ -7,11 +7,12 @@ The customer context graph is Outlit's unified data model. It connects every cus
 
 ## What is the customer context graph?
 
-The customer context graph is a structured representation of everything Outlit knows about your customers. It has three layers:
+The customer context graph is a structured representation of everything Outlit knows about your customers. It has four layers:
 
 1. **Entities** — The people and companies you do business with: anonymous visitors, known contacts, customer accounts, and devices
 2. **Relationships** — How entities connect: identity resolution links, account membership, cross-device associations
-3. **Signals** — Activity from every source: pageviews from your website, events from your product, charges from Stripe, sessions from PostHog
+3. **Activity timeline** — A chronological log of every interaction from every source: pageviews, form submissions, Stripe charges, Slack messages, email threads, call transcripts
+4. **Facts** — Temporal assertions about each customer that capture *what it means*, not just what happened: churn risk signals, expansion opportunities, competitive evaluations, champion changes, and more
 
 ```mermaid
 %%{init: {'theme': 'dark', 'flowchart': {'nodeSpacing': 40, 'rankSpacing': 50, 'curve': 'basis', 'padding': 15}}}%%
@@ -108,7 +109,23 @@ Traditional tools capture one slice of the customer relationship:
 | CRM | Deal stages and contacts | Actual product usage |
 | Billing | Payment events | Everything before payment |
 
-Outlit's graph connects all of these. A single `outlit customers get acme.com --include timeline` shows the complete story: which pages Acme's team viewed before signing up, how they used the product after onboarding, and what their billing trajectory looks like.
+Outlit's graph connects all of these — and goes further with **facts**. Instead of just showing raw data, a query like `outlit customers get acme.com --include timeline,facts` shows the complete story *with reasoning*: which pages Acme's team viewed before signing up, how they used the product after onboarding, what their billing trajectory looks like, and what it all means — churn risk signals, expansion opportunities, champion changes, and competitive context.
+
+## How do facts work?
+
+Facts are temporal assertions that Outlit maintains about each customer. While the activity timeline records *what happened*, facts capture *what it means* — the reasoning layer that makes the graph intelligent.
+
+Outlit generates facts from three sources:
+
+| Source | What it captures | Example |
+|--------|-----------------|---------|
+| **Behavioral** | Automatically detected from activity patterns | "Core feature usage declined 40% over 14 days" |
+| **Extracted** | Parsed from Slack, email, and call transcripts | "Customer mentioned evaluating a competitor in #support channel" |
+| **Synthesized** | Correlated from multiple observations | "Key contact went quiet + competitor mention + declining usage = churn risk" |
+
+Every fact has **temporal validity** — it knows when it became true and when it stops being relevant. As new activity flows into the graph, facts are automatically validated or invalidated. A "contract renews in March" fact expires after March. A "customer is evaluating competitors" fact gets resolved when they renew. This means the graph always reflects the *current* state of each customer relationship, not stale snapshots.
+
+Facts are queryable through the same interfaces as the rest of the graph — CLI, MCP, and API.
 
 ## How do journey stages fit into the graph?
 
