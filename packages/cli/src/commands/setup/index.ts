@@ -12,6 +12,7 @@ import { configureSafe as configureClaudeDesktop } from "./claude-desktop"
 import { configureSafe as configureCursor } from "./cursor"
 import { configureSafe as configureGemini } from "./gemini"
 import { configureSafe as configureOpenclaw } from "./openclaw"
+import { runSkillsInstall } from "./skills"
 import { configureSafe as configureVscode } from "./vscode"
 
 export type AgentId = "cursor" | "claude-code" | "claude-desktop" | "vscode" | "gemini" | "openclaw"
@@ -95,7 +96,7 @@ export default defineCommand({
 
     if (detected.length === 0) {
       if (isJsonMode(json)) {
-        return outputResult({ detected: [], configured: [], failed: [] })
+        return outputResult({ detected: [], configured: [], failed: [], skills: null })
       }
       console.log("No supported agent tools detected.")
       return
@@ -123,8 +124,16 @@ export default defineCommand({
       }
     }
 
+    // Install agent skills (best-effort, never blocks batch setup)
+    const skills = runSkillsInstall(json, false)
+
+    if (!isJsonMode(json) && !skills.success) {
+      console.log(`\n  ! Agent skills installation failed: ${skills.error ?? "unknown error"}`)
+      console.log("    Run `outlit setup skills` to retry.")
+    }
+
     if (isJsonMode(json)) {
-      return outputResult({ detected, configured, failed })
+      return outputResult({ detected, configured, failed, skills })
     }
 
     if (failed.length > 0) {

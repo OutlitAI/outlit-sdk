@@ -13,12 +13,12 @@ Skills are open source at [github.com/OutlitAI/outlit-agent-skills](https://gith
 outlit setup skills
 ```
 
-Auto-detects your package runner and installs the `outlit-cli` skill. No API key required.
+Auto-detects your package runner and installs `outlit-cli` and `outlit-sdk` skills. No API key required. Also runs automatically as part of `outlit setup`.
 
 Or install manually:
 
 ```bash
-npx -y skills add https://github.com/OutlitAI/outlit-agent-skills --skill outlit-cli -y -g
+npx -y skills add https://github.com/OutlitAI/outlit-agent-skills --skill outlit-cli --skill outlit-sdk -y -g
 ```
 
 ## Verify
@@ -41,9 +41,8 @@ outlit doctor
 
 ## Recommended Setup
 
-For the best experience, set up both MCP and skills:
+`outlit setup` configures MCP and installs skills in one command:
 
 ```bash
-outlit setup claude-code   # MCP tools (requires API key)
-outlit setup skills        # Agent knowledge (no key needed)
+outlit setup --yes
 ```
