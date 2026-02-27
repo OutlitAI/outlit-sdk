@@ -1,11 +1,11 @@
 ---
-title: "Anonymous Tracking"
-description: "How Outlit tracks visitors before they identify themselves"
+title: "Website Visitors"
+description: "What Outlit captures when someone visits your website, from the first anonymous pageview through identification and company enrichment"
 ---
 
-## TL;DR
+## What does Outlit capture from website visitors?
 
-Most visitors browse your site anonymously before signing up or logging in. Outlit tracks their behavior from the first pageview and automatically connects that history to their profile when they identify themselves. This gives you complete visibility into the customer journey—from first touch to conversion.
+Most visitors browse your site anonymously before signing up or logging in. Outlit tracks their behavior from the first pageview and automatically connects that history to their profile when they identify themselves. This gives you complete visibility into the customer journey — from first touch to conversion — as part of the [customer context graph](/concepts/customer-context-graph).
 
 ## The Anonymous Phase
 
@@ -292,10 +292,13 @@ outlit.init({ publicKey: 'pk_xxx' })
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
-    How profiles are merged across identifiers
+  <Card title="Customer Context Graph" icon="circle-nodes" href="/concepts/customer-context-graph">
+    How visitors fit into the unified data model
   </Card>
-  <Card title="Browser Tracking" icon="browser" href="/tracking/browser/script">
+  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
+    How anonymous visitors become known contacts
+  </Card>
+  <Card title="Browser SDKs" icon="browser" href="/tracking/browser/script">
     Detailed browser integration guide
   </Card>
 </CardGroup>
