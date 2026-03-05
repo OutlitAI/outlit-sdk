@@ -34,10 +34,18 @@ describe("extractPathFromUrl", () => {
     )
   })
 
+  it("does not treat root anchor fragments as hash routes", () => {
+    expect(extractPathFromUrl("https://app.example.com/#faq")).toBe("/")
+  })
+
   it("uses hash path for /index.html web hash-routing URLs", () => {
     expect(extractPathFromUrl("https://app.example.com/index.html#/workspace/abc123")).toBe(
       "/workspace/abc123",
     )
+  })
+
+  it("does not treat /index.html anchor fragments as hash routes", () => {
+    expect(extractPathFromUrl("https://app.example.com/index.html#faq")).toBe("/index.html")
   })
 
   it("does not use hash for non-root web URLs", () => {
