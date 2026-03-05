@@ -1,5 +1,16 @@
 # @outlit/node
 
+## 1.4.2
+
+### Patch Changes
+
+- [#63](https://github.com/OutlitAI/outlit-sdk/pull/63) [`c9015e4`](https://github.com/OutlitAI/outlit-sdk/commit/c9015e4254f4766f6a49c846e66bc299fe475b41) Thanks [@leo-paz](https://github.com/leo-paz)! - Prevent infinite flush retry loops on non-retryable ingest errors.
+
+  `@outlit/node` now classifies transport failures and only retries transient errors
+  (network/timeouts, `429`, and `5xx`). Non-retryable API errors such as invalid or
+  inactive tracking configuration (`400`) no longer get re-queued forever, and periodic
+  auto-flush retries are disabled after the first fatal non-retryable failure.
+
 ## 1.1.0
 
 ### Minor Changes
