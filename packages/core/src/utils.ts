@@ -44,11 +44,10 @@ export function extractPathFromUrl(url: string): string {
     // For web hash-routing SPAs (e.g. "/#/settings"), prefer hash when the
     // pathname is an SPA entry point.
     else if (
-      hash &&
-      hash.length > 2 &&
+      hash.startsWith("#/") &&
       (urlObj.pathname === "/" || urlObj.pathname.endsWith("/index.html"))
     ) {
-      path = hash.replace(/^#/, "")
+      path = hash.slice(1)
     }
 
     if (!path) return "/"
