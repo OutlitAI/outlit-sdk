@@ -15,7 +15,7 @@ import {
   validateServerIdentity,
 } from "@outlit/core"
 import { EventQueue } from "./queue"
-import { HttpTransport } from "./transport"
+import { HttpTransport, TransportError } from "./transport"
 
 // ============================================
 // STAGE OPTIONS
@@ -119,6 +119,7 @@ export class Outlit {
   private flushTimer: ReturnType<typeof setInterval> | null = null
   private flushInterval: number
   private isShutdown = false
+  private fatalTransportError: TransportError | null = null
 
   constructor(options: OutlitOptions) {
     const apiHost = options.apiHost ?? DEFAULT_API_HOST
@@ -310,6 +311,10 @@ export class Outlit {
 
     this.flushTimer = setInterval(() => {
       this.flush().catch((error) => {
+        if (this.isNonRetryableTransportError(error)) {
+          // Already handled and logged in sendEvents().
+          return
+        }
         console.error("[Outlit] Flush error:", error)
       })
     }, this.flushInterval)
@@ -322,6 +327,7 @@ export class Outlit {
 
   private async sendEvents(events: TrackerEvent[]): Promise<void> {
     if (events.length === 0) return
+    if (this.fatalTransportError) return
 
     // For server events, we don't use visitorId - the API resolves identity
     // directly from the event data (email/userId)
@@ -331,7 +337,14 @@ export class Outlit {
       // visitorId is intentionally omitted for server events
     }
 
-    await this.transport.send(payload)
+    try {
+      await this.transport.send(payload)
+    } catch (error) {
+      if (this.isNonRetryableTransportError(error)) {
+        this.handleFatalTransportError(error)
+      }
+      throw error
+    }
   }
 
   private ensureNotShutdown(): void {
@@ -340,5 +353,25 @@ export class Outlit {
         "[Outlit] Client has been shutdown. Create a new instance to continue tracking.",
       )
     }
+  }
+
+  private isNonRetryableTransportError(error: unknown): error is TransportError {
+    return error instanceof TransportError && error.retryable === false
+  }
+
+  private handleFatalTransportError(error: TransportError): void {
+    if (this.fatalTransportError) return
+
+    this.fatalTransportError = error
+
+    if (this.flushTimer) {
+      clearInterval(this.flushTimer)
+      this.flushTimer = null
+    }
+
+    console.error(
+      "[Outlit] Non-retryable ingest error. Automatic flush retries disabled until client restart:",
+      error,
+    )
   }
 }

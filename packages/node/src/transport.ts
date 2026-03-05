@@ -4,6 +4,36 @@ import type { IngestPayload, IngestResponse } from "@outlit/core"
 // HTTP TRANSPORT
 // ============================================
 
+interface TransportErrorOptions {
+  status?: number
+  retryable?: boolean
+  cause?: unknown
+}
+
+/**
+ * Transport-level error enriched with retryability metadata.
+ */
+export class TransportError extends Error {
+  readonly status?: number
+  readonly retryable: boolean
+
+  constructor(message: string, options?: TransportErrorOptions) {
+    super(message)
+    this.name = "TransportError"
+    this.status = options?.status
+    this.retryable = options?.retryable ?? true
+
+    if (options?.cause !== undefined) {
+      this.cause = options.cause
+    }
+  }
+}
+
+function isRetryableStatus(status: number): boolean {
+  // 429 is rate limiting (transient). Most other 4xx are configuration/input errors.
+  return status === 429 || status >= 500
+}
+
 export interface TransportOptions {
   apiHost: string
   publicKey: string
@@ -42,15 +72,36 @@ export class HttpTransport {
 
       if (!response.ok) {
         const errorBody = await response.text().catch(() => "Unknown error")
-        throw new Error(`HTTP ${response.status}: ${errorBody}`)
+        throw new TransportError(`HTTP ${response.status}: ${errorBody}`, {
+          status: response.status,
+          retryable: isRetryableStatus(response.status),
+        })
       }
 
       return (await response.json()) as IngestResponse
     } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new Error(`Request timed out after ${this.timeout}ms`)
+      if (error instanceof TransportError) {
+        throw error
       }
-      throw error
+
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new TransportError(`Request timed out after ${this.timeout}ms`, {
+          retryable: true,
+          cause: error,
+        })
+      }
+
+      if (error instanceof Error) {
+        throw new TransportError(error.message, {
+          retryable: true,
+          cause: error,
+        })
+      }
+
+      throw new TransportError("Unknown transport error", {
+        retryable: true,
+        cause: error,
+      })
     } finally {
       clearTimeout(timeoutId)
     }
