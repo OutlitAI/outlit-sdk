@@ -4,6 +4,13 @@ import type { TrackerEvent } from "@outlit/core"
 // EVENT QUEUE
 // ============================================
 
+function isNonRetryableError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false
+  if (!("retryable" in error)) return false
+
+  return (error as { retryable?: unknown }).retryable === false
+}
+
 export interface QueueOptions {
   maxSize?: number
   onFlush: (events: TrackerEvent[]) => Promise<void>
@@ -45,8 +52,11 @@ export class EventQueue {
     try {
       await this.onFlush(events)
     } catch (error) {
-      // Re-add events to queue on failure
-      this.queue = [...events, ...this.queue]
+      // Re-add events for retryable failures only.
+      // Non-retryable failures (e.g. invalid config 4xx) are dropped to avoid infinite retry loops.
+      if (!isNonRetryableError(error)) {
+        this.queue = [...events, ...this.queue]
+      }
       throw error
     } finally {
       this.isFlushing = false
