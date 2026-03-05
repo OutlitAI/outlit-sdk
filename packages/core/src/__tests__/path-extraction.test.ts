@@ -11,14 +11,14 @@ describe("extractPathFromUrl", () => {
   it("uses hash path for Electron-style file URLs", () => {
     expect(
       extractPathFromUrl(
-        "file:///Applications/Superset.app/Contents/Resources/app.asar/dist/renderer/index.html#/settings/api-keys",
+        "file:///Applications/ExampleDesktop.app/Contents/Resources/app.asar/dist/renderer/index.html#/settings/api-keys",
       ),
     ).toBe("/settings/api-keys")
   })
 
   it("keeps file pathname when no hash route exists", () => {
-    expect(extractPathFromUrl("file:///Applications/Superset.app/index.html")).toBe(
-      "/Applications/Superset.app/index.html",
+    expect(extractPathFromUrl("file:///Applications/ExampleDesktop.app/index.html")).toBe(
+      "/Applications/ExampleDesktop.app/index.html",
     )
   })
 
