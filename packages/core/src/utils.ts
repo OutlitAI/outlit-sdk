@@ -33,7 +33,28 @@ export function extractUtmParams(url: string): UtmParams | undefined {
 export function extractPathFromUrl(url: string): string {
   try {
     const urlObj = new URL(url)
-    return urlObj.pathname
+    let path = urlObj.pathname
+    const hash = urlObj.hash
+
+    // For file:// or custom protocol URLs with no real hostname (common in Electron),
+    // the meaningful route is typically stored in the hash fragment.
+    if (hash && hash.length > 1 && (!urlObj.hostname || urlObj.protocol === "file:")) {
+      path = hash.replace(/^#/, "")
+    }
+    // For web hash-routing SPAs (e.g. "/#/settings"), prefer hash when the
+    // pathname is an SPA entry point.
+    else if (
+      hash &&
+      hash.length > 2 &&
+      (urlObj.pathname === "/" || urlObj.pathname.endsWith("/index.html"))
+    ) {
+      path = hash.replace(/^#/, "")
+    }
+
+    if (!path) return "/"
+    if (!path.startsWith("/")) return `/${path}`
+
+    return path
   } catch (error) {
     console.warn(
       `[Outlit] Failed to parse URL for path extraction: "${url}", defaulting to "/"`,
