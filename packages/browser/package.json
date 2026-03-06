@@ -64,7 +64,7 @@
     "deploy:version": "bun run build && tsx ./scripts/deploy.ts version"
   },
   "dependencies": {
-    "@outlit/core": "workspace:*"
+    "@outlit/core": "^1.1.0"
   },
   "devDependencies": {
     "@outlit/typescript-config": "workspace:*",

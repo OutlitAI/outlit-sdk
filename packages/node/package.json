@@ -41,7 +41,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@outlit/core": "workspace:*"
+    "@outlit/core": "^1.1.0"
   },
   "devDependencies": {
     "@outlit/typescript-config": "workspace:*",
