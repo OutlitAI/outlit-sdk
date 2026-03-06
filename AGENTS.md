@@ -49,6 +49,17 @@ Bun workspaces resolve any matching version range to the local package, so concr
 - Canary snapshots publish on every push to `main` when unreleased changesets exist
 - Stable releases happen when the "Version Packages" PR is merged
 
+## PR workflow
+
+After pushing a PR, monitor it through to merge:
+
+1. **Poll CI checks** (`gh pr checks`) until all required checks pass: Changeset Check, Lint/Build/Test, Rust CI
+2. **Review AI comments** — CodeRabbit reviews PRs automatically. Pull down any inline comments (`gh api repos/OutlitAI/outlit-sdk/pulls/<number>/comments`) and review-level feedback (`gh api repos/OutlitAI/outlit-sdk/pulls/<number>/reviews`)
+3. **Validate before fixing** — don't blindly apply AI suggestions. Check whether each comment is technically correct and relevant. Fix only what's valid; ignore or dismiss the rest
+4. **Merge with rebase** when all checks are green and comments are resolved: `gh pr merge <number> --repo OutlitAI/outlit-sdk --rebase`
+
+Non-required checks (e.g. Mintlify Deployment) can be skipped.
+
 ## Code style
 
 - TypeScript everywhere
