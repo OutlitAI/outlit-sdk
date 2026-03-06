@@ -1,5 +1,11 @@
 # @outlit/core
 
+## 1.4.3
+
+### Patch Changes
+
+- [#65](https://github.com/OutlitAI/outlit-sdk/pull/65) [`86db798`](https://github.com/OutlitAI/outlit-sdk/commit/86db798a7d309830c249a337f35ad49c66fb726b) Thanks [@leo-paz](https://github.com/leo-paz)! - Improve URL path extraction so hash-routed Electron and SPA URLs produce analytics-friendly paths.
+
 ## 1.1.0
 
 ### Minor Changes

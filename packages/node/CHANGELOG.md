@@ -1,5 +1,14 @@
 # @outlit/node
 
+## 1.4.3
+
+### Patch Changes
+
+- [#67](https://github.com/OutlitAI/outlit-sdk/pull/67) [`e8c4779`](https://github.com/OutlitAI/outlit-sdk/commit/e8c4779ed85d4639e09245727c3494ca093cdc6a) Thanks [@leo-paz](https://github.com/leo-paz)! - fix: replace workspace:\* with concrete version ranges to prevent protocol leak during npm publish
+
+- Updated dependencies [[`86db798`](https://github.com/OutlitAI/outlit-sdk/commit/86db798a7d309830c249a337f35ad49c66fb726b)]:
+  - @outlit/core@1.4.3
+
 ## 1.4.2
 
 ### Patch Changes
