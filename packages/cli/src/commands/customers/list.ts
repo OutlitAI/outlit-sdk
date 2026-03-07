@@ -23,7 +23,7 @@ export default defineCommand({
       "  outlit customers list --mrr-above 10000 --limit 50      # high-value at-risk",
       "  outlit customers list --json | jq '.items[].domain'     # pipe-friendly",
       "",
-      "Billing statuses: NONE, TRIALING, PAYING, CHURNED",
+      "Billing statuses: NONE, TRIALING, PAYING, PAST_DUE, CHURNED",
       "Activity periods: 7d, 14d, 30d, 90d",
       "",
       AGENT_JSON_HINT,
@@ -37,7 +37,7 @@ export default defineCommand({
     ...orderArgs,
     "billing-status": {
       type: "string",
-      description: "Filter by billing status (NONE, TRIALING, PAYING, CHURNED)",
+      description: "Filter by billing status (NONE, TRIALING, PAYING, PAST_DUE, CHURNED)",
     },
     "mrr-above": {
       type: "string",
