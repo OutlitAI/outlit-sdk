@@ -1,5 +1,11 @@
 # @outlit/cli
 
+## 1.3.1
+
+### Patch Changes
+
+- [#70](https://github.com/OutlitAI/outlit-sdk/pull/70) [`dbafc63`](https://github.com/OutlitAI/outlit-sdk/commit/dbafc63ca6e80302c52364c5f21257eb06b6511e) Thanks [@leo-paz](https://github.com/leo-paz)! - fix: add PAST_DUE to billing status filter options in customers list command
+
 ## 1.3.0
 
 ### Minor Changes
