@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { formatCents, relativeDate, truncate } from "../../src/lib/format"
+import { capitalize, formatCents, formatNumber, relativeDate, truncate } from "../../src/lib/format"
 
 describe("formatCents", () => {
   test("converts cents to dollar string", () => {
@@ -55,5 +55,44 @@ describe("truncate", () => {
 
   test("converts non-strings via String()", () => {
     expect(truncate(12345, 10)).toBe("12345")
+  })
+})
+
+describe("capitalize", () => {
+  test("capitalizes first letter", () => {
+    expect(capitalize("crm")).toBe("Crm")
+    expect(capitalize("communication")).toBe("Communication")
+  })
+
+  test("handles single character", () => {
+    expect(capitalize("a")).toBe("A")
+  })
+
+  test("handles already capitalized", () => {
+    expect(capitalize("Already")).toBe("Already")
+  })
+
+  test("returns -- for null, undefined, non-string", () => {
+    expect(capitalize(null)).toBe("--")
+    expect(capitalize(undefined)).toBe("--")
+    expect(capitalize(42)).toBe("--")
+  })
+})
+
+describe("formatNumber", () => {
+  test("formats numbers with locale separators", () => {
+    expect(formatNumber(0)).toBe("0")
+    expect(formatNumber(42)).toBe("42")
+    // Large numbers get separators (locale-dependent, but at least formatted)
+    const result = formatNumber(1234567)
+    expect(result).toContain("1")
+    expect(result).toContain("234")
+    expect(result).toContain("567")
+  })
+
+  test("returns -- for null, undefined, non-numeric", () => {
+    expect(formatNumber(null)).toBe("--")
+    expect(formatNumber(undefined)).toBe("--")
+    expect(formatNumber("not a number")).toBe("--")
   })
 })

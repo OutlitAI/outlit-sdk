@@ -1,5 +1,4 @@
 import { defineCommand } from "citty"
-import { outputArgs } from "../args/output"
 import { outputError } from "../lib/output"
 
 // ── Data model ──────────────────────────────────────────────────────────────
@@ -35,7 +34,11 @@ const COMMANDS: readonly CmdDef[] = [
     desc: "Manage authentication",
     subs: [
       { name: "signup", desc: "Create an Outlit account", flags: [JSON_F] },
-      { name: "login", desc: "Store API key", flags: [JSON_F, { name: "--key", desc: "API key to store" }] },
+      {
+        name: "login",
+        desc: "Store API key",
+        flags: [JSON_F, { name: "--key", desc: "API key to store" }],
+      },
       { name: "logout", desc: "Remove stored key", flags: [JSON_F] },
       { name: "status", desc: "Check auth state", flags: [...COMMON] },
       { name: "whoami", desc: "Print masked key", flags: [...COMMON] },
@@ -126,6 +129,24 @@ const COMMANDS: readonly CmdDef[] = [
   },
   { name: "schema", desc: "Discover table schemas", flags: [...COMMON] },
   {
+    name: "integrations",
+    desc: "Manage platform integrations",
+    subs: [
+      { name: "list", desc: "List integrations and status", flags: [...COMMON] },
+      {
+        name: "add",
+        desc: "Connect an integration (OAuth)",
+        flags: [...COMMON, { name: "--force", desc: "Reconnect if already connected" }],
+      },
+      {
+        name: "remove",
+        desc: "Disconnect an integration",
+        flags: [...COMMON, { name: "--yes", desc: "Skip confirmation" }],
+      },
+      { name: "status", desc: "Show sync status", flags: [...COMMON] },
+    ],
+  },
+  {
     name: "setup",
     desc: "Configure AI agent tools",
     flags: [...COMMON, { name: "--yes", desc: "Skip prompts" }],
@@ -166,20 +187,22 @@ function generateBash(): string {
     .map((c) => {
       const names = c.subs!.map((s) => s.name).join(" ")
       const parentFlags = c.flags?.length ? ` ${flagNames(c.flags)}` : ""
-      return `      ${c.name}) COMPREPLY=(\$(compgen -W "${names}${parentFlags}" -- "\$cur")) ;;`
+      return `      ${c.name}) COMPREPLY=($(compgen -W "${names}${parentFlags}" -- "$cur")) ;;`
     })
     .join("\n")
 
   // case entries for flag completions (leaf commands keyed by cmd, subcommands by cmd.sub)
   const flagEntries: string[] = []
   for (const cmd of leafCmds) {
-    flagEntries.push(`      ${cmd.name}) COMPREPLY=(\$(compgen -W "${flagNames(cmd.flags!)}" -- "\$cur")) ;;`)
+    flagEntries.push(
+      `      ${cmd.name}) COMPREPLY=($(compgen -W "${flagNames(cmd.flags!)}" -- "$cur")) ;;`,
+    )
   }
   for (const cmd of cmdsWithSubs) {
     for (const sub of cmd.subs!) {
       if (sub.flags?.length) {
         flagEntries.push(
-          `      ${cmd.name}.${sub.name}) COMPREPLY=(\$(compgen -W "${flagNames(sub.flags)}" -- "\$cur")) ;;`,
+          `      ${cmd.name}.${sub.name}) COMPREPLY=($(compgen -W "${flagNames(sub.flags)}" -- "$cur")) ;;`,
         )
       }
     }
@@ -191,15 +214,15 @@ function generateBash(): string {
   local cmd="\${COMP_WORDS[1]}"
   local key
 
-  if [[ \$COMP_CWORD -eq 1 ]]; then
-    COMPREPLY=(\$(compgen -W "${cmdNames}" -- "\$cur"))
+  if [[ $COMP_CWORD -eq 1 ]]; then
+    COMPREPLY=($(compgen -W "${cmdNames}" -- "$cur"))
     return
   fi
 
-  case \$cmd in
+  case $cmd in
     ${cmdsWithSubs.map((c) => c.name).join("|")})
-      if [[ \$COMP_CWORD -eq 2 ]]; then
-        case \$cmd in
+      if [[ $COMP_CWORD -eq 2 ]]; then
+        case $cmd in
 ${subCases}
         esac
         return
@@ -207,11 +230,11 @@ ${subCases}
       key="\${cmd}.\${COMP_WORDS[2]}"
       ;;
     *)
-      key=\$cmd
+      key=$cmd
       ;;
   esac
 
-  case \$key in
+  case $key in
 ${flagCases}
   esac
 }
@@ -231,7 +254,10 @@ function generateZsh(): string {
   // subcommand cases -- merges parent flags alongside subcommand names
   const subCases = cmdsWithSubs
     .map((c) => {
-      const items = [...c.subs!.map((s) => ({ name: s.name, desc: s.desc })), ...(c.flags ?? []).map((f) => ({ name: f.name, desc: f.desc }))]
+      const items = [
+        ...c.subs!.map((s) => ({ name: s.name, desc: s.desc })),
+        ...(c.flags ?? []).map((f) => ({ name: f.name, desc: f.desc })),
+      ]
       return `    ${c.name})\n      completions=(${zshDescribe(items)})\n      _describe 'subcommand' completions\n      ;;`
     })
     .join("\n")
@@ -257,7 +283,7 @@ function generateZsh(): string {
   return `#compdef outlit
 _outlit() {
   local -a completions
-  local cmd=\$words[2]
+  local cmd=$words[2]
   local key
 
   if (( CURRENT == 2 )); then
@@ -266,22 +292,22 @@ _outlit() {
     return
   fi
 
-  case \$cmd in
+  case $cmd in
     ${cmdsWithSubs.map((c) => c.name).join("|")})
       if (( CURRENT == 3 )); then
-        case \$cmd in
+        case $cmd in
 ${subCases}
         esac
         return
       fi
-      key="\${cmd}.\$words[3]"
+      key="\${cmd}.$words[3]"
       ;;
     *)
-      key=\$cmd
+      key=$cmd
       ;;
   esac
 
-  case \$key in
+  case $key in
 ${flagCases}
   esac
 }
@@ -402,7 +428,6 @@ export default defineCommand({
     ].join("\n"),
   },
   args: {
-    ...outputArgs,
     shell: {
       type: "positional",
       description: "Shell to generate completions for (bash, zsh, fish)",
@@ -410,7 +435,6 @@ export default defineCommand({
     },
   },
   run({ args }) {
-    const json = !!args.json
     const shell = args.shell
 
     const generate = SCRIPTS[shell]
@@ -420,7 +444,7 @@ export default defineCommand({
           message: `Unknown shell: ${shell}. Supported: bash, zsh, fish`,
           code: "unknown_shell",
         },
-        json,
+        false,
       )
     }
 

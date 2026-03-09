@@ -16,7 +16,9 @@
   "bin": {
     "outlit": "./dist/cli.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "bun run src/cli.ts",
     "dev:watch": "bun --watch src/cli.ts",
@@ -32,7 +34,7 @@
     "@clack/prompts": "^1.0.1"
   },
   "devDependencies": {
-    "typescript": "^5.5.0",
+    "typescript": "^5.9.3",
     "@types/bun": "latest"
   }
 }

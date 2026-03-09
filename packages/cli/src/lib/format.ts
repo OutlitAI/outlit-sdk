@@ -30,3 +30,15 @@ export function truncate(value: unknown, maxLen: number): string {
   if (maxLen <= 3) return "...".slice(0, maxLen)
   return `${str.slice(0, maxLen - 3)}...`
 }
+
+/** Capitalizes the first letter of a string. Returns "--" for null/undefined. */
+export function capitalize(value: unknown): string {
+  if (value == null || typeof value !== "string") return "--"
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+/** Formats a number with locale separators. Returns "--" for null/undefined/non-numeric. */
+export function formatNumber(value: unknown): string {
+  if (value == null || typeof value !== "number") return "--"
+  return value.toLocaleString()
+}

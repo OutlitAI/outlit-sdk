@@ -17,6 +17,12 @@ export const DEFAULT_API_URL = "https://app.outlit.ai"
 /** Outlit dashboard URL for API key management. */
 export const OUTLIT_DASHBOARD_URL = "https://app.outlit.ai/workspace-profile"
 
+/** Outlit sign-up page URL. */
+export const OUTLIT_SIGNUP_URL = "https://app.outlit.ai/sign-up"
+
+/** Outlit integrations settings page URL. */
+export const OUTLIT_INTEGRATIONS_URL = "https://app.outlit.ai/settings/integrations"
+
 /** ANSI green checkmark for interactive terminal output. Falls back to ASCII on Windows. */
 export const TICK = `\x1b[32m${isUnicodeSupported ? String.fromCodePoint(0x2713) : String.fromCodePoint(0x221a)}\x1b[0m`
 

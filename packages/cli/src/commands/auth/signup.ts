@@ -1,11 +1,9 @@
-import { execFileSync } from "node:child_process"
 import * as p from "@clack/prompts"
 import { defineCommand } from "citty"
 import { outputArgs } from "../../args/output"
+import { OUTLIT_SIGNUP_URL } from "../../lib/config"
 import { isJsonMode, outputResult } from "../../lib/output"
-import { isInteractive, openBrowserCmd } from "../../lib/tty"
-
-const OUTLIT_SIGNUP_URL = "https://app.outlit.ai/sign-up"
+import { isInteractive, openBrowser } from "../../lib/tty"
 
 export default defineCommand({
   meta: {
@@ -32,15 +30,7 @@ export default defineCommand({
       p.intro("Outlit CLI -- Sign Up")
     }
 
-    try {
-      if (process.platform === "win32") {
-        execFileSync("cmd", ["/c", "start", "", OUTLIT_SIGNUP_URL], { stdio: "ignore" })
-      } else {
-        execFileSync(openBrowserCmd(), [OUTLIT_SIGNUP_URL], { stdio: "ignore" })
-      }
-    } catch {
-      // Browser open is best-effort
-    }
+    openBrowser(OUTLIT_SIGNUP_URL)
 
     if (isInteractive()) {
       p.log.info(`Opening ${OUTLIT_SIGNUP_URL}`)
