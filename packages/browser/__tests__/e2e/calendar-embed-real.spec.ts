@@ -15,7 +15,7 @@
  * Uses: https://cal.com/leo-paz/15min (simple form: name + email only)
  */
 
-import { type FrameLocator, type Page, type Route, expect, test } from "@playwright/test"
+import { expect, type FrameLocator, type Page, type Route, test } from "@playwright/test"
 
 interface FullEvent {
   type: "pageview" | "custom" | "form" | "identify" | "calendar"
@@ -64,7 +64,7 @@ async function interceptApiCalls(page: Page): Promise<ApiCall[]> {
  * Select the first available time slot.
  * Cal.com auto-selects an available day, so we just need to click a time.
  */
-async function selectFirstAvailableTimeSlot(calFrame: FrameLocator, page: Page): Promise<void> {
+async function selectFirstAvailableTimeSlot(calFrame: FrameLocator, _page: Page): Promise<void> {
   await calFrame.locator("main").waitFor({ state: "visible", timeout: 30000 })
 
   // Time slots are buttons like "11:30am", "1:00pm" etc.

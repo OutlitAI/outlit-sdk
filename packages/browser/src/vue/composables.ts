@@ -1,7 +1,7 @@
 import type { BrowserIdentifyOptions, BrowserTrackOptions } from "@outlit/core"
-import { type Ref, inject, watch } from "vue"
+import { inject, type Ref, watch } from "vue"
 import type { BillingOptions, UserIdentity } from "../tracker"
-import { type OutlitInstance, OutlitKey } from "./plugin"
+import { OutlitKey } from "./plugin"
 
 // ============================================
 // useOutlit Composable

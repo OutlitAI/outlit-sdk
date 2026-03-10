@@ -1,33 +1,16 @@
 // Main exports for npm package
-export {
-  Outlit,
-  init,
-  getInstance,
-  track,
-  identify,
-  enableTracking,
-  disableTracking,
-  isTrackingEnabled,
-  setUser,
-  clearUser,
-  user,
-  customer,
-} from "./tracker"
-export type { OutlitOptions, UserIdentity, BillingOptions } from "./tracker"
 
 // Re-export useful types from core
 export type {
-  BrowserTrackOptions,
   BrowserIdentifyOptions,
+  BrowserTrackOptions,
+  CustomerIdentifier,
+  ExplicitJourneyStage,
   TrackerConfig,
   UtmParams,
-  ExplicitJourneyStage,
-  CustomerIdentifier,
 } from "@outlit/core"
-
-// Default export for simple import
-import {
-  Outlit,
+export type { BillingOptions, OutlitOptions, UserIdentity } from "./tracker"
+export {
   clearUser,
   customer,
   disableTracking,
@@ -36,6 +19,23 @@ import {
   identify,
   init,
   isTrackingEnabled,
+  Outlit,
+  setUser,
+  track,
+  user,
+} from "./tracker"
+
+// Default export for simple import
+import {
+  clearUser,
+  customer,
+  disableTracking,
+  enableTracking,
+  getInstance,
+  identify,
+  init,
+  isTrackingEnabled,
+  Outlit,
   setUser,
   track,
   user,

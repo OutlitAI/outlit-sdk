@@ -1,4 +1,4 @@
-import { type EngagementEvent, buildEngagementEvent } from "@outlit/core"
+import { buildEngagementEvent, type EngagementEvent } from "@outlit/core"
 
 // ============================================
 // SESSION TRACKER

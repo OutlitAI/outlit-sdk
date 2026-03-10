@@ -1,4 +1,4 @@
-import { type ReactNode, createContext, useCallback, useEffect, useRef, useState } from "react"
+import { createContext, type ReactNode, useCallback, useEffect, useRef, useState } from "react"
 import { Outlit, type OutlitOptions, type UserIdentity } from "../tracker"
 
 // ============================================

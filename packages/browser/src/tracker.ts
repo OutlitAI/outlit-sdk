@@ -2,11 +2,6 @@ import {
   type BillingStatus,
   type BrowserIdentifyOptions,
   type BrowserTrackOptions,
-  type CustomerIdentifier,
-  DEFAULT_API_HOST,
-  type ExplicitJourneyStage,
-  type TrackerConfig,
-  type TrackerEvent,
   buildBillingEvent,
   buildCalendarEvent,
   buildCustomEvent,
@@ -15,16 +10,22 @@ import {
   buildIngestPayload,
   buildPageviewEvent,
   buildStageEvent,
+  type CustomerIdentifier,
+  DEFAULT_API_HOST,
+  type ExplicitJourneyStage,
+  type TrackerConfig,
+  type TrackerEvent,
 } from "@outlit/core"
 
 const MAX_PENDING_STAGE_EVENTS = 10
+
 import { initFormTracking, initPageviewTracking, stopAutocapture } from "./autocapture"
 import {
   type CalendarBookingEvent,
   initCalendarTracking,
   stopCalendarTracking,
 } from "./embed-integrations"
-import { type SessionTracker, initSessionTracking, stopSessionTracking } from "./session-tracker"
+import { initSessionTracking, type SessionTracker, stopSessionTracking } from "./session-tracker"
 import { getConsentState, getOrCreateVisitorId, setConsentState } from "./storage"
 
 // ============================================
@@ -94,7 +95,6 @@ export class Outlit {
   private eventQueue: TrackerEvent[] = []
   private flushTimer: ReturnType<typeof setInterval> | null = null
   private flushInterval: number
-  private isInitialized = false
   private isTrackingEnabled = false
   private options: OutlitOptions
   private hasHandledExit = false
@@ -165,8 +165,6 @@ export class Outlit {
         () => window.removeEventListener("beforeunload", handleExit),
       ]
     }
-
-    this.isInitialized = true
 
     // Check persisted consent state, falling back to autoTrack option
     const consent = getConsentState()

@@ -1,4 +1,4 @@
-import { type Request, type Route, expect, test } from "@playwright/test"
+import { expect, type Request, type Route, test } from "@playwright/test"
 
 interface ApiCall {
   url: string
@@ -72,7 +72,7 @@ test.describe("SDK Initialization", () => {
     expect(visitorId2).toBe(visitorId1)
   })
 
-  test("visitor ID persists across different pages", async ({ page, context }) => {
+  test("visitor ID persists across different pages", async ({ page }) => {
     await page.goto("/test-page.html")
     await page.waitForFunction(() => window.outlit?._initialized)
 

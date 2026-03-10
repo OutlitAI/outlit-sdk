@@ -1,15 +1,14 @@
 // Vue integration for Outlit Browser SDK
 
-// Plugin
-export { OutlitPlugin, OutlitKey, type OutlitPluginOptions, type OutlitInstance } from "./plugin"
-
 // Composables
 export {
-  useOutlit,
-  useTrack,
-  useIdentify,
-  useOutlitUser,
+  type UseIdentifyReturn,
   type UseOutlitReturn,
   type UseTrackReturn,
-  type UseIdentifyReturn,
+  useIdentify,
+  useOutlit,
+  useOutlitUser,
+  useTrack,
 } from "./composables"
+// Plugin
+export { type OutlitInstance, OutlitKey, OutlitPlugin, type OutlitPluginOptions } from "./plugin"

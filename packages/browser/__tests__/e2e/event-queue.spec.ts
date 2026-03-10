@@ -7,7 +7,7 @@
  * - beforeunload flush
  */
 
-import { type Route, expect, test } from "@playwright/test"
+import { expect, type Route, test } from "@playwright/test"
 
 interface ApiCall {
   url: string
@@ -87,7 +87,7 @@ test.describe("Event Queue Behavior", () => {
 
     // May have 0 or 1 calls (for initial pageview batching)
     // The key is that we shouldn't have all events flushed yet
-    const totalEvents = apiCalls.flatMap((c) => c.payload.events || [])
+    const _totalEvents = apiCalls.flatMap((c) => c.payload.events || [])
     // If events were sent, it should be less than 6 (not all flushed due to threshold)
     // Actually the flush timer may have triggered, so let's check differently
 

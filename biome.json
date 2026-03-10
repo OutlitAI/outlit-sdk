@@ -42,6 +42,26 @@
       "formatter": {
         "enabled": true
       }
+    },
+    {
+      "includes": ["**/*vue*.test.ts", "**/*vue*.test.tsx"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useHookAtTopLevel": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/storage.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noDocumentCookie": "off"
+          }
+        }
+      }
     }
   ]
 }

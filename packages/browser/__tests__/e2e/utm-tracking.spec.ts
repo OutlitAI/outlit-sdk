@@ -9,7 +9,7 @@
  * - utm_content
  */
 
-import { type Route, expect, test } from "@playwright/test"
+import { expect, type Route, test } from "@playwright/test"
 
 interface UtmParams {
   source?: string
