@@ -66,8 +66,12 @@ export default defineCommand({
       if (p.isCancel(method)) cancelLogin()
 
       if (method === "browser") {
-        openBrowser(OUTLIT_DASHBOARD_URL)
-        p.log.info("Opening browser... paste your key once you have it.")
+        const opened = openBrowser(OUTLIT_DASHBOARD_URL)
+        if (opened) {
+          p.log.info("Opening browser... paste your key once you have it.")
+        } else {
+          p.log.info(`Could not open browser. Visit ${OUTLIT_DASHBOARD_URL} manually.`)
+        }
       }
 
       const result = await p.password({

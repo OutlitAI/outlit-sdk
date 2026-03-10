@@ -47,10 +47,10 @@ export default defineCommand({
 
     // Require confirmation
     if (!args.yes) {
-      if (!isInteractive()) {
+      if (!isInteractive() || json) {
         return outputError(
           {
-            message: `Disconnecting ${provider.name} requires confirmation. Use --yes to confirm in non-interactive mode.`,
+            message: `Disconnecting ${provider.name} requires confirmation. Use --yes to confirm in non-interactive or JSON mode.`,
             code: "confirmation_required",
           },
           json,

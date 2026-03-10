@@ -85,7 +85,14 @@ async function addApiKeyProvider(
   if (rawConfig) {
     // Parse --config JSON
     try {
-      config = JSON.parse(rawConfig) as Record<string, string>
+      const parsed: unknown = JSON.parse(rawConfig)
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return outputError(
+          { message: "Invalid JSON in --config. Expected a JSON object.", code: "invalid_config" },
+          json,
+        )
+      }
+      config = parsed as Record<string, string>
     } catch {
       return outputError(
         { message: "Invalid JSON in --config. Expected a JSON object.", code: "invalid_config" },

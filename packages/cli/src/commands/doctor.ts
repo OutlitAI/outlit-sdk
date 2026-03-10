@@ -72,17 +72,18 @@ export default defineCommand({
     checks.push(checkApiKeyPresence(credential))
 
     if (credential) {
-      checks.push(await validateApiKey(credential.key))
+      const apiCheck = await validateApiKey(credential.key)
+      checks.push(apiCheck)
+
+      if (apiCheck.status !== "fail") {
+        checks.push(await checkIntegrations(credential.key))
+      }
     } else {
       checks.push({
         name: "API validation",
         status: "fail",
         message: "Skipped -- no API key found",
       })
-    }
-
-    if (credential) {
-      checks.push(await checkIntegrations(credential.key))
     }
 
     checks.push(...detectAgents())

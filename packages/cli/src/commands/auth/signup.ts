@@ -30,10 +30,14 @@ export default defineCommand({
       p.intro("Outlit CLI -- Sign Up")
     }
 
-    openBrowser(OUTLIT_SIGNUP_URL)
+    const opened = openBrowser(OUTLIT_SIGNUP_URL)
 
     if (isInteractive()) {
-      p.log.info(`Opening ${OUTLIT_SIGNUP_URL}`)
+      if (opened) {
+        p.log.info(`Opening ${OUTLIT_SIGNUP_URL}`)
+      } else {
+        p.log.info(`Could not open browser. Visit ${OUTLIT_SIGNUP_URL}`)
+      }
       p.outro("Once you've signed up, run `outlit auth login` to store your API key.")
     }
   },

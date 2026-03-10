@@ -10,6 +10,35 @@ import {
 
 const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({}))
 
+const setupMockCallTool = () => {
+  mockCallTool.mockImplementation(async (toolName: string, _params: unknown) => {
+    if (toolName === "outlit_integration_sync_status") {
+      return {
+        syncs: [
+          { model: "Opportunity", status: "syncing", recordCount: 150, lastSyncedAt: null },
+          {
+            model: "Contact",
+            status: "complete",
+            recordCount: 3200,
+            lastSyncedAt: new Date().toISOString(),
+          },
+        ],
+      }
+    }
+    return {
+      items: [
+        {
+          name: "Salesforce",
+          category: "crm",
+          syncStatus: "active",
+          lastDataReceivedAt: new Date().toISOString(),
+        },
+        { name: "Slack", category: "communication", syncStatus: "idle", lastDataReceivedAt: null },
+      ],
+    }
+  })
+}
+
 mock.module("../../../src/lib/client", () => ({
   createClient: async () => ({
     key: TEST_API_KEY,
@@ -18,33 +47,7 @@ mock.module("../../../src/lib/client", () => ({
   }),
 }))
 
-// Set up the branching mock response based on tool name
-mockCallTool.mockImplementation(async (toolName: string, _params: unknown) => {
-  if (toolName === "outlit_integration_sync_status") {
-    return {
-      syncs: [
-        { model: "Opportunity", status: "syncing", recordCount: 150, lastSyncedAt: null },
-        {
-          model: "Contact",
-          status: "complete",
-          recordCount: 3200,
-          lastSyncedAt: new Date().toISOString(),
-        },
-      ],
-    }
-  }
-  return {
-    items: [
-      {
-        name: "Salesforce",
-        category: "crm",
-        syncStatus: "active",
-        lastDataReceivedAt: new Date().toISOString(),
-      },
-      { name: "Slack", category: "communication", syncStatus: "idle", lastDataReceivedAt: null },
-    ],
-  }
-})
+setupMockCallTool()
 
 describe("integrations status", () => {
   useTempEnv("integrations-status-test")
@@ -52,38 +55,7 @@ describe("integrations status", () => {
   beforeEach(() => {
     setNonInteractive()
     mockCallTool.mockClear()
-    // Re-set the branching mock after mockClear
-    mockCallTool.mockImplementation(async (toolName: string, _params: unknown) => {
-      if (toolName === "outlit_integration_sync_status") {
-        return {
-          syncs: [
-            { model: "Opportunity", status: "syncing", recordCount: 150, lastSyncedAt: null },
-            {
-              model: "Contact",
-              status: "complete",
-              recordCount: 3200,
-              lastSyncedAt: new Date().toISOString(),
-            },
-          ],
-        }
-      }
-      return {
-        items: [
-          {
-            name: "Salesforce",
-            category: "crm",
-            syncStatus: "active",
-            lastDataReceivedAt: new Date().toISOString(),
-          },
-          {
-            name: "Slack",
-            category: "communication",
-            syncStatus: "idle",
-            lastDataReceivedAt: null,
-          },
-        ],
-      }
-    })
+    setupMockCallTool()
   })
 
   test("calls outlit_list_integrations with connectedOnly when no provider given", async () => {

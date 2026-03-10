@@ -39,6 +39,6 @@ export function capitalize(value: unknown): string {
 
 /** Formats a number with locale separators. Returns "--" for null/undefined/non-numeric. */
 export function formatNumber(value: unknown): string {
-  if (value == null || typeof value !== "number") return "--"
-  return value.toLocaleString()
+  if (value == null || typeof value !== "number" || Number.isNaN(value)) return "--"
+  return value.toLocaleString("en-US")
 }

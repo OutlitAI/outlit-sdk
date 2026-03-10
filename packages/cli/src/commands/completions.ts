@@ -135,8 +135,12 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "list", desc: "List integrations and status", flags: [...COMMON] },
       {
         name: "add",
-        desc: "Connect an integration (OAuth)",
-        flags: [...COMMON, { name: "--force", desc: "Reconnect if already connected" }],
+        desc: "Connect an integration",
+        flags: [
+          ...COMMON,
+          { name: "--config", desc: "JSON config for API-key providers" },
+          { name: "--force", desc: "Reconnect if already connected" },
+        ],
       },
       {
         name: "remove",
@@ -160,7 +164,7 @@ const COMMANDS: readonly CmdDef[] = [
     ],
   },
   { name: "doctor", desc: "Diagnose environment", flags: [...COMMON] },
-  { name: "completions", desc: "Generate shell completions", flags: [JSON_F] },
+  { name: "completions", desc: "Generate shell completions", flags: [] },
 ]
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
