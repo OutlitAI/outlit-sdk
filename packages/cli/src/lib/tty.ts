@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process"
+import { createInterface } from "node:readline"
 
 /**
  * Detects whether the terminal can render Unicode characters.
@@ -33,6 +34,32 @@ export function openBrowser(url: string): boolean {
   } catch {
     return false
   }
+}
+
+/**
+ * Prompts the user for text input via readline.
+ *
+ * Writes the prompt to stderr (keeps stdout clean for JSON output).
+ * When `secret` is true, input characters are not echoed to the terminal.
+ */
+export function promptInput(label: string, opts?: { secret?: boolean }): Promise<string> {
+  return new Promise((resolve) => {
+    const rl = createInterface({
+      input: process.stdin,
+      // When secret, suppress echo by writing to a no-op stream
+      output: opts?.secret ? undefined : process.stderr,
+      terminal: !opts?.secret,
+    })
+
+    process.stderr.write(`${label}: `)
+
+    rl.question("", (answer) => {
+      rl.close()
+      // Print newline after hidden input so next output starts on its own line
+      if (opts?.secret) process.stderr.write("\n")
+      resolve(answer.trim())
+    })
+  })
 }
 
 /**
