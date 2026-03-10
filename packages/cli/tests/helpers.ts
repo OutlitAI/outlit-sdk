@@ -104,3 +104,48 @@ export function expectErrorExit(thrown: unknown, stderrOutput: string, expectedC
   const parsed = JSON.parse(stderrOutput) as Record<string, unknown>
   expect(parsed.code).toBe(expectedCode)
 }
+
+/**
+ * Runs a command function and asserts it exits with the expected error code.
+ * Eliminates the repeated try/catch/finally + spy boilerplate in error tests.
+ */
+export async function runExpectingError(
+  fn: () => Promise<void>,
+  expectedCode: string,
+): Promise<void> {
+  const exitSpy = mockExitThrow()
+  const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+  let thrown: unknown
+  let stderrWritten = ""
+  try {
+    await fn()
+  } catch (e) {
+    thrown = e
+    stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
+  } finally {
+    exitSpy.mockRestore()
+    stderrSpy.mockRestore()
+  }
+
+  expectErrorExit(thrown, stderrWritten, expectedCode)
+}
+
+/**
+ * Captures stdout.write output from a command function.
+ * Returns the parsed JSON written to stdout.
+ */
+export async function captureStdout<T = Record<string, unknown>>(
+  fn: () => Promise<void>,
+): Promise<T> {
+  const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+  const logSpy = spyOn(console, "log").mockImplementation(() => {})
+  try {
+    await fn()
+    const written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
+    return JSON.parse(written) as T
+  } finally {
+    writeSpy.mockRestore()
+    logSpy.mockRestore()
+  }
+}

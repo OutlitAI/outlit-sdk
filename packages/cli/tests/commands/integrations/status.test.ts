@@ -1,14 +1,25 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
-  expectErrorExit,
-  mockExitThrow,
+  captureStdout,
+  runExpectingError,
   setInteractive,
   setNonInteractive,
   TEST_API_KEY,
   useTempEnv,
 } from "../../helpers"
 
-const mockCallTool = mock(async (toolName: string, _params: unknown) => {
+const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({}))
+
+mock.module("../../../src/lib/client", () => ({
+  createClient: async () => ({
+    key: TEST_API_KEY,
+    baseUrl: "https://app.outlit.ai",
+    callTool: mockCallTool,
+  }),
+}))
+
+// Set up the branching mock response based on tool name
+mockCallTool.mockImplementation(async (toolName: string, _params: unknown) => {
   if (toolName === "outlit_integration_sync_status") {
     return {
       syncs: [
@@ -35,122 +46,116 @@ const mockCallTool = mock(async (toolName: string, _params: unknown) => {
   }
 })
 
-mock.module("../../../src/lib/client", () => ({
-  createClient: async () => ({
-    key: TEST_API_KEY,
-    baseUrl: "https://app.outlit.ai",
-    callTool: mockCallTool,
-  }),
-}))
-
 describe("integrations status", () => {
   useTempEnv("integrations-status-test")
 
   beforeEach(() => {
     setNonInteractive()
     mockCallTool.mockClear()
+    // Re-set the branching mock after mockClear
+    mockCallTool.mockImplementation(async (toolName: string, _params: unknown) => {
+      if (toolName === "outlit_integration_sync_status") {
+        return {
+          syncs: [
+            { model: "Opportunity", status: "syncing", recordCount: 150, lastSyncedAt: null },
+            {
+              model: "Contact",
+              status: "complete",
+              recordCount: 3200,
+              lastSyncedAt: new Date().toISOString(),
+            },
+          ],
+        }
+      }
+      return {
+        items: [
+          {
+            name: "Salesforce",
+            category: "crm",
+            syncStatus: "active",
+            lastDataReceivedAt: new Date().toISOString(),
+          },
+          {
+            name: "Slack",
+            category: "communication",
+            syncStatus: "idle",
+            lastDataReceivedAt: null,
+          },
+        ],
+      }
+    })
   })
 
   test("calls outlit_list_integrations with connectedOnly when no provider given", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await statusCmd.run!({
+    await captureStdout(() =>
+      statusCmd.run!({
         args: { json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0])
+      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+    )
 
-      expect(mockCallTool).toHaveBeenCalledWith("outlit_list_integrations", {
-        connectedOnly: true,
-      })
-    } finally {
-      writeSpy.mockRestore()
-    }
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_integrations", {
+      connectedOnly: true,
+    })
   })
 
   test("calls outlit_integration_sync_status when provider is given", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await statusCmd.run!({
+    await captureStdout(() =>
+      statusCmd.run!({
         args: { provider: "salesforce", json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0])
+      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+    )
 
-      expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_sync_status", {
-        provider: "salesforce",
-      })
-    } finally {
-      writeSpy.mockRestore()
-    }
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_sync_status", {
+      provider: "salesforce",
+    })
   })
 
   test("resolves provider alias for status", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await statusCmd.run!({
+    await captureStdout(() =>
+      statusCmd.run!({
         args: { provider: "gmail", json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0])
+      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+    )
 
-      expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_sync_status", {
-        provider: "google-mail",
-      })
-    } finally {
-      writeSpy.mockRestore()
-    }
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_sync_status", {
+      provider: "google-mail",
+    })
   })
 
   test("rejects unknown provider", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    let stderrWritten = ""
-    try {
-      await statusCmd.run!({
-        args: { provider: "nonexistent", json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-      stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
-    } finally {
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-    }
-
-    expectErrorExit(thrown, stderrWritten, "unknown_provider")
+    await runExpectingError(
+      () =>
+        statusCmd.run!({
+          args: { provider: "nonexistent", json: true },
+        } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+      "unknown_provider",
+    )
   })
 
   test("outputs JSON for summary view", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await statusCmd.run!({
+    const parsed = await captureStdout(() =>
+      statusCmd.run!({
         args: { json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0])
+      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+    )
 
-      const written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
-      const parsed = JSON.parse(written) as Record<string, unknown>
-      expect(Array.isArray(parsed.items)).toBe(true)
-    } finally {
-      writeSpy.mockRestore()
-    }
+    expect(Array.isArray(parsed.items)).toBe(true)
   })
 
   test("outputs JSON for per-provider detail view", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await statusCmd.run!({
+    const parsed = await captureStdout(() =>
+      statusCmd.run!({
         args: { provider: "salesforce", json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0])
+      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+    )
 
-      const written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
-      const parsed = JSON.parse(written) as Record<string, unknown>
-      expect(Array.isArray(parsed.syncs)).toBe(true)
-    } finally {
-      writeSpy.mockRestore()
-    }
+    expect(Array.isArray(parsed.syncs)).toBe(true)
   })
 
   test("renders table in interactive mode for summary", async () => {
@@ -158,9 +163,7 @@ describe("integrations status", () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
     const logSpy = spyOn(console, "log").mockImplementation(() => {})
     try {
-      await statusCmd.run!({
-        args: {},
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0])
+      await statusCmd.run!({ args: {} } as Parameters<NonNullable<typeof statusCmd.run>>[0])
 
       const output = logSpy.mock.calls.map((c) => c[0] as string).join("\n")
       expect(output).toContain("┌")
@@ -179,23 +182,12 @@ describe("integrations status", () => {
     })
 
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    let stderrWritten = ""
-    try {
-      await statusCmd.run!({
-        args: { json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-      stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
-    } finally {
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-    }
-
-    expectErrorExit(thrown, stderrWritten, "api_error")
+    await runExpectingError(
+      () =>
+        statusCmd.run!({
+          args: { json: true },
+        } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+      "api_error",
+    )
   })
 })

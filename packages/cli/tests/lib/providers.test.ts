@@ -15,8 +15,51 @@ describe("INTEGRATION_PROVIDERS", () => {
       expect(info.id).toBeString()
       expect(info.name).toBeString()
       expect(info.category).toBeString()
+      expect(info.authType).toBeString()
       expect(key).toBeTruthy()
     }
+  })
+
+  test("OAuth providers have no configFields", () => {
+    const oauthProviders = Object.values(INTEGRATION_PROVIDERS).filter(
+      (p) => p.authType === "oauth",
+    )
+    expect(oauthProviders.length).toBeGreaterThan(0)
+    for (const p of oauthProviders) {
+      expect(p.configFields).toBeUndefined()
+    }
+  })
+
+  test("API-key providers have configFields", () => {
+    const apiKeyProviders = Object.values(INTEGRATION_PROVIDERS).filter(
+      (p) => p.authType === "api_key",
+    )
+    expect(apiKeyProviders.length).toBeGreaterThan(0)
+    for (const p of apiKeyProviders) {
+      expect(p.configFields).toBeDefined()
+      expect(p.configFields!.length).toBeGreaterThan(0)
+    }
+  })
+
+  test("includes supabase provider", () => {
+    const supabase = INTEGRATION_PROVIDERS["supabase"]!
+    expect(supabase).toBeDefined()
+    expect(supabase.id).toBe("supabase")
+    expect(supabase.category).toBe("data")
+    expect(supabase.authType).toBe("api_key")
+    expect(supabase.configFields).toEqual([
+      { key: "projectUrl", label: "Project URL" },
+      { key: "serviceRoleKey", label: "Service Role Key", secret: true },
+    ])
+  })
+
+  test("includes clerk provider", () => {
+    const clerk = INTEGRATION_PROVIDERS["clerk"]!
+    expect(clerk).toBeDefined()
+    expect(clerk.id).toBe("clerk")
+    expect(clerk.category).toBe("auth")
+    expect(clerk.authType).toBe("api_key")
+    expect(clerk.configFields).toEqual([{ key: "secretKey", label: "Secret Key", secret: true }])
   })
 })
 
@@ -32,6 +75,8 @@ describe("PROVIDER_NAMES", () => {
     expect(PROVIDER_NAMES).toContain("slack")
     expect(PROVIDER_NAMES).toContain("stripe")
     expect(PROVIDER_NAMES).toContain("google-calendar")
+    expect(PROVIDER_NAMES).toContain("supabase")
+    expect(PROVIDER_NAMES).toContain("clerk")
   })
 })
 
@@ -102,6 +147,16 @@ describe("resolveProvider", () => {
       expect(result.provider.id).toBe("google-mail")
       expect(result.provider.name).toBe("Gmail")
       expect(result.cliName).toBe("gmail")
+    }
+  })
+
+  test("resolves new providers (supabase, clerk)", () => {
+    for (const name of ["supabase", "clerk"]) {
+      const result = resolveProvider(name)
+      expect("provider" in result).toBe(true)
+      if ("provider" in result) {
+        expect(result.provider.authType).toBe("api_key")
+      }
     }
   })
 })

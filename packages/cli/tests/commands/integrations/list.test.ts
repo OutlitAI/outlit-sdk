@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
-  expectErrorExit,
-  mockExitThrow,
+  captureStdout,
+  runExpectingError,
   setInteractive,
   setNonInteractive,
   TEST_API_KEY,
@@ -33,48 +33,29 @@ describe("integrations list", () => {
 
   test("calls outlit_list_integrations", async () => {
     const { default: listCmd } = await import("../../../src/commands/integrations/list")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await listCmd.run!({
-        args: { json: true },
-      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+    await captureStdout(() =>
+      listCmd.run!({ args: { json: true } } as Parameters<NonNullable<typeof listCmd.run>>[0]),
+    )
 
-      expect(mockCallTool).toHaveBeenCalledWith("outlit_list_integrations", {})
-    } finally {
-      writeSpy.mockRestore()
-    }
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_integrations", {})
   })
 
   test("outputs JSON result to stdout", async () => {
     const { default: listCmd } = await import("../../../src/commands/integrations/list")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await listCmd.run!({
-        args: { json: true },
-      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+    const parsed = await captureStdout(() =>
+      listCmd.run!({ args: { json: true } } as Parameters<NonNullable<typeof listCmd.run>>[0]),
+    )
 
-      const written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
-      const parsed = JSON.parse(written) as Record<string, unknown>
-      expect(Array.isArray(parsed.items)).toBe(true)
-    } finally {
-      writeSpy.mockRestore()
-    }
+    expect(Array.isArray(parsed.items)).toBe(true)
   })
 
   test("auto-outputs JSON when non-interactive", async () => {
     const { default: listCmd } = await import("../../../src/commands/integrations/list")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await listCmd.run!({
-        args: {},
-      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+    const parsed = await captureStdout(() =>
+      listCmd.run!({ args: {} } as Parameters<NonNullable<typeof listCmd.run>>[0]),
+    )
 
-      expect(writeSpy).toHaveBeenCalled()
-      const written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
-      expect(() => JSON.parse(written)).not.toThrow()
-    } finally {
-      writeSpy.mockRestore()
-    }
+    expect(parsed.items).toBeDefined()
   })
 
   test("renders table in interactive mode", async () => {
@@ -82,9 +63,7 @@ describe("integrations list", () => {
     const { default: listCmd } = await import("../../../src/commands/integrations/list")
     const logSpy = spyOn(console, "log").mockImplementation(() => {})
     try {
-      await listCmd.run!({
-        args: {},
-      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+      await listCmd.run!({ args: {} } as Parameters<NonNullable<typeof listCmd.run>>[0])
 
       const output = logSpy.mock.calls.map((c) => c[0] as string).join("\n")
       expect(output).toContain("┌")
@@ -104,23 +83,10 @@ describe("integrations list", () => {
     })
 
     const { default: listCmd } = await import("../../../src/commands/integrations/list")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    let stderrWritten = ""
-    try {
-      await listCmd.run!({
-        args: { json: true },
-      } as Parameters<NonNullable<typeof listCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-      stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
-    } finally {
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-    }
-
-    expectErrorExit(thrown, stderrWritten, "api_error")
+    await runExpectingError(
+      () =>
+        listCmd.run!({ args: { json: true } } as Parameters<NonNullable<typeof listCmd.run>>[0]),
+      "api_error",
+    )
   })
 })

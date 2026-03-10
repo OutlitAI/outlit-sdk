@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
+import { beforeEach, describe, expect, mock, test } from "bun:test"
 import {
-  expectErrorExit,
-  mockExitThrow,
+  captureStdout,
+  runExpectingError,
   setNonInteractive,
   TEST_API_KEY,
   useTempEnv,
@@ -29,87 +29,52 @@ describe("integrations remove", () => {
 
   test("rejects unknown provider", async () => {
     const { default: removeCmd } = await import("../../../src/commands/integrations/remove")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    let stderrWritten = ""
-    try {
-      await removeCmd.run!({
-        args: { provider: "nonexistent", yes: true, json: true },
-      } as Parameters<NonNullable<typeof removeCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-      stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
-    } finally {
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-    }
-
-    expectErrorExit(thrown, stderrWritten, "unknown_provider")
+    await runExpectingError(
+      () =>
+        removeCmd.run!({
+          args: { provider: "nonexistent", yes: true, json: true },
+        } as Parameters<NonNullable<typeof removeCmd.run>>[0]),
+      "unknown_provider",
+    )
   })
 
   test("requires --yes in non-interactive mode", async () => {
     const { default: removeCmd } = await import("../../../src/commands/integrations/remove")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    let stderrWritten = ""
-    try {
-      await removeCmd.run!({
-        args: { provider: "salesforce", json: true },
-      } as Parameters<NonNullable<typeof removeCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-      stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
-    } finally {
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-    }
-
-    expectErrorExit(thrown, stderrWritten, "confirmation_required")
+    await runExpectingError(
+      () =>
+        removeCmd.run!({
+          args: { provider: "salesforce", json: true },
+        } as Parameters<NonNullable<typeof removeCmd.run>>[0]),
+      "confirmation_required",
+    )
   })
 
   test("disconnects with --yes flag", async () => {
     const { default: removeCmd } = await import("../../../src/commands/integrations/remove")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    const logSpy = spyOn(console, "log").mockImplementation(() => {})
-    try {
-      await removeCmd.run!({
+    const parsed = await captureStdout(() =>
+      removeCmd.run!({
         args: { provider: "salesforce", yes: true, json: true },
-      } as Parameters<NonNullable<typeof removeCmd.run>>[0])
+      } as Parameters<NonNullable<typeof removeCmd.run>>[0]),
+    )
 
-      expect(mockCallTool).toHaveBeenCalledWith("outlit_disconnect_integration", {
-        provider: "salesforce",
-      })
-
-      const written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
-      const parsed = JSON.parse(written) as Record<string, unknown>
-      expect(parsed.success).toBe(true)
-      expect(parsed.provider).toBe("salesforce")
-    } finally {
-      writeSpy.mockRestore()
-      logSpy.mockRestore()
-    }
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_disconnect_integration", {
+      provider: "salesforce",
+    })
+    expect(parsed.success).toBe(true)
+    expect(parsed.provider).toBe("salesforce")
   })
 
   test("resolves gmail alias to google-mail for disconnect", async () => {
     const { default: removeCmd } = await import("../../../src/commands/integrations/remove")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    const logSpy = spyOn(console, "log").mockImplementation(() => {})
-    try {
-      await removeCmd.run!({
+    await captureStdout(() =>
+      removeCmd.run!({
         args: { provider: "gmail", yes: true, json: true },
-      } as Parameters<NonNullable<typeof removeCmd.run>>[0])
+      } as Parameters<NonNullable<typeof removeCmd.run>>[0]),
+    )
 
-      expect(mockCallTool).toHaveBeenCalledWith("outlit_disconnect_integration", {
-        provider: "google-mail",
-      })
-    } finally {
-      writeSpy.mockRestore()
-      logSpy.mockRestore()
-    }
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_disconnect_integration", {
+      provider: "google-mail",
+    })
   })
 
   test("exits 1 when disconnect fails", async () => {
@@ -119,24 +84,13 @@ describe("integrations remove", () => {
     }))
 
     const { default: removeCmd } = await import("../../../src/commands/integrations/remove")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    let stderrWritten = ""
-    try {
-      await removeCmd.run!({
-        args: { provider: "salesforce", yes: true, json: true },
-      } as Parameters<NonNullable<typeof removeCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-      stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
-    } finally {
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-    }
-
-    expectErrorExit(thrown, stderrWritten, "disconnect_failed")
+    await runExpectingError(
+      () =>
+        removeCmd.run!({
+          args: { provider: "salesforce", yes: true, json: true },
+        } as Parameters<NonNullable<typeof removeCmd.run>>[0]),
+      "disconnect_failed",
+    )
   })
 
   test("exits 1 when API call throws", async () => {
@@ -145,23 +99,12 @@ describe("integrations remove", () => {
     })
 
     const { default: removeCmd } = await import("../../../src/commands/integrations/remove")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    let stderrWritten = ""
-    try {
-      await removeCmd.run!({
-        args: { provider: "salesforce", yes: true, json: true },
-      } as Parameters<NonNullable<typeof removeCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-      stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
-    } finally {
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-    }
-
-    expectErrorExit(thrown, stderrWritten, "api_error")
+    await runExpectingError(
+      () =>
+        removeCmd.run!({
+          args: { provider: "salesforce", yes: true, json: true },
+        } as Parameters<NonNullable<typeof removeCmd.run>>[0]),
+      "api_error",
+    )
   })
 })
