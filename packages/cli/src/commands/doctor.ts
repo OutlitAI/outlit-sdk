@@ -167,7 +167,13 @@ async function validateApiKey(apiKey: string): Promise<CheckResult> {
 async function checkIntegrations(apiKey: string): Promise<CheckResult> {
   try {
     const client = await createClient(apiKey)
-    const data = (await client.callTool("outlit_list_integrations", {})) as {
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Integrations check timed out")), 10_000),
+    )
+    const data = (await Promise.race([
+      client.callTool("outlit_list_integrations", {}),
+      timeout,
+    ])) as {
       items?: Array<{ status: string }>
     }
     const items = data.items ?? []
