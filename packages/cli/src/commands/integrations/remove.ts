@@ -4,7 +4,7 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit } from "../../lib/api"
 import { errorMessage, isJsonMode, outputError, outputResult } from "../../lib/output"
-import { resolveProvider } from "../../lib/providers"
+import { resolveProviderOrExit } from "../../lib/providers"
 import { createSpinner } from "../../lib/spinner"
 import { isInteractive } from "../../lib/tty"
 
@@ -40,12 +40,7 @@ export default defineCommand({
   async run({ args }) {
     const json = !!args.json
 
-    // Validate provider name
-    const resolved = resolveProvider(args.provider)
-    if ("error" in resolved) {
-      return outputError({ message: resolved.error, code: "unknown_provider" }, json)
-    }
-    const { provider, cliName } = resolved
+    const { provider, cliName } = resolveProviderOrExit(args.provider, json)
 
     // Auth check before confirmation — don't ask user to confirm if they can't authenticate
     const client = await getClientOrExit(args["api-key"], json)

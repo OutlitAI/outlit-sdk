@@ -3,8 +3,7 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { capitalize, formatNumber, relativeDate, truncate } from "../../lib/format"
-import { outputError } from "../../lib/output"
-import { resolveProvider } from "../../lib/providers"
+import { resolveProviderOrExit } from "../../lib/providers"
 
 export default defineCommand({
   meta: {
@@ -36,28 +35,19 @@ export default defineCommand({
     const client = await getClientOrExit(args["api-key"], json)
 
     if (args.provider) {
-      const result = resolveProvider(args.provider)
-      if ("error" in result) {
-        return outputError({ message: result.error, code: "unknown_provider" }, json)
-      }
-      return runTool(
-        client,
-        "outlit_integration_sync_status",
-        { provider: result.provider.id },
-        json,
-        {
-          spinnerMessage: "Fetching sync status...",
-          table: {
-            columns: [
-              { header: "Model", key: "model" },
-              { header: "Status", key: "status" },
-              { header: "Records", key: "recordCount", format: formatNumber },
-              { header: "Last Synced", key: "lastSyncedAt", format: relativeDate },
-            ],
-            itemsKey: "syncs",
-          },
+      const { provider } = resolveProviderOrExit(args.provider, json)
+      return runTool(client, "outlit_integration_sync_status", { provider: provider.id }, json, {
+        spinnerMessage: "Fetching sync status...",
+        table: {
+          columns: [
+            { header: "Model", key: "model" },
+            { header: "Status", key: "status" },
+            { header: "Records", key: "recordCount", format: formatNumber },
+            { header: "Last Synced", key: "lastSyncedAt", format: relativeDate },
+          ],
+          itemsKey: "syncs",
         },
-      )
+      })
     }
 
     return runTool(client, "outlit_list_integrations", { connectedOnly: true }, json, {
