@@ -13,7 +13,12 @@
     "url": "https://github.com/OutlitAI/outlit-sdk/issues"
   },
   "homepage": "https://github.com/OutlitAI/outlit-sdk#readme",
-  "keywords": ["outlit", "analytics", "tracking", "sdk"],
+  "keywords": [
+    "outlit",
+    "analytics",
+    "tracking",
+    "sdk"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -28,7 +33,9 @@
       "default": "./dist/index.mjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -40,8 +47,8 @@
   },
   "devDependencies": {
     "@outlit/typescript-config": "workspace:*",
-    "tsup": "^8.0.1",
-    "typescript": "^5.3.3",
-    "vitest": "^1.2.1"
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }

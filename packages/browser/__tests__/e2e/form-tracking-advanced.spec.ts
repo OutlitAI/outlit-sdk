@@ -8,7 +8,7 @@
  * - Custom field denylist
  */
 
-import { type Route, expect, test } from "@playwright/test"
+import { expect, type Route, test } from "@playwright/test"
 
 interface ApiCall {
   url: string

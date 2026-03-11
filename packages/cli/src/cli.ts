@@ -24,6 +24,7 @@ const main = defineCommand({
     search: () => import("./commands/search").then((m) => m.default),
     sql: () => import("./commands/sql").then((m) => m.default),
     schema: () => import("./commands/schema").then((m) => m.default),
+    integrations: () => import("./commands/integrations/index").then((m) => m.default),
     completions: () => import("./commands/completions").then((m) => m.default),
     setup: () => import("./commands/setup/index").then((m) => m.default),
   },

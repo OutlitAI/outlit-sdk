@@ -9,7 +9,7 @@
  * - Form event still emitted alongside identify
  */
 
-import { type Route, expect, test } from "@playwright/test"
+import { expect, type Route, test } from "@playwright/test"
 
 interface FullEvent {
   type: "pageview" | "custom" | "form" | "identify"

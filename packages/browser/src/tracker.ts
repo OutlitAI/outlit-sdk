@@ -2,11 +2,6 @@ import {
   type BillingStatus,
   type BrowserIdentifyOptions,
   type BrowserTrackOptions,
-  type CustomerIdentifier,
-  DEFAULT_API_HOST,
-  type ExplicitJourneyStage,
-  type TrackerConfig,
-  type TrackerEvent,
   buildBillingEvent,
   buildCalendarEvent,
   buildCustomEvent,
@@ -15,16 +10,22 @@ import {
   buildIngestPayload,
   buildPageviewEvent,
   buildStageEvent,
+  type CustomerIdentifier,
+  DEFAULT_API_HOST,
+  type ExplicitJourneyStage,
+  type TrackerConfig,
+  type TrackerEvent,
 } from "@outlit/core"
 
 const MAX_PENDING_STAGE_EVENTS = 10
+
 import { initFormTracking, initPageviewTracking, stopAutocapture } from "./autocapture"
 import {
   type CalendarBookingEvent,
   initCalendarTracking,
   stopCalendarTracking,
 } from "./embed-integrations"
-import { type SessionTracker, initSessionTracking, stopSessionTracking } from "./session-tracker"
+import { initSessionTracking, type SessionTracker, stopSessionTracking } from "./session-tracker"
 import { getConsentState, getOrCreateVisitorId, setConsentState } from "./storage"
 
 // ============================================

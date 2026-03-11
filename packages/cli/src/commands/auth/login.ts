@@ -1,11 +1,10 @@
-import { execFileSync } from "node:child_process"
 import * as p from "@clack/prompts"
 import { defineCommand } from "citty"
 import { outputArgs } from "../../args/output"
 import { pingApiKey } from "../../lib/api"
 import { OUTLIT_DASHBOARD_URL, resolveApiKey, storeApiKey } from "../../lib/config"
 import { errorMessage, isJsonMode, outputError, outputResult } from "../../lib/output"
-import { isInteractive, openBrowserCmd } from "../../lib/tty"
+import { isInteractive, openBrowser } from "../../lib/tty"
 
 export default defineCommand({
   meta: {
@@ -67,16 +66,12 @@ export default defineCommand({
       if (p.isCancel(method)) cancelLogin()
 
       if (method === "browser") {
-        try {
-          if (process.platform === "win32") {
-            execFileSync("cmd", ["/c", "start", "", OUTLIT_DASHBOARD_URL], { stdio: "ignore" })
-          } else {
-            execFileSync(openBrowserCmd(), [OUTLIT_DASHBOARD_URL], { stdio: "ignore" })
-          }
-        } catch {
-          // Browser open is best-effort — user can copy URL from the prompt
+        const opened = openBrowser(OUTLIT_DASHBOARD_URL)
+        if (opened) {
+          p.log.info("Opening browser... paste your key once you have it.")
+        } else {
+          p.log.info(`Could not open browser. Visit ${OUTLIT_DASHBOARD_URL} manually.`)
         }
-        p.log.info("Opening browser... paste your key once you have it.")
       }
 
       const result = await p.password({

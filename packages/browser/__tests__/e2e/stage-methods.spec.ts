@@ -5,7 +5,7 @@
  * to ensure they correctly send stage events to the API.
  */
 
-import { type Request, type Route, expect, test } from "@playwright/test"
+import { expect, type Request, type Route, test } from "@playwright/test"
 
 interface StageEvent {
   type: "stage"

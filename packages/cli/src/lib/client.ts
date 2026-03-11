@@ -28,6 +28,17 @@ const TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string }> =
   outlit_schema: { method: "GET", path: "/api/internal/mcp/sql-schema" },
   outlit_query: { method: "POST", path: "/api/internal/mcp/sql" },
   outlit_search_customer_context: { method: "POST", path: "/api/internal/mcp/context-search" },
+  outlit_list_integrations: { method: "GET", path: "/api/internal/mcp/integrations" },
+  outlit_connect_integration: { method: "POST", path: "/api/internal/mcp/integrations/connect" },
+  outlit_connect_status: { method: "GET", path: "/api/internal/mcp/integrations/connect/status" },
+  outlit_disconnect_integration: {
+    method: "POST",
+    path: "/api/internal/mcp/integrations/disconnect",
+  },
+  outlit_integration_sync_status: {
+    method: "GET",
+    path: "/api/internal/mcp/integrations/sync-status",
+  },
 }
 
 /**

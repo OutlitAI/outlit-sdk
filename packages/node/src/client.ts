@@ -1,5 +1,9 @@
 import {
   type BillingStatus,
+  buildBillingEvent,
+  buildCustomEvent,
+  buildIdentifyEvent,
+  buildStageEvent,
   type CustomerIdentifier,
   DEFAULT_API_HOST,
   type ExplicitJourneyStage,
@@ -8,10 +12,6 @@ import {
   type ServerIdentity,
   type ServerTrackOptions,
   type TrackerEvent,
-  buildBillingEvent,
-  buildCustomEvent,
-  buildIdentifyEvent,
-  buildStageEvent,
   validateServerIdentity,
 } from "@outlit/core"
 import { EventQueue } from "./queue"

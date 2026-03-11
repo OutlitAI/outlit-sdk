@@ -3,11 +3,14 @@
   "formatter": {
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineWidth": 100,
-    "ignore": ["**/dist/**", "**/node_modules/**"]
+    "lineWidth": 100
   },
-  "organizeImports": {
-    "enabled": true
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   },
   "linter": {
     "enabled": true,
@@ -21,12 +24,11 @@
       "suspicious": {
         "noExplicitAny": "off"
       }
-    },
-    "ignore": ["node_modules", "**/dist/**"]
+    }
   },
   "files": {
     "maxSize": 5242880,
-    "ignore": ["**/dist/**", "**/node_modules/**"]
+    "includes": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.json"]
   },
   "javascript": {
     "formatter": {
@@ -43,9 +45,29 @@
   },
   "overrides": [
     {
-      "include": ["*.ts", "*.tsx"],
+      "includes": ["**/*.ts", "**/*.tsx"],
       "formatter": {
         "enabled": true
+      }
+    },
+    {
+      "includes": ["**/*vue*.test.ts", "**/*vue*.test.tsx"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useHookAtTopLevel": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/storage.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noDocumentCookie": "off"
+          }
+        }
       }
     }
   ]

@@ -5,15 +5,16 @@ import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { outputArgs } from "../args/output"
 import { pingApiKey } from "../lib/api"
+import { createClient } from "../lib/client"
 import type { CredentialResult } from "../lib/config"
 import {
   CLI_VERSION,
-  OUTLIT_DASHBOARD_URL,
-  TICK,
   getClaudeDesktopConfigPath,
   maskKey,
+  OUTLIT_DASHBOARD_URL,
   readJsonConfig,
   resolveApiKey,
+  TICK,
 } from "../lib/config"
 import { errorMessage, isJsonMode, outputResult } from "../lib/output"
 import { isUnicodeSupported } from "../lib/tty"
@@ -71,7 +72,12 @@ export default defineCommand({
     checks.push(checkApiKeyPresence(credential))
 
     if (credential) {
-      checks.push(await validateApiKey(credential.key))
+      const apiCheck = await validateApiKey(credential.key)
+      checks.push(apiCheck)
+
+      if (apiCheck.status !== "fail") {
+        checks.push(await checkIntegrations(credential.key))
+      }
     } else {
       checks.push({
         name: "API validation",
@@ -89,7 +95,7 @@ export default defineCommand({
     } else {
       printChecks(checks)
     }
-    process.exit(hasFail ? 1 : 0)
+    if (hasFail) process.exit(1)
   },
 })
 
@@ -154,6 +160,53 @@ async function validateApiKey(apiKey: string): Promise<CheckResult> {
       status: "fail",
       message: `API rejected key: ${errorMessage(err, "unknown error")}`,
       detail: `Check your key at ${OUTLIT_DASHBOARD_URL}`,
+    }
+  }
+}
+
+async function checkIntegrations(apiKey: string): Promise<CheckResult> {
+  try {
+    const client = await createClient(apiKey)
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Integrations check timed out")), 10_000),
+    )
+    const data = (await Promise.race([
+      client.callTool("outlit_list_integrations", {}),
+      timeout,
+    ])) as {
+      items?: Array<{ status: string }>
+    }
+    const items = data.items ?? []
+    const connected = items.filter((i) => i.status === "connected").length
+    const errors = items.filter((i) => i.status === "error").length
+
+    if (errors > 0) {
+      return {
+        name: "Integrations",
+        status: "warn",
+        message: `${connected} connected, ${errors} with errors`,
+        detail: "Run `outlit integrations status` for details",
+      }
+    }
+    if (connected === 0) {
+      return {
+        name: "Integrations",
+        status: "pass",
+        message: "No integrations connected",
+        detail: "Run `outlit integrations list` to see available integrations",
+      }
+    }
+    return {
+      name: "Integrations",
+      status: "pass",
+      message: `${connected} integration(s) connected`,
+    }
+  } catch {
+    return {
+      name: "Integrations",
+      status: "warn",
+      message: "Could not check integrations",
+      detail: "Integration status endpoint may not be available yet",
     }
   }
 }

@@ -1,0 +1,171 @@
+---
+title: "Integrations"
+description: "Connect and manage third-party integrations from the CLI"
+---
+
+Connect communication tools, analytics platforms, billing, and more — directly from the terminal. OAuth providers open the browser for authentication; API-key providers accept credentials inline.
+
+## Supported Providers
+
+### OAuth (browser-based)
+
+| Provider | Category | CLI Name |
+|----------|----------|----------|
+| Slack | Communication | `slack` |
+| Gmail | Communication | `gmail` |
+| Google Calendar | Calendar | `google-calendar` |
+
+### API Key
+
+| Provider | Category | CLI Name | Required Fields |
+|----------|----------|----------|-----------------|
+| Stripe | Billing | `stripe` | `apiKey` |
+| Fireflies | Calls | `fireflies` | `apiKey` |
+| Pylon | Support | `pylon` | `apiKey` |
+| PostHog | Analytics | `posthog` | `apiKey`, `region`, `projectId` |
+| Supabase | Data | `supabase` | `projectUrl`, `serviceRoleKey` |
+| Clerk | Auth | `clerk` | `secretKey` |
+
+## integrations list
+
+List all available integrations and their connection status.
+
+```bash
+outlit integrations list
+```
+
+### Examples
+
+```bash
+# Interactive table
+outlit integrations list
+
+# JSON for scripting
+outlit integrations list --json
+```
+
+## integrations add
+
+Connect a new integration.
+
+```bash
+outlit integrations add <provider> [flags]
+```
+
+### Flags
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--config` | string | JSON config for API-key providers (e.g. `'{"apiKey": "sk_xxx"}'`) |
+| `--force` | boolean | Reconnect even if already connected |
+
+### OAuth Providers
+
+Opens the browser for authentication. In interactive mode, the CLI polls until the connection completes (up to 5 minutes).
+
+```bash
+outlit integrations add slack
+outlit integrations add gmail --force
+```
+
+In JSON mode, returns a `sessionId` immediately for agent-side polling:
+
+```json
+{
+  "status": "awaiting_auth",
+  "provider": "slack",
+  "sessionId": "uuid"
+}
+```
+
+### API-Key Providers
+
+Pass credentials via `--config`:
+
+```bash
+outlit integrations add stripe --config '{"apiKey": "rk_live_xxx"}'
+outlit integrations add posthog --config '{"apiKey": "phx_xxx", "region": "us", "projectId": "12345"}'
+```
+
+In interactive mode without `--config`, the CLI prompts for each field (secrets are masked).
+
+In non-interactive mode without `--config`, returns the required fields as JSON:
+
+```json
+{
+  "status": "config_required",
+  "provider": "posthog",
+  "message": "PostHog requires API key configuration. Pass --config with the required fields.",
+  "requiredFields": [
+    { "key": "apiKey", "label": "API Key" },
+    { "key": "region", "label": "Region (us or eu)" },
+    { "key": "projectId", "label": "Project ID" }
+  ]
+}
+```
+
+<Info>
+  AI agents receive `config_required` automatically (piped stdout triggers JSON mode), so they can read `requiredFields` and prompt the user or pass `--config` in a follow-up call.
+</Info>
+
+## integrations remove
+
+Disconnect an integration and remove all synced data.
+
+```bash
+outlit integrations remove <provider> [flags]
+```
+
+### Flags
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--yes` | boolean | Skip confirmation prompt (required in non-interactive mode) |
+
+### Examples
+
+```bash
+# Interactive (prompts for confirmation)
+outlit integrations remove posthog
+
+# Non-interactive / scripting
+outlit integrations remove slack --yes
+```
+
+<Warning>
+  This permanently deletes all synced data for the integration. This action cannot be undone.
+</Warning>
+
+## integrations status
+
+Show sync status for connected integrations.
+
+```bash
+outlit integrations status [provider]
+```
+
+### Examples
+
+```bash
+# Summary of all connected integrations
+outlit integrations status
+
+# Detailed per-model sync status for a provider
+outlit integrations status stripe
+```
+
+### JSON Response (detailed)
+
+```json
+{
+  "provider": "stripe",
+  "syncs": [
+    {
+      "model": "Customers",
+      "status": "syncing",
+      "recordCount": 1250,
+      "lastSyncedAt": "2026-03-10T12:00:00Z"
+    }
+  ]
+}
+```

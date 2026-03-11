@@ -1,12 +1,12 @@
 // Main export
-export { Outlit } from "./client"
-export type { OutlitOptions, StageOptions, BillingOptions } from "./client"
 
 // Re-export useful types from core
 export type {
-  ServerTrackOptions,
-  ServerIdentifyOptions,
-  TrackerConfig,
-  IngestResponse,
   ExplicitJourneyStage,
+  IngestResponse,
+  ServerIdentifyOptions,
+  ServerTrackOptions,
+  TrackerConfig,
 } from "@outlit/core"
+export type { BillingOptions, OutlitOptions, StageOptions } from "./client"
+export { Outlit } from "./client"
