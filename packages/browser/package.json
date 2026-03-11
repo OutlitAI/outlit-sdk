@@ -1,6 +1,6 @@
 {
   "name": "@outlit/browser",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "Outlit browser tracking SDK with React and Vue bindings",
   "license": "Apache-2.0",
   "author": "Outlit AI",
@@ -78,7 +78,7 @@
     "deploy:version": "bun run build && tsx ./scripts/deploy.ts version"
   },
   "dependencies": {
-    "@outlit/core": "^1.4.3"
+    "@outlit/core": "^1.4.4"
   },
   "devDependencies": {
     "@outlit/typescript-config": "workspace:*",
