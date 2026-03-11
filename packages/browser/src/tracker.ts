@@ -95,6 +95,7 @@ export class Outlit {
   private eventQueue: TrackerEvent[] = []
   private flushTimer: ReturnType<typeof setInterval> | null = null
   private flushInterval: number
+  private isInitialized = false
   private isTrackingEnabled = false
   private options: OutlitOptions
   private hasHandledExit = false
@@ -165,6 +166,8 @@ export class Outlit {
         () => window.removeEventListener("beforeunload", handleExit),
       ]
     }
+
+    this.isInitialized = true
 
     // Check persisted consent state, falling back to autoTrack option
     const consent = getConsentState()
