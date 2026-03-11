@@ -1,5 +1,11 @@
 # @outlit/cli
 
+## 1.4.0
+
+### Minor Changes
+
+- [#72](https://github.com/OutlitAI/outlit-sdk/pull/72) [`06bd548`](https://github.com/OutlitAI/outlit-sdk/commit/06bd54886a254b42ba76d354c401022abd9cc0c0) Thanks [@rafa-thayto](https://github.com/rafa-thayto)! - Add integrations commands (list, add, remove, status) with API-key and OAuth provider flows
+
 ## 1.3.1
 
 ### Patch Changes

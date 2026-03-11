@@ -1,6 +1,6 @@
 {
   "name": "@outlit/node",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "Outlit server-side tracking SDK for Node.js",
   "license": "Apache-2.0",
   "author": "Outlit AI",
@@ -50,7 +50,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@outlit/core": "^1.4.3"
+    "@outlit/core": "^1.4.4"
   },
   "devDependencies": {
     "@outlit/typescript-config": "workspace:*",
