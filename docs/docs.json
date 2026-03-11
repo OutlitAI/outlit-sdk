@@ -64,6 +64,10 @@
           {
             "group": "AI Integrations",
             "pages": ["ai-integrations/mcp", "ai-integrations/skills"]
+          },
+          {
+            "group": "Use Cases",
+            "pages": ["use-cases/openclaw"]
           }
         ]
       },
