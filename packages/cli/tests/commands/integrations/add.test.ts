@@ -46,12 +46,12 @@ describe("integrations add", () => {
       const { default: addCmd } = await import("../../../src/commands/integrations/add")
       await captureStdout(() =>
         addCmd.run!({
-          args: { provider: "salesforce", json: true },
+          args: { provider: "slack", json: true },
         } as Parameters<NonNullable<typeof addCmd.run>>[0]),
       )
 
       expect(mockCallTool).toHaveBeenCalledWith("outlit_connect_integration", {
-        provider: "salesforce",
+        provider: "slack",
       })
     })
 
@@ -77,7 +77,7 @@ describe("integrations add", () => {
       const { default: addCmd } = await import("../../../src/commands/integrations/add")
       const parsed = await captureStdout(() =>
         addCmd.run!({
-          args: { provider: "salesforce", json: true },
+          args: { provider: "slack", json: true },
         } as Parameters<NonNullable<typeof addCmd.run>>[0]),
       )
 
@@ -93,7 +93,7 @@ describe("integrations add", () => {
       const { default: addCmd } = await import("../../../src/commands/integrations/add")
       const parsed = await captureStdout(() =>
         addCmd.run!({
-          args: { provider: "salesforce", force: true, json: true },
+          args: { provider: "slack", force: true, json: true },
         } as Parameters<NonNullable<typeof addCmd.run>>[0]),
       )
 
@@ -125,7 +125,7 @@ describe("integrations add", () => {
       await runExpectingError(
         () =>
           addCmd.run!({
-            args: { provider: "salesforce", json: true },
+            args: { provider: "slack", json: true },
           } as Parameters<NonNullable<typeof addCmd.run>>[0]),
         "api_error",
       )

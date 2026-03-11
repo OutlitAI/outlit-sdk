@@ -27,11 +27,11 @@ export default defineCommand({
     description: [
       "Connect a new integration.",
       "",
-      "For OAuth providers (Salesforce, HubSpot, etc.), opens the browser for authentication.",
+      "For OAuth providers (Slack, Gmail, etc.), opens the browser for authentication.",
       "For API-key providers (Stripe, PostHog, etc.), accepts credentials via --config or interactive prompts.",
       "",
       "Examples:",
-      "  outlit integrations add salesforce",
+      "  outlit integrations add slack",
       '  outlit integrations add stripe --config \'{"apiKey": "rk_xxx"}\'',
       "  outlit integrations add posthog --json          # outputs required fields as JSON",
       "  outlit integrations add slack --force            # reconnect if already connected",
@@ -267,8 +267,4 @@ async function waitForConnection(
   spinner.stop(`${provider.name} connected successfully!`)
   console.log(`    Sync will begin automatically.`)
   console.log(`    Use \`outlit integrations status ${cliName}\` to check progress.`)
-
-  if (provider.category === "crm") {
-    console.log(`    For pipeline and field mappings, visit: ${client.baseUrl}/integrations`)
-  }
 }

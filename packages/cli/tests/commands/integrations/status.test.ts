@@ -28,8 +28,8 @@ const setupMockCallTool = () => {
     return {
       items: [
         {
-          name: "Salesforce",
-          category: "crm",
+          name: "Slack",
+          category: "communication",
           syncStatus: "active",
           lastDataReceivedAt: new Date().toISOString(),
         },
@@ -75,12 +75,12 @@ describe("integrations status", () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
     await captureStdout(() =>
       statusCmd.run!({
-        args: { provider: "salesforce", json: true },
+        args: { provider: "slack", json: true },
       } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_sync_status", {
-      provider: "salesforce",
+      provider: "slack",
     })
   })
 
@@ -123,7 +123,7 @@ describe("integrations status", () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
     const parsed = await captureStdout(() =>
       statusCmd.run!({
-        args: { provider: "salesforce", json: true },
+        args: { provider: "slack", json: true },
       } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
     )
 
@@ -141,7 +141,7 @@ describe("integrations status", () => {
       expect(output).toContain("┌")
       expect(output).toContain("Name")
       expect(output).toContain("Sync Status")
-      expect(output).toContain("Salesforce")
+      expect(output).toContain("Slack")
     } finally {
       logSpy.mockRestore()
       setNonInteractive()

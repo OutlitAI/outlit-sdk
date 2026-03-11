@@ -1,7 +1,6 @@
 import { outputError } from "./output"
 
 export type ProviderCategory =
-  | "crm"
   | "communication"
   | "calls"
   | "calendar"
@@ -42,20 +41,22 @@ export interface ProviderInfo {
  */
 export const INTEGRATION_PROVIDERS: Record<string, ProviderInfo> = {
   // OAuth providers
-  salesforce: { id: "salesforce", name: "Salesforce", category: "crm", authType: "oauth" },
-  hubspot: { id: "hubspot", name: "HubSpot", category: "crm", authType: "oauth" },
-  attio: { id: "attio", name: "Attio", category: "crm", authType: "oauth" },
   slack: { id: "slack", name: "Slack", category: "communication", authType: "oauth" },
   gmail: { id: "google-mail", name: "Gmail", category: "communication", authType: "oauth" },
-  gong: { id: "gong", name: "Gong", category: "calls", authType: "oauth" },
   "google-calendar": {
     id: "google-calendar",
     name: "Google Calendar",
     category: "calendar",
     authType: "oauth",
   },
-
   // API-key providers
+  pylon: {
+    id: "pylon",
+    name: "Pylon",
+    category: "support",
+    authType: "api_key",
+    configFields: [{ key: "apiKey", label: "API Key", secret: true }],
+  },
   stripe: {
     id: "brex-api-key",
     name: "Stripe",

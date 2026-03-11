@@ -10,7 +10,7 @@ import {
 
 const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
   items: [
-    { name: "Salesforce", category: "crm", status: "connected", lastDataReceivedAt: null },
+    { name: "Stripe", category: "billing", status: "connected", lastDataReceivedAt: null },
     { name: "Slack", category: "communication", status: "not_connected", lastDataReceivedAt: null },
   ],
 }))
@@ -70,7 +70,7 @@ describe("integrations list", () => {
       expect(output).toContain("Name")
       expect(output).toContain("Category")
       expect(output).toContain("Status")
-      expect(output).toContain("Salesforce")
+      expect(output).toContain("Stripe")
     } finally {
       logSpy.mockRestore()
       setNonInteractive()

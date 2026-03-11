@@ -43,7 +43,7 @@ describe("integrations remove", () => {
     await runExpectingError(
       () =>
         removeCmd.run!({
-          args: { provider: "salesforce", json: true },
+          args: { provider: "slack", json: true },
         } as Parameters<NonNullable<typeof removeCmd.run>>[0]),
       "confirmation_required",
     )
@@ -53,15 +53,15 @@ describe("integrations remove", () => {
     const { default: removeCmd } = await import("../../../src/commands/integrations/remove")
     const parsed = await captureStdout(() =>
       removeCmd.run!({
-        args: { provider: "salesforce", yes: true, json: true },
+        args: { provider: "slack", yes: true, json: true },
       } as Parameters<NonNullable<typeof removeCmd.run>>[0]),
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_disconnect_integration", {
-      provider: "salesforce",
+      provider: "slack",
     })
     expect(parsed.success).toBe(true)
-    expect(parsed.provider).toBe("salesforce")
+    expect(parsed.provider).toBe("slack")
   })
 
   test("resolves gmail alias to google-mail for disconnect", async () => {
@@ -87,7 +87,7 @@ describe("integrations remove", () => {
     await runExpectingError(
       () =>
         removeCmd.run!({
-          args: { provider: "salesforce", yes: true, json: true },
+          args: { provider: "slack", yes: true, json: true },
         } as Parameters<NonNullable<typeof removeCmd.run>>[0]),
       "disconnect_failed",
     )
@@ -102,7 +102,7 @@ describe("integrations remove", () => {
     await runExpectingError(
       () =>
         removeCmd.run!({
-          args: { provider: "salesforce", yes: true, json: true },
+          args: { provider: "slack", yes: true, json: true },
         } as Parameters<NonNullable<typeof removeCmd.run>>[0]),
       "api_error",
     )

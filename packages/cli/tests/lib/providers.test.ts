@@ -70,31 +70,40 @@ describe("PROVIDER_NAMES", () => {
   })
 
   test("includes all expected providers", () => {
-    expect(PROVIDER_NAMES).toContain("salesforce")
-    expect(PROVIDER_NAMES).toContain("gmail")
     expect(PROVIDER_NAMES).toContain("slack")
+    expect(PROVIDER_NAMES).toContain("gmail")
     expect(PROVIDER_NAMES).toContain("stripe")
     expect(PROVIDER_NAMES).toContain("google-calendar")
+    expect(PROVIDER_NAMES).toContain("fireflies")
+    expect(PROVIDER_NAMES).toContain("posthog")
     expect(PROVIDER_NAMES).toContain("supabase")
     expect(PROVIDER_NAMES).toContain("clerk")
+    expect(PROVIDER_NAMES).toContain("pylon")
+  })
+
+  test("does not include removed CRM providers", () => {
+    expect(PROVIDER_NAMES).not.toContain("salesforce")
+    expect(PROVIDER_NAMES).not.toContain("hubspot")
+    expect(PROVIDER_NAMES).not.toContain("attio")
+    expect(PROVIDER_NAMES).not.toContain("gong")
   })
 })
 
 describe("resolveProvider", () => {
   test("returns provider on exact match", () => {
-    const result = resolveProvider("salesforce")
+    const result = resolveProvider("slack")
     expect("provider" in result).toBe(true)
     if ("provider" in result) {
-      expect(result.provider.id).toBe("salesforce")
-      expect(result.cliName).toBe("salesforce")
+      expect(result.provider.id).toBe("slack")
+      expect(result.cliName).toBe("slack")
     }
   })
 
   test("matches case-insensitively", () => {
-    const result = resolveProvider("Salesforce")
+    const result = resolveProvider("Slack")
     expect("provider" in result).toBe(true)
     if ("provider" in result) {
-      expect(result.provider.id).toBe("salesforce")
+      expect(result.provider.id).toBe("slack")
     }
   })
 
@@ -116,19 +125,19 @@ describe("resolveProvider", () => {
   })
 
   test("suggests matching provider via prefix", () => {
-    const result = resolveProvider("sale")
+    const result = resolveProvider("sla")
     expect("error" in result).toBe(true)
     if ("error" in result) {
-      expect(result.suggestion).toBe("salesforce")
-      expect(result.error).toContain('Did you mean "salesforce"')
+      expect(result.suggestion).toBe("slack")
+      expect(result.error).toContain('Did you mean "slack"')
     }
   })
 
   test("suggests when input is a prefix of a provider name", () => {
-    const result = resolveProvider("hub")
+    const result = resolveProvider("pos")
     expect("error" in result).toBe(true)
     if ("error" in result) {
-      expect(result.suggestion).toBe("hubspot")
+      expect(result.suggestion).toBe("posthog")
     }
   })
 

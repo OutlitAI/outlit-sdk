@@ -16,7 +16,7 @@ export default defineCommand({
       "",
       "Examples:",
       "  outlit integrations status              # summary of all",
-      "  outlit integrations status salesforce    # detailed Salesforce sync status",
+      "  outlit integrations status stripe    # detailed Stripe sync status",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),

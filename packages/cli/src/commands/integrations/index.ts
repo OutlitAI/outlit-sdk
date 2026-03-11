@@ -5,9 +5,9 @@ export default defineCommand({
   meta: {
     name: "integrations",
     description: [
-      "Manage platform integrations (CRM, communication, analytics, etc.).",
+      "Manage platform integrations (communication, analytics, billing, etc.).",
       "",
-      "Connect third-party services like Salesforce, Slack, and PostHog",
+      "Connect third-party services like Slack, Stripe, and PostHog",
       "to sync data into your Outlit workspace.",
       "",
       "Commands:",

@@ -3,7 +3,7 @@ title: "Integrations"
 description: "Connect and manage third-party integrations from the CLI"
 ---
 
-Connect CRMs, communication tools, analytics platforms, and more — directly from the terminal. OAuth providers open the browser for authentication; API-key providers accept credentials inline.
+Connect communication tools, analytics platforms, billing, and more — directly from the terminal. OAuth providers open the browser for authentication; API-key providers accept credentials inline.
 
 ## Supported Providers
 
@@ -11,10 +11,6 @@ Connect CRMs, communication tools, analytics platforms, and more — directly fr
 
 | Provider | Category | CLI Name |
 |----------|----------|----------|
-| Salesforce | CRM | `salesforce` |
-| HubSpot | CRM | `hubspot` |
-| Attio | CRM | `attio` |
-| Gong | Calls | `gong` |
 | Slack | Communication | `slack` |
 | Gmail | Communication | `gmail` |
 | Google Calendar | Calendar | `google-calendar` |
@@ -25,6 +21,7 @@ Connect CRMs, communication tools, analytics platforms, and more — directly fr
 |----------|----------|----------|-----------------|
 | Stripe | Billing | `stripe` | `apiKey` |
 | Fireflies | Calls | `fireflies` | `apiKey` |
+| Pylon | Support | `pylon` | `apiKey` |
 | PostHog | Analytics | `posthog` | `apiKey`, `region`, `projectId` |
 | Supabase | Data | `supabase` | `projectUrl`, `serviceRoleKey` |
 | Clerk | Auth | `clerk` | `secretKey` |
@@ -164,7 +161,7 @@ outlit integrations status stripe
   "provider": "stripe",
   "syncs": [
     {
-      "model": "Contacts",
+      "model": "Customers",
       "status": "syncing",
       "recordCount": 1250,
       "lastSyncedAt": "2026-03-10T12:00:00Z"

@@ -18,7 +18,7 @@ export default defineCommand({
       "(e.g., opportunities, contacts, messages). The action cannot be undone.",
       "",
       "Examples:",
-      "  outlit integrations remove salesforce",
+      "  outlit integrations remove posthog",
       "  outlit integrations remove slack --yes     # skip confirmation prompt",
       "",
       AGENT_JSON_HINT,
