@@ -37,8 +37,7 @@ export function detectAgents(): AgentId[] {
   if (isCommandAvailable("code") || existsSync(join(process.cwd(), ".vscode")))
     detected.push("vscode")
   if (isCommandAvailable("gemini")) detected.push("gemini")
-  if (existsSync(join(home, "clawd", "skills")) || existsSync(join(home, ".openclaw", "skills")))
-    detected.push("openclaw")
+  if (existsSync(join(home, ".openclaw", "skills"))) detected.push("openclaw")
 
   return detected
 }
