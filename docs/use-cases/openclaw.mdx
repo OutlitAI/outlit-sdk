@@ -17,10 +17,22 @@ Combined with OpenClaw's built-in cron scheduler, you get **automated customer h
         npm install -g @outlit/cli
         ```
       </Tab>
+      <Tab title="bun">
+        ```bash
+        bun add -g @outlit/cli
+        ```
+      </Tab>
       <Tab title="Homebrew">
         ```bash
         brew install outlitai/tap/outlit
         ```
+      </Tab>
+      <Tab title="Shell Script">
+        ```bash
+        curl -fsSL https://outlit.ai/install.sh | bash
+        ```
+
+        Detects your OS and architecture, downloads the latest binary to `~/.outlit/bin`, and adds it to your `PATH`.
       </Tab>
     </Tabs>
 
@@ -54,13 +66,10 @@ Combined with OpenClaw's built-in cron scheduler, you get **automated customer h
       </Tab>
     </Tabs>
 
-    Both methods write an `outlit-intelligence` skill to your OpenClaw skills directory (`~/clawd/skills/` or `~/.openclaw/skills/`). OpenClaw detects and loads it automatically — no restart needed.
+    Both methods write an `outlit` skill to your OpenClaw skills directory (`~/.openclaw/skills/`). OpenClaw detects and loads it automatically — no restart needed.
 
     <Tip>
-      Make sure `OUTLIT_API_KEY` is set in your shell environment so OpenClaw can authenticate when running commands. Add it to your `.bashrc` / `.zshrc`:
-      ```bash
-      export OUTLIT_API_KEY=ok_your_api_key_here
-      ```
+      OpenClaw needs your `OUTLIT_API_KEY` to authenticate. The recommended way to store it is through OpenClaw's [SecretRefs](https://docs.openclaw.ai/gateway/secrets) — run `openclaw secrets configure` to set it up securely without plaintext exposure. See the [CLI secrets guide](https://docs.openclaw.ai/cli/secrets) for more details.
     </Tip>
   </Step>
   <Step title="Verify">
@@ -136,7 +145,7 @@ openclaw cron add \
   --name "Revenue Snapshot" \
   --cron "0 9 * * 1" \
   --tz "America/New_York" \
-  --message "Run: outlit sql \"SELECT domain, current_mrr FROM customer_dimensions ORDER BY current_mrr DESC LIMIT 15\". Format as a revenue snapshot table — convert cents to dollars, show rank, and note the total MRR across all listed accounts." \
+  --message "Run: outlit sql \"SELECT domain, mrr_cents FROM customer_dimensions ORDER BY mrr_cents DESC LIMIT 15\". Format as a revenue snapshot table — convert cents to dollars, show rank, and note the total MRR across all listed accounts." \
   --announce
 ```
 
@@ -153,16 +162,16 @@ openclaw cron add \
   --announce
 ```
 
-### Churn Signals Search (Weekly)
+### New Signups Overview (Weekly)
 
-Semantic sweep for red flags across all customer communications.
+Friday recap of new customers that signed up during the week.
 
 ```bash
 openclaw cron add \
-  --name "Churn Signals Search" \
+  --name "New Signups Overview" \
   --cron "0 10 * * 5" \
   --tz "America/New_York" \
-  --message "Run: outlit search \"pricing concerns OR cancellation OR downgrade OR budget cut\". Summarize findings as a weekly churn signals report — group by customer, quote key phrases, and rate severity (low/medium/high)." \
+  --message "Run: outlit customers list --billing-status TRIALING --order-by created_at. Summarize as a weekly new signups report — list each new customer, their domain, and current activity level." \
   --announce
 ```
 
@@ -179,44 +188,6 @@ openclaw cron disable JOB_ID        # Pause without deleting
 openclaw cron enable JOB_ID         # Resume a paused job
 openclaw cron rm JOB_ID             # Delete a job
 ```
-
-## Heartbeat Monitoring
-
-For less time-sensitive checks, add a rotation to OpenClaw's `HEARTBEAT.md` file (`~/.openclaw/workspace/HEARTBEAT.md`). The heartbeat runs periodically and cycles through tasks:
-
-```markdown
-## Outlit Customer Health Rotation
-
-- [ ] Revenue Snapshot: Run `outlit sql "SELECT domain, current_mrr FROM customer_dimensions ORDER BY current_mrr DESC LIMIT 10"` and summarize top account movements
-- [ ] At-Risk Users: Run `outlit users list --journey-stage AT_RISK --limit 20` and flag any new entries
-- [ ] Churn Signals: Run `outlit search "pricing concerns OR cancellation OR downgrade"` and report findings
-```
-
-OpenClaw rotates through these checks during heartbeats, giving you ambient awareness without flooding your channels.
-
-<Tip>
-  **Cron vs Heartbeat**: Use cron for time-critical alerts (churn risk, trial health) that need exact schedules and channel delivery. Use heartbeat for background monitoring that can happen whenever OpenClaw has a free cycle.
-</Tip>
-
-## How the Skill Works
-
-When you run `outlit setup openclaw`, the CLI writes a `SKILL.md` file to your OpenClaw skills directory:
-
-```
-~/clawd/skills/outlit-intelligence/SKILL.md
-```
-
-This file contains:
-
-- **YAML frontmatter** declaring dependencies — OpenClaw checks that the `outlit` binary is installed and `OUTLIT_API_KEY` is set before using the skill
-- **Command reference** with examples for every `outlit` subcommand
-- **Behavioral rules** — parse JSON, convert cents to dollars, handle pagination, never expose API keys
-
-OpenClaw reads this file at runtime and learns how to use the Outlit CLI. No MCP server or HTTP connection needed — it's just a markdown file that teaches your agent a new capability.
-
-<Info>
-  The skill checks `~/clawd/skills/` first, falling back to `~/.openclaw/skills/` for older OpenClaw installations. Both paths work identically.
-</Info>
 
 ## Outlit Agent Skills
 
@@ -246,14 +217,11 @@ These skills are also available on ClawHub at [clawhub.ai/leo-paz/outlit](https:
 
 ## What's Next
 
-<CardGroup cols={3}>
-  <Card title="CLI Commands" icon="terminal" href="/cli/commands">
-    Full reference for all Outlit data commands
+<CardGroup cols={2}>
+  <Card title="OpenClaw Docs" icon="lobster" href="https://docs.openclaw.ai">
+    Learn more about OpenClaw's features — skills, cron, secrets, and more
   </Card>
-  <Card title="Agent Skills" icon="brain" href="/ai-integrations/skills">
-    Install additional Outlit agent skills
-  </Card>
-  <Card title="Outlit on ClawHub" icon="paw" href="https://clawhub.ai/leo-paz/outlit">
+  <Card title="Outlit on ClawHub" icon="globe" href="https://clawhub.ai/leo-paz/outlit">
     Browse the Outlit skill on ClawHub
   </Card>
 </CardGroup>
