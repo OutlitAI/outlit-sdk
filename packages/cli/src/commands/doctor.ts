@@ -251,17 +251,15 @@ function detectAgents(): CheckResult[] {
 
     // OpenClaw: check for SKILL.md
     if (agentId === "openclaw") {
-      const openclawBase = existsSync(join(home, "clawd", "skills"))
-        ? join(home, "clawd", "skills")
-        : join(home, ".openclaw", "skills")
-      const hasSkill = existsSync(join(openclawBase, "outlit-intelligence", "SKILL.md"))
+      const openclawBase = join(home, ".openclaw", "skills")
+      const hasSkill = existsSync(join(openclawBase, "outlit", "SKILL.md"))
       results.push({
         name: meta.name,
         status: hasSkill ? "pass" : "warn",
         message: hasSkill
           ? "Installed, Outlit skill configured"
           : "Installed, but Outlit skill not found",
-        detail: hasSkill ? undefined : "Run `outlit setup openclaw` to configure",
+        detail: hasSkill ? undefined : "Run `clawhub install outlit` to configure",
       })
       continue
     }

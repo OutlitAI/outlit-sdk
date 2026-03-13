@@ -41,11 +41,7 @@ describe("setup openclaw", () => {
     }))
   })
 
-  test("writes SKILL.md to ~/clawd/skills/ when it exists", async () => {
-    const clawdDir = join(homedir(), "clawd")
-    // ~/clawd/ exists
-    mockExistsSync.mockImplementation((p: string) => p === clawdDir)
-
+  test("writes SKILL.md to ~/.openclaw/skills/outlit", async () => {
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     const { default: openclawCmd } = await import("../../../src/commands/setup/openclaw")
 
@@ -60,9 +56,9 @@ describe("setup openclaw", () => {
       expect(mockWriteFileSync.mock.calls.length).toBeGreaterThan(0)
       const [writtenPath, writtenContent] = mockWriteFileSync.mock.calls[0] as [string, string]
 
-      const expectedDir = join(clawdDir, "skills", "outlit-intelligence")
+      const expectedDir = join(homedir(), ".openclaw", "skills", "outlit")
       expect(writtenPath).toBe(join(expectedDir, "SKILL.md"))
-      expect(writtenContent).toContain("name: outlit-intelligence")
+      expect(writtenContent).toContain("name: outlit")
       expect(writtenContent).toContain("outlit customers list")
 
       const written = (calls[0]?.[0] as string) ?? ""
@@ -70,34 +66,6 @@ describe("setup openclaw", () => {
       expect(result.success).toBe(true)
       expect(result.agent).toBe("openclaw")
       expect(result.path).toBe(join(expectedDir, "SKILL.md"))
-    }
-  })
-
-  test("falls back to ~/.openclaw/skills/ when ~/clawd/ doesn't exist", async () => {
-    // ~/clawd/ does not exist
-    mockExistsSync.mockImplementation((_path: string) => false)
-
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    const { default: openclawCmd } = await import("../../../src/commands/setup/openclaw")
-
-    try {
-      await openclawCmd.run!({
-        args: { json: true },
-      } as Parameters<NonNullable<typeof openclawCmd.run>>[0])
-    } finally {
-      const calls = writeSpy.mock.calls.slice()
-      writeSpy.mockRestore()
-
-      expect(mockWriteFileSync.mock.calls.length).toBeGreaterThan(0)
-      const [writtenPath] = mockWriteFileSync.mock.calls[0] as [string, string]
-
-      const expectedDir = join(homedir(), ".openclaw", "skills", "outlit-intelligence")
-      expect(writtenPath).toBe(join(expectedDir, "SKILL.md"))
-
-      const written = (calls[0]?.[0] as string) ?? ""
-      const result = JSON.parse(written) as Record<string, unknown>
-      expect(result.success).toBe(true)
-      expect(result.path).toContain(".openclaw")
     }
   })
 
@@ -129,10 +97,6 @@ describe("setup openclaw", () => {
   })
 
   test("SKILL.md content contains required sections", async () => {
-    const clawdDir = join(homedir(), "clawd")
-    // ~/clawd/ exists so SKILL.md goes there
-    mockExistsSync.mockImplementation((p: string) => p === clawdDir)
-
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     const { default: openclawCmd } = await import("../../../src/commands/setup/openclaw")
 
@@ -151,10 +115,10 @@ describe("setup openclaw", () => {
       expect(writtenContent).toContain("outlit facts")
       expect(writtenContent).toContain("outlit sql")
 
-      // The env var reference must appear so Claude knows how to authenticate
+      // The env var reference must appear so OpenClaw knows how to authenticate
       expect(writtenContent).toContain("OUTLIT_API_KEY")
 
-      // The rules section must exist so Claude knows how to handle the output
+      // The rules section must exist so OpenClaw knows how to handle the output
       expect(writtenContent).toContain("## Rules")
     }
   })

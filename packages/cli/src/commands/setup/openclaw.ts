@@ -1,4 +1,3 @@
-import { existsSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
 import { defineCommand } from "citty"
@@ -9,16 +8,12 @@ import { isJsonMode, outputResult } from "../../lib/output"
 
 export function getSkillDir(): string {
   const home = homedir()
-  const clawdDir = join(home, "clawd")
-  if (existsSync(clawdDir)) {
-    return join(clawdDir, "skills", "outlit-intelligence")
-  }
-  return join(home, ".openclaw", "skills", "outlit-intelligence")
+  return join(home, ".openclaw", "skills", "outlit")
 }
 
 export function buildSkillContent(maskedKey: string): string {
   return `---
-name: outlit-intelligence
+name: outlit
 description: Query customer data, revenue metrics, and analytics via the Outlit CLI.
 metadata:
   openclaw:
@@ -98,7 +93,7 @@ export function configureSafe(key: string, json: boolean): boolean {
 export default defineCommand({
   meta: {
     name: "openclaw",
-    description: "Write Outlit intelligence skill to ~/clawd/skills/ for OpenClaw.",
+    description: "Write Outlit skill to ~/.openclaw/skills/ for OpenClaw.",
   },
   args: { ...authArgs, ...outputArgs },
   run({ args }) {
