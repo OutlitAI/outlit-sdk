@@ -20,6 +20,15 @@ mock.module("../../../src/lib/client", () => ({
   }),
 }))
 
+const mockOpenBrowser = mock(() => true)
+mock.module("../../../src/lib/tty", () => {
+  const actual = require("../../../src/lib/tty")
+  return {
+    ...actual,
+    openBrowser: mockOpenBrowser,
+  }
+})
+
 describe("integrations add", () => {
   useTempEnv("integrations-add-test")
 
