@@ -253,7 +253,7 @@ describe("search", () => {
     let thrown: unknown
     try {
       await searchCmd.run!({
-        args: { query: "test query", json: true },
+        args: { query: "test query", "top-k": "20", json: true },
       } as Parameters<NonNullable<typeof searchCmd.run>>[0])
     } catch (e) {
       thrown = e
