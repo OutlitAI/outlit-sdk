@@ -72,28 +72,45 @@ describe("search", () => {
     }
   })
 
-  test("--doc-types splits into array", async () => {
+  test("error when --top-k exceeds 50", async () => {
     const { default: searchCmd } = await import("../../src/commands/search")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
     try {
       await searchCmd.run!({
-        args: {
-          query: "budget",
-          "doc-types": "fact,email_chunk",
-          "top-k": "20",
-          json: true,
-        },
+        args: { query: "test", "top-k": "100", json: true },
       } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-
-      expect(mockCallTool).toHaveBeenCalledWith(
-        "outlit_search_customer_context",
-        expect.objectContaining({
-          query: "budget",
-          docTypes: ["fact", "email_chunk"],
-        }),
-      )
+    } catch (e) {
+      thrown = e
     } finally {
-      writeSpy.mockRestore()
+      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+    }
+  })
+
+  test("error when --top-k is 0", async () => {
+    const { default: searchCmd } = await import("../../src/commands/search")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await searchCmd.run!({
+        args: { query: "test", "top-k": "0", json: true },
+      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
     }
   })
 
