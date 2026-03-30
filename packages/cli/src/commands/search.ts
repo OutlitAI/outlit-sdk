@@ -19,7 +19,7 @@ export default defineCommand({
       "  outlit search 'churn risk signals' --customer acme.com",
       "  outlit search 'expansion opportunities' --top-k 50 --json",
       "  outlit search 'support escalations' --after 2025-01-01 --before 2025-03-31",
-      "  outlit search 'budget' --doc-types fact,email_chunk",
+      "  outlit search 'onboarding issues' --source-types call_transcript,email",
       "  outlit search --source-type call_transcript --source-id call_123",
       "",
       AGENT_JSON_HINT,
@@ -40,7 +40,7 @@ export default defineCommand({
     },
     "top-k": {
       type: "string",
-      description: "Maximum number of results to return. Default: 20.",
+      description: "Maximum number of results to return (1–50). Default: 20.",
       default: "20",
     },
     after: {
@@ -50,10 +50,6 @@ export default defineCommand({
     before: {
       type: "string",
       description: "Filter to events occurring before this date (ISO 8601, e.g. 2025-03-31)",
-    },
-    "doc-types": {
-      type: "string",
-      description: "Comma-separated document types to filter: fact, email_chunk, transcript_chunk",
     },
     "source-types": {
       type: "string",
@@ -73,9 +69,9 @@ export default defineCommand({
 
     // Validate arguments before authenticating
     const topK = Number(args["top-k"])
-    if (!Number.isFinite(topK) || topK <= 0) {
+    if (!Number.isFinite(topK) || topK < 1 || topK > 50) {
       return outputError(
-        { message: "--top-k must be a positive number", code: "invalid_input" },
+        { message: "--top-k must be an integer between 1 and 50", code: "invalid_input" },
         json,
       )
     }
@@ -130,7 +126,6 @@ export default defineCommand({
     if (args.customer) params.customer = args.customer
     if (args.after) params.occurredAfter = args.after
     if (args.before) params.occurredBefore = args.before
-    if (args["doc-types"]) params.docTypes = parseCsv(args["doc-types"])
     if (sourceTypes) params.sourceTypes = parseCsv(sourceTypes)
     if (sourceType) params.sourceType = sourceType
     if (sourceId) params.sourceId = sourceId

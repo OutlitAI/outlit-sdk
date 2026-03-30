@@ -379,11 +379,10 @@ outlit search [query] [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--customer` | string | — | Scope to a specific customer (domain or UUID) |
-| `--top-k` | number | `20` | Maximum results to return |
+| `--top-k` | number | `20` | Maximum results to return (1–50) |
 | `--after` | string | — | Filter to events after date (YYYY-MM-DD) |
 | `--before` | string | — | Filter to events before date (YYYY-MM-DD) |
-| `--doc-types` | string | — | Comma-separated document types: `fact`, `email_chunk`, `transcript_chunk` |
-| `--source-types` | string | — | Comma-separated broad source type filter |
+| `--source-types` | string | — | Comma-separated source type filter (e.g. `email`, `call_transcript`) |
 | `--source-type` | string | — | Exact source type for direct lookup (must pair with `--source-id`) |
 | `--source-id` | string | — | Exact source ID for direct lookup (must pair with `--source-type`) |
 
@@ -406,17 +405,14 @@ outlit search "budget concerns" --customer acme.com
 # Time-bounded
 outlit search "expansion signals" --after 2025-01-01 --before 2025-03-31
 
-# Filter by document type
-outlit search "budget" --doc-types fact,email_chunk
-
-# Broad source type filter
+# Filter by source type
 outlit search "onboarding issues" --source-types call_transcript,email
 
 # Direct source lookup (no query needed)
 outlit search --source-type call_transcript --source-id call_123
 
-# More results
-outlit search "churn risk" --top-k 100 --json
+# More results (max 50)
+outlit search "churn risk" --top-k 50 --json
 ```
 
 ### JSON Response
