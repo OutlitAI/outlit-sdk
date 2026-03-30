@@ -35,6 +35,7 @@ describe("integrations add", () => {
   beforeEach(() => {
     setNonInteractive()
     mockCallTool.mockClear()
+    mockOpenBrowser.mockClear()
   })
 
   test("rejects unknown provider", async () => {
@@ -123,6 +124,21 @@ describe("integrations add", () => {
       expect(parsed.sessionId).toBe("sess_123")
       // connectUrl is no longer in the response
       expect(parsed.connectUrl).toBeUndefined()
+    })
+
+    test("returns browser_failed when browser cannot open", async () => {
+      mockOpenBrowser.mockReturnValueOnce(false)
+
+      const { default: addCmd } = await import("../../../src/commands/integrations/add")
+      const parsed = await captureStdout(() =>
+        addCmd.run!({
+          args: { provider: "slack", json: true },
+        } as Parameters<NonNullable<typeof addCmd.run>>[0]),
+      )
+
+      expect(parsed.status).toBe("browser_failed")
+      expect(parsed.url).toBeDefined()
+      expect(parsed.sessionId).toBe("sess_123")
     })
 
     test("exits 1 when API call fails", async () => {

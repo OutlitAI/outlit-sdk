@@ -70,8 +70,8 @@ export default defineCommand({
   },
   async run({ args }) {
     const json = !!args.json
-    const client = await getClientOrExit(args["api-key"], json)
 
+    // Validate arguments before authenticating
     const topK = Number(args["top-k"])
     if (!Number.isFinite(topK) || topK <= 0) {
       return outputError(
@@ -117,13 +117,21 @@ export default defineCommand({
       )
     }
 
+    const client = await getClientOrExit(args["api-key"], json)
+
+    const parseCsv = (value: string) =>
+      value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean)
+
     const params: Record<string, unknown> = { topK }
     if (args.query) params.query = args.query
     if (args.customer) params.customer = args.customer
     if (args.after) params.occurredAfter = args.after
     if (args.before) params.occurredBefore = args.before
-    if (args["doc-types"]) params.docTypes = args["doc-types"].split(",")
-    if (sourceTypes) params.sourceTypes = sourceTypes.split(",")
+    if (args["doc-types"]) params.docTypes = parseCsv(args["doc-types"])
+    if (sourceTypes) params.sourceTypes = parseCsv(sourceTypes)
     if (sourceType) params.sourceType = sourceType
     if (sourceId) params.sourceId = sourceId
 
