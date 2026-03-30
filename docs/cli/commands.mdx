@@ -338,7 +338,14 @@ outlit facts acme.com --json | jq '.items[] | select(.severity == "HIGH")'
       "type": "SIGNAL",
       "title": "Budget concerns raised",
       "severity": "HIGH",
-      "generatedAt": "2025-02-10T15:30:00Z"
+      "generatedAt": "2025-02-10T15:30:00Z",
+      "sourceMetadata": {
+        "sourceType": "call_transcript",
+        "sourceId": "call_123",
+        "sourceOccurredAt": "2025-02-10T14:00:00Z",
+        "sourceQuote": "Budget is blocked until next quarter.",
+        "permalink": "https://app.outlit.com/calls/call_123"
+      }
     }
   ],
   "pagination": {
@@ -349,19 +356,23 @@ outlit facts acme.com --json | jq '.items[] | select(.severity == "HIGH")'
 }
 ```
 
+<Note>
+  The `sourceMetadata` object provides provenance for each fact. All fields are nullable — `null` indicates the source information is unavailable.
+</Note>
+
 ## Search
 
-Semantic search across customer context — events, signals, emails, and facts.
+Semantic search across customer context — facts, emails, transcripts, and signals. Supports natural language queries, direct source lookups, and document type filtering.
 
 ```bash
-outlit search <query> [flags]
+outlit search [query] [flags]
 ```
 
 ### Arguments
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `query` | Yes | Natural language search query |
+| `query` | No* | Natural language search query. *Required unless `--source-type` and `--source-id` are both provided |
 
 ### Flags
 
@@ -371,6 +382,17 @@ outlit search <query> [flags]
 | `--top-k` | number | `20` | Maximum results to return |
 | `--after` | string | — | Filter to events after date (YYYY-MM-DD) |
 | `--before` | string | — | Filter to events before date (YYYY-MM-DD) |
+| `--doc-types` | string | — | Comma-separated document types: `fact`, `email_chunk`, `transcript_chunk` |
+| `--source-types` | string | — | Comma-separated broad source type filter |
+| `--source-type` | string | — | Exact source type for direct lookup (must pair with `--source-id`) |
+| `--source-id` | string | — | Exact source ID for direct lookup (must pair with `--source-type`) |
+
+<Note>
+  **Validation rules:**
+  - Either `query` or both `--source-type` and `--source-id` must be provided
+  - `--source-type` and `--source-id` must always be used together
+  - `--source-types` cannot be combined with `--source-type`/`--source-id`
+</Note>
 
 ### Examples
 
@@ -383,6 +405,15 @@ outlit search "budget concerns" --customer acme.com
 
 # Time-bounded
 outlit search "expansion signals" --after 2025-01-01 --before 2025-03-31
+
+# Filter by document type
+outlit search "budget" --doc-types fact,email_chunk
+
+# Broad source type filter
+outlit search "onboarding issues" --source-types call_transcript,email
+
+# Direct source lookup (no query needed)
+outlit search --source-type call_transcript --source-id call_123
 
 # More results
 outlit search "churn risk" --top-k 100 --json
@@ -398,6 +429,8 @@ outlit search "churn risk" --top-k 100 --json
       "snippet": "Customer mentioned pricing concerns in Q1 planning meeting",
       "relevance": 0.92,
       "source": "TIMELINE",
+      "sourceId": "call_456",
+      "occurredAt": "2025-02-10T15:30:00Z",
       "timestamp": "2025-02-10T15:30:00Z"
     }
   ],
