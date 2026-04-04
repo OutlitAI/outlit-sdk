@@ -13,8 +13,10 @@ import {
   type CustomerIdentifier,
   DEFAULT_API_HOST,
   type ExplicitJourneyStage,
+  type PayloadUserIdentity,
   type TrackerConfig,
   type TrackerEvent,
+  validateCustomerIdentity,
 } from "@outlit/core"
 
 const MAX_PENDING_STAGE_EVENTS = 10
@@ -78,11 +80,7 @@ export interface OutlitOptions extends TrackerConfig {
   idleTimeout?: number
 }
 
-export interface UserIdentity {
-  email?: string
-  userId?: string
-  traits?: Record<string, string | number | boolean | null>
-}
+export type UserIdentity = PayloadUserIdentity
 
 export interface BillingOptions extends CustomerIdentifier {
   properties?: Record<string, string | number | boolean | null>
@@ -301,6 +299,11 @@ export class Outlit {
       return
     }
 
+    if (!options.email && !options.userId) {
+      console.warn("[Outlit] identify requires email or userId")
+      return
+    }
+
     // Update currentUser if email or userId is provided
     // This enables stage events after identify() is called
     if (options.email || options.userId) {
@@ -308,6 +311,10 @@ export class Outlit {
       this.currentUser = {
         email: options.email,
         userId: options.userId,
+        customerId: options.customerId,
+        customerDomain: options.customerDomain,
+        customerTraits: options.customerTraits,
+        traits: options.traits,
       }
       if (hadNoUser) {
         this.flushPendingStageEvents()
@@ -319,6 +326,9 @@ export class Outlit {
       referrer: document.referrer,
       email: options.email,
       userId: options.userId,
+      customerId: options.customerId,
+      customerDomain: options.customerDomain,
+      customerTraits: options.customerTraits,
       traits: options.traits,
     })
     this.enqueue(event)
@@ -365,7 +375,14 @@ export class Outlit {
    */
   private applyUser(identity: UserIdentity): void {
     this.currentUser = identity
-    this.identify({ email: identity.email, userId: identity.userId, traits: identity.traits })
+    this.identify({
+      email: identity.email,
+      userId: identity.userId,
+      traits: identity.traits,
+      customerId: identity.customerId,
+      customerDomain: identity.customerDomain,
+      customerTraits: identity.customerTraits,
+    })
     this.flushPendingStageEvents()
   }
 
@@ -449,11 +466,24 @@ export class Outlit {
       return
     }
 
+    try {
+      validateCustomerIdentity(
+        options.customerId,
+        options.customerDomain,
+        options.domain,
+        options.stripeCustomerId,
+      )
+    } catch (error) {
+      console.warn("[Outlit]", error instanceof Error ? error.message : error)
+      return
+    }
+
     const event = buildBillingEvent({
       url: window.location.href,
       referrer: document.referrer,
       status,
       customerId: options.customerId,
+      customerDomain: options.customerDomain,
       stripeCustomerId: options.stripeCustomerId,
       domain: options.domain,
       properties: options.properties,

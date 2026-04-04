@@ -55,7 +55,10 @@ POST https://app.outlit.ai/api/i/v1/{publicKey}/events
   | Property | Type | Description |
   |----------|------|-------------|
   | `email` | string | User's email address |
-  | `userId` | string | Your internal user ID |
+  | `userId` | string | Your system-owned user/contact ID |
+  | `customerId` | string | Your system-owned customer/account/workspace ID |
+  | `customerDomain` | string | Public customer/account domain used for billing and attribution |
+  | `customerTraits` | object | Customer/account traits |
 </ParamField>
 
 ## Event Types
@@ -199,11 +202,17 @@ Identify the visitor with their email/userId.
   "path": "/signup",
   "email": "jane@example.com",
   "userId": "usr_12345",
+  "customerId": "cust_123",
+  "customerDomain": "acme.com",
   "traits": {
     "name": "Jane Doe",
     "company": "Acme Inc",
     "plan": "enterprise",
     "role": "admin"
+  },
+  "customerTraits": {
+    "plan": "enterprise",
+    "seats": 50
   },
   "timestamp": 1699999999999
 }
@@ -218,11 +227,23 @@ Identify the visitor with their email/userId.
 </ParamField>
 
 <ParamField body="userId" type="string">
-  Your internal user ID.
+  Your system-owned user/contact ID.
 </ParamField>
 
 <ParamField body="traits" type="object">
   Properties to set on the user profile.
+</ParamField>
+
+<ParamField body="customerId" type="string">
+  Your system-owned customer/account/workspace ID.
+</ParamField>
+
+<ParamField body="customerDomain" type="string">
+  Public customer/account domain used for billing and attribution.
+</ParamField>
+
+<ParamField body="customerTraits" type="object">
+  Properties to set on the customer profile.
 </ParamField>
 
 ---
@@ -445,8 +466,13 @@ curl -X POST "https://app.outlit.ai/api/i/v1/pk_your_key/events" \
         "path": "/",
         "email": "jane@acme.com",
         "userId": "usr_123",
+        "customerId": "cust_123",
+        "customerDomain": "acme.com",
         "traits": {
           "name": "Jane Doe",
+          "plan": "pro"
+        },
+        "customerTraits": {
           "plan": "pro"
         }
       },
@@ -455,8 +481,11 @@ curl -X POST "https://app.outlit.ai/api/i/v1/pk_your_key/events" \
         "url": "server://jane@acme.com",
         "path": "/",
         "eventName": "subscription_created",
+        "email": "jane@acme.com",
+        "userId": "usr_123",
+        "customerId": "cust_123",
+        "customerDomain": "acme.com",
         "properties": {
-          "__email": "jane@acme.com",
           "plan": "pro",
           "amount": 99
         }
@@ -509,7 +538,10 @@ response = requests.post(
                 'url': 'server://jane@example.com',
                 'path': '/',
                 'email': 'jane@example.com',
+                'customerId': 'cust_123',
+                'customerDomain': 'acme.com',
                 'traits': {'name': 'Jane Doe'},
+                'customerTraits': {'plan': 'enterprise'},
                 'timestamp': int(time.time() * 1000)
             }
         ]
@@ -523,8 +555,8 @@ print(response.json())
 
 For server-side tracking, the `visitorId` field can be omitted. Identity is resolved from the event data:
 
-- **Identify events**: Use `email` and/or `userId` fields
-- **Custom events**: Include `__email` and/or `__userId` in properties
+- **Identify events**: Use `email` and/or `userId` fields, plus optional customer context
+- **Custom events**: Include top-level `email`, `userId`, `customerId`, and/or `customerDomain` fields
 
 ```json
 {
@@ -535,9 +567,11 @@ For server-side tracking, the `visitorId` field can be omitted. Identity is reso
       "url": "server://user@example.com",
       "path": "/",
       "eventName": "payment_received",
+      "email": "user@example.com",
+      "userId": "usr_123",
+      "customerId": "cust_123",
+      "customerDomain": "acme.com",
       "properties": {
-        "__email": "user@example.com",
-        "__userId": "usr_123",
         "amount": 99,
         "currency": "USD"
       }

@@ -1,0 +1,123 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { Outlit } from "../client"
+
+const fetchMock = vi.fn()
+
+function getLastPayload() {
+  const call = fetchMock.mock.calls.at(-1)
+  if (!call) {
+    throw new Error("Expected fetch to be called")
+  }
+
+  const [, init] = call
+  if (!init || typeof init !== "object" || !("body" in init)) {
+    throw new Error("Expected fetch body")
+  }
+
+  return JSON.parse(String((init as RequestInit).body))
+}
+
+beforeEach(() => {
+  fetchMock.mockResolvedValue({
+    ok: true,
+    json: async () => ({ success: true, processed: 1 }),
+  })
+  globalThis.fetch = fetchMock as typeof fetch
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  fetchMock.mockReset()
+})
+
+describe("Outlit", () => {
+  it("tracks customer-only events with top-level customer attribution", async () => {
+    const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
+
+    outlit.track({
+      customerId: "cust_123",
+      customerDomain: "acme.com",
+      eventName: "account_synced",
+    })
+
+    await outlit.flush()
+
+    const payload = getLastPayload()
+    expect(payload.source).toBe("server")
+    const event = payload.events[0]!
+    expect(event.customerId).toBe("cust_123")
+    expect(event.customerDomain).toBe("acme.com")
+
+    await outlit.shutdown()
+  })
+
+  it("identifies a user while preserving customer context", async () => {
+    const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
+
+    outlit.identify({
+      email: "user@example.com",
+      userId: "usr_123",
+      customerId: "cust_123",
+      customerDomain: "acme.com",
+      customerTraits: {
+        plan: "pro",
+      },
+      traits: {
+        name: "Jane Doe",
+      },
+    })
+
+    await outlit.flush()
+
+    const payload = getLastPayload()
+    const event = payload.events[0]!
+    expect(event.type).toBe("identify")
+    expect(event.customerId).toBe("cust_123")
+    expect(event.customerDomain).toBe("acme.com")
+    expect(event.customerTraits?.plan).toBe("pro")
+
+    await outlit.shutdown()
+  })
+
+  it("preserves stage identity markers for server batches", async () => {
+    const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
+
+    outlit.user.activate({
+      email: "user@example.com",
+      userId: "usr_123",
+      properties: { source: "signup" },
+    })
+
+    await outlit.flush()
+
+    const payload = getLastPayload()
+    const event = payload.events[0]!
+    expect(event.type).toBe("stage")
+    expect(event.properties?.__email).toBe("user@example.com")
+    expect(event.properties?.__userId).toBe("usr_123")
+    expect(event.properties?.__fingerprint).toBeNull()
+    expect(event.properties?.source).toBe("signup")
+
+    await outlit.shutdown()
+  })
+
+  it("publishes billing events using customerDomain", async () => {
+    const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
+
+    outlit.customer.paid({
+      customerId: "cust_123",
+      customerDomain: "acme.com",
+      properties: { plan: "enterprise" },
+    })
+
+    await outlit.flush()
+
+    const payload = getLastPayload()
+    const event = payload.events[0]!
+    expect(event.type).toBe("billing")
+    expect(event.customerId).toBe("cust_123")
+    expect(event.customerDomain).toBe("acme.com")
+
+    await outlit.shutdown()
+  })
+})

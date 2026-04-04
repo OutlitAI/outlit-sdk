@@ -22,6 +22,7 @@ export type {
   CalendarEvent,
   CalendarProvider,
   CustomEvent,
+  CustomerAttribution,
   CustomerIdentifier,
   CustomerTraits,
   EngagementEvent,
@@ -59,5 +60,6 @@ export {
   // Auto-identify utilities
   isValidEmail,
   sanitizeFormFields,
+  validateCustomerIdentity,
   validateServerIdentity,
 } from "./utils"

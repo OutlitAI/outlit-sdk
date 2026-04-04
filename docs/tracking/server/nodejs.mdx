@@ -7,7 +7,8 @@ description: "Server-side tracking for backend applications"
 
 The Node.js SDK is designed for server-side tracking where you have user identity. It supports:
 
-- **Identified tracking** - Use `email` or `userId` for immediate resolution
+- **Identified tracking** - Use `email` or `userId` for user-scoped resolution
+- **Customer attribution** - Add `customerId` and/or `customerDomain` for account context
 - **Efficient batching** - Events are queued and sent in batches
 - **Device tracking** - Use `fingerprint` for desktop/mobile apps ([learn more](/concepts/website-visitors#device-tracking-non-browser))
 
@@ -47,6 +48,8 @@ const outlit = new Outlit({
 // Track an event
 outlit.track({
   email: 'user@example.com',
+  customerId: 'cust_123',
+  customerDomain: 'acme.com',
   eventName: 'subscription_upgraded',
   properties: {
     fromPlan: 'starter',
@@ -97,12 +100,14 @@ const outlit = new Outlit({
 
 ### `outlit.track(options)`
 
-Track a custom event for an identified user.
+Track a custom event for a user, a customer, or both.
 
 ```typescript
 outlit.track({
   email: 'jane@acme.com',
   userId: 'usr_12345', // optional if email provided
+  customerId: 'cust_123',
+  customerDomain: 'acme.com',
   eventName: 'report_exported',
   properties: {
     reportType: 'sales',
@@ -118,11 +123,19 @@ outlit.track({
 </ParamField>
 
 <ParamField path="userId" type="string">
-  Your internal user ID.
+  Your system-owned user/contact ID.
 </ParamField>
 
 <ParamField path="fingerprint" type="string">
   Device identifier for anonymous tracking. See [Device Tracking](/concepts/website-visitors#device-tracking-non-browser).
+</ParamField>
+
+<ParamField path="customerId" type="string">
+  Your system-owned customer/account/workspace ID.
+</ParamField>
+
+<ParamField path="customerDomain" type="string">
+  Public customer/account domain used for billing and attribution.
 </ParamField>
 
 <ParamField path="eventName" type="string" required>
@@ -138,32 +151,36 @@ outlit.track({
 </ParamField>
 
 <Info>
-  At least one of `email`, `userId`, or `fingerprint` is required.
+  At least one of `email`, `userId`, `fingerprint`, `customerId`, or `customerDomain` is required for `track()`.
 </Info>
 
 ### `outlit.identify(options)`
 
-Update user traits without tracking an event.
+Update user traits without tracking an event. Customer metadata can be included alongside the user identity.
 
 ```typescript
 outlit.identify({
   email: 'jane@acme.com',
   userId: 'usr_12345',
+  customerId: 'cust_123',
+  customerDomain: 'acme.com',
+  customerTraits: {
+    plan: 'enterprise',
+    seats: 50
+  },
   traits: {
     name: 'Jane Doe',
-    company: 'Acme Inc',
-    plan: 'enterprise',
     role: 'admin'
   }
 })
 ```
 
-<ParamField path="email" type="string" required>
-  User's email address. Required to establish identity.
+<ParamField path="email" type="string">
+  User's email address. Use this or `userId` to establish user-scoped identity.
 </ParamField>
 
 <ParamField path="userId" type="string">
-  Your internal user ID.
+  Your system-owned user/contact ID.
 </ParamField>
 
 <ParamField path="fingerprint" type="string">
@@ -173,6 +190,22 @@ outlit.identify({
 <ParamField path="traits" type="Record<string, any>">
   Properties to update on the user profile.
 </ParamField>
+
+<ParamField path="customerId" type="string">
+  Your system-owned customer/account/workspace ID.
+</ParamField>
+
+<ParamField path="customerDomain" type="string">
+  Public customer/account domain used for billing and attribution.
+</ParamField>
+
+<ParamField path="customerTraits" type="Record<string, any>">
+  Properties to update on the customer profile.
+</ParamField>
+
+<Info>
+  At least one of `email` or `userId` is required for `identify()`. Customer fields are optional additions.
+</Info>
 
 ### Contact Stage Methods
 
@@ -217,7 +250,7 @@ outlit.user.inactive({
 
 ### Account Billing Methods
 
-Track account billing status. These methods target the account (by domain), not individual contacts. If you've connected Stripe, billing is handled automatically.
+Track account billing status. These methods target the account by `customerId` and/or `customerDomain`, not individual contacts. If you've connected Stripe, billing is handled automatically.
 
 #### `outlit.customer.trialing(options)`
 
@@ -225,7 +258,8 @@ Mark an account as trialing.
 
 ```typescript
 outlit.customer.trialing({
-  domain: 'acme.com',
+  customerDomain: 'acme.com',
+  customerId: 'cust_123',
   properties: { trialEndsAt: '2024-02-15' }
 })
 ```
@@ -236,7 +270,8 @@ Mark an account as paying.
 
 ```typescript
 outlit.customer.paid({
-  domain: 'acme.com',
+  customerDomain: 'acme.com',
+  customerId: 'cust_123',
   properties: { plan: 'pro', amount: 99 }
 })
 ```
@@ -247,13 +282,14 @@ Mark an account as churned.
 
 ```typescript
 outlit.customer.churned({
-  domain: 'acme.com',
+  customerDomain: 'acme.com',
+  customerId: 'cust_123',
   properties: { reason: 'cancelled_by_user' }
 })
 ```
 
 <Info>
-  Billing methods target accounts by domain. All contacts under that domain share the same billing status. See [Customer Journey](/concepts/customer-journey) for details on how contact stages and account billing work together.
+  Billing methods target accounts by `customerId` and/or `customerDomain`. All contacts under that domain share the same billing status. See [Customer Journey](/concepts/customer-journey) for details on how contact stages and account billing work together.
 </Info>
 
 ### `outlit.flush()`
@@ -338,13 +374,16 @@ export async function POST(request: Request) {
   outlit.track({
     email,
     userId,
+    customerId: `cust_${userId}`,
+    customerDomain: domain,
     eventName: 'subscription_upgraded',
     properties: { plan: newPlan }
   })
 
   // Update account billing status
   outlit.customer.paid({
-    domain,
+    customerDomain: domain,
+    customerId: `cust_${userId}`,
     properties: { plan: newPlan, amount }
   })
 
@@ -404,7 +443,8 @@ export async function handleStripeWebhook(event: Stripe.Event) {
       const domain = await getAccountDomain(session.customer)
       if (domain) {
         outlit.customer.paid({
-          domain,
+          customerDomain: domain,
+          customerId: subscription.customer,
           properties: {
             amount: session.amount_total ? session.amount_total / 100 : undefined,
             currency: session.currency,
@@ -420,7 +460,8 @@ export async function handleStripeWebhook(event: Stripe.Event) {
       const domain = await getAccountDomain(subscription.customer)
       if (domain) {
         outlit.customer.churned({
-          domain,
+          customerDomain: domain,
+          customerId: subscription.customer,
           properties: {
             reason: subscription.cancellation_details?.reason,
           }
@@ -503,8 +544,8 @@ import {
   type OutlitOptions,
   type ServerTrackOptions,
   type ServerIdentifyOptions,
-  type ContactStageOptions,
-  type AccountBillingOptions,
+  type StageOptions,
+  type BillingOptions,
 } from '@outlit/node'
 
 const options: OutlitOptions = {
@@ -516,6 +557,8 @@ const outlit = new Outlit(options)
 
 const trackOptions: ServerTrackOptions = {
   email: 'user@test.com',
+  customerId: 'cust_123',
+  customerDomain: 'acme.com',
   eventName: 'test',
   properties: { key: 'value' }
 }
@@ -523,7 +566,7 @@ const trackOptions: ServerTrackOptions = {
 outlit.track(trackOptions)
 
 // Contact stage options
-const stageOptions: ContactStageOptions = {
+const stageOptions: StageOptions = {
   email: 'user@test.com',
   properties: { flow: 'onboarding' }
 }
@@ -531,8 +574,9 @@ const stageOptions: ContactStageOptions = {
 outlit.user.activate(stageOptions)
 
 // Account billing options
-const billingOptions: AccountBillingOptions = {
-  domain: 'acme.com',
+const billingOptions: BillingOptions = {
+  customerDomain: 'acme.com',
+  customerId: 'cust_123',
   properties: { plan: 'pro' }
 }
 

@@ -47,7 +47,8 @@
     "clean": "rm -rf dist .turbo node_modules",
     "lint": "biome check . --write",
     "format": "biome format --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@outlit/core": "^1.4.4"
