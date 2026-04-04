@@ -30,6 +30,7 @@ outlit customers list [flags]
 | `--type` | string | — | Filter by type: `COMPANY`, `INDIVIDUAL` |
 | `--no-activity-in` | string | — | Inactive for period: `7d`, `14d`, `30d`, `90d` |
 | `--has-activity-in` | string | — | Active within period: `7d`, `14d`, `30d`, `90d` |
+| `--trait` | string | — | Exact trait filters as comma-separated `key=value` pairs (for example `segment=enterprise,active=true`) |
 | `--search` | string | — | Search by name or domain |
 | `--order-by` | string | `last_activity_at` | Sort field |
 | `--order-direction` | string | `desc` | Sort direction: `asc`, `desc` |
@@ -47,6 +48,9 @@ outlit customers list --mrr-above 50000 --order-by mrr_cents --order-direction d
 
 # Search for a customer
 outlit customers list --search "acme"
+
+# Filter by exact customer traits
+outlit customers list --trait "segment=enterprise,active=true"
 
 # Pipe to jq
 outlit customers list --json | jq '.items[] | {domain, mrr: .currentMrr}'
@@ -251,6 +255,7 @@ outlit users list [flags]
 | `--customer-id` | string | — | Filter to users of a specific customer (UUID) |
 | `--no-activity-in` | string | — | Inactive for period: `7d`, `14d`, `30d`, `90d` |
 | `--has-activity-in` | string | — | Active within period: `7d`, `14d`, `30d`, `90d` |
+| `--trait` | string | — | Exact trait filters as comma-separated `key=value` pairs (for example `role=admin,onboarded=true`) |
 | `--search` | string | — | Search by name or email |
 | `--order-by` | string | `last_activity_at` | Sort field |
 | `--order-direction` | string | `desc` | Sort direction: `asc`, `desc` |
@@ -265,6 +270,9 @@ outlit users list --journey-stage CHAMPION
 
 # Inactive users from a specific customer
 outlit users list --customer-id 550e8400-... --no-activity-in 30d
+
+# Filter by exact user traits
+outlit users list --trait "role=admin,onboarded=true"
 
 # Search by name
 outlit users list --search "alice" --order-by last_activity_at
