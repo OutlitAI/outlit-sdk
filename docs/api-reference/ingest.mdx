@@ -56,6 +56,7 @@ POST https://app.outlit.ai/api/i/v1/{publicKey}/events
   |----------|------|-------------|
   | `email` | string | User's email address |
   | `userId` | string | Your system-owned user/contact ID |
+  | `traits` | object | User/contact traits |
   | `customerId` | string | Your system-owned customer/account/workspace ID |
   | `customerDomain` | string | Public customer/account domain used for billing and attribution |
   | `customerTraits` | object | Customer/account traits |
@@ -553,7 +554,7 @@ print(response.json())
 
 ## Server-Side Events
 
-For server-side tracking, the `visitorId` field can be omitted. Identity is resolved from the event data:
+For server-side tracking, the `visitorId` field can be omitted. Identity is resolved from the event data, including customer-only attribution when `customerId` and/or `customerDomain` are provided:
 
 - **Identify events**: Use `email` and/or `userId` fields, plus optional customer context
 - **Custom events**: Include top-level `email`, `userId`, `customerId`, and/or `customerDomain` fields

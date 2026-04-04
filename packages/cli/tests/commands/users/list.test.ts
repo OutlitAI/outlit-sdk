@@ -94,6 +94,24 @@ describe("users list", () => {
     }
   })
 
+  test("omits traitFilters when --trait is only whitespace", async () => {
+    const { default: listCmd } = await import("../../../src/commands/users/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: {
+          trait: "   ",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      const [[, params]] = mockCallTool.mock.calls as [[string, Record<string, unknown>]]
+      expect(params).not.toHaveProperty("traitFilters")
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("auth_required error on createClient failure", async () => {
     const clientModule = await import("../../../src/lib/client")
     const createClientSpy = spyOn(clientModule, "createClient").mockRejectedValue(
