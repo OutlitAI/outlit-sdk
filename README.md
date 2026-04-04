@@ -42,6 +42,9 @@ const outlit = new Outlit({
 outlit.user.identify({
   email: 'user@example.com',
   traits: { name: 'John Doe' },
+  customerId: 'cust_123',
+  customerDomain: 'acme.com',
+  customerTraits: { plan: 'pro' },
 })
 
 // Track events
@@ -52,7 +55,8 @@ outlit.track('button_clicked', {
 
 // Mark billing status on a customer
 outlit.customer.trialing({
-  domain: 'acme.com',
+  customerDomain: 'acme.com',
+  customerId: 'cust_123',
   properties: { plan: 'pro' },
 })
 ```
@@ -67,8 +71,16 @@ init({ publicKey: 'pk_xxx' })
 
 // Then use anywhere
 track('page_viewed', { page: '/home' })
-user().identify({ email: 'user@example.com' })
-customer().paid({ domain: 'acme.com', properties: { plan: 'pro' } })
+user().identify({
+  email: 'user@example.com',
+  customerId: 'cust_123',
+  customerDomain: 'acme.com',
+})
+customer().paid({
+  customerId: 'cust_123',
+  customerDomain: 'acme.com',
+  properties: { plan: 'pro' },
+})
 ```
 
 #### Using with React
@@ -109,6 +121,8 @@ const outlit = new Outlit({
 // Track server-side events (requires identity)
 outlit.track('api_request', {
   email: 'user@example.com',
+  customerId: 'cust_123',
+  customerDomain: 'acme.com',
   properties: {
     endpoint: '/api/users',
     method: 'GET',
@@ -120,11 +134,15 @@ outlit.track('api_request', {
 outlit.user.identify({
   email: 'user@example.com',
   traits: { plan: 'pro' },
+  customerId: 'cust_123',
+  customerDomain: 'acme.com',
+  customerTraits: { plan: 'pro' },
 })
 
 // Mark customer billing status
 outlit.customer.paid({
   customerId: 'cust_123',
+  customerDomain: 'acme.com',
   properties: { plan: 'pro' },
 })
 

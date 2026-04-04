@@ -12,6 +12,7 @@ import {
   type ServerIdentity,
   type ServerTrackOptions,
   type TrackerEvent,
+  validateCustomerIdentity,
   validateServerIdentity,
 } from "@outlit/core"
 import { EventQueue } from "./queue"
@@ -34,7 +35,7 @@ export interface StageOptions extends ServerIdentity {
 
 /**
  * Options for billing status events.
- * Requires at least one customer identifier (customerId, stripeCustomerId, or domain).
+ * Public billing calls should use customerId and/or customerDomain.
  */
 export interface BillingOptions extends CustomerIdentifier {
   properties?: Record<string, string | number | boolean | null>
@@ -78,7 +79,7 @@ export interface OutlitOptions {
 /**
  * Outlit server-side tracking client.
  *
- * Supports tracking with fingerprint (device ID), email, or userId.
+ * Supports tracking with fingerprint (device ID), email, userId, or customer attribution.
  * Use fingerprint for anonymous tracking that can be linked to users later.
  *
  * @example
@@ -92,6 +93,13 @@ export interface OutlitOptions {
  *   fingerprint: deviceId,
  *   eventName: 'page_view',
  *   properties: { page: '/pricing' }
+ * })
+ *
+ * // Track with customer attribution only
+ * outlit.track({
+ *   customerId: 'cust_123',
+ *   customerDomain: 'acme.com',
+ *   eventName: 'account_synced'
  * })
  *
  * // Track with email (resolves immediately)
@@ -143,43 +151,58 @@ export class Outlit {
   }
 
   /**
-   * Track a custom event.
-   *
-   * Requires at least one of: `fingerprint`, `email`, or `userId`.
-   *
-   * - Use `fingerprint` for anonymous tracking (events linked later via identify)
-   * - Use `email` for immediate user resolution
-   * - Use `userId` for app-specific user identification
-   *
-   * @throws Error if no identity is provided
-   */
+ * Track a custom event.
+ *
+ * Requires at least one of: `fingerprint`, `email`, `userId`, `customerId`, or `customerDomain`.
+ *
+ * - Use `fingerprint` for anonymous tracking (events linked later via identify)
+ * - Use `email` or `userId` for user-scoped attribution
+ * - Use `customerId` / `customerDomain` for customer-scoped attribution
+ * - `userId` is your system-owned user/contact ID
+ * - `customerId` is your system-owned customer/account/workspace ID
+ *
+ * @throws Error if no identity is provided
+ */
   track(options: ServerTrackOptions): void {
     this.ensureNotShutdown()
-    validateServerIdentity(options.fingerprint, options.email, options.userId)
+    validateServerIdentity(
+      options.fingerprint,
+      options.email,
+      options.userId,
+      options.customerId,
+      options.customerDomain,
+    )
 
     const event = buildCustomEvent({
-      url: `server://${options.email ?? options.userId ?? options.fingerprint}`,
+      url: `server://${
+        options.email ??
+        options.userId ??
+        options.customerDomain ??
+        options.customerId ??
+        options.fingerprint
+      }`,
       timestamp: options.timestamp,
       eventName: options.eventName,
-      properties: {
-        ...options.properties,
-        // Include identity in properties for server-side resolution
-        __fingerprint: options.fingerprint ?? null,
-        __email: options.email ?? null,
-        __userId: options.userId ?? null,
-      },
+      email: options.email,
+      userId: options.userId,
+      fingerprint: options.fingerprint,
+      customerId: options.customerId,
+      customerDomain: options.customerDomain,
+      properties: options.properties,
     })
 
     this.queue.enqueue(event)
   }
 
   /**
-   * Identify or update a user.
-   *
-   * Requires `email` to establish definitive identity.
-   * Optionally include `fingerprint` and/or `userId` to link them to this email.
-   *
-   * This is how you link anonymous fingerprint-tracked events to a real user:
+ * Identify or update a user.
+ *
+ * Requires `email` or `userId` to establish user-scoped identity.
+ * Optionally include `fingerprint` and customer attribution fields to link them.
+ * `userId` is your system-owned user/contact ID and `customerId` is your system-owned
+ * customer/account/workspace ID.
+ *
+ * This is how you link anonymous fingerprint-tracked events to a real user:
    * ```typescript
    * outlit.identify({
    *   email: 'user@example.com',
@@ -188,25 +211,28 @@ export class Outlit {
    * });
    * ```
    *
-   * @throws Error if email is not provided
+   * @throws Error if neither email nor userId is provided
    */
   identify(options: ServerIdentifyOptions): void {
     this.ensureNotShutdown()
 
-    // Identify requires email (definitive identity)
-    if (!options.email) {
+    // Identify requires user-scoped identity.
+    if (!options.email && !options.userId) {
       throw new Error(
-        "identify() requires email to establish definitive identity. " +
-          "Use fingerprint and/or userId as optional fields to link them to the email.",
+        "identify() requires email or userId to establish user-scoped identity. " +
+          "Use customerId/customerDomain as optional fields for account attribution.",
       )
     }
 
     const event = buildIdentifyEvent({
-      url: `server://${options.email}`,
+      url: `server://${options.email ?? options.userId}`,
       email: options.email,
       userId: options.userId,
       fingerprint: options.fingerprint,
       traits: options.traits,
+      customerId: options.customerId,
+      customerDomain: options.customerDomain,
+      customerTraits: options.customerTraits,
     })
 
     this.queue.enqueue(event)
@@ -243,7 +269,6 @@ export class Outlit {
       stage,
       properties: {
         ...options.properties,
-        // Include identity in properties for server-side resolution
         __fingerprint: options.fingerprint ?? null,
         __email: options.email ?? null,
         __userId: options.userId ?? null,
@@ -255,11 +280,13 @@ export class Outlit {
 
   private sendBillingEvent(status: BillingStatus, options: BillingOptions): void {
     this.ensureNotShutdown()
+    validateCustomerIdentity(options.customerId, options.customerDomain, options.domain, options.stripeCustomerId)
 
     const event = buildBillingEvent({
-      url: `server://${options.domain}`,
+      url: `server://${options.customerDomain ?? options.domain ?? options.customerId ?? options.stripeCustomerId}`,
       status,
       customerId: options.customerId,
+      customerDomain: options.customerDomain,
       stripeCustomerId: options.stripeCustomerId,
       domain: options.domain,
       properties: options.properties,

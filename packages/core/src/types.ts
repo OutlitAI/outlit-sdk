@@ -52,40 +52,49 @@ export interface BrowserTrackOptions {
   properties?: Record<string, string | number | boolean | null>
 }
 
-export interface BrowserIdentifyOptions {
+export interface BrowserIdentifyOptions extends CustomerAttribution {
   email?: string
+  /** Your system-owned user/contact ID. */
   userId?: string
+  /** User/contact traits. */
   traits?: IdentifyTraits
+  /** Customer/account-level traits. */
+  customerTraits?: CustomerTraits
 }
 
 // ============================================
-// SERVER-SPECIFIC TYPES (identity required)
-// At least one of fingerprint, email, or userId required
+// SERVER-SPECIFIC TYPES
+// Track calls can use user identity, customer attribution, or both.
+// Identify calls remain user-scoped and require email or userId.
 // ============================================
 
 /**
- * Server identity - requires at least one of fingerprint, email, or userId.
- * This is validated at runtime to avoid complex union types that
- * cause TypeScript memory issues during type checking.
+ * Base server-side user identity.
+ * Track calls may use customerId/customerDomain without these fields.
+ * Identify calls still require email or userId at runtime.
  *
  * - fingerprint: Device identifier for anonymous tracking (can be linked later)
  * - email: User's email address (definitive identity, resolves immediately)
- * - userId: App's internal user ID
+ * - userId: Your system-owned user/contact ID
  */
 export interface ServerIdentity {
   fingerprint?: string
   email?: string
+  /** Your system-owned user/contact ID. */
   userId?: string
 }
 
+export interface CustomerAttribution {
+  /** Your system-owned customer/account/workspace ID. */
+  customerId?: string
+  /** Public customer/account domain used for billing and attribution. */
+  customerDomain?: string
+}
+
 // ============================================
-// IDENTIFY TRAITS (with optional customer nesting)
+// TRAITS
 // ============================================
 
-/**
- * Customer-level traits that can be nested under `customer` in identify.
- * These are applied to the customer/account, not the individual user.
- */
 export interface CustomerTraits {
   /** Customer's billing plan */
   plan?: string
@@ -94,36 +103,39 @@ export interface CustomerTraits {
 }
 
 /**
- * Traits for identify calls, supporting both user-level
- * and nested customer-level properties.
+ * Traits for identify calls.
+ * These are user/contact traits, not customer/account traits.
  */
 export interface IdentifyTraits {
-  /** Nested customer/account-level traits */
-  customer?: CustomerTraits
   /** User-level traits */
-  [key: string]: string | number | boolean | null | CustomerTraits | undefined
+  [key: string]: string | number | boolean | null | undefined
 }
 
-export interface ServerTrackOptions extends ServerIdentity {
+export interface ServerTrackOptions extends ServerIdentity, CustomerAttribution {
   eventName: string
   properties?: Record<string, string | number | boolean | null>
   timestamp?: number
 }
 
-export interface ServerIdentifyOptions extends ServerIdentity {
+export interface ServerIdentifyOptions extends ServerIdentity, CustomerAttribution {
   traits?: IdentifyTraits
+  customerTraits?: CustomerTraits
 }
 
 /**
  * Customer identity for SDK billing methods.
- * Domain is required as the primary identifier; additional identifiers are optional.
+ * Public billing calls should use `customerId` and/or `customerDomain`.
  */
-export interface CustomerIdentifier {
-  /** Required: The customer's domain (e.g., "acme.com") */
-  domain: string
-  /** Optional: Your internal customer ID */
-  customerId?: string
-  /** Optional: Stripe customer ID (e.g., "cus_xxx") */
+export interface CustomerIdentifier extends CustomerAttribution {
+  /**
+   * @deprecated Use `customerDomain` instead.
+   * Legacy alias kept for backward compatibility.
+   */
+  domain?: string
+  /**
+   * @deprecated Stripe customer identifier.
+   * Billing attribution should use `customerId` and/or `customerDomain` publicly.
+   */
   stripeCustomerId?: string
 }
 
@@ -157,12 +169,20 @@ export interface IdentifyEvent extends BaseEvent {
   email?: string
   userId?: string
   fingerprint?: string
+  customerId?: string
+  customerDomain?: string
+  customerTraits?: CustomerTraits
   traits?: IdentifyTraits
 }
 
 export interface CustomEvent extends BaseEvent {
   type: "custom"
   eventName: string
+  email?: string
+  userId?: string
+  fingerprint?: string
+  customerId?: string
+  customerDomain?: string
   properties?: Record<string, string | number | boolean | null>
 }
 
@@ -203,8 +223,10 @@ export interface BillingEvent extends BaseEvent {
   status: BillingStatus
   /** Optional customer identifiers */
   customerId?: string
-  stripeCustomerId?: string
+  customerDomain?: string
+  /** @deprecated Legacy alias for `customerDomain`. */
   domain?: string
+  stripeCustomerId?: string
   /** Optional properties for context */
   properties?: Record<string, string | number | boolean | null>
 }
@@ -228,9 +250,14 @@ export type TrackerEvent =
  * User identity for payload-level resolution.
  * Used by browser SDK when user is logged in (via setUser).
  */
-export interface PayloadUserIdentity {
+export interface PayloadUserIdentity extends CustomerAttribution {
   email?: string
+  /** Your system-owned user/contact ID. */
   userId?: string
+  /** User/contact traits. */
+  traits?: IdentifyTraits
+  /** Customer/account traits. */
+  customerTraits?: CustomerTraits
 }
 
 export interface IngestPayload {

@@ -9,6 +9,7 @@ import type {
   FormEvent,
   IdentifyEvent,
   IdentifyTraits,
+  CustomerTraits,
   IngestPayload,
   PageviewEvent,
   PayloadUserIdentity,
@@ -76,9 +77,23 @@ export function buildIdentifyEvent(
     userId?: string
     fingerprint?: string
     traits?: IdentifyTraits
+    customerId?: string
+    customerDomain?: string
+    customerTraits?: CustomerTraits
   },
 ): IdentifyEvent {
-  const { url, referrer, timestamp, email, userId, fingerprint, traits } = params
+  const {
+    url,
+    referrer,
+    timestamp,
+    email,
+    userId,
+    fingerprint,
+    traits,
+    customerId,
+    customerDomain,
+    customerTraits,
+  } = params
   return {
     type: "identify",
     timestamp: timestamp ?? Date.now(),
@@ -89,6 +104,9 @@ export function buildIdentifyEvent(
     email,
     userId,
     fingerprint,
+    customerId,
+    customerDomain,
+    customerTraits,
     traits,
   }
 }
@@ -100,9 +118,25 @@ export function buildCustomEvent(
   params: BaseEventParams & {
     eventName: string
     properties?: Record<string, string | number | boolean | null>
+    email?: string
+    userId?: string
+    fingerprint?: string
+    customerId?: string
+    customerDomain?: string
   },
 ): CustomEvent {
-  const { url, referrer, timestamp, eventName, properties } = params
+  const {
+    url,
+    referrer,
+    timestamp,
+    eventName,
+    properties,
+    email,
+    userId,
+    fingerprint,
+    customerId,
+    customerDomain,
+  } = params
   return {
     type: "custom",
     timestamp: timestamp ?? Date.now(),
@@ -111,6 +145,11 @@ export function buildCustomEvent(
     referrer,
     utm: extractUtmParams(url),
     eventName,
+    email,
+    userId,
+    fingerprint,
+    customerId,
+    customerDomain,
     properties,
   }
 }
@@ -218,13 +257,23 @@ export function buildBillingEvent(
   params: BaseEventParams & {
     status: BillingStatus
     customerId?: string
+    customerDomain?: string
     stripeCustomerId?: string
     domain?: string
     properties?: Record<string, string | number | boolean | null>
   },
 ): BillingEvent {
-  const { url, referrer, timestamp, status, customerId, stripeCustomerId, domain, properties } =
-    params
+  const {
+    url,
+    referrer,
+    timestamp,
+    status,
+    customerId,
+    customerDomain,
+    stripeCustomerId,
+    domain,
+    properties,
+  } = params
   return {
     type: "billing",
     timestamp: timestamp ?? Date.now(),
@@ -234,8 +283,9 @@ export function buildBillingEvent(
     utm: extractUtmParams(url),
     status,
     customerId,
+    customerDomain: customerDomain ?? domain,
+    domain: domain ?? customerDomain,
     stripeCustomerId,
-    domain,
     properties,
   }
 }
@@ -279,10 +329,22 @@ export function buildIngestPayload(
   }
 
   // Only include userIdentity if it has actual values
-  if (userIdentity && (userIdentity.email || userIdentity.userId)) {
+  if (
+    userIdentity &&
+    (userIdentity.email ||
+      userIdentity.userId ||
+      userIdentity.customerId ||
+      userIdentity.customerDomain ||
+      userIdentity.traits ||
+      userIdentity.customerTraits)
+  ) {
     payload.userIdentity = {
       ...(userIdentity.email && { email: userIdentity.email }),
       ...(userIdentity.userId && { userId: userIdentity.userId }),
+      ...(userIdentity.customerId && { customerId: userIdentity.customerId }),
+      ...(userIdentity.customerDomain && { customerDomain: userIdentity.customerDomain }),
+      ...(userIdentity.traits && { traits: userIdentity.traits }),
+      ...(userIdentity.customerTraits && { customerTraits: userIdentity.customerTraits }),
     }
   }
 

@@ -1,7 +1,10 @@
 {
   "extends": "@outlit/typescript-config/browser.json",
   "compilerOptions": {
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@outlit/core": ["../core/src/index.ts"]
+    }
   },
   "include": ["."],
   "exclude": ["node_modules", "dist"]

@@ -132,6 +132,14 @@ describe("validateServerIdentity with fingerprint", () => {
     expect(() => validateServerIdentity(undefined, undefined, "usr_123")).not.toThrow()
   })
 
+  it("passes with customerId only (no user identity)", () => {
+    expect(() => validateServerIdentity(undefined, undefined, undefined, "cust_123")).not.toThrow()
+  })
+
+  it("passes with customerDomain only (no user identity)", () => {
+    expect(() => validateServerIdentity(undefined, undefined, undefined, undefined, "acme.com")).not.toThrow()
+  })
+
   it("throws with no identifiers", () => {
     expect(() => validateServerIdentity(undefined, undefined, undefined)).toThrow()
   })
@@ -141,21 +149,18 @@ describe("validateServerIdentity with fingerprint", () => {
 // PAYLOAD BUILDER TESTS
 // ============================================
 
-describe("buildCustomEvent with fingerprint in properties", () => {
-  it("accepts properties with __fingerprint", () => {
+describe("buildCustomEvent with fingerprint", () => {
+  it("includes fingerprint as a top-level event field", () => {
     const event = buildCustomEvent({
       url: "server://device_abc123",
       eventName: "page_view",
-      properties: {
-        __fingerprint: "device_abc123",
-        __email: null,
-        __userId: null,
-        page: "/pricing",
-      },
+      fingerprint: "device_abc123",
+      properties: { page: "/pricing" },
     })
 
     expect(event.type).toBe("custom")
-    expect(event.properties?.__fingerprint).toBe("device_abc123")
+    expect(event.fingerprint).toBe("device_abc123")
+    expect(event.properties?.page).toBe("/pricing")
   })
 })
 

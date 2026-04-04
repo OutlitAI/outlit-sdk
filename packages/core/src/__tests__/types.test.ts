@@ -1,13 +1,14 @@
-import { describe, expectTypeOf, it } from "vitest"
+import { describe, expect, expectTypeOf, it } from "vitest"
 import type {
   BrowserIdentifyOptions,
   CustomerTraits,
   IdentifyTraits,
   ServerIdentifyOptions,
+  ServerTrackOptions,
 } from "../types"
 
 describe("CustomerTraits", () => {
-  it("accepts plan property", () => {
+  it("accepts account-level traits", () => {
     const traits: CustomerTraits = { plan: "enterprise" }
     expectTypeOf(traits).toMatchTypeOf<CustomerTraits>()
   })
@@ -23,7 +24,7 @@ describe("CustomerTraits", () => {
 })
 
 describe("IdentifyTraits", () => {
-  it("accepts flat traits (backward compat)", () => {
+  it("accepts flat user traits", () => {
     const traits: IdentifyTraits = {
       name: "John",
       age: 30,
@@ -31,40 +32,77 @@ describe("IdentifyTraits", () => {
     expectTypeOf(traits).toMatchTypeOf<IdentifyTraits>()
   })
 
-  it("accepts nested customer traits", () => {
+  it("rejects nested customer traits", () => {
     const traits: IdentifyTraits = {
       name: "John",
+      // @ts-expect-error customer traits are now top-level identify fields
       customer: {
         plan: "enterprise",
-        seats: 50,
       },
     }
-    expectTypeOf(traits).toMatchTypeOf<IdentifyTraits>()
+
+    expect(traits).toBeDefined()
+  })
+})
+
+describe("ServerTrackOptions", () => {
+  it("accepts customer-only attribution", () => {
+    const options: ServerTrackOptions = {
+      customerId: "cust_123",
+      customerDomain: "acme.com",
+      eventName: "account_synced",
+    }
+
+    expectTypeOf(options).toMatchTypeOf<ServerTrackOptions>()
+  })
+
+  it("accepts combined user and customer attribution", () => {
+    const options: ServerTrackOptions = {
+      email: "user@example.com",
+      userId: "usr_123",
+      customerId: "cust_123",
+      customerDomain: "acme.com",
+      eventName: "subscription_created",
+    }
+
+    expectTypeOf(options).toMatchTypeOf<ServerTrackOptions>()
   })
 })
 
 describe("ServerIdentifyOptions", () => {
-  it("accepts IdentifyTraits in traits field", () => {
+  it("accepts customer metadata alongside user identity", () => {
     const options: ServerIdentifyOptions = {
       email: "user@example.com",
+      userId: "usr_123",
+      customerId: "cust_123",
+      customerDomain: "acme.com",
+      customerTraits: {
+        plan: "pro",
+      },
       traits: {
         name: "John",
-        customer: { plan: "pro" },
       },
     }
+
     expectTypeOf(options).toMatchTypeOf<ServerIdentifyOptions>()
   })
 })
 
 describe("BrowserIdentifyOptions", () => {
-  it("accepts IdentifyTraits in traits field", () => {
+  it("accepts customer metadata alongside user identity", () => {
     const options: BrowserIdentifyOptions = {
       email: "user@example.com",
+      userId: "usr_123",
+      customerId: "cust_123",
+      customerDomain: "acme.com",
+      customerTraits: {
+        plan: "pro",
+      },
       traits: {
         name: "John",
-        customer: { plan: "pro" },
       },
     }
+
     expectTypeOf(options).toMatchTypeOf<BrowserIdentifyOptions>()
   })
 })
