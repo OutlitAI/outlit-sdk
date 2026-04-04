@@ -44,9 +44,9 @@ describe("completions command", () => {
 
   test("bash — flag completions for subcommands", async () => {
     const out = await captureCompletions("bash")
-    expect(out).toContain("customers.list) COMPREPLY=($(compgen -W \"--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --billing-status --mrr-above --mrr-below --search --status --type\"")
+    expect(out).toContain("customers.list) COMPREPLY=($(compgen -W \"--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --search --status --type\"")
     expect(out).toContain("auth.login) COMPREPLY=($(compgen -W \"--json --key\"")
-    expect(out).toContain("users.list) COMPREPLY=($(compgen -W \"--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --journey-stage --customer-id --search\"")
+    expect(out).toContain("users.list) COMPREPLY=($(compgen -W \"--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --journey-stage --customer-id --search\"")
   })
 
   // ── Zsh ─────────────────────────────────────────────────────────────────
@@ -100,8 +100,10 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd sql' -l query-file")
     // Subcommand flags use nested condition
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
+    expect(out).toContain("-n '__outlit_using_cmd customers list' -l trait")
     expect(out).toContain("-n '__outlit_using_cmd auth login' -l key")
     expect(out).toContain("-n '__outlit_using_cmd users list' -l journey-stage")
+    expect(out).toContain("-n '__outlit_using_cmd users list' -l trait")
   })
 
   // ── Error ───────────────────────────────────────────────────────────────

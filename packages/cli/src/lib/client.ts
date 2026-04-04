@@ -51,6 +51,8 @@ function buildUrl(base: string, path: string, params: Record<string, unknown>): 
     if (value == null) continue
     if (Array.isArray(value)) {
       url.searchParams.set(key, value.join(","))
+    } else if (typeof value === "object") {
+      url.searchParams.set(key, JSON.stringify(value))
     } else {
       url.searchParams.set(key, String(value))
     }

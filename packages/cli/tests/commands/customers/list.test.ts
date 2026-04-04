@@ -80,6 +80,29 @@ describe("customers list", () => {
     }
   })
 
+  test("maps --trait filters into traitFilters params", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: { trait: "segment=enterprise,active=true,seats=25", json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({
+          traitFilters: {
+            segment: "enterprise",
+            active: true,
+            seats: 25,
+          },
+        }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("outputs JSON result to stdout", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)

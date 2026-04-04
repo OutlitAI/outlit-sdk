@@ -54,6 +54,7 @@ const COMMANDS: readonly CmdDef[] = [
         flags: [
           ...PAGINATED,
           ...ACTIVITY_ORDER,
+          { name: "--trait", desc: "Filter by trait key=value pairs" },
           { name: "--billing-status", desc: "Filter by billing status" },
           { name: "--mrr-above", desc: "MRR above threshold (cents)" },
           { name: "--mrr-below", desc: "MRR below threshold (cents)" },
@@ -95,6 +96,7 @@ const COMMANDS: readonly CmdDef[] = [
         flags: [
           ...PAGINATED,
           ...ACTIVITY_ORDER,
+          { name: "--trait", desc: "Filter by trait key=value pairs" },
           { name: "--journey-stage", desc: "Filter by journey stage" },
           { name: "--customer-id", desc: "Filter by customer UUID" },
           { name: "--search", desc: "Search name or email" },

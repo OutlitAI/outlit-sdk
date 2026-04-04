@@ -1,10 +1,17 @@
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
-import { activityFilterArgs, applyListFilters, orderArgs } from "../../args/filters"
+import {
+  activityFilterArgs,
+  applyListFilters,
+  orderArgs,
+  parseTraitFilters,
+  traitFilterArgs,
+} from "../../args/filters"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { relativeDate, truncate } from "../../lib/format"
+import { outputError } from "../../lib/output"
 
 export default defineCommand({
   meta: {
@@ -30,6 +37,7 @@ export default defineCommand({
     ...authArgs,
     ...outputArgs,
     ...paginationArgs,
+    ...traitFilterArgs,
     "journey-stage": {
       type: "string",
       description: "Filter by journey stage (e.g. CHAMPION, AT_RISK, CHURNED)",
@@ -52,6 +60,19 @@ export default defineCommand({
     const params: Record<string, unknown> = {}
     if (args["journey-stage"]) params.journeyStage = args["journey-stage"]
     if (args["customer-id"]) params.customerId = args["customer-id"]
+    if (args.trait) {
+      try {
+        params.traitFilters = parseTraitFilters(args.trait)
+      } catch (error) {
+        return outputError(
+          {
+            message: error instanceof Error ? error.message : "Invalid --trait filter",
+            code: "invalid_input",
+          },
+          json,
+        )
+      }
+    }
     applyListFilters(params, args)
     applyPagination(params, args, json)
 

@@ -182,4 +182,24 @@ describe("client.callTool()", () => {
 
     fetchSpy.mockRestore()
   })
+
+  test("serializes object params in GET query string as JSON", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ items: [] }), { status: 200 }),
+    )
+
+    const client = await createClient()
+    await client.callTool("outlit_list_customers", {
+      traitFilters: { segment: "enterprise", active: true, seats: 25 },
+    })
+
+    const calledUrl = fetchSpy.mock.calls[0]?.[0] as string
+    expect(calledUrl).toContain(
+      encodeURIComponent('{"segment":"enterprise","active":true,"seats":25}'),
+    )
+
+    fetchSpy.mockRestore()
+  })
 })
