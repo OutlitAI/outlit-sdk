@@ -439,12 +439,13 @@ export async function handleStripeWebhook(event: Stripe.Event) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session
+      const customerId = String(session.customer)
       // Get account domain from your database
-      const domain = await getAccountDomain(session.customer)
+      const domain = await getAccountDomain(customerId)
       if (domain) {
         outlit.customer.paid({
           customerDomain: domain,
-          customerId: subscription.customer,
+          customerId,
           properties: {
             amount: session.amount_total ? session.amount_total / 100 : undefined,
             currency: session.currency,

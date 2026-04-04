@@ -89,7 +89,10 @@ export default defineCommand({
     }
     if (args.trait) {
       try {
-        params.traitFilters = parseTraitFilters(args.trait)
+        const traitFilters = parseTraitFilters(args.trait)
+        if (traitFilters) {
+          params.traitFilters = traitFilters
+        }
       } catch (error) {
         return outputError(
           {

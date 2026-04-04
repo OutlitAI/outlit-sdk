@@ -119,10 +119,11 @@ const outlit = new Outlit({
 })
 
 // Track server-side events (requires identity)
-outlit.track('api_request', {
+outlit.track({
   email: 'user@example.com',
   customerId: 'cust_123',
   customerDomain: 'acme.com',
+  eventName: 'api_request',
   properties: {
     endpoint: '/api/users',
     method: 'GET',

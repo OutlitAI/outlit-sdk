@@ -103,6 +103,24 @@ describe("customers list", () => {
     }
   })
 
+  test("omits traitFilters when --trait is only whitespace", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: {
+          trait: "   ",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      const [[, params]] = mockCallTool.mock.calls as [[string, Record<string, unknown>]]
+      expect(params).not.toHaveProperty("traitFilters")
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("outputs JSON result to stdout", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
