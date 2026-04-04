@@ -68,6 +68,32 @@ describe("users list", () => {
     }
   })
 
+  test("maps --trait filters into traitFilters params", async () => {
+    const { default: listCmd } = await import("../../../src/commands/users/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: {
+          trait: "role=admin,onboarded=false,seats=3",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_users",
+        expect.objectContaining({
+          traitFilters: {
+            role: "admin",
+            onboarded: false,
+            seats: 3,
+          },
+        }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("auth_required error on createClient failure", async () => {
     const clientModule = await import("../../../src/lib/client")
     const createClientSpy = spyOn(clientModule, "createClient").mockRejectedValue(

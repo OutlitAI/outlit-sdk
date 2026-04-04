@@ -1,6 +1,12 @@
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
-import { activityFilterArgs, applyListFilters, orderArgs } from "../../args/filters"
+import {
+  activityFilterArgs,
+  applyListFilters,
+  orderArgs,
+  parseTraitFilters,
+  traitFilterArgs,
+} from "../../args/filters"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
@@ -34,6 +40,7 @@ export default defineCommand({
     ...outputArgs,
     ...paginationArgs,
     ...activityFilterArgs,
+    ...traitFilterArgs,
     ...orderArgs,
     "billing-status": {
       type: "string",
@@ -79,6 +86,19 @@ export default defineCommand({
         return outputError({ message: "--mrr-below must be a number", code: "invalid_input" }, json)
       }
       params.mrrBelow = value
+    }
+    if (args.trait) {
+      try {
+        params.traitFilters = parseTraitFilters(args.trait)
+      } catch (error) {
+        return outputError(
+          {
+            message: error instanceof Error ? error.message : "Invalid --trait filter",
+            code: "invalid_input",
+          },
+          json,
+        )
+      }
     }
     applyListFilters(params, args)
     applyPagination(params, args, json)
