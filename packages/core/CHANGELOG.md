@@ -1,5 +1,18 @@
 # @outlit/core
 
+## 1.4.5
+
+### Patch Changes
+
+- [#78](https://github.com/OutlitAI/outlit-sdk/pull/78) [`d2f7b68`](https://github.com/OutlitAI/outlit-sdk/commit/d2f7b684ad67945647a4e2b019e1bf4435a033da) Thanks [@leo-paz](https://github.com/leo-paz)! - Introduce the approved customer-identified tracking contract across the SDKs.
+
+  - Promote `customerId` and `customerDomain` to top-level public identity fields.
+  - Keep `identify()` user-scoped while allowing customer metadata via `customerId`, `customerDomain`, and `customerTraits`.
+  - Allow `track()` to accept user-only, customer-only, or combined attribution.
+  - Deprecate nested `traits.customer` in favor of top-level customer traits.
+
+- [#80](https://github.com/OutlitAI/outlit-sdk/pull/80) [`9c99955`](https://github.com/OutlitAI/outlit-sdk/commit/9c999559c0c98a7b974d77298ad8fcf636b7c681) Thanks [@leo-paz](https://github.com/leo-paz)! - Serialize browser batch customer attribution into top-level `customerIdentity` instead of nesting customer fields under `userIdentity`. This aligns the browser SDK with the platform ingest schema while keeping identify events customer-aware.
+
 ## 1.4.4
 
 ### Patch Changes
