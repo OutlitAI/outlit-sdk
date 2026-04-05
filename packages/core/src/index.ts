@@ -34,6 +34,7 @@ export type {
   IngestPayload,
   IngestResponse,
   PageviewEvent,
+  PayloadCustomerIdentity,
   PayloadUserIdentity,
   ServerIdentifyOptions,
   ServerIdentity,

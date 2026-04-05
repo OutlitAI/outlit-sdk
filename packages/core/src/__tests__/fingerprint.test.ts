@@ -137,7 +137,9 @@ describe("validateServerIdentity with fingerprint", () => {
   })
 
   it("passes with customerDomain only (no user identity)", () => {
-    expect(() => validateServerIdentity(undefined, undefined, undefined, undefined, "acme.com")).not.toThrow()
+    expect(() =>
+      validateServerIdentity(undefined, undefined, undefined, undefined, "acme.com"),
+    ).not.toThrow()
   })
 
   it("throws with no identifiers", () => {
@@ -199,6 +201,7 @@ describe("buildIngestPayload with fingerprint", () => {
       undefined, // userIdentity
       undefined, // sessionId
       "device_abc123", // fingerprint
+      undefined, // customerIdentity
     )
 
     expect(payload.fingerprint).toBe("device_abc123")
@@ -218,6 +221,7 @@ describe("buildIngestPayload with fingerprint", () => {
       { email: "user@example.com" },
       undefined,
       "device_abc123",
+      undefined,
     )
 
     expect(payload.visitorId).toBe("visitor_123")

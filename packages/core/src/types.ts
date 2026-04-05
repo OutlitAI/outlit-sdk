@@ -249,13 +249,21 @@ export type TrackerEvent =
 /**
  * User identity for payload-level resolution.
  * Used by browser SDK when user is logged in (via setUser).
+ * Customer attribution is carried separately in `customerIdentity`.
  */
-export interface PayloadUserIdentity extends CustomerAttribution {
+export interface PayloadUserIdentity {
   email?: string
   /** Your system-owned user/contact ID. */
   userId?: string
   /** User/contact traits. */
   traits?: IdentifyTraits
+}
+
+/**
+ * Customer identity for payload-level attribution.
+ * Used by browser SDK to attach account/workspace context to a batch.
+ */
+export interface PayloadCustomerIdentity extends CustomerAttribution {
   /** Customer/account traits. */
   customerTraits?: CustomerTraits
 }
@@ -286,6 +294,12 @@ export interface IngestPayload {
    * allowing immediate identity resolution for SPA/React apps.
    */
   userIdentity?: PayloadUserIdentity
+  /**
+   * Customer/account identity for this batch of events.
+   * Used to attribute browser batches to a customer/workspace even when
+   * the customer fields are not present on every event.
+   */
+  customerIdentity?: PayloadCustomerIdentity
 }
 
 // ============================================
