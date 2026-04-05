@@ -74,6 +74,34 @@ describe("customer identity contract", () => {
     expect(payload.sessionId).toBe("session_123")
   })
 
+  it("lifts legacy customer fields from payload-level user identity", () => {
+    const legacyUserIdentity: Parameters<typeof buildIngestPayload>[3] & {
+      customerId: string
+      customerDomain: string
+      customerTraits: { plan: string }
+    } = {
+      email: "legacy@example.com",
+      userId: "usr_legacy",
+      customerId: "cust_legacy",
+      customerDomain: "legacy.com",
+      customerTraits: { plan: "legacy-pro" },
+      traits: { name: "Legacy User" },
+    }
+
+    const payload = buildIngestPayload("visitor_legacy", "client", [], legacyUserIdentity)
+
+    expect(payload.userIdentity).toEqual({
+      email: "legacy@example.com",
+      userId: "usr_legacy",
+      traits: { name: "Legacy User" },
+    })
+    expect(payload.customerIdentity).toEqual({
+      customerId: "cust_legacy",
+      customerDomain: "legacy.com",
+      customerTraits: { plan: "legacy-pro" },
+    })
+  })
+
   it("requires a customer identifier for billing", () => {
     expect(() => validateCustomerIdentity()).toThrow()
     expect(() =>

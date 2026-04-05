@@ -257,6 +257,21 @@ export interface PayloadUserIdentity {
   userId?: string
   /** User/contact traits. */
   traits?: IdentifyTraits
+  /**
+   * @deprecated Use payload-level `customerIdentity.customerId` instead.
+   * Kept for one compatibility window while callers migrate.
+   */
+  customerId?: string
+  /**
+   * @deprecated Use payload-level `customerIdentity.customerDomain` instead.
+   * Kept for one compatibility window while callers migrate.
+   */
+  customerDomain?: string
+  /**
+   * @deprecated Use payload-level `customerIdentity.customerTraits` instead.
+   * Kept for one compatibility window while callers migrate.
+   */
+  customerTraits?: CustomerTraits
 }
 
 /**

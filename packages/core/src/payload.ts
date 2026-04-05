@@ -17,7 +17,6 @@ import type {
   SourceType,
   StageEvent,
   TrackerEvent,
-  UtmParams,
 } from "./types"
 import { extractPathFromUrl, extractUtmParams } from "./utils"
 
@@ -320,6 +319,17 @@ export function buildIngestPayload(
     source,
     events,
   }
+  const legacyCustomerIdentity =
+    customerIdentity === undefined &&
+    userIdentity &&
+    (userIdentity.customerId || userIdentity.customerDomain || userIdentity.customerTraits)
+      ? {
+          ...(userIdentity.customerId && { customerId: userIdentity.customerId }),
+          ...(userIdentity.customerDomain && { customerDomain: userIdentity.customerDomain }),
+          ...(userIdentity.customerTraits && { customerTraits: userIdentity.customerTraits }),
+        }
+      : undefined
+  const resolvedCustomerIdentity = customerIdentity ?? legacyCustomerIdentity
 
   // Only include fingerprint if provided (server SDK only)
   if (fingerprint) {
@@ -341,16 +351,20 @@ export function buildIngestPayload(
   }
 
   if (
-    customerIdentity &&
-    (customerIdentity.customerId ||
-      customerIdentity.customerDomain ||
-      customerIdentity.customerTraits)
+    resolvedCustomerIdentity &&
+    (resolvedCustomerIdentity.customerId ||
+      resolvedCustomerIdentity.customerDomain ||
+      resolvedCustomerIdentity.customerTraits)
   ) {
     payload.customerIdentity = {
-      ...(customerIdentity.customerId && { customerId: customerIdentity.customerId }),
-      ...(customerIdentity.customerDomain && { customerDomain: customerIdentity.customerDomain }),
-      ...(customerIdentity.customerTraits && {
-        customerTraits: customerIdentity.customerTraits,
+      ...(resolvedCustomerIdentity.customerId && {
+        customerId: resolvedCustomerIdentity.customerId,
+      }),
+      ...(resolvedCustomerIdentity.customerDomain && {
+        customerDomain: resolvedCustomerIdentity.customerDomain,
+      }),
+      ...(resolvedCustomerIdentity.customerTraits && {
+        customerTraits: resolvedCustomerIdentity.customerTraits,
       }),
     }
   }
