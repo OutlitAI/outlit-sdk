@@ -1,5 +1,15 @@
 # @outlit/cli
 
+## 1.4.1
+
+### Patch Changes
+
+- [#76](https://github.com/OutlitAI/outlit-sdk/pull/76) [`6ca230c`](https://github.com/OutlitAI/outlit-sdk/commit/6ca230c075b0b5274055745ddf60bc5b44653637) Thanks [@leo-paz](https://github.com/leo-paz)! - fix: add PAST_DUE to billing status filter options in customers list command
+
+- [#74](https://github.com/OutlitAI/outlit-sdk/pull/74) [`7e8aff5`](https://github.com/OutlitAI/outlit-sdk/commit/7e8aff5fd8f3fbb16af80c0b99b3c6d5c787ab4c) Thanks [@rafa-thayto](https://github.com/rafa-thayto)! - Remove legacy ~/clawd/ skill path fallback and rename skill from outlit-intelligence to outlit
+
+- [#77](https://github.com/OutlitAI/outlit-sdk/pull/77) [`507a8c3`](https://github.com/OutlitAI/outlit-sdk/commit/507a8c32e0d796013b34b46f413c648353842365) Thanks [@leo-paz](https://github.com/leo-paz)! - Add --doc-types, --source-types, --source-type, and --source-id flags to `outlit search`. Query is now optional when --source-type and --source-id are provided for direct source lookup.
+
 ## 1.4.0
 
 ### Minor Changes
