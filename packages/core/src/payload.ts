@@ -4,14 +4,15 @@ import type {
   CalendarEvent,
   CalendarProvider,
   CustomEvent,
+  CustomerTraits,
   EngagementEvent,
   ExplicitJourneyStage,
   FormEvent,
   IdentifyEvent,
   IdentifyTraits,
-  CustomerTraits,
   IngestPayload,
   PageviewEvent,
+  PayloadCustomerIdentity,
   PayloadUserIdentity,
   SourceType,
   StageEvent,
@@ -303,6 +304,7 @@ export function buildBillingEvent(
  * @param userIdentity - Optional user identity for immediate resolution (from setUser in SPA)
  * @param sessionId - Optional session ID for grouping events (browser SDK only)
  * @param fingerprint - Optional device identifier for server-side anonymous tracking
+ * @param customerIdentity - Optional customer identity for batch attribution
  */
 export function buildIngestPayload(
   visitorId: string,
@@ -311,6 +313,7 @@ export function buildIngestPayload(
   userIdentity?: PayloadUserIdentity,
   sessionId?: string,
   fingerprint?: string,
+  customerIdentity?: PayloadCustomerIdentity,
 ): IngestPayload {
   const payload: IngestPayload = {
     visitorId,
@@ -329,22 +332,26 @@ export function buildIngestPayload(
   }
 
   // Only include userIdentity if it has actual values
-  if (
-    userIdentity &&
-    (userIdentity.email ||
-      userIdentity.userId ||
-      userIdentity.customerId ||
-      userIdentity.customerDomain ||
-      userIdentity.traits ||
-      userIdentity.customerTraits)
-  ) {
+  if (userIdentity && (userIdentity.email || userIdentity.userId || userIdentity.traits)) {
     payload.userIdentity = {
       ...(userIdentity.email && { email: userIdentity.email }),
       ...(userIdentity.userId && { userId: userIdentity.userId }),
-      ...(userIdentity.customerId && { customerId: userIdentity.customerId }),
-      ...(userIdentity.customerDomain && { customerDomain: userIdentity.customerDomain }),
       ...(userIdentity.traits && { traits: userIdentity.traits }),
-      ...(userIdentity.customerTraits && { customerTraits: userIdentity.customerTraits }),
+    }
+  }
+
+  if (
+    customerIdentity &&
+    (customerIdentity.customerId ||
+      customerIdentity.customerDomain ||
+      customerIdentity.customerTraits)
+  ) {
+    payload.customerIdentity = {
+      ...(customerIdentity.customerId && { customerId: customerIdentity.customerId }),
+      ...(customerIdentity.customerDomain && { customerDomain: customerIdentity.customerDomain }),
+      ...(customerIdentity.customerTraits && {
+        customerTraits: customerIdentity.customerTraits,
+      }),
     }
   }
 

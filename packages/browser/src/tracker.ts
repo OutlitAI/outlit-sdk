@@ -13,6 +13,7 @@ import {
   type CustomerIdentifier,
   DEFAULT_API_HOST,
   type ExplicitJourneyStage,
+  type PayloadCustomerIdentity,
   type PayloadUserIdentity,
   type TrackerConfig,
   type TrackerEvent,
@@ -80,7 +81,7 @@ export interface OutlitOptions extends TrackerConfig {
   idleTimeout?: number
 }
 
-export type UserIdentity = PayloadUserIdentity
+export type UserIdentity = BrowserIdentifyOptions
 
 export interface BillingOptions extends CustomerIdentifier {
   properties?: Record<string, string | number | boolean | null>
@@ -640,15 +641,30 @@ export class Outlit {
       return undefined
     }
 
-    const { email, userId, customerId, customerDomain } = this.currentUser
+    const { email, userId } = this.currentUser
 
-    if (!email && !userId && !customerId && !customerDomain) {
+    if (!email && !userId) {
       return undefined
     }
 
     return {
       ...(email && { email }),
       ...(userId && { userId }),
+    }
+  }
+
+  private getPayloadCustomerIdentity(): PayloadCustomerIdentity | undefined {
+    if (!this.currentUser) {
+      return undefined
+    }
+
+    const { customerId, customerDomain } = this.currentUser
+
+    if (!customerId && !customerDomain) {
+      return undefined
+    }
+
+    return {
       ...(customerId && { customerId }),
       ...(customerDomain && { customerDomain }),
     }
@@ -661,9 +677,18 @@ export class Outlit {
     // Include only attribution identifiers in payload-level user identity.
     // Profile traits travel on identify events, not on subsequent track batches.
     const userIdentity = this.getPayloadUserIdentity()
+    const customerIdentity = this.getPayloadCustomerIdentity()
     // Include session ID for grouping all events in this batch
     const sessionId = this.sessionTracker?.getSessionId()
-    const payload = buildIngestPayload(this.visitorId, "client", events, userIdentity, sessionId)
+    const payload = buildIngestPayload(
+      this.visitorId,
+      "client",
+      events,
+      userIdentity,
+      sessionId,
+      undefined,
+      customerIdentity,
+    )
     const url = `${this.apiHost}/api/i/v1/${this.publicKey}/events`
 
     try {

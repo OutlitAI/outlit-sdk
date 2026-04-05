@@ -42,7 +42,7 @@ describe("customer identity contract", () => {
     expect(event.customerTraits?.plan).toBe("enterprise")
   })
 
-  it("includes customer context in payload-level user identity", () => {
+  it("separates customer context from payload-level user identity", () => {
     const payload = buildIngestPayload(
       "visitor_123",
       "client",
@@ -50,17 +50,27 @@ describe("customer identity contract", () => {
       {
         email: "user@example.com",
         userId: "usr_123",
-        customerId: "cust_123",
-        customerDomain: "acme.com",
-        customerTraits: { plan: "pro" },
         traits: { name: "Jane Doe" },
       },
       "session_123",
+      undefined,
+      {
+        customerId: "cust_123",
+        customerDomain: "acme.com",
+        customerTraits: { plan: "pro" },
+      },
     )
 
-    expect(payload.userIdentity?.customerId).toBe("cust_123")
-    expect(payload.userIdentity?.customerDomain).toBe("acme.com")
-    expect(payload.userIdentity?.customerTraits?.plan).toBe("pro")
+    expect(payload.userIdentity).toEqual({
+      email: "user@example.com",
+      userId: "usr_123",
+      traits: { name: "Jane Doe" },
+    })
+    expect(payload.customerIdentity).toEqual({
+      customerId: "cust_123",
+      customerDomain: "acme.com",
+      customerTraits: { plan: "pro" },
+    })
     expect(payload.sessionId).toBe("session_123")
   })
 

@@ -120,6 +120,7 @@ describe("payload identity", () => {
     const fetchOptions = vi.mocked(global.fetch).mock.calls[0]?.[1]
     const payload = JSON.parse(String(fetchOptions?.body)) as {
       userIdentity?: Record<string, unknown>
+      customerIdentity?: Record<string, unknown>
       events: Array<{ type: string }>
     }
 
@@ -127,10 +128,14 @@ describe("payload identity", () => {
     expect(payload.events.map((event) => event.type)).toEqual(["identify", "custom"])
     expect(payload.userIdentity).toEqual({
       email: "user@example.com",
+    })
+    expect(payload.customerIdentity).toEqual({
       customerId: "cust_123",
       customerDomain: "acme.com",
     })
     expect(payload.userIdentity).not.toHaveProperty("traits")
-    expect(payload.userIdentity).not.toHaveProperty("customerTraits")
+    expect(payload.userIdentity).not.toHaveProperty("customerId")
+    expect(payload.userIdentity).not.toHaveProperty("customerDomain")
+    expect(payload.customerIdentity).not.toHaveProperty("customerTraits")
   })
 })
