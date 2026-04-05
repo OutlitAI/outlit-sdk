@@ -92,3 +92,45 @@ describe("consent state on init", () => {
     expect(outlitNoAuto.isEnabled()).toBe(false)
   })
 })
+
+describe("payload identity", () => {
+  it("does not include profile traits in non-identify browser batches", async () => {
+    const outlit = new Outlit({
+      publicKey: "pk_test",
+      autoTrack: false,
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+    })
+
+    outlit.enableTracking()
+    outlit.identify({
+      email: "user@example.com",
+      customerId: "cust_123",
+      customerDomain: "acme.com",
+      traits: { role: "admin" },
+      customerTraits: { plan: "enterprise" },
+    })
+    outlit.track("button_clicked", { buttonId: "cta" })
+
+    await outlit.flush()
+
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+
+    const fetchOptions = vi.mocked(global.fetch).mock.calls[0]?.[1]
+    const payload = JSON.parse(String(fetchOptions?.body)) as {
+      userIdentity?: Record<string, unknown>
+      events: Array<{ type: string }>
+    }
+
+    expect(payload.events).toHaveLength(2)
+    expect(payload.events.map((event) => event.type)).toEqual(["identify", "custom"])
+    expect(payload.userIdentity).toEqual({
+      email: "user@example.com",
+      customerId: "cust_123",
+      customerDomain: "acme.com",
+    })
+    expect(payload.userIdentity).not.toHaveProperty("traits")
+    expect(payload.userIdentity).not.toHaveProperty("customerTraits")
+  })
+})
