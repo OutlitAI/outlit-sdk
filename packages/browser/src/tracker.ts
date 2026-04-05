@@ -635,14 +635,32 @@ export class Outlit {
     }, this.flushInterval)
   }
 
+  private getPayloadUserIdentity(): PayloadUserIdentity | undefined {
+    if (!this.currentUser) {
+      return undefined
+    }
+
+    const { email, userId, customerId, customerDomain } = this.currentUser
+
+    if (!email && !userId && !customerId && !customerDomain) {
+      return undefined
+    }
+
+    return {
+      ...(email && { email }),
+      ...(userId && { userId }),
+      ...(customerId && { customerId }),
+      ...(customerDomain && { customerDomain }),
+    }
+  }
+
   private async sendEvents(events: TrackerEvent[]): Promise<void> {
     if (events.length === 0) return
     if (!this.visitorId) return // Can't send without a visitor ID
 
-    // Include current user identity in payload for direct resolution
-    // This allows the server to resolve identity immediately for SPA apps
-    // instead of waiting for the anonymous visitor flow
-    const userIdentity = this.currentUser ?? undefined
+    // Include only attribution identifiers in payload-level user identity.
+    // Profile traits travel on identify events, not on subsequent track batches.
+    const userIdentity = this.getPayloadUserIdentity()
     // Include session ID for grouping all events in this batch
     const sessionId = this.sessionTracker?.getSessionId()
     const payload = buildIngestPayload(this.visitorId, "client", events, userIdentity, sessionId)
