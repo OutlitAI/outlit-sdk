@@ -439,7 +439,9 @@ export async function handleStripeWebhook(event: Stripe.Event) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session
-      const customerId = String(session.customer)
+      const customerId =
+        typeof session.customer === 'string' ? session.customer : session.customer?.id
+      if (!customerId) break
       // Get account domain from your database
       const domain = await getAccountDomain(customerId)
       if (domain) {
@@ -457,12 +459,17 @@ export async function handleStripeWebhook(event: Stripe.Event) {
 
     case 'customer.subscription.deleted': {
       const subscription = event.data.object as Stripe.Subscription
+      const customerId =
+        typeof subscription.customer === 'string'
+          ? subscription.customer
+          : subscription.customer?.id
+      if (!customerId) break
       // Get account domain from your database
-      const domain = await getAccountDomain(subscription.customer)
+      const domain = await getAccountDomain(customerId)
       if (domain) {
         outlit.customer.churned({
           customerDomain: domain,
-          customerId: subscription.customer,
+          customerId,
           properties: {
             reason: subscription.cancellation_details?.reason,
           }
