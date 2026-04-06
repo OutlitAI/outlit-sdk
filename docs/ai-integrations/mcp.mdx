@@ -26,6 +26,11 @@ Skills are also installed automatically when running `outlit setup`. See [Agent 
     Go to [Settings > MCP Integration](https://app.outlit.ai/workspace-profile/mcp) in the Outlit dashboard. Click **Generate API Key**, give it a descriptive name, and copy it immediately — it won't be shown again.
   </Step>
   <Step title="Connect your AI tool">
+    <Tip>
+      If your account belongs to multiple Outlit workspaces, use your workspace-specific MCP URL instead of the shared route:
+      `https://mcp.outlit.ai/w/&lt;workspace-slug&gt;/mcp`
+    </Tip>
+
     <Tabs>
       <Tab title="Claude Code">
         ```bash
