@@ -303,7 +303,9 @@ export function buildBillingEvent(
  * @param userIdentity - Optional user identity for immediate resolution (from setUser in SPA)
  * @param sessionId - Optional session ID for grouping events (browser SDK only)
  * @param fingerprint - Optional device identifier for server-side anonymous tracking
- * @param customerIdentity - Optional customer identity for batch attribution
+ * @param customerIdentity - Optional customer identity for batch attribution. `customerId`-only
+ * batches are valid and remain provisional until a later identify(email, customerId) call
+ * links that external account/workspace to a resolved customer.
  */
 export function buildIngestPayload(
   visitorId: string,

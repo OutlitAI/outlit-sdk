@@ -98,9 +98,10 @@ export interface OutlitOptions {
  * // Track with customer attribution only
  * outlit.track({
  *   customerId: 'cust_123',
- *   customerDomain: 'acme.com',
  *   eventName: 'account_synced'
  * })
+ * // `customerId`-only events stay attributable immediately and can later
+ * // link to the email-resolved customer when identify() uses the same customerId.
  *
  * // Track with email (resolves immediately)
  * outlit.track({
@@ -151,18 +152,20 @@ export class Outlit {
   }
 
   /**
- * Track a custom event.
- *
- * Requires at least one of: `fingerprint`, `email`, `userId`, `customerId`, or `customerDomain`.
- *
- * - Use `fingerprint` for anonymous tracking (events linked later via identify)
- * - Use `email` or `userId` for user-scoped attribution
- * - Use `customerId` / `customerDomain` for customer-scoped attribution
- * - `userId` is your system-owned user/contact ID
- * - `customerId` is your system-owned customer/account/workspace ID
- *
- * @throws Error if no identity is provided
- */
+   * Track a custom event.
+   *
+   * Requires at least one of: `fingerprint`, `email`, `userId`, `customerId`, or `customerDomain`.
+   *
+   * - Use `fingerprint` for anonymous tracking (events linked later via identify)
+   * - Use `email` or `userId` for user-scoped attribution
+   * - Use `customerId` for customer/account/workspace-scoped attribution
+   * - If you later call `identify({ email, customerId })`, Outlit can link earlier
+   *   `customerId`-only events to the customer resolved from email
+   * - `userId` is your system-owned user/contact ID
+   * - `customerId` is your system-owned customer/account/workspace ID
+   *
+   * @throws Error if no identity is provided
+   */
   track(options: ServerTrackOptions): void {
     this.ensureNotShutdown()
     validateServerIdentity(
@@ -195,14 +198,15 @@ export class Outlit {
   }
 
   /**
- * Identify or update a user.
- *
- * Requires `email` or `userId` to establish user-scoped identity.
- * Optionally include `fingerprint` and customer attribution fields to link them.
- * `userId` is your system-owned user/contact ID and `customerId` is your system-owned
- * customer/account/workspace ID.
- *
- * This is how you link anonymous fingerprint-tracked events to a real user:
+   * Identify or update a user.
+   *
+   * Requires `email` or `userId` to establish user-scoped identity.
+   * Optionally include `fingerprint` and customer attribution fields to link them.
+   * `userId` is your system-owned user/contact ID and `customerId` is your system-owned
+   * customer/account/workspace ID. When `email` and `customerId` are sent together,
+   * Outlit can link that account/workspace to the customer resolved from email.
+   *
+   * This is how you link anonymous fingerprint-tracked events to a real user:
    * ```typescript
    * outlit.identify({
    *   email: 'user@example.com',
@@ -220,7 +224,7 @@ export class Outlit {
     if (!options.email && !options.userId) {
       throw new Error(
         "identify() requires email or userId to establish user-scoped identity. " +
-          "Use customerId/customerDomain as optional fields for account attribution.",
+          "Use customerId as the optional account/workspace identifier for linking attribution.",
       )
     }
 
@@ -280,7 +284,12 @@ export class Outlit {
 
   private sendBillingEvent(status: BillingStatus, options: BillingOptions): void {
     this.ensureNotShutdown()
-    validateCustomerIdentity(options.customerId, options.customerDomain, options.domain, options.stripeCustomerId)
+    validateCustomerIdentity(
+      options.customerId,
+      options.customerDomain,
+      options.domain,
+      options.stripeCustomerId,
+    )
 
     const event = buildBillingEvent({
       url: `server://${options.customerDomain ?? options.domain ?? options.customerId ?? options.stripeCustomerId}`,
