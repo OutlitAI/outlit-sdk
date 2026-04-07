@@ -73,7 +73,8 @@ export interface BrowserIdentifyOptions extends CustomerAttribution {
  * Track calls may use customerId/customerDomain without these fields.
  * Identify calls still require email or userId at runtime.
  * `customerId`-only track calls are valid immediately, but they stay provisional
- * until the same customer/account/workspace later appears on identify() with email or userId.
+ * until the same customer/account/workspace later appears on identify() with
+ * the matching customerId and an email.
  *
  * - fingerprint: Device identifier for anonymous tracking (can be linked later)
  * - email: User's email address (definitive identity, resolves immediately)
