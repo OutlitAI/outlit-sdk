@@ -72,6 +72,8 @@ export interface BrowserIdentifyOptions extends CustomerAttribution {
  * Base server-side user identity.
  * Track calls may use customerId/customerDomain without these fields.
  * Identify calls still require email or userId at runtime.
+ * `customerId`-only track calls are valid immediately, but they stay provisional
+ * until the same customer/account/workspace later appears on identify() with email or userId.
  *
  * - fingerprint: Device identifier for anonymous tracking (can be linked later)
  * - email: User's email address (definitive identity, resolves immediately)
@@ -87,7 +89,10 @@ export interface ServerIdentity {
 export interface CustomerAttribution {
   /** Your system-owned customer/account/workspace ID. */
   customerId?: string
-  /** Public customer/account domain used for billing and attribution. */
+  /**
+   * Optional canonical public customer/account domain.
+   * Most integrations should omit this and let Outlit resolve the customer from identify(email, customerId).
+   */
   customerDomain?: string
 }
 
@@ -277,6 +282,8 @@ export interface PayloadUserIdentity {
 /**
  * Customer identity for payload-level attribution.
  * Used by browser SDK to attach account/workspace context to a batch.
+ * `customerId`-only attribution is valid and remains provisional until a later
+ * identify(email, customerId) call links that external account/workspace to a resolved customer.
  */
 export interface PayloadCustomerIdentity extends CustomerAttribution {
   /** Customer/account traits. */

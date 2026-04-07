@@ -42,8 +42,7 @@ const outlit = new Outlit({
 outlit.user.identify({
   email: 'user@example.com',
   traits: { name: 'John Doe' },
-  customerId: 'cust_123',
-  customerDomain: 'acme.com',
+  customerId: 'cust_123', // The stable account/workspace ID you also use on track()
   customerTraits: { plan: 'pro' },
 })
 
@@ -55,7 +54,6 @@ outlit.track('button_clicked', {
 
 // Mark billing status on a customer
 outlit.customer.trialing({
-  customerDomain: 'acme.com',
   customerId: 'cust_123',
   properties: { plan: 'pro' },
 })
@@ -74,11 +72,9 @@ track('page_viewed', { page: '/home' })
 user().identify({
   email: 'user@example.com',
   customerId: 'cust_123',
-  customerDomain: 'acme.com',
 })
 customer().paid({
   customerId: 'cust_123',
-  customerDomain: 'acme.com',
   properties: { plan: 'pro' },
 })
 ```
@@ -120,9 +116,7 @@ const outlit = new Outlit({
 
 // Track server-side events (requires identity)
 outlit.track({
-  email: 'user@example.com',
   customerId: 'cust_123',
-  customerDomain: 'acme.com',
   eventName: 'api_request',
   properties: {
     endpoint: '/api/users',
@@ -130,20 +124,21 @@ outlit.track({
     status: 200,
   },
 })
+// `customerId`-only track events are valid immediately.
+// When you later call identify() with the same customerId and an email,
+// Outlit can link that account/workspace to the customer resolved from email.
 
 // Identify a user
 outlit.user.identify({
   email: 'user@example.com',
   traits: { plan: 'pro' },
   customerId: 'cust_123',
-  customerDomain: 'acme.com',
   customerTraits: { plan: 'pro' },
 })
 
 // Mark customer billing status
 outlit.customer.paid({
   customerId: 'cust_123',
-  customerDomain: 'acme.com',
   properties: { plan: 'pro' },
 })
 
