@@ -9,6 +9,7 @@ import {
   getCachedUpdateNotice,
   getUpdateCachePath,
   getUpgradeCommand,
+  inferInstallerFromInstallation,
   isUpdateCheckDue,
   shouldCheckForUpdates,
   writeCachedUpdateState,
@@ -98,6 +99,26 @@ describe("update helpers", () => {
 
   test("returns null when no executable upgrade command can be inferred", () => {
     expect(getUpgradeCommand()).toBeNull()
+  })
+
+  test("infers npm from an installed cli path under the npm prefix", () => {
+    expect(
+      inferInstallerFromInstallation({
+        argv1: "/tmp/outlit-prefix/node_modules/@outlit/cli/dist/cli.js",
+        realExecPath: "/tmp/outlit-prefix/node_modules/@outlit/cli/dist/cli.js",
+        npmGlobalPrefix: "/tmp/outlit-prefix",
+      }),
+    ).toBe("npm")
+  })
+
+  test("infers npm from a global npm install path under lib/node_modules", () => {
+    expect(
+      inferInstallerFromInstallation({
+        argv1: "/usr/local/bin/outlit",
+        realExecPath: "/usr/local/lib/node_modules/@outlit/cli/dist/cli.js",
+        npmGlobalPrefix: "/usr/local",
+      }),
+    ).toBe("npm")
   })
 
   test("allows update checks in interactive terminals", () => {

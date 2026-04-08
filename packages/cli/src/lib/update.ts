@@ -1,5 +1,6 @@
-import { spawn, spawnSync } from "node:child_process"
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { execFileSync, spawn, spawnSync } from "node:child_process"
+import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs"
+import { homedir } from "node:os"
 import { dirname, join } from "node:path"
 import { CLI_VERSION, getConfigDir } from "./config"
 import { isInteractive } from "./tty"
@@ -29,6 +30,13 @@ export interface UpdateNotice {
   currentVersion: string
   latestVersion: string
   command: string
+}
+
+interface InstallerDetectionOptions {
+  argv1?: string
+  realExecPath?: string | null
+  npmGlobalPrefix?: string | null
+  bunGlobalBin?: string | null
 }
 
 export function getUpdateCachePath(): string {
@@ -84,13 +92,81 @@ export function compareVersions(a: string, b: string): number {
   return 0
 }
 
-export function inferInstaller(): Installer | null {
-  const agent = process.env.npm_config_user_agent ?? ""
+function inferInstallerFromUserAgent(agent: string): Installer | null {
   if (agent.startsWith("bun/")) return "bun"
   if (agent.startsWith("npm/")) return "npm"
   if (agent.startsWith("pnpm/")) return "pnpm"
   if (agent.startsWith("yarn/")) return "yarn"
   return null
+}
+
+function isUnderPath(path: string, parent: string): boolean {
+  return path === parent || path.startsWith(`${parent}/`)
+}
+
+export function inferInstallerFromInstallation(opts: InstallerDetectionOptions): Installer | null {
+  const candidatePaths = [opts.argv1, opts.realExecPath].filter((value): value is string => !!value)
+
+  if (opts.npmGlobalPrefix) {
+    const npmPackageRoots = [
+      join(opts.npmGlobalPrefix, "node_modules", PACKAGE_NAME),
+      join(opts.npmGlobalPrefix, "lib", "node_modules", PACKAGE_NAME),
+    ]
+
+    if (candidatePaths.some((path) => npmPackageRoots.some((root) => isUnderPath(path, root)))) {
+      return "npm"
+    }
+  }
+
+  if (opts.bunGlobalBin) {
+    const bunGlobalBin = opts.bunGlobalBin
+    if (candidatePaths.some((path) => isUnderPath(path, bunGlobalBin))) {
+      return "bun"
+    }
+  }
+
+  return null
+}
+
+function readCommandOutput(command: string, args: string[]): string | null {
+  try {
+    return execFileSync(command, args, {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim()
+  } catch {
+    return null
+  }
+}
+
+export function inferInstaller(): Installer | null {
+  const fromAgent = inferInstallerFromUserAgent(process.env.npm_config_user_agent ?? "")
+  if (fromAgent) return fromAgent
+
+  const argv1 = process.argv[1]
+  const realExecPath = argv1
+    ? (readCommandOutput("realpath", [argv1]) ?? safeRealPath(argv1))
+    : null
+  const npmGlobalPrefix =
+    process.env.npm_config_prefix ?? readCommandOutput("npm", ["prefix", "-g"])
+  const bunGlobalBin = process.env.BUN_INSTALL
+    ? join(process.env.BUN_INSTALL, "bin")
+    : (readCommandOutput("bun", ["pm", "bin", "-g"]) ?? join(homedir(), ".bun", "bin"))
+
+  return inferInstallerFromInstallation({
+    argv1,
+    realExecPath,
+    npmGlobalPrefix,
+    bunGlobalBin,
+  })
+}
+
+function safeRealPath(filePath: string): string | null {
+  try {
+    return realpathSync(filePath)
+  } catch {
+    return null
+  }
 }
 
 export function formatUpdateCommand(installer = inferInstaller()): string {
