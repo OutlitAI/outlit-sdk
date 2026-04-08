@@ -132,10 +132,6 @@ jobs:
         if: steps.changesets.outputs.count != '0'
         run: bun install --frozen-lockfile
 
-      - name: Build
-        if: steps.changesets.outputs.count != '0'
-        run: bun run build
-
       - name: Create canary snapshot versions
         if: steps.changesets.outputs.count != '0'
         run: |
@@ -145,6 +141,10 @@ jobs:
           bunx changeset version --snapshot canary-${TIMESTAMP}-${SHORT_SHA}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        if: steps.changesets.outputs.count != '0'
+        run: bun run build
 
       - name: Inspect canary snapshot packages
         if: steps.changesets.outputs.count != '0'
