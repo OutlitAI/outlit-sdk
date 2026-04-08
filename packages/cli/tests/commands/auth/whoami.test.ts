@@ -67,6 +67,17 @@ describe("auth whoami", () => {
         args: { json: true, "api-key": undefined },
       } as Parameters<NonNullable<typeof whoamiCmd.run>>[0])
 
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "https://app.outlit.ai/api/internal/mcp/validate-api-key",
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
+          },
+        },
+      )
+
       stdoutOutput = stdoutSpy.mock.calls.map((c) => c[0] as string).join("")
     } finally {
       resolveApiKeySpy.mockRestore()
@@ -96,6 +107,17 @@ describe("auth whoami", () => {
       await whoamiCmd.run!({
         args: { json: false, "api-key": undefined },
       } as Parameters<NonNullable<typeof whoamiCmd.run>>[0])
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "https://app.outlit.ai/api/internal/mcp/validate-api-key",
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
+          },
+        },
+      )
 
       stdoutOutput = stdoutSpy.mock.calls.map((c) => c[0] as string).join("")
     } finally {
@@ -128,6 +150,16 @@ describe("auth whoami", () => {
       } as Parameters<NonNullable<typeof whoamiCmd.run>>[0])
     } catch (e) {
       thrown = e
+      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "https://app.outlit.ai/api/internal/mcp/validate-api-key",
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
+          },
+        },
+      )
       stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
     } finally {
       resolveApiKeySpy.mockRestore()
