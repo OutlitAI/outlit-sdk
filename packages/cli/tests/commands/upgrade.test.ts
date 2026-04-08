@@ -81,6 +81,34 @@ describe("upgrade command", () => {
     })
   })
 
+  test("uses npm when the installed cli path is under the npm prefix", async () => {
+    process.env.npm_config_prefix = "/tmp/outlit-prefix"
+    const originalArgv1 = process.argv[1]
+    process.argv[1] = "/tmp/outlit-prefix/node_modules/@outlit/cli/dist/cli.js"
+
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ version: "9.9.9" }), { status: 200 }),
+    )
+
+    const { default: upgradeCmd } = await import("../../src/commands/upgrade")
+
+    try {
+      await upgradeCmd.run!({ args: {} } as Parameters<NonNullable<typeof upgradeCmd.run>>[0])
+    } finally {
+      fetchSpy.mockRestore()
+      if (originalArgv1 === undefined) {
+        Reflect.deleteProperty(process.argv, "1")
+      } else {
+        process.argv[1] = originalArgv1
+      }
+      Reflect.deleteProperty(process.env, "npm_config_prefix")
+    }
+
+    expect(mockSpawnSync).toHaveBeenCalledWith("npm", ["install", "-g", "@outlit/cli"], {
+      stdio: "inherit",
+    })
+  })
+
   test("fails cleanly when the latest version check fails", async () => {
     process.env.npm_config_user_agent = "bun/1.3.9 npm/? node/v22.0.0 darwin x64"
     const fetchSpy = spyOn(globalThis, "fetch").mockRejectedValue(new Error("network down"))
