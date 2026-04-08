@@ -121,6 +121,16 @@ describe("update helpers", () => {
     ).toBe("npm")
   })
 
+  test("infers npm when the npm prefix is symlinked but the executable path is realpathed", () => {
+    expect(
+      inferInstallerFromInstallation({
+        argv1: "/tmp/outlit-prefix/node_modules/.bin/outlit",
+        realExecPath: "/private/tmp/outlit-prefix/node_modules/@outlit/cli/dist/cli.js",
+        npmGlobalPrefix: "/tmp/outlit-prefix",
+      }),
+    ).toBe("npm")
+  })
+
   test("allows update checks in interactive terminals", () => {
     setInteractive()
     expect(shouldCheckForUpdates()).toBe(true)

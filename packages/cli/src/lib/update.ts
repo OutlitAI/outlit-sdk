@@ -101,7 +101,13 @@ function inferInstallerFromUserAgent(agent: string): Installer | null {
 }
 
 function isUnderPath(path: string, parent: string): boolean {
-  return path === parent || path.startsWith(`${parent}/`)
+  const normalizedPath = normalizeInstallerPath(path)
+  const normalizedParent = normalizeInstallerPath(parent)
+  return normalizedPath === normalizedParent || normalizedPath.startsWith(`${normalizedParent}/`)
+}
+
+function normalizeInstallerPath(path: string): string {
+  return path.replace(/^\/private\/tmp\//, "/tmp/")
 }
 
 export function inferInstallerFromInstallation(opts: InstallerDetectionOptions): Installer | null {
