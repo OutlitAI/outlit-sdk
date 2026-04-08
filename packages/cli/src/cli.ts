@@ -1,12 +1,24 @@
 #!/usr/bin/env bun
 import { defineCommand, runMain } from "citty"
 import { CLI_VERSION } from "./lib/config"
+import {
+  INTERNAL_UPDATE_FLAG,
+  initializeUpdateNotifier,
+  runInternalUpdateCheck,
+} from "./lib/update"
 
 // citty only handles --version; support -v as a short alias
 if (process.argv.includes("-v")) {
   console.log(CLI_VERSION)
   process.exit(0)
 }
+
+if (process.argv.includes(INTERNAL_UPDATE_FLAG)) {
+  await runInternalUpdateCheck()
+  process.exit(0)
+}
+
+initializeUpdateNotifier()
 
 const main = defineCommand({
   meta: {
@@ -20,6 +32,7 @@ const main = defineCommand({
     customers: () => import("./commands/customers/index").then((m) => m.default),
     users: () => import("./commands/users/index").then((m) => m.default),
     doctor: () => import("./commands/doctor").then((m) => m.default),
+    upgrade: () => import("./commands/upgrade").then((m) => m.default),
     facts: () => import("./commands/facts").then((m) => m.default),
     search: () => import("./commands/search").then((m) => m.default),
     sql: () => import("./commands/sql").then((m) => m.default),

@@ -165,6 +165,7 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "openclaw", desc: "Configure OpenClaw", flags: [...COMMON] },
     ],
   },
+  { name: "upgrade", desc: "Upgrade the CLI", flags: [] },
   { name: "doctor", desc: "Diagnose environment", flags: [...COMMON] },
   { name: "completions", desc: "Generate shell completions", flags: [] },
 ]
