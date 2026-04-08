@@ -42,7 +42,7 @@ describe("completions command", () => {
       'facts) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --timeframe"',
     )
     expect(out).toContain(
-      'search) COMPREPLY=($(compgen -W "--api-key --json --customer --top-k --after --before"',
+      'search) COMPREPLY=($(compgen -W "--api-key --json --customer --top-k --after --before --source-types --source-type --source-id"',
     )
     expect(out).toContain('sql) COMPREPLY=($(compgen -W "--api-key --json --query-file --limit"')
   })
@@ -50,7 +50,7 @@ describe("completions command", () => {
   test("bash — flag completions for subcommands", async () => {
     const out = await captureCompletions("bash")
     expect(out).toContain(
-      'customers.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --search --status --type"',
+      'customers.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --search"',
     )
     expect(out).toContain('auth.login) COMPREPLY=($(compgen -W "--json --key"')
     expect(out).toContain(
@@ -107,6 +107,7 @@ describe("completions command", () => {
     // Leaf command flags
     expect(out).toContain("-n '__outlit_using_cmd facts' -l timeframe")
     expect(out).toContain("-n '__outlit_using_cmd sql' -l query-file")
+    expect(out).toContain("-n '__outlit_using_cmd search' -l source-type")
     // Subcommand flags use nested condition
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l trait")

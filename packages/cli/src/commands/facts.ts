@@ -2,6 +2,7 @@ import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
 import { applyPagination, paginationArgs } from "../args/pagination"
+import { customerToolContracts, timelineTimeframes } from "../generated/tool-contracts"
 import { getClientOrExit, runTool } from "../lib/api"
 
 export default defineCommand({
@@ -12,6 +13,8 @@ export default defineCommand({
       "",
       "Returns a list of facts (signals, events, and derived insights) for the",
       "specified customer within the given timeframe.",
+      "",
+      `Timeframes: ${timelineTimeframes.join(", ")}`,
       "",
       "Examples:",
       "  outlit facts acme.com",
@@ -32,7 +35,7 @@ export default defineCommand({
     },
     timeframe: {
       type: "string",
-      description: "Lookback window (e.g. 7d, 30d, 90d). Default: 30d.",
+      description: `Lookback window (${timelineTimeframes.join(", ")}). Default: 30d.`,
       default: "30d",
     },
   },
@@ -46,6 +49,6 @@ export default defineCommand({
     }
     applyPagination(params, args, json)
 
-    return runTool(client, "outlit_get_facts", params, json)
+    return runTool(client, customerToolContracts.outlit_get_facts.toolName, params, json)
   },
 })

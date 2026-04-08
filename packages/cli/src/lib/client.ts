@@ -41,6 +41,10 @@ const TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string }> =
   },
 }
 
+function isExactContextSourceLookup(params: Record<string, unknown>): boolean {
+  return typeof params.sourceType === "string" && typeof params.sourceId === "string"
+}
+
 /**
  * Builds a URL with query parameters from a params object.
  * Skips null/undefined values. Arrays are joined with commas.
@@ -91,7 +95,10 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
     key: credential.key,
     baseUrl,
     async callTool(toolName: string, params: Record<string, unknown>) {
-      const endpoint = TOOL_ENDPOINTS[toolName]
+      const endpoint =
+        toolName === "outlit_search_customer_context" && isExactContextSourceLookup(params)
+          ? { method: "POST" as const, path: "/api/internal/mcp/context-source" }
+          : TOOL_ENDPOINTS[toolName]
       if (!endpoint) {
         throw new Error(`Unknown tool: ${toolName}`)
       }

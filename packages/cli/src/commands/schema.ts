@@ -1,6 +1,7 @@
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
+import { customerToolContracts, schemaTables } from "../generated/tool-contracts"
 import { getClientOrExit, runTool } from "../lib/api"
 
 export default defineCommand({
@@ -12,7 +13,7 @@ export default defineCommand({
       "Without a table name, returns the full schema for all tables.",
       "With a table name, returns detailed column info for that table.",
       "",
-      "Available tables: events, customer_dimensions, user_dimensions, mrr_snapshots",
+      `Available tables: ${schemaTables.join(", ")}`,
       "",
       "Examples:",
       "  outlit schema",
@@ -27,8 +28,7 @@ export default defineCommand({
     ...outputArgs,
     table: {
       type: "positional",
-      description:
-        "Table to describe (events, customer_dimensions, user_dimensions, mrr_snapshots). Optional.",
+      description: `Table to describe (${schemaTables.join(", ")}). Optional.`,
       required: false,
     },
   },
@@ -39,6 +39,6 @@ export default defineCommand({
     const params: Record<string, unknown> = {}
     if (args.table) params.table = args.table
 
-    return runTool(client, "outlit_schema", params, json)
+    return runTool(client, customerToolContracts.outlit_schema.toolName, params, json)
   },
 })

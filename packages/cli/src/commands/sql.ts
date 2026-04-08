@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
+import { customerToolContracts, schemaTables } from "../generated/tool-contracts"
 import { getClientOrExit, runTool } from "../lib/api"
 import { errorMessage, outputError } from "../lib/output"
 
@@ -14,7 +15,7 @@ export default defineCommand({
       "Provide the query as a positional argument or via --query-file.",
       "When both are provided, --query-file takes precedence.",
       "",
-      "Available tables: events, customer_dimensions, user_dimensions, mrr_snapshots",
+      `Available tables: ${schemaTables.join(", ")}`,
       "",
       "Examples:",
       "  outlit sql 'SELECT * FROM events LIMIT 10'",
@@ -77,6 +78,6 @@ export default defineCommand({
       )
     }
 
-    return runTool(client, "outlit_query", { sql, limit }, json)
+    return runTool(client, customerToolContracts.outlit_query.toolName, { sql, limit }, json)
   },
 })

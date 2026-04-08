@@ -9,6 +9,7 @@ import {
 } from "../../args/filters"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
+import { customerBillingStatuses, customerToolContracts } from "../../generated/tool-contracts"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { formatCents, relativeDate, truncate } from "../../lib/format"
 import { outputError } from "../../lib/output"
@@ -29,7 +30,7 @@ export default defineCommand({
       "  outlit customers list --mrr-above 10000 --limit 50      # high-value at-risk",
       "  outlit customers list --json | jq '.items[].domain'     # pipe-friendly",
       "",
-      "Billing statuses: NONE, TRIALING, PAYING, PAST_DUE, CHURNED",
+      `Billing statuses: ${customerBillingStatuses.join(", ")}`,
       "Activity periods: 7d, 14d, 30d, 90d",
       "",
       AGENT_JSON_HINT,
@@ -44,7 +45,7 @@ export default defineCommand({
     ...orderArgs,
     "billing-status": {
       type: "string",
-      description: "Filter by billing status (NONE, TRIALING, PAYING, PAST_DUE, CHURNED)",
+      description: `Filter by billing status (${customerBillingStatuses.join(", ")})`,
     },
     "mrr-above": {
       type: "string",
@@ -57,14 +58,6 @@ export default defineCommand({
     search: {
       type: "string",
       description: "Search by customer name or domain",
-    },
-    status: {
-      type: "string",
-      description: "Customer status filter (PROVISIONAL, ACTIVE, CHURNED, MERGED)",
-    },
-    type: {
-      type: "string",
-      description: "Customer type filter (COMPANY, INDIVIDUAL)",
     },
   },
   async run({ args }) {
@@ -105,10 +98,8 @@ export default defineCommand({
     }
     applyListFilters(params, args)
     applyPagination(params, args, json)
-    if (args.status) params.status = args.status
-    if (args.type) params.type = args.type
 
-    return runTool(client, "outlit_list_customers", params, json, {
+    return runTool(client, customerToolContracts.outlit_list_customers.toolName, params, json, {
       spinnerMessage: "Fetching customers...",
       table: {
         columns: [

@@ -9,6 +9,7 @@ import {
 } from "../../args/filters"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
+import { customerToolContracts, userJourneyStages } from "../../generated/tool-contracts"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { relativeDate, truncate } from "../../lib/format"
 import { outputError } from "../../lib/output"
@@ -40,7 +41,7 @@ export default defineCommand({
     ...traitFilterArgs,
     "journey-stage": {
       type: "string",
-      description: "Filter by journey stage (e.g. CHAMPION, AT_RISK, CHURNED)",
+      description: `Filter by journey stage (${userJourneyStages.join(", ")})`,
     },
     "customer-id": {
       type: "string",
@@ -79,7 +80,7 @@ export default defineCommand({
     applyListFilters(params, args)
     applyPagination(params, args, json)
 
-    return runTool(client, "outlit_list_users", params, json, {
+    return runTool(client, customerToolContracts.outlit_list_users.toolName, params, json, {
       spinnerMessage: "Fetching users...",
       table: {
         columns: [
