@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "outlit-pr-coderabbit-followthrough": {
+      "source": "outlitai/internal-skills",
+      "sourceType": "github",
+      "computedHash": "59ca8e58b701376a5af63677d5e739a331ba97237ffd200482f377e3aeb0c10a"
+    }
+  }
+}

@@ -10,6 +10,9 @@ permissions:
   pull-requests: write
   id-token: write # Required for trusted publishing
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # Only run for Rust changes
   check-changes:
@@ -17,7 +20,7 @@ jobs:
     outputs:
       rust_changed: ${{ steps.changes.outputs.rust_changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -47,7 +50,7 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -72,7 +75,7 @@ jobs:
       published: ${{ steps.version-check.outputs.should_publish }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Check if version changed
         id: version-check
@@ -144,7 +147,7 @@ jobs:
     environment: release
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable

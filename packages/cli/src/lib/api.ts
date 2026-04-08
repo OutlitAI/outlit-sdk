@@ -1,5 +1,6 @@
 import type { OutlitClient } from "./client"
 import { createClient } from "./client"
+import { DEFAULT_API_URL } from "./config"
 import { errorMessage, isJsonMode, outputError, outputResult } from "./output"
 import { createSpinner } from "./spinner"
 import { renderPaginationHint, renderTable } from "./table"
@@ -41,8 +42,32 @@ export async function getClientOrExit(
  * Throws on failure — callers decide how to handle the error.
  */
 export async function pingApiKey(apiKey: string): Promise<void> {
-  const client = await createClient(apiKey)
-  await client.callTool("outlit_list_customers", { limit: 1 })
+  const baseUrl = process.env.OUTLIT_API_URL ?? DEFAULT_API_URL
+  const url = new URL("/api/internal/mcp/validate-api-key", baseUrl).toString()
+
+  const response = await globalThis.fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+  })
+
+  const text = await response.text()
+  const payload =
+    text.length > 0
+      ? (() => {
+          try {
+            return JSON.parse(text) as { valid?: boolean; error?: string }
+          } catch {
+            return null
+          }
+        })()
+      : null
+
+  if (!response.ok || !payload?.valid) {
+    const message = payload?.error ?? (text.length > 0 ? text : `API error (${response.status})`)
+    throw new Error(message)
+  }
 }
 
 /**

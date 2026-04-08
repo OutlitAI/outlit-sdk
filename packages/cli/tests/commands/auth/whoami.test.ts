@@ -16,7 +16,6 @@ mock.module("../../../src/lib/client", () => ({
 }))
 
 import { default as whoamiCmd } from "../../../src/commands/auth/whoami"
-import * as clientModule from "../../../src/lib/client"
 import * as configModule from "../../../src/lib/config"
 import {
   ExitError,
@@ -57,11 +56,9 @@ describe("auth whoami", () => {
       key: "ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
       source: "config",
     })
-    const createClientSpy = spyOn(clientModule, "createClient").mockResolvedValue({
-      key: "ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
-      baseUrl: "https://app.outlit.ai",
-      callTool: async () => ({ customers: [] }),
-    })
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+    )
     const stdoutSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
 
     let stdoutOutput = ""
@@ -73,7 +70,7 @@ describe("auth whoami", () => {
       stdoutOutput = stdoutSpy.mock.calls.map((c) => c[0] as string).join("")
     } finally {
       resolveApiKeySpy.mockRestore()
-      createClientSpy.mockRestore()
+      fetchSpy.mockRestore()
       stdoutSpy.mockRestore()
     }
 
@@ -89,11 +86,9 @@ describe("auth whoami", () => {
       key: "ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
       source: "env",
     })
-    const createClientSpy = spyOn(clientModule, "createClient").mockResolvedValue({
-      key: "ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
-      baseUrl: "https://app.outlit.ai",
-      callTool: async () => ({ customers: [] }),
-    })
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+    )
     const stdoutSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
 
     let stdoutOutput = ""
@@ -106,7 +101,7 @@ describe("auth whoami", () => {
     } finally {
       setNonInteractive()
       resolveApiKeySpy.mockRestore()
-      createClientSpy.mockRestore()
+      fetchSpy.mockRestore()
       stdoutSpy.mockRestore()
     }
 
@@ -119,8 +114,8 @@ describe("auth whoami", () => {
       key: "ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
       source: "flag",
     })
-    const createClientSpy = spyOn(clientModule, "createClient").mockRejectedValue(
-      new Error("API error (401): Unauthorized"),
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ valid: false, error: "Invalid API key" }), { status: 401 }),
     )
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -136,7 +131,7 @@ describe("auth whoami", () => {
       stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
     } finally {
       resolveApiKeySpy.mockRestore()
-      createClientSpy.mockRestore()
+      fetchSpy.mockRestore()
       exitSpy.mockRestore()
       stderrSpy.mockRestore()
     }

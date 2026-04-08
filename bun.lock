@@ -18,7 +18,7 @@
     },
     "packages/browser": {
       "name": "@outlit/browser",
-      "version": "1.4.1",
+      "version": "1.4.5",
       "dependencies": {
         "@outlit/core": "workspace:*",
       },
@@ -48,7 +48,7 @@
     },
     "packages/cli": {
       "name": "@outlit/cli",
-      "version": "1.0.0",
+      "version": "1.4.1",
       "bin": {
         "outlit": "./dist/cli.js",
       },
@@ -63,7 +63,7 @@
     },
     "packages/core": {
       "name": "@outlit/core",
-      "version": "1.1.0",
+      "version": "1.4.5",
       "devDependencies": {
         "@outlit/typescript-config": "workspace:*",
         "tsup": "^8.5.1",
@@ -73,14 +73,15 @@
     },
     "packages/node": {
       "name": "@outlit/node",
-      "version": "1.1.0",
+      "version": "1.4.5",
       "dependencies": {
-        "@outlit/core": "workspace:*",
+        "@outlit/core": "^1.4.5",
       },
       "devDependencies": {
         "@outlit/typescript-config": "workspace:*",
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
+        "vitest": "^4.0.18",
       },
     },
     "packages/typescript-config": {
