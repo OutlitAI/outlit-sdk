@@ -108,6 +108,8 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd facts' -l timeframe")
     expect(out).toContain("-n '__outlit_using_cmd sql' -l query-file")
     expect(out).toContain("-n '__outlit_using_cmd search' -l source-type")
+    expect(out).toContain("-n '__outlit_using_cmd search' -l source-id")
+    expect(out).toContain("-n '__outlit_using_cmd search' -l source-types")
     // Subcommand flags use nested condition
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l trait")

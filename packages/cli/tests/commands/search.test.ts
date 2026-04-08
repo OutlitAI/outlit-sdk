@@ -309,6 +309,31 @@ describe("search", () => {
     }
   })
 
+  test("error when --top-k is not an integer", async () => {
+    const { default: searchCmd } = await import("../../src/commands/search")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await searchCmd.run!({
+        args: {
+          query: "pricing objections",
+          "top-k": "1.5",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+    }
+  })
+
   test("error when --after/--before are combined with --source-type/--source-id", async () => {
     const { default: searchCmd } = await import("../../src/commands/search")
     const exitSpy = mockExitThrow()

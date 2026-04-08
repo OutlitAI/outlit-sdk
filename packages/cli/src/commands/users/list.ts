@@ -25,7 +25,7 @@ export default defineCommand({
       "",
       "Examples:",
       "  outlit users list                                          # all users",
-      "  outlit users list --journey-stage CHAMPION                # champions only",
+      "  outlit users list --journey-stage ENGAGED                 # engaged users only",
       "  outlit users list --customer-id <uuid>                    # users for a customer",
       "  outlit users list --no-activity-in 30d                    # inactive users",
       "  outlit users list --search alice --order-by last_activity_at",

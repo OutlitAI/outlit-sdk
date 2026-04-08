@@ -72,7 +72,10 @@ export default defineCommand({
 
     // Validate arguments before authenticating
     const topK = args["top-k"] ? Number(args["top-k"]) : undefined
-    if (topK !== undefined && (!Number.isFinite(topK) || topK < 1 || topK > 50)) {
+    if (
+      topK !== undefined &&
+      (!Number.isFinite(topK) || !Number.isInteger(topK) || topK < 1 || topK > 50)
+    ) {
       return outputError(
         { message: "--top-k must be an integer between 1 and 50", code: "invalid_input" },
         json,
