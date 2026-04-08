@@ -1,3 +1,4 @@
+import { customerToolContracts } from "../generated/tool-contracts"
 import { DEFAULT_API_URL, OUTLIT_DASHBOARD_URL, resolveApiKey } from "./config"
 
 export interface OutlitClient {
@@ -96,7 +97,8 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
     baseUrl,
     async callTool(toolName: string, params: Record<string, unknown>) {
       const endpoint =
-        toolName === "outlit_search_customer_context" && isExactContextSourceLookup(params)
+        toolName === customerToolContracts.outlit_search_customer_context.toolName &&
+        isExactContextSourceLookup(params)
           ? { method: "POST" as const, path: "/api/internal/mcp/context-source" }
           : TOOL_ENDPOINTS[toolName]
       if (!endpoint) {

@@ -4,6 +4,7 @@ import { AGENT_JSON_HINT, outputArgs } from "../args/output"
 import { applyPagination, paginationArgs } from "../args/pagination"
 import { customerToolContracts, timelineTimeframes } from "../generated/tool-contracts"
 import { getClientOrExit, runTool } from "../lib/api"
+import { outputError } from "../lib/output"
 
 export default defineCommand({
   meta: {
@@ -41,6 +42,17 @@ export default defineCommand({
   },
   async run({ args }) {
     const json = !!args.json
+
+    if (!timelineTimeframes.includes(args.timeframe as (typeof timelineTimeframes)[number])) {
+      return outputError(
+        {
+          message: `--timeframe must be one of ${timelineTimeframes.join(", ")}`,
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+
     const client = await getClientOrExit(args["api-key"], json)
 
     const params: Record<string, unknown> = {
