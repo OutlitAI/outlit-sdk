@@ -26,6 +26,7 @@ describe("completions command", () => {
     expect(out).toContain("compgen")
     expect(out).toContain("complete -F _outlit_completions outlit")
     expect(out).toContain("COMP_CWORD -eq 1")
+    expect(out).toContain("upgrade")
   })
 
   test("bash — subcommand dispatch", async () => {
@@ -37,16 +38,24 @@ describe("completions command", () => {
 
   test("bash — flag completions for leaf commands", async () => {
     const out = await captureCompletions("bash")
-    expect(out).toContain("facts) COMPREPLY=($(compgen -W \"--api-key --json --limit --cursor --timeframe\"")
-    expect(out).toContain("search) COMPREPLY=($(compgen -W \"--api-key --json --customer --top-k --after --before\"")
-    expect(out).toContain("sql) COMPREPLY=($(compgen -W \"--api-key --json --query-file --limit\"")
+    expect(out).toContain(
+      'facts) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --timeframe"',
+    )
+    expect(out).toContain(
+      'search) COMPREPLY=($(compgen -W "--api-key --json --customer --top-k --after --before"',
+    )
+    expect(out).toContain('sql) COMPREPLY=($(compgen -W "--api-key --json --query-file --limit"')
   })
 
   test("bash — flag completions for subcommands", async () => {
     const out = await captureCompletions("bash")
-    expect(out).toContain("customers.list) COMPREPLY=($(compgen -W \"--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --search --status --type\"")
-    expect(out).toContain("auth.login) COMPREPLY=($(compgen -W \"--json --key\"")
-    expect(out).toContain("users.list) COMPREPLY=($(compgen -W \"--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --journey-stage --customer-id --search\"")
+    expect(out).toContain(
+      'customers.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --search --status --type"',
+    )
+    expect(out).toContain('auth.login) COMPREPLY=($(compgen -W "--json --key"')
+    expect(out).toContain(
+      'users.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --journey-stage --customer-id --search"',
+    )
   })
 
   // ── Zsh ─────────────────────────────────────────────────────────────────

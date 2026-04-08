@@ -18,6 +18,7 @@ import {
 } from "../lib/config"
 import { errorMessage, isJsonMode, outputResult } from "../lib/output"
 import { isUnicodeSupported } from "../lib/tty"
+import { fetchLatestCliVersion, formatUpdateCommand } from "../lib/update"
 import { type AgentId, detectAgents as detectInstalledAgents } from "./setup/index"
 
 type Status = "pass" | "warn" | "fail"
@@ -102,12 +103,7 @@ export default defineCommand({
 async function checkCliVersion(): Promise<CheckResult> {
   const current = CLI_VERSION
   try {
-    const res = await fetch("https://registry.npmjs.org/@outlit%2Fcli/latest", {
-      signal: AbortSignal.timeout(5000),
-    })
-    if (!res.ok) throw new Error("registry unavailable")
-    const data = (await res.json()) as { version?: string }
-    const latest = data.version ?? "unknown"
+    const latest = await fetchLatestCliVersion()
     if (latest === current) {
       return { name: "CLI version", status: "pass", message: `v${current} (latest)` }
     }
@@ -115,7 +111,7 @@ async function checkCliVersion(): Promise<CheckResult> {
       name: "CLI version",
       status: "warn",
       message: `v${current} installed, v${latest} available`,
-      detail: "Run `npm update -g @outlit/cli` to update",
+      detail: `Run \`${formatUpdateCommand()}\` to update`,
     }
   } catch {
     return {
