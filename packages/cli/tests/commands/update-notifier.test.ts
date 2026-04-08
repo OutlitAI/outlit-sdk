@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test"
+import { CLI_VERSION } from "../../src/lib/config"
 import {
   clearCachedUpdateState,
   initializeUpdateNotifier,
@@ -32,7 +33,7 @@ describe("update notifier", () => {
 
     const written = (notify.mock.calls[0]?.[0] as string) ?? ""
     expect(written).toBe(
-      "Outlit CLI update available: 1.4.1 -> 9.9.9\nUpdate with: bun add -g @outlit/cli",
+      `Outlit CLI update available: ${CLI_VERSION} -> 9.9.9\nUpdate with: bun add -g @outlit/cli`,
     )
     expect(spawn).not.toHaveBeenCalled()
   })
