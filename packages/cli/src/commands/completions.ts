@@ -59,8 +59,6 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--mrr-above", desc: "MRR above threshold (cents)" },
           { name: "--mrr-below", desc: "MRR below threshold (cents)" },
           { name: "--search", desc: "Search name or domain" },
-          { name: "--status", desc: "Customer status filter" },
-          { name: "--type", desc: "Customer type filter" },
         ],
       },
       {
@@ -118,6 +116,9 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "--top-k", desc: "Max results" },
       { name: "--after", desc: "Events after date (ISO 8601)" },
       { name: "--before", desc: "Events before date (ISO 8601)" },
+      { name: "--source-types", desc: "Broad source type filter" },
+      { name: "--source-type", desc: "Exact source type for direct lookup" },
+      { name: "--source-id", desc: "Exact source ID for direct lookup" },
     ],
   },
   {

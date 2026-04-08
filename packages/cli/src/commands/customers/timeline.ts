@@ -2,6 +2,11 @@ import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
+import {
+  customerToolContracts,
+  timelineChannels,
+  timelineTimeframes,
+} from "../../generated/tool-contracts"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
 
@@ -17,6 +22,8 @@ export default defineCommand({
       "",
       "Timeframe is used when no explicit date range is set.",
       "When --start-date or --end-date is provided, --timeframe is ignored.",
+      `Channels: ${timelineChannels.join(", ")}`,
+      `Timeframes: ${timelineTimeframes.join(", ")}`,
       "",
       "Examples:",
       "  outlit customers timeline acme.com",
@@ -39,7 +46,7 @@ export default defineCommand({
     },
     channels: {
       type: "string",
-      description: "Comma-separated list of channels to filter (e.g. EMAIL,SLACK)",
+      description: `Comma-separated list of channels to filter (${timelineChannels.join(", ")})`,
     },
     "event-types": {
       type: "string",
@@ -47,8 +54,7 @@ export default defineCommand({
     },
     timeframe: {
       type: "string",
-      description:
-        "Timeframe for events (e.g. 7d, 14d, 30d, 90d). Ignored when --start-date or --end-date is set.",
+      description: `Timeframe for events (${timelineTimeframes.join(", ")}). Ignored when --start-date or --end-date is set.`,
       default: "30d",
     },
     "start-date": {
@@ -86,6 +92,6 @@ export default defineCommand({
     }
     applyPagination(params, args, json)
 
-    return runTool(client, "outlit_get_timeline", params, json)
+    return runTool(client, customerToolContracts.outlit_get_timeline.toolName, params, json)
   },
 })

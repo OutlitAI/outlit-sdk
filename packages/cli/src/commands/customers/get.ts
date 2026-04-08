@@ -1,6 +1,11 @@
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
+import {
+  customerIncludeSections,
+  customerTimeframes,
+  customerToolContracts,
+} from "../../generated/tool-contracts"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
 
@@ -17,6 +22,9 @@ export default defineCommand({
       "",
       'Naming note: --include users returns data under the "contacts" key in',
       "the response. This is a server-side naming inconsistency, not a CLI bug.",
+      "",
+      `Available include sections: ${customerIncludeSections.join(", ")}`,
+      `Timeframes: ${customerTimeframes.join(", ")}`,
       "",
       "Examples:",
       "  outlit customers get acme.com",
@@ -38,7 +46,7 @@ export default defineCommand({
       type: "string",
       description: [
         "Comma-separated sections to include in response.",
-        "Available: users, revenue, recentTimeline, behaviorMetrics",
+        `Available: ${customerIncludeSections.join(", ")}`,
         'Note: "users" maps to "contacts" in the response (server naming).',
       ].join("\n"),
     },
@@ -61,6 +69,6 @@ export default defineCommand({
       params.include = splitCsv(args.include)
     }
 
-    return runTool(client, "outlit_get_customer", params, json)
+    return runTool(client, customerToolContracts.outlit_get_customer.toolName, params, json)
   },
 })

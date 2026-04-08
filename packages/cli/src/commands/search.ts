@@ -1,6 +1,10 @@
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
+import {
+  customerToolContracts,
+  resolveCustomerContextSearchRequest,
+} from "../generated/tool-contracts"
 import { getClientOrExit, runTool } from "../lib/api"
 import { outputError } from "../lib/output"
 
@@ -41,7 +45,6 @@ export default defineCommand({
     "top-k": {
       type: "string",
       description: "Maximum number of results to return (1–50). Default: 20.",
-      default: "20",
     },
     after: {
       type: "string",
@@ -68,45 +71,37 @@ export default defineCommand({
     const json = !!args.json
 
     // Validate arguments before authenticating
-    const topK = Number(args["top-k"])
-    if (!Number.isFinite(topK) || topK < 1 || topK > 50) {
+    const topK = args["top-k"] ? Number(args["top-k"]) : undefined
+    if (topK !== undefined && (!Number.isFinite(topK) || topK < 1 || topK > 50)) {
       return outputError(
         { message: "--top-k must be an integer between 1 and 50", code: "invalid_input" },
         json,
       )
     }
 
-    const sourceType = args["source-type"]
-    const sourceId = args["source-id"]
     const sourceTypes = args["source-types"]
 
-    // sourceType and sourceId must be provided together
-    if ((sourceType && !sourceId) || (!sourceType && sourceId)) {
-      return outputError(
-        {
-          message: "--source-type and --source-id must be provided together",
-          code: "invalid_input",
-        },
-        json,
-      )
-    }
+    const parseCsv = (value: string) =>
+      value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean)
 
-    // query OR (sourceType + sourceId) required
-    if (!args.query && !sourceType) {
-      return outputError(
-        {
-          message: "A query argument or --source-type and --source-id are required",
-          code: "invalid_input",
-        },
-        json,
-      )
-    }
+    const resolved = resolveCustomerContextSearchRequest({
+      query: args.query,
+      customer: args.customer,
+      topK,
+      occurredAfter: args.after,
+      occurredBefore: args.before,
+      sourceTypes: sourceTypes ? parseCsv(sourceTypes) : undefined,
+      sourceType: args["source-type"],
+      sourceId: args["source-id"],
+    })
 
-    // sourceTypes cannot be combined with exact sourceType/sourceId lookup
-    if (sourceTypes && sourceType) {
+    if (!resolved.ok) {
       return outputError(
         {
-          message: "--source-types cannot be combined with --source-type/--source-id",
+          message: resolved.message,
           code: "invalid_input",
         },
         json,
@@ -115,21 +110,16 @@ export default defineCommand({
 
     const client = await getClientOrExit(args["api-key"], json)
 
-    const parseCsv = (value: string) =>
-      value
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean)
+    const params: Record<string, unknown> =
+      resolved.request.kind === "exact_lookup"
+        ? resolved.request.exactLookup
+        : resolved.request.search
 
-    const params: Record<string, unknown> = { topK }
-    if (args.query) params.query = args.query
-    if (args.customer) params.customer = args.customer
-    if (args.after) params.occurredAfter = args.after
-    if (args.before) params.occurredBefore = args.before
-    if (sourceTypes) params.sourceTypes = parseCsv(sourceTypes)
-    if (sourceType) params.sourceType = sourceType
-    if (sourceId) params.sourceId = sourceId
-
-    return runTool(client, "outlit_search_customer_context", params, json)
+    return runTool(
+      client,
+      customerToolContracts.outlit_search_customer_context.toolName,
+      params,
+      json,
+    )
   },
 })
