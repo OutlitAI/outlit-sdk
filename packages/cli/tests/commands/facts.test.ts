@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
-  TEST_API_KEY,
   expectErrorExit,
   mockExitThrow,
   setNonInteractive,
+  TEST_API_KEY,
   useTempEnv,
 } from "../helpers"
 
@@ -58,7 +58,7 @@ describe("facts", () => {
     let thrown: unknown
     try {
       await factsCmd.run!({
-        args: { customer: "acme.com", json: true },
+        args: { customer: "acme.com", timeframe: "30d", json: true },
       } as Parameters<NonNullable<typeof factsCmd.run>>[0])
     } catch (e) {
       thrown = e
@@ -69,6 +69,27 @@ describe("facts", () => {
       stderrSpy.mockRestore()
 
       expectErrorExit(thrown, stderrOutput, "auth_required")
+    }
+  })
+
+  test("invalid_input error when timeframe is unsupported", async () => {
+    const { default: factsCmd } = await import("../../src/commands/facts")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await factsCmd.run!({
+        args: { customer: "acme.com", timeframe: "foo", json: true },
+      } as Parameters<NonNullable<typeof factsCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
     }
   })
 })
