@@ -17,7 +17,6 @@ interface StageEvent {
 interface BillingEvent {
   type: "billing"
   status: string
-  domain?: string
   customerId?: string
   stripeCustomerId?: string
   path?: string
@@ -165,7 +164,10 @@ test.describe("Stage Methods", () => {
     await page.waitForFunction(() => window.outlit?._initialized)
 
     await page.evaluate(() => {
-      window.outlit.customer.paid({ domain: "outlit.ai", properties: { plan: "enterprise" } })
+      window.outlit.customer.paid({
+        customerId: "cust_paid",
+        properties: { plan: "enterprise" },
+      })
     })
 
     await page.evaluate(() => window.dispatchEvent(new Event("beforeunload")))
@@ -179,7 +181,8 @@ test.describe("Stage Methods", () => {
     expect(billingEvent).toBeDefined()
     expect(billingEvent?.type).toBe("billing")
     expect(billingEvent?.status).toBe("paid")
-    expect(billingEvent?.domain).toBe("outlit.ai")
+    expect(billingEvent?.customerId).toBe("cust_paid")
+    expect(billingEvent?.properties?.plan).toBe("enterprise")
   })
 
   test("trialing() sends billing event with customerId", async ({ page }) => {
@@ -189,7 +192,6 @@ test.describe("Stage Methods", () => {
 
     await page.evaluate(() => {
       window.outlit.customer.trialing({
-        domain: "test.outlit.ai",
         customerId: "cust_123",
         properties: { plan: "pro" },
       })
@@ -206,7 +208,6 @@ test.describe("Stage Methods", () => {
     expect(billingEvent).toBeDefined()
     expect(billingEvent?.type).toBe("billing")
     expect(billingEvent?.status).toBe("trialing")
-    expect(billingEvent?.domain).toBe("test.outlit.ai")
     expect(billingEvent?.customerId).toBe("cust_123")
     expect(billingEvent?.properties?.plan).toBe("pro")
   })
@@ -218,7 +219,6 @@ test.describe("Stage Methods", () => {
 
     await page.evaluate(() => {
       window.outlit.customer.churned({
-        domain: "test.outlit.ai",
         stripeCustomerId: "cus_stripe_abc",
         properties: { reason: "cancelled" },
       })
@@ -235,7 +235,6 @@ test.describe("Stage Methods", () => {
     expect(billingEvent).toBeDefined()
     expect(billingEvent?.type).toBe("billing")
     expect(billingEvent?.status).toBe("churned")
-    expect(billingEvent?.domain).toBe("test.outlit.ai")
     expect(billingEvent?.stripeCustomerId).toBe("cus_stripe_abc")
     expect(billingEvent?.properties?.reason).toBe("cancelled")
   })
