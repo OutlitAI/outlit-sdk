@@ -36,7 +36,6 @@ describe("Outlit", () => {
 
     outlit.track({
       customerId: "cust_123",
-      customerDomain: "acme.com",
       eventName: "account_synced",
     })
 
@@ -46,7 +45,7 @@ describe("Outlit", () => {
     expect(payload.source).toBe("server")
     const event = payload.events[0]!
     expect(event.customerId).toBe("cust_123")
-    expect(event.customerDomain).toBe("acme.com")
+    expect(event).not.toHaveProperty("customerDomain")
 
     await outlit.shutdown()
   })
@@ -58,7 +57,6 @@ describe("Outlit", () => {
       email: "user@example.com",
       userId: "usr_123",
       customerId: "cust_123",
-      customerDomain: "acme.com",
       customerTraits: {
         plan: "pro",
       },
@@ -73,7 +71,7 @@ describe("Outlit", () => {
     const event = payload.events[0]!
     expect(event.type).toBe("identify")
     expect(event.customerId).toBe("cust_123")
-    expect(event.customerDomain).toBe("acme.com")
+    expect(event).not.toHaveProperty("customerDomain")
     expect(event.customerTraits?.plan).toBe("pro")
 
     await outlit.shutdown()
@@ -101,12 +99,11 @@ describe("Outlit", () => {
     await outlit.shutdown()
   })
 
-  it("publishes billing events using customerDomain", async () => {
+  it("publishes billing events using customerId", async () => {
     const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
 
     outlit.customer.paid({
       customerId: "cust_123",
-      customerDomain: "acme.com",
       properties: { plan: "enterprise" },
     })
 
@@ -116,7 +113,7 @@ describe("Outlit", () => {
     const event = payload.events[0]!
     expect(event.type).toBe("billing")
     expect(event.customerId).toBe("cust_123")
-    expect(event.customerDomain).toBe("acme.com")
+    expect(event).not.toHaveProperty("customerDomain")
 
     await outlit.shutdown()
   })

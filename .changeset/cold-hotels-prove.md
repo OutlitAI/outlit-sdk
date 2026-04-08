@@ -1,7 +1,6 @@
----
-"@outlit/browser": patch
-"@outlit/core": patch
-"@outlit/node": patch
+"@outlit/browser": major
+"@outlit/core": major
+"@outlit/node": major
 ---
 
-Clarify how `customerId`-only tracking links to identify-time email resolution in the SDK docs and inline API documentation.
+Remove the public `customerDomain` tracking field from the SDK surface and make `customerId` plus identify-time email linking the only supported customer-attribution path.

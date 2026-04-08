@@ -136,12 +136,6 @@ describe("validateServerIdentity with fingerprint", () => {
     expect(() => validateServerIdentity(undefined, undefined, undefined, "cust_123")).not.toThrow()
   })
 
-  it("passes with customerDomain only (no user identity)", () => {
-    expect(() =>
-      validateServerIdentity(undefined, undefined, undefined, undefined, "acme.com"),
-    ).not.toThrow()
-  })
-
   it("throws with no identifiers", () => {
     expect(() => validateServerIdentity(undefined, undefined, undefined)).toThrow()
   })

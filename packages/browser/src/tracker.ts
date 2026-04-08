@@ -313,7 +313,6 @@ export class Outlit {
         email: options.email,
         userId: options.userId,
         customerId: options.customerId,
-        customerDomain: options.customerDomain,
         customerTraits: options.customerTraits,
         traits: options.traits,
       }
@@ -328,7 +327,6 @@ export class Outlit {
       email: options.email,
       userId: options.userId,
       customerId: options.customerId,
-      customerDomain: options.customerDomain,
       customerTraits: options.customerTraits,
       traits: options.traits,
     })
@@ -381,7 +379,6 @@ export class Outlit {
       userId: identity.userId,
       traits: identity.traits,
       customerId: identity.customerId,
-      customerDomain: identity.customerDomain,
       customerTraits: identity.customerTraits,
     })
     this.flushPendingStageEvents()
@@ -468,12 +465,7 @@ export class Outlit {
     }
 
     try {
-      validateCustomerIdentity(
-        options.customerId,
-        options.customerDomain,
-        options.domain,
-        options.stripeCustomerId,
-      )
+      validateCustomerIdentity(options.customerId, options.stripeCustomerId)
     } catch (error) {
       console.warn("[Outlit]", error instanceof Error ? error.message : error)
       return
@@ -484,9 +476,7 @@ export class Outlit {
       referrer: document.referrer,
       status,
       customerId: options.customerId,
-      customerDomain: options.customerDomain,
       stripeCustomerId: options.stripeCustomerId,
-      domain: options.domain,
       properties: options.properties,
     })
     this.enqueue(event)
@@ -658,15 +648,14 @@ export class Outlit {
       return undefined
     }
 
-    const { customerId, customerDomain } = this.currentUser
+    const { customerId } = this.currentUser
 
-    if (!customerId && !customerDomain) {
+    if (!customerId) {
       return undefined
     }
 
     return {
       ...(customerId && { customerId }),
-      ...(customerDomain && { customerDomain }),
     }
   }
 

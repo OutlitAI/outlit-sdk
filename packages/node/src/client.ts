@@ -35,7 +35,7 @@ export interface StageOptions extends ServerIdentity {
 
 /**
  * Options for billing status events.
- * Public billing calls should use customerId and/or customerDomain.
+ * Public billing calls should use customerId.
  */
 export interface BillingOptions extends CustomerIdentifier {
   properties?: Record<string, string | number | boolean | null>
@@ -154,7 +154,7 @@ export class Outlit {
   /**
    * Track a custom event.
    *
-   * Requires at least one of: `fingerprint`, `email`, `userId`, `customerId`, or `customerDomain`.
+   * Requires at least one of: `fingerprint`, `email`, `userId`, or `customerId`.
    *
    * - Use `fingerprint` for anonymous tracking (events linked later via identify)
    * - Use `email` or `userId` for user-scoped attribution
@@ -168,21 +168,11 @@ export class Outlit {
    */
   track(options: ServerTrackOptions): void {
     this.ensureNotShutdown()
-    validateServerIdentity(
-      options.fingerprint,
-      options.email,
-      options.userId,
-      options.customerId,
-      options.customerDomain,
-    )
+    validateServerIdentity(options.fingerprint, options.email, options.userId, options.customerId)
 
     const event = buildCustomEvent({
       url: `server://${
-        options.email ??
-        options.userId ??
-        options.customerDomain ??
-        options.customerId ??
-        options.fingerprint
+        options.email ?? options.userId ?? options.customerId ?? options.fingerprint
       }`,
       timestamp: options.timestamp,
       eventName: options.eventName,
@@ -190,7 +180,6 @@ export class Outlit {
       userId: options.userId,
       fingerprint: options.fingerprint,
       customerId: options.customerId,
-      customerDomain: options.customerDomain,
       properties: options.properties,
     })
 
@@ -235,7 +224,6 @@ export class Outlit {
       fingerprint: options.fingerprint,
       traits: options.traits,
       customerId: options.customerId,
-      customerDomain: options.customerDomain,
       customerTraits: options.customerTraits,
     })
 
@@ -284,20 +272,13 @@ export class Outlit {
 
   private sendBillingEvent(status: BillingStatus, options: BillingOptions): void {
     this.ensureNotShutdown()
-    validateCustomerIdentity(
-      options.customerId,
-      options.customerDomain,
-      options.domain,
-      options.stripeCustomerId,
-    )
+    validateCustomerIdentity(options.customerId, options.stripeCustomerId)
 
     const event = buildBillingEvent({
-      url: `server://${options.customerDomain ?? options.domain ?? options.customerId ?? options.stripeCustomerId}`,
+      url: `server://${options.customerId ?? options.stripeCustomerId}`,
       status,
       customerId: options.customerId,
-      customerDomain: options.customerDomain,
       stripeCustomerId: options.stripeCustomerId,
-      domain: options.domain,
       properties: options.properties,
     })
 

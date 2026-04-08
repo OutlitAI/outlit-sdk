@@ -175,25 +175,22 @@ export function deriveVisitorIdFromIdentity(email?: string, userId?: string): st
  * - email: User's email (definitive identity)
  * - userId: Your system-owned user/contact ID
  * - customerId: Your system-owned customer/account/workspace ID
- * - customerDomain: Public customer/account domain used for billing and attribution
  */
 export function validateServerIdentity(
   fingerprint?: string,
   email?: string,
   userId?: string,
   customerId?: string,
-  customerDomain?: string,
 ): void {
   const hasFingerprint = fingerprint && fingerprint.trim().length > 0
   const hasEmail = email && email.trim().length > 0
   const hasUserId = userId && userId.trim().length > 0
   const hasCustomerId = customerId && customerId.trim().length > 0
-  const hasCustomerDomain = customerDomain && customerDomain.trim().length > 0
 
-  if (!hasFingerprint && !hasEmail && !hasUserId && !hasCustomerId && !hasCustomerDomain) {
+  if (!hasFingerprint && !hasEmail && !hasUserId && !hasCustomerId) {
     throw new Error(
-      "Server SDK requires at least one of: fingerprint, email, userId, customerId, or customerDomain for track calls. " +
-        "Use fingerprint/email/userId for user-scoped tracking or customerId/customerDomain for customer-only tracking.",
+      "Server SDK requires at least one of: fingerprint, email, userId, or customerId for track calls. " +
+        "Use fingerprint/email/userId for user-scoped tracking or customerId for customer-only tracking.",
     )
   }
 }
@@ -201,21 +198,14 @@ export function validateServerIdentity(
 /**
  * Validate that at least one customer identifier is provided for billing calls.
  */
-export function validateCustomerIdentity(
-  customerId?: string,
-  customerDomain?: string,
-  domain?: string,
-  stripeCustomerId?: string,
-): void {
+export function validateCustomerIdentity(customerId?: string, stripeCustomerId?: string): void {
   const hasCustomerId = customerId && customerId.trim().length > 0
-  const hasCustomerDomain = customerDomain && customerDomain.trim().length > 0
-  const hasDomain = domain && domain.trim().length > 0
   const hasStripeCustomerId = stripeCustomerId && stripeCustomerId.trim().length > 0
 
-  if (!hasCustomerId && !hasCustomerDomain && !hasDomain && !hasStripeCustomerId) {
+  if (!hasCustomerId && !hasStripeCustomerId) {
     throw new Error(
-      "Billing methods require customerId or customerDomain. " +
-        "Use customerId for your system-owned account ID and customerDomain for the public account domain.",
+      "Billing methods require customerId or stripeCustomerId. " +
+        "Use customerId for your system-owned account ID.",
     )
   }
 }
