@@ -1,4 +1,4 @@
-import { describe, expect, mock, spyOn, test } from "bun:test"
+import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import { CLI_VERSION } from "../../src/lib/config"
 import { ExitError, mockExitThrow } from "../helpers"
 
@@ -11,6 +11,11 @@ mock.module("node:child_process", () => ({
 }))
 
 describe("upgrade command", () => {
+  beforeEach(() => {
+    mockSpawn.mockClear()
+    mockSpawnSync.mockClear()
+  })
+
   test("does not run the installer when the CLI is already current", async () => {
     process.env.npm_config_user_agent = "bun/1.3.9 npm/? node/v22.0.0 darwin x64"
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(

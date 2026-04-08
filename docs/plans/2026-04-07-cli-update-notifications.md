@@ -8,7 +8,7 @@
 
 **Tech Stack:** Bun, TypeScript, Bun test, citty, Node fs/path/os/process APIs
 
-### Task 1: Document and test update helper behavior
+## Task 1: Document and test update helper behavior
 
 **Files:**
 - Create: `packages/cli/tests/lib/update.test.ts`
@@ -46,7 +46,7 @@ Create `packages/cli/src/lib/update.ts` with:
 Run: `bun test packages/cli/tests/lib/update.test.ts`
 Expected: PASS.
 
-### Task 2: Add CLI-level notification behavior
+## Task 2: Add CLI-level notification behavior
 
 **Files:**
 - Modify: `packages/cli/src/cli.ts`
@@ -80,7 +80,7 @@ Update `src/cli.ts` to:
 Run: `bun test packages/cli/tests/commands/update-notifier.test.ts`
 Expected: PASS.
 
-### Task 3: Reuse the shared version helper in doctor
+## Task 3: Reuse the shared version helper in doctor
 
 **Files:**
 - Modify: `packages/cli/src/commands/doctor.ts`
@@ -108,7 +108,7 @@ Refactor `doctor.ts` to call the new shared registry helper and shared upgrade-c
 Run: `bun test packages/cli/tests/commands/doctor.test.ts`
 Expected: PASS.
 
-### Task 4: Run focused verification
+## Task 4: Run focused verification
 
 **Files:**
 - Test: `packages/cli/tests/lib/update.test.ts`
