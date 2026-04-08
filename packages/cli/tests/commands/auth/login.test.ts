@@ -1,11 +1,10 @@
 // mock.module() must appear before any import statements — Bun hoists it.
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
-  ExitError,
-  TEST_API_KEY,
   expectErrorExit,
   mockExitThrow,
   setNonInteractive,
+  TEST_API_KEY,
   useTempEnv,
 } from "../../helpers"
 
@@ -36,10 +35,17 @@ describe("auth login", () => {
   test("stores API key and writes success JSON when --key and --json are provided", async () => {
     const { default: loginCmd } = await import("../../../src/commands/auth/login")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+    )
 
-    await loginCmd.run!({
-      args: { key: TEST_API_KEY, json: true },
-    } as Parameters<NonNullable<typeof loginCmd.run>>[0])
+    try {
+      await loginCmd.run!({
+        args: { key: TEST_API_KEY, json: true },
+      } as Parameters<NonNullable<typeof loginCmd.run>>[0])
+    } finally {
+      fetchSpy.mockRestore()
+    }
 
     const written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
     const parsed = JSON.parse(written) as Record<string, unknown>
@@ -48,15 +54,35 @@ describe("auth login", () => {
     writeSpy.mockRestore()
   })
 
-  test("calls outlit_list_customers to validate the key", async () => {
+  test("calls the non-billable validate-api-key endpoint to validate the key", async () => {
     const { default: loginCmd } = await import("../../../src/commands/auth/login")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+    )
+    let fetchCalls: Array<unknown[]> = []
 
-    await loginCmd.run!({
-      args: { key: TEST_API_KEY, json: false },
-    } as Parameters<NonNullable<typeof loginCmd.run>>[0])
+    try {
+      await loginCmd.run!({
+        args: { key: TEST_API_KEY, json: false },
+      } as Parameters<NonNullable<typeof loginCmd.run>>[0])
+      fetchCalls = [...fetchSpy.mock.calls]
+    } finally {
+      fetchSpy.mockRestore()
+    }
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_customers", { limit: 1 })
+    expect(fetchCalls).toEqual([
+      [
+        "https://app.outlit.ai/api/internal/mcp/validate-api-key",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${TEST_API_KEY}`,
+          },
+        },
+      ],
+    ])
+    expect(mockCallTool).not.toHaveBeenCalled()
     writeSpy.mockRestore()
   })
 
