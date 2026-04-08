@@ -1,3 +1,4 @@
+---
 "@outlit/browser": major
 "@outlit/core": major
 "@outlit/node": major
