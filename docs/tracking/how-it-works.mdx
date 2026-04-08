@@ -1,13 +1,13 @@
 ---
 title: "How It Works"
-description: "How Outlit collects customer activity, resolves identities, builds the context graph, and makes it queryable"
+description: "How Outlit connects customer systems, resolves identities, structures customer context, and makes it queryable"
 ---
 
-Outlit builds a [customer context graph](/concepts/customer-context-graph) from every customer interaction — website visits, product usage, billing events, and more. Here's how data flows from collection to queryable context.
+Outlit builds a [customer context graph](/concepts/customer-context-graph) from every customer interaction — website visits, product usage, billing, support, conversations, and more. Here's how raw source data becomes structured customer context.
 
-## 1. Collect
+## 1. Connect
 
-Data enters the graph from multiple sources:
+Data enters Outlit from multiple sources:
 
 ```mermaid
 %%{init: {'theme': 'dark', 'flowchart': {'nodeSpacing': 40, 'rankSpacing': 50, 'curve': 'basis', 'padding': 15}}}%%
@@ -84,17 +84,17 @@ This happens without code when forms contain an email field (auto-identify). For
   For details on the anonymous phase — what's captured, how visitor IDs work, and company enrichment — see [Website Visitors](/concepts/website-visitors).
 </Info>
 
-## 3. Build the Graph
+## 3. Structure
 
-As data flows in and identities resolve, Outlit structures it into three layers:
+As data flows in and identities resolve, Outlit structures it into three layers your team and agents can query:
 
-### Entities and relationships
+### Customer profiles and relationships
 
 - **Visitors** — Anonymous browsing sessions, identified by visitor ID or device fingerprint
 - **Contacts** — Known people, identified by email and/or user ID
 - **Accounts** — Companies, identified by domain, with billing status from Stripe
 
-Visitors link to contacts via identity resolution. Contacts belong to accounts via email domain matching. All activity flows into a unified timeline per contact and account.
+Visitors link to contacts via identity resolution. Contacts belong to accounts via email domain matching. All activity flows into unified customer profiles and timelines per contact and account.
 
 ### Activity timeline
 
@@ -126,22 +126,22 @@ The Outlit browser SDK auto-detects **Discovered** (email known, no userId) and 
 
 ## 4. Query
 
-The complete graph is accessible through three interfaces:
+The structured customer context is accessible through three interfaces:
 
 ### CLI
 
 ```bash
-# List paying customers sorted by revenue
-outlit customers list --billing-status PAYING --sort mrr
+# List paying customers inactive for 30 days
+outlit customers list --billing-status PAYING --no-activity-in 30d
 
 # Get a customer profile with timeline
-outlit customers get acme.com --include users,revenue,timeline
+outlit customers get acme.com --include users,revenue,recentTimeline
 
 # Natural language search
 outlit search "customers who signed up from Google Ads last month"
 
 # SQL
-outlit sql "SELECT domain, mrr_cents FROM customers WHERE billing_status = 'PAYING'"
+outlit sql "SELECT domain, mrr_cents FROM customer_dimensions WHERE billing_status = 'PAYING'"
 ```
 
 ### AI Agents (MCP)
