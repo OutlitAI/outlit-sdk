@@ -49,7 +49,6 @@ describe("ServerTrackOptions", () => {
   it("accepts customer-only attribution", () => {
     const options: ServerTrackOptions = {
       customerId: "cust_123",
-      customerDomain: "acme.com",
       eventName: "account_synced",
     }
 
@@ -61,7 +60,6 @@ describe("ServerTrackOptions", () => {
       email: "user@example.com",
       userId: "usr_123",
       customerId: "cust_123",
-      customerDomain: "acme.com",
       eventName: "subscription_created",
     }
 
@@ -75,7 +73,6 @@ describe("ServerIdentifyOptions", () => {
       email: "user@example.com",
       userId: "usr_123",
       customerId: "cust_123",
-      customerDomain: "acme.com",
       customerTraits: {
         plan: "pro",
       },
@@ -94,7 +91,6 @@ describe("BrowserIdentifyOptions", () => {
       email: "user@example.com",
       userId: "usr_123",
       customerId: "cust_123",
-      customerDomain: "acme.com",
       customerTraits: {
         plan: "pro",
       },

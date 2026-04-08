@@ -78,7 +78,6 @@ export function buildIdentifyEvent(
     fingerprint?: string
     traits?: IdentifyTraits
     customerId?: string
-    customerDomain?: string
     customerTraits?: CustomerTraits
   },
 ): IdentifyEvent {
@@ -91,7 +90,6 @@ export function buildIdentifyEvent(
     fingerprint,
     traits,
     customerId,
-    customerDomain,
     customerTraits,
   } = params
   return {
@@ -105,7 +103,6 @@ export function buildIdentifyEvent(
     userId,
     fingerprint,
     customerId,
-    customerDomain,
     customerTraits,
     traits,
   }
@@ -122,7 +119,6 @@ export function buildCustomEvent(
     userId?: string
     fingerprint?: string
     customerId?: string
-    customerDomain?: string
   },
 ): CustomEvent {
   const {
@@ -135,7 +131,6 @@ export function buildCustomEvent(
     userId,
     fingerprint,
     customerId,
-    customerDomain,
   } = params
   return {
     type: "custom",
@@ -149,7 +144,6 @@ export function buildCustomEvent(
     userId,
     fingerprint,
     customerId,
-    customerDomain,
     properties,
   }
 }
@@ -257,23 +251,11 @@ export function buildBillingEvent(
   params: BaseEventParams & {
     status: BillingStatus
     customerId?: string
-    customerDomain?: string
     stripeCustomerId?: string
-    domain?: string
     properties?: Record<string, string | number | boolean | null>
   },
 ): BillingEvent {
-  const {
-    url,
-    referrer,
-    timestamp,
-    status,
-    customerId,
-    customerDomain,
-    stripeCustomerId,
-    domain,
-    properties,
-  } = params
+  const { url, referrer, timestamp, status, customerId, stripeCustomerId, properties } = params
   return {
     type: "billing",
     timestamp: timestamp ?? Date.now(),
@@ -283,8 +265,6 @@ export function buildBillingEvent(
     utm: extractUtmParams(url),
     status,
     customerId,
-    customerDomain: customerDomain ?? domain,
-    domain: domain ?? customerDomain,
     stripeCustomerId,
     properties,
   }
@@ -324,10 +304,9 @@ export function buildIngestPayload(
   const legacyCustomerIdentity =
     customerIdentity === undefined &&
     userIdentity &&
-    (userIdentity.customerId || userIdentity.customerDomain || userIdentity.customerTraits)
+    (userIdentity.customerId || userIdentity.customerTraits)
       ? {
           ...(userIdentity.customerId && { customerId: userIdentity.customerId }),
-          ...(userIdentity.customerDomain && { customerDomain: userIdentity.customerDomain }),
           ...(userIdentity.customerTraits && { customerTraits: userIdentity.customerTraits }),
         }
       : undefined
@@ -354,16 +333,11 @@ export function buildIngestPayload(
 
   if (
     resolvedCustomerIdentity &&
-    (resolvedCustomerIdentity.customerId ||
-      resolvedCustomerIdentity.customerDomain ||
-      resolvedCustomerIdentity.customerTraits)
+    (resolvedCustomerIdentity.customerId || resolvedCustomerIdentity.customerTraits)
   ) {
     payload.customerIdentity = {
       ...(resolvedCustomerIdentity.customerId && {
         customerId: resolvedCustomerIdentity.customerId,
-      }),
-      ...(resolvedCustomerIdentity.customerDomain && {
-        customerDomain: resolvedCustomerIdentity.customerDomain,
       }),
       ...(resolvedCustomerIdentity.customerTraits && {
         customerTraits: resolvedCustomerIdentity.customerTraits,

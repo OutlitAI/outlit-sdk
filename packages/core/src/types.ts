@@ -70,7 +70,7 @@ export interface BrowserIdentifyOptions extends CustomerAttribution {
 
 /**
  * Base server-side user identity.
- * Track calls may use customerId/customerDomain without these fields.
+ * Track calls may use customerId without these fields.
  * Identify calls still require email or userId at runtime.
  * `customerId`-only track calls are valid immediately, but they stay provisional
  * until the same customer/account/workspace later appears on identify() with
@@ -90,11 +90,6 @@ export interface ServerIdentity {
 export interface CustomerAttribution {
   /** Your system-owned customer/account/workspace ID. */
   customerId?: string
-  /**
-   * Optional canonical public customer/account domain.
-   * Most integrations should omit this and let Outlit resolve the customer from identify(email, customerId).
-   */
-  customerDomain?: string
 }
 
 // ============================================
@@ -130,17 +125,12 @@ export interface ServerIdentifyOptions extends ServerIdentity, CustomerAttributi
 
 /**
  * Customer identity for SDK billing methods.
- * Public billing calls should use `customerId` and/or `customerDomain`.
+ * Public billing calls should use `customerId`.
  */
 export interface CustomerIdentifier extends CustomerAttribution {
   /**
-   * @deprecated Use `customerDomain` instead.
-   * Legacy alias kept for backward compatibility.
-   */
-  domain?: string
-  /**
    * @deprecated Stripe customer identifier.
-   * Billing attribution should use `customerId` and/or `customerDomain` publicly.
+   * Billing attribution should use `customerId` publicly.
    */
   stripeCustomerId?: string
 }
@@ -176,7 +166,6 @@ export interface IdentifyEvent extends BaseEvent {
   userId?: string
   fingerprint?: string
   customerId?: string
-  customerDomain?: string
   customerTraits?: CustomerTraits
   traits?: IdentifyTraits
 }
@@ -188,7 +177,6 @@ export interface CustomEvent extends BaseEvent {
   userId?: string
   fingerprint?: string
   customerId?: string
-  customerDomain?: string
   properties?: Record<string, string | number | boolean | null>
 }
 
@@ -229,9 +217,6 @@ export interface BillingEvent extends BaseEvent {
   status: BillingStatus
   /** Optional customer identifiers */
   customerId?: string
-  customerDomain?: string
-  /** @deprecated Legacy alias for `customerDomain`. */
-  domain?: string
   stripeCustomerId?: string
   /** Optional properties for context */
   properties?: Record<string, string | number | boolean | null>
@@ -268,11 +253,6 @@ export interface PayloadUserIdentity {
    * Kept for one compatibility window while callers migrate.
    */
   customerId?: string
-  /**
-   * @deprecated Use payload-level `customerIdentity.customerDomain` instead.
-   * Kept for one compatibility window while callers migrate.
-   */
-  customerDomain?: string
   /**
    * @deprecated Use payload-level `customerIdentity.customerTraits` instead.
    * Kept for one compatibility window while callers migrate.

@@ -107,7 +107,6 @@ describe("payload identity", () => {
     outlit.identify({
       email: "user@example.com",
       customerId: "cust_123",
-      customerDomain: "acme.com",
       traits: { role: "admin" },
       customerTraits: { plan: "enterprise" },
     })
@@ -131,11 +130,9 @@ describe("payload identity", () => {
     })
     expect(payload.customerIdentity).toEqual({
       customerId: "cust_123",
-      customerDomain: "acme.com",
     })
     expect(payload.userIdentity).not.toHaveProperty("traits")
     expect(payload.userIdentity).not.toHaveProperty("customerId")
-    expect(payload.userIdentity).not.toHaveProperty("customerDomain")
     expect(payload.customerIdentity).not.toHaveProperty("customerTraits")
   })
 })
