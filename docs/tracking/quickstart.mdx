@@ -1,13 +1,23 @@
 ---
 title: "Quick Start"
-description: "Install the Outlit CLI, add tracking to your site, and query your first customer data in under 5 minutes"
+description: "Install the Outlit CLI, connect your first source, and query customer context in minutes"
 ---
 
 ## What is Outlit?
 
-Outlit is a customer context layer that unifies website visits, product usage, and billing events into a single queryable graph. You install it with the CLI, add a lightweight tracker to your site, and immediately start querying customer data from the terminal or through AI agents.
+Outlit is infrastructure for customer context. It connects website activity, product usage, billing, support, and conversation data, then structures it into customer profiles your team and agents can query from the CLI, MCP, or API.
 
 ## Step 1: Install the CLI
+
+Fastest path:
+
+```bash
+curl -fsSL https://outlit.ai/install.sh | bash
+```
+
+<Tip>
+  This installs the latest Outlit CLI release from GitHub. Prefer one of the options below if you want manual package management.
+</Tip>
 
 <Tabs>
   <Tab title="npm">
@@ -33,7 +43,7 @@ If you already have an account:
 outlit auth login
 ```
 
-New to Outlit? Sign up directly from the terminal:
+New to Outlit? Start signup from the terminal:
 
 ```bash
 outlit auth signup
@@ -43,9 +53,9 @@ outlit auth signup
   On macOS/Linux, the CLI stores your API key at `~/.config/outlit/credentials.json` with `0600` permissions. You can also pass a key directly with `--key` or set the `OUTLIT_API_KEY` environment variable.
 </Info>
 
-## Step 3: Connect a Data Source
+## Step 3: Connect Your First Source
 
-The browser SDK is the most common first integration — it captures website visits, form submissions, and engagement automatically. Choose your framework to get started:
+Most teams start with the browser SDK to capture website visits, form submissions, and engagement automatically. Choose your framework to get started:
 
 <CardGroup cols={3}>
   <Card title="Script Tag" icon="code" href="/tracking/browser/script">
@@ -77,7 +87,11 @@ The browser SDK is the most common first integration — it captures website vis
   </Card>
 </CardGroup>
 
-Connect external data sources like Stripe, PostHog, Slack, Gmail, and more from your [integrations dashboard](https://app.outlit.ai/integrations).
+Then connect external sources like Stripe, PostHog, Slack, Gmail, Fireflies.ai, Google Calendar, Supabase Auth, Clerk, and more from your [integrations dashboard](https://app.outlit.ai/integrations).
+
+<Info>
+  Outlit is infrastructure, not a CRM. It syncs your sources, resolves identities across them, structures the data into customer context, and gives you a query layer via CLI, MCP, and API.
+</Info>
 
 <Warning>
   Outlit uses cookies to track visitors across pages. If you need GDPR compliance, show a consent banner before loading the tracker. [See consent management →](/tracking/browser/script#consent-management)
@@ -91,18 +105,18 @@ Once the tracker is live and you have some traffic, use the CLI to explore:
 # List your customers
 outlit customers list
 
-# See a customer's full timeline
-outlit customers timeline acme.com
+# Get a full customer profile
+outlit customers get acme.com --include users,revenue,recentTimeline
 
 # Search with natural language
 outlit search "who signed up this week"
 
 # Run SQL directly
-outlit sql "SELECT domain, billing_status, mrr_cents FROM customers ORDER BY mrr_cents DESC LIMIT 10"
+outlit sql "SELECT domain, billing_status, mrr_cents FROM customer_dimensions ORDER BY mrr_cents DESC LIMIT 10"
 ```
 
 <Tip>
-  **Set up AI agents** to query customer context directly from Cursor, Claude Code, or VS Code:
+  **Set up supported AI agents** to query customer context directly from tools like Cursor, Claude Code, OpenClaw, Gemini, VS Code, and Claude Desktop:
 
   ```bash
   outlit setup --yes
@@ -123,6 +137,8 @@ Once the browser SDK is installed, Outlit captures without any additional code:
 | **Engagement time** | Active time on each page (not just tab-open time) |
 | **Attribution** | UTM parameters, referrer, and landing page on first visit |
 | **Company enrichment** | IP-based company identification for B2B visitor intelligence |
+
+Once you connect additional sources, Outlit merges those product, billing, support, and conversation signals into the same customer context.
 
 ## Next Steps
 

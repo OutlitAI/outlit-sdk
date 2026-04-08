@@ -1,11 +1,11 @@
 ---
 title: "Welcome to Outlit"
-description: "Outlit is the customer context layer that unifies every customer interaction into a structured, queryable graph — from anonymous website visit to paid subscription"
+description: "Outlit is infrastructure for customer context. It unifies product, billing, support, and conversation data into structured customer profiles your agents can query before they act"
 ---
 
-## The Customer Context Layer
+## Customer Context Infrastructure
 
-Outlit unifies every customer interaction — website visits, product usage, billing events — into a single [customer context graph](/concepts/customer-context-graph). Query the complete picture from the CLI, through AI agents, or via API.
+Outlit connects website activity, product usage, billing, support, and conversations into a single [customer context graph](/concepts/customer-context-graph). Under the hood, that graph powers structured customer profiles, timelines, and facts your team can query from the CLI, through AI agents, or via API.
 
 <Card
   title="Get Started"
@@ -13,23 +13,23 @@ Outlit unifies every customer interaction — website visits, product usage, bil
   href="/tracking/quickstart"
   horizontal
 >
-  Install the CLI and connect your first data source in under 5 minutes.
+  Install the CLI and connect your first source in minutes.
 </Card>
 
 ## How It Works
 
 <Steps>
-  <Step title="Collect">
-    Add the Outlit browser SDK to capture website visits, form submissions, and engagement. Connect Stripe for billing data and PostHog for product usage.
+  <Step title="Connect">
+    Add the Outlit browser or server SDK, then connect systems like Stripe, PostHog, Slack, Gmail, and more to bring your customer data into one place.
   </Step>
   <Step title="Resolve">
-    Identity resolution automatically links anonymous visitors to known contacts when they sign up, log in, or submit a form. The same person across devices merges into one profile.
+    Identity resolution automatically links anonymous visitors, known contacts, and accounts across forms, auth systems, emails, and devices.
   </Step>
-  <Step title="Build the Graph">
-    Outlit connects visitors, contacts, and accounts into a structured graph with journey stages, billing statuses, and unified activity timelines.
+  <Step title="Structure">
+    Raw events, conversations, and billing signals are normalized into customer profiles, timelines, facts, journey stages, and billing states.
   </Step>
   <Step title="Query">
-    Use the CLI, AI agents (via MCP), or the API to query your complete customer context — no dashboard required.
+    Use the CLI, AI agents (via MCP), or the API to query complete customer context wherever your team already works.
   </Step>
 </Steps>
 
@@ -37,16 +37,16 @@ Outlit unifies every customer interaction — website visits, product usage, bil
 
 <Columns cols={2}>
   <Card title="Unified Context" icon="circle-nodes">
-    One graph connecting website analytics, product usage, and billing — instead of siloed tools that each show a fragment.
+    One graph connecting product, billing, support, and conversation data — instead of siloed tools that each show a fragment.
   </Card>
   <Card title="Identity Resolution" icon="fingerprint">
     Automatically merge customer profiles across devices, emails, and auth providers into a single contact.
   </Card>
   <Card title="Agent-First" icon="robot">
-    Query customer data from the CLI or through AI agents via MCP — run SQL, search with natural language, and get full context without leaving your terminal.
+    Query structured customer context from the CLI or through AI agents via MCP — run SQL, search with natural language, and get full context without leaving your workflow.
   </Card>
   <Card title="Journey Intelligence" icon="sparkles">
-    Outlit tracks where each contact and account is in their lifecycle, from first visit through activation to churn risk.
+    Outlit turns raw events and conversations into timelines, facts, and lifecycle signals your agents can actually act on.
   </Card>
 </Columns>
 

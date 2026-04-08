@@ -1,11 +1,19 @@
 ---
 title: "CLI Overview"
-description: "Query customer data, run analytics, and configure AI agents from the terminal"
+description: "Access customer context from the terminal and configure AI agents with one CLI"
 ---
 
-The Outlit CLI gives you direct access to your customer intelligence data from the terminal. List customers, inspect activity timelines, run SQL queries, search with natural language, and configure AI agents — all without leaving your workflow.
+The Outlit CLI gives you direct access to structured customer context from the terminal. List customers, inspect activity timelines, search conversations and facts, run SQL queries, and configure AI agents — all without leaving your workflow.
 
 ## Installation
+
+Fastest path:
+
+```bash
+curl -fsSL https://outlit.ai/install.sh | bash
+```
+
+Alternative install methods:
 
 <Tabs>
   <Tab title="npm">
@@ -60,7 +68,7 @@ outlit --version
     outlit customers list --billing-status PAYING
 
     # Get a customer profile
-    outlit customers get acme.com --include users,revenue
+    outlit customers get acme.com --include users,revenue,recentTimeline
 
     # Search with natural language
     outlit search "pricing objections last quarter"
@@ -136,10 +144,6 @@ ok_ab...1234 (config)
 | [`search`](/cli/commands#search) | Natural language search across customer context |
 | [`sql`](/cli/commands#sql) | Run SQL queries against analytics tables |
 | [`schema`](/cli/commands#schema) | Discover database tables and columns |
-| [`integrations list`](/cli/integrations#integrations-list) | List available integrations and connection status |
-| [`integrations add`](/cli/integrations#integrations-add) | Connect a new integration (OAuth or API key) |
-| [`integrations remove`](/cli/integrations#integrations-remove) | Disconnect an integration and remove synced data |
-| [`integrations status`](/cli/integrations#integrations-status) | Show sync status for connected integrations |
 | [`setup`](/cli/ai-agents) | Configure AI agent MCP integrations |
 | [`doctor`](/cli/ai-agents#diagnostics) | Run environment diagnostics |
 | [`completions`](/cli/ai-agents#shell-completions) | Generate shell completion scripts |
