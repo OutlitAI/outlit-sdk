@@ -63,6 +63,7 @@ const setupSubcommandNames = new Set([
   "droid",
   "opencode",
   "pi",
+  "openclaw",
   "skills",
 ])
 
@@ -73,7 +74,7 @@ export default defineCommand({
       "Install the Outlit skill for coding agents.",
       "",
       "Without a subcommand, auto-detects supported coding agents and installs `outlit` for all of them.",
-      "Subcommands: claude-code, codex, gemini, droid, opencode, pi, skills",
+      "Subcommands: claude-code, codex, gemini, droid, opencode, pi, openclaw, skills",
     ].join("\n"),
   },
   args: {
@@ -90,6 +91,7 @@ export default defineCommand({
     droid: () => import("./droid").then((m) => m.default),
     opencode: () => import("./opencode").then((m) => m.default),
     pi: () => import("./pi").then((m) => m.default),
+    openclaw: () => import("./openclaw").then((m) => m.default),
     skills: () => import("./skills").then((m) => m.default),
   },
   async run({ args, rawArgs }) {

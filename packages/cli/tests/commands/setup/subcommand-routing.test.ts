@@ -137,4 +137,49 @@ describe("setup subcommand routing", () => {
       else process.env.XDG_CONFIG_HOME = originalXdg
     }
   })
+
+  test("setup openclaw via the parser does not fall through to auto-detect", async () => {
+    const originalHome = process.env.HOME
+    const originalXdg = process.env.XDG_CONFIG_HOME
+    process.env.HOME = "/test-home"
+    process.env.XDG_CONFIG_HOME = "/test-home/.config"
+
+    const stdoutSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const { default: setupCmd } = await import("../../../src/commands/setup/index")
+
+    try {
+      await runCommand(setupCmd, { rawArgs: ["openclaw", "--json"] })
+    } finally {
+      const calls = stdoutSpy.mock.calls.slice()
+      stdoutSpy.mockRestore()
+
+      const writes = jsonWrites(calls)
+      expect(writes).toHaveLength(1)
+      expect(writes[0]).toEqual({
+        success: true,
+        agent: "openclaw",
+        runner: "npx",
+      })
+
+      const npxCalls = mockExecFileSync.mock.calls.filter(([cmd]) => cmd === "npx")
+      expect(npxCalls).toHaveLength(1)
+      expect(npxCalls[0]?.[1]).toEqual([
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/OutlitAI/outlit-agent-skills",
+        "--skill",
+        "outlit",
+        "--agent",
+        "openclaw",
+        "-y",
+        "-g",
+      ])
+
+      if (originalHome === undefined) Reflect.deleteProperty(process.env, "HOME")
+      else process.env.HOME = originalHome
+      if (originalXdg === undefined) Reflect.deleteProperty(process.env, "XDG_CONFIG_HOME")
+      else process.env.XDG_CONFIG_HOME = originalXdg
+    }
+  })
 })

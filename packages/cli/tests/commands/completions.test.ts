@@ -33,7 +33,7 @@ describe("completions command", () => {
     expect(out).toContain('customers) COMPREPLY=($(compgen -W "list get timeline')
     expect(out).toContain("COMP_CWORD -eq 2")
     expect(out).toContain("signup login logout status whoami")
-    expect(out).toContain("claude-code codex gemini droid opencode pi skills --json --yes")
+    expect(out).toContain("claude-code codex gemini droid opencode pi openclaw skills --json --yes")
   })
 
   test("bash — flag completions for updated commands", async () => {
@@ -94,6 +94,7 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd setup' -l yes")
     expect(out).toContain("-n '__outlit_using_cmd setup claude-code' -l json")
     expect(out).toContain("-n '__outlit_using_cmd setup opencode' -l json")
+    expect(out).toContain("-n '__outlit_using_cmd setup openclaw' -l json")
     expect(out).not.toContain("-n '__outlit_using_cmd setup claude-code' -l api-key")
   })
 

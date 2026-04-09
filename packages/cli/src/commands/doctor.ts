@@ -226,7 +226,7 @@ const agentChecks: Record<AgentId, { name: string; missingDetail: string }> = {
   },
   openclaw: {
     name: "OpenClaw",
-    missingDetail: "Run `outlit setup skills` and choose OpenClaw",
+    missingDetail: "Run `outlit setup openclaw` to install the Outlit skill",
   },
 }
 

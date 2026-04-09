@@ -1,6 +1,6 @@
 ---
 title: "AI Agent Setup"
-description: "Install Outlit skills for Claude Code, Codex, Gemini CLI, Droid, OpenCode, Pi, and other coding agents"
+description: "Install Outlit skills for Claude Code, Codex, Gemini CLI, Droid, OpenCode, Pi, OpenClaw, and other coding agents"
 ---
 
 The `outlit setup` command installs the `outlit` skill for coding agents. It does not configure MCP clients.
@@ -17,7 +17,7 @@ If you want Cursor, VS Code, Claude, or another MCP client, use the direct [MCP 
 | Droid | `outlit setup droid` | Installs `outlit` for the `droid` skills target |
 | OpenCode | `outlit setup opencode` | Installs `outlit` for the `opencode` skills target |
 | Pi | `outlit setup pi` | Installs `outlit` for the `pi` skills target |
-| OpenClaw | `outlit setup skills` | Use the interactive installer and choose OpenClaw |
+| OpenClaw | `outlit setup openclaw` | Installs `outlit` for the `openclaw` skills target |
 | Manual / multi-agent | `outlit setup skills` | Launches the interactive Outlit skills installer |
 
 ## Auto-Setup
@@ -77,6 +77,12 @@ outlit setup opencode
 
 ```bash
 outlit setup pi
+```
+
+### OpenClaw
+
+```bash
+outlit setup openclaw
 ```
 
 ### Interactive Skills Installer

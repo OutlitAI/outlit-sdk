@@ -53,10 +53,10 @@ Combined with OpenClaw's built-in cron scheduler, you get **automated customer h
   </Step>
   <Step title="Install the Outlit skill">
     ```bash
-    clawhub install outlit
+    outlit setup openclaw
     ```
 
-    This installs the `outlit` skill from [ClawHub](https://clawhub.ai/leo-paz/outlit) into your OpenClaw skills directory. OpenClaw detects and loads it automatically, no restart needed.
+    This installs the `outlit` skill into the OpenClaw skills target through the shared `skills` installer. OpenClaw detects and loads it automatically.
 
     <Tip>
       OpenClaw needs your `OUTLIT_API_KEY` to authenticate. The recommended way to store it is through OpenClaw's [SecretRefs](https://docs.openclaw.ai/gateway/secrets). Run `openclaw secrets configure` to set it up securely without plaintext exposure. See the [CLI secrets guide](https://docs.openclaw.ai/cli/secrets) for more details.
