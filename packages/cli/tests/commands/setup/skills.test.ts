@@ -15,13 +15,12 @@ setNonInteractive()
 describe("setup skills", () => {
   beforeEach(() => {
     mockExecFileSync.mockClear()
-    // Default: npx available on PATH, skills add succeeds
     mockExecFileSync.mockImplementation(
       (_cmd: string, _args: string[], _opts?: unknown) => undefined,
     )
   })
 
-  test("detects npx and runs skills add with -y flag", async () => {
+  test("detects npx and runs interactive skills add for the Outlit repo", async () => {
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     const { default: skillsCmd } = await import("../../../src/commands/setup/skills")
 
@@ -33,7 +32,6 @@ describe("setup skills", () => {
       const calls = writeSpy.mock.calls.slice()
       writeSpy.mockRestore()
 
-      // First call is `which npx` for detection, second is the actual skills add
       expect(mockExecFileSync.mock.calls.length).toBe(2)
 
       const [detectionCmd, detectionArgs] = mockExecFileSync.mock.calls[0] as [string, string[]]
@@ -42,17 +40,13 @@ describe("setup skills", () => {
 
       const [runnerCmd, runnerArgs] = mockExecFileSync.mock.calls[1] as [string, string[]]
       expect(runnerCmd).toBe("npx")
-      expect(runnerArgs).toContain("-y")
-      expect(runnerArgs).toContain("skills")
-      expect(runnerArgs).toContain("add")
-      expect(runnerArgs).toContain("https://github.com/OutlitAI/outlit-agent-skills")
-      // Verify --skill flag pairing
-      const cliIdx = runnerArgs.indexOf("outlit-cli")
-      const sdkIdx = runnerArgs.indexOf("outlit-sdk")
-      expect(cliIdx).toBeGreaterThan(-1)
-      expect(sdkIdx).toBeGreaterThan(-1)
-      expect(runnerArgs[cliIdx - 1]).toBe("--skill")
-      expect(runnerArgs[sdkIdx - 1]).toBe("--skill")
+      expect(runnerArgs).toEqual([
+        "-y",
+        "skills",
+        "add",
+        "https://github.com/OutlitAI/outlit-agent-skills",
+        "-g",
+      ])
 
       const written = (calls[0]?.[0] as string) ?? ""
       const result = JSON.parse(written) as Record<string, unknown>
@@ -62,9 +56,8 @@ describe("setup skills", () => {
     }
   })
 
-  test("falls back to bunx when npx not available", async () => {
+  test("falls back to bunx when npx is not available", async () => {
     mockExecFileSync.mockImplementation((cmd: string, args: string[], _opts?: unknown) => {
-      // `which npx` fails, `which bunx` succeeds
       if (cmd === "which" && args[0] === "npx") {
         throw Object.assign(new Error("not found"), { code: "ENOENT" })
       }
@@ -82,15 +75,16 @@ describe("setup skills", () => {
       const calls = writeSpy.mock.calls.slice()
       writeSpy.mockRestore()
 
-      // which npx (fail) + which bunx (pass) + bunx skills add
       expect(mockExecFileSync.mock.calls.length).toBe(3)
 
       const [runnerCmd, runnerArgs] = mockExecFileSync.mock.calls[2] as [string, string[]]
       expect(runnerCmd).toBe("bunx")
-      // bunx does not get npx's -y prefix, but skills' -y flag is still present
-      expect(runnerArgs[0]).not.toBe("-y")
-      expect(runnerArgs).toContain("skills")
-      expect(runnerArgs).toContain("add")
+      expect(runnerArgs).toEqual([
+        "skills",
+        "add",
+        "https://github.com/OutlitAI/outlit-agent-skills",
+        "-g",
+      ])
 
       const written = (calls[0]?.[0] as string) ?? ""
       const result = JSON.parse(written) as Record<string, unknown>
@@ -131,9 +125,7 @@ describe("setup skills", () => {
     let callCount = 0
     mockExecFileSync.mockImplementation((_cmd: string, _args: string[], _opts?: unknown) => {
       callCount++
-      // First call: which npx succeeds
       if (callCount === 1) return undefined
-      // Second call: npx skills add fails
       throw new Error("skills add failed: network error")
     })
 
@@ -164,7 +156,6 @@ describe("setup skills", () => {
 
   test("no auth required — command has no authArgs", async () => {
     const { default: skillsCmd } = await import("../../../src/commands/setup/skills")
-    // The command should NOT have api-key in its args definition
     expect(skillsCmd.args).toBeDefined()
     const argKeys = Object.keys(skillsCmd.args!)
     expect(argKeys).not.toContain("api-key")

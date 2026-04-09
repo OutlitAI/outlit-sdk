@@ -116,13 +116,13 @@ outlit sql "SELECT domain, billing_status, mrr_cents FROM customer_dimensions OR
 ```
 
 <Tip>
-  **Set up supported AI agents** to query customer context directly from tools like Cursor, Claude Code, OpenClaw, Gemini, VS Code, and Claude Desktop:
+  **Set up coding agents** to query customer context directly from Claude Code, Codex, or Gemini CLI:
 
   ```bash
   outlit setup --yes
   ```
 
-  This auto-detects installed agents and configures MCP access. See [AI Agent Setup →](/cli/ai-agents)
+  This auto-detects installed coding agents and installs the `outlit` skill. For MCP clients, use the direct [MCP Integration →](/ai-integrations/mcp) guide.
 </Tip>
 
 ## What happens automatically?

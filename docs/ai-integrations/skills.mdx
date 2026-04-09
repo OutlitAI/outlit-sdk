@@ -1,24 +1,34 @@
 ---
 title: "Agent Skills"
-description: "Give AI agents deeper context for Outlit SDK integration and customer data queries"
+description: "Give coding agents better guidance for customer queries and Outlit SDK work"
 ---
 
-Agent skills teach AI agents how to work with Outlit — best practices, decision frameworks, and integration patterns. The [MCP server](/ai-integrations/mcp) gives agents _tools_; skills give them _knowledge_ about how to use those tools well.
+Agent skills teach coding agents how to work with Outlit. The `outlit` skill covers customer intelligence workflows. The optional `outlit-sdk` skill covers tracking and instrumentation work.
 
 Skills are open source at [github.com/OutlitAI/outlit-agent-skills](https://github.com/OutlitAI/outlit-agent-skills).
 
 ## Install
 
+Launch the interactive installer:
+
 ```bash
 outlit setup skills
 ```
 
-Auto-detects your package runner and installs `outlit-cli` and `outlit-sdk` skills. No API key required. Also runs automatically as part of `outlit setup`.
+This opens `skills add` against the Outlit skills repo and lets you choose:
+- `outlit`
+- `outlit-sdk`
 
-Or install manually:
+You can also install directly with `skills`:
 
 ```bash
-npx -y skills add https://github.com/OutlitAI/outlit-agent-skills --skill outlit-cli --skill outlit-sdk -y -g
+npx -y skills add https://github.com/OutlitAI/outlit-agent-skills -g
+```
+
+For a targeted install, pass the agent and skill explicitly:
+
+```bash
+npx -y skills add https://github.com/OutlitAI/outlit-agent-skills --skill outlit --agent claude-code --agent opencode -y -g
 ```
 
 ## Verify
@@ -27,22 +37,40 @@ npx -y skills add https://github.com/OutlitAI/outlit-agent-skills --skill outlit
 outlit doctor
 ```
 
-```
-  ✓ Agent Skills: Outlit agent skills installed
+Look for a per-agent check such as:
+
+```text
+✓ Claude Code: Outlit skill installed
 ```
 
 ## Available Skills
 
 | Skill | What it teaches |
 |-------|-----------------|
-| **outlit-cli** | CLI commands, AI agent setup, customer queries from the terminal |
-| **outlit-sdk** | SDK integration for any framework — detection, consent, auth, billing, events |
-| **outlit-mcp** | MCP tool usage, SQL patterns, analysis workflows, common pitfalls |
+| **outlit** | Customer queries, timelines, search, facts, SQL, and when to use CLI vs MCP |
+| **outlit-sdk** | Tracking integration work: detection, consent, auth, billing, and event instrumentation |
 
 ## Recommended Setup
 
-`outlit setup` configures MCP and installs skills in one command:
+For coding agents you already use locally:
 
 ```bash
 outlit setup --yes
+```
+
+Popular agent aliases:
+
+```bash
+outlit setup claude-code
+outlit setup codex
+outlit setup gemini
+outlit setup droid
+outlit setup opencode
+outlit setup pi
+```
+
+For manual selection or optional `outlit-sdk` installation:
+
+```bash
+outlit setup skills
 ```

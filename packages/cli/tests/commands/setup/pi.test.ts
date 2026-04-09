@@ -12,7 +12,7 @@ import { ExitError, mockExitThrow, setNonInteractive } from "../../helpers"
 
 setNonInteractive()
 
-describe("setup claude-code", () => {
+describe("setup pi", () => {
   beforeEach(() => {
     mockExecFileSync.mockClear()
     mockExecFileSync.mockImplementation(
@@ -20,14 +20,14 @@ describe("setup claude-code", () => {
     )
   })
 
-  test("installs the outlit skill for Claude Code", async () => {
+  test("installs the outlit skill for Pi", async () => {
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    const { default: claudeCodeCmd } = await import("../../../src/commands/setup/claude-code")
+    const { default: piCmd } = await import("../../../src/commands/setup/pi")
 
     try {
-      await claudeCodeCmd.run!({
+      await piCmd.run!({
         args: { json: true },
-      } as Parameters<NonNullable<typeof claudeCodeCmd.run>>[0])
+      } as Parameters<NonNullable<typeof piCmd.run>>[0])
     } finally {
       const calls = writeSpy.mock.calls.slice()
       writeSpy.mockRestore()
@@ -44,7 +44,7 @@ describe("setup claude-code", () => {
         "--skill",
         "outlit",
         "--agent",
-        "claude-code",
+        "pi",
         "-y",
         "-g",
       ])
@@ -52,7 +52,7 @@ describe("setup claude-code", () => {
       const written = (calls[0]?.[0] as string) ?? ""
       const result = JSON.parse(written) as Record<string, unknown>
       expect(result.success).toBe(true)
-      expect(result.agent).toBe("claude-code")
+      expect(result.agent).toBe("pi")
       expect(result.runner).toBe("npx")
     }
   })
@@ -64,14 +64,14 @@ describe("setup claude-code", () => {
 
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-    const { default: claudeCodeCmd } = await import("../../../src/commands/setup/claude-code")
+    const { default: piCmd } = await import("../../../src/commands/setup/pi")
 
     let thrown: unknown
     let stderrWritten = ""
     try {
-      await claudeCodeCmd.run!({
+      await piCmd.run!({
         args: { json: true },
-      } as Parameters<NonNullable<typeof claudeCodeCmd.run>>[0])
+      } as Parameters<NonNullable<typeof piCmd.run>>[0])
     } catch (e) {
       thrown = e
       stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
@@ -84,12 +84,5 @@ describe("setup claude-code", () => {
     expect((thrown as ExitError).code).toBe(1)
     const parsed = JSON.parse(stderrWritten) as Record<string, string>
     expect(parsed.code).toBe("runner_not_found")
-  })
-
-  test("no auth required — command has no authArgs", async () => {
-    const { default: claudeCodeCmd } = await import("../../../src/commands/setup/claude-code")
-    expect(claudeCodeCmd.args).toBeDefined()
-    const argKeys = Object.keys(claudeCodeCmd.args!)
-    expect(argKeys).not.toContain("api-key")
   })
 })

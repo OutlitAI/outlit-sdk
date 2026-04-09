@@ -1,99 +1,65 @@
 ---
 title: "MCP Integration"
-description: "Connect AI agents like Claude and Cursor to Outlit to query customer data, revenue metrics, and activity timelines using the Model Context Protocol"
+description: "Connect remote MCP clients to Outlit with your workspace URL and OAuth"
 ---
 
 ## What is the Outlit MCP Server?
 
-Outlit's MCP server lets AI agents query your customer data directly through the [Model Context Protocol](https://modelcontextprotocol.io) (MCP), an open standard for connecting AI tools to external data sources. Supported agents include Claude Code, Claude Desktop, Cursor, and any MCP-compatible client.
+Outlit's MCP server lets MCP-compatible clients query customer data, revenue metrics, timelines, facts, search results, and SQL analytics over a remote MCP connection.
 
-Once connected, your AI agent can search customers, pull revenue metrics, inspect activity timelines, search customer context using natural language, and run SQL analytics — all from within your conversation.
+The Outlit CLI is not required for MCP setup. Use the workspace MCP URL directly in your MCP client.
 
-## Install Agent Skills
+## Authentication Model
 
-For the best experience, install [Outlit agent skills](/ai-integrations/skills) to give your AI agent deeper context about query patterns, SDK integration, and best practices:
+Outlit's remote MCP endpoint uses OAuth-based authentication. In practice that means:
+- you add the workspace MCP URL to your client
+- you do not paste API keys or bearer headers into config files
+- the client opens an OAuth sign-in flow and stores the resulting session
 
-```bash
-outlit setup skills
-```
-
-Skills are also installed automatically when running `outlit setup`. See [Agent Skills](/ai-integrations/skills) for details.
-
-## How to Connect Your AI Tool
+## Connect Your MCP Client
 
 <Steps>
-  <Step title="Get your API key">
-    Go to [Settings > MCP Integration](https://app.outlit.ai/workspace-profile/mcp) in the Outlit dashboard. Click **Generate API Key**, give it a descriptive name, and copy it immediately — it won't be shown again.
+  <Step title="Copy your workspace MCP URL">
+    Open Outlit Settings and copy the workspace-specific MCP URL for the workspace you want to connect.
+
+    It looks like:
+
+    ```text
+    https://mcp.outlit.ai/w/<workspace-slug>/mcp
+    ```
   </Step>
-  <Step title="Connect your AI tool">
-    <Tip>
-      If your account belongs to multiple Outlit workspaces, use your workspace-specific MCP URL instead of the shared route:
-      `https://mcp.outlit.ai/w/&lt;workspace-slug&gt;/mcp`
-    </Tip>
+  <Step title="Add the URL to your MCP client">
+    Use your client's remote MCP / connector / server settings and add the Outlit URL directly.
 
-    <Tabs>
-      <Tab title="Claude Code">
-        ```bash
-        claude mcp add --transport http outlit https://mcp.outlit.ai/mcp --header "Authorization: Bearer YOUR_API_KEY"
-        ```
-      </Tab>
-      <Tab title="Codex">
-        ```bash
-        codex mcp add outlit -- npx -y mcp-remote@latest https://mcp.outlit.ai/mcp --header "Authorization: Bearer YOUR_API_KEY"
-        ```
-      </Tab>
-      <Tab title="Claude Desktop">
-        Add to your config file (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+    For clients that accept raw JSON config, the shape is typically:
 
-        ```json
-        {
-          "mcpServers": {
-            "outlit": {
-              "url": "https://mcp.outlit.ai/mcp",
-              "headers": {
-                "Authorization": "Bearer YOUR_API_KEY"
-              }
-            }
-          }
+    ```json
+    {
+      "mcpServers": {
+        "outlit": {
+          "url": "https://mcp.outlit.ai/w/<workspace-slug>/mcp"
         }
-        ```
+      }
+    }
+    ```
 
-        Restart Claude Desktop after saving.
-      </Tab>
-      <Tab title="Cursor">
-        Add to `.cursor/mcp.json` in your project root:
-
-        ```json
-        {
-          "mcpServers": {
-            "outlit": {
-              "url": "https://mcp.outlit.ai/mcp",
-              "headers": {
-                "Authorization": "Bearer YOUR_API_KEY"
-              }
-            }
-          }
-        }
-        ```
-      </Tab>
-    </Tabs>
-
-    Replace `YOUR_API_KEY` with the key from Step 1.
+    No `Authorization` header is needed.
+  </Step>
+  <Step title="Complete OAuth in the client">
+    After you add the server, your client should prompt you to sign in to Outlit and authorize access for that workspace.
   </Step>
   <Step title="Verify the connection">
-    Ask your AI tool:
+    Ask your client:
 
-    ```
+    ```text
     Show me the available Outlit analytics tables.
     ```
-
-    You should see a list of available analytics tables. If you get an authentication error, double-check your API key.
   </Step>
 </Steps>
 
-<Warning>
-  Treat your MCP API key like a password. It grants read access to your customer data. You can revoke keys at any time from the [MCP Integration settings](https://app.outlit.ai/workspace-profile/mcp).
-</Warning>
+<Tip>
+  Use [Agent Skills](/ai-integrations/skills) for coding agents like Claude Code, Codex, and Gemini CLI. Use MCP when your primary surface is an MCP client such as Cursor, VS Code, or another remote-MCP connector.
+</Tip>
 
 ## What Tools Are Available?
 

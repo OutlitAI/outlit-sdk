@@ -144,15 +144,17 @@ outlit search "customers who signed up from Google Ads last month"
 outlit sql "SELECT domain, mrr_cents FROM customer_dimensions WHERE billing_status = 'PAYING'"
 ```
 
-### AI Agents (MCP)
+### AI Agents
 
-Configure your AI agent to query customer context directly:
+For coding agents, install the `outlit` skill directly:
 
 ```bash
 outlit setup --yes
 ```
 
-Then in Cursor, Claude Code, or VS Code, your AI agent can ask questions about customers, get timelines, search context, and run SQL — all powered by the same graph.
+Then in Claude Code, Codex, or Gemini CLI, your agent can ask questions about customers, get timelines, search context, and run SQL from the same graph.
+
+For MCP clients, use the workspace MCP URL from [MCP Integration](/ai-integrations/mcp).
 
 ### REST API
 
