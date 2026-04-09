@@ -56,6 +56,16 @@ const agentLabels: Record<AgentId, { label: string; hint: string }> = {
   openclaw: { label: "OpenClaw", hint: "OpenClaw config found" },
 }
 
+const setupSubcommandNames = new Set([
+  "claude-code",
+  "codex",
+  "gemini",
+  "droid",
+  "opencode",
+  "pi",
+  "skills",
+])
+
 export default defineCommand({
   meta: {
     name: "setup",
@@ -82,7 +92,15 @@ export default defineCommand({
     pi: () => import("./pi").then((m) => m.default),
     skills: () => import("./skills").then((m) => m.default),
   },
-  async run({ args }) {
+  async run({ args, rawArgs }) {
+    // citty executes the parent run() even when a subcommand matched.
+    // Bail out so `outlit setup gemini` does not also trigger auto-detect.
+    const setupRawArgs = rawArgs ?? []
+    const subcommandName = setupRawArgs.find((arg) => !arg.startsWith("-"))
+    if (subcommandName && setupSubcommandNames.has(subcommandName)) {
+      return
+    }
+
     const json = !!args.json
     const detected = detectAgents()
 
