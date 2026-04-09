@@ -83,6 +83,7 @@ describe("facts commands", () => {
       stderrSpy.mockRestore()
 
       expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
     }
   })
 
@@ -109,6 +110,7 @@ describe("facts commands", () => {
 
       expectErrorExit(thrown, stderrOutput, "invalid_input")
       expect(stderrOutput).toContain("--after must be a valid ISO 8601 datetime")
+      expect(mockCallTool).not.toHaveBeenCalled()
     }
   })
 
