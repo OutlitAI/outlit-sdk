@@ -126,6 +126,49 @@ describe("client.callTool()", () => {
     fetchSpy.mockRestore()
   })
 
+  test("routes exact fact retrieval to /facts/get", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ fact: { id: "fact_123" } }), { status: 200 }),
+    )
+
+    const client = await createClient()
+    await client.callTool("outlit_get_fact", {
+      factId: "fact_123",
+      include: ["evidence"],
+    })
+
+    const calledUrl = fetchSpy.mock.calls[0]?.[0] as string
+    expect(calledUrl).toContain("/api/internal/mcp/facts/get")
+
+    const opts = fetchSpy.mock.calls[0]?.[1] as RequestInit
+    const body = JSON.parse(opts.body as string) as Record<string, unknown>
+    expect(body.factId).toBe("fact_123")
+    expect(body.include).toEqual(["evidence"])
+
+    fetchSpy.mockRestore()
+  })
+
+  test("routes exact source retrieval to /context-source", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ source: { sourceType: "CALL" } }), { status: 200 }),
+    )
+
+    const client = await createClient()
+    await client.callTool("outlit_get_source", {
+      sourceType: "CALL",
+      sourceId: "call_123",
+    })
+
+    const calledUrl = fetchSpy.mock.calls[0]?.[0] as string
+    expect(calledUrl).toContain("/api/internal/mcp/context-source")
+
+    fetchSpy.mockRestore()
+  })
+
   test("includes Authorization header with Bearer token", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
@@ -199,6 +242,27 @@ describe("client.callTool()", () => {
     expect(calledUrl).toContain(
       encodeURIComponent('{"segment":"enterprise","active":true,"seats":25}'),
     )
+
+    fetchSpy.mockRestore()
+  })
+
+  test("search always routes to /context-search", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ items: [] }), { status: 200 }),
+    )
+
+    const client = await createClient()
+    await client.callTool("outlit_search_customer_context", {
+      query: "pricing",
+      sourceType: "CALL",
+      sourceId: "call_123",
+    })
+
+    const calledUrl = fetchSpy.mock.calls[0]?.[0] as string
+    expect(calledUrl).toContain("/api/internal/mcp/context-search")
+    expect(calledUrl).not.toContain("/api/internal/mcp/context-source")
 
     fetchSpy.mockRestore()
   })

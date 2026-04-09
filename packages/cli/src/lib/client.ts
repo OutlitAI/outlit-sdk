@@ -1,4 +1,3 @@
-import { customerToolContracts } from "../generated/tool-contracts"
 import { DEFAULT_API_URL, OUTLIT_DASHBOARD_URL, resolveApiKey } from "./config"
 
 export interface OutlitClient {
@@ -25,7 +24,9 @@ const TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string }> =
   outlit_get_customer: { method: "POST", path: "/api/internal/mcp/customers" },
   outlit_list_users: { method: "GET", path: "/api/internal/mcp/users" },
   outlit_get_timeline: { method: "POST", path: "/api/internal/mcp/timeline" },
-  outlit_get_facts: { method: "POST", path: "/api/internal/mcp/facts" },
+  outlit_list_facts: { method: "POST", path: "/api/internal/mcp/facts" },
+  outlit_get_fact: { method: "POST", path: "/api/internal/mcp/facts/get" },
+  outlit_get_source: { method: "POST", path: "/api/internal/mcp/context-source" },
   outlit_schema: { method: "GET", path: "/api/internal/mcp/sql-schema" },
   outlit_query: { method: "POST", path: "/api/internal/mcp/sql" },
   outlit_search_customer_context: { method: "POST", path: "/api/internal/mcp/context-search" },
@@ -40,10 +41,6 @@ const TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string }> =
     method: "GET",
     path: "/api/internal/mcp/integrations/sync-status",
   },
-}
-
-function isExactContextSourceLookup(params: Record<string, unknown>): boolean {
-  return typeof params.sourceType === "string" && typeof params.sourceId === "string"
 }
 
 /**
@@ -96,11 +93,7 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
     key: credential.key,
     baseUrl,
     async callTool(toolName: string, params: Record<string, unknown>) {
-      const endpoint =
-        toolName === customerToolContracts.outlit_search_customer_context.toolName &&
-        isExactContextSourceLookup(params)
-          ? { method: "POST" as const, path: "/api/internal/mcp/context-source" }
-          : TOOL_ENDPOINTS[toolName]
+      const endpoint = TOOL_ENDPOINTS[toolName]
       if (!endpoint) {
         throw new Error(`Unknown tool: ${toolName}`)
       }

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
+  captureStdout,
   expectErrorExit,
   mockExitThrow,
   setNonInteractive,
@@ -22,74 +23,85 @@ mock.module("../../src/lib/client", () => ({
 
 setNonInteractive()
 
-describe("facts", () => {
+describe("facts commands", () => {
   useTempEnv("facts-test")
 
   beforeEach(() => {
     mockCallTool.mockClear()
   })
 
-  test("sends customer and timeframe", async () => {
-    const { default: factsCmd } = await import("../../src/commands/facts")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await factsCmd.run!({
-        args: { customer: "acme.com", timeframe: "30d", json: true },
-      } as Parameters<NonNullable<typeof factsCmd.run>>[0])
+  test("list sends customer filters to outlit_list_facts", async () => {
+    const { default: factsListCmd } = await import("../../src/commands/facts/list")
 
-      expect(mockCallTool).toHaveBeenCalledWith(
-        "outlit_get_facts",
-        expect.objectContaining({ customer: "acme.com", timeframe: "30d" }),
-      )
-    } finally {
-      writeSpy.mockRestore()
-    }
-  })
-
-  test("auth_required error — createClient throws → outputError called", async () => {
-    const clientModule = await import("../../src/lib/client")
-    const createClientSpy = spyOn(clientModule, "createClient").mockRejectedValue(
-      new Error("No API key found. Run `outlit auth login` or set OUTLIT_API_KEY."),
+    await captureStdout(() =>
+      factsListCmd.run!({
+        args: {
+          customer: "acme.com",
+          status: "ACTIVE",
+          "source-types": "CALL,EMAIL",
+          after: "2025-01-01T00:00:00Z",
+          before: "2025-03-31T23:59:59Z",
+          limit: "50",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof factsListCmd.run>>[0]),
     )
-    const { default: factsCmd } = await import("../../src/commands/facts")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
 
-    let thrown: unknown
-    try {
-      await factsCmd.run!({
-        args: { customer: "acme.com", timeframe: "30d", json: true },
-      } as Parameters<NonNullable<typeof factsCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-    } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
-      createClientSpy.mockRestore()
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-
-      expectErrorExit(thrown, stderrOutput, "auth_required")
-    }
+    expect(mockCallTool).toHaveBeenCalledWith(
+      "outlit_list_facts",
+      expect.objectContaining({
+        customer: "acme.com",
+        status: ["ACTIVE"],
+        sourceTypes: ["CALL", "EMAIL"],
+        after: "2025-01-01T00:00:00Z",
+        before: "2025-03-31T23:59:59Z",
+        limit: 50,
+      }),
+    )
   })
 
-  test("invalid_input error when timeframe is unsupported", async () => {
-    const { default: factsCmd } = await import("../../src/commands/facts")
+  test("list rejects invalid date range", async () => {
+    const { default: factsListCmd } = await import("../../src/commands/facts/list")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
 
     let thrown: unknown
     try {
-      await factsCmd.run!({
-        args: { customer: "acme.com", timeframe: "foo", json: true },
-      } as Parameters<NonNullable<typeof factsCmd.run>>[0])
-    } catch (e) {
-      thrown = e
+      await factsListCmd.run!({
+        args: {
+          customer: "acme.com",
+          after: "2025-04-01T00:00:00Z",
+          before: "2025-03-01T23:59:59Z",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof factsListCmd.run>>[0])
+    } catch (error) {
+      thrown = error
     } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      const stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
       exitSpy.mockRestore()
       stderrSpy.mockRestore()
 
       expectErrorExit(thrown, stderrOutput, "invalid_input")
     }
+  })
+
+  test("get sends fact id and include list to outlit_get_fact", async () => {
+    const { default: factsGetCmd } = await import("../../src/commands/facts/get")
+
+    await captureStdout(() =>
+      factsGetCmd.run!({
+        args: {
+          "fact-id": "fact_123",
+          include: "evidence,ignored",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof factsGetCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_fact", {
+      factId: "fact_123",
+      include: ["evidence", "ignored"],
+    })
   })
 })

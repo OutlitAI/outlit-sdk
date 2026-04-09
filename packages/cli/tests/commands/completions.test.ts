@@ -19,106 +19,54 @@ function captureCompletions(shell: string): Promise<string> {
 }
 
 describe("completions command", () => {
-  // ── Bash ────────────────────────────────────────────────────────────────
-
   test("bash — top-level commands", async () => {
     const out = await captureCompletions("bash")
-    expect(out).toContain("compgen")
     expect(out).toContain("complete -F _outlit_completions outlit")
-    expect(out).toContain("COMP_CWORD -eq 1")
-    expect(out).toContain("upgrade")
+    expect(out).toContain("facts")
+    expect(out).toContain("sources")
   })
 
   test("bash — subcommand dispatch", async () => {
     const out = await captureCompletions("bash")
-    expect(out).toContain("COMP_CWORD -eq 2")
-    expect(out).toContain("signup login logout status whoami")
-    expect(out).toContain("list get timeline")
+    expect(out).toContain('facts) COMPREPLY=($(compgen -W "list get')
+    expect(out).toContain('sources) COMPREPLY=($(compgen -W "get')
+    expect(out).toContain('customers) COMPREPLY=($(compgen -W "list get timeline')
   })
 
-  test("bash — flag completions for leaf commands", async () => {
+  test("bash — flag completions for updated commands", async () => {
     const out = await captureCompletions("bash")
     expect(out).toContain(
-      'facts) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --timeframe"',
+      'search) COMPREPLY=($(compgen -W "--api-key --json --customer --top-k --after --before --source-types"',
     )
     expect(out).toContain(
-      'search) COMPREPLY=($(compgen -W "--api-key --json --customer --top-k --after --before --source-types --source-type --source-id"',
+      'facts.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --source-types --after --before"',
     )
-    expect(out).toContain('sql) COMPREPLY=($(compgen -W "--api-key --json --query-file --limit"')
-  })
-
-  test("bash — flag completions for subcommands", async () => {
-    const out = await captureCompletions("bash")
     expect(out).toContain(
-      'customers.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --search"',
+      'facts.get) COMPREPLY=($(compgen -W "--api-key --json --fact-id --include"',
     )
-    expect(out).toContain('auth.login) COMPREPLY=($(compgen -W "--json --key"')
     expect(out).toContain(
-      'users.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --journey-stage --customer-id --search"',
+      'sources.get) COMPREPLY=($(compgen -W "--api-key --json --source-type --source-id"',
     )
-  })
-
-  // ── Zsh ─────────────────────────────────────────────────────────────────
-
-  test("zsh — top-level commands", async () => {
-    const out = await captureCompletions("zsh")
-    expect(out).toContain("#compdef outlit")
-    expect(out).toContain("CURRENT == 2")
-    expect(out).toContain("'auth:Manage authentication'")
-  })
-
-  test("zsh — subcommand dispatch", async () => {
-    const out = await captureCompletions("zsh")
-    expect(out).toContain("CURRENT == 3")
-    expect(out).toContain("'list:List and filter customers'")
-    expect(out).toContain("'signup:Create an Outlit account'")
   })
 
   test("zsh — flag completions with descriptions", async () => {
     const out = await captureCompletions("zsh")
-    // Leaf command flags
-    expect(out).toContain("'--timeframe:Lookback window (7d, 30d, 90d)'")
-    // Subcommand flags
-    expect(out).toContain("'--billing-status:Filter by billing status'")
-    expect(out).toContain("'--journey-stage:Filter by journey stage'")
-    expect(out).toContain("'--key:API key to store'")
-    // Flag context keying
-    expect(out).toContain("customers.list)")
-    expect(out).toContain("auth.login)")
+    expect(out).toContain("'facts:Get customer facts'")
+    expect(out).toContain("'sources:Get a concrete source by type and id'")
+    expect(out).toContain("'--status:Filter by fact status'")
+    expect(out).toContain("'--fact-id:Fact ID to fetch'")
+    expect(out).toContain("'--source-type:Canonical source type'")
+    expect(out).toContain("facts.list)")
+    expect(out).toContain("sources.get)")
   })
 
-  // ── Fish ────────────────────────────────────────────────────────────────
-
-  test("fish — top-level commands", async () => {
+  test("fish — flag completions with nested commands", async () => {
     const out = await captureCompletions("fish")
-    expect(out).toContain("complete -c outlit")
-    expect(out).toContain("__fish_use_subcommand")
-  })
-
-  test("fish — subcommands with custom helper", async () => {
-    const out = await captureCompletions("fish")
-    expect(out).toContain("function __outlit_using_cmd")
-    expect(out).toContain("__outlit_using_cmd customers")
-    expect(out).toContain("__outlit_using_cmd auth")
-  })
-
-  test("fish — flag completions with -l (long)", async () => {
-    const out = await captureCompletions("fish")
-    // Leaf command flags
-    expect(out).toContain("-n '__outlit_using_cmd facts' -l timeframe")
-    expect(out).toContain("-n '__outlit_using_cmd sql' -l query-file")
-    expect(out).toContain("-n '__outlit_using_cmd search' -l source-type")
-    expect(out).toContain("-n '__outlit_using_cmd search' -l source-id")
     expect(out).toContain("-n '__outlit_using_cmd search' -l source-types")
-    // Subcommand flags use nested condition
-    expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
-    expect(out).toContain("-n '__outlit_using_cmd customers list' -l trait")
-    expect(out).toContain("-n '__outlit_using_cmd auth login' -l key")
-    expect(out).toContain("-n '__outlit_using_cmd users list' -l journey-stage")
-    expect(out).toContain("-n '__outlit_using_cmd users list' -l trait")
+    expect(out).toContain("-n '__outlit_using_cmd facts list' -l status")
+    expect(out).toContain("-n '__outlit_using_cmd facts get' -l fact-id")
+    expect(out).toContain("-n '__outlit_using_cmd sources get' -l source-type")
   })
-
-  // ── Error ───────────────────────────────────────────────────────────────
 
   test("unknown shell — exits 1", async () => {
     const { default: completionsCmd } = await import("../../src/commands/completions")

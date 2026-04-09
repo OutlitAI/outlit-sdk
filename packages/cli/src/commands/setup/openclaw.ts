@@ -3,7 +3,7 @@ import { join } from "node:path"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { outputArgs } from "../../args/output"
-import { TICK, maskKey, requireCredential, writeConfigFile } from "../../lib/config"
+import { maskKey, requireCredential, TICK, writeConfigFile } from "../../lib/config"
 import { isJsonMode, outputResult } from "../../lib/output"
 
 export function getSkillDir(): string {
@@ -55,7 +55,11 @@ Set the env var before running any command:
 
 ## Get facts about a customer
 
-    outlit facts acme.com --timeframe 90d
+    outlit facts list acme.com --source-types CALL --limit 20
+
+## Get an exact source
+
+    outlit sources get --source-type CALL --source-id call_123
 
 ## Run custom SQL
 

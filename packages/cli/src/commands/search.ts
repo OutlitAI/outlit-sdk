@@ -2,29 +2,29 @@ import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
 import {
+  customerSourceTypes,
   customerToolContracts,
-  resolveCustomerContextSearchRequest,
+  resolveCustomerContextSearchInput,
 } from "../generated/tool-contracts"
 import { getClientOrExit, runTool } from "../lib/api"
+import { splitCsv } from "../lib/config"
 import { outputError } from "../lib/output"
 
 export default defineCommand({
   meta: {
     name: "search",
     description: [
-      "Search customer context using natural language or direct source lookup.",
+      "Search customer context using natural language.",
       "",
-      "Performs a semantic search over customer facts, emails, and transcripts.",
+      "Performs a semantic search over grouped source and fact results.",
       "Optionally scope to a specific customer with --customer.",
-      "Use --source-type and --source-id for direct source lookup (query becomes optional).",
       "",
       "Examples:",
       "  outlit search 'pricing objections last quarter'",
       "  outlit search 'churn risk signals' --customer acme.com",
       "  outlit search 'expansion opportunities' --top-k 50 --json",
-      "  outlit search 'support escalations' --after 2025-01-01 --before 2025-03-31",
-      "  outlit search 'onboarding issues' --source-types call_transcript,email",
-      "  outlit search --source-type call_transcript --source-id call_123",
+      "  outlit search 'support escalations' --after 2025-01-01T00:00:00Z --before 2025-03-31T23:59:59Z",
+      "  outlit search 'onboarding issues' --source-types CALL,EMAIL",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -34,9 +34,8 @@ export default defineCommand({
     ...outputArgs,
     query: {
       type: "positional",
-      description:
-        "Natural language search query. Optional when --source-type and --source-id are provided.",
-      required: false,
+      description: "Natural language search query",
+      required: true,
     },
     customer: {
       type: "string",
@@ -48,23 +47,17 @@ export default defineCommand({
     },
     after: {
       type: "string",
-      description: "Filter to events occurring after this date (ISO 8601, e.g. 2025-01-01)",
+      description:
+        "Filter to events occurring after this datetime (ISO 8601, e.g. 2025-01-01T00:00:00Z)",
     },
     before: {
       type: "string",
-      description: "Filter to events occurring before this date (ISO 8601, e.g. 2025-03-31)",
+      description:
+        "Filter to events occurring before this datetime (ISO 8601, e.g. 2025-03-31T23:59:59Z)",
     },
     "source-types": {
       type: "string",
-      description: "Comma-separated broad source type filter",
-    },
-    "source-type": {
-      type: "string",
-      description: "Exact source type for direct lookup (must pair with --source-id)",
-    },
-    "source-id": {
-      type: "string",
-      description: "Exact source ID for direct lookup (must pair with --source-type)",
+      description: `Comma-separated generic source type filter (${customerSourceTypes.join(", ")})`,
     },
   },
   async run({ args }) {
@@ -83,22 +76,31 @@ export default defineCommand({
     }
 
     const sourceTypes = args["source-types"]
+      ? splitCsv(args["source-types"])
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : undefined
 
-    const parseCsv = (value: string) =>
-      value
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean)
+    const invalidSourceTypes = sourceTypes?.filter(
+      (value) => !customerSourceTypes.includes(value as (typeof customerSourceTypes)[number]),
+    )
+    if (invalidSourceTypes && invalidSourceTypes.length > 0) {
+      return outputError(
+        {
+          message: `Unknown source types: ${invalidSourceTypes.join(", ")}. Allowed: ${customerSourceTypes.join(", ")}`,
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
 
-    const resolved = resolveCustomerContextSearchRequest({
+    const resolved = resolveCustomerContextSearchInput({
       query: args.query,
       customer: args.customer,
       topK,
-      occurredAfter: args.after,
-      occurredBefore: args.before,
-      sourceTypes: sourceTypes ? parseCsv(sourceTypes) : undefined,
-      sourceType: args["source-type"],
-      sourceId: args["source-id"],
+      after: args.after,
+      before: args.before,
+      sourceTypes,
     })
 
     if (!resolved.ok) {
@@ -113,15 +115,10 @@ export default defineCommand({
 
     const client = await getClientOrExit(args["api-key"], json)
 
-    const params: Record<string, unknown> =
-      resolved.request.kind === "exact_lookup"
-        ? resolved.request.exactLookup
-        : resolved.request.search
-
     return runTool(
       client,
       customerToolContracts.outlit_search_customer_context.toolName,
-      params,
+      resolved.request,
       json,
     )
   },

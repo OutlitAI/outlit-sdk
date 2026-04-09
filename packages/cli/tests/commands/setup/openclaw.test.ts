@@ -12,6 +12,7 @@ mock.module("node:fs", () => ({
 }))
 
 import type { CredentialResult } from "../../../src/lib/config"
+
 const mockResolveApiKey = mock((_flag?: string): CredentialResult | null => ({
   key: TEST_API_KEY,
   source: "env",
@@ -24,7 +25,7 @@ mock.module("../../../src/lib/config", () => ({
 import { beforeEach, describe, expect, spyOn, test } from "bun:test"
 import { homedir } from "node:os"
 import { join } from "node:path"
-import { ExitError, TEST_API_KEY, mockExitThrow, setNonInteractive } from "../../helpers"
+import { ExitError, mockExitThrow, setNonInteractive, TEST_API_KEY } from "../../helpers"
 
 setNonInteractive()
 
@@ -112,7 +113,8 @@ describe("setup openclaw", () => {
 
       // All CLI commands that the skill documents must be present
       expect(writtenContent).toContain("outlit customers list")
-      expect(writtenContent).toContain("outlit facts")
+      expect(writtenContent).toContain("outlit facts list")
+      expect(writtenContent).toContain("outlit sources get")
       expect(writtenContent).toContain("outlit sql")
 
       // The env var reference must appear so OpenClaw knows how to authenticate
