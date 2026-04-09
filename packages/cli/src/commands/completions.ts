@@ -105,7 +105,43 @@ const COMMANDS: readonly CmdDef[] = [
   {
     name: "facts",
     desc: "Get customer facts",
-    flags: [...PAGINATED, { name: "--timeframe", desc: "Lookback window (7d, 30d, 90d)" }],
+    subs: [
+      {
+        name: "list",
+        desc: "List customer facts",
+        flags: [
+          ...PAGINATED,
+          { name: "--status", desc: "Filter by fact status" },
+          { name: "--source-types", desc: "Filter by source types" },
+          { name: "--after", desc: "Facts after date (ISO 8601)" },
+          { name: "--before", desc: "Facts before date (ISO 8601)" },
+        ],
+      },
+      {
+        name: "get",
+        desc: "Get a single fact by ID",
+        flags: [
+          ...COMMON,
+          { name: "--fact-id", desc: "Fact ID to fetch" },
+          { name: "--include", desc: "Best-effort expansions" },
+        ],
+      },
+    ],
+  },
+  {
+    name: "sources",
+    desc: "Get a concrete source by type and id",
+    subs: [
+      {
+        name: "get",
+        desc: "Get one exact source record",
+        flags: [
+          ...COMMON,
+          { name: "--source-type", desc: "Canonical source type" },
+          { name: "--source-id", desc: "Exact source ID" },
+        ],
+      },
+    ],
   },
   {
     name: "search",
@@ -117,8 +153,6 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "--after", desc: "Events after date (ISO 8601)" },
       { name: "--before", desc: "Events before date (ISO 8601)" },
       { name: "--source-types", desc: "Broad source type filter" },
-      { name: "--source-type", desc: "Exact source type for direct lookup" },
-      { name: "--source-id", desc: "Exact source ID for direct lookup" },
     ],
   },
   {

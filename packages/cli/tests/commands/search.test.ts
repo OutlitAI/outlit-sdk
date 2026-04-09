@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
+  captureStdout,
   expectErrorExit,
   mockExitThrow,
   setNonInteractive,
@@ -29,47 +30,31 @@ describe("search", () => {
     mockCallTool.mockClear()
   })
 
-  test("sends query and topK", async () => {
+  test("sends query, topK, dates, and sourceTypes", async () => {
     const { default: searchCmd } = await import("../../src/commands/search")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await searchCmd.run!({
-        args: { query: "pricing objections", "top-k": "10", json: true },
-      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
 
-      expect(mockCallTool).toHaveBeenCalledWith(
-        "outlit_search_customer_context",
-        expect.objectContaining({ query: "pricing objections", topK: 10 }),
-      )
-    } finally {
-      writeSpy.mockRestore()
-    }
-  })
-
-  test("--after→occurredAfter, --before→occurredBefore", async () => {
-    const { default: searchCmd } = await import("../../src/commands/search")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await searchCmd.run!({
+    await captureStdout(() =>
+      searchCmd.run!({
         args: {
-          query: "churn signals",
-          after: "2025-01-01",
-          before: "2025-03-31",
-          "top-k": "20",
+          query: "pricing objections",
+          customer: "acme.com",
+          "top-k": "10",
+          after: "2025-01-01T00:00:00Z",
+          before: "2025-03-31T23:59:59Z",
+          "source-types": "CALL,EMAIL",
           json: true,
         },
-      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
+      } as Parameters<NonNullable<typeof searchCmd.run>>[0]),
+    )
 
-      expect(mockCallTool).toHaveBeenCalledWith(
-        "outlit_search_customer_context",
-        expect.objectContaining({
-          occurredAfter: "2025-01-01",
-          occurredBefore: "2025-03-31",
-        }),
-      )
-    } finally {
-      writeSpy.mockRestore()
-    }
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_search_customer_context", {
+      query: "pricing objections",
+      customer: "acme.com",
+      topK: 10,
+      after: "2025-01-01T00:00:00Z",
+      before: "2025-03-31T23:59:59Z",
+      sourceTypes: ["CALL", "EMAIL"],
+    })
   })
 
   test("error when --top-k exceeds 50", async () => {
@@ -82,10 +67,10 @@ describe("search", () => {
       await searchCmd.run!({
         args: { query: "test", "top-k": "100", json: true },
       } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-    } catch (e) {
-      thrown = e
+    } catch (error) {
+      thrown = error
     } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      const stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
       exitSpy.mockRestore()
       stderrSpy.mockRestore()
 
@@ -93,80 +78,7 @@ describe("search", () => {
     }
   })
 
-  test("error when --top-k is 0", async () => {
-    const { default: searchCmd } = await import("../../src/commands/search")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    try {
-      await searchCmd.run!({
-        args: { query: "test", "top-k": "0", json: true },
-      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-    } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-
-      expectErrorExit(thrown, stderrOutput, "invalid_input")
-    }
-  })
-
-  test("--source-types splits into array", async () => {
-    const { default: searchCmd } = await import("../../src/commands/search")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await searchCmd.run!({
-        args: {
-          query: "onboarding",
-          "source-types": "call_transcript,email",
-          "top-k": "20",
-          json: true,
-        },
-      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-
-      expect(mockCallTool).toHaveBeenCalledWith(
-        "outlit_search_customer_context",
-        expect.objectContaining({
-          query: "onboarding",
-          sourceTypes: ["call_transcript", "email"],
-        }),
-      )
-    } finally {
-      writeSpy.mockRestore()
-    }
-  })
-
-  test("--source-type + --source-id direct lookup without query", async () => {
-    const { default: searchCmd } = await import("../../src/commands/search")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await searchCmd.run!({
-        args: {
-          "source-type": "call_transcript",
-          "source-id": "call_123",
-          json: true,
-        },
-      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-
-      expect(mockCallTool).toHaveBeenCalledWith(
-        "outlit_search_customer_context",
-        expect.objectContaining({
-          sourceType: "call_transcript",
-          sourceId: "call_123",
-        }),
-      )
-      // query should not be in params
-      const callParams = mockCallTool.mock.calls[0]![1] as Record<string, unknown>
-      expect(callParams.query).toBeUndefined()
-    } finally {
-      writeSpy.mockRestore()
-    }
-  })
-
-  test("error when neither query nor --source-type/--source-id", async () => {
+  test("error when query is missing", async () => {
     const { default: searchCmd } = await import("../../src/commands/search")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -176,10 +88,10 @@ describe("search", () => {
       await searchCmd.run!({
         args: { "top-k": "20", json: true },
       } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-    } catch (e) {
-      thrown = e
+    } catch (error) {
+      thrown = error
     } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      const stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
       exitSpy.mockRestore()
       stderrSpy.mockRestore()
 
@@ -187,49 +99,7 @@ describe("search", () => {
     }
   })
 
-  test("error when --source-type without --source-id", async () => {
-    const { default: searchCmd } = await import("../../src/commands/search")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    try {
-      await searchCmd.run!({
-        args: { "source-type": "call_transcript", "top-k": "20", json: true },
-      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-    } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-
-      expectErrorExit(thrown, stderrOutput, "invalid_input")
-    }
-  })
-
-  test("error when --source-id without --source-type", async () => {
-    const { default: searchCmd } = await import("../../src/commands/search")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    try {
-      await searchCmd.run!({
-        args: { "source-id": "call_123", "top-k": "20", json: true },
-      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-    } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-
-      expectErrorExit(thrown, stderrOutput, "invalid_input")
-    }
-  })
-
-  test("error when --source-types combined with --source-type/--source-id", async () => {
+  test("error when date range is inverted", async () => {
     const { default: searchCmd } = await import("../../src/commands/search")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -238,122 +108,16 @@ describe("search", () => {
     try {
       await searchCmd.run!({
         args: {
-          query: "test",
-          "source-types": "email",
-          "source-type": "call_transcript",
-          "source-id": "call_123",
-          "top-k": "20",
+          query: "pricing",
+          after: "2025-04-01T00:00:00Z",
+          before: "2025-03-01T23:59:59Z",
           json: true,
         },
       } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-    } catch (e) {
-      thrown = e
+    } catch (error) {
+      thrown = error
     } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-
-      expectErrorExit(thrown, stderrOutput, "invalid_input")
-    }
-  })
-
-  test("error when --customer is combined with --source-type/--source-id", async () => {
-    const { default: searchCmd } = await import("../../src/commands/search")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    try {
-      await searchCmd.run!({
-        args: {
-          customer: "acme.com",
-          "source-type": "call_transcript",
-          "source-id": "call_123",
-          json: true,
-        },
-      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-    } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-
-      expectErrorExit(thrown, stderrOutput, "invalid_input")
-    }
-  })
-
-  test("error when --top-k is combined with --source-type/--source-id", async () => {
-    const { default: searchCmd } = await import("../../src/commands/search")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    try {
-      await searchCmd.run!({
-        args: {
-          "source-type": "call_transcript",
-          "source-id": "call_123",
-          "top-k": "20",
-          json: true,
-        },
-      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-    } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-
-      expectErrorExit(thrown, stderrOutput, "invalid_input")
-    }
-  })
-
-  test("error when --top-k is not an integer", async () => {
-    const { default: searchCmd } = await import("../../src/commands/search")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    try {
-      await searchCmd.run!({
-        args: {
-          query: "pricing objections",
-          "top-k": "1.5",
-          json: true,
-        },
-      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-    } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-
-      expectErrorExit(thrown, stderrOutput, "invalid_input")
-    }
-  })
-
-  test("error when --after/--before are combined with --source-type/--source-id", async () => {
-    const { default: searchCmd } = await import("../../src/commands/search")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    try {
-      await searchCmd.run!({
-        args: {
-          "source-type": "call_transcript",
-          "source-id": "call_123",
-          after: "2025-01-01",
-          before: "2025-03-31",
-          json: true,
-        },
-      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-    } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      const stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
       exitSpy.mockRestore()
       stderrSpy.mockRestore()
 
@@ -373,48 +137,17 @@ describe("search", () => {
     let thrown: unknown
     try {
       await searchCmd.run!({
-        args: { query: "test query", "top-k": "20", json: true },
+        args: { query: "pricing", json: true },
       } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-    } catch (e) {
-      thrown = e
+    } catch (error) {
+      thrown = error
     } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      const stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
       createClientSpy.mockRestore()
       exitSpy.mockRestore()
       stderrSpy.mockRestore()
 
       expectErrorExit(thrown, stderrOutput, "auth_required")
-    }
-  })
-
-  test("validates input before auth when exact lookup params conflict", async () => {
-    const clientModule = await import("../../src/lib/client")
-    const createClientSpy = spyOn(clientModule, "createClient").mockRejectedValue(
-      new Error("No API key found. Run `outlit auth login` or set OUTLIT_API_KEY."),
-    )
-    const { default: searchCmd } = await import("../../src/commands/search")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-
-    let thrown: unknown
-    try {
-      await searchCmd.run!({
-        args: {
-          customer: "acme.com",
-          "source-type": "call_transcript",
-          "source-id": "call_123",
-          json: true,
-        },
-      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-    } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
-      createClientSpy.mockRestore()
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-
-      expectErrorExit(thrown, stderrOutput, "invalid_input")
     }
   })
 })

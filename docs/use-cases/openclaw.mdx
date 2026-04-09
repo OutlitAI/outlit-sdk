@@ -90,7 +90,8 @@ Once the skill is installed, OpenClaw learns how to use the full `outlit` CLI. Y
 | "What's been happening with Acme on Slack?" | `outlit customers timeline acme.com --channels SLACK --limit 50` |
 | "Find at-risk users at Acme Corp" | `outlit users list --customer-id YOUR_CUSTOMER_ID --journey-stage AT_RISK` |
 | "Search for pricing concerns across all customers" | `outlit search "pricing concerns"` |
-| "What do we know about acme.com recently?" | `outlit facts acme.com --timeframe 30d` |
+| "What do we know about acme.com recently?" | `outlit facts list acme.com --status ACTIVE --limit 20` |
+| "Open the exact call behind that search result" | `outlit sources get --source-type CALL --source-id call_123` |
 | "Which event types fire most often?" | `outlit sql "SELECT event_type, COUNT(*) FROM events GROUP BY 1 ORDER BY 2 DESC LIMIT 10"` |
 | "Show me the database schema" | `outlit schema` |
 

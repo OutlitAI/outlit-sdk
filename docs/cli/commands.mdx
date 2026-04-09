@@ -305,50 +305,78 @@ outlit users list --search "alice" --order-by last_activity_at
 Retrieve AI-generated facts, signals, and insights for a customer.
 
 ```bash
-outlit facts <customer> [flags]
+outlit facts list <customer> [flags]
+outlit facts get --fact-id <id> [flags]
 ```
 
-### Arguments
+### `facts list` Arguments
 
 | Argument | Required | Description |
 |----------|----------|-------------|
 | `customer` | Yes | Customer domain or UUID |
 
-### Flags
+### `facts list` Flags
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--timeframe` | string | `30d` | Lookback window: `7d`, `14d`, `30d`, `90d` |
+| `--status` | string | — | Comma-separated fact status filter: `ACTIVE`, `ACKNOWLEDGED`, `RESOLVED`, `SNOOZED`, `CANDIDATE` |
+| `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET` |
+| `--after` | string | — | Lower bound on fact occurrence time (ISO 8601 datetime) |
+| `--before` | string | — | Upper bound on fact occurrence time (ISO 8601 datetime) |
 | `--limit` | number | `20` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor |
+
+### `facts get` Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--fact-id` | string | — | Exact fact identifier |
+| `--include` | string | — | Comma-separated best-effort expansions. `evidence` requests evidence details when available |
 
 ### Examples
 
 ```bash
-# Facts from last 30 days
-outlit facts acme.com
+# All facts for a customer
+outlit facts list acme.com
 
-# Extended lookback
-outlit facts acme.com --timeframe 90d --limit 50
+# Filter by status and source type
+outlit facts list acme.com --status ACTIVE --source-types CALL,EMAIL --after 2025-01-01T00:00:00Z
 
 # Pipe for processing
-outlit facts acme.com --json | jq '.items[] | select(.severity == "HIGH")'
+outlit facts list acme.com --json | jq '.facts[] | select(.severity == "HIGH")'
+
+# Fetch one exact fact with best-effort evidence expansion
+outlit facts get --fact-id fact_123 --include evidence
 ```
 
 ### JSON Response
 
 ```json
 {
-  "items": [
+  "customer": {
+    "id": "cust_123",
+    "name": "Acme",
+    "domain": "acme.com"
+  },
+  "facts": [
     {
       "id": "fact-uuid",
-      "customerId": "customer-uuid",
-      "type": "SIGNAL",
-      "title": "Budget concerns raised",
+      "assertion": "Budget concerns raised",
+      "factType": "SIGNAL",
+      "factCategory": "COMMERCIAL",
+      "status": "ACTIVE",
+      "confidence": 0.92,
       "severity": "HIGH",
-      "generatedAt": "2025-02-10T15:30:00Z",
+      "occurredAt": "2025-02-10T14:00:00Z",
+      "detectedAt": "2025-02-10T15:30:00Z",
+      "linkedSourceRef": {
+        "sourceType": "CALL",
+        "sourceId": "call_123",
+        "occurredAt": "2025-02-10T14:00:00Z",
+        "permalink": "https://app.outlit.ai/calls/call_123"
+      },
       "sourceMetadata": {
-        "sourceType": "call_transcript",
+        "sourceType": "CALL",
         "sourceId": "call_123",
         "sourceOccurredAt": "2025-02-10T14:00:00Z",
         "sourceQuote": "Budget is blocked until next quarter.",
@@ -358,29 +386,28 @@ outlit facts acme.com --json | jq '.items[] | select(.severity == "HIGH")'
   ],
   "pagination": {
     "hasMore": false,
-    "nextCursor": null,
-    "total": 12
+    "nextCursor": null
   }
 }
 ```
 
 <Note>
-  The `sourceMetadata` object provides provenance for each fact. All fields are nullable — `null` indicates the source information is unavailable.
+  `facts get` returns the same canonical fact shape as `facts list`. Passing `--include evidence` requests a best-effort evidence expansion; unsupported include values are ignored.
 </Note>
 
 ## Search
 
-Semantic search across customer context — facts, emails, transcripts, and signals. Supports natural language queries, direct source lookups, and document type filtering.
+Semantic search across customer context. Results are grouped at the artifact level, so matching sources and facts are returned directly instead of raw chunks.
 
 ```bash
-outlit search [query] [flags]
+outlit search <query> [flags]
 ```
 
 ### Arguments
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `query` | No* | Natural language search query. *Required unless `--source-type` and `--source-id` are both provided |
+| `query` | Yes | Natural language search query |
 
 ### Flags
 
@@ -388,18 +415,9 @@ outlit search [query] [flags]
 |------|------|---------|-------------|
 | `--customer` | string | — | Scope to a specific customer (domain or UUID) |
 | `--top-k` | number | `20` | Maximum results to return (1–50) |
-| `--after` | string | — | Filter to events after date (YYYY-MM-DD) |
-| `--before` | string | — | Filter to events before date (YYYY-MM-DD) |
-| `--source-types` | string | — | Comma-separated source type filter (e.g. `email`, `call_transcript`) |
-| `--source-type` | string | — | Exact source type for direct lookup (must pair with `--source-id`) |
-| `--source-id` | string | — | Exact source ID for direct lookup (must pair with `--source-type`) |
-
-<Note>
-  **Validation rules:**
-  - Either `query` or both `--source-type` and `--source-id` must be provided
-  - `--source-type` and `--source-id` must always be used together
-  - `--source-types` cannot be combined with `--source-type`/`--source-id`
-</Note>
+| `--after` | string | — | Filter to events after this ISO 8601 datetime |
+| `--before` | string | — | Filter to events before this ISO 8601 datetime |
+| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`) |
 
 ### Examples
 
@@ -411,13 +429,10 @@ outlit search "pricing objections"
 outlit search "budget concerns" --customer acme.com
 
 # Time-bounded
-outlit search "expansion signals" --after 2025-01-01 --before 2025-03-31
+outlit search "expansion signals" --after 2025-01-01T00:00:00Z --before 2025-03-31T23:59:59Z
 
 # Filter by source type
-outlit search "onboarding issues" --source-types call_transcript,email
-
-# Direct source lookup (no query needed)
-outlit search --source-type call_transcript --source-id call_123
+outlit search "onboarding issues" --source-types CALL,EMAIL
 
 # More results (max 50)
 outlit search "churn risk" --top-k 50 --json
@@ -427,24 +442,54 @@ outlit search "churn risk" --top-k 50 --json
 
 ```json
 {
-  "items": [
+  "customer": {
+    "id": "cust_123",
+    "name": "Acme",
+    "domain": "acme.com"
+  },
+  "results": [
     {
-      "customerId": "customer-uuid",
-      "snippet": "Customer mentioned pricing concerns in Q1 planning meeting",
-      "relevance": 0.92,
-      "source": "TIMELINE",
+      "kind": "source",
+      "score": 0.92,
+      "matchCount": 2,
+      "sourceType": "CALL",
       "sourceId": "call_456",
       "occurredAt": "2025-02-10T15:30:00Z",
-      "timestamp": "2025-02-10T15:30:00Z"
+      "matches": [
+        {
+          "text": "Customer mentioned pricing concerns in Q1 planning meeting"
+        }
+      ]
     }
-  ],
-  "total": 42
+  ]
 }
 ```
 
 <Note>
-  The search response uses a flat `total` field — not nested under `pagination` like other list commands.
+  Search returns both matching `source` and `fact` artifacts when both are relevant. Multiple chunk hits from the same source are grouped into one source result.
 </Note>
+
+## Sources
+
+Fetch one exact source by generic `sourceType` and `sourceId`.
+
+```bash
+outlit sources get --source-type <type> --source-id <id>
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--source-type` | string | — | Canonical source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET` |
+| `--source-id` | string | — | Exact source identifier |
+
+### Examples
+
+```bash
+outlit sources get --source-type CALL --source-id call_123
+outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
+```
 
 ## SQL
 

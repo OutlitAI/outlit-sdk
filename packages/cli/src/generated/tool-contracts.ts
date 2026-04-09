@@ -22,15 +22,25 @@ export const customerToolContracts = {
     description:
       "Get the chronological activity timeline for a customer. Use this to see what happened and when — emails, calls, Slack messages, billing events, etc. Supports channel and date filtering.",
   },
-  outlit_get_facts: {
-    toolName: "outlit_get_facts",
+  outlit_list_facts: {
+    toolName: "outlit_list_facts",
     description:
-      "List structured facts known about a customer (e.g. 'wants 90-day retention', 'budget approved Q2'). Use this to see all facts with status and confidence. For finding facts about a specific topic, use outlit_search_customer_context instead.",
+      "List structured facts known about a customer. Use filters like status, sourceTypes, and date bounds to narrow the result set. For topic-specific retrieval, use outlit_search_customer_context instead.",
+  },
+  outlit_get_fact: {
+    toolName: "outlit_get_fact",
+    description:
+      "Get one exact fact by ID. Returns the canonical fact shape and optionally expands requested related data such as evidence.",
+  },
+  outlit_get_source: {
+    toolName: "outlit_get_source",
+    description:
+      "Get one exact source record by generic sourceType and sourceId. Use this when you already know the concrete underlying source you want to inspect.",
   },
   outlit_search_customer_context: {
     toolName: "outlit_search_customer_context",
     description:
-      "Search across all known customer context (facts, emails, notes). Results include sourceType, sourceId, occurredAt, and permalink so you can tie hits back to concrete records. You can also do an exact lookup by passing sourceType and sourceId together. Omit customer to search across all customers in the organization.",
+      "Search across all known customer context using a natural-language query. Returns grouped artifact-level results for matching sources and facts. Omit customer to search across all customers in the organization.",
   },
   outlit_query: {
     toolName: "outlit_query",
@@ -54,6 +64,16 @@ export const customerBillingStatuses = [
 
 export const customerActivityWindows = ["7d", "14d", "30d", "90d"] as const
 
+export const customerFactStatuses = [
+  "ACTIVE",
+  "ACKNOWLEDGED",
+  "RESOLVED",
+  "SNOOZED",
+  "CANDIDATE",
+] as const
+
+export const customerFactIncludes = ["evidence"] as const
+
 export const customerListOrderFields = [
   "last_activity_at",
   "first_seen_at",
@@ -67,6 +87,8 @@ export const customerIncludeSections = [
   "recentTimeline",
   "behaviorMetrics",
 ] as const
+
+export const customerSourceTypes = ["EMAIL", "CALL", "CALENDAR_EVENT", "SUPPORT_TICKET"] as const
 
 export const customerTimeframes = ["7d", "14d", "30d", "90d"] as const
 
@@ -100,114 +122,65 @@ export const schemaTables = [
   "mrr_snapshots",
 ] as const
 
-export const customerContextExactLookupDisallowedFields = [
-  "query",
-  "customer",
-  "topK",
-  "occurredAfter",
-  "occurredBefore",
-  "sourceTypes",
-] as const
-
 export type SearchArgsLike = {
   query?: string
   customer?: string
   topK?: number
-  occurredAfter?: string
-  occurredBefore?: string
+  after?: string
+  before?: string
   sourceTypes?: string[]
-  sourceType?: string
-  sourceId?: string
 }
 
-export type CustomerContextSearchRequest =
-  | {
-      kind: "exact_lookup"
-      exactLookup: {
-        sourceType: string
-        sourceId: string
-      }
-    }
-  | {
-      kind: "search"
-      search: {
-        query: string
-        customer?: string
-        topK?: number
-        occurredAfter?: string
-        occurredBefore?: string
-        sourceTypes?: string[]
-      }
-    }
-
-function getExactLookupConflictField(value: SearchArgsLike): string | null {
-  if (value.query !== undefined) return customerContextExactLookupDisallowedFields[0]
-  if (value.customer !== undefined) return customerContextExactLookupDisallowedFields[1]
-  if (value.topK !== undefined) return customerContextExactLookupDisallowedFields[2]
-  if (value.occurredAfter !== undefined) return customerContextExactLookupDisallowedFields[3]
-  if (value.occurredBefore !== undefined) return customerContextExactLookupDisallowedFields[4]
-  if (value.sourceTypes && value.sourceTypes.length > 0)
-    return customerContextExactLookupDisallowedFields[5]
-  return null
+export type CustomerContextSearchInput = {
+  query: string
+  customer?: string
+  topK?: number
+  after?: string
+  before?: string
+  sourceTypes?: string[]
 }
 
-export function resolveCustomerContextSearchRequest(value: SearchArgsLike):
-  | { ok: true; request: CustomerContextSearchRequest }
+export function resolveCustomerContextSearchInput(value: SearchArgsLike):
+  | { ok: true; request: CustomerContextSearchInput }
   | {
       ok: false
       message: string
     } {
-  const hasExactLookup = Boolean(value.sourceType && value.sourceId)
-  const hasPartialExactLookup = Boolean(value.sourceType || value.sourceId)
-
-  if (hasPartialExactLookup && !hasExactLookup) {
-    return {
-      ok: false,
-      message: "--source-type and --source-id must be provided together",
-    }
-  }
-
-  if (hasExactLookup) {
-    const conflictField = getExactLookupConflictField(value)
-    if (conflictField) {
-      return {
-        ok: false,
-        message:
-          "Exact sourceType/sourceId lookup cannot be combined with query or search filters.",
-      }
-    }
-
-    return {
-      ok: true,
-      request: {
-        kind: "exact_lookup",
-        exactLookup: {
-          sourceType: value.sourceType!,
-          sourceId: value.sourceId!,
-        },
-      },
-    }
-  }
-
   if (!value.query) {
     return {
       ok: false,
-      message: "A query argument or --source-type and --source-id are required",
+      message: "A query argument is required",
+    }
+  }
+
+  const normalizedQuery = value.query.trim()
+  if (normalizedQuery.length < 2) {
+    return {
+      ok: false,
+      message: "Query must be at least 2 non-whitespace characters",
+    }
+  }
+
+  if (
+    value.after !== undefined &&
+    value.before !== undefined &&
+    new Date(value.after).getTime() > new Date(value.before).getTime()
+  ) {
+    return {
+      ok: false,
+      message: "--after must be before or equal to --before",
     }
   }
 
   return {
     ok: true,
     request: {
-      kind: "search",
-      search: {
-        query: value.query,
-        customer: value.customer,
-        topK: value.topK,
-        occurredAfter: value.occurredAfter,
-        occurredBefore: value.occurredBefore,
-        sourceTypes: value.sourceTypes,
-      },
+      query: normalizedQuery,
+      customer: value.customer,
+      topK: value.topK,
+      after: value.after,
+      before: value.before,
+      sourceTypes: value.sourceTypes,
     },
   }
 }
