@@ -14,7 +14,7 @@ import { fetchLatestCliVersion, formatUpdateCommand } from "../lib/update"
 import { type AgentId, detectAgents as detectInstalledAgents } from "./setup/index"
 
 type Status = "pass" | "warn" | "fail"
-interface CheckResult {
+export interface CheckResult {
   name: string
   status: Status
   message: string
@@ -79,7 +79,7 @@ export default defineCommand({
       })
     }
 
-    checks.push(...detectAgents())
+    checks.push(...buildAgentChecks())
 
     const hasFail = checks.some((c) => c.status === "fail")
 
@@ -230,16 +230,21 @@ const agentChecks: Record<AgentId, { name: string; missingDetail: string }> = {
   },
 }
 
-function getHomeDir(): string {
-  return process.env.HOME?.trim() || homedir()
+interface AgentCheckOptions {
+  claudeConfigDir?: string
+  homeDir?: string
 }
 
-function getSharedSkillsDir(): string {
-  return join(getHomeDir(), ".agents", "skills")
+function getHomeDir(options?: AgentCheckOptions): string {
+  return options?.homeDir?.trim() || process.env.HOME?.trim() || homedir()
 }
 
-function getOpenClawHome(): string {
-  const home = getHomeDir()
+function getSharedSkillsDir(options?: AgentCheckOptions): string {
+  return join(getHomeDir(options), ".agents", "skills")
+}
+
+function getOpenClawHome(options?: AgentCheckOptions): string {
+  const home = getHomeDir(options)
 
   if (existsSync(join(home, ".openclaw"))) return join(home, ".openclaw")
   if (existsSync(join(home, ".clawdbot"))) return join(home, ".clawdbot")
@@ -248,29 +253,36 @@ function getOpenClawHome(): string {
   return join(home, ".openclaw")
 }
 
-function getAgentSkillDir(agentId: AgentId): string {
-  const home = getHomeDir()
+function getAgentSkillDir(agentId: AgentId, options?: AgentCheckOptions): string {
+  const home = getHomeDir(options)
 
   switch (agentId) {
     case "claude-code":
-      return join(process.env.CLAUDE_CONFIG_DIR?.trim() || join(home, ".claude"), "skills")
+      return join(
+        options?.claudeConfigDir?.trim() ||
+          process.env.CLAUDE_CONFIG_DIR?.trim() ||
+          join(home, ".claude"),
+        "skills",
+      )
     case "codex":
-      return getSharedSkillsDir()
+      return getSharedSkillsDir(options)
     case "gemini":
-      return getSharedSkillsDir()
+      return getSharedSkillsDir(options)
     case "droid":
       return join(home, ".factory", "skills")
     case "opencode":
-      return getSharedSkillsDir()
+      return getSharedSkillsDir(options)
     case "pi":
       return join(home, ".pi", "agent", "skills")
     case "openclaw":
-      return join(getOpenClawHome(), "skills")
+      return join(getOpenClawHome(options), "skills")
   }
 }
 
-function detectAgents(): CheckResult[] {
-  const detected = detectInstalledAgents()
+export function buildAgentChecks(
+  detected: AgentId[] = detectInstalledAgents(),
+  options?: AgentCheckOptions,
+): CheckResult[] {
   if (detected.length === 0) {
     return [
       {
@@ -285,7 +297,7 @@ function detectAgents(): CheckResult[] {
 
   for (const agentId of detected) {
     const meta = agentChecks[agentId]
-    const hasSkill = existsSync(join(getAgentSkillDir(agentId), "outlit", "SKILL.md"))
+    const hasSkill = existsSync(join(getAgentSkillDir(agentId, options), "outlit", "SKILL.md"))
 
     results.push({
       name: meta.name,
