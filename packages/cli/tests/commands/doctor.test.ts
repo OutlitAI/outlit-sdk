@@ -109,10 +109,13 @@ describe("doctor command", () => {
 
   test("reports detected coding agents as missing until the outlit skill is installed", async () => {
     const { buildAgentChecks } = await import("../../src/commands/doctor")
-    const checks = buildAgentChecks(["claude-code", "codex", "gemini", "droid", "opencode", "pi"], {
-      homeDir: testDir,
-      claudeConfigDir: join(testDir, ".claude"),
-    })
+    const checks = buildAgentChecks(
+      ["claude-code", "codex", "gemini", "droid", "opencode", "pi", "openclaw"],
+      {
+        homeDir: testDir,
+        claudeConfigDir: join(testDir, ".claude"),
+      },
+    )
 
     const claudeCheck = checks.find((check) => check.name === "Claude Code")
     const codexCheck = checks.find((check) => check.name === "Codex")
@@ -120,6 +123,7 @@ describe("doctor command", () => {
     const droidCheck = checks.find((check) => check.name === "Droid")
     const opencodeCheck = checks.find((check) => check.name === "OpenCode")
     const piCheck = checks.find((check) => check.name === "Pi")
+    const openclawCheck = checks.find((check) => check.name === "OpenClaw")
     expect(claudeCheck?.status).toBe("warn")
     expect(claudeCheck?.detail).toBe("Run `outlit setup claude-code` to install the Outlit skill")
     expect(codexCheck?.status).toBe("warn")
@@ -132,6 +136,8 @@ describe("doctor command", () => {
     expect(opencodeCheck?.detail).toBe("Run `outlit setup opencode` to install the Outlit skill")
     expect(piCheck?.status).toBe("warn")
     expect(piCheck?.detail).toBe("Run `outlit setup pi` to install the Outlit skill")
+    expect(openclawCheck?.status).toBe("warn")
+    expect(openclawCheck?.detail).toBe("Run `outlit setup openclaw` to install the Outlit skill")
   })
 
   test("detects installed skills across shared and agent-specific skill directories", async () => {
@@ -140,6 +146,7 @@ describe("doctor command", () => {
       join(testDir, ".claude", "skills", "outlit"),
       join(testDir, ".factory", "skills", "outlit"),
       join(testDir, ".pi", "agent", "skills", "outlit"),
+      join(testDir, ".openclaw", "skills", "outlit"),
     ]
 
     for (const dir of installedSkillDirs) {
@@ -148,12 +155,23 @@ describe("doctor command", () => {
     }
 
     const { buildAgentChecks } = await import("../../src/commands/doctor")
-    const checks = buildAgentChecks(["claude-code", "codex", "gemini", "droid", "opencode", "pi"], {
-      homeDir: testDir,
-      claudeConfigDir: join(testDir, ".claude"),
-    })
+    const checks = buildAgentChecks(
+      ["claude-code", "codex", "gemini", "droid", "opencode", "pi", "openclaw"],
+      {
+        homeDir: testDir,
+        claudeConfigDir: join(testDir, ".claude"),
+      },
+    )
 
-    for (const name of ["Claude Code", "Codex", "Gemini CLI", "Droid", "OpenCode", "Pi"]) {
+    for (const name of [
+      "Claude Code",
+      "Codex",
+      "Gemini CLI",
+      "Droid",
+      "OpenCode",
+      "Pi",
+      "OpenClaw",
+    ]) {
       const check = checks.find((entry) => entry.name === name)
       expect(check?.status).toBe("pass")
       expect(check?.message).toBe("Outlit skill installed")

@@ -198,6 +198,7 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "droid", desc: "Install the Outlit skill for Droid", flags: [JSON_F] },
       { name: "opencode", desc: "Install the Outlit skill for OpenCode", flags: [JSON_F] },
       { name: "pi", desc: "Install the Outlit skill for Pi", flags: [JSON_F] },
+      { name: "openclaw", desc: "Install the Outlit skill for OpenClaw", flags: [JSON_F] },
       { name: "skills", desc: "Launch the interactive Outlit skills installer", flags: [JSON_F] },
     ],
   },

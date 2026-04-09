@@ -47,7 +47,12 @@ describe("setup auto-detect", () => {
       throw new Error("not found")
     })
     mockExistsSync.mockImplementation((path: string) =>
-      ["/test-home/.factory", "/test-home/.config/opencode", "/test-home/.pi/agent"].includes(path),
+      [
+        "/test-home/.factory",
+        "/test-home/.config/opencode",
+        "/test-home/.pi/agent",
+        "/test-home/.openclaw",
+      ].includes(path),
     )
 
     const originalHome = process.env.HOME
@@ -73,8 +78,8 @@ describe("setup auto-detect", () => {
         runner: string | null
       }
 
-      expect(result.detected).toEqual(["claude-code", "droid", "opencode", "pi"])
-      expect(result.configured).toEqual(["claude-code", "droid", "opencode", "pi"])
+      expect(result.detected).toEqual(["claude-code", "droid", "opencode", "pi", "openclaw"])
+      expect(result.configured).toEqual(["claude-code", "droid", "opencode", "pi", "openclaw"])
       expect(result.failed).toHaveLength(0)
       expect(result.runner).toBe("npx")
 
@@ -95,6 +100,8 @@ describe("setup auto-detect", () => {
         "opencode",
         "--agent",
         "pi",
+        "--agent",
+        "openclaw",
         "-y",
         "-g",
       ])
