@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
-import { chmodSync, mkdirSync, writeFileSync } from "node:fs"
+import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { ExitError, mockExitThrow, setNonInteractive, TEST_API_KEY, useTempEnv } from "../helpers"
 
@@ -108,65 +108,18 @@ describe("doctor command", () => {
   })
 
   test("reports detected coding agents as missing until the outlit skill is installed", async () => {
-    process.env.OUTLIT_API_KEY = TEST_API_KEY
-    process.env.HOME = testDir
-    process.env.XDG_CONFIG_HOME = join(testDir, ".config")
-    process.env.CLAUDE_CONFIG_DIR = join(testDir, ".claude")
-    const binDir = join(testDir, "bin")
-    mkdirSync(join(testDir, ".factory"), { recursive: true })
-    mkdirSync(join(testDir, ".config", "opencode"), { recursive: true })
-    mkdirSync(join(testDir, ".pi", "agent"), { recursive: true })
-    mkdirSync(binDir, { recursive: true })
-    for (const name of ["claude", "codex", "gemini"]) {
-      const path = join(binDir, name)
-      writeFileSync(path, "#!/bin/sh\nexit 0\n")
-      chmodSync(path, 0o755)
-    }
-    process.env.PATH = `${binDir}:/usr/bin:/bin`
+    const { buildAgentChecks } = await import("../../src/commands/doctor")
+    const checks = buildAgentChecks(["claude-code", "codex", "gemini", "droid", "opencode", "pi"], {
+      homeDir: testDir,
+      claudeConfigDir: join(testDir, ".claude"),
+    })
 
-    const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async (input) => {
-      const url = String(input)
-      if (url === "https://registry.npmjs.org/@outlit%2Fcli/latest") {
-        return new Response(JSON.stringify({ version: "0.1.0" }), { status: 200 })
-      }
-      if (url === getValidateApiKeyUrl()) {
-        return new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), {
-          status: 200,
-        })
-      }
-      throw new Error(`Unexpected fetch URL: ${url}`)
-    }) as typeof fetch)
-
-    const { default: doctorCmd } = await import("../../src/commands/doctor")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    const exitSpy = mockExitThrow()
-
-    let written = ""
-    let thrown: unknown
-    try {
-      await doctorCmd.run!({
-        args: { json: true },
-      } as Parameters<NonNullable<typeof doctorCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-    } finally {
-      written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
-      writeSpy.mockRestore()
-      fetchSpy.mockRestore()
-      exitSpy.mockRestore()
-      Reflect.deleteProperty(process.env, "HOME")
-      Reflect.deleteProperty(process.env, "CLAUDE_CONFIG_DIR")
-    }
-
-    expect(thrown).toBeUndefined()
-    const parsed = JSON.parse(written) as { ok: boolean; checks: Array<Record<string, string>> }
-    expect(parsed.ok).toBe(true)
-    const claudeCheck = parsed.checks.find((check) => check.name === "Claude Code")
-    const codexCheck = parsed.checks.find((check) => check.name === "Codex")
-    const geminiCheck = parsed.checks.find((check) => check.name === "Gemini CLI")
-    const droidCheck = parsed.checks.find((check) => check.name === "Droid")
-    const opencodeCheck = parsed.checks.find((check) => check.name === "OpenCode")
-    const piCheck = parsed.checks.find((check) => check.name === "Pi")
+    const claudeCheck = checks.find((check) => check.name === "Claude Code")
+    const codexCheck = checks.find((check) => check.name === "Codex")
+    const geminiCheck = checks.find((check) => check.name === "Gemini CLI")
+    const droidCheck = checks.find((check) => check.name === "Droid")
+    const opencodeCheck = checks.find((check) => check.name === "OpenCode")
+    const piCheck = checks.find((check) => check.name === "Pi")
     expect(claudeCheck?.status).toBe("warn")
     expect(claudeCheck?.detail).toBe("Run `outlit setup claude-code` to install the Outlit skill")
     expect(codexCheck?.status).toBe("warn")
@@ -182,12 +135,6 @@ describe("doctor command", () => {
   })
 
   test("detects installed skills across shared and agent-specific skill directories", async () => {
-    process.env.OUTLIT_API_KEY = TEST_API_KEY
-    process.env.HOME = testDir
-    process.env.XDG_CONFIG_HOME = join(testDir, ".config")
-    process.env.CLAUDE_CONFIG_DIR = join(testDir, ".claude")
-    const binDir = join(testDir, "bin")
-
     const installedSkillDirs = [
       join(testDir, ".agents", "skills", "outlit"),
       join(testDir, ".claude", "skills", "outlit"),
@@ -200,56 +147,14 @@ describe("doctor command", () => {
       writeFileSync(join(dir, "SKILL.md"), "---\nname: outlit\ndescription: test\n---\n")
     }
 
-    mkdirSync(join(testDir, ".config", "opencode"), { recursive: true })
-    mkdirSync(binDir, { recursive: true })
-
-    for (const name of ["claude", "codex", "gemini"]) {
-      const path = join(binDir, name)
-      writeFileSync(path, "#!/bin/sh\nexit 0\n")
-      chmodSync(path, 0o755)
-    }
-    process.env.PATH = `${binDir}:/usr/bin:/bin`
-
-    const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async (input) => {
-      const url = String(input)
-      if (url === "https://registry.npmjs.org/@outlit%2Fcli/latest") {
-        return new Response(JSON.stringify({ version: "0.1.0" }), { status: 200 })
-      }
-      if (url === getValidateApiKeyUrl()) {
-        return new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), {
-          status: 200,
-        })
-      }
-      throw new Error(`Unexpected fetch URL: ${url}`)
-    }) as typeof fetch)
-
-    const { default: doctorCmd } = await import("../../src/commands/doctor")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    const exitSpy = mockExitThrow()
-
-    let written = ""
-    let thrown: unknown
-    try {
-      await doctorCmd.run!({
-        args: { json: true },
-      } as Parameters<NonNullable<typeof doctorCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-    } finally {
-      written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
-      writeSpy.mockRestore()
-      fetchSpy.mockRestore()
-      exitSpy.mockRestore()
-      Reflect.deleteProperty(process.env, "HOME")
-      Reflect.deleteProperty(process.env, "CLAUDE_CONFIG_DIR")
-    }
-
-    expect(thrown).toBeUndefined()
-    const parsed = JSON.parse(written) as { ok: boolean; checks: Array<Record<string, string>> }
-    expect(parsed.ok).toBe(true)
+    const { buildAgentChecks } = await import("../../src/commands/doctor")
+    const checks = buildAgentChecks(["claude-code", "codex", "gemini", "droid", "opencode", "pi"], {
+      homeDir: testDir,
+      claudeConfigDir: join(testDir, ".claude"),
+    })
 
     for (const name of ["Claude Code", "Codex", "Gemini CLI", "Droid", "OpenCode", "Pi"]) {
-      const check = parsed.checks.find((entry) => entry.name === name)
+      const check = checks.find((entry) => entry.name === name)
       expect(check?.status).toBe("pass")
       expect(check?.message).toBe("Outlit skill installed")
     }
