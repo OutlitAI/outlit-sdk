@@ -8,9 +8,6 @@ import { isUnicodeSupported } from "./tty"
 /** CLI version — read from package.json, inlined at build time by Bun's bundler. */
 export const CLI_VERSION: string = pkg.version
 
-/** The hosted Outlit MCP server endpoint. Used by setup commands for AI agent configuration. */
-export const DEFAULT_MCP_URL = "https://mcp.outlit.ai/mcp"
-
 /** The Outlit Platform API base URL. Used by the CLI client for direct REST calls. */
 export const DEFAULT_API_URL = "https://app.outlit.ai"
 
@@ -31,29 +28,6 @@ export function isEnoentError(err: unknown): err is NodeJS.ErrnoException {
 /** Splits a comma-separated string into a trimmed array. */
 export function splitCsv(value: string): string[] {
   return value.split(",").map((s) => s.trim())
-}
-
-/**
- * Returns the platform-appropriate path to Claude Desktop's config file.
- *
- * macOS:    ~/Library/Application Support/Claude/claude_desktop_config.json
- * Windows:  %APPDATA%/Claude/claude_desktop_config.json
- * Linux:    ~/.config/Claude/claude_desktop_config.json
- */
-export function getClaudeDesktopConfigPath(): string {
-  const home = homedir()
-  switch (process.platform) {
-    case "win32":
-      return join(
-        process.env.APPDATA ?? join(home, "AppData", "Roaming"),
-        "Claude",
-        "claude_desktop_config.json",
-      )
-    case "darwin":
-      return join(home, "Library", "Application Support", "Claude", "claude_desktop_config.json")
-    default:
-      return join(home, ".config", "Claude", "claude_desktop_config.json")
-  }
 }
 
 export interface CredentialResult {
@@ -120,7 +94,6 @@ export function maskKey(key: string): string {
 /**
  * Reads and parses a JSON config file, returning an empty object on any error.
  *
- * Used by setup commands that merge into existing MCP config files.
  * Never throws — a missing or corrupted file is treated as an empty config.
  */
 export function readJsonConfig(filePath: string): Record<string, unknown> {
@@ -171,28 +144,6 @@ export function writeConfigFile(
       opts.json,
     )
   }
-}
-
-/**
- * Merges an Outlit MCP server entry into an existing JSON config file.
- *
- * Used by cursor, claude-desktop, and vscode setup commands.
- * Reads the file (or starts from {}), spreads the existing servers,
- * adds/overwrites the "outlit" key, and writes back.
- */
-export function mergeOutlitMcpConfig(
-  configPath: string,
-  serversKey: string,
-  outlitConfig: Record<string, unknown>,
-  opts: { json: boolean; label: string },
-): void {
-  const existing = readJsonConfig(configPath)
-  const existingServers = (existing[serversKey] as Record<string, unknown> | undefined) ?? {}
-  const merged = {
-    ...existing,
-    [serversKey]: { ...existingServers, outlit: outlitConfig },
-  }
-  writeConfigFile(configPath, `${JSON.stringify(merged, null, 2)}\n`, opts)
 }
 
 /**

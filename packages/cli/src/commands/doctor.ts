@@ -7,15 +7,7 @@ import { outputArgs } from "../args/output"
 import { pingApiKey } from "../lib/api"
 import { createClient } from "../lib/client"
 import type { CredentialResult } from "../lib/config"
-import {
-  CLI_VERSION,
-  getClaudeDesktopConfigPath,
-  maskKey,
-  OUTLIT_DASHBOARD_URL,
-  readJsonConfig,
-  resolveApiKey,
-  TICK,
-} from "../lib/config"
+import { CLI_VERSION, maskKey, OUTLIT_DASHBOARD_URL, resolveApiKey, TICK } from "../lib/config"
 import { errorMessage, isJsonMode, outputResult } from "../lib/output"
 import { isUnicodeSupported } from "../lib/tty"
 import { fetchLatestCliVersion, formatUpdateCommand } from "../lib/update"
@@ -47,7 +39,7 @@ export default defineCommand({
       "  1. CLI version -- compares against npm registry",
       "  2. API key -- checks presence and format (ok_ prefix)",
       "  3. API validation -- makes a live test call to verify the key works",
-      "  4. Agent detection -- detects OpenClaw, Cursor, Claude Desktop, VS Code",
+      "  4. Agent detection -- detects supported coding agents and whether the Outlit skill is installed",
       "",
       "Exit code: 0 if all checks pass or warn, 1 if any check fails.",
       "",
@@ -207,25 +199,75 @@ async function checkIntegrations(apiKey: string): Promise<CheckResult> {
   }
 }
 
-/** Metadata for each agent used to generate rich CheckResults from detected AgentIds. */
-const agentChecks: Record<AgentId, { name: string; configCheck?: { path: string; key: string } }> =
-  {
-    cursor: {
-      name: "Cursor",
-      configCheck: { path: join(homedir(), ".cursor", "mcp.json"), key: "mcpServers" },
-    },
-    "claude-code": { name: "Claude Code" },
-    "claude-desktop": {
-      name: "Claude Desktop",
-      configCheck: { path: getClaudeDesktopConfigPath(), key: "mcpServers" },
-    },
-    vscode: {
-      name: "VS Code",
-      configCheck: { path: join(process.cwd(), ".vscode", "mcp.json"), key: "servers" },
-    },
-    gemini: { name: "Gemini CLI" },
-    openclaw: { name: "OpenClaw" },
+const agentChecks: Record<AgentId, { name: string; missingDetail: string }> = {
+  "claude-code": {
+    name: "Claude Code",
+    missingDetail: "Run `outlit setup claude-code` to install the Outlit skill",
+  },
+  codex: {
+    name: "Codex",
+    missingDetail: "Run `outlit setup codex` to install the Outlit skill",
+  },
+  gemini: {
+    name: "Gemini CLI",
+    missingDetail: "Run `outlit setup gemini` to install the Outlit skill",
+  },
+  droid: {
+    name: "Droid",
+    missingDetail: "Run `outlit setup droid` to install the Outlit skill",
+  },
+  opencode: {
+    name: "OpenCode",
+    missingDetail: "Run `outlit setup opencode` to install the Outlit skill",
+  },
+  pi: {
+    name: "Pi",
+    missingDetail: "Run `outlit setup pi` to install the Outlit skill",
+  },
+  openclaw: {
+    name: "OpenClaw",
+    missingDetail: "Run `outlit setup skills` and choose OpenClaw",
+  },
+}
+
+function getHomeDir(): string {
+  return process.env.HOME?.trim() || homedir()
+}
+
+function getSharedSkillsDir(): string {
+  return join(getHomeDir(), ".agents", "skills")
+}
+
+function getOpenClawHome(): string {
+  const home = getHomeDir()
+
+  if (existsSync(join(home, ".openclaw"))) return join(home, ".openclaw")
+  if (existsSync(join(home, ".clawdbot"))) return join(home, ".clawdbot")
+  if (existsSync(join(home, ".moltbot"))) return join(home, ".moltbot")
+
+  return join(home, ".openclaw")
+}
+
+function getAgentSkillDir(agentId: AgentId): string {
+  const home = getHomeDir()
+
+  switch (agentId) {
+    case "claude-code":
+      return join(process.env.CLAUDE_CONFIG_DIR?.trim() || join(home, ".claude"), "skills")
+    case "codex":
+      return getSharedSkillsDir()
+    case "gemini":
+      return getSharedSkillsDir()
+    case "droid":
+      return join(home, ".factory", "skills")
+    case "opencode":
+      return getSharedSkillsDir()
+    case "pi":
+      return join(home, ".pi", "agent", "skills")
+    case "openclaw":
+      return join(getOpenClawHome(), "skills")
   }
+}
 
 function detectAgents(): CheckResult[] {
   const detected = detectInstalledAgents()
@@ -240,85 +282,17 @@ function detectAgents(): CheckResult[] {
   }
 
   const results: CheckResult[] = []
-  const home = homedir()
 
   for (const agentId of detected) {
     const meta = agentChecks[agentId]
+    const hasSkill = existsSync(join(getAgentSkillDir(agentId), "outlit", "SKILL.md"))
 
-    // OpenClaw: check for SKILL.md
-    if (agentId === "openclaw") {
-      const openclawBase = join(home, ".openclaw", "skills")
-      const hasSkill = existsSync(join(openclawBase, "outlit", "SKILL.md"))
-      results.push({
-        name: meta.name,
-        status: hasSkill ? "pass" : "warn",
-        message: hasSkill
-          ? "Installed, Outlit skill configured"
-          : "Installed, but Outlit skill not found",
-        detail: hasSkill ? undefined : "Run `clawhub install outlit` to configure",
-      })
-      continue
-    }
-
-    // CLI-based agents (claude-code, gemini): no config file to check
-    if (!meta.configCheck) {
-      results.push({
-        name: meta.name,
-        status: "warn",
-        message: "Installed, but Outlit MCP not verified",
-        detail: `Run \`outlit setup ${agentId}\` to configure`,
-      })
-
-      // For Claude Code, also check if agent skills are installed
-      if (agentId === "claude-code") {
-        const skillsDir = join(home, ".claude", "skills")
-        const hasSkills =
-          existsSync(join(skillsDir, "outlit-cli")) ||
-          existsSync(join(skillsDir, "outlit-sdk")) ||
-          existsSync(join(skillsDir, "outlit-mcp"))
-        results.push({
-          name: "Agent Skills",
-          status: hasSkills ? "pass" : "warn",
-          message: hasSkills ? "Outlit agent skills installed" : "Outlit agent skills not found",
-          detail: hasSkills
-            ? undefined
-            : "Run `outlit setup skills` to install deeper AI agent context",
-        })
-      }
-
-      continue
-    }
-
-    // Config-file agents (cursor, claude-desktop, vscode): check for outlit key
-    const { path, key } = meta.configCheck
-    if (!existsSync(path)) {
-      results.push({
-        name: meta.name,
-        status: "warn",
-        message: "Installed, but config file not found",
-        detail: `Run \`outlit setup ${agentId}\` to configure`,
-      })
-      continue
-    }
-    try {
-      const config = readJsonConfig(path)
-      const configured = !!(config[key] as Record<string, unknown> | undefined)?.outlit
-      results.push({
-        name: meta.name,
-        status: configured ? "pass" : "warn",
-        message: configured
-          ? "Installed, Outlit MCP configured"
-          : "Installed, but Outlit MCP not configured",
-        detail: configured ? undefined : `Run \`outlit setup ${agentId}\` to configure`,
-      })
-    } catch {
-      results.push({
-        name: meta.name,
-        status: "warn",
-        message: "Installed, but config file is malformed",
-        detail: `Check ${path} for JSON syntax errors`,
-      })
-    }
+    results.push({
+      name: meta.name,
+      status: hasSkill ? "pass" : "warn",
+      message: hasSkill ? "Outlit skill installed" : "Installed, but Outlit skill not found",
+      detail: hasSkill ? undefined : meta.missingDetail,
+    })
   }
 
   return results

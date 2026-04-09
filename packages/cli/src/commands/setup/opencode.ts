@@ -4,11 +4,11 @@ import { runAgentSkillsInstall } from "./skills"
 
 export default defineCommand({
   meta: {
-    name: "gemini",
-    description: "Install the Outlit skill for Gemini CLI.",
+    name: "opencode",
+    description: "Install the Outlit skill for OpenCode.",
   },
   args: { ...outputArgs },
   run({ args }) {
-    runAgentSkillsInstall("gemini", !!args.json)
+    runAgentSkillsInstall("opencode", !!args.json)
   },
 })

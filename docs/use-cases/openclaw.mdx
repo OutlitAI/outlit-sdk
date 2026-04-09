@@ -69,7 +69,7 @@ Combined with OpenClaw's built-in cron scheduler, you get **automated customer h
 
     You should see:
     ```
-    ✓ OpenClaw: Installed, Outlit skill configured
+    ✓ OpenClaw: Outlit skill installed
     ```
 
     Then message OpenClaw in your chat platform:
@@ -182,7 +182,7 @@ openclaw cron rm JOB_ID             # Delete a job
 
 ## Outlit Agent Skills
 
-Beyond the OpenClaw skill, Outlit provides [agent skills](/ai-integrations/skills) that teach any AI agent deeper patterns for working with customer data. Install them alongside your OpenClaw setup for richer context:
+Outlit also provides [agent skills](/ai-integrations/skills) for richer customer-data workflows and optional SDK guidance:
 
 ```bash
 outlit setup skills
@@ -190,9 +190,8 @@ outlit setup skills
 
 | Skill | What it teaches |
 |-------|-----------------|
-| **outlit-cli** | CLI commands, query patterns, and customer data workflows |
+| **outlit** | Customer queries, search, facts, SQL, and CLI vs MCP workflow guidance |
 | **outlit-sdk** | SDK integration for tracking: detection, consent, auth, billing, events |
-| **outlit-mcp** | [MCP](/ai-integrations/mcp) tool usage, SQL patterns, and analysis workflows |
 
 These skills are also available on [ClawHub](https://clawhub.ai/leo-paz/outlit).
 

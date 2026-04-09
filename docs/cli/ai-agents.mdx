@@ -1,71 +1,47 @@
 ---
 title: "AI Agent Setup"
-description: "Configure AI agents like Claude, Cursor, and Gemini to query Outlit data via MCP"
+description: "Install Outlit skills for Claude Code, Codex, Gemini CLI, Droid, OpenCode, Pi, and other coding agents"
 ---
 
-The `outlit setup` command registers Outlit as an [MCP](https://modelcontextprotocol.io) server with your AI agent tools. Once configured, your agents can query customers, pull revenue metrics, search context, and run SQL — all from within your conversation.
+The `outlit setup` command installs the `outlit` skill for coding agents. It does not configure MCP clients.
 
-<Tip>
-  If you already configured your agent manually using the [MCP Integration](/ai-integrations/mcp) guide, you don't need `outlit setup` — both approaches connect to the same MCP server.
-</Tip>
+If you want Cursor, VS Code, Claude, or another MCP client, use the direct [MCP Integration](/ai-integrations/mcp) guide instead.
 
 ## Supported Agents
 
-| Agent | Command | How it connects |
-|-------|---------|----------------|
-| Cursor | `outlit setup cursor` | Writes to `~/.cursor/mcp.json` |
-| Claude Code | `outlit setup claude-code` | Runs `claude mcp add` |
-| Claude Desktop | `outlit setup claude-desktop` | Writes to Claude Desktop config |
-| VS Code | `outlit setup vscode` | Writes to `.vscode/mcp.json` |
-| Gemini CLI | `outlit setup gemini` | Runs `gemini mcp add` |
-| OpenClaw | `outlit setup openclaw` | Writes skill to OpenClaw skills directory |
-| Agent Skills | `outlit setup skills` | Installs [Outlit agent skills](/ai-integrations/skills) via package runner |
+| Agent | Command | What it does |
+|-------|---------|--------------|
+| Claude Code | `outlit setup claude-code` | Installs `outlit` for the `claude-code` skills target |
+| Codex | `outlit setup codex` | Installs `outlit` for the `codex` skills target |
+| Gemini CLI | `outlit setup gemini` | Installs `outlit` for the `gemini-cli` skills target |
+| Droid | `outlit setup droid` | Installs `outlit` for the `droid` skills target |
+| OpenCode | `outlit setup opencode` | Installs `outlit` for the `opencode` skills target |
+| Pi | `outlit setup pi` | Installs `outlit` for the `pi` skills target |
+| OpenClaw | `outlit setup skills` | Use the interactive installer and choose OpenClaw |
+| Manual / multi-agent | `outlit setup skills` | Launches the interactive Outlit skills installer |
 
 ## Auto-Setup
 
-Detect and configure all installed agents at once:
+Detect installed coding agents and install `outlit` for all of them:
 
 ```bash
 outlit setup --yes
 ```
 
-Without `--yes`, the CLI lists detected agents before configuring. [Agent skills](/ai-integrations/skills) are also installed automatically.
+Without `--yes`, the CLI lists detected agents before installing.
 
 ### JSON Output
 
 ```json
 {
-  "detected": ["cursor", "claude-code", "claude-desktop"],
-  "configured": ["cursor", "claude-code", "claude-desktop"],
+  "detected": ["claude-code", "opencode"],
+  "configured": ["claude-code", "opencode"],
   "failed": [],
-  "skills": { "success": true, "runner": "npx" }
+  "runner": "npx"
 }
 ```
 
 ## Individual Setup
-
-### Cursor
-
-```bash
-outlit setup cursor
-```
-
-Adds Outlit to `~/.cursor/mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "outlit": {
-      "url": "https://mcp.outlit.ai/mcp",
-      "headers": {
-        "Authorization": "Bearer ok_your_api_key"
-      }
-    }
-  }
-}
-```
-
-Restart Cursor after setup.
 
 ### Claude Code
 
@@ -73,47 +49,11 @@ Restart Cursor after setup.
 outlit setup claude-code
 ```
 
-Registers the MCP server using the Claude CLI. Requires `claude` to be installed.
-
-### Claude Desktop
+### Codex
 
 ```bash
-outlit setup claude-desktop
+outlit setup codex
 ```
-
-Writes to the platform-specific Claude Desktop config:
-
-| Platform | Config path |
-|----------|------------|
-| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| Windows | `%APPDATA%/Claude/claude_desktop_config.json` |
-| Linux | `~/.config/Claude/claude_desktop_config.json` |
-
-Claude Desktop uses a command-based config (unlike Cursor's HTTP URL approach):
-
-```json
-{
-  "mcpServers": {
-    "outlit": {
-      "command": "outlit",
-      "args": ["mcp", "serve"],
-      "env": {
-        "OUTLIT_API_KEY": "ok_your_api_key"
-      }
-    }
-  }
-}
-```
-
-Restart Claude Desktop after setup.
-
-### VS Code
-
-```bash
-outlit setup vscode
-```
-
-Writes to `.vscode/mcp.json` in the current working directory. Creates the `.vscode/` directory if needed. Note: VS Code uses a `servers` key (not `mcpServers`).
 
 ### Gemini CLI
 
@@ -121,27 +61,37 @@ Writes to `.vscode/mcp.json` in the current working directory. Creates the `.vsc
 outlit setup gemini
 ```
 
-Registers the MCP server using the Gemini CLI. Requires `gemini` to be installed.
-
-### OpenClaw
+### Droid
 
 ```bash
-outlit setup openclaw
+outlit setup droid
 ```
 
-Writes an Outlit intelligence skill to the OpenClaw skills directory. Checks `~/clawd/skills/` first, falls back to `~/.openclaw/skills/`. OpenClaw loads skills automatically.
+### OpenCode
 
-### Agent Skills
+```bash
+outlit setup opencode
+```
+
+### Pi
+
+```bash
+outlit setup pi
+```
+
+### Interactive Skills Installer
+
+Use this when you want to pick agents manually or optionally add `outlit-sdk`:
 
 ```bash
 outlit setup skills
 ```
 
-Installs Outlit [agent skills](/ai-integrations/skills) via your package runner. No API key required.
+This opens the interactive `skills add` flow scoped to `github.com/OutlitAI/outlit-agent-skills`.
 
 ## Diagnostics
 
-The `doctor` command runs environment checks to verify your CLI and agent setup:
+The `doctor` command checks your CLI auth plus coding-agent skill installs:
 
 ```bash
 outlit doctor
@@ -154,19 +104,19 @@ outlit doctor
 | CLI version | Whether you're running the latest version |
 | API key | Presence and format of your API key |
 | API validation | Live test call to verify the key works |
-| Per-agent checks | Each detected agent gets its own check (e.g., "Cursor", "Claude Code") |
+| Integrations | Whether Outlit can read integration status |
+| Per-agent checks | Whether detected coding agents already have the `outlit` skill |
 
 ### Example Output
 
 ```
   Outlit Doctor
 
-  ✓ CLI version: v0.1.0 (latest)
+  ✓ CLI version: v1.4.1 (latest)
   ✓ API key: Found (ok_ab...1234) via config
   ✓ API validation: Key is valid
-  ✓ Cursor: Installed, Outlit MCP configured
-  ! Claude Code: Installed, but Outlit MCP not verified
-  ✓ Claude Desktop: Installed, Outlit MCP configured
+  ! Claude Code: Installed, but Outlit skill not found
+  ✓ Codex: Outlit skill installed
 
   Everything works, 1 suggestion(s).
 ```
@@ -181,10 +131,10 @@ outlit doctor --json
 {
   "ok": true,
   "checks": [
-    { "name": "CLI version", "status": "pass", "message": "v0.1.0 (latest)" },
+    { "name": "CLI version", "status": "pass", "message": "v1.4.1 (latest)" },
     { "name": "API key", "status": "pass", "message": "Found (ok_ab...1234) via config" },
     { "name": "API validation", "status": "pass", "message": "Key is valid" },
-    { "name": "Cursor", "status": "pass", "message": "Installed, Outlit MCP configured" }
+    { "name": "Claude Code", "status": "warn", "message": "Installed, but Outlit skill not found" }
   ]
 }
 ```
@@ -197,7 +147,7 @@ outlit doctor --json | jq '.checks[] | select(.status == "fail")'
 
 ### Exit Code
 
-`doctor` exits with code `1` if any check fails, making it useful in CI:
+`doctor` exits with code `1` if any check fails, which makes it useful in CI:
 
 ```bash
 outlit doctor || echo "Setup issues detected"
