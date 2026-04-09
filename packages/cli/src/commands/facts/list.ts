@@ -99,11 +99,30 @@ export default defineCommand({
       )
     }
 
-    if (
-      args.after &&
-      args.before &&
-      new Date(args.after).getTime() > new Date(args.before).getTime()
-    ) {
+    const afterDate = args.after ? new Date(args.after) : null
+    const beforeDate = args.before ? new Date(args.before) : null
+
+    if (afterDate && Number.isNaN(afterDate.getTime())) {
+      return outputError(
+        {
+          message: "--after must be a valid ISO 8601 datetime",
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+
+    if (beforeDate && Number.isNaN(beforeDate.getTime())) {
+      return outputError(
+        {
+          message: "--before must be a valid ISO 8601 datetime",
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+
+    if (afterDate && beforeDate && afterDate.getTime() > beforeDate.getTime()) {
       return outputError(
         {
           message: "--after must be before or equal to --before",

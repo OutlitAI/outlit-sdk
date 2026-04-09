@@ -326,6 +326,13 @@ outlit facts get --fact-id <id> [flags]
 | `--limit` | number | `20` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor |
 
+### `facts get` Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--fact-id` | string | — | Exact fact identifier |
+| `--include` | string | — | Comma-separated best-effort expansions. `evidence` requests evidence details when available |
+
 ### Examples
 
 ```bash

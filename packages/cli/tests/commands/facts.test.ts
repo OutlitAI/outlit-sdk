@@ -86,6 +86,32 @@ describe("facts commands", () => {
     }
   })
 
+  test("list rejects malformed ISO datetimes", async () => {
+    const { default: factsListCmd } = await import("../../src/commands/facts/list")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await factsListCmd.run!({
+        args: {
+          customer: "acme.com",
+          after: "not-a-date",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof factsListCmd.run>>[0])
+    } catch (error) {
+      thrown = error
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(stderrOutput).toContain("--after must be a valid ISO 8601 datetime")
+    }
+  })
+
   test("get sends fact id and include list to outlit_get_fact", async () => {
     const { default: factsGetCmd } = await import("../../src/commands/facts/get")
 
