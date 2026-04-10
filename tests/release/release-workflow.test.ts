@@ -13,3 +13,13 @@ describe("release workflow canary order", () => {
     expect(snapshotIndex).toBeLessThan(buildIndex)
   })
 })
+
+describe("release workflow CLI dispatch", () => {
+  test("uses the repo token with actions write permission for same-repo workflow dispatch", () => {
+    const workflow = readFileSync(".github/workflows/release.yml", "utf8")
+    const githubTokenExpression = "GH_TOKEN: $" + "{{ github.token }}"
+
+    expect(workflow).toContain("actions: write")
+    expect(workflow).toContain(githubTokenExpression)
+  })
+})
