@@ -1,5 +1,25 @@
 # @outlit/cli
 
+## 1.5.0
+
+### Minor Changes
+
+- [#83](https://github.com/OutlitAI/outlit-sdk/pull/83) [`1038de4`](https://github.com/OutlitAI/outlit-sdk/commit/1038de4cd549b9105ed529680241a42bfb99bcd8) Thanks [@leo-paz](https://github.com/leo-paz)! - Add automatic CLI update notifications and a new `outlit upgrade` command.
+
+- [#93](https://github.com/OutlitAI/outlit-sdk/pull/93) [`433121e`](https://github.com/OutlitAI/outlit-sdk/commit/433121e70858fbed8c90ce0747bc70173f5314bb) Thanks [@leo-paz](https://github.com/leo-paz)! - Refocus `outlit setup` on coding-agent skills, remove CLI-managed MCP setup subcommands, and add curated setup commands for Claude Code, Codex, Gemini CLI, Droid, OpenCode, and Pi.
+
+### Patch Changes
+
+- [#91](https://github.com/OutlitAI/outlit-sdk/pull/91) [`9cab5d1`](https://github.com/OutlitAI/outlit-sdk/commit/9cab5d17a08eeb0622ceb51957e8abb9be1a6340) Thanks [@leo-paz](https://github.com/leo-paz)! - Align CLI customer-surface commands with the shared tool contract registry and exact source lookup behavior.
+
+- [#92](https://github.com/OutlitAI/outlit-sdk/pull/92) [`1d54582`](https://github.com/OutlitAI/outlit-sdk/commit/1d54582329b772447faf82eba799a17eb9a6090e) Thanks [@leo-paz](https://github.com/leo-paz)! - Align the CLI with the refactored customer context tool surface, including grouped search results, exact source retrieval, and split facts list/get commands.
+
+- [#94](https://github.com/OutlitAI/outlit-sdk/pull/94) [`3943037`](https://github.com/OutlitAI/outlit-sdk/commit/394303767cc0deb905e2cc106ed9cba07b68acdc) Thanks [@leo-paz](https://github.com/leo-paz)! - Prevent `outlit setup` subcommands from falling through into the parent auto-detect installer when invoked through the CLI parser.
+
+- [#95](https://github.com/OutlitAI/outlit-sdk/pull/95) [`8ac17c0`](https://github.com/OutlitAI/outlit-sdk/commit/8ac17c02088b50c704835991cfda072cb3e60a74) Thanks [@leo-paz](https://github.com/leo-paz)! - Add `outlit setup openclaw` as a first-class setup alias for installing the Outlit skill into OpenClaw.
+
+- [#89](https://github.com/OutlitAI/outlit-sdk/pull/89) [`6186f79`](https://github.com/OutlitAI/outlit-sdk/commit/6186f7929ab4adead38a3b10d23749ba11ed9a49) Thanks [@leo-paz](https://github.com/leo-paz)! - Use the dedicated API key validation endpoint in CLI auth flows and improve upgrade-path compatibility in CI.
+
 ## 1.4.1
 
 ### Patch Changes
