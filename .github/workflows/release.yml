@@ -56,6 +56,7 @@ jobs:
     if: needs.release.outputs.published == 'true'
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: write
     steps:
       - name: Checkout
@@ -63,7 +64,7 @@ jobs:
 
       - name: Create tag and dispatch CLI binary release
         env:
-          GH_TOKEN: ${{ secrets.TAP_WORKFLOW_PAT }}
+          GH_TOKEN: ${{ github.token }}
           PUBLISHED: ${{ needs.release.outputs.publishedPackages }}
         run: |
           VERSION=$(echo "$PUBLISHED" | jq -r '.[] | select(.name == "@outlit/cli") | .version')
