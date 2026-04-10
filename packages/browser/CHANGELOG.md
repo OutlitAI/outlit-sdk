@@ -1,5 +1,16 @@
 # @outlit/browser
 
+## 1.5.0
+
+### Minor Changes
+
+- [#82](https://github.com/OutlitAI/outlit-sdk/pull/82) [`60a4633`](https://github.com/OutlitAI/outlit-sdk/commit/60a4633974467505afae0dd62fd79de93861a292) Thanks [@leo-paz](https://github.com/leo-paz)! - Remove the public `customerDomain` tracking field from the SDK surface and make `customerId` plus identify-time email linking the only supported customer-attribution path.
+
+### Patch Changes
+
+- Updated dependencies [[`60a4633`](https://github.com/OutlitAI/outlit-sdk/commit/60a4633974467505afae0dd62fd79de93861a292)]:
+  - @outlit/core@1.5.0
+
 ## 1.4.5
 
 ### Patch Changes
