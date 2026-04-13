@@ -18,7 +18,7 @@ mock.module("../../src/lib/client", () => ({
 
 function getValidateApiKeyUrl(): string {
   return new URL(
-    "/api/internal/mcp/validate-api-key",
+    "/api/validate-api-key",
     process.env.OUTLIT_API_URL ?? "https://app.outlit.ai",
   ).toString()
 }

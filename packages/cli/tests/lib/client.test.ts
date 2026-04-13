@@ -75,7 +75,7 @@ describe("client.callTool()", () => {
     }
   })
 
-  test("sends GET with query params for list endpoints", async () => {
+  test("delegates customer tools to the public tools endpoint", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const mockData = { items: [{ id: "1", name: "Acme" }], pagination: { hasMore: false } }
@@ -88,45 +88,62 @@ describe("client.callTool()", () => {
     expect(result).toEqual(mockData)
 
     const calledUrl = fetchSpy.mock.calls[0]?.[0] as string
-    expect(calledUrl).toContain("/api/internal/mcp/customers")
-    expect(calledUrl).toContain("limit=10")
-
-    const opts = fetchSpy.mock.calls[0]?.[1] as RequestInit
-    expect(opts.method).toBe("GET")
-    expect(opts.body).toBeUndefined()
-
-    fetchSpy.mockRestore()
-  })
-
-  test("sends POST with JSON body for detail endpoints", async () => {
-    process.env.OUTLIT_API_KEY = TEST_API_KEY
-
-    const mockData = { customer: { id: "1", name: "Acme" } }
-    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify(mockData), { status: 200 }),
-    )
-
-    const client = await createClient()
-    const result = await client.callTool("outlit_get_customer", {
-      customer: "acme.com",
-      include: ["users", "revenue"],
-    })
-    expect(result).toEqual(mockData)
-
-    const calledUrl = fetchSpy.mock.calls[0]?.[0] as string
-    expect(calledUrl).toContain("/api/internal/mcp/customers")
-    expect(calledUrl).not.toContain("?") // POST — no query params
+    expect(calledUrl).toContain("/api/tools/call")
 
     const opts = fetchSpy.mock.calls[0]?.[1] as RequestInit
     expect(opts.method).toBe("POST")
     const body = JSON.parse(opts.body as string) as Record<string, unknown>
-    expect(body.customer).toBe("acme.com")
-    expect(body.include).toEqual(["users", "revenue"])
+    expect(body).toEqual({
+      tool: "outlit_list_customers",
+      input: { limit: 10 },
+    })
 
     fetchSpy.mockRestore()
   })
 
-  test("routes exact fact retrieval to /facts/get", async () => {
+  test("keeps integration tools on public integration endpoints", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const fetchSpy = spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ items: [] }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ sessionId: "session_123" }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ status: "pending" }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ status: "connected" }), { status: 200 }))
+
+    const client = await createClient()
+    await client.callTool("outlit_list_integrations", { connectedOnly: true })
+    await client.callTool("outlit_connect_integration", { provider: "slack" })
+    await client.callTool("outlit_connect_status", { sessionId: "session_123" })
+    await client.callTool("outlit_disconnect_integration", { provider: "slack" })
+    await client.callTool("outlit_integration_sync_status", { provider: "slack" })
+
+    expect(fetchSpy.mock.calls[0]?.[0] as string).toContain("/api/integrations?connectedOnly=true")
+    expect(fetchSpy.mock.calls[1]?.[0] as string).toContain("/api/integrations/connect")
+    expect(fetchSpy.mock.calls[2]?.[0] as string).toContain(
+      "/api/integrations/connect/status?sessionId=session_123",
+    )
+    expect(fetchSpy.mock.calls[3]?.[0] as string).toContain("/api/integrations/disconnect")
+    expect(fetchSpy.mock.calls[4]?.[0] as string).toContain(
+      "/api/integrations/sync-status?provider=slack",
+    )
+
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[1]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[1]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({ provider: "slack" }),
+    )
+    expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[4]?.[1] as RequestInit).method).toBe("GET")
+
+    fetchSpy.mockRestore()
+  })
+
+  test("delegates exact fact retrieval through the public tools endpoint", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
@@ -140,17 +157,22 @@ describe("client.callTool()", () => {
     })
 
     const calledUrl = fetchSpy.mock.calls[0]?.[0] as string
-    expect(calledUrl).toContain("/api/internal/mcp/facts/get")
+    expect(calledUrl).toContain("/api/tools/call")
 
     const opts = fetchSpy.mock.calls[0]?.[1] as RequestInit
     const body = JSON.parse(opts.body as string) as Record<string, unknown>
-    expect(body.factId).toBe("fact_123")
-    expect(body.include).toEqual(["evidence"])
+    expect(body).toEqual({
+      tool: "outlit_get_fact",
+      input: {
+        factId: "fact_123",
+        include: ["evidence"],
+      },
+    })
 
     fetchSpy.mockRestore()
   })
 
-  test("routes exact source retrieval to /context-source", async () => {
+  test("delegates exact source retrieval through the public tools endpoint", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
@@ -164,7 +186,7 @@ describe("client.callTool()", () => {
     })
 
     const calledUrl = fetchSpy.mock.calls[0]?.[0] as string
-    expect(calledUrl).toContain("/api/internal/mcp/context-source")
+    expect(calledUrl).toContain("/api/tools/call")
 
     fetchSpy.mockRestore()
   })
@@ -204,7 +226,7 @@ describe("client.callTool()", () => {
     await expect(client.callTool("nonexistent_tool", {})).rejects.toThrow("Unknown tool")
   })
 
-  test("skips null/undefined params in GET query string", async () => {
+  test("passes customer tool input through the public tool request body", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
@@ -218,15 +240,21 @@ describe("client.callTool()", () => {
       cursor: undefined,
     })
 
-    const calledUrl = fetchSpy.mock.calls[0]?.[0] as string
-    expect(calledUrl).toContain("limit=10")
-    expect(calledUrl).not.toContain("search")
-    expect(calledUrl).not.toContain("cursor")
+    const opts = fetchSpy.mock.calls[0]?.[1] as RequestInit
+    const body = JSON.parse(opts.body as string) as Record<string, unknown>
+    expect(body).toEqual({
+      tool: "outlit_list_customers",
+      input: {
+        limit: 10,
+        search: null,
+        cursor: undefined,
+      },
+    })
 
     fetchSpy.mockRestore()
   })
 
-  test("serializes object params in GET query string as JSON", async () => {
+  test("passes object params through customer tool request bodies", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
@@ -238,15 +266,19 @@ describe("client.callTool()", () => {
       traitFilters: { segment: "enterprise", active: true, seats: 25 },
     })
 
-    const calledUrl = fetchSpy.mock.calls[0]?.[0] as string
-    expect(calledUrl).toContain(
-      encodeURIComponent('{"segment":"enterprise","active":true,"seats":25}'),
-    )
+    const opts = fetchSpy.mock.calls[0]?.[1] as RequestInit
+    const body = JSON.parse(opts.body as string) as Record<string, unknown>
+    expect(body).toEqual({
+      tool: "outlit_list_customers",
+      input: {
+        traitFilters: { segment: "enterprise", active: true, seats: 25 },
+      },
+    })
 
     fetchSpy.mockRestore()
   })
 
-  test("search always routes to /context-search", async () => {
+  test("delegates search through the public tools endpoint", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
@@ -261,8 +293,18 @@ describe("client.callTool()", () => {
     })
 
     const calledUrl = fetchSpy.mock.calls[0]?.[0] as string
-    expect(calledUrl).toContain("/api/internal/mcp/context-search")
-    expect(calledUrl).not.toContain("/api/internal/mcp/context-source")
+    expect(calledUrl).toContain("/api/tools/call")
+
+    const opts = fetchSpy.mock.calls[0]?.[1] as RequestInit
+    const body = JSON.parse(opts.body as string) as Record<string, unknown>
+    expect(body).toEqual({
+      tool: "outlit_search_customer_context",
+      input: {
+        query: "pricing",
+        sourceType: "CALL",
+        sourceId: "call_123",
+      },
+    })
 
     fetchSpy.mockRestore()
   })

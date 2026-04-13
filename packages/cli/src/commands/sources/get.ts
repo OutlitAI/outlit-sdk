@@ -1,7 +1,7 @@
+import { customerSourceTypes, customerToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { customerSourceTypes, customerToolContracts } from "../../generated/tool-contracts"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
 

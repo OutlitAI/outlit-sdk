@@ -73,7 +73,7 @@ describe("auth login", () => {
 
     expect(fetchCalls).toEqual([
       [
-        "https://app.outlit.ai/api/internal/mcp/validate-api-key",
+        "https://app.outlit.ai/api/validate-api-key",
         {
           method: "POST",
           headers: {

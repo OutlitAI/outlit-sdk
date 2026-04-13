@@ -43,7 +43,7 @@ export async function getClientOrExit(
  */
 export async function pingApiKey(apiKey: string): Promise<void> {
   const baseUrl = process.env.OUTLIT_API_URL ?? DEFAULT_API_URL
-  const url = new URL("/api/internal/mcp/validate-api-key", baseUrl).toString()
+  const url = new URL("/api/validate-api-key", baseUrl).toString()
 
   const response = await globalThis.fetch(url, {
     method: "POST",

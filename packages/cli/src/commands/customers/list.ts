@@ -1,3 +1,4 @@
+import { customerBillingStatuses, customerToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import {
@@ -9,7 +10,6 @@ import {
 } from "../../args/filters"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
-import { customerBillingStatuses, customerToolContracts } from "../../generated/tool-contracts"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { formatCents, relativeDate, truncate } from "../../lib/format"
 import { outputError } from "../../lib/output"

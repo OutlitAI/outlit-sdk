@@ -1,11 +1,11 @@
-import { defineCommand } from "citty"
-import { authArgs } from "../args/auth"
-import { AGENT_JSON_HINT, outputArgs } from "../args/output"
 import {
   customerSourceTypes,
   customerToolContracts,
   resolveCustomerContextSearchInput,
-} from "../generated/tool-contracts"
+} from "@outlit/tools"
+import { defineCommand } from "citty"
+import { authArgs } from "../args/auth"
+import { AGENT_JSON_HINT, outputArgs } from "../args/output"
 import { getClientOrExit, runTool } from "../lib/api"
 import { splitCsv } from "../lib/config"
 import { outputError } from "../lib/output"
