@@ -1,3 +1,4 @@
+import { createOutlitClient, isCustomerToolName } from "@outlit/tools"
 import { DEFAULT_API_URL, OUTLIT_DASHBOARD_URL, resolveApiKey } from "./config"
 
 export interface OutlitClient {
@@ -18,28 +19,18 @@ export interface OutlitClient {
 // Widened from {32} to {32,} since real API keys may be longer than 32 suffix chars.
 const API_KEY_REGEX = /^ok_[A-Za-z0-9_-]{32,}$/
 
-/** Maps CLI tool names to Platform REST endpoints. */
-const TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string }> = {
-  outlit_list_customers: { method: "GET", path: "/api/internal/mcp/customers" },
-  outlit_get_customer: { method: "POST", path: "/api/internal/mcp/customers" },
-  outlit_list_users: { method: "GET", path: "/api/internal/mcp/users" },
-  outlit_get_timeline: { method: "POST", path: "/api/internal/mcp/timeline" },
-  outlit_list_facts: { method: "POST", path: "/api/internal/mcp/facts" },
-  outlit_get_fact: { method: "POST", path: "/api/internal/mcp/facts/get" },
-  outlit_get_source: { method: "POST", path: "/api/internal/mcp/context-source" },
-  outlit_schema: { method: "GET", path: "/api/internal/mcp/sql-schema" },
-  outlit_query: { method: "POST", path: "/api/internal/mcp/sql" },
-  outlit_search_customer_context: { method: "POST", path: "/api/internal/mcp/context-search" },
-  outlit_list_integrations: { method: "GET", path: "/api/internal/mcp/integrations" },
-  outlit_connect_integration: { method: "POST", path: "/api/internal/mcp/integrations/connect" },
-  outlit_connect_status: { method: "GET", path: "/api/internal/mcp/integrations/connect/status" },
+/** Maps CLI integration-management tools to Platform REST endpoints. */
+const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string }> = {
+  outlit_list_integrations: { method: "GET", path: "/api/integrations" },
+  outlit_connect_integration: { method: "POST", path: "/api/integrations/connect" },
+  outlit_connect_status: { method: "GET", path: "/api/integrations/connect/status" },
   outlit_disconnect_integration: {
     method: "POST",
-    path: "/api/internal/mcp/integrations/disconnect",
+    path: "/api/integrations/disconnect",
   },
   outlit_integration_sync_status: {
     method: "GET",
-    path: "/api/internal/mcp/integrations/sync-status",
+    path: "/api/integrations/sync-status",
   },
 }
 
@@ -88,12 +79,20 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
   }
 
   const baseUrl = process.env.OUTLIT_API_URL ?? DEFAULT_API_URL
+  const toolsClient = createOutlitClient({
+    apiKey: credential.key,
+    baseUrl,
+  })
 
   return {
     key: credential.key,
     baseUrl,
     async callTool(toolName: string, params: Record<string, unknown>) {
-      const endpoint = TOOL_ENDPOINTS[toolName]
+      if (isCustomerToolName(toolName)) {
+        return toolsClient.callTool(toolName, params)
+      }
+
+      const endpoint = CLI_TOOL_ENDPOINTS[toolName]
       if (!endpoint) {
         throw new Error(`Unknown tool: ${toolName}`)
       }

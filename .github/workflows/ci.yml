@@ -94,6 +94,11 @@ jobs:
           else
             echo "cli=false" >> "$GITHUB_OUTPUT"
           fi
+          if [ -n "$ROOT_CHANGED" ] || echo "$CHANGED" | grep -q '^packages/tools/'; then
+            echo "tools=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "tools=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Get Playwright version
         if: steps.changes.outputs.browser == 'true'
@@ -132,6 +137,11 @@ jobs:
           bun test $(find tests -name '*.test.ts' \
             ! -path 'tests/lib/config.test.ts' \
             ! -path 'tests/lib/client.test.ts' | tr '\n' ' ')
+
+      - name: Run tools tests
+        if: steps.changes.outputs.tools == 'true'
+        working-directory: packages/tools
+        run: bun run test
 
   rust:
     name: Rust CI

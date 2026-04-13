@@ -1,7 +1,7 @@
+import { customerToolContracts, schemaTables } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
-import { customerToolContracts, schemaTables } from "../generated/tool-contracts"
 import { getClientOrExit, runTool } from "../lib/api"
 
 export default defineCommand({
