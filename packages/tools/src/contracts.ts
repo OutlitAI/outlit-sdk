@@ -574,6 +574,8 @@ export type CustomerToolContract = {
 }
 
 const customerToolNameSet = new Set<string>(customerToolNames)
+const iso8601UtcDateTimeRegex =
+  /^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$/
 
 export function isCustomerToolName(value: string): value is CustomerToolName {
   return customerToolNameSet.has(value)
@@ -622,11 +624,25 @@ export function resolveCustomerContextSearchInput(value: SearchArgsLike):
     }
   }
 
+  if (value.after !== undefined && !iso8601UtcDateTimeRegex.test(value.after)) {
+    return {
+      ok: false,
+      message: "--after must be a valid ISO 8601 datetime",
+    }
+  }
+
   const afterTime = value.after === undefined ? undefined : new Date(value.after).getTime()
   if (afterTime !== undefined && Number.isNaN(afterTime)) {
     return {
       ok: false,
       message: "--after must be a valid ISO 8601 datetime",
+    }
+  }
+
+  if (value.before !== undefined && !iso8601UtcDateTimeRegex.test(value.before)) {
+    return {
+      ok: false,
+      message: "--before must be a valid ISO 8601 datetime",
     }
   }
 

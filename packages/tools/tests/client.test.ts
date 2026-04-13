@@ -94,4 +94,16 @@ describe("resolveCustomerContextSearchInput", () => {
       message: "--before must be a valid ISO 8601 datetime",
     })
   })
+
+  test("rejects date-only filters because the schema requires datetimes", () => {
+    expect(
+      resolveCustomerContextSearchInput({
+        query: "churn risk",
+        after: "2025-01-01",
+      }),
+    ).toEqual({
+      ok: false,
+      message: "--after must be a valid ISO 8601 datetime",
+    })
+  })
 })
