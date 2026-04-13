@@ -16,7 +16,7 @@ export type OutlitToolsClientOptions = {
 export type OutlitToolsClient = {
   key: string
   baseUrl: string
-  callTool(toolName: CustomerToolName | string, input?: Record<string, unknown>): Promise<unknown>
+  callTool(toolName: CustomerToolName, input?: Record<string, unknown>): Promise<unknown>
 }
 
 export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToolsClient {

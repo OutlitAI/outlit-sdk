@@ -585,7 +585,7 @@ export function getCustomerToolContract(name: CustomerToolName): CustomerToolCon
 
 export type SearchArgsLike = {
   query?: string
-  customer?: string
+  customer?: string | null
   topK?: number
   after?: string
   before?: string
@@ -594,7 +594,7 @@ export type SearchArgsLike = {
 
 export type CustomerContextSearchInput = {
   query: string
-  customer?: string
+  customer?: string | null
   topK?: number
   after?: string
   before?: string
@@ -622,11 +622,23 @@ export function resolveCustomerContextSearchInput(value: SearchArgsLike):
     }
   }
 
-  if (
-    value.after !== undefined &&
-    value.before !== undefined &&
-    new Date(value.after).getTime() > new Date(value.before).getTime()
-  ) {
+  const afterTime = value.after === undefined ? undefined : new Date(value.after).getTime()
+  if (afterTime !== undefined && Number.isNaN(afterTime)) {
+    return {
+      ok: false,
+      message: "--after must be a valid ISO 8601 datetime",
+    }
+  }
+
+  const beforeTime = value.before === undefined ? undefined : new Date(value.before).getTime()
+  if (beforeTime !== undefined && Number.isNaN(beforeTime)) {
+    return {
+      ok: false,
+      message: "--before must be a valid ISO 8601 datetime",
+    }
+  }
+
+  if (afterTime !== undefined && beforeTime !== undefined && afterTime > beforeTime) {
     return {
       ok: false,
       message: "--after must be before or equal to --before",

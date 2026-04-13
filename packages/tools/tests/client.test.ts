@@ -2,8 +2,10 @@ import { describe, expect, test, vi } from "vitest"
 
 import {
   allCustomerToolNames,
+  type CustomerContextSearchInput,
   createOutlitClient,
   defaultAgentToolNames,
+  resolveCustomerContextSearchInput,
   sqlToolNames,
 } from "../src/index.js"
 
@@ -54,8 +56,42 @@ describe("createOutlitClient", () => {
       fetch: vi.fn(),
     })
 
+    // @ts-expect-error Runtime guard should still reject invalid external input.
     await expect(client.callTool("outlit_connect_integration", {})).rejects.toThrow(
       "Unknown customer tool",
     )
+  })
+})
+
+describe("resolveCustomerContextSearchInput", () => {
+  test("allows a null customer filter to match the schema contract", () => {
+    const input: CustomerContextSearchInput = {
+      query: "churn risk",
+      customer: null,
+    }
+
+    expect(input.customer).toBeNull()
+  })
+
+  test("rejects malformed date filters", () => {
+    expect(
+      resolveCustomerContextSearchInput({
+        query: "churn risk",
+        after: "not-a-date",
+      }),
+    ).toEqual({
+      ok: false,
+      message: "--after must be a valid ISO 8601 datetime",
+    })
+
+    expect(
+      resolveCustomerContextSearchInput({
+        query: "churn risk",
+        before: "still-not-a-date",
+      }),
+    ).toEqual({
+      ok: false,
+      message: "--before must be a valid ISO 8601 datetime",
+    })
   })
 })

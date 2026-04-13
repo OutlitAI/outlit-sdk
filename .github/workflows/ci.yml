@@ -89,7 +89,7 @@ jobs:
           else
             echo "browser=false" >> "$GITHUB_OUTPUT"
           fi
-          if [ -n "$ROOT_CHANGED" ] || echo "$CHANGED" | grep -q '^packages/cli/'; then
+          if [ -n "$ROOT_CHANGED" ] || echo "$CHANGED" | grep -qE '^packages/(cli|tools)/'; then
             echo "cli=true" >> "$GITHUB_OUTPUT"
           else
             echo "cli=false" >> "$GITHUB_OUTPUT"
