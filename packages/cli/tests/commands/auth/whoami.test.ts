@@ -17,13 +17,7 @@ mock.module("../../../src/lib/client", () => ({
 
 import { default as whoamiCmd } from "../../../src/commands/auth/whoami"
 import * as configModule from "../../../src/lib/config"
-import {
-  ExitError,
-  expectErrorExit,
-  mockExitThrow,
-  setInteractive,
-  setNonInteractive,
-} from "../../helpers"
+import { expectErrorExit, mockExitThrow, setInteractive, setNonInteractive } from "../../helpers"
 
 setNonInteractive()
 
@@ -68,15 +62,12 @@ describe("auth whoami", () => {
       } as Parameters<NonNullable<typeof whoamiCmd.run>>[0])
 
       expect(fetchSpy).toHaveBeenCalledTimes(1)
-      expect(fetchSpy).toHaveBeenCalledWith(
-        "https://app.outlit.ai/api/internal/mcp/validate-api-key",
-        {
-          method: "POST",
-          headers: {
-            Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
-          },
+      expect(fetchSpy).toHaveBeenCalledWith("https://app.outlit.ai/api/validate-api-key", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
         },
-      )
+      })
 
       stdoutOutput = stdoutSpy.mock.calls.map((c) => c[0] as string).join("")
     } finally {
@@ -109,15 +100,12 @@ describe("auth whoami", () => {
       } as Parameters<NonNullable<typeof whoamiCmd.run>>[0])
 
       expect(fetchSpy).toHaveBeenCalledTimes(1)
-      expect(fetchSpy).toHaveBeenCalledWith(
-        "https://app.outlit.ai/api/internal/mcp/validate-api-key",
-        {
-          method: "POST",
-          headers: {
-            Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
-          },
+      expect(fetchSpy).toHaveBeenCalledWith("https://app.outlit.ai/api/validate-api-key", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
         },
-      )
+      })
 
       stdoutOutput = stdoutSpy.mock.calls.map((c) => c[0] as string).join("")
     } finally {
@@ -151,15 +139,12 @@ describe("auth whoami", () => {
     } catch (e) {
       thrown = e
       expect(fetchSpy).toHaveBeenCalledTimes(1)
-      expect(fetchSpy).toHaveBeenCalledWith(
-        "https://app.outlit.ai/api/internal/mcp/validate-api-key",
-        {
-          method: "POST",
-          headers: {
-            Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
-          },
+      expect(fetchSpy).toHaveBeenCalledWith("https://app.outlit.ai/api/validate-api-key", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
         },
-      )
+      })
       stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
     } finally {
       resolveApiKeySpy.mockRestore()

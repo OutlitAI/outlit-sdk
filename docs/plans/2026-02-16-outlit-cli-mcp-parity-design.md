@@ -79,17 +79,10 @@ This plan requires coordinated changes in `Core` (platform + hosted MCP server).
 
 - Hosted MCP server: `apps/mcp/app/mcp/route.ts`
 - MCP server HTTP client to platform: `apps/mcp/lib/platform-client.ts`
-- Platform auth gate: `apps/platform/lib/api/internal-mcp-auth.ts`
-- Platform internal MCP routes:
-  - `apps/platform/app/api/internal/mcp/customers/route.ts`
-  - `apps/platform/app/api/internal/mcp/users/route.ts`
-  - `apps/platform/app/api/internal/mcp/timeline/route.ts`
-  - `apps/platform/app/api/internal/mcp/facts/route.ts`
-  - `apps/platform/app/api/internal/mcp/context-search/route.ts`
-  - `apps/platform/app/api/internal/mcp/sql/route.ts`
-  - `apps/platform/app/api/internal/mcp/sql-schema/route.ts`
-  - `apps/platform/app/api/internal/mcp/revenue/route.ts`
-  - `apps/platform/app/api/internal/mcp/validate-api-key/route.ts`
+- Platform API-key auth gate
+- Public platform tool routes:
+  - `POST /api/tools/call`
+  - `POST /api/validate-api-key`
 
 Important: there is another consumer that calls these same routes directly (Outlit agent workflow tools), but this is a secondary Slack-bot integration and should not drive primary CLI/MCP architecture decisions. Contract changes should consider it for compatibility, not as a design constraint:
 
@@ -99,17 +92,17 @@ Important: there is another consumer that calls these same routes directly (Outl
 
 ### Auth state today
 
-- Internal routes currently authenticate via:
+- Platform tool routes currently authenticate via:
   1. `x-internal-secret` + `x-internal-org-id` (trusted service path)
   2. `Authorization: Bearer ok_*` (MCP API keys)
-- This is implemented in `apps/platform/lib/api/internal-mcp-auth.ts`.
+- This is implemented in the platform API-key auth layer.
 - Hosted MCP server validates `ok_*` keys via `validate-api-key` and then forwards org context.
 
 Implication: public CLI cannot rely on internal-secret auth and should not use it.
 
 ### Response shape state today
 
-- Response and error shapes are not fully uniform across internal MCP routes.
+- Response and error shapes are not fully uniform across platform tool routes.
 - Most routes return route-specific JSON payloads on success and `{ error, details? }` on failure.
 - SQL route returns `executeRawSql()` result object directly (different shape semantics).
 - MCP server tools stringify route responses into text content without canonical envelope guarantees.
@@ -118,8 +111,8 @@ Implication: parity and agent-debug reliability require explicit envelope normal
 
 ### Trace/correlation state today
 
-- MCP server client (`apps/mcp/lib/platform-client.ts`) currently forwards `x-internal-secret` and `x-internal-org-id`, but not `x-request-id` / `x-trace-id`.
-- Internal MCP route handlers do not currently use `createRequestContext` / `withRequestContext` directly.
+- MCP server client (`apps/mcp/lib/platform-client.ts`) currently forwards service auth context, but not `x-request-id` / `x-trace-id`.
+- Platform tool route handlers do not currently use `createRequestContext` / `withRequestContext` directly.
 - Existing platform logging context supports request/trace IDs, but MCP path is not consistently wiring adapter-generated IDs through.
 
 Implication: request-level cross-surface debugging is incomplete today.
@@ -128,7 +121,7 @@ Implication: request-level cross-surface debugging is incomplete today.
 
 ### A) Introduce shared MCP/CLI envelope contract in platform
 
-Create shared response helpers in `Core` (for example `apps/platform/lib/api/mcp-response.ts`) and migrate all internal MCP routes to use them.
+Create shared response helpers in `Core` and migrate platform tool routes to use them.
 
 Requirements:
 
@@ -138,7 +131,7 @@ Requirements:
 - `meta.source` reflects route execution source (`remote` for platform APIs)
 - `meta.requestId` included only when available
 
-Apply to every route under `apps/platform/app/api/internal/mcp/*` so all operations are consistent.
+Apply to every hosted tool operation so all operations are consistent.
 
 ### B) Add correlation propagation + response headers
 
@@ -183,7 +176,7 @@ Return canonical `UPGRADE_REQUIRED` when below minimum.
 
 ### E) Keep internal consumers compatible (non-blocking)
 
-`apps/platform/lib/outlit-agent/tools.ts` currently expects raw text bodies from internal routes. This is a small Slack agent integration and should be treated as a follow-on compatibility task, not a blocker for core CLI/MCP parity work. During migration:
+`apps/platform/lib/outlit-agent/tools.ts` currently expects raw text bodies from the legacy platform tool path. This is a small Slack agent integration and should be treated as a follow-on compatibility task, not a blocker for core CLI/MCP parity work. During migration:
 
 - either update it to parse canonical envelope,
 - or provide temporary compatibility unwrapping until fully migrated.
@@ -192,7 +185,7 @@ Do not break workflow tooling while introducing parity contracts, but prioritize
 
 ### F) Route-by-route migration checklist
 
-For each route in `apps/platform/app/api/internal/mcp/*`:
+For each hosted tool operation:
 
 1. convert success and failure responses to canonical envelope,
 2. map validation/auth/not-found/rate-limit/internal errors to canonical error codes,
