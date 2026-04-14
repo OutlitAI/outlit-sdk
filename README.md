@@ -4,11 +4,14 @@ TypeScript SDK for the Outlit events ingestion API. Track user interactions, pag
 
 ## Packages
 
-This monorepo contains three packages under the `@outlit` scope:
+This monorepo contains these packages under the `@outlit` scope:
 
 - **[@outlit/core](./packages/core)** - Core SDK functionality and base client
 - **[@outlit/browser](./packages/browser)** - Browser-specific SDK with automatic page view tracking
 - **[@outlit/node](./packages/node)** - Node.js SDK for server-side event tracking
+- **[@outlit/cli](./packages/cli)** - CLI for Outlit customer intelligence
+- **[@outlit/tools](./packages/tools)** - Customer intelligence tool contracts and client helpers
+- **[@outlit/pi](./packages/pi)** - Pi package for Outlit customer intelligence tools
 
 ## Installation
 
@@ -158,6 +161,10 @@ await outlit.flush()
 - **High Performance** - Minimal overhead and efficient batching
 - **Type Safe** - Full TypeScript support with strict types
 
+## Examples
+
+- **[Pi agents](./examples/pi-agents)** - Build customer intelligence agents in Pi with `@outlit/pi`
+
 ## Development
 
 This project uses a modern monorepo setup with the following tools:
@@ -197,10 +204,15 @@ bun run format
 ```
 outlit-sdk/
 ├── .github/workflows/   # CI/CD workflows
+├── examples/
+│   └── pi-agents/       # Example Pi agents using @outlit/pi
 ├── packages/
 │   ├── browser/         # Browser SDK with React bindings
+│   ├── cli/             # Outlit CLI
 │   ├── core/            # Shared types and utilities
 │   ├── node/            # Node.js SDK
+│   ├── pi/              # Pi package for Outlit tools
+│   ├── tools/           # Customer intelligence tool contracts
 │   └── typescript-config/  # Shared TypeScript configs
 ├── package.json         # Root package with workspace config
 ├── bun.lock             # Bun lockfile

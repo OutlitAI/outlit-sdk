@@ -1,0 +1,40 @@
+{
+  "name": "outlit-pi-agents-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Example Pi agents built with Outlit customer intelligence tools",
+  "keywords": [
+    "outlit",
+    "pi-package",
+    "customer-intelligence",
+    "churn"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions/outlit-churn-agent.ts"
+    ],
+    "skills": [
+      "./skills",
+      "./node_modules/@outlit/pi/skills"
+    ],
+    "prompts": [
+      "./prompts"
+    ]
+  },
+  "scripts": {
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@outlit/pi": "^0.1.0"
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*",
+    "@sinclair/typebox": "*"
+  },
+  "devDependencies": {
+    "@mariozechner/pi-coding-agent": "^0.67.1",
+    "@sinclair/typebox": "^0.34.41",
+    "typescript": "^5.9.3"
+  }
+}
