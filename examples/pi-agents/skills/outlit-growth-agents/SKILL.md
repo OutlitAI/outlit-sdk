@@ -1,0 +1,146 @@
+---
+name: outlit-growth-agents
+description: Use Outlit customer intelligence tools to run usage-decay churn, friction-to-churn, activation-failure, or expansion-readiness reviews.
+---
+
+# Outlit Growth Agents
+
+Use Outlit tools to ground customer signal work in actual customer data. These agents are meant for PLG, month-to-month, and hybrid SaaS businesses where churn or expansion may show up through behavior, billing, conversations, and support context rather than annual renewal dates.
+
+## Shared Review Process
+
+1. Identify the task type:
+   - Usage decay churn: paying accounts that may cancel because product engagement is weakening.
+   - Friction-to-churn: accounts where unresolved product or support pain is becoming retention risk.
+   - Activation failure: trials, new accounts, or recently converted accounts that are not reaching first value.
+   - Expansion readiness: healthy customers with evidence they may upgrade, add seats, or buy more.
+2. Discover candidates.
+   - Use `outlit_schema` before SQL when you need table names, columns, or valid query surfaces.
+   - Use `outlit_query` for cohorts, usage trends, active-user counts, activation gaps, revenue filters, event aggregates, and repeated signal patterns.
+   - Use `outlit_list_customers` for portfolio scans, billing status, MRR, activity recency, and customer search.
+   - Use `outlit_list_users` when account-level behavior depends on user activation, active users, or champion disappearance.
+   - Use `outlit_search_customer_context` for thematic discovery across customers.
+3. Gather account evidence.
+   - Use `outlit_get_customer` with relevant includes before deep analysis.
+   - Prefer stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
+   - Use `outlit_get_timeline` when recency, sequence, or behavior changes matter.
+   - Use `outlit_list_facts` for known account facts, health indicators, support issues, billing context, activation context, and relationship notes. Use `factTypes` and `factCategories` to narrow extracted customer-memory facts when helpful.
+   - Use `outlit_get_fact` or `outlit_get_source` when a claim needs stronger evidence.
+4. Rank only after reviewing evidence.
+   - Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
+   - Prefer stronger evidence over generic SaaS heuristics.
+   - Prefer paying customers for churn and expansion work.
+   - For activation failure, include trials and newly converted customers.
+   - Say when data is sparse, stale, or contradictory.
+
+## Signal Boundaries
+
+Keep these categories separate:
+
+- Usage decay churn: reduced or stale product behavior for a paying account, especially after prior engagement.
+- Friction-to-churn: unresolved blocker, failed integration, bug, complaint, or support issue that threatens value realization.
+- Activation failure: account has not reached first value for its lifecycle stage.
+- Expansion readiness: account shows buying intent, capacity pressure, plan-limit pain, seat growth, or strong value realization.
+- Renewal or procurement risk: contract, legal, pricing, or procurement risk. Do not call this churn unless there is cancellation, downgrade, non-use, or failed value realization evidence.
+- Billing cancellation, subscription pause, legal review, procurement delay, or renewal risk can support a finding, but they do not replace the specific evidence required by each agent.
+- Behavioral/anomaly fact types can be useful if present, but do not require or assume them. Many customers will not have configured core actions, activation paths, or funnel paths. Use SQL over events/users/revenue as the primary source for usage decay and activation analysis.
+
+## Useful Fact Filters
+
+When calling `outlit_list_facts`, prefer non-behavioral customer-memory filters:
+
+- Usage decay churn: `factTypes: ["CHURN_RISK", "SENTIMENT", "PRODUCT_USAGE", "CHAMPION_RISK", "BUDGET"]`, usually with `factCategories: ["MEMORY"]`.
+- Friction-to-churn: `factTypes: ["CHURN_RISK", "SENTIMENT", "REQUIREMENTS", "PRODUCT_USAGE"]`, usually with `factCategories: ["MEMORY"]`; use `sourceTypes: ["SUPPORT_TICKET"]` when looking for support-backed evidence.
+- Activation failure: `factTypes: ["REQUIREMENTS", "PRODUCT_USAGE", "SENTIMENT", "CHURN_RISK"]`, usually with `factCategories: ["MEMORY"]`.
+- Expansion readiness: `factTypes: ["EXPANSION", "PRODUCT_USAGE", "REQUIREMENTS", "SENTIMENT"]`, usually with `factCategories: ["MEMORY"]`.
+
+Do not request `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF` as fact filters. Those come from anomaly detectors and are not part of the public filter surface for these agents.
+
+## Agent-Specific Guidance
+
+### Usage Decay Churn
+
+Look for:
+
+- declining usage or fewer active users
+- stale recent activity after prior engagement
+- core workflows no longer used
+- power users or champions disappearing
+- paying accounts with no meaningful product activity
+
+Avoid:
+
+- ranking a customer only because usage is low
+- ranking subscription cancellation, subscription pause, renewal negotiation, legal review, or procurement delay as usage decay unless there is also declining or stale product usage
+- treating a new or tiny customer like a mature account
+- treating renewal negotiation as churn without product or cancellation evidence
+
+### Friction-to-Churn
+
+Look for:
+
+- repeated complaints
+- unresolved blockers
+- failed implementation or integration attempts
+- negative sentiment tied to value realization
+- support pain paired with usage decay, payment risk, or disengagement
+
+Avoid:
+
+- treating support volume alone as risk
+- ignoring customers who are noisy because they are deeply engaged
+- treating legal review, procurement delay, security addendum negotiation, renewal pushback, or generic spend pressure as product or support friction
+- filling the ranking with generic churn-risk, renewal-risk, spend-pressure, or usage-slowdown accounts when direct product, implementation, integration, bug, support, or blocker evidence is missing
+
+### Activation Failure
+
+Look for:
+
+- trial or new account with no activation event
+- setup started but stalled
+- onboarding or integration blockers
+- conversation interest without product follow-through
+- no payment method or no team adoption after initial signup
+
+Avoid:
+
+- calling an account failed just because it is early
+- ignoring stated intent if the product behavior contradicts it
+- ranking mature paying churn-risk accounts unless they are clearly still pre-activation or post-sale onboarding is incomplete
+- classifying explicit external, anonymous, test, or API-only pseudo-customers as activation failures unless they have a real customer identity and lifecycle evidence
+- rejecting a candidate solely because sandbox or demo data uses generic names or domains; require stronger pseudo-customer evidence, such as unknown domain, external org placeholder, API-only identity, no users, and no lifecycle trail
+
+### Expansion Readiness
+
+Look for:
+
+- usage growth across users, teams, or workflows
+- plan limits, seat pressure, or volume constraints
+- starter/small-plan accounts with power-user behavior
+- positive sentiment and clear value realization
+- questions about premium capabilities or adjacent use cases
+
+Avoid:
+
+- treating healthy usage alone as expansion intent
+- ranking plan mismatch, high MRR, or broad feature usage without buying intent, plan-limit pain, capacity pressure, seat or team growth, or a premium-feature request
+- recommending outreach without a concrete expansion path
+
+## Output Rules
+
+For portfolio reviews, return a compact table first:
+
+```markdown
+| Customer | Signal | Confidence | Why now | Recommended action |
+| --- | --- | --- | --- | --- |
+```
+
+Then include short evidence notes for each ranked customer:
+
+- customer name and domain
+- billing or lifecycle context
+- evidence used
+- why the category applies
+- what would change the assessment
+
+Do not send messages, create tasks, update CRM records, or take external actions unless the user explicitly asks and the necessary tools are available.

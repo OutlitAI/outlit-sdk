@@ -42,7 +42,7 @@ describe("completions command", () => {
       'search) COMPREPLY=($(compgen -W "--api-key --json --customer --top-k --after --before --source-types"',
     )
     expect(out).toContain(
-      'facts.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --source-types --after --before"',
+      'facts.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --source-types --fact-types --fact-categories --after --before"',
     )
     expect(out).toContain(
       'facts.get) COMPREPLY=($(compgen -W "--api-key --json --fact-id --include"',

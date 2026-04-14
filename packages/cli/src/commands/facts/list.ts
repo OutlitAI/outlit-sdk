@@ -1,4 +1,11 @@
-import { customerFactStatuses, customerSourceTypes, customerToolContracts } from "@outlit/tools"
+import {
+  customerFactCategories,
+  customerFactStatuses,
+  customerFactTypes,
+  customerSourceTypes,
+  customerToolContracts,
+  unsupportedCustomerFactTypes,
+} from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
@@ -33,11 +40,13 @@ export default defineCommand({
       "Examples:",
       "  outlit facts list acme.com",
       "  outlit facts list acme.com --status ACTIVE",
+      "  outlit facts list acme.com --fact-types CHURN_RISK,EXPANSION --fact-categories MEMORY",
       "  outlit facts list acme.com --source-types CALL,EMAIL --after 2025-01-01T00:00:00Z",
       "  outlit facts list acme.com --limit 50 --json",
       "",
       `Statuses: ${customerFactStatuses.join(", ")}`,
       `Source types: ${customerSourceTypes.join(", ")}`,
+      `Fact categories: ${customerFactCategories.join(", ")}`,
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -59,6 +68,15 @@ export default defineCommand({
       type: "string",
       description: `Comma-separated generic source type filter (${customerSourceTypes.join(", ")})`,
     },
+    "fact-types": {
+      type: "string",
+      description:
+        "Comma-separated customer-memory fact type filter, such as CHURN_RISK, EXPANSION, or SENTIMENT",
+    },
+    "fact-categories": {
+      type: "string",
+      description: `Comma-separated fact category filter (${customerFactCategories.join(", ")})`,
+    },
     after: {
       type: "string",
       description: "Filter to facts occurring after this ISO 8601 datetime",
@@ -72,6 +90,8 @@ export default defineCommand({
     const json = !!args.json
     const statuses = parseCsvArg(args.status)
     const sourceTypes = parseCsvArg(args["source-types"])
+    const factTypes = parseCsvArg(args["fact-types"])
+    const factCategories = parseCsvArg(args["fact-categories"])
 
     const invalidStatuses = invalidValues(statuses, customerFactStatuses)
     if (invalidStatuses.length > 0) {
@@ -89,6 +109,53 @@ export default defineCommand({
       return outputError(
         {
           message: `Unknown source types: ${invalidSourceTypes.join(", ")}. Allowed: ${customerSourceTypes.join(", ")}`,
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+
+    const invalidFactTypes = invalidValues(factTypes, customerFactTypes)
+    if (invalidFactTypes.length > 0) {
+      const anomalyFactTypes = invalidFactTypes.filter((value) =>
+        unsupportedCustomerFactTypes.includes(
+          value as (typeof unsupportedCustomerFactTypes)[number],
+        ),
+      )
+      const unknownFactTypes = invalidFactTypes.filter(
+        (value) =>
+          !unsupportedCustomerFactTypes.includes(
+            value as (typeof unsupportedCustomerFactTypes)[number],
+          ),
+      )
+      const messageParts: string[] = []
+
+      if (anomalyFactTypes.length > 0) {
+        messageParts.push(
+          `Anomaly detector fact types are not supported as public filters: ${anomalyFactTypes.join(", ")}. Use customer-memory fact types such as CHURN_RISK, EXPANSION, SENTIMENT, or PRODUCT_USAGE.`,
+        )
+      }
+
+      if (unknownFactTypes.length > 0) {
+        messageParts.push(
+          `Unknown fact types: ${unknownFactTypes.join(", ")}. Allowed: ${customerFactTypes.join(", ")}`,
+        )
+      }
+
+      return outputError(
+        {
+          message: messageParts.join(" "),
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+
+    const invalidFactCategories = invalidValues(factCategories, customerFactCategories)
+    if (invalidFactCategories.length > 0) {
+      return outputError(
+        {
+          message: `Unsupported fact categories: ${invalidFactCategories.join(", ")}. Allowed: ${customerFactCategories.join(", ")}`,
           code: "invalid_input",
         },
         json,
@@ -135,6 +202,8 @@ export default defineCommand({
     }
     if (statuses) params.status = statuses
     if (sourceTypes) params.sourceTypes = sourceTypes
+    if (factTypes) params.factTypes = factTypes
+    if (factCategories) params.factCategories = factCategories
     if (args.after) params.after = args.after
     if (args.before) params.before = args.before
     applyPagination(params, args, json)

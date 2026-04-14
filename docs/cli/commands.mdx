@@ -321,6 +321,8 @@ outlit facts get --fact-id <id> [flags]
 |------|------|---------|-------------|
 | `--status` | string | — | Comma-separated fact status filter: `ACTIVE`, `ACKNOWLEDGED`, `RESOLVED`, `SNOOZED`, `CANDIDATE` |
 | `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET` |
+| `--fact-types` | string | — | Comma-separated customer-memory fact type filter: e.g. `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `PRODUCT_USAGE` |
+| `--fact-categories` | string | — | Comma-separated fact category filter: `MEMORY`, `CUSTOM` |
 | `--after` | string | — | Lower bound on fact occurrence time (ISO 8601 datetime) |
 | `--before` | string | — | Upper bound on fact occurrence time (ISO 8601 datetime) |
 | `--limit` | number | `20` | Results per page (1–100) |
@@ -342,6 +344,9 @@ outlit facts list acme.com
 # Filter by status and source type
 outlit facts list acme.com --status ACTIVE --source-types CALL,EMAIL --after 2025-01-01T00:00:00Z
 
+# Filter customer-memory facts by public fact type and category
+outlit facts list acme.com --fact-types CHURN_RISK,PRODUCT_USAGE --fact-categories MEMORY
+
 # Pipe for processing
 outlit facts list acme.com --json | jq '.facts[] | select(.severity == "HIGH")'
 
@@ -362,8 +367,8 @@ outlit facts get --fact-id fact_123 --include evidence
     {
       "id": "fact-uuid",
       "assertion": "Budget concerns raised",
-      "factType": "SIGNAL",
-      "factCategory": "COMMERCIAL",
+      "factType": "BUDGET",
+      "factCategory": "MEMORY",
       "status": "ACTIVE",
       "confidence": 0.92,
       "severity": "HIGH",

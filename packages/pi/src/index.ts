@@ -143,6 +143,11 @@ function firstLine(value: string): string {
 }
 
 export type { CustomerToolName } from "@outlit/tools"
-export { allCustomerToolNames, defaultAgentToolNames, sqlToolNames } from "@outlit/tools"
+export {
+  allCustomerToolNames,
+  analyticalAgentToolNames,
+  defaultAgentToolNames,
+  sqlToolNames,
+} from "@outlit/tools"
 
 export default createOutlitPiExtension()

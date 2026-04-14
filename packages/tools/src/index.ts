@@ -10,8 +10,10 @@ export type {
 export {
   customerActivityWindows,
   customerBillingStatuses,
+  customerFactCategories,
   customerFactIncludes,
   customerFactStatuses,
+  customerFactTypes,
   customerIncludeSections,
   customerListOrderFields,
   customerSourceTypes,
@@ -25,12 +27,14 @@ export {
   schemaTables,
   timelineChannels,
   timelineTimeframes,
+  unsupportedCustomerFactTypes,
   userJourneyStages,
   userListOrderFields,
 } from "./contracts.js"
 
 export {
   allCustomerToolNames,
+  analyticalAgentToolNames,
   defaultAgentToolNames,
   sqlToolNames,
 } from "./toolsets.js"

@@ -17,7 +17,7 @@ Do not invent customer state when Outlit can answer it. Call out sparse or messy
 - Use `outlit_list_users` for user-level questions or when a customer answer depends on individual users.
 - Use `outlit_get_customer` before deep analysis of a named customer or account.
 - Use `outlit_get_timeline` when order, recency, activity sequence, meetings, messages, product usage, support, or billing chronology matters.
-- Use `outlit_list_facts` to browse structured account facts, known signals, open issues, health indicators, relationship notes, activation, billing, or renewal context.
+- Use `outlit_list_facts` to browse structured account facts, known signals, open issues, health indicators, relationship notes, activation, billing, or renewal context. Narrow with `status`, `sourceTypes`, `factTypes`, and `factCategories` when you know what evidence class you need.
 - Use `outlit_get_fact` when you already have a fact id and need the canonical fact payload.
 - Use `outlit_search_customer_context` for fuzzy or thematic questions such as pricing concern, blocked integration, not using, renewal, champion left, negative sentiment, expansion, implementation, or support escalation.
 - Use `outlit_get_source` when a fact or search result needs stronger evidence from the underlying source artifact.
@@ -27,6 +27,8 @@ Use customer lookups before SQL. SQL is for aggregates, joins, cohorts, time-ser
 ## Facts vs Search vs Timeline
 
 - Use `outlit_list_facts` to list what Outlit already knows about an account.
+- Use `factTypes` for specific extracted fact classes such as `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `BUDGET`, `REQUIREMENTS`, `PRODUCT_USAGE`, or `CHAMPION_RISK` when those are relevant. Do not request anomaly detector fact types such as `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF` as filters.
+- Use `factCategories` for broad groups such as `MEMORY` or `CUSTOM` when you want extracted customer-memory facts rather than all fact categories.
 - Use `outlit_get_fact` when you already have a fact id and need that exact fact.
 - Use `outlit_search_customer_context` for a specific question or theme, including cross-customer questions.
 - Use `outlit_get_source` when you need the exact email, call, calendar event, ticket, or other source artifact behind a fact or search hit.

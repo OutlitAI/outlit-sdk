@@ -16,4 +16,9 @@ export const sqlToolNames = [
   "outlit_query",
 ] as const satisfies readonly CustomerToolName[]
 
+export const analyticalAgentToolNames = [
+  ...defaultAgentToolNames,
+  ...sqlToolNames,
+] as const satisfies readonly CustomerToolName[]
+
 export const allCustomerToolNames = customerToolNames
