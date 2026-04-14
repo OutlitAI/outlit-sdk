@@ -94,6 +94,26 @@ describe("consent state on init", () => {
 })
 
 describe("payload identity", () => {
+  it("defaults event delivery to the hosted Outlit ingest endpoint", async () => {
+    const outlit = new Outlit({
+      publicKey: "pk_test",
+      autoTrack: false,
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+    })
+
+    outlit.enableTracking()
+    outlit.track("button_clicked", { buttonId: "cta" })
+
+    await outlit.flush()
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://app.outlit.ai/api/i/v1/pk_test/events",
+      expect.any(Object),
+    )
+  })
+
   it("does not include profile traits in non-identify browser batches", async () => {
     const outlit = new Outlit({
       publicKey: "pk_test",

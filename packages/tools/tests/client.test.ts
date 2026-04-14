@@ -68,6 +68,23 @@ describe("tool contracts", () => {
 })
 
 describe("createOutlitClient", () => {
+  test("defaults to the hosted Outlit tool endpoint", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true })))
+
+    const client = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: fetchMock,
+    })
+
+    await client.callTool("outlit_list_customers", {})
+
+    expect(client.baseUrl).toBe("https://app.outlit.ai")
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://app.outlit.ai/api/tools/call",
+      expect.any(Object),
+    )
+  })
+
   test("calls the public tool endpoint with the selected customer tool", async () => {
     const fetchMock = vi
       .fn()
