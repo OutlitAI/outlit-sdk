@@ -125,7 +125,7 @@ Outlit generates facts from three sources:
 | **Extracted** | Parsed from support tickets, Slack, email, and call transcripts | "Customer mentioned evaluating a competitor in #support channel" |
 | **Synthesized** | Correlated from multiple observations | "Key contact went quiet + competitor mention + declining usage = churn risk" |
 
-Every fact has **temporal validity** — it knows when it became true and when it stops being relevant. As new activity flows into the graph, facts are automatically validated or invalidated. A "contract renews in March" fact expires after March. A "customer is evaluating competitors" fact gets resolved when they renew. This means the graph always reflects the *current* state of each customer relationship, not stale snapshots.
+Every fact carries **temporal context**. `validFrom` records when the supporting signal happened or became true, and `validUntil` can be set when a fact should no longer be treated as current. Outlit uses those fields, source metadata, and fact status to make facts time-aware for agents; newer evidence can supersede older context, but facts should still be read with their source and status rather than as self-updating claims.
 
 Facts are queryable through the same interfaces as the rest of the graph — CLI, MCP, and API.
 
