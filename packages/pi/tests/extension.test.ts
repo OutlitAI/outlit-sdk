@@ -29,6 +29,21 @@ describe("createOutlitPiExtension", () => {
     expect(registeredNames).not.toContain("outlit_schema")
   })
 
+  test("deduplicates custom tool names before registration", () => {
+    const pi = createPiMock()
+
+    createOutlitPiExtension({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn(),
+      toolNames: ["outlit_list_customers", "outlit_list_customers", "outlit_get_customer"],
+    })(pi)
+
+    expect(pi.registeredTools.map((tool) => tool.name)).toEqual([
+      "outlit_list_customers",
+      "outlit_get_customer",
+    ])
+  })
+
   test("executes registered tools through the public Outlit tool client", async () => {
     const apiResult = { items: [{ id: "cust_123" }] }
     const fetchMock = vi
@@ -108,5 +123,30 @@ describe("createOutlitPiExtension", () => {
         process.env.OUTLIT_API_KEY = previousApiKey
       }
     }
+  })
+
+  test("rejects malformed tool input", async () => {
+    const pi = createPiMock()
+
+    createOutlitPiExtension({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn(),
+      toolNames: ["outlit_list_customers"],
+    })(pi)
+
+    const tool = pi.registeredTools[0]
+    if (!tool) {
+      throw new Error("Expected one registered tool")
+    }
+
+    await expect(
+      tool.execute("call_1", "limit=10", undefined, undefined, undefined as never),
+    ).rejects.toThrow("Outlit Pi tool input must be an object")
+    await expect(
+      tool.execute("call_1", [], undefined, undefined, undefined as never),
+    ).rejects.toThrow("Outlit Pi tool input must be an object")
+    await expect(
+      tool.execute("call_1", null, undefined, undefined, undefined as never),
+    ).rejects.toThrow("Outlit Pi tool input must be an object")
   })
 })

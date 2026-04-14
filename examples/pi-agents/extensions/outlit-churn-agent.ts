@@ -43,6 +43,10 @@ export default function outlitChurnAgent(pi: ExtensionAPI) {
       return undefined
     }
 
+    if (event.systemPrompt.includes(CHURN_AGENT_SYSTEM_PROMPT)) {
+      return undefined
+    }
+
     return {
       systemPrompt: `${event.systemPrompt}\n\n${CHURN_AGENT_SYSTEM_PROMPT}`,
     }
