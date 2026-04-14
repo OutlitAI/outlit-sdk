@@ -125,7 +125,7 @@ Outlit generates facts from three sources:
 | **Extracted** | Parsed from support tickets, Slack, email, and call transcripts | "Customer mentioned evaluating a competitor in #support channel" |
 | **Synthesized** | Correlated from multiple observations | "Key contact went quiet + competitor mention + declining usage = churn risk" |
 
-Every fact carries **temporal context**. `validFrom` records when the supporting signal happened or became true, and `validUntil` can be set when a fact should no longer be treated as current. Outlit uses those fields, source metadata, and fact status to make facts time-aware for agents; newer evidence can supersede older context, but facts should still be read with their source and status rather than as self-updating claims.
+Every fact carries **temporal context**. Public fact results expose `occurredAt` for when the supporting signal happened or was detected, plus `status` and provenance fields such as `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink` when available. Outlit uses source time, status, and evidence to help agents distinguish current signals from historical context; newer evidence can supersede older context, but facts should still be read with their source and status rather than as self-updating claims.
 
 Facts are queryable through the same interfaces as the rest of the graph — CLI, MCP, and API.
 
