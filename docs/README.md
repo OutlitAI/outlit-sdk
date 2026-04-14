@@ -1,6 +1,6 @@
 # Outlit Documentation
 
-This repository contains the documentation for Outlit - the customer journey platform.
+This repository contains the documentation for Outlit, customer context infrastructure that turns product, website, billing, support, and conversation data into complete customer profiles your team and agents can query.
 
 ## Local Development
 
@@ -21,18 +21,32 @@ mintlify dev
 ```
 docs/
 ├── index.mdx                    # Homepage
+├── concepts/
+│   ├── customer-context-graph.mdx
+│   ├── customer-journey.mdx
+│   ├── identity-resolution.mdx
+│   └── website-visitors.mdx
 ├── tracking/
-│   ├── overview.mdx             # Tracking system overview
+│   ├── how-it-works.mdx         # Tracking and context graph overview
 │   ├── quickstart.mdx           # Quick start guide
 │   ├── browser/
 │   │   ├── script.mdx           # Script tag integration
-│   │   ├── npm.mdx              # NPM package
-│   │   └── react.mdx            # React integration
+│   │   ├── npm.mdx              # npm package
+│   │   ├── react.mdx            # React integration
+│   │   └── ...                  # Framework guides
 │   ├── server/
-│   │   └── nodejs.mdx           # Node.js SDK
-│   └── identity/
-│       ├── overview.mdx         # Identity resolution
-│       └── anonymous-visitors.mdx
+│   │   ├── nodejs.mdx           # Node.js SDK
+│   │   └── rust.mdx             # Rust SDK
+├── cli/
+│   ├── overview.mdx
+│   ├── commands.mdx
+│   ├── integrations.mdx
+│   ├── ai-agents.mdx
+│   └── configuration.mdx
+├── ai-integrations/
+│   ├── mcp.mdx
+│   ├── pi.mdx
+│   └── skills.mdx
 └── api-reference/
     ├── introduction.mdx         # API overview
     ├── validation.mdx           # API key validation docs

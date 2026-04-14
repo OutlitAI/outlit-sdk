@@ -3,7 +3,7 @@ title: "Customer Context Graph"
 description: "How Outlit unifies customer data from every source into a single queryable graph of entities, relationships, and signals"
 ---
 
-The customer context graph is Outlit's unified data model. It connects every customer interaction — website visits, product usage, billing events, support conversations — into a structured graph of entities and relationships. Instead of customer data scattered across Stripe, PostHog, your app database, and email, the graph gives you (and your AI agents) one place to query the complete picture.
+The customer context graph is Outlit's unified data model. It connects every customer interaction — website visits, product usage, billing events, support tickets, calls, emails, and Slack conversations — into a structured graph of entities, relationships, timelines, and facts. Instead of customer data scattered across Stripe, PostHog, your app database, support tools, and email, the graph gives you and your AI agents one place to query the complete customer profile.
 
 ## What is the customer context graph?
 
@@ -11,8 +11,8 @@ The customer context graph is a structured representation of everything Outlit k
 
 1. **Entities** — The people and companies you do business with: anonymous visitors, known contacts, customer accounts, and devices
 2. **Relationships** — How entities connect: identity resolution links, account membership, cross-device associations
-3. **Activity timeline** — A chronological log of every interaction from every source: pageviews, form submissions, Stripe charges, Slack messages, email threads, call transcripts
-4. **Facts** — Temporal assertions about each customer that capture *what it means*, not just what happened: churn risk signals, expansion opportunities, competitive evaluations, champion changes, and more
+3. **Activity timeline** — A chronological log of every interaction from every source: pageviews, form submissions, Stripe charges, support tickets, Slack messages, email threads, calls, and calendar events
+4. **Facts** — Temporal assertions about each customer that capture *what it means*, not just what happened: churn risk signals, expansion opportunities, support escalations, competitive evaluations, champion changes, and more
 
 ```mermaid
 %%{init: {'theme': 'dark', 'flowchart': {'nodeSpacing': 40, 'rankSpacing': 50, 'curve': 'basis', 'padding': 15}}}%%
@@ -70,7 +70,9 @@ Data flows in from multiple sources:
 | **Slack** | Messages, reactions, thread context | Connect via [dashboard](https://app.outlit.ai/integrations) |
 | **Gmail** | Email threads, sender history | Connect via [dashboard](https://app.outlit.ai/integrations) |
 | **Fireflies.ai** | Call transcripts, action items, summaries | Connect via [dashboard](https://app.outlit.ai/integrations) |
+| **Granola** | Meeting notes and customer-call summaries | Connect via [dashboard](https://app.outlit.ai/integrations) |
 | **Google Calendar** | Meetings, attendees, scheduling patterns | Connect via [dashboard](https://app.outlit.ai/integrations) |
+| **Pylon** | Support tickets, escalations, and customer requests | Connect via [dashboard](https://app.outlit.ai/integrations) |
 | **Supabase Auth / Clerk** | User identity, sign-up source, auth events | Connect via [dashboard](https://app.outlit.ai/integrations) |
 
 <Info>
@@ -85,7 +87,7 @@ Data flows in from multiple sources:
 
 Entities form relationships:
 - **Visitors → Contacts**: Via identity resolution (email, userId, device fingerprint)
-- **Contacts → Accounts**: Via email domain matching and explicit association
+- **Contacts → Accounts**: Via organizational email domains, explicit `customerId` attribution, and connected source data
 - **Accounts → Billing**: Via Stripe integration or manual status updates
 
 Each contact carries a [journey stage](/concepts/customer-journey) (Discovered → Signed Up → Activated → Engaged → Inactive) and each account carries a billing status (None → Trialing → Paying → Churned).
@@ -109,7 +111,7 @@ Traditional tools capture one slice of the customer relationship:
 | CRM | Deal stages and contacts | Actual product usage |
 | Billing | Payment events | Everything before payment |
 
-Outlit's graph connects all of these — and goes further with **facts**. Instead of just showing raw data, a query like `outlit customers get acme.com --include timeline,facts` shows the complete story *with reasoning*: which pages Acme's team viewed before signing up, how they used the product after onboarding, what their billing trajectory looks like, and what it all means — churn risk signals, expansion opportunities, champion changes, and competitive context.
+Outlit's graph connects all of these — and goes further with **facts**. Instead of just showing raw data, a query like `outlit customers get acme.com --include users,revenue,recentTimeline` plus `outlit facts list acme.com` shows the complete story *with reasoning*: which pages Acme's team viewed before signing up, how they used the product after onboarding, what support tickets or calls changed the relationship, what their billing trajectory looks like, and what it all means — churn risk signals, expansion opportunities, champion changes, and competitive context.
 
 ## How do facts work?
 
@@ -120,7 +122,7 @@ Outlit generates facts from three sources:
 | Source | What it captures | Example |
 |--------|-----------------|---------|
 | **Behavioral** | Automatically detected from activity patterns | "Core feature usage declined 40% over 14 days" |
-| **Extracted** | Parsed from Slack, email, and call transcripts | "Customer mentioned evaluating a competitor in #support channel" |
+| **Extracted** | Parsed from support tickets, Slack, email, and call transcripts | "Customer mentioned evaluating a competitor in #support channel" |
 | **Synthesized** | Correlated from multiple observations | "Key contact went quiet + competitor mention + declining usage = churn risk" |
 
 Every fact has **temporal validity** — it knows when it became true and when it stops being relevant. As new activity flows into the graph, facts are automatically validated or invalidated. A "contract renews in March" fact expires after March. A "customer is evaluating competitors" fact gets resolved when they renew. This means the graph always reflects the *current* state of each customer relationship, not stale snapshots.
@@ -150,11 +152,11 @@ For full details, see [Customer Journey](/concepts/customer-journey).
   </Accordion>
 
   <Accordion title="How is the graph different from a data warehouse?">
-    A data warehouse stores raw events. The customer context graph is entity-resolved and relationship-mapped — it knows that visitor abc-123, user jane@acme.com, and Stripe customer cus_456 are the same person at the same company, and it maintains that structure automatically.
+    A data warehouse stores raw events. The customer context graph is entity-resolved and relationship-mapped — it knows that visitor abc-123, user jane@acme.com, and Stripe customer cus_456 are linked parts of the same customer profile when the source evidence supports that relationship. Organizational domains, personal email providers, and explicit customer IDs are handled differently so the graph does not turn every email domain into a company account.
   </Accordion>
 
   <Accordion title="Can AI agents access the full graph?">
-    Yes. The [MCP integration](/ai-integrations/mcp) exposes the graph to AI agents in Cursor, Claude Code, Claude Desktop, VS Code, and other supported environments. Agents can list customers, get timelines, search context, and run SQL queries.
+    Yes. The [MCP integration](/ai-integrations/mcp) exposes the graph to remote MCP clients such as Cursor, VS Code, and other supported environments. For coding agents that run local commands, install [Agent Skills](/ai-integrations/skills). Agents can list customers, get timelines, search context, inspect facts and sources, and run SQL queries.
   </Accordion>
 
   <Accordion title="How quickly does new data appear in the graph?">

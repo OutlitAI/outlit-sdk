@@ -1,9 +1,9 @@
 ---
 title: "Identity Resolution"
-description: "How Outlit connects anonymous visitors to known customers"
+description: "How Outlit connects anonymous visitors, known contacts, and customer accounts"
 ---
 
-**TL;DR:** Identity resolution is how Outlit links anonymous website visitors to known contacts in the [customer context graph](/concepts/customer-context-graph). When someone browses your site anonymously and later signs up or logs in, Outlit automatically connects their entire history — giving you a complete picture of their journey from first visit to conversion.
+**TL;DR:** Identity resolution is how Outlit links anonymous website visitors, known contacts, and customer accounts in the [customer context graph](/concepts/customer-context-graph). When someone browses your site anonymously and later signs up or logs in, Outlit connects their history to the right complete customer profile.
 
 ## Auto-Identify
 
@@ -83,7 +83,7 @@ flowchart TD
     A([Anonymous Visit<br/>visitorId: abc-123]) -->|identify email| B([CustomerContact<br/>email: jane@acme.com])
     C([Anonymous Visit<br/>visitorId: xyz-789]) -->|identify same email| B
     D([Server Event<br/>userId: usr_456]) -->|same email| B
-    B --> E([Unified Customer Timeline])
+    B --> E([Complete Customer Profile])
 ```
 
 ### Identity Priority
@@ -105,6 +105,12 @@ When you call `identify()`:
 2. **Match found?** Link the anonymous visitor to existing contact
 3. **No match?** Create new CustomerContact and Customer
 4. **Multiple matches?** Merge profiles, keeping the most complete one
+
+When `customerId` is provided with an identify call, Outlit also links that contact to your system-owned account/workspace identifier. That is how earlier `customerId`-only server events become part of the same customer profile once a user identifies.
+
+<Info>
+  Outlit treats organizational domains differently from common personal email providers. An address like `jane@acme.com` can establish company account context, while `jane@gmail.com`, academic addresses, and other personal/common-provider emails are resolved as personal contacts unless another source links them to an account.
+</Info>
 
 ---
 
@@ -136,6 +142,30 @@ outlit.identify({
 <Tip>
   Always send both `email` and `userId` when available. This creates the strongest identity link.
 </Tip>
+
+### Customer ID
+
+Your system-owned customer, account, or workspace ID. Use this when product usage or billing is account-scoped:
+
+```typescript
+outlit.identify({
+  email: 'jane@acme.com',
+  userId: 'usr_12345',
+  customerId: 'cust_123',
+  customerTraits: { plan: 'enterprise' }
+})
+```
+
+Server-side `track()` calls can also use `customerId` without a user identity:
+
+```typescript
+outlit.track({
+  customerId: 'cust_123',
+  eventName: 'account_synced'
+})
+```
+
+Those events are attributable immediately to the account/workspace and can later link to the contact resolved from email when `identify({ email, customerId })` is sent.
 
 ### Anonymous Visitor ID
 
@@ -234,17 +264,24 @@ When Outlit detects the same person with different identifiers, profiles are mer
     ```
   </Tab>
   <Tab title="Server Tracking">
-    **Identity required**
+    **Identity or account attribution required**
 
-    - Every call needs `email` or `userId`
-    - Events go directly to the contact
+    - User-scoped events use `email`, `userId`, or `fingerprint`
+    - Account-scoped events can use `customerId` only
+    - `customerId` links account/workspace activity to contacts when identify uses the same ID
     - For device/app tracking, use `fingerprint` ([learn more](/concepts/website-visitors#device-tracking-non-browser))
 
     ```typescript
-    // Email or userId required
+    // User-scoped event
     outlit.track({
       email: 'user@example.com',
       eventName: 'subscription_created'
+    })
+
+    // Account/workspace-scoped event
+    outlit.track({
+      customerId: 'cust_123',
+      eventName: 'workspace_synced'
     })
     ```
   </Tab>

@@ -156,10 +156,10 @@ If you've connected Stripe to Outlit, billing status is handled automatically:
 | `canceled` | Churned |
 | `unpaid` | Churned |
 
-When a subscription status changes in Stripe, Outlit automatically updates the account's billing status. Individual contact journey stages are not affected.
+When a subscription status changes in Stripe, Outlit automatically updates the matching account's billing status. Individual contact journey stages are not affected.
 
 <Info>
-  Stripe integration links accounts via email matching. When Outlit syncs a Stripe customer, it finds the matching account and updates its billing status.
+  Stripe integration links accounts through synced customer and contact identity. Company-domain accounts and personal-email customers are handled differently, so billing status should be read as account context, not as a contact journey stage.
 </Info>
 
 ---
@@ -170,17 +170,26 @@ For non-Stripe payment processors or custom billing logic:
 
 ```typescript
 // When a trial starts
-outlit.customer.trialing({ domain: 'acme.com', trialEndsAt: '2025-06-15' })
+outlit.customer.trialing({
+  customerId: 'cust_123',
+  properties: { trialEndsAt: '2025-06-15' }
+})
 
 // When payment succeeds
-outlit.customer.paid({ domain: 'acme.com', plan: 'pro', amount: 99 })
+outlit.customer.paid({
+  customerId: 'cust_123',
+  properties: { plan: 'pro', amount: 99 }
+})
 
 // When subscription is cancelled
-outlit.customer.churned({ domain: 'acme.com', reason: 'too_expensive' })
+outlit.customer.churned({
+  customerId: 'cust_123',
+  properties: { reason: 'too_expensive' }
+})
 ```
 
 <Note>
-  Billing methods target the account by domain, not individual contacts. All contacts under that account share the same billing status.
+  Billing methods target the account by `customerId`, not individual contacts. Send the same `customerId` in identify calls to link people to that account/workspace.
 </Note>
 
 ---

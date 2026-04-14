@@ -3,7 +3,7 @@ title: "How It Works"
 description: "How Outlit connects customer systems, resolves identities, structures customer context, and makes it queryable"
 ---
 
-Outlit builds a [customer context graph](/concepts/customer-context-graph) from every customer interaction — website visits, product usage, billing, support, conversations, and more. Here's how raw source data becomes structured customer context.
+Outlit builds a [customer context graph](/concepts/customer-context-graph) from every customer interaction: website visits, product usage, billing, support tickets, calls, emails, Slack conversations, and more. Raw source data becomes complete customer profiles your team and agents can query before they act.
 
 ## 1. Connect
 
@@ -24,6 +24,8 @@ flowchart LR
         G([Gmail])
         H([Fireflies.ai])
         I([Google Calendar])
+        L([Pylon])
+        M([Granola])
     end
 
     subgraph Auth
@@ -39,6 +41,8 @@ flowchart LR
     G -->|email threads| D
     H -->|call transcripts| D
     I -->|meetings, attendees| D
+    L -->|support tickets| D
+    M -->|meeting notes| D
     J -->|identity, auth events| D
     K -->|profiles, login activity| D
 ```
@@ -61,7 +65,11 @@ flowchart LR
 
 **Fireflies.ai** — Call transcripts, action items, and meeting summaries.
 
+**Granola** — Meeting notes and customer-call summaries.
+
 **Google Calendar** — Meetings, attendees, and scheduling patterns.
+
+**Pylon** — Support tickets, escalations, and customer requests.
 
 **Supabase Auth / Clerk** — User identity, sign-up source, org membership, and auth events. These complement the browser SDK's auto-identification with server-side identity signals.
 
@@ -88,17 +96,17 @@ This happens without code when forms contain an email field (auto-identify). For
 
 As data flows in and identities resolve, Outlit structures it into three layers your team and agents can query:
 
-### Customer profiles and relationships
+### Complete customer profiles and relationships
 
 - **Visitors** — Anonymous browsing sessions, identified by visitor ID or device fingerprint
 - **Contacts** — Known people, identified by email and/or user ID
 - **Accounts** — Companies, identified by domain, with billing status from Stripe
 
-Visitors link to contacts via identity resolution. Contacts belong to accounts via email domain matching. All activity flows into unified customer profiles and timelines per contact and account.
+Visitors link to contacts via identity resolution. Contacts link to accounts through organizational email domains, explicit `customerId` attribution, and connected sources such as billing and auth systems. Common personal email providers are treated as personal contacts unless another source links them to an account. All activity flows into unified customer profiles and timelines per contact and account.
 
 ### Activity timeline
 
-Every interaction from every source is stored chronologically — pageviews, form submissions, SDK events, Stripe charges, Slack messages, email threads, call transcripts. The timeline shows *what happened* with full detail and original timestamps.
+Every interaction from every source is stored chronologically: pageviews, form submissions, SDK events, Stripe charges, Slack messages, email threads, call transcripts, support tickets, and calendar events. The timeline shows *what happened* with full detail and original timestamps.
 
 ### Facts
 
@@ -107,7 +115,7 @@ Facts are temporal assertions that Outlit maintains about each customer. While t
 Outlit generates facts from three sources:
 
 - **Behavioral facts** — Automatically detected from activity patterns. When a customer's core usage drops, an activation rate changes, or an expected activity pattern breaks, Outlit surfaces it as a fact with severity and context.
-- **Extracted facts** — Parsed from unstructured sources like Slack messages, email threads, and call transcripts. Outlit identifies signals like churn risk, expansion opportunities, competitive evaluations, champion changes, and timeline commitments.
+- **Extracted facts** — Parsed from unstructured sources like Slack messages, support tickets, email threads, and call transcripts. Outlit identifies signals like churn risk, expansion opportunities, competitive evaluations, champion changes, and timeline commitments.
 - **Synthesized facts** — Derived by correlating multiple observations. For example, a key contact going quiet + a competitor mention in Slack + declining product usage = a churn risk fact with full reasoning.
 
 Every fact has **temporal validity** — a `validFrom` date and an optional expiration. As new activity flows in, facts are automatically validated or invalidated. A "contract renews in March" fact expires after March. A "customer is evaluating competitors" fact gets resolved when they renew. This temporal reasoning means the graph always reflects the *current* state of each customer relationship, not stale snapshots.
@@ -158,7 +166,7 @@ For MCP clients, use the workspace MCP URL from [MCP Integration](/ai-integratio
 
 ### REST API
 
-For custom integrations, the [Ingest API](/api-reference/ingest) accepts events from any source, and query endpoints expose the graph programmatically.
+For custom integrations, the [Ingest API](/api-reference/ingest) accepts events from any source, and the [public tool gateway](/api-reference/tools) exposes customer profiles, timelines, facts, sources, search, and SQL programmatically.
 
 ---
 

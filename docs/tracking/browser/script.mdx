@@ -52,7 +52,7 @@ If you prefer a cleaner script tag and don't need to call tracking methods befor
 ```
 
 <ParamField path="data-public-key" type="string" required>
-  Your organization's public key. Find it in [Settings → Website Tracking](https://app.outlit.ai/workspace-profile/tracking).
+  Your organization's public key. Find it in [Settings → Website Tracking](https://app.outlit.ai/settings/workspace/tracking).
 </ParamField>
 
 <ParamField path="data-api-host" type="string">
@@ -432,7 +432,7 @@ For performance, events are batched and sent:
 <AccordionGroup>
   <Accordion title="Events not appearing in dashboard">
     1. Check your public key is correct
-    2. Verify the domain is in your allowlist ([Settings → Website Tracking](https://app.outlit.ai/workspace-profile/tracking))
+    2. Verify the domain is in your allowlist ([Settings → Website Tracking](https://app.outlit.ai/settings/workspace/tracking))
     3. Open DevTools → Network and check for errors in `/api/i/v1/` requests
     4. Ensure the script loads without errors (check Console)
   </Accordion>
@@ -466,4 +466,3 @@ For performance, events are batched and sent:
     Track Cal.com and Calendly bookings
   </Card>
 </CardGroup>
-

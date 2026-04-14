@@ -30,6 +30,8 @@ GET /api/integrations
 POST /api/validate-api-key
 ```
 
+The public tool gateway exposes the same customer context tools used by the CLI and agent integrations: complete customer profiles, timelines, facts, exact source lookup, semantic search across sources and facts, and read-only SQL.
+
 ### Ingest API
 
 The Ingest API uses your **public key** in the URL path. No additional authentication headers are required for ingestion.
@@ -114,7 +116,7 @@ Plan and billing failures include a stable `code` plus plan metadata:
 
 ## CORS
 
-The Ingest API supports CORS for browser requests. Allowed origins are configured in your tracking settings ([Settings -> Website Tracking](https://app.outlit.ai/workspace-profile/tracking) -> Enabled Domains).
+The Ingest API supports CORS for browser requests. Allowed origins are configured in your tracking settings ([Settings -> Website Tracking](https://app.outlit.ai/settings/workspace/tracking) -> Enabled Domains).
 
 ```
 Access-Control-Allow-Origin: https://your-domain.com

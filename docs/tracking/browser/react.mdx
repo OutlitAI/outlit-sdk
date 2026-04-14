@@ -131,7 +131,6 @@ import { OutlitProvider } from '@outlit/browser/react'
 
 <OutlitProvider
   publicKey="pk_xxx"
-  apiHost="https://app.outlit.ai"
   trackPageviews={true}
   trackForms={true}
   trackEngagement={true}
@@ -455,7 +454,10 @@ function MyComponent() {
   user.engaged({ milestone: 'first_project' })
 
   // Customer billing methods (requires account identifier)
-  customer.paid({ domain: 'acme.com', plan: 'pro' })
+  customer.paid({
+    customerId: 'cust_123',
+    properties: { plan: 'pro' }
+  })
 
   // Get visitor ID (null if tracking not enabled)
   const visitorId = getVisitorId()
@@ -494,7 +496,7 @@ function MyComponent() {
 </ParamField>
 
 <ParamField path="customer" type="object">
-  Customer billing methods namespace. Requires at least one of `domain`, `customerId`, or `stripeCustomerId`:
+  Customer billing methods namespace. Requires `customerId` or `stripeCustomerId`; public calls should use `customerId`:
   - `customer.trialing(options)` - Mark account as trialing
   - `customer.paid(options)` - Mark account as paid
   - `customer.churned(options)` - Mark account as churned

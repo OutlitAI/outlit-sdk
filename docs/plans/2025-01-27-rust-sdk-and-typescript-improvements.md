@@ -55,7 +55,6 @@ use outlit::Outlit;
 use std::time::Duration;
 
 let client = Outlit::builder("pk_xxx")
-    .api_host("https://custom.example.com")
     .flush_interval(Duration::from_secs(5))
     .max_batch_size(50)
     .timeout(Duration::from_secs(30))
@@ -443,7 +442,6 @@ fn test_client_builder_defaults() {
 #[test]
 fn test_client_builder_custom_values() {
     let client = Outlit::builder("pk_test")
-        .api_host("https://custom.example.com")
         .flush_interval(Duration::from_secs(5))
         .max_batch_size(50)
         .timeout(Duration::from_secs(30))
