@@ -8,11 +8,13 @@
     "outlit",
     "pi-package",
     "customer-intelligence",
-    "churn"
+    "churn",
+    "activation",
+    "expansion"
   ],
   "pi": {
     "extensions": [
-      "./extensions/outlit-churn-agent.ts"
+      "./extensions/outlit-growth-agents.ts"
     ],
     "skills": [
       "./skills",

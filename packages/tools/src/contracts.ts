@@ -286,7 +286,7 @@ export const customerToolContracts = {
   outlit_list_facts: {
     toolName: "outlit_list_facts",
     description:
-      "List structured facts known about a customer. Use filters like status, sourceTypes, and date bounds to narrow the result set. For topic-specific retrieval, use outlit_search_customer_context instead.",
+      "List structured facts known about a customer. Use filters like status, sourceTypes, factTypes, factCategories, and date bounds to narrow the result set. For topic-specific retrieval, use outlit_search_customer_context instead.",
     inputSchema: {
       $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
@@ -309,6 +309,41 @@ export const customerToolContracts = {
           items: {
             type: "string",
             enum: ["EMAIL", "CALL", "CALENDAR_EVENT", "SUPPORT_TICKET"],
+          },
+        },
+        factTypes: {
+          description:
+            "Optional customer-memory fact type filters, such as CHURN_RISK, EXPANSION, SENTIMENT, or BUDGET. Anomaly detector fact types are not supported.",
+          type: "array",
+          items: {
+            type: "string",
+            enum: [
+              "CUSTOM",
+              "COMPANY_CHANGE",
+              "FUNDING_REVENUE",
+              "TECHNOLOGY",
+              "STRATEGY",
+              "COMPETITIVE",
+              "SENTIMENT",
+              "CHAMPION_RISK",
+              "EXPANSION",
+              "CHURN_RISK",
+              "TIMELINE",
+              "BUDGET",
+              "DECISION_MAKER",
+              "REQUIREMENTS",
+              "PRODUCT_USAGE",
+              "CONTACT_INFO",
+              "CONTACT_PREFERENCE",
+            ],
+          },
+        },
+        factCategories: {
+          description: "Optional public fact category filters. Supported values: MEMORY, CUSTOM.",
+          type: "array",
+          items: {
+            type: "string",
+            enum: ["MEMORY", "CUSTOM"],
           },
         },
         after: {
@@ -514,6 +549,41 @@ export const customerFactStatuses = [
 
 export const customerFactIncludes = ["evidence"] as const
 
+export const customerFactTypes = [
+  "CUSTOM",
+  "COMPANY_CHANGE",
+  "FUNDING_REVENUE",
+  "TECHNOLOGY",
+  "STRATEGY",
+  "COMPETITIVE",
+  "SENTIMENT",
+  "CHAMPION_RISK",
+  "EXPANSION",
+  "CHURN_RISK",
+  "TIMELINE",
+  "BUDGET",
+  "DECISION_MAKER",
+  "REQUIREMENTS",
+  "PRODUCT_USAGE",
+  "CONTACT_INFO",
+  "CONTACT_PREFERENCE",
+] as const
+
+export const unsupportedCustomerFactTypes = [
+  "TRACKING_GAP",
+  "SCHEMA_DRIFT",
+  "INGESTION_LAG",
+  "ACTIVATION_RATE_DROP",
+  "FUNNEL_DROPOFF",
+  "CORE_ACTION_DECAY",
+  "CADENCE_BREAK",
+  "QUIET_ACCOUNT",
+  "CHAMPION_AT_RISK",
+  "SEGMENT_DIVERGENCE",
+] as const
+
+export const customerFactCategories = ["MEMORY", "CUSTOM"] as const
+
 export const customerListOrderFields = [
   "last_activity_at",
   "first_seen_at",
@@ -563,7 +633,7 @@ export const schemaTables = [
 ] as const
 
 export const customerToolContractHash =
-  "723c552610b62397f04eb941a656e858772b876bf876065f05bc96ad019aac0b" as const
+  "f72fbbc848a81a54ca460f08b474cad516ba5f23b07b2dae3d31bdea189f8787" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 

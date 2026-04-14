@@ -2,9 +2,11 @@ import { describe, expect, test, vi } from "vitest"
 
 import {
   allCustomerToolNames,
+  analyticalAgentToolNames,
   type CustomerContextSearchInput,
   createOutlitClient,
   defaultAgentToolNames,
+  getCustomerToolContract,
   resolveCustomerContextSearchInput,
   sqlToolNames,
 } from "../src/index.js"
@@ -17,6 +19,51 @@ describe("toolsets", () => {
     expect(defaultAgentToolNames).not.toContain("outlit_schema")
     expect(sqlToolNames).toEqual(["outlit_schema", "outlit_query"])
     expect(allCustomerToolNames).toContain("outlit_query")
+  })
+
+  test("exposes an analytical agent toolset with only default tools plus SQL", () => {
+    expect(analyticalAgentToolNames).toEqual([...defaultAgentToolNames, ...sqlToolNames])
+    expect(analyticalAgentToolNames).toContain("outlit_schema")
+    expect(analyticalAgentToolNames).toContain("outlit_query")
+    expect(analyticalAgentToolNames).not.toEqual([...allCustomerToolNames])
+  })
+})
+
+describe("tool contracts", () => {
+  test("exposes fact type and category filters on facts listing", () => {
+    const contract = getCustomerToolContract("outlit_list_facts")
+    const properties = contract.inputSchema.properties as Record<string, unknown>
+
+    expect(properties.factTypes).toEqual(
+      expect.objectContaining({
+        type: "array",
+        items: expect.objectContaining({
+          enum: expect.arrayContaining(["CHURN_RISK", "EXPANSION", "CHAMPION_RISK"]),
+        }),
+      }),
+    )
+    expect(properties.factCategories).toEqual(
+      expect.objectContaining({
+        type: "array",
+        items: expect.objectContaining({
+          enum: ["MEMORY", "CUSTOM"],
+        }),
+      }),
+    )
+  })
+
+  test("keeps anomaly detector filters out of the facts listing schema", () => {
+    const contract = getCustomerToolContract("outlit_list_facts")
+    const properties = contract.inputSchema.properties as Record<
+      string,
+      { items?: { enum?: string[] } }
+    >
+
+    expect(properties.factTypes?.items?.enum).not.toContain("CORE_ACTION_DECAY")
+    expect(properties.factTypes?.items?.enum).not.toContain("ACTIVATION_RATE_DROP")
+    expect(properties.factTypes?.items?.enum).not.toContain("CHAMPION_AT_RISK")
+    expect(properties.factCategories?.items?.enum).not.toContain("CHURN")
+    expect(properties.factCategories?.items?.enum).not.toContain("JOURNEY")
   })
 })
 

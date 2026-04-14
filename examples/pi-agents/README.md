@@ -1,14 +1,19 @@
 # Outlit Pi Agents
 
-This example shows how to build a Pi agent with `@outlit/pi`. It ships a churn-review agent that can use Outlit customer intelligence tools, a Pi skill, and a prompt template.
+This example shows how to build Pi agents with `@outlit/pi`. It includes four customer-signal agents that use Outlit customer intelligence tools, a shared Pi skill, and reusable prompt templates.
 
-## What You Get
+These examples focus on harder revenue and retention questions where the agent has to connect product behavior, billing, conversations, support context, timelines, facts, and source evidence.
 
-- Outlit customer tools registered in Pi through `@outlit/pi`
-- Generic `outlit` skill from `@outlit/pi` for tool selection
-- `/outlit-churn-review` command for starting a churn review
-- `/churn-review` prompt template for repeatable reviews
-- `outlit-churn-review` skill with the review playbook and output format
+The prompts are intentionally conservative. A good run may return fewer than 5 accounts when Outlit does not contain enough evidence for the requested signal. That is better than padding a list with adjacent but wrong categories.
+
+## Included Agents
+
+| Agent | Use it for | Pi command | Prompt template |
+| --- | --- | --- | --- |
+| Usage Decay Churn Watchtower | Paying customers whose product behavior suggests they may cancel soon | `/outlit-usage-decay-watchtower` | `/usage-decay-watchtower` |
+| Friction-to-Churn Agent | Accounts where product or support friction is becoming churn risk | `/outlit-friction-to-churn` | `/friction-to-churn` |
+| Activation Failure Agent | Trials, new accounts, or recently converted customers that are not reaching first value | `/outlit-activation-failure` | `/activation-failure` |
+| Expansion Readiness Agent | Customers likely to upgrade, expand seats, or buy more | `/outlit-expansion-readiness` | `/expansion-readiness` |
 
 ## Setup
 
@@ -28,7 +33,7 @@ npm install
 Set your Outlit API key:
 
 ```bash
-export OUTLIT_API_KEY=ok_your_api_key
+export OUTLIT_API_KEY=your_outlit_api_key
 ```
 
 Optionally point at staging or a local Outlit environment:
@@ -37,14 +42,14 @@ Optionally point at staging or a local Outlit environment:
 export OUTLIT_API_URL=https://staging.app.outlit.ai
 ```
 
-To try the agent from this example directory:
+To try the agents from this example directory:
 
 ```bash
 pi install -l .
 pi
 ```
 
-To use the agent in one of your own projects, run the install command from that project instead:
+To use the agents in one of your own projects, run the install command from that project instead:
 
 ```bash
 cd /path/to/your/project
@@ -52,57 +57,94 @@ pi install -l /path/to/outlit-sdk/examples/pi-agents
 pi
 ```
 
-## Running the Churn Agent
+## Running The Agents
 
-Use the slash command for a specific customer:
-
-```text
-/outlit-churn-review Acme
-```
-
-Use it without arguments for a portfolio scan:
+Use a slash command with a specific scope:
 
 ```text
-/outlit-churn-review
+/outlit-usage-decay-watchtower paying customers over $500 MRR
+/outlit-friction-to-churn customers with integration complaints
+/outlit-activation-failure trial accounts from the last 30 days
+/outlit-expansion-readiness starter-plan customers
 ```
 
-Use the prompt template when you want to edit the prompt before sending:
+Use a command without arguments for a portfolio scan:
 
 ```text
-/churn-review Acme
+/outlit-usage-decay-watchtower
 ```
 
-Free-form requests also work because the package includes a skill:
+Use prompt templates when you want to edit the prompt before sending:
 
 ```text
-Which paying customers look most likely to churn this week?
+/usage-decay-watchtower paying customers over $500 MRR
+/friction-to-churn customers with repeated setup blockers
+/activation-failure trials with no payment method
+/expansion-readiness active starter-plan customers
 ```
+
+Free-form requests also work because the package includes a shared skill:
+
+```text
+Which paying customers are active enough to be expansion candidates but blocked by plan limits?
+```
+
+## Claude Code Prompts
+
+The `claude-code-prompts` directory contains copyable long prompts for running the same jobs in Claude Code with the Outlit CLI:
+
+- `claude-code-prompts/usage-decay-watchtower.md`
+- `claude-code-prompts/friction-to-churn.md`
+- `claude-code-prompts/activation-failure.md`
+- `claude-code-prompts/expansion-readiness.md`
+
+Those prompts assume the `outlit` CLI is on `PATH` and authenticated through environment variables. They intentionally tell Claude Code to use Outlit data only, not local seed files or repository artifacts.
 
 ## How It Works
 
-`extensions/outlit-churn-agent.ts` is the only TypeScript code. It imports `createOutlitPiExtension` from `@outlit/pi`, registers the default Outlit customer intelligence tools, and adds a small `/outlit-churn-review` command.
+`extensions/outlit-growth-agents.ts` imports `createOutlitPiExtension`, `defaultAgentToolNames`, and `sqlToolNames` from `@outlit/pi`, registers focused customer intelligence plus SQL tools, and adds four slash commands.
 
-The extension does not know how to call Outlit directly. `@outlit/pi` creates Pi tool definitions from `@outlit/tools`, and `@outlit/tools` calls Outlit's public `/api/tools/call` endpoint with your `OUTLIT_API_KEY`.
+The extension does not call Outlit directly. `@outlit/pi` creates Pi tool definitions from `@outlit/tools`, and `@outlit/tools` calls Outlit's public `/api/tools/call` endpoint with your `OUTLIT_API_KEY`.
 
-The example package loads both its local churn skill and the generic `outlit` skill from `@outlit/pi`. Pi does not automatically expose resources from dependency packages, so this package references `./node_modules/@outlit/pi/skills` in `package.json`.
+The example package loads both the shared local `outlit-growth-agents` skill and the generic `outlit` skill from `@outlit/pi`. Pi does not automatically expose resources from dependency packages, so this package references `./node_modules/@outlit/pi/skills` in `package.json`.
 
-`skills/outlit-churn-review/SKILL.md` gives the model the churn review playbook. `prompts/churn-review.md` gives users a reusable slash prompt.
+`skills/outlit-growth-agents/SKILL.md` gives the model the category boundaries and review playbooks. The `prompts` directory gives users reusable slash prompts.
 
 ## Prompt vs Workflow
 
 The Outlit tools are registered when Pi loads this package. Any prompt in that Pi session can use those tools when the model decides they are relevant.
 
-`/churn-review` is a prompt template. It expands into text and starts a normal agent turn with access to the registered tools.
+The prompt templates expand into text and start normal agent turns with access to the registered tools.
 
-`/outlit-churn-review` is an extension command. It creates a better churn-review prompt from the command arguments and sends that prompt to Pi. It does not run a fixed sequence of API calls.
+The extension commands create focused prompts from the command arguments and send those prompts to Pi. They do not run fixed API sequences.
 
-The churn agent is therefore agentic: the prompt and skill tell the model what evidence to gather, and the model chooses which Outlit tools to call and in what order. If you need a deterministic workflow, create a custom Pi tool or command that calls Outlit APIs directly in the exact sequence you need.
+These agents are therefore agentic: the prompt and skill tell the model what evidence to gather, and the model chooses which Outlit tools to call and in what order. If you need a deterministic workflow, create a custom Pi tool or command that calls Outlit APIs directly in the exact sequence you need.
 
-## Customizing The Agent
+## Tool Scope
 
-Pass `toolNames` to `createOutlitPiExtension` only when you intentionally want a different toolset.
+These launch examples use the default customer intelligence tools plus SQL/schema tools:
 
-For example, expose every customer tool, including SQL tools, for more advanced internal agents:
+- customer discovery
+- user discovery
+- customer details
+- timeline
+- facts
+- source lookup
+- semantic customer context search
+- schema discovery
+- SQL query
+
+The base `@outlit/pi` default toolset does not include SQL, but these harder examples opt into schema and SQL because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks.
+
+Facts can also be narrowed with `factTypes` and `factCategories`. These examples use those filters for extracted customer-memory facts such as `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `BUDGET`, `REQUIREMENTS`, `PRODUCT_USAGE`, and `CHAMPION_RISK`.
+
+The usage-decay and activation agents do not depend on behavioral/anomaly fact types like `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF`. Those fact types are not supported as public filters because many customers will not have configured core actions, activation paths, or funnels. The examples use SQL and customer/user/event evidence as the primary signal for those jobs.
+
+When your installed `@outlit/pi` version includes `analyticalAgentToolNames`, you can use that helper directly instead of combining `defaultAgentToolNames` and `sqlToolNames` yourself.
+
+The examples still avoid `allCustomerToolNames` because broad tool access can make agents over-weight high-revenue accounts with weak evidence. Use broader toolsets only when you intentionally want internal analysis or custom reporting.
+
+For example:
 
 ```ts
 import { allCustomerToolNames, createOutlitPiExtension } from "@outlit/pi"
@@ -112,13 +154,29 @@ export default createOutlitPiExtension({
 })
 ```
 
-The default toolset does not include SQL tools. That keeps the first customer-facing agent focused on customer intelligence APIs with narrower schemas. Use `allCustomerToolNames` when SQL access is appropriate for your team.
+Keep integration setup or integration-management actions outside customer-facing Pi agents unless you are intentionally building an internal admin package. Customer-facing agents should usually read customer intelligence, not modify integration configuration.
 
-Keep integration setup or integration-management actions outside the Pi agent unless you are intentionally building an internal admin package. Customer-facing agents should usually read customer intelligence, not modify integration configuration.
+## Quality Bar
+
+Treat these agents as evidence reviewers, not label generators. They should:
+
+- Use domains or stable customer IDs for follow-up lookups when names are ambiguous.
+- Use SQL/schema for candidate discovery, then customer, timeline, fact, source, and search tools for account-level evidence.
+- Use `factTypes` and `factCategories` to narrow facts, but do not request behavioral/anomaly fact types as filters.
+- Keep usage decay, product/support friction, activation failure, expansion readiness, and renewal/procurement risk separate.
+- Return fewer accounts when the evidence is weak.
+- Call out sparse, stale, synthetic, or contradictory data.
+
+Common failure modes to watch for:
+
+- Calling subscription cancellation or renewal friction "usage decay" without product usage evidence.
+- Calling legal/procurement negotiation "product friction" without a product, support, implementation, integration, bug, or blocker artifact.
+- Calling mature paying churn-risk accounts "activation failures" when they are already past first value.
+- Calling high usage, high MRR, or plan mismatch "expansion readiness" without buying intent, plan-limit pain, capacity pressure, seat/team growth, or a premium-feature ask.
 
 ## Minimal Agent
 
-If you only want the Outlit tools with no churn-specific guidance, your extension can be this small:
+If you only want the Outlit tools with no example commands or signal-specific guidance, your extension can be this small:
 
 ```ts
 import { createOutlitPiExtension } from "@outlit/pi"

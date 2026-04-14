@@ -113,6 +113,8 @@ const COMMANDS: readonly CmdDef[] = [
           ...PAGINATED,
           { name: "--status", desc: "Filter by fact status" },
           { name: "--source-types", desc: "Filter by source types" },
+          { name: "--fact-types", desc: "Filter by fact types" },
+          { name: "--fact-categories", desc: "Filter by fact categories" },
           { name: "--after", desc: "Facts after date (ISO 8601)" },
           { name: "--before", desc: "Facts before date (ISO 8601)" },
         ],
