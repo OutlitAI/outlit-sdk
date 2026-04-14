@@ -43,7 +43,7 @@ outlit --version
 
 <Steps>
   <Step title="Get your API key">
-    Go to [Settings > MCP Integration](https://app.outlit.ai/workspace-profile/mcp) in the Outlit dashboard. Click **Generate API Key**, copy it, and keep it safe.
+    Go to [Settings > API Keys](https://app.outlit.ai/settings/workspace/api-keys) in the Outlit dashboard. Create an API key, copy it, and keep it safe.
 
     <Warning>
       Treat your API key like a password. It grants read access to your customer data. You can revoke keys at any time from the dashboard.
@@ -146,6 +146,7 @@ ok_ab...1234 (config)
 | [`users list`](/cli/commands#users-list) | Filter and list users by journey stage, activity, customer, and traits |
 | [`facts`](/cli/commands#facts) | Retrieve AI-generated facts and signals for a customer |
 | [`search`](/cli/commands#search) | Natural language search across customer context |
+| [`sources get`](/cli/commands#sources) | Retrieve one exact source record behind a fact or search result |
 | [`sql`](/cli/commands#sql) | Run SQL queries against analytics tables |
 | [`schema`](/cli/commands#schema) | Discover database tables and columns |
 | [`integrations list`](/cli/integrations#integrations-list) | List available integrations and connection status |
@@ -154,7 +155,18 @@ ok_ab...1234 (config)
 | [`integrations status`](/cli/integrations#integrations-status) | Show sync status for connected integrations |
 | [`setup`](/cli/ai-agents) | Install Outlit skills for coding agents |
 | [`doctor`](/cli/ai-agents#diagnostics) | Run environment diagnostics |
-| [`completions`](/cli/ai-agents#shell-completions) | Generate shell completion scripts |
+| [`completions`](/cli/configuration#shell-completions) | Generate shell completion scripts |
+| `upgrade` | Upgrade the CLI with the package manager that installed it |
+
+## Updates
+
+In interactive terminals, the CLI checks for newer published versions using a local cache so normal commands stay fast. When an update is available, it prints a short notice to stderr and continues.
+
+```bash
+outlit upgrade
+```
+
+`outlit upgrade` tries to use the same package manager that installed the CLI, such as Bun, npm, pnpm, or Yarn. Set `OUTLIT_NO_UPDATE_NOTIFIER=1` to suppress automatic notices.
 
 ## Output Modes
 

@@ -26,8 +26,6 @@ outlit customers list [flags]
 | `--billing-status` | string | — | Filter by billing status: `NONE`, `TRIALING`, `PAYING`, `PAST_DUE`, `CHURNED` |
 | `--mrr-above` | number | — | MRR floor in cents (e.g. `10000` for $100/mo) |
 | `--mrr-below` | number | — | MRR ceiling in cents |
-| `--status` | string | — | Filter by customer status: `PROVISIONAL`, `ACTIVE`, `CHURNED`, `MERGED` |
-| `--type` | string | — | Filter by type: `COMPANY`, `INDIVIDUAL` |
 | `--no-activity-in` | string | — | Inactive for period: `7d`, `14d`, `30d`, `90d` |
 | `--has-activity-in` | string | — | Active within period: `7d`, `14d`, `30d`, `90d` |
 | `--trait` | string | — | Exact trait filters as comma-separated `key=value` pairs (for example `segment=enterprise,active=true`) |
@@ -147,7 +145,7 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
       "id": "user-uuid",
       "name": "Jane Doe",
       "email": "jane@acme.com",
-      "journeyStage": "CHAMPION"
+      "journeyStage": "ENGAGED"
     }
   ],
   "revenue": {
@@ -157,7 +155,7 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
   "recentTimeline": [
     {
       "type": "PAGE_VIEW",
-      "channel": "WEB",
+      "channel": "SDK",
       "occurredAt": "2025-02-10T15:30:00Z"
     }
   ]
@@ -187,9 +185,9 @@ outlit customers timeline <customer> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--timeframe` | string | `30d` | Lookback window: `7d`, `14d`, `30d`, `90d` |
-| `--start-date` | string | — | Start date (YYYY-MM-DD) — overrides `--timeframe` |
-| `--end-date` | string | — | End date (YYYY-MM-DD) — overrides `--timeframe` |
-| `--channels` | string | — | Comma-separated channels: `EMAIL`, `SLACK`, `WEB`, etc. |
+| `--start-date` | string | — | Start datetime (ISO 8601, for example `2025-01-01T00:00:00Z`) — overrides `--timeframe` |
+| `--end-date` | string | — | End datetime (ISO 8601, for example `2025-03-01T23:59:59Z`) — overrides `--timeframe` |
+| `--channels` | string | — | Comma-separated channels: `SDK`, `EMAIL`, `SLACK`, `CALL`, `CRM`, `BILLING`, `SUPPORT`, `INTERNAL` |
 | `--event-types` | string | — | Comma-separated types: `PAGE_VIEW`, `MEETING`, `SUPPORT_TICKET`, etc. |
 | `--limit` | number | `20` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor |
@@ -208,7 +206,7 @@ outlit customers timeline acme.com
 outlit customers timeline acme.com --timeframe 90d --channels EMAIL,SLACK
 
 # Custom date range
-outlit customers timeline acme.com --start-date 2025-01-01 --end-date 2025-03-01
+outlit customers timeline acme.com --start-date 2025-01-01T00:00:00Z --end-date 2025-03-01T23:59:59Z
 
 # Page views and meetings only
 outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50
@@ -223,7 +221,7 @@ outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50
       "id": "event-uuid",
       "customerId": "customer-uuid",
       "type": "PAGE_VIEW",
-      "channel": "WEB",
+      "channel": "SDK",
       "occurredAt": "2025-02-10T15:30:00Z",
       "metadata": {
         "url": "https://acme.com/pricing",
@@ -251,7 +249,7 @@ outlit users list [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--journey-stage` | string | — | Filter by stage: `CHAMPION`, `AT_RISK`, `CHURNED`, `ACTIVATED`, etc. |
+| `--journey-stage` | string | — | Filter by stage: `DISCOVERED`, `SIGNED_UP`, `ACTIVATED`, `ENGAGED`, `INACTIVE` |
 | `--customer-id` | string | — | Filter to users of a specific customer (UUID) |
 | `--no-activity-in` | string | — | Inactive for period: `7d`, `14d`, `30d`, `90d` |
 | `--has-activity-in` | string | — | Active within period: `7d`, `14d`, `30d`, `90d` |
@@ -265,8 +263,8 @@ outlit users list [flags]
 ### Examples
 
 ```bash
-# Find champions
-outlit users list --journey-stage CHAMPION
+# Find engaged users
+outlit users list --journey-stage ENGAGED
 
 # Inactive users from a specific customer
 outlit users list --customer-id 550e8400-... --no-activity-in 30d
@@ -288,7 +286,7 @@ outlit users list --search "alice" --order-by last_activity_at
       "email": "jane@acme.com",
       "name": "Jane Doe",
       "customerId": "customer-uuid",
-      "journeyStage": "CHAMPION",
+      "journeyStage": "ENGAGED",
       "lastActivityAt": "2025-02-10T15:30:00Z"
     }
   ],
@@ -378,14 +376,14 @@ outlit facts get --fact-id fact_123 --include evidence
         "sourceType": "CALL",
         "sourceId": "call_123",
         "occurredAt": "2025-02-10T14:00:00Z",
-        "permalink": "https://app.outlit.ai/calls/call_123"
+        "permalink": "https://granola.ai/notes/call_123"
       },
       "sourceMetadata": {
         "sourceType": "CALL",
         "sourceId": "call_123",
         "sourceOccurredAt": "2025-02-10T14:00:00Z",
         "sourceQuote": "Budget is blocked until next quarter.",
-        "permalink": "https://app.outlit.ai/calls/call_123"
+        "permalink": "https://granola.ai/notes/call_123"
       }
     }
   ],

@@ -9,16 +9,18 @@ If you want Cursor, VS Code, Claude, or another MCP client, use the direct [MCP 
 
 ## Supported Agents
 
-| Agent | Command | What it does |
-|-------|---------|--------------|
-| Claude Code | `outlit setup claude-code` | Installs `outlit` for the `claude-code` skills target |
-| Codex | `outlit setup codex` | Installs `outlit` for the `codex` skills target |
-| Gemini CLI | `outlit setup gemini` | Installs `outlit` for the `gemini-cli` skills target |
-| Droid | `outlit setup droid` | Installs `outlit` for the `droid` skills target |
-| OpenCode | `outlit setup opencode` | Installs `outlit` for the `opencode` skills target |
-| Pi | `outlit setup pi` | Installs `outlit` for the `pi` skills target |
-| OpenClaw | `outlit setup openclaw` | Installs `outlit` for the `openclaw` skills target |
-| Manual / multi-agent | `outlit setup skills` | Launches the interactive Outlit skills installer |
+Run the command for the agent you use, or run `outlit setup --yes` to detect installed agents automatically.
+
+| Agent | Setup command |
+|-------|---------------|
+| Claude Code | `outlit setup claude-code` |
+| Codex | `outlit setup codex` |
+| Gemini CLI | `outlit setup gemini` |
+| Droid | `outlit setup droid` |
+| OpenCode | `outlit setup opencode` |
+| Pi | `outlit setup pi` |
+| OpenClaw | `outlit setup openclaw` |
+| Manual / multi-agent | `outlit setup skills` |
 
 ## Auto-Setup
 
@@ -41,51 +43,7 @@ Without `--yes`, the CLI lists detected agents before installing.
 }
 ```
 
-## Individual Setup
-
-### Claude Code
-
-```bash
-outlit setup claude-code
-```
-
-### Codex
-
-```bash
-outlit setup codex
-```
-
-### Gemini CLI
-
-```bash
-outlit setup gemini
-```
-
-### Droid
-
-```bash
-outlit setup droid
-```
-
-### OpenCode
-
-```bash
-outlit setup opencode
-```
-
-### Pi
-
-```bash
-outlit setup pi
-```
-
-### OpenClaw
-
-```bash
-outlit setup openclaw
-```
-
-### Interactive Skills Installer
+## Interactive Skills Installer
 
 Use this when you want to pick agents manually or optionally add `outlit-sdk`:
 
@@ -158,27 +116,3 @@ outlit doctor --json | jq '.checks[] | select(.status == "fail")'
 ```bash
 outlit doctor || echo "Setup issues detected"
 ```
-
-## Shell Completions
-
-Generate completion scripts for your shell:
-
-<Tabs>
-  <Tab title="Bash">
-    ```bash
-    outlit completions bash >> ~/.bash_completion
-    source ~/.bash_completion
-    ```
-  </Tab>
-  <Tab title="Zsh">
-    ```bash
-    outlit completions zsh >> ~/.zshrc
-    exec zsh
-    ```
-  </Tab>
-  <Tab title="Fish">
-    ```bash
-    outlit completions fish > ~/.config/fish/completions/outlit.fish
-    ```
-  </Tab>
-</Tabs>
