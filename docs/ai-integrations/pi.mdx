@@ -61,14 +61,14 @@ export default createOutlitPiExtension({
 
 `allCustomerToolNames` includes the SQL tools. Keep integration setup and integration-management actions outside customer-facing Pi agents unless you are building an internal admin package.
 
-## Churn Review Example
+## Growth Agent Examples
 
-The [`examples/pi-agents`](https://github.com/OutlitAI/outlit-sdk/tree/main/examples/pi-agents) package shows a complete churn-review agent built on `@outlit/pi`. It includes:
+The [`examples/pi-agents`](https://github.com/OutlitAI/outlit-sdk/tree/main/examples/pi-agents) package shows four Pi agents built on `@outlit/pi` for revenue and retention work. It includes:
 
-- Outlit customer tools registered in Pi
+- Outlit customer intelligence, SQL, and schema tools registered in Pi
 - the generic `outlit` skill from `@outlit/pi`
-- a churn-review skill with an evidence-gathering playbook
-- `/outlit-churn-review` and `/churn-review` prompts for repeatable reviews
+- a shared growth-agent skill with evidence-gathering playbooks
+- slash commands and editable prompt templates for usage decay, friction-to-churn, activation failure, and expansion readiness
 
 Try it locally from the SDK repo:
 
@@ -83,13 +83,13 @@ pi
 Then ask:
 
 ```text
-/outlit-churn-review Acme
+/outlit-usage-decay-watchtower paying customers over $500 MRR
 ```
 
 or:
 
 ```text
-Which paying customers look most likely to churn this week?
+Which paying customers are active enough to be expansion candidates but blocked by plan limits?
 ```
 
 <CardGroup cols={2}>
