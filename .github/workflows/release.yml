@@ -191,6 +191,8 @@ jobs:
           if echo "${{ steps.canary_meta.outputs.snapshot_packages }}" | grep -q '@outlit/cli'; then echo "npm install @outlit/cli@canary" >> $GITHUB_STEP_SUMMARY; fi
           if echo "${{ steps.canary_meta.outputs.snapshot_packages }}" | grep -q '@outlit/core'; then echo "npm install @outlit/core@canary" >> $GITHUB_STEP_SUMMARY; fi
           if echo "${{ steps.canary_meta.outputs.snapshot_packages }}" | grep -q '@outlit/node'; then echo "npm install @outlit/node@canary" >> $GITHUB_STEP_SUMMARY; fi
+          if echo "${{ steps.canary_meta.outputs.snapshot_packages }}" | grep -q '@outlit/tools'; then echo "npm install @outlit/tools@canary" >> $GITHUB_STEP_SUMMARY; fi
+          if echo "${{ steps.canary_meta.outputs.snapshot_packages }}" | grep -q '@outlit/pi'; then echo "npm install @outlit/pi@canary" >> $GITHUB_STEP_SUMMARY; fi
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.canary_meta.outputs.has_browser_snapshot }}" = 'true' ]; then

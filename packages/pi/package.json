@@ -64,7 +64,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@outlit/tools": "^1.5.0"
+    "@outlit/tools": "^0.0.1"
   },
   "peerDependencies": {
     "@mariozechner/pi-coding-agent": "*",

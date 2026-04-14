@@ -6,6 +6,8 @@ const PUBLISHED_PACKAGES = [
   { name: "@outlit/cli", packageJson: "packages/cli/package.json" },
   { name: "@outlit/core", packageJson: "packages/core/package.json" },
   { name: "@outlit/node", packageJson: "packages/node/package.json" },
+  { name: "@outlit/tools", packageJson: "packages/tools/package.json" },
+  { name: "@outlit/pi", packageJson: "packages/pi/package.json" },
 ]
 
 export function getCanaryReleaseMetadata(packageVersions) {

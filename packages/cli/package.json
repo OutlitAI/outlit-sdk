@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.0.1",
-    "@outlit/tools": "^1.5.0",
+    "@outlit/tools": "^0.0.1",
     "citty": "^0.2.1"
   },
   "devDependencies": {
