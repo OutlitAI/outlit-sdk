@@ -1,0 +1,63 @@
+---
+title: "Validate API Key"
+description: "Verify that an Outlit API key can authenticate Platform API requests"
+api: "POST /api/validate-api-key"
+---
+
+## Endpoint
+
+```http
+POST https://app.outlit.ai/api/validate-api-key
+```
+
+## Authentication
+
+<ParamField header="Authorization" type="string" required>
+  Outlit API key using the `Bearer ok_...` format.
+</ParamField>
+
+## Request Body
+
+No request body is required when validating the API key from the `Authorization` header.
+
+## Example
+
+```bash
+curl -X POST https://app.outlit.ai/api/validate-api-key \
+  -H "Authorization: Bearer ok_your_api_key"
+```
+
+## Success Response
+
+```json
+{
+  "valid": true,
+  "organizationId": "org_123",
+  "createdById": "user_123"
+}
+```
+
+<ResponseField name="valid" type="boolean">
+  Whether the supplied API key is active and accepted.
+</ResponseField>
+
+<ResponseField name="organizationId" type="string">
+  Organization associated with the API key.
+</ResponseField>
+
+<ResponseField name="createdById" type="string | null">
+  User that created the API key, when available.
+</ResponseField>
+
+## Error Responses
+
+Invalid or disabled keys return `401`:
+
+```json
+{
+  "valid": false,
+  "error": "Invalid credentials"
+}
+```
+
+Malformed validation requests return `400`. Server-side validation failures return `500`.
