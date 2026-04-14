@@ -13,7 +13,7 @@ Use Outlit tools to gather evidence before ranking:
 - Check users and customer details for journey stage, activity recency, team adoption, activation indicators, and recent behavior.
 - Review timeline events for signup, onboarding, integration work, product usage, payment, support, and communications.
 - Search customer context for "setup", "onboarding", "blocked", "integration", "trial", "payment", "activate", "implementation", "not working", and "next steps".
-- Use facts and source lookups for blockers, stated intent, missing payment, and activation milestones. Useful customer-memory fact filters include `factTypes: ["REQUIREMENTS", "PRODUCT_USAGE", "SENTIMENT", "CHURN_RISK"]` with `factCategories: ["MEMORY"]`.
+- Use facts and source lookups for blockers, stated intent, missing payment, and activation milestones. Useful customer-memory fact filters include `factTypes: ["REQUIREMENTS", "PRODUCT_USAGE", "SENTIMENT", "CHURN_RISK"]`.
 - Do not request behavioral/anomaly fact types like `ACTIVATION_RATE_DROP` or `FUNNEL_DROPOFF` as fact filters; many customers will not have configured activation paths or funnels. Use SQL/user/event evidence as the primary activation signal.
 - Use stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
 

@@ -13,7 +13,7 @@ Use Outlit tools to gather evidence before ranking:
 - Pull customer details with revenue, users, recent timeline, and behavior metrics when available.
 - Check timeline events for declining product activity, stale core workflows, disappearing users, quiet periods after problems, or payment issues.
 - Search customer context for "not using", "inactive", "cancel", "downgrade", "usage down", "blocked", "no value", and similar terms.
-- Use `outlit_list_facts` with customer-memory fact filters such as `factTypes: ["CHURN_RISK", "SENTIMENT", "PRODUCT_USAGE", "CHAMPION_RISK", "BUDGET"]` and `factCategories: ["MEMORY"]` when a claim needs stronger supporting context.
+- Use `outlit_list_facts` with customer-memory fact filters such as `factTypes: ["CHURN_RISK", "SENTIMENT", "PRODUCT_USAGE", "CHAMPION_RISK", "BUDGET"]` when a claim needs stronger supporting context.
 - Do not request behavioral/anomaly fact types like `CORE_ACTION_DECAY`, `CADENCE_BREAK`, or `QUIET_ACCOUNT` as fact filters; many customers will not have configured usage paths. Use SQL/event evidence as the primary usage-decay signal.
 - Use stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
 

@@ -40,7 +40,7 @@ export default defineCommand({
       "Examples:",
       "  outlit facts list acme.com",
       "  outlit facts list acme.com --status ACTIVE",
-      "  outlit facts list acme.com --fact-types CHURN_RISK,EXPANSION --fact-categories MEMORY",
+      "  outlit facts list acme.com --fact-types CHURN_RISK,EXPANSION",
       "  outlit facts list acme.com --source-types CALL,EMAIL --after 2025-01-01T00:00:00Z",
       "  outlit facts list acme.com --limit 50 --json",
       "",

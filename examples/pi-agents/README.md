@@ -136,7 +136,7 @@ These launch examples use the default customer intelligence tools plus SQL/schem
 
 The base `@outlit/pi` default toolset does not include SQL, but these harder examples opt into schema and SQL because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks.
 
-Facts can also be narrowed with `factTypes` and `factCategories`. These examples use those filters for extracted customer-memory facts such as `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `BUDGET`, `REQUIREMENTS`, `PRODUCT_USAGE`, and `CHAMPION_RISK`.
+Facts can also be narrowed with `factTypes`. These examples use those filters for extracted customer-memory facts such as `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `BUDGET`, `REQUIREMENTS`, `PRODUCT_USAGE`, and `CHAMPION_RISK`.
 
 The usage-decay and activation agents do not depend on behavioral/anomaly fact types like `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF`. Those fact types are not supported as public filters because many customers will not have configured core actions, activation paths, or funnels. The examples use SQL and customer/user/event evidence as the primary signal for those jobs.
 
@@ -162,7 +162,7 @@ Treat these agents as evidence reviewers, not label generators. They should:
 
 - Use domains or stable customer IDs for follow-up lookups when names are ambiguous.
 - Use SQL/schema for candidate discovery, then customer, timeline, fact, source, and search tools for account-level evidence.
-- Use `factTypes` and `factCategories` to narrow facts, but do not request behavioral/anomaly fact types as filters.
+- Use `factTypes` to narrow facts, but do not request behavioral/anomaly fact types as filters.
 - Keep usage decay, product/support friction, activation failure, expansion readiness, and renewal/procurement risk separate.
 - Return fewer accounts when the evidence is weak.
 - Call out sparse, stale, synthetic, or contradictory data.

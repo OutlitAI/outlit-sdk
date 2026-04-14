@@ -16,7 +16,7 @@ Process:
 1. Run `outlit schema` when you need table names or fields, then use `outlit sql` to find paying customers with stale activity, declining event volume, shrinking active-user counts, or meaningful MRR.
 2. Discover paying customers with CLI customer commands as needed. Prefer meaningful MRR and signs of stale or declining activity.
 3. For each candidate, gather customer details, recent timeline, users, facts, billing context, and semantic search evidence.
-   Use fact filters such as `outlit facts list <customer> --fact-types CHURN_RISK,SENTIMENT,PRODUCT_USAGE,CHAMPION_RISK,BUDGET --fact-categories MEMORY --json` for customer-memory context when available.
+   Use fact filters such as `outlit facts list <customer> --fact-types CHURN_RISK,SENTIMENT,PRODUCT_USAGE,CHAMPION_RISK,BUDGET --json` for customer-memory context when available.
    Do not request behavioral/anomaly fact types like `CORE_ACTION_DECAY`, `CADENCE_BREAK`, or `QUIET_ACCOUNT` as fact filters; many customers will not have configured usage paths. Use SQL/event evidence as the primary usage-decay signal.
    Use stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
 4. Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.

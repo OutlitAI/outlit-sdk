@@ -13,7 +13,7 @@ Use Outlit tools to gather evidence before ranking:
 - Pull customer details with revenue, users, recent timeline, and behavior metrics when available.
 - Check timeline events and user activity for usage growth, additional teams, more seats, repeated workflows, and capacity pressure.
 - Search customer context for "upgrade", "seats", "team", "limit", "plan", "pricing", "premium", "more users", "volume", "feature", and "use case".
-- Use facts and source lookups when a buying signal or plan-limit pain needs stronger evidence. Useful customer-memory fact filters include `factTypes: ["EXPANSION", "PRODUCT_USAGE", "REQUIREMENTS", "SENTIMENT"]` and `factCategories: ["MEMORY"]`.
+- Use facts and source lookups when a buying signal or plan-limit pain needs stronger evidence. Useful customer-memory fact filters include `factTypes: ["EXPANSION", "PRODUCT_USAGE", "REQUIREMENTS", "SENTIMENT"]`.
 - Use stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
 
 Important guardrails:
