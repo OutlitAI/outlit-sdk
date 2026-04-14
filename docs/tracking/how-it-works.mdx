@@ -118,7 +118,7 @@ Outlit generates facts from three sources:
 - **Extracted facts** — Parsed from unstructured sources like Slack messages, support tickets, email threads, and call transcripts. Outlit identifies signals like churn risk, expansion opportunities, competitive evaluations, champion changes, and timeline commitments.
 - **Synthesized facts** — Derived by correlating multiple observations. For example, a key contact going quiet + a competitor mention in Slack + declining product usage = a churn risk fact with full reasoning.
 
-Every fact has **temporal validity** — a `validFrom` date and an optional expiration. As new activity flows in, facts are automatically validated or invalidated. A "contract renews in March" fact expires after March. A "customer is evaluating competitors" fact gets resolved when they renew. This temporal reasoning means the graph always reflects the *current* state of each customer relationship, not stale snapshots.
+Every fact carries **temporal context** — a `validFrom` date, source occurrence metadata when available, fact status, and optional expiration. `validFrom` tells agents when the supporting signal happened or became true. `validUntil` is available when a fact should stop being treated as current, but facts should be read with source time, status, and evidence rather than as self-updating claims.
 
 ### Journey stages
 
