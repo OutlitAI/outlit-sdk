@@ -31,6 +31,24 @@ afterEach(() => {
 })
 
 describe("Outlit", () => {
+  it("defaults event delivery to the hosted Outlit ingest endpoint", async () => {
+    const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
+
+    outlit.track({
+      customerId: "cust_123",
+      eventName: "account_synced",
+    })
+
+    await outlit.flush()
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://app.outlit.ai/api/i/v1/pk_test/events",
+      expect.any(Object),
+    )
+
+    await outlit.shutdown()
+  })
+
   it("tracks customer-only events with top-level customer attribution", async () => {
     const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
 

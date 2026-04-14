@@ -15,6 +15,40 @@ function createPiMock() {
 }
 
 describe("createOutlitPiExtension", () => {
+  test("defaults tools to the hosted Outlit endpoint", async () => {
+    const previousApiUrl = process.env.OUTLIT_API_URL
+    delete process.env.OUTLIT_API_URL
+
+    try {
+      const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true })))
+      const pi = createPiMock()
+
+      createOutlitPiExtension({
+        apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+        fetch: fetchMock,
+        toolNames: ["outlit_list_customers"],
+      })(pi)
+
+      const tool = pi.registeredTools[0]
+      if (!tool) {
+        throw new Error("Expected one registered tool")
+      }
+
+      await tool.execute("call_1", {}, undefined, undefined, undefined as never)
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://app.outlit.ai/api/tools/call",
+        expect.any(Object),
+      )
+    } finally {
+      if (previousApiUrl === undefined) {
+        delete process.env.OUTLIT_API_URL
+      } else {
+        process.env.OUTLIT_API_URL = previousApiUrl
+      }
+    }
+  })
+
   test("registers the default customer intelligence tools", () => {
     const pi = createPiMock()
 
