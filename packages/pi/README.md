@@ -15,12 +15,6 @@ export OUTLIT_API_KEY=ok_...
 pi
 ```
 
-Use `OUTLIT_API_URL` to point the tools at a non-production Outlit environment:
-
-```bash
-export OUTLIT_API_URL=https://staging.app.outlit.ai
-```
-
 ## Tools
 
 The default extension registers the default customer intelligence tools from `@outlit/tools`:
