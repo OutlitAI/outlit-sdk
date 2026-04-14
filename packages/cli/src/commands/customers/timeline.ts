@@ -25,7 +25,7 @@ export default defineCommand({
       "  outlit customers timeline acme.com",
       "  outlit customers timeline acme.com --timeframe 90d",
       "  outlit customers timeline acme.com --channels EMAIL,SLACK",
-      "  outlit customers timeline acme.com --start-date 2025-01-01 --end-date 2025-03-01",
+      "  outlit customers timeline acme.com --start-date 2025-01-01T00:00:00Z --end-date 2025-03-01T23:59:59Z",
       "  outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50",
       "",
       AGENT_JSON_HINT,
@@ -56,12 +56,12 @@ export default defineCommand({
     "start-date": {
       type: "string",
       description:
-        "Start date for the event range (ISO 8601, e.g. 2025-01-01). When set, --timeframe is ignored.",
+        "Start datetime for the event range (ISO 8601, e.g. 2025-01-01T00:00:00Z). When set, --timeframe is ignored.",
     },
     "end-date": {
       type: "string",
       description:
-        "End date for the event range (ISO 8601, e.g. 2025-03-01). When set, --timeframe is ignored.",
+        "End datetime for the event range (ISO 8601, e.g. 2025-03-01T23:59:59Z). When set, --timeframe is ignored.",
     },
   },
   async run({ args }) {

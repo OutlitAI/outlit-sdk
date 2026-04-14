@@ -39,7 +39,7 @@ Combined with OpenClaw's built-in cron scheduler, you get **automated customer h
     Verify with `outlit --version`.
   </Step>
   <Step title="Authenticate">
-    Get your API key from [Settings > API Keys](https://app.outlit.ai/workspace-profile/api-keys), then:
+    Get your API key from [Settings > API Keys](https://app.outlit.ai/settings/workspace/api-keys), then:
 
     ```bash
     outlit auth login
@@ -88,7 +88,7 @@ Once the skill is installed, OpenClaw learns how to use the full `outlit` CLI. Y
 | "Show me paying customers who went silent this month" | `outlit customers list --billing-status PAYING --no-activity-in 30d` |
 | "Get the full profile for acme.com" | `outlit customers get acme.com --include users,revenue,recentTimeline` |
 | "What's been happening with Acme on Slack?" | `outlit customers timeline acme.com --channels SLACK --limit 50` |
-| "Find at-risk users at Acme Corp" | `outlit users list --customer-id YOUR_CUSTOMER_ID --journey-stage AT_RISK` |
+| "Find inactive users at Acme Corp" | `outlit users list --customer-id YOUR_CUSTOMER_ID --journey-stage INACTIVE` |
 | "Search for pricing concerns across all customers" | `outlit search "pricing concerns"` |
 | "What do we know about acme.com recently?" | `outlit facts list acme.com --status ACTIVE --limit 20` |
 | "Open the exact call behind that search result" | `outlit sources get --source-type CALL --source-id call_123` |
@@ -140,16 +140,16 @@ openclaw cron add \
   --announce
 ```
 
-### At-Risk Users (Twice a Week)
+### Inactive Users (Twice a Week)
 
-Individual users flagged as at-risk, even if their company account is still active.
+Individual users who went inactive, even if their company account is still active.
 
 ```bash
 openclaw cron add \
-  --name "At-Risk Users" \
+  --name "Inactive Users" \
   --cron "0 9 * * 2,4" \
   --tz "America/New_York" \
-  --message "Run: outlit users list --journey-stage AT_RISK --limit 20. Summarize as an at-risk users report, group by customer, show user emails and journey stage, and note any patterns." \
+  --message "Run: outlit users list --journey-stage INACTIVE --limit 20. Summarize as an inactive users report, group by customer, show user emails and journey stage, and note any patterns." \
   --announce
 ```
 
@@ -162,7 +162,7 @@ openclaw cron add \
   --name "New Signups Overview" \
   --cron "0 10 * * 5" \
   --tz "America/New_York" \
-  --message "Run: outlit customers list --billing-status TRIALING --order-by created_at. Summarize as a weekly new signups report, list each new customer, their domain, and current activity level." \
+  --message "Run: outlit users list --journey-stage SIGNED_UP --order-by first_seen_at --limit 50. Summarize as a weekly new signups report, group users by customer, and note current activity level." \
   --announce
 ```
 
@@ -203,7 +203,7 @@ These skills are also available on [ClawHub](https://clawhub.ai/leo-paz/outlit).
 | OpenClaw says it doesn't know about Outlit | Make sure `OUTLIT_API_KEY` is set in your shell environment and restart OpenClaw's Gateway |
 | Commands return authentication errors | Run `outlit auth status` to verify your key is valid |
 | Cron jobs aren't firing | Check `openclaw cron status` and verify timezone settings |
-| JSON parsing errors | Ensure you're running the latest Outlit CLI (`npm update -g @outlit/cli`) |
+| JSON parsing errors | Ensure you're running the latest Outlit CLI (`outlit upgrade`) |
 
 ## What's Next
 

@@ -8,7 +8,7 @@ description: "Environment variables, output behavior, and file paths for the Out
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `OUTLIT_API_KEY` | API key for authentication (overridden by `--api-key` flag) | — |
-| `OUTLIT_API_URL` | Override the API base URL | `https://app.outlit.ai` |
+| `OUTLIT_NO_UPDATE_NOTIFIER` | Disable automatic interactive CLI update notices when set | — |
 | `XDG_CONFIG_HOME` | Override the config directory (Unix) | `~/.config` |
 | `CI` | Triggers JSON output mode when equal to exactly `"true"` or `"1"` | — |
 | `GITHUB_ACTIONS` | Triggers JSON output mode when set | — |
@@ -28,6 +28,7 @@ The CLI stores configuration in a platform-specific directory:
 | File | Purpose | Created by |
 |------|---------|------------|
 | `credentials.json` | Stored API key | `outlit auth login` |
+| `update-check.json` | Cached latest CLI version and installer hint | Automatic update check |
 
 The credentials file has `0600` permissions (readable by owner only) and contains:
 
@@ -36,6 +37,40 @@ The credentials file has `0600` permissions (readable by owner only) and contain
   "apiKey": "ok_your_api_key_here"
 }
 ```
+
+## Update Checks
+
+In interactive terminals, the CLI periodically checks npm for the latest `@outlit/cli` version and caches the result in `update-check.json`. Cached notices are printed to stderr and never affect JSON output.
+
+```bash
+OUTLIT_NO_UPDATE_NOTIFIER=1 outlit customers list
+```
+
+Use `outlit upgrade` to update with the same package manager that installed the CLI when it can be inferred.
+
+## Shell Completions
+
+Generate completion scripts for your shell:
+
+<Tabs>
+  <Tab title="Bash">
+    ```bash
+    outlit completions bash >> ~/.bash_completion
+    source ~/.bash_completion
+    ```
+  </Tab>
+  <Tab title="Zsh">
+    ```bash
+    outlit completions zsh >> ~/.zshrc
+    exec zsh
+    ```
+  </Tab>
+  <Tab title="Fish">
+    ```bash
+    outlit completions fish > ~/.config/fish/completions/outlit.fish
+    ```
+  </Tab>
+</Tabs>
 
 ## Output Behavior
 
@@ -194,9 +229,9 @@ outlit customers list --limit 100 --json \
 outlit doctor --json | jq -e '.ok' > /dev/null || exit 1
 ```
 
-### Filter Churned Users
+### Filter Inactive Users
 
 ```bash
-outlit users list --journey-stage CHURNED --no-activity-in 30d --json \
+outlit users list --journey-stage INACTIVE --no-activity-in 30d --json \
   | jq '.items[] | {email, customer: .customerId, lastSeen: .lastActivityAt}'
 ```
