@@ -428,8 +428,10 @@ export async function handleStripeWebhook(event: Stripe.Event) {
       outlit.customer.paid({
         customerId,
         properties: {
-          amount: session.amount_total ? session.amount_total / 100 : undefined,
-          currency: session.currency,
+          ...(session.amount_total != null
+            ? { amount: session.amount_total / 100 }
+            : {}),
+          ...(session.currency != null ? { currency: session.currency } : {}),
         }
       })
       break
@@ -445,7 +447,9 @@ export async function handleStripeWebhook(event: Stripe.Event) {
       outlit.customer.churned({
         customerId,
         properties: {
-          reason: subscription.cancellation_details?.reason,
+          ...(subscription.cancellation_details?.reason != null
+            ? { reason: subscription.cancellation_details.reason }
+            : {}),
         }
       })
       break
