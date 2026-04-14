@@ -1,0 +1,102 @@
+---
+title: "Pi Agents"
+description: "Build Pi agents with Outlit customer intelligence tools, skills, and examples"
+---
+
+`@outlit/pi` registers Outlit customer intelligence tools inside [Pi](https://github.com/mariozechner/pi-coding-agent). Use it when you want a Pi agent to query complete customer profiles, timelines, facts, sources, and customer-context search results through Outlit's public tool gateway.
+
+## Install
+
+```bash
+pi install npm:@outlit/pi
+```
+
+Set an Outlit API key before starting Pi:
+
+```bash
+export OUTLIT_API_KEY=ok_your_api_key
+pi
+```
+
+## Default Tools
+
+The default Pi extension exposes the customer intelligence tools that are safe for most agents:
+
+| Tool | What it does |
+|------|--------------|
+| `outlit_list_customers` | Browse customers by billing status, activity, revenue, traits, or name |
+| `outlit_list_users` | Browse contacts by journey stage, activity, customer, traits, email, or name |
+| `outlit_get_customer` | Retrieve one complete customer profile |
+| `outlit_get_timeline` | Retrieve customer activity across product, billing, support, and conversation channels |
+| `outlit_list_facts` | List structured facts with status, source type, date, and provenance filters |
+| `outlit_get_fact` | Retrieve one exact fact |
+| `outlit_get_source` | Retrieve one exact source record behind a fact or search result |
+| `outlit_search_customer_context` | Search grouped source and fact results with natural language |
+
+SQL tools are available through `@outlit/tools`, but they are not enabled by default in `@outlit/pi`. Use them only for internal agents that should run read-only SQL.
+
+## Minimal Extension
+
+If you only need the Outlit tools and the bundled `outlit` Pi skill, the package default is enough:
+
+```ts
+import { createOutlitPiExtension } from "@outlit/pi"
+
+export default createOutlitPiExtension()
+```
+
+The extension reads `OUTLIT_API_KEY` from the environment and uses `https://app.outlit.ai` by default.
+
+## Custom Toolsets
+
+Pass `toolNames` when you want a narrower or broader toolset:
+
+```ts
+import { allCustomerToolNames, createOutlitPiExtension } from "@outlit/pi"
+
+export default createOutlitPiExtension({
+  toolNames: allCustomerToolNames,
+})
+```
+
+`allCustomerToolNames` includes the SQL tools. Keep integration setup and integration-management actions outside customer-facing Pi agents unless you are building an internal admin package.
+
+## Churn Review Example
+
+The [`examples/pi-agents`](https://github.com/OutlitAI/outlit-sdk/tree/main/examples/pi-agents) package shows a complete churn-review agent built on `@outlit/pi`. It includes:
+
+- Outlit customer tools registered in Pi
+- the generic `outlit` skill from `@outlit/pi`
+- a churn-review skill with an evidence-gathering playbook
+- `/outlit-churn-review` and `/churn-review` prompts for repeatable reviews
+
+Try it locally from the SDK repo:
+
+```bash
+cd examples/pi-agents
+npm install
+export OUTLIT_API_KEY=ok_your_api_key
+pi install -l .
+pi
+```
+
+Then ask:
+
+```text
+/outlit-churn-review Acme
+```
+
+or:
+
+```text
+Which paying customers look most likely to churn this week?
+```
+
+<CardGroup cols={2}>
+  <Card title="Public Tool Gateway" icon="terminal" href="/api-reference/tools">
+    See the HTTP route and shared `@outlit/tools` contracts
+  </Card>
+  <Card title="Agent Skills" icon="book" href="/ai-integrations/skills">
+    Install Outlit guidance for coding agents
+  </Card>
+</CardGroup>

@@ -69,7 +69,7 @@
           },
           {
             "group": "AI Integrations",
-            "pages": ["ai-integrations/mcp", "ai-integrations/skills"]
+            "pages": ["ai-integrations/mcp", "ai-integrations/skills", "ai-integrations/pi"]
           },
           {
             "group": "Use Cases",

@@ -36,12 +36,6 @@ Set your Outlit API key:
 export OUTLIT_API_KEY=your_outlit_api_key
 ```
 
-Optionally point at staging or a local Outlit environment:
-
-```bash
-export OUTLIT_API_URL=https://staging.app.outlit.ai
-```
-
 To try the agents from this example directory:
 
 ```bash
@@ -184,4 +178,4 @@ import { createOutlitPiExtension } from "@outlit/pi"
 export default createOutlitPiExtension()
 ```
 
-That registers the default customer intelligence tools and reads `OUTLIT_API_KEY` / `OUTLIT_API_URL` from the environment.
+That registers the default customer intelligence tools, reads `OUTLIT_API_KEY` from the environment, and uses `https://app.outlit.ai` by default.
