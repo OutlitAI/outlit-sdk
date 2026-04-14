@@ -81,7 +81,7 @@ export function formatOutlitToolLabel(toolName: CustomerToolName): string {
 function resolveToolNames(toolNames: readonly CustomerToolName[] | undefined): CustomerToolName[] {
   const names = toolNames ?? defaultAgentToolNames
 
-  return names.map((name) => {
+  return [...new Set(names)].map((name) => {
     if (!isCustomerToolName(name)) {
       throw new Error(`Unknown Outlit customer tool: ${name}`)
     }
@@ -114,8 +114,12 @@ function normalizeString(value: string | undefined): string | undefined {
 }
 
 function normalizeToolInput(params: unknown): Record<string, unknown> {
-  if (!params || typeof params !== "object" || Array.isArray(params)) {
+  if (params === undefined) {
     return {}
+  }
+
+  if (params === null || typeof params !== "object" || Array.isArray(params)) {
+    throw new TypeError("Outlit Pi tool input must be an object")
   }
 
   return params as Record<string, unknown>
