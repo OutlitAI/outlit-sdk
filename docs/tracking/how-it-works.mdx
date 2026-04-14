@@ -118,7 +118,7 @@ Outlit generates facts from three sources:
 - **Extracted facts** — Parsed from unstructured sources like Slack messages, support tickets, email threads, and call transcripts. Outlit identifies signals like churn risk, expansion opportunities, competitive evaluations, champion changes, and timeline commitments.
 - **Synthesized facts** — Derived by correlating multiple observations. For example, a key contact going quiet + a competitor mention in Slack + declining product usage = a churn risk fact with full reasoning.
 
-Every fact carries **temporal context** — a `validFrom` date, source occurrence metadata when available, fact status, and optional expiration. `validFrom` tells agents when the supporting signal happened or became true. `validUntil` is available when a fact should stop being treated as current, but facts should be read with source time, status, and evidence rather than as self-updating claims.
+Every fact carries **temporal context**. Public fact results expose `occurredAt` for when the supporting signal happened or was detected, plus `status` and provenance fields such as `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink` when available. When evaluating freshness, agents should use source time, status, and evidence rather than read facts as self-updating claims.
 
 ### Journey stages
 
@@ -166,7 +166,7 @@ For MCP clients, use the workspace MCP URL from [MCP Integration](/ai-integratio
 
 ### REST API
 
-For custom integrations, the [Ingest API](/api-reference/ingest) accepts events from any source, and the [public tool gateway](/api-reference/tools) exposes customer profiles, timelines, facts, sources, search, and SQL programmatically.
+For custom integrations, the [Ingest API](/api-reference/ingest) accepts events from any source, and the [public tool gateway](/api-reference/tools) exposes customer profiles, timelines, facts, sources, search, and read-only SQL programmatically.
 
 ---
 
