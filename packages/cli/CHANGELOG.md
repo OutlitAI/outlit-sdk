@@ -1,5 +1,20 @@
 # @outlit/cli
 
+## 1.6.0
+
+### Minor Changes
+
+- [#103](https://github.com/OutlitAI/outlit-sdk/pull/103) [`8b61522`](https://github.com/OutlitAI/outlit-sdk/commit/8b61522d0b85a5164b6ab1efa01e0c182d79cab5) Thanks [@leo-paz](https://github.com/leo-paz)! - Add public customer fact type and category filters, reject anomaly detector filters, and expand Pi growth-agent examples.
+
+### Patch Changes
+
+- [#98](https://github.com/OutlitAI/outlit-sdk/pull/98) [`e7f42ca`](https://github.com/OutlitAI/outlit-sdk/commit/e7f42ca89fe4e072f32e18969ae111ebd7979f59) Thanks [@leo-paz](https://github.com/leo-paz)! - Add the public Outlit tools package and route CLI customer intelligence commands through it.
+
+- [#102](https://github.com/OutlitAI/outlit-sdk/pull/102) [`cefc519`](https://github.com/OutlitAI/outlit-sdk/commit/cefc51938b57771b9ba3ebb45dbf541519964d7e) Thanks [@leo-paz](https://github.com/leo-paz)! - Update CLI help examples to use current journey stages and ISO datetime ranges.
+
+- Updated dependencies [[`e7f42ca`](https://github.com/OutlitAI/outlit-sdk/commit/e7f42ca89fe4e072f32e18969ae111ebd7979f59), [`8b61522`](https://github.com/OutlitAI/outlit-sdk/commit/8b61522d0b85a5164b6ab1efa01e0c182d79cab5)]:
+  - @outlit/tools@0.1.0
+
 ## 1.5.0
 
 ### Minor Changes
