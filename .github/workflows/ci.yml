@@ -99,6 +99,11 @@ jobs:
           else
             echo "tools=false" >> "$GITHUB_OUTPUT"
           fi
+          if [ -n "$ROOT_CHANGED" ] || echo "$CHANGED" | grep -qE '^packages/(pi|tools)/|^examples/pi-agents/'; then
+            echo "pi=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pi=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Get Playwright version
         if: steps.changes.outputs.browser == 'true'
@@ -141,6 +146,11 @@ jobs:
       - name: Run tools tests
         if: steps.changes.outputs.tools == 'true'
         working-directory: packages/tools
+        run: bun run test
+
+      - name: Run Pi tests
+        if: steps.changes.outputs.pi == 'true'
+        working-directory: packages/pi
         run: bun run test
 
   rust:

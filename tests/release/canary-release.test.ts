@@ -47,4 +47,26 @@ describe("getCanaryReleaseMetadata", () => {
     expect(metadata.hasSnapshots).toBe(false)
     expect(metadata.snapshotPackages).toEqual([])
   })
+
+  test("includes tools and Pi snapshots in canary metadata", () => {
+    const metadata = getCanaryReleaseMetadata({
+      "@outlit/browser": "1.5.0",
+      "@outlit/cli": "1.5.0",
+      "@outlit/core": "1.5.0",
+      "@outlit/node": "1.5.0",
+      "@outlit/pi": "0.0.0-canary-202604080240-abcd123",
+      "@outlit/tools": "0.0.0-canary-202604080240-abcd123",
+    })
+
+    expect(metadata.hasSnapshots).toBe(true)
+    expect(metadata.hasBrowserSnapshot).toBe(false)
+    expect(metadata.snapshotPackages.map((pkg) => pkg.name)).toEqual([
+      "@outlit/tools",
+      "@outlit/pi",
+    ])
+    expect(metadata.snapshotPackages.map((pkg) => pkg.installCommand)).toEqual([
+      "npm install @outlit/tools@canary",
+      "npm install @outlit/pi@canary",
+    ])
+  })
 })

@@ -23,3 +23,22 @@ describe("release workflow CLI dispatch", () => {
     expect(workflow).toContain(githubTokenExpression)
   })
 })
+
+describe("release workflow canary summary", () => {
+  test("prints install commands for agent package canaries", () => {
+    const workflow = readFileSync(".github/workflows/release.yml", "utf8")
+
+    expect(workflow).toContain("npm install @outlit/tools@canary")
+    expect(workflow).toContain("npm install @outlit/pi@canary")
+  })
+})
+
+describe("CI workflow Pi package coverage", () => {
+  test("detects Pi package changes and runs Pi tests", () => {
+    const workflow = readFileSync(".github/workflows/ci.yml", "utf8")
+
+    expect(workflow).toContain('echo "pi=true"')
+    expect(workflow).toContain("steps.changes.outputs.pi == 'true'")
+    expect(workflow).toContain("working-directory: packages/pi")
+  })
+})
