@@ -81,8 +81,20 @@
         "tab": "API Reference",
         "groups": [
           {
+            "group": "Overview",
+            "pages": ["api-reference/introduction"]
+          },
+          {
+            "group": "Platform API",
+            "pages": [
+              "api-reference/validation",
+              "api-reference/tools",
+              "api-reference/integrations"
+            ]
+          },
+          {
             "group": "Ingest API",
-            "pages": ["api-reference/introduction", "api-reference/ingest"]
+            "pages": ["api-reference/ingest"]
           }
         ]
       }

@@ -5,13 +5,32 @@ description: "Direct API access for custom integrations"
 
 ## Base URL
 
-All API requests should be made to:
+Outlit exposes two API surfaces:
 
-```
-https://app.outlit.ai/api/i/v1
-```
+| Surface | Base URL | Authentication |
+|---------|----------|----------------|
+| Platform API | `https://app.outlit.ai` | Bearer API key |
+| Ingest API | `https://app.outlit.ai/api/i/v1` | Public key in the URL path |
 
 ## Authentication
+
+### Platform API
+
+Platform API routes use an Outlit API key in the `Authorization` header:
+
+```http
+Authorization: Bearer ok_...
+```
+
+Use Platform API routes for customer intelligence tools, integration management, and API key validation:
+
+```http
+POST /api/tools/call
+GET /api/integrations
+POST /api/validate-api-key
+```
+
+### Ingest API
 
 The Ingest API uses your **public key** in the URL path. No additional authentication headers are required for ingestion.
 
@@ -24,6 +43,8 @@ POST /api/i/v1/{publicKey}/events
 </Warning>
 
 ## Rate Limits
+
+### Ingest API
 
 | Limit | Value |
 |-------|-------|
@@ -39,9 +60,13 @@ X-RateLimit-Remaining: 95
 X-RateLimit-Reset: 1699999999
 ```
 
+### Platform API
+
+Customer intelligence tool calls are authenticated with your Outlit API key and may count toward your plan's API-call allowance. Integration management routes are authenticated the same way, but integration connections are governed by your plan's connection limit.
+
 ## Error Responses
 
-All error responses follow this format:
+Ingest API errors use the tracking response format:
 
 ```json
 {
@@ -56,19 +81,40 @@ All error responses follow this format:
 }
 ```
 
+Platform API errors use endpoint-specific JSON responses. Most Platform API failures include an `error` field:
+
+```json
+{
+  "error": "Invalid credentials"
+}
+```
+
+Plan and billing failures include a stable `code` plus plan metadata:
+
+```json
+{
+  "error": "Your plan has exhausted its included API calls for the current billing cycle.",
+  "code": "api_limit_exceeded",
+  "plan": "free",
+  "feature": "api_calls",
+  "resetAt": 1776124800000
+}
+```
+
 ### HTTP Status Codes
 
 | Code | Description |
 |------|-------------|
 | 200 | Success |
 | 400 | Invalid request body or parameters |
-| 403 | Invalid public key or unauthorized domain |
+| 401 | Invalid or missing API key |
+| 403 | Invalid public key, unauthorized domain, or plan connection limit |
 | 429 | Rate limit exceeded |
 | 500 | Internal server error |
 
 ## CORS
 
-The API supports CORS for browser requests. Allowed origins are configured in your tracking settings ([Settings → Website Tracking](https://app.outlit.ai/workspace-profile/tracking) → Enabled Domains).
+The Ingest API supports CORS for browser requests. Allowed origins are configured in your tracking settings ([Settings -> Website Tracking](https://app.outlit.ai/workspace-profile/tracking) -> Enabled Domains).
 
 ```
 Access-Control-Allow-Origin: https://your-domain.com
@@ -77,6 +123,18 @@ Access-Control-Allow-Headers: Content-Type
 ```
 
 ## Available Endpoints
+
+<Card title="POST /api/validate-api-key" icon="key" href="/api-reference/validation">
+  Verify that an Outlit API key can authenticate Platform API requests
+</Card>
+
+<Card title="POST /api/tools/call" icon="terminal" href="/api-reference/tools">
+  Call customer intelligence tools through the public tool gateway
+</Card>
+
+<Card title="/api/integrations/*" icon="plug" href="/api-reference/integrations">
+  List, connect, poll, disconnect, and inspect integration sync status
+</Card>
 
 <Card title="POST /events" icon="arrow-right" href="/api-reference/ingest">
   Send tracking events (pageviews, custom events, identify, engagement, calendar, and stage events)

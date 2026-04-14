@@ -35,6 +35,9 @@ docs/
 │       └── anonymous-visitors.mdx
 └── api-reference/
     ├── introduction.mdx         # API overview
+    ├── validation.mdx           # API key validation docs
+    ├── tools.mdx                # Customer intelligence tool call docs
+    ├── integrations.mdx         # Integration management route docs
     └── ingest.mdx               # Ingest API docs
 ```
 

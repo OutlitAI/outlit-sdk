@@ -1,0 +1,143 @@
+---
+title: "Call Tool"
+description: "Call customer intelligence tools through the public tool gateway"
+api: "POST /api/tools/call"
+---
+
+## Endpoint
+
+```http
+POST https://app.outlit.ai/api/tools/call
+```
+
+## Authentication
+
+<ParamField header="Authorization" type="string" required>
+  Outlit API key using the `Bearer ok_...` format.
+</ParamField>
+
+## Request Body
+
+```json
+{
+  "tool": "outlit_list_customers",
+  "input": {
+    "limit": 10,
+    "billingStatus": "PAYING"
+  }
+}
+```
+
+<ParamField body="tool" type="string" required>
+  Customer intelligence tool name. Must be one of the supported tool names below.
+</ParamField>
+
+<ParamField body="input" type="object" default="{}">
+  Tool-specific input object. The input is validated against the shared `@outlit/tools` contract before the tool runs.
+</ParamField>
+
+## Supported Tools
+
+| Tool | Purpose |
+|------|---------|
+| `outlit_list_customers` | Browse and filter customers by billing status, activity recency, revenue, traits, or name |
+| `outlit_list_users` | Browse and filter users by journey stage, activity recency, customer, traits, email, or name |
+| `outlit_get_customer` | Get full details for one customer, with optional related sections |
+| `outlit_get_timeline` | Get chronological customer activity across product, billing, support, and conversation channels |
+| `outlit_list_facts` | Browse stored customer facts and evidence |
+| `outlit_get_fact` | Retrieve one exact customer fact |
+| `outlit_get_source` | Retrieve one exact source record behind a fact or search result |
+| `outlit_search_customer_context` | Search customer context semantically |
+| `outlit_query` | Run SQL against customer intelligence tables |
+| `outlit_schema` | Inspect available SQL schema tables |
+
+<Info>
+  Tool input schemas are published by `@outlit/tools` as `customerToolContracts`. Use that package when building schema-driven clients or model tool definitions.
+</Info>
+
+## Examples
+
+### List Paying Customers
+
+```bash
+curl -X POST https://app.outlit.ai/api/tools/call \
+  -H "Authorization: Bearer ok_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "outlit_list_customers",
+    "input": {
+      "billingStatus": "PAYING",
+      "limit": 10
+    }
+  }'
+```
+
+### Get Customer Details
+
+```json
+{
+  "tool": "outlit_get_customer",
+  "input": {
+    "customer": "acme.com",
+    "include": ["users", "revenue", "recentTimeline"],
+    "timeframe": "30d"
+  }
+}
+```
+
+### Search Customer Context
+
+```json
+{
+  "tool": "outlit_search_customer_context",
+  "input": {
+    "customer": "acme.com",
+    "query": "What renewal concerns came up recently?",
+    "topK": 5
+  }
+}
+```
+
+## Response
+
+The response is the selected tool's JSON result. List tools return paginated collections; exact lookup tools return the matched record or an error when the record cannot be found.
+
+Example list response:
+
+```json
+{
+  "items": [
+    {
+      "id": "cus_123",
+      "name": "Acme",
+      "domain": "acme.com",
+      "billingStatus": "PAYING",
+      "mrrCents": 25000,
+      "lastActivityAt": "2026-04-10T18:22:11.000Z"
+    }
+  ],
+  "pagination": {
+    "hasMore": true,
+    "nextCursor": "cursor_abc",
+    "total": 128
+  }
+}
+```
+
+## Error Responses
+
+Invalid JSON, unknown tool names, or invalid tool inputs return `400`:
+
+```json
+{
+  "error": "Invalid tool input",
+  "details": [
+    {
+      "path": ["limit"],
+      "message": "Too big: expected number to be <=1000"
+    }
+  ]
+}
+```
+
+Invalid credentials return `401`. Plan API-call limits can return `402` or `429` with a stable billing `code`.

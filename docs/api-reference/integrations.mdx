@@ -1,0 +1,228 @@
+---
+title: "Integration Routes"
+description: "List, connect, poll, disconnect, and inspect integration sync status"
+---
+
+Every integration request requires an Outlit API key:
+
+```http
+Authorization: Bearer ok_...
+```
+
+## Provider IDs
+
+Use the currently enabled public provider IDs below when calling integration routes.
+
+| Provider ID | Name | Category | Direct config support |
+|-------------|------|----------|-----------------------|
+| `slack` | Slack | Communication | Browser session |
+| `fireflies` | Fireflies.ai | Calls | `apiKey` |
+| `granola` | Granola | Calls | `apiKey` |
+| `google-calendar` | Google Calendar | Calendar | Browser session |
+| `google-mail` | Gmail | Communication | Browser session |
+| `posthog` | PostHog | Analytics | `apiKey`, `region`, `projectId` |
+| `stripe` | Stripe | Billing | `apiKey` |
+| `supabase` | Supabase Auth | Analytics | `projectUrl`, `serviceRoleKey` |
+| `clerk` | Clerk | Analytics | `secretKey` |
+| `pylon` | Pylon | Support | Browser session |
+
+<Info>
+  Use `google-mail` for direct API requests. The CLI also accepts `gmail` as a convenience alias.
+</Info>
+
+## List Integrations
+
+```http
+GET https://app.outlit.ai/api/integrations
+```
+
+<ParamField query="connectedOnly" type="boolean" default="false">
+  When `true`, only returns currently connected integrations.
+</ParamField>
+
+### Example
+
+```bash
+curl https://app.outlit.ai/api/integrations?connectedOnly=true \
+  -H "Authorization: Bearer ok_your_api_key"
+```
+
+### Response
+
+```json
+{
+  "items": [
+    {
+      "id": "stripe",
+      "name": "Stripe",
+      "category": "billing",
+      "status": "connected",
+      "connectionId": "stripe-org_123",
+      "lastDataReceivedAt": "2026-04-10T18:22:11.000Z",
+      "syncStatus": "SUCCESS",
+      "errorMessage": null
+    }
+  ]
+}
+```
+
+## Connect Integration
+
+```http
+POST https://app.outlit.ai/api/integrations/connect
+```
+
+### Request Body
+
+```json
+{
+  "provider": "posthog",
+  "config": {
+    "apiKey": "phx_...",
+    "region": "us",
+    "projectId": "12345"
+  }
+}
+```
+
+<ParamField body="provider" type="string" required>
+  Public provider ID from the provider table.
+</ParamField>
+
+<ParamField body="config" type="object">
+  Required for direct API-key connections. Omit this field to create a browser-based connection session.
+</ParamField>
+
+### Direct API-Key Response
+
+```json
+{
+  "connected": true,
+  "connectionId": "posthog-org_123",
+  "alreadyConnected": false
+}
+```
+
+### Browser Session Response
+
+```json
+{
+  "sessionId": "0f6d0f76-1dc7-4c5c-bba5-6685f74a5e3a",
+  "connectUrl": "https://app.outlit.ai/integrations",
+  "alreadyConnected": false
+}
+```
+
+Open `connectUrl` in a browser where the user can complete the provider connection, then poll the connect status route with `sessionId`.
+
+### Errors
+
+Invalid providers or malformed JSON return `400`. Connection-limit failures return `403`:
+
+```json
+{
+  "error": "Your plan has reached its integration connection limit.",
+  "code": "plan_connection_limit_exceeded",
+  "feature": "integration_connections",
+  "plan": "free",
+  "currentConnections": 3,
+  "limit": 3
+}
+```
+
+## Poll Connection Status
+
+```http
+GET https://app.outlit.ai/api/integrations/connect/status
+```
+
+<ParamField query="sessionId" type="string" required>
+  Session ID returned by `POST /api/integrations/connect`.
+</ParamField>
+
+### Response
+
+```json
+{
+  "status": "pending",
+  "provider": "slack"
+}
+```
+
+`status` is one of `pending`, `connected`, `failed`, or `expired`. Failed responses may include `error`.
+
+## Disconnect Integration
+
+```http
+POST https://app.outlit.ai/api/integrations/disconnect
+```
+
+### Request Body
+
+```json
+{
+  "provider": "stripe"
+}
+```
+
+<ParamField body="provider" type="string" required>
+  Public provider ID from the provider table.
+</ParamField>
+
+### Response
+
+```json
+{
+  "success": true
+}
+```
+
+If the provider is valid but not connected, the route returns `404`:
+
+```json
+{
+  "success": false,
+  "message": "Integration is not connected"
+}
+```
+
+## Get Sync Status
+
+```http
+GET https://app.outlit.ai/api/integrations/sync-status
+```
+
+<ParamField query="provider" type="string" required>
+  Public provider ID from the provider table.
+</ParamField>
+
+### Response
+
+```json
+{
+  "provider": "stripe",
+  "name": "Stripe",
+  "category": "billing",
+  "status": "connected",
+  "syncs": [
+    {
+      "model": "StripeCustomer",
+      "status": "SUCCESS",
+      "lastSyncedAt": "2026-04-10T18:22:11.000Z",
+      "errorMessage": null
+    }
+  ]
+}
+```
+
+When the provider is valid but not connected, the route returns:
+
+```json
+{
+  "provider": "stripe",
+  "name": "Stripe",
+  "category": "billing",
+  "status": "not_connected",
+  "syncs": []
+}
+```
