@@ -1,0 +1,81 @@
+{
+  "name": "@outlit/pi",
+  "version": "0.0.1",
+  "description": "Pi package for Outlit customer intelligence tools",
+  "license": "Apache-2.0",
+  "author": "Outlit AI",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OutlitAI/outlit-sdk.git",
+    "directory": "packages/pi"
+  },
+  "bugs": {
+    "url": "https://github.com/OutlitAI/outlit-sdk/issues"
+  },
+  "homepage": "https://github.com/OutlitAI/outlit-sdk#readme",
+  "keywords": [
+    "outlit",
+    "pi",
+    "pi-package",
+    "agents",
+    "customer-intelligence"
+  ],
+  "pi": {
+    "extensions": [
+      "./dist/extension.js"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./extension": {
+      "types": "./dist/extension.d.ts",
+      "import": "./dist/extension.js",
+      "require": "./dist/extension.cjs",
+      "default": "./dist/extension.js"
+    }
+  },
+  "files": [
+    "dist",
+    "skills",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist .turbo node_modules",
+    "lint": "biome check . --write",
+    "format": "biome format --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@outlit/tools": "^1.5.0"
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*",
+    "@sinclair/typebox": "*"
+  },
+  "devDependencies": {
+    "@mariozechner/pi-coding-agent": "^0.67.1",
+    "@outlit/typescript-config": "workspace:*",
+    "@sinclair/typebox": "^0.34.41",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  }
+}

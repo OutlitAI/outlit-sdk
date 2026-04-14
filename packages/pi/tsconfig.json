@@ -1,0 +1,8 @@
+{
+  "extends": "@outlit/typescript-config/base.json",
+  "compilerOptions": {
+    "baseUrl": "."
+  },
+  "include": ["."],
+  "exclude": ["node_modules", "dist"]
+}
