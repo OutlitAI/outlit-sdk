@@ -64,7 +64,6 @@ async fn main() -> Result<(), outlit::Error> {
 
 ```rust
 let client = Outlit::builder("pk_xxx")
-    .api_host("https://custom.example.com")  // default: https://app.outlit.ai
     .flush_interval(Duration::from_secs(5))   // default: 10 seconds
     .max_batch_size(50)                       // default: 100
     .timeout(Duration::from_secs(30))         // default: 10 seconds

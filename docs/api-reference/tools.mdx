@@ -55,6 +55,34 @@ POST https://app.outlit.ai/api/tools/call
   Tool input schemas are published by `@outlit/tools` as `customerToolContracts`. Use that package when building schema-driven clients or model tool definitions.
 </Info>
 
+## TypeScript Client
+
+Use `@outlit/tools` when you want the same tool names and input contracts that power the CLI, Pi package, and public tool gateway:
+
+```bash
+npm install @outlit/tools
+```
+
+```typescript
+import { createOutlitClient, customerToolContracts } from "@outlit/tools"
+
+const outlit = createOutlitClient({
+  apiKey: process.env.OUTLIT_API_KEY!,
+})
+
+const result = await outlit.callTool(
+  customerToolContracts.outlit_search_customer_context.toolName,
+  {
+    query: "What pricing concerns came up recently?",
+    customer: "acme.com",
+    sourceTypes: ["CALL", "EMAIL", "SUPPORT_TICKET"],
+    topK: 5,
+  },
+)
+```
+
+The package also exports `customerToolContracts`, `defaultAgentToolNames`, `allCustomerToolNames`, and enum lists such as `customerSourceTypes` for schema-driven agent integrations.
+
 ## Examples
 
 ### List Paying Customers
@@ -93,14 +121,43 @@ curl -X POST https://app.outlit.ai/api/tools/call \
   "input": {
     "customer": "acme.com",
     "query": "What renewal concerns came up recently?",
+    "sourceTypes": ["EMAIL", "CALL", "SUPPORT_TICKET"],
+    "after": "2026-01-01T00:00:00Z",
     "topK": 5
+  }
+}
+```
+
+### List Active Facts From Calls
+
+```json
+{
+  "tool": "outlit_list_facts",
+  "input": {
+    "customer": "acme.com",
+    "status": ["ACTIVE"],
+    "sourceTypes": ["CALL"],
+    "after": "2026-01-01T00:00:00Z",
+    "limit": 20
+  }
+}
+```
+
+### Open One Source Record
+
+```json
+{
+  "tool": "outlit_get_source",
+  "input": {
+    "sourceType": "SUPPORT_TICKET",
+    "sourceId": "ticket_456"
   }
 }
 ```
 
 ## Response
 
-The response is the selected tool's JSON result. List tools return paginated collections; exact lookup tools return the matched record or an error when the record cannot be found.
+The response is the selected tool's JSON result. List tools return paginated collections; exact lookup tools return the matched record or an error when the record cannot be found. Search returns grouped artifact-level `source` and `fact` results, not raw vector chunks. Fact results include provenance fields such as `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink` when available.
 
 Example list response:
 

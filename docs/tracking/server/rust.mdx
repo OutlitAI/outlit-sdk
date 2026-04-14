@@ -54,7 +54,6 @@ async fn main() -> Result<(), outlit::Error> {
 use std::time::Duration;
 
 let client = Outlit::builder("pk_xxx")
-    .api_host("https://app.outlit.ai")  // optional
     .flush_interval(Duration::from_secs(10))
     .max_batch_size(100)
     .timeout(Duration::from_secs(10))

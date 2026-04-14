@@ -38,7 +38,7 @@ POST https://app.outlit.ai/api/i/v1/{publicKey}/events
 ### Body Parameters
 
 <ParamField body="visitorId" type="string">
-  Unique identifier for the visitor (UUID format). Required for browser (`client`) tracking. For server-side tracking (`server` source), this can be omitted—identity is derived from email/userId in the events.
+  Unique identifier for the visitor (UUID format). Required for browser (`client`) tracking. For server-side tracking (`server` source), this can be omitted; identity or attribution is derived from `email`, `userId`, `fingerprint`, `customerId`, or billing identifiers in the events.
 </ParamField>
 
 <ParamField body="source" type="string" default="client">
@@ -57,8 +57,14 @@ POST https://app.outlit.ai/api/i/v1/{publicKey}/events
   | `email` | string | User's email address |
   | `userId` | string | Your system-owned user/contact ID |
   | `traits` | object | User/contact traits |
+</ParamField>
+
+<ParamField body="customerIdentity" type="object">
+  Optional customer/account attribution for the whole batch. Used by browser SDK when the current user carries account/workspace context.
+
+  | Property | Type | Description |
+  |----------|------|-------------|
   | `customerId` | string | Your system-owned customer/account/workspace ID |
-  | `customerDomain` | string | Public customer/account domain used for billing and attribution |
   | `customerTraits` | object | Customer/account traits |
 </ParamField>
 
@@ -204,7 +210,6 @@ Identify the visitor with their email/userId.
   "email": "jane@example.com",
   "userId": "usr_12345",
   "customerId": "cust_123",
-  "customerDomain": "acme.com",
   "traits": {
     "name": "Jane Doe",
     "company": "Acme Inc",
@@ -236,11 +241,7 @@ Identify the visitor with their email/userId.
 </ParamField>
 
 <ParamField body="customerId" type="string">
-  Your system-owned customer/account/workspace ID.
-</ParamField>
-
-<ParamField body="customerDomain" type="string">
-  Public customer/account domain used for billing and attribution.
+  Your system-owned customer/account/workspace ID. Send it with an identify event when you want that external account/workspace to link to the contact resolved from email or userId.
 </ParamField>
 
 <ParamField body="customerTraits" type="object">
@@ -342,7 +343,7 @@ Track calendar booking from embedded widgets (Cal.com, Calendly).
 
 ### Stage Event
 
-Track user journey stage transitions. Use this to mark users as activated, engaged, paid, or churned.
+Track contact journey stage transitions. Use this to mark users as activated, engaged, or inactive.
 
 ```json
 {
@@ -363,7 +364,7 @@ Track user journey stage transitions. Use this to mark users as activated, engag
 </ParamField>
 
 <ParamField body="stage" type="string" required>
-  The journey stage. One of: `"activated"`, `"engaged"`, `"paid"`, `"churned"`.
+  The journey stage. One of: `"activated"`, `"engaged"`, `"inactive"`.
 </ParamField>
 
 <ParamField body="properties" type="object">
@@ -372,6 +373,51 @@ Track user journey stage transitions. Use this to mark users as activated, engag
 
 <Info>
   The `discovered` and `signed_up` stages are automatically inferred from identify events. Only use stage events for explicit milestone tracking.
+</Info>
+
+---
+
+### Billing Event
+
+Track account billing status for custom billing systems. If Stripe is connected, billing status is handled automatically.
+
+```json
+{
+  "type": "billing",
+  "url": "server://cust_123",
+  "path": "/",
+  "status": "paid",
+  "customerId": "cust_123",
+  "properties": {
+    "plan": "pro",
+    "amount": 99
+  },
+  "timestamp": 1699999999999
+}
+```
+
+<ParamField body="type" type="string" required>
+  Must be `"billing"`.
+</ParamField>
+
+<ParamField body="status" type="string" required>
+  The billing status. One of: `"trialing"`, `"paid"`, `"churned"`.
+</ParamField>
+
+<ParamField body="customerId" type="string">
+  Your system-owned customer/account/workspace ID. Public billing calls should use this identifier.
+</ParamField>
+
+<ParamField body="stripeCustomerId" type="string">
+  Stripe customer identifier. Prefer `customerId` unless you are sending compatibility events that already use Stripe IDs.
+</ParamField>
+
+<ParamField body="properties" type="object">
+  Additional billing context such as plan, amount, or cancellation reason.
+</ParamField>
+
+<Info>
+  Billing events require `customerId` or `stripeCustomerId`. They target the account, not an individual contact.
 </Info>
 
 ---
@@ -468,7 +514,6 @@ curl -X POST "https://app.outlit.ai/api/i/v1/pk_your_key/events" \
         "email": "jane@acme.com",
         "userId": "usr_123",
         "customerId": "cust_123",
-        "customerDomain": "acme.com",
         "traits": {
           "name": "Jane Doe",
           "plan": "pro"
@@ -485,7 +530,6 @@ curl -X POST "https://app.outlit.ai/api/i/v1/pk_your_key/events" \
         "email": "jane@acme.com",
         "userId": "usr_123",
         "customerId": "cust_123",
-        "customerDomain": "acme.com",
         "properties": {
           "plan": "pro",
           "amount": 99
@@ -540,7 +584,6 @@ response = requests.post(
                 'path': '/',
                 'email': 'jane@example.com',
                 'customerId': 'cust_123',
-                'customerDomain': 'acme.com',
                 'traits': {'name': 'Jane Doe'},
                 'customerTraits': {'plan': 'enterprise'},
                 'timestamp': int(time.time() * 1000)
@@ -554,10 +597,11 @@ print(response.json())
 
 ## Server-Side Events
 
-For server-side tracking, the `visitorId` field can be omitted. Identity is resolved from the event data, including customer-only attribution when `customerId` and/or `customerDomain` are provided:
+For server-side tracking, the `visitorId` field can be omitted. Identity is resolved from the event data, including customer-only attribution when `customerId` is provided:
 
 - **Identify events**: Use `email` and/or `userId` fields, plus optional customer context
-- **Custom events**: Include top-level `email`, `userId`, `customerId`, and/or `customerDomain` fields
+- **Custom events**: Include top-level `email`, `userId`, `fingerprint`, and/or `customerId` fields
+- **Billing events**: Include `customerId` or `stripeCustomerId`
 
 ```json
 {
@@ -571,7 +615,6 @@ For server-side tracking, the `visitorId` field can be omitted. Identity is reso
       "email": "user@example.com",
       "userId": "usr_123",
       "customerId": "cust_123",
-      "customerDomain": "acme.com",
       "properties": {
         "amount": 99,
         "currency": "USD"
@@ -582,7 +625,7 @@ For server-side tracking, the `visitorId` field can be omitted. Identity is reso
 ```
 
 <Warning>
-  Server events **require identity**. The request will fail if no identify event or identity properties are found in the batch.
+  Server events require identity or account attribution. Custom events need at least one of `email`, `userId`, `fingerprint`, or `customerId`; identify events need `email` or `userId`; billing events need `customerId` or `stripeCustomerId`.
 </Warning>
 
 ## Batching Best Practices

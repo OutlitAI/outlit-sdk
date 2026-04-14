@@ -33,7 +33,6 @@ import outlit from '@outlit/browser'
 outlit.init({
   publicKey: 'pk_your_public_key',
   // Optional configuration
-  apiHost: 'https://app.outlit.ai',
   trackPageviews: true,
   trackForms: true,
   trackEngagement: true,
@@ -44,7 +43,7 @@ outlit.init({
 ### Configuration Options
 
 <ParamField path="publicKey" type="string" required>
-  Your organization's public key from [Settings → Website Tracking](https://app.outlit.ai/workspace-profile/tracking).
+  Your organization's public key from [Settings → Website Tracking](https://app.outlit.ai/settings/workspace/tracking).
 </ParamField>
 
 <ParamField path="apiHost" type="string" default="https://app.outlit.ai">
@@ -161,10 +160,12 @@ Identify the current visitor. Links their anonymous history to a known profile.
 outlit.identify({
   email: 'jane@acme.com',
   userId: 'usr_12345',
+  customerId: 'cust_123',
   traits: {
     name: 'Jane Doe',
-    company: 'Acme Inc',
     role: 'Engineering Manager',
+  },
+  customerTraits: {
     plan: 'enterprise'
   }
 })
@@ -182,6 +183,14 @@ outlit.identify({
   Additional properties about the user.
 </ParamField>
 
+<ParamField path="customerId" type="string">
+  Your system-owned customer/account/workspace ID. Send this when the visitor belongs to a known account.
+</ParamField>
+
+<ParamField path="customerTraits" type="Record<string, string | number | boolean | null>">
+  Additional properties about the customer/account profile.
+</ParamField>
+
 ### `outlit.setUser(identity)`
 
 Set the current user identity. Ideal for SPA applications where you know the user's identity after authentication. Can be called before tracking is enabled—the identity is queued and applied when `enableTracking()` is called.
@@ -191,8 +200,11 @@ Set the current user identity. Ideal for SPA applications where you know the use
 outlit.setUser({
   email: 'jane@acme.com',
   userId: 'usr_12345',
+  customerId: 'cust_123',
   traits: {
     name: 'Jane Doe',
+  },
+  customerTraits: {
     plan: 'pro'
   }
 })

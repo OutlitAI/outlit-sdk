@@ -8,7 +8,7 @@ description: "Server-side tracking for backend applications"
 The Node.js SDK is designed for server-side tracking where you have user identity. It supports:
 
 - **Identified tracking** - Use `email` or `userId` for user-scoped resolution
-- **Customer attribution** - Add `customerId` and/or `customerDomain` for account context
+- **Customer attribution** - Add `customerId` for account/workspace context, even before a user is known
 - **Efficient batching** - Events are queued and sent in batches
 - **Device tracking** - Use `fingerprint` for desktop/mobile apps ([learn more](/concepts/website-visitors#device-tracking-non-browser))
 
@@ -49,7 +49,6 @@ const outlit = new Outlit({
 outlit.track({
   email: 'user@example.com',
   customerId: 'cust_123',
-  customerDomain: 'acme.com',
   eventName: 'subscription_upgraded',
   properties: {
     fromPlan: 'starter',
@@ -67,7 +66,6 @@ await outlit.flush()
 ```typescript
 const outlit = new Outlit({
   publicKey: 'pk_xxx',
-  apiHost: 'https://app.outlit.ai', // optional
   flushInterval: 10000, // ms, default 10s
   maxBatchSize: 100, // events per batch
   timeout: 10000, // request timeout ms
@@ -107,7 +105,6 @@ outlit.track({
   email: 'jane@acme.com',
   userId: 'usr_12345', // optional if email provided
   customerId: 'cust_123',
-  customerDomain: 'acme.com',
   eventName: 'report_exported',
   properties: {
     reportType: 'sales',
@@ -134,10 +131,6 @@ outlit.track({
   Your system-owned customer/account/workspace ID.
 </ParamField>
 
-<ParamField path="customerDomain" type="string">
-  Public customer/account domain used for billing and attribution.
-</ParamField>
-
 <ParamField path="eventName" type="string" required>
   Name of the event. Use `snake_case`.
 </ParamField>
@@ -151,7 +144,7 @@ outlit.track({
 </ParamField>
 
 <Info>
-  At least one of `email`, `userId`, `fingerprint`, `customerId`, or `customerDomain` is required for `track()`.
+  At least one of `email`, `userId`, `fingerprint`, or `customerId` is required for `track()`. `customerId`-only events are valid immediately and can later link to a resolved customer when `identify()` uses the same `customerId` with an email.
 </Info>
 
 ### `outlit.identify(options)`
@@ -163,7 +156,6 @@ outlit.identify({
   email: 'jane@acme.com',
   userId: 'usr_12345',
   customerId: 'cust_123',
-  customerDomain: 'acme.com',
   customerTraits: {
     plan: 'enterprise',
     seats: 50
@@ -192,11 +184,7 @@ outlit.identify({
 </ParamField>
 
 <ParamField path="customerId" type="string">
-  Your system-owned customer/account/workspace ID.
-</ParamField>
-
-<ParamField path="customerDomain" type="string">
-  Public customer/account domain used for billing and attribution.
+  Your system-owned customer/account/workspace ID. Send this with `email` or `userId` to link the account/workspace to the resolved contact profile.
 </ParamField>
 
 <ParamField path="customerTraits" type="Record<string, any>">
@@ -250,7 +238,7 @@ outlit.user.inactive({
 
 ### Account Billing Methods
 
-Track account billing status. These methods target the account by `customerId` and/or `customerDomain`, not individual contacts. If you've connected Stripe, billing is handled automatically.
+Track account billing status. These methods target the account by `customerId`, not individual contacts. If you've connected Stripe, billing is handled automatically.
 
 #### `outlit.customer.trialing(options)`
 
@@ -258,7 +246,6 @@ Mark an account as trialing.
 
 ```typescript
 outlit.customer.trialing({
-  customerDomain: 'acme.com',
   customerId: 'cust_123',
   properties: { trialEndsAt: '2024-02-15' }
 })
@@ -270,7 +257,6 @@ Mark an account as paying.
 
 ```typescript
 outlit.customer.paid({
-  customerDomain: 'acme.com',
   customerId: 'cust_123',
   properties: { plan: 'pro', amount: 99 }
 })
@@ -282,14 +268,13 @@ Mark an account as churned.
 
 ```typescript
 outlit.customer.churned({
-  customerDomain: 'acme.com',
   customerId: 'cust_123',
   properties: { reason: 'cancelled_by_user' }
 })
 ```
 
 <Info>
-  Billing methods target accounts by `customerId` and/or `customerDomain`. All contacts under that domain share the same billing status. See [Customer Journey](/concepts/customer-journey) for details on how contact stages and account billing work together.
+  Billing methods target accounts by `customerId`. Contacts linked to that customer share the same billing status. See [Customer Journey](/concepts/customer-journey) for details on how contact stages and account billing work together.
 </Info>
 
 ### `outlit.flush()`
@@ -365,7 +350,7 @@ import { Outlit } from '@outlit/node'
 const outlit = new Outlit({ publicKey: process.env.OUTLIT_KEY! })
 
 export async function POST(request: Request) {
-  const { userId, email, newPlan, amount, domain } = await request.json()
+  const { userId, email, customerId, newPlan, amount } = await request.json()
 
   // Your upgrade logic
   await upgradeSubscription(userId, newPlan)
@@ -374,16 +359,14 @@ export async function POST(request: Request) {
   outlit.track({
     email,
     userId,
-    customerId: `cust_${userId}`,
-    customerDomain: domain,
+    customerId,
     eventName: 'subscription_upgraded',
     properties: { plan: newPlan }
   })
 
   // Update account billing status
   outlit.customer.paid({
-    customerDomain: domain,
-    customerId: `cust_${userId}`,
+    customerId,
     properties: { plan: newPlan, amount }
   })
 
@@ -442,18 +425,13 @@ export async function handleStripeWebhook(event: Stripe.Event) {
       const customerId =
         typeof session.customer === 'string' ? session.customer : session.customer?.id
       if (!customerId) break
-      // Get account domain from your database
-      const domain = await getAccountDomain(customerId)
-      if (domain) {
-        outlit.customer.paid({
-          customerDomain: domain,
-          customerId,
-          properties: {
-            amount: session.amount_total ? session.amount_total / 100 : undefined,
-            currency: session.currency,
-          }
-        })
-      }
+      outlit.customer.paid({
+        customerId,
+        properties: {
+          amount: session.amount_total ? session.amount_total / 100 : undefined,
+          currency: session.currency,
+        }
+      })
       break
     }
 
@@ -464,17 +442,12 @@ export async function handleStripeWebhook(event: Stripe.Event) {
           ? subscription.customer
           : subscription.customer?.id
       if (!customerId) break
-      // Get account domain from your database
-      const domain = await getAccountDomain(customerId)
-      if (domain) {
-        outlit.customer.churned({
-          customerDomain: domain,
-          customerId,
-          properties: {
-            reason: subscription.cancellation_details?.reason,
-          }
-        })
-      }
+      outlit.customer.churned({
+        customerId,
+        properties: {
+          reason: subscription.cancellation_details?.reason,
+        }
+      })
       break
     }
   }
@@ -566,7 +539,6 @@ const outlit = new Outlit(options)
 const trackOptions: ServerTrackOptions = {
   email: 'user@test.com',
   customerId: 'cust_123',
-  customerDomain: 'acme.com',
   eventName: 'test',
   properties: { key: 'value' }
 }
@@ -583,7 +555,6 @@ outlit.user.activate(stageOptions)
 
 // Account billing options
 const billingOptions: BillingOptions = {
-  customerDomain: 'acme.com',
   customerId: 'cust_123',
   properties: { plan: 'pro' }
 }
