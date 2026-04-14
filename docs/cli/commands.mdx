@@ -344,8 +344,8 @@ outlit facts list acme.com
 # Filter by status and source type
 outlit facts list acme.com --status ACTIVE --source-types CALL,EMAIL --after 2025-01-01T00:00:00Z
 
-# Filter customer-memory facts by public fact type and category
-outlit facts list acme.com --fact-types CHURN_RISK,PRODUCT_USAGE --fact-categories MEMORY
+# Filter customer-memory facts by public fact type
+outlit facts list acme.com --fact-types CHURN_RISK,PRODUCT_USAGE
 
 # Pipe for processing
 outlit facts list acme.com --json | jq '.facts[] | select(.severity == "HIGH")'

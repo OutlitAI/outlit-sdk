@@ -25,7 +25,7 @@ const main = defineCommand({
     name: "outlit",
     version: CLI_VERSION,
     description:
-      "Outlit CLI -- customer intelligence from the terminal.\n\nUsage examples:\n  outlit customers list --billing-status PAYING --no-activity-in 30d\n  outlit customers get acme.com --include users,revenue\n  outlit customers timeline acme.com --timeframe 90d\n  outlit users list --journey-stage CHAMPION\n  outlit facts list acme.com --fact-types CHURN_RISK,EXPANSION --fact-categories MEMORY\n  outlit facts get --fact-id fact_123 --include evidence\n  outlit sources get --source-type CALL --source-id call_123\n  outlit search 'pricing objections last quarter' --source-types CALL,EMAIL\n  outlit sql 'SELECT * FROM events LIMIT 10'\n  outlit schema events\n  outlit doctor --json\n\nFor AI agents: commands auto-output JSON when stdout is piped. No --json flag needed.",
+      "Outlit CLI -- customer intelligence from the terminal.\n\nUsage examples:\n  outlit customers list --billing-status PAYING --no-activity-in 30d\n  outlit customers get acme.com --include users,revenue\n  outlit customers timeline acme.com --timeframe 90d\n  outlit users list --journey-stage CHAMPION\n  outlit facts list acme.com --fact-types CHURN_RISK,EXPANSION\n  outlit facts get --fact-id fact_123 --include evidence\n  outlit sources get --source-type CALL --source-id call_123\n  outlit search 'pricing objections last quarter' --source-types CALL,EMAIL\n  outlit sql 'SELECT * FROM events LIMIT 10'\n  outlit schema events\n  outlit doctor --json\n\nFor AI agents: commands auto-output JSON when stdout is piped. No --json flag needed.",
   },
   subCommands: {
     auth: () => import("./commands/auth/index").then((m) => m.default),

@@ -24,7 +24,7 @@ Use Outlit tools to ground customer signal work in actual customer data. These a
    - Use `outlit_get_customer` with relevant includes before deep analysis.
    - Prefer stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
    - Use `outlit_get_timeline` when recency, sequence, or behavior changes matter.
-   - Use `outlit_list_facts` for known account facts, health indicators, support issues, billing context, activation context, and relationship notes. Use `factTypes` and `factCategories` to narrow extracted customer-memory facts when helpful.
+   - Use `outlit_list_facts` for known account facts, health indicators, support issues, billing context, activation context, and relationship notes. Use `factTypes` to narrow extracted customer-memory facts when helpful.
    - Use `outlit_get_fact` or `outlit_get_source` when a claim needs stronger evidence.
 4. Rank only after reviewing evidence.
    - Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
@@ -49,10 +49,10 @@ Keep these categories separate:
 
 When calling `outlit_list_facts`, prefer non-behavioral customer-memory filters:
 
-- Usage decay churn: `factTypes: ["CHURN_RISK", "SENTIMENT", "PRODUCT_USAGE", "CHAMPION_RISK", "BUDGET"]`, usually with `factCategories: ["MEMORY"]`.
-- Friction-to-churn: `factTypes: ["CHURN_RISK", "SENTIMENT", "REQUIREMENTS", "PRODUCT_USAGE"]`, usually with `factCategories: ["MEMORY"]`; use `sourceTypes: ["SUPPORT_TICKET"]` when looking for support-backed evidence.
-- Activation failure: `factTypes: ["REQUIREMENTS", "PRODUCT_USAGE", "SENTIMENT", "CHURN_RISK"]`, usually with `factCategories: ["MEMORY"]`.
-- Expansion readiness: `factTypes: ["EXPANSION", "PRODUCT_USAGE", "REQUIREMENTS", "SENTIMENT"]`, usually with `factCategories: ["MEMORY"]`.
+- Usage decay churn: `factTypes: ["CHURN_RISK", "SENTIMENT", "PRODUCT_USAGE", "CHAMPION_RISK", "BUDGET"]`.
+- Friction-to-churn: `factTypes: ["CHURN_RISK", "SENTIMENT", "REQUIREMENTS", "PRODUCT_USAGE"]`; use `sourceTypes: ["SUPPORT_TICKET"]` when looking for support-backed evidence.
+- Activation failure: `factTypes: ["REQUIREMENTS", "PRODUCT_USAGE", "SENTIMENT", "CHURN_RISK"]`.
+- Expansion readiness: `factTypes: ["EXPANSION", "PRODUCT_USAGE", "REQUIREMENTS", "SENTIMENT"]`.
 
 Do not request `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF` as fact filters. Those come from anomaly detectors and are not part of the public filter surface for these agents.
 

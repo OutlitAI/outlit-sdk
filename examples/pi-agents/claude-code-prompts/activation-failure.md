@@ -16,7 +16,7 @@ Process:
 1. Run `outlit schema` when you need table names or fields, then use `outlit sql` to find trials, new accounts, missing activation events, stalled onboarding, or no recent activity after signup.
 2. Discover trialing, unpaid, recently seen, or newly converted customers with CLI customer and user commands as needed. Include paying customers only when they are still onboarding or clearly pre-activation.
 3. Gather customer details, user journey stage, activity recency, timeline, facts, billing/payment context, and semantic search evidence.
-   Use fact filters such as `outlit facts list <customer> --fact-types REQUIREMENTS,PRODUCT_USAGE,SENTIMENT,CHURN_RISK --fact-categories MEMORY --json` for blockers, stated intent, and missing-first-value context.
+   Use fact filters such as `outlit facts list <customer> --fact-types REQUIREMENTS,PRODUCT_USAGE,SENTIMENT,CHURN_RISK --json` for blockers, stated intent, and missing-first-value context.
    Do not request behavioral/anomaly fact types like `ACTIVATION_RATE_DROP` or `FUNNEL_DROPOFF` as fact filters; many customers will not have configured activation paths or funnels. Use SQL/user/event evidence as the primary activation signal.
    Use stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
 4. Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.

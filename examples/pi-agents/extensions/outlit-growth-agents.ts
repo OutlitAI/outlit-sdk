@@ -18,7 +18,7 @@ const SHARED_AGENT_SYSTEM_PROMPT = `
 Outlit customer signal agent guidance:
 - Use Outlit tools for customer discovery, customer details, timeline events, facts, source evidence, billing, product activity, and semantic customer context.
 - Use outlit_schema and outlit_query for candidate discovery, cohorts, usage trends, revenue filters, activation gaps, and aggregate checks before deep account review.
-- Use outlit_list_facts with factTypes and factCategories for extracted customer-memory evidence when helpful, such as CHURN_RISK, EXPANSION, SENTIMENT, BUDGET, REQUIREMENTS, PRODUCT_USAGE, or CHAMPION_RISK.
+- Use outlit_list_facts with factTypes for extracted customer-memory evidence when helpful, such as CHURN_RISK, EXPANSION, SENTIMENT, BUDGET, REQUIREMENTS, PRODUCT_USAGE, or CHAMPION_RISK.
 - Do not assume behavioral/anomaly fact types exist for every customer. Treat usage-path and funnel facts as optional supporting evidence only.
 - Use stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
 - Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
