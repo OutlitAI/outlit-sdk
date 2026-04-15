@@ -1,5 +1,11 @@
 # @outlit/cli
 
+## 1.6.1
+
+### Patch Changes
+
+- [#105](https://github.com/OutlitAI/outlit-sdk/pull/105) [`fc51b27`](https://github.com/OutlitAI/outlit-sdk/commit/fc51b27ce89fe5309940ff276f72325c7329fa76) Thanks [@leo-paz](https://github.com/leo-paz)! - Fix the native CLI binary release by building local tool dependencies before release tests and avoiding top-level await in the CLI entrypoint.
+
 ## 1.6.0
 
 ### Minor Changes
