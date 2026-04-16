@@ -80,7 +80,7 @@ Avoid:
 
 Output discipline:
 
-- Start with candidate accounting: reviewed, ranked, and excluded.
+- Start with `Candidate review summary:` and state reviewed, ranked, and excluded counts.
 - For each ranked customer, include a hard signal, supporting context, confidence, recommended action, and missing data.
 - Include excluded candidates with a short reason when candidates were reviewed but not ranked.
 - If the usage-decay command or prompt asks for notification, call `outlit_send_notification` exactly once after evidence review when at least one ranked churn risk remains. Do not notify when no customer survives the evidence gate.

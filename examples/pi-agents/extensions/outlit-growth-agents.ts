@@ -42,7 +42,7 @@ type AgentCommand = {
   name: string
   description: string
   notify: string
-  prompt: (scope: string | undefined, pretriageContext?: string) => string
+  prompt: (scope: string | undefined, pretriageContext?: string, pretriageNote?: string) => string
   pretriage?: {
     scopeProfile: "configured" | "revenue_accounts" | "all_accounts" | "auto"
     maxPromptCustomers: number
@@ -85,11 +85,12 @@ const COMMANDS: AgentCommand[] = [
       scopeProfile: "revenue_accounts",
       maxPromptCustomers: 5,
     },
-    prompt: (scope, pretriageContext) =>
+    prompt: (scope, pretriageContext, pretriageNote) =>
       buildPortfolioPrompt({
         title: "Usage Decay Churn Watchtower",
         scope,
         pretriageContext,
+        pretriageNote,
         notificationInstructions: buildUsageDecayNotificationInstructions(),
         objective:
           "Find paying customers whose product behavior suggests they may cancel soon, even when there is no renewal date or explicit renewal conversation.",
@@ -192,11 +193,19 @@ export default function outlitGrowthAgents(pi: GrowthAgentPiApi) {
       description: command.description,
       handler: async (args, ctx) => {
         ctx.ui.notify(command.notify, "info")
-        const pretriage = command.pretriage ? await buildCommandPretriage(command) : undefined
+        const scope = normalizeCommandScope(args)
+        const shouldRunPretriage = Boolean(command.pretriage && !scope)
+        const pretriage = shouldRunPretriage ? await buildCommandPretriage(command) : undefined
+        const pretriageNote =
+          command.pretriage && scope
+            ? "Deterministic churn pretriage was skipped because this run has an explicit user scope. Use Outlit tools to discover and review candidates inside that scope only."
+            : undefined
         if (pretriage) {
           ctx.ui.notify(pretriage.notification, "info")
+        } else if (command.pretriage && scope) {
+          ctx.ui.notify("Skipping deterministic churn pretriage for explicit scope", "info")
         }
-        pi.sendUserMessage(command.prompt(args, pretriage?.context))
+        pi.sendUserMessage(command.prompt(scope, pretriage?.context, pretriageNote))
       },
     })
   }
@@ -254,10 +263,16 @@ function formatError(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
+function normalizeCommandScope(scope: string | undefined): string | undefined {
+  const normalized = scope?.trim()
+  return normalized ? normalized : undefined
+}
+
 function buildPortfolioPrompt({
   title,
   scope,
   pretriageContext,
+  pretriageNote,
   notificationInstructions,
   objective,
   signals,
@@ -266,6 +281,7 @@ function buildPortfolioPrompt({
   title: string
   scope: string | undefined
   pretriageContext?: string
+  pretriageNote?: string
   notificationInstructions?: string
   objective: string
   signals: string[]
@@ -284,9 +300,10 @@ ${scopeLine}
 Objective: ${objective}
 
 ${pretriageContext ? `Deterministic pretriage context:\n${pretriageContext}\n` : ""}
+${pretriageNote ? `Deterministic pretriage note:\n${pretriageNote}\n` : ""}
 
 Process:
-1. If deterministic pretriage context is present, treat those customers as the investigation set for this run. Do not add unrelated customers unless the user explicitly asked for a broader scan.
+1. If deterministic pretriage context is present, treat those customers as the investigation set for this run. Do not add unrelated customers unless the user explicitly asked for a broader scan. If deterministic pretriage was skipped for an explicit scope, stay inside that scope.
 2. Use outlit_schema when you need table names or fields, then use outlit_query for candidate discovery, cohorts, usage trends, revenue filters, activation gaps, or aggregate checks.
 3. Gather customer, user, fact, timeline, search, billing, and source evidence for each candidate before ranking them. Use customer domains or IDs for follow-up lookups whenever possible.
 4. Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.

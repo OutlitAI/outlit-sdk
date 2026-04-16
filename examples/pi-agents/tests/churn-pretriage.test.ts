@@ -77,6 +77,50 @@ describe("runOutlitChurnPretriage", () => {
     ).toBe(4)
   })
 
+  test("rotates investigate customers by remaining prompt slots after likely churn", async () => {
+    const firstRun = await runOutlitChurnPretriage({
+      client: { callTool: createMixedDispositionQueryMock() },
+      config: defaultChurnPretriageConfig,
+      now: "2026-04-15T00:00:00Z",
+      scopeProfile: "revenue_accounts",
+      maxPromptCustomers: 3,
+    })
+    const secondRun = await runOutlitChurnPretriage({
+      client: { callTool: createMixedDispositionQueryMock() },
+      config: defaultChurnPretriageConfig,
+      now: "2026-04-15T01:00:00Z",
+      scopeProfile: "revenue_accounts",
+      maxPromptCustomers: 3,
+    })
+
+    expect(firstRun.surfacedCustomers.map((customer) => customer.customerId)).toEqual([
+      "cust_likely",
+      "cust_investigate_1",
+      "cust_investigate_2",
+    ])
+    expect(secondRun.surfacedCustomers.map((customer) => customer.customerId)).toEqual([
+      "cust_likely",
+      "cust_investigate_3",
+      "cust_investigate_4",
+    ])
+  })
+
+  test("uses customer ID as a stable final ordering tiebreaker", async () => {
+    const result = await runOutlitChurnPretriage({
+      client: { callTool: createTiebreakerQueryMock() },
+      config: defaultChurnPretriageConfig,
+      now: "2026-04-15T00:00:00Z",
+      scopeProfile: "revenue_accounts",
+      maxPromptCustomers: 10,
+    })
+
+    expect(result.surfacedCustomers.map((customer) => customer.customerId)).toEqual([
+      "cust_a",
+      "cust_b",
+      "cust_c",
+    ])
+  })
+
   test("surfaces customers with the same churn heuristic classes as the internal agent", async () => {
     const queryMock = vi
       .fn()
@@ -277,14 +321,64 @@ describe("runOutlitChurnPretriage", () => {
       ...defaultChurnPretriageConfig,
       version: 99,
     } as unknown as OutlitChurnPretriageConfig
+    const queryMock = vi.fn()
 
     await expect(
       runOutlitChurnPretriage({
-        client: { callTool: vi.fn() },
+        client: { callTool: queryMock },
         config: invalidConfig,
         now: fixedNow,
       }),
     ).rejects.toThrow("churn pretriage config version must be 2")
+    expect(queryMock).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    {
+      name: "auto scope interval",
+      mutate: (config: OutlitChurnPretriageConfig) => {
+        config.autoScopeSchedule.intervalHours = 5
+      },
+      message: "autoScopeSchedule.intervalHours must be a positive divisor of 24",
+    },
+    {
+      name: "past due enabled flag",
+      mutate: (config: OutlitChurnPretriageConfig) => {
+        const pastDueBillingStatus = config.defaults.customerHeuristics
+          .pastDueBillingStatus as unknown as {
+          enabled: unknown
+        }
+        pastDueBillingStatus.enabled = "yes"
+      },
+      message: "pastDueBillingStatus.enabled must be a boolean",
+    },
+    {
+      name: "active day minimum customer age",
+      mutate: (config: OutlitChurnPretriageConfig) => {
+        config.defaults.customerHeuristics.activeDaysLast30d.minimumCustomerAgeDays = -1
+      },
+      message: "activeDaysLast30d.minimumCustomerAgeDays must be a non-negative integer",
+    },
+    {
+      name: "all users now inactive lookback",
+      mutate: (config: OutlitChurnPretriageConfig) => {
+        config.defaults.userHeuristics.allRecentlyActiveUsersNowInactive.lookbackDays = 0
+      },
+      message: "allRecentlyActiveUsersNowInactive.lookbackDays must be a positive integer",
+    },
+  ])("validates $name before running SQL", async ({ mutate, message }) => {
+    const invalidConfig = structuredClone(defaultChurnPretriageConfig)
+    const queryMock = vi.fn()
+    mutate(invalidConfig)
+
+    await expect(
+      runOutlitChurnPretriage({
+        client: { callTool: queryMock },
+        config: invalidConfig,
+        now: fixedNow,
+      }),
+    ).rejects.toThrow(message)
+    expect(queryMock).not.toHaveBeenCalled()
   })
 })
 
@@ -310,6 +404,82 @@ function createRotationQueryMock() {
         lastMeaningfulActivityAt: "2026-02-01T00:00:00Z",
         activeDays30d: 0,
         eventCount30d: 0,
+      })),
+    })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
+}
+
+function createMixedDispositionQueryMock() {
+  const investigateRows = Array.from({ length: 4 }, (_, index) => {
+    const customerNumber = index + 1
+    return {
+      customerId: `cust_investigate_${customerNumber}`,
+      customerName: `Investigate ${customerNumber}`,
+      domain: `investigate-${customerNumber}.example`,
+      billingStatus: "PAYING",
+      mrrCents: 10000,
+    }
+  })
+
+  return vi
+    .fn()
+    .mockResolvedValueOnce({
+      rows: [
+        {
+          customerId: "cust_likely",
+          customerName: "Likely Co",
+          domain: "likely.example",
+          billingStatus: "PAST_DUE",
+          mrrCents: 10000,
+        },
+        ...investigateRows,
+      ],
+    })
+    .mockResolvedValueOnce({
+      rows: investigateRows.map((customer) => ({
+        customerId: customer.customerId,
+        firstMeaningfulActivityAt: "2026-01-01T00:00:00Z",
+        lastMeaningfulActivityAt: "2026-04-14T00:00:00Z",
+        activeDays30d: 10,
+        eventCount30d: 25,
+      })),
+    })
+    .mockResolvedValueOnce({
+      rows: investigateRows.map((customer) => ({
+        customerId: customer.customerId,
+        currentActiveDays: 1,
+        currentEventCount: 3,
+        baselineActiveDays: 12,
+        baselineEventCount: 40,
+      })),
+    })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
+}
+
+function createTiebreakerQueryMock() {
+  const directoryRows = ["cust_c", "cust_b", "cust_a"].map((customerId) => ({
+    customerId,
+    customerName: customerId,
+    domain: `${customerId}.example`,
+    billingStatus: "PAYING",
+    mrrCents: 10000,
+  }))
+
+  return vi
+    .fn()
+    .mockResolvedValueOnce({ rows: directoryRows })
+    .mockResolvedValueOnce({
+      rows: directoryRows.map((customer) => ({
+        customerId: customer.customerId,
+        firstMeaningfulActivityAt: "2026-01-01T00:00:00Z",
+        lastMeaningfulActivityAt: "2026-02-01T00:00:00Z",
+        activeDays30d: 10,
+        eventCount30d: 25,
       })),
     })
     .mockResolvedValueOnce({ rows: [] })
