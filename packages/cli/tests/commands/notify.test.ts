@@ -285,7 +285,7 @@ describe("notify", () => {
       await notifyCmd.run!({
         args: {
           title: "Risk found",
-          "payload-file": "/nonexistent/payload.json",
+          "payload-file": join(testDir, "missing-payload.json"),
           json: true,
         },
       } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
