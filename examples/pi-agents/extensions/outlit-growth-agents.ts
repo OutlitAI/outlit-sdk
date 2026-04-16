@@ -1,4 +1,3 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent"
 import {
   actionToolNames,
   type CustomerToolName,
@@ -7,18 +6,57 @@ import {
   sqlToolNames,
 } from "@outlit/pi"
 
+import {
+  createOutlitChurnPretriageTool,
+  type OutlitChurnPretriageResult,
+  runOutlitChurnPretriage,
+} from "../lib/churn-pretriage.js"
+
+type GrowthAgentPiApi = {
+  registerTool: (tool: unknown) => void
+  registerCommand: (
+    name: string,
+    config: {
+      description: string
+      handler: (
+        args: string | undefined,
+        ctx: { ui: { notify: (message: string, level: "info") => void } },
+      ) => Promise<void>
+    },
+  ) => void
+  on: (
+    eventName: "before_agent_start",
+    handler: (event: { prompt: string; systemPrompt: string }) => Promise<
+      | {
+          systemPrompt: string
+        }
+      | undefined
+    >,
+  ) => void
+  sendUserMessage: (prompt: string) => void
+}
+
+type OutlitPiRegistry = Parameters<ReturnType<typeof createOutlitPiExtension>>[0]
+
 type AgentCommand = {
   name: string
   description: string
   notify: string
-  prompt: (scope: string | undefined) => string
+  prompt: (scope: string | undefined, pretriageContext?: string) => string
+  pretriage?: {
+    scopeProfile: "configured" | "revenue_accounts" | "all_accounts" | "auto"
+    maxPromptCustomers: number
+  }
   trigger: RegExp
 }
+
+const CHURN_CONFIG_PATH = new URL("../churn.json", import.meta.url)
 
 const SHARED_AGENT_SYSTEM_PROMPT = `
 Outlit customer signal agent guidance:
 - Use Outlit tools for customer discovery, customer details, timeline events, facts, source evidence, billing, product activity, and semantic customer context.
 - Use outlit_schema and outlit_query for candidate discovery, cohorts, usage trends, revenue filters, activation gaps, and aggregate checks before deep account review.
+- Use outlit_churn_pretriage for deterministic usage-decay churn candidate discovery when it is registered.
 - Use outlit_list_facts with factTypes for extracted customer-memory evidence when helpful, such as CHURN_RISK, EXPANSION, SENTIMENT, BUDGET, REQUIREMENTS, PRODUCT_USAGE, or CHAMPION_RISK.
 - Do not assume behavioral/anomaly fact types exist for every customer. Treat usage-path and funnel facts as optional supporting evidence only.
 - Use stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
@@ -31,6 +69,7 @@ Outlit customer signal agent guidance:
 - Tie every recommendation to specific evidence from customer records, timeline events, facts, search results, or source snippets whenever available.
 `.trim()
 
+// Keep the toolset visible in the example instead of hiding it behind a helper.
 const analyticalAgentToolNames = [
   ...defaultAgentToolNames,
   ...actionToolNames,
@@ -41,11 +80,17 @@ const COMMANDS: AgentCommand[] = [
   {
     name: "outlit-usage-decay-watchtower",
     description: "Find paying customers with usage decay that may lead to churn",
-    notify: "Starting Outlit usage-decay churn review",
-    prompt: (scope) =>
+    notify: "Starting Outlit deterministic churn pretriage",
+    pretriage: {
+      scopeProfile: "revenue_accounts",
+      maxPromptCustomers: 5,
+    },
+    prompt: (scope, pretriageContext) =>
       buildPortfolioPrompt({
         title: "Usage Decay Churn Watchtower",
         scope,
+        pretriageContext,
+        notificationInstructions: buildUsageDecayNotificationInstructions(),
         objective:
           "Find paying customers whose product behavior suggests they may cancel soon, even when there is no renewal date or explicit renewal conversation.",
         signals: [
@@ -132,17 +177,26 @@ const COMMANDS: AgentCommand[] = [
   },
 ]
 
-export default function outlitGrowthAgents(pi: ExtensionAPI) {
+export default function outlitGrowthAgents(pi: GrowthAgentPiApi) {
   createOutlitPiExtension({
     toolNames: analyticalAgentToolNames,
-  })(pi)
+  })(pi as OutlitPiRegistry)
+  pi.registerTool(
+    createOutlitChurnPretriageTool({
+      configPath: CHURN_CONFIG_PATH,
+    }),
+  )
 
   for (const command of COMMANDS) {
     pi.registerCommand(command.name, {
       description: command.description,
       handler: async (args, ctx) => {
         ctx.ui.notify(command.notify, "info")
-        pi.sendUserMessage(command.prompt(args))
+        const pretriage = command.pretriage ? await buildCommandPretriage(command) : undefined
+        if (pretriage) {
+          ctx.ui.notify(pretriage.notification, "info")
+        }
+        pi.sendUserMessage(command.prompt(args, pretriage?.context))
       },
     })
   }
@@ -166,15 +220,53 @@ function shouldApplyOutlitSignalGuidance(prompt: string): boolean {
   return COMMANDS.some((command) => command.trigger.test(prompt))
 }
 
+async function buildCommandPretriage(
+  command: AgentCommand,
+): Promise<{ context: string; notification: string } | undefined> {
+  if (!command.pretriage) {
+    return undefined
+  }
+
+  try {
+    const result = await runOutlitChurnPretriage({
+      configPath: CHURN_CONFIG_PATH,
+      scopeProfile: command.pretriage.scopeProfile,
+      maxPromptCustomers: command.pretriage.maxPromptCustomers,
+    })
+
+    return {
+      context: result.context,
+      notification: formatPretriageNotification(result),
+    }
+  } catch (error) {
+    return {
+      context: `Deterministic churn pretriage could not run before this prompt: ${formatError(error)}. Continue with the registered Outlit tools and say that deterministic pretriage was unavailable.`,
+      notification: "Outlit deterministic churn pretriage was unavailable",
+    }
+  }
+}
+
+function formatPretriageNotification(result: OutlitChurnPretriageResult): string {
+  return `Outlit deterministic churn pretriage surfaced ${result.summary.customersIncludedThisRun} of ${result.summary.totalSurfacedCustomers} customers`
+}
+
+function formatError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
 function buildPortfolioPrompt({
   title,
   scope,
+  pretriageContext,
+  notificationInstructions,
   objective,
   signals,
   avoid,
 }: {
   title: string
   scope: string | undefined
+  pretriageContext?: string
+  notificationInstructions?: string
   objective: string
   signals: string[]
   avoid: string
@@ -191,18 +283,41 @@ ${scopeLine}
 
 Objective: ${objective}
 
+${pretriageContext ? `Deterministic pretriage context:\n${pretriageContext}\n` : ""}
+
 Process:
-1. Use outlit_schema when you need table names or fields, then use outlit_query for candidate discovery, cohorts, usage trends, revenue filters, activation gaps, or aggregate checks.
-2. Gather customer, user, fact, timeline, search, billing, and source evidence for each candidate before ranking them. Use customer domains or IDs for follow-up lookups whenever possible.
-3. Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
-4. Prefer paying customers when the job is about churn or expansion. Include trials or new accounts for activation failure.
-5. Return the strongest 5-8 accounts. If fewer accounts have enough evidence, return fewer and explain why.
+1. If deterministic pretriage context is present, treat those customers as the investigation set for this run. Do not add unrelated customers unless the user explicitly asked for a broader scan.
+2. Use outlit_schema when you need table names or fields, then use outlit_query for candidate discovery, cohorts, usage trends, revenue filters, activation gaps, or aggregate checks.
+3. Gather customer, user, fact, timeline, search, billing, and source evidence for each candidate before ranking them. Use customer domains or IDs for follow-up lookups whenever possible.
+4. Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
+5. Prefer paying customers when the job is about churn or expansion. Include trials or new accounts for activation failure.
+6. Return the strongest 5-8 accounts. If fewer accounts have enough evidence, return fewer and explain why.
+7. Do not pad the ranking. Exclude candidates whose evidence is missing, stale, contradicted, or only adjacent to the selected signal.
 
 Primary signals:
 ${signals.map((signal) => `- ${signal}`).join("\n")}
 
 Guardrail: ${avoid}
 
-For each customer, include the customer name, domain, lifecycle or billing context, signal strength, evidence, recommended action, confidence, and missing data.
+Final answer contract:
+- Start with "Candidate review summary:" and state how many candidates were reviewed, ranked, and excluded.
+- Then return the ranked customers in a compact table with: customer, domain, signal, hard evidence, supporting context, confidence, recommended action, and missing data.
+- Include "Excluded candidates:" when any reviewed customer was dropped, with a one-line reason for each exclusion.
+- For each ranked customer, cite concrete Outlit evidence. Do not rely on vague phrasing like "low engagement" without a date, metric, source, or fact.
+- If no customer survives the evidence gate, say that directly and do not produce a ranked table.
+${notificationInstructions ? `\nNotification action:\n${notificationInstructions}` : ""}
+`.trim()
+}
+
+function buildUsageDecayNotificationInstructions(): string {
+  return `
+- After evidence review, if at least one customer survives the evidence gate, call outlit_send_notification exactly once before your final answer.
+- Use title "Usage Decay Churn Watchtower: Churn Risks".
+- Set source to "outlit-pi-usage-decay-watchtower".
+- Set severity to "high" when any ranked customer has high confidence or high signal strength; otherwise set severity to "medium".
+- Use message to summarize how many usage-decay churn risks were found.
+- Set payload to a JSON-compatible object with candidateReviewSummary, topCustomers, excludedCandidates, dataQualityNotes, and openQuestions.
+- Do not call outlit_send_notification if no customer survives the evidence gate.
+- After the notification tool call, return the same ranked findings to the user.
 `.trim()
 }

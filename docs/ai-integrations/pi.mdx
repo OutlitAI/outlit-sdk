@@ -69,6 +69,7 @@ The [`examples/pi-agents`](https://github.com/OutlitAI/outlit-sdk/tree/main/exam
 - Outlit customer intelligence, SQL, and schema tools registered in Pi
 - the generic `outlit` skill from `@outlit/pi`
 - a shared growth-agent skill with evidence-gathering playbooks
+- a local usage-decay churn pretriage helper with a `churn.json` config
 - slash commands and editable prompt templates for usage decay, friction-to-churn, activation failure, and expansion readiness
 
 Try it locally from the SDK repo:
@@ -80,6 +81,8 @@ export OUTLIT_API_KEY=ok_your_api_key
 pi install -l .
 pi
 ```
+
+The example package currently uses the `canary` dist-tag for `@outlit/pi` and `@outlit/tools` so fresh installs include the notification action contracts before the next stable release is promoted.
 
 Then ask:
 
