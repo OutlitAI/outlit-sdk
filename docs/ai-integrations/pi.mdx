@@ -3,7 +3,7 @@ title: "Pi Agents"
 description: "Build Pi agents with Outlit customer intelligence tools, skills, and examples"
 ---
 
-`@outlit/pi` registers Outlit customer intelligence tools inside [Pi](https://github.com/mariozechner/pi-coding-agent). Use it when you want a Pi agent to query complete customer profiles, timelines, facts, sources, and customer-context search results through Outlit's public tool gateway.
+`@outlit/pi` registers Outlit customer intelligence tools inside [Pi](https://github.com/mariozechner/pi-coding-agent). Use it when you want a Pi agent to query complete customer profiles, timelines, facts, sources, customer-context search results, and Slack notifications through Outlit's public tool gateway.
 
 ## Install
 
@@ -20,7 +20,7 @@ pi
 
 ## Default Tools
 
-The default Pi extension exposes the customer intelligence tools that are safe for most agents:
+The default Pi extension exposes the customer intelligence tools that are safe for most agents, plus the Slack notification action tool:
 
 | Tool | What it does |
 |------|--------------|
@@ -32,8 +32,9 @@ The default Pi extension exposes the customer intelligence tools that are safe f
 | `outlit_get_fact` | Retrieve one exact fact |
 | `outlit_get_source` | Retrieve one exact source record behind a fact or search result |
 | `outlit_search_customer_context` | Search grouped source and fact results with natural language |
+| `outlit_send_notification` | Send a Slack notification to the organization's configured notification channel |
 
-SQL tools are available through `@outlit/tools`, but they are not enabled by default in `@outlit/pi`. Use them only for internal agents that should run read-only SQL.
+Notification action tools are included in the default Pi toolset, but they should only be used when the user explicitly asks to send, post, or notify a result to Slack. SQL tools are available through `@outlit/tools`, but they are not enabled by default in `@outlit/pi`. Use them only for internal agents that should run read-only SQL.
 
 ## Minimal Extension
 
@@ -59,7 +60,7 @@ export default createOutlitPiExtension({
 })
 ```
 
-`allCustomerToolNames` includes the SQL tools. Keep integration setup and integration-management actions outside customer-facing Pi agents unless you are building an internal admin package.
+`allCustomerToolNames` includes the SQL tools. If you want to assemble a custom set yourself, import `defaultAgentToolNames`, `actionToolNames`, and `sqlToolNames` from `@outlit/pi` and combine them explicitly. Keep integration setup and integration-management actions outside customer-facing Pi agents unless you are building an internal admin package.
 
 ## Growth Agent Examples
 

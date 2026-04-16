@@ -3,7 +3,7 @@ title: "Command Reference"
 description: "Complete reference for all Outlit CLI data commands"
 ---
 
-All data commands share these common flags:
+Most commands in this reference share these common flags:
 
 | Flag | Description |
 |------|-------------|
@@ -493,6 +493,52 @@ outlit sources get --source-type <type> --source-id <id>
 outlit sources get --source-type CALL --source-id call_123
 outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
 ```
+
+## Notify
+
+Send a Slack notification to the organization's configured notification channel.
+
+```bash
+outlit notify --title <title> [payload] [flags]
+outlit notify --title <title> --payload-file <path> [flags]
+```
+
+### Arguments
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `payload` | No | Notification payload as JSON or a raw string. Any JSON-serializable object, array, scalar, or string is accepted. |
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--title` | string | — | Notification title |
+| `--payload-file` | string | — | Path to a payload file. Takes precedence over the positional payload. |
+| `--message` | string | — | Optional Slack message |
+| `--severity` | string | — | Optional severity: `low`, `medium`, `high` |
+| `--source` | string | — | Optional source label |
+| `--subject` | string | — | Optional subject line |
+
+### Examples
+
+```bash
+# Inline JSON payload
+outlit notify --title "Expansion signal" '{"customer":"acme.com","score":0.91}'
+
+# Raw string payload
+outlit notify --title "Escalation" "Check this account before renewal"
+
+# Payload from a file
+outlit notify --title "Usage decay" --payload-file ./payload.json
+
+# High-severity notification with a message
+outlit notify --title "Escalation" --severity high --message "Check this account" '{"customer":"acme.com"}'
+```
+
+<Note>
+  `--payload-file` takes precedence over the positional payload. The CLI reads file contents first, then falls back to the positional payload when no file is provided.
+</Note>
 
 ## SQL
 
