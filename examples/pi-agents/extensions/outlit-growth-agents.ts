@@ -1,5 +1,6 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent"
 import {
+  actionToolNames,
   type CustomerToolName,
   createOutlitPiExtension,
   defaultAgentToolNames,
@@ -34,6 +35,7 @@ Outlit customer signal agent guidance:
 // Newer versions export analyticalAgentToolNames directly.
 const analyticalAgentToolNames = [
   ...defaultAgentToolNames,
+  ...actionToolNames,
   ...sqlToolNames,
 ] as const satisfies readonly CustomerToolName[]
 
