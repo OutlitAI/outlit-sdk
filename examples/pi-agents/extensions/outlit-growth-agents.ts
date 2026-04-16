@@ -31,8 +31,6 @@ Outlit customer signal agent guidance:
 - Tie every recommendation to specific evidence from customer records, timeline events, facts, search results, or source snippets whenever available.
 `.trim()
 
-// Keep the example compatible with the currently published @outlit/pi package.
-// Newer versions export analyticalAgentToolNames directly.
 const analyticalAgentToolNames = [
   ...defaultAgentToolNames,
   ...actionToolNames,

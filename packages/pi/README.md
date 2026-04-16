@@ -27,8 +27,9 @@ The default extension registers the default customer intelligence tools from `@o
 - `outlit_get_fact`
 - `outlit_get_source`
 - `outlit_search_customer_context`
+- `outlit_send_notification`
 
-SQL tools are available from `@outlit/tools`, but they are not enabled by default. Integration-management commands are intentionally not part of this package.
+SQL tools are available from `@outlit/tools`, but they are not enabled by default. Notification action tools are included in the default Pi toolset, but they should only be used when the user explicitly asks to send, post, or notify a result. Integration-management commands are intentionally not part of this package.
 
 For analytical agents that need cohorts, usage trends, revenue filters, activation gaps, or aggregate checks, import `analyticalAgentToolNames`. It combines the default customer intelligence tools with `outlit_schema` and `outlit_query` without exposing every customer tool:
 
