@@ -13,6 +13,7 @@ export const customerToolNames = [
   "outlit_search_customer_context",
   "outlit_query",
   "outlit_schema",
+  "outlit_send_notification",
 ] as const
 
 export const customerToolContracts = {
@@ -527,6 +528,115 @@ export const customerToolContracts = {
       additionalProperties: false,
     },
   },
+  outlit_send_notification: {
+    toolName: "outlit_send_notification",
+    description:
+      "Send or post a Slack notification. Use only when the user explicitly asks you to send, post, or notify. The payload is rendered as a Slack code block.",
+    inputSchema: {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      type: "object",
+      properties: {
+        title: {
+          type: "string",
+          minLength: 1,
+          maxLength: 160,
+          description: "Notification title",
+        },
+        payload: {
+          description:
+            "JSON-compatible payload rendered in Slack as a code block. Serialized size must be 100,000 characters or fewer.",
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+          ],
+          $ref: "#/$defs/__schema0",
+        },
+        message: {
+          description: "Optional Slack message",
+          type: "string",
+          minLength: 1,
+          maxLength: 1200,
+        },
+        severity: {
+          description: "Optional notification severity",
+          type: "string",
+          enum: ["low", "medium", "high"],
+        },
+        source: {
+          description: "Optional source label",
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        subject: {
+          description: "Optional subject line",
+          type: "string",
+          minLength: 1,
+          maxLength: 240,
+        },
+      },
+      required: ["title", "payload"],
+      additionalProperties: false,
+      $defs: {
+        __schema0: {
+          anyOf: [
+            {
+              type: "string",
+            },
+            {
+              type: "number",
+            },
+            {
+              type: "boolean",
+            },
+            {
+              type: "null",
+            },
+            {
+              type: "array",
+              items: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+            {
+              type: "object",
+              propertyNames: {
+                type: "string",
+              },
+              additionalProperties: {
+                $ref: "#/$defs/__schema0",
+              },
+            },
+          ],
+        },
+      },
+    },
+  },
 } as const
 
 export const customerBillingStatuses = [
@@ -602,6 +712,8 @@ export const customerSourceTypes = ["EMAIL", "CALL", "CALENDAR_EVENT", "SUPPORT_
 
 export const customerTimeframes = ["7d", "14d", "30d", "90d"] as const
 
+export const notificationSeverityValues = ["low", "medium", "high"] as const
+
 export const timelineChannels = [
   "SDK",
   "EMAIL",
@@ -633,7 +745,7 @@ export const schemaTables = [
 ] as const
 
 export const customerToolContractHash =
-  "f72fbbc848a81a54ca460f08b474cad516ba5f23b07b2dae3d31bdea189f8787" as const
+  "a178699faa46c81cf8a1439dd85be9ccc998188b94ccf880910b5615e091fabd" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 

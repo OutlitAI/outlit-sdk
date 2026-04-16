@@ -1,5 +1,9 @@
 import { type CustomerToolName, customerToolNames } from "./contracts.js"
 
+export const actionToolNames = [
+  "outlit_send_notification",
+] as const satisfies readonly CustomerToolName[]
+
 export const defaultAgentToolNames = [
   "outlit_list_customers",
   "outlit_list_users",
@@ -9,6 +13,7 @@ export const defaultAgentToolNames = [
   "outlit_get_fact",
   "outlit_get_source",
   "outlit_search_customer_context",
+  ...actionToolNames,
 ] as const satisfies readonly CustomerToolName[]
 
 export const sqlToolNames = [
