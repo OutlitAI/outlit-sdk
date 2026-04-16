@@ -96,7 +96,7 @@ Those prompts assume the `outlit` CLI is on `PATH` and authenticated through env
 
 ## How It Works
 
-`extensions/outlit-growth-agents.ts` imports `createOutlitPiExtension`, `defaultAgentToolNames`, and `sqlToolNames` from `@outlit/pi`, registers focused customer intelligence plus SQL tools, and adds four slash commands.
+`extensions/outlit-growth-agents.ts` imports `createOutlitPiExtension`, `defaultAgentToolNames`, `actionToolNames`, and `sqlToolNames` from `@outlit/pi`, registers focused customer intelligence, notification action tools, and SQL tools, and adds four slash commands.
 
 The extension does not call Outlit directly. `@outlit/pi` creates Pi tool definitions from `@outlit/tools`, and `@outlit/tools` calls Outlit's public `/api/tools/call` endpoint with your `OUTLIT_API_KEY`.
 
@@ -128,13 +128,13 @@ These launch examples use the default customer intelligence tools plus SQL/schem
 - schema discovery
 - SQL query
 
-The base `@outlit/pi` default toolset does not include SQL, but these harder examples opt into schema and SQL because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks.
+The base `@outlit/pi` default toolset does not include SQL, but these harder examples opt into notification action tools plus schema and SQL because they benefit from cohorting, revenue filters, usage trends, activation gaps, aggregate checks, and Slack notification support when explicitly requested.
 
 Facts can also be narrowed with `factTypes`. These examples use those filters for extracted customer-memory facts such as `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `BUDGET`, `REQUIREMENTS`, `PRODUCT_USAGE`, and `CHAMPION_RISK`.
 
 The usage-decay and activation agents do not depend on behavioral/anomaly fact types like `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF`. Those fact types are not supported as public filters because many customers will not have configured core actions, activation paths, or funnels. The examples use SQL and customer/user/event evidence as the primary signal for those jobs.
 
-When your installed `@outlit/pi` version includes `analyticalAgentToolNames`, you can use that helper directly instead of combining `defaultAgentToolNames` and `sqlToolNames` yourself.
+When your installed `@outlit/pi` version includes `analyticalAgentToolNames`, you can use that helper directly instead of combining `defaultAgentToolNames`, `actionToolNames`, and `sqlToolNames` yourself.
 
 The examples still avoid `allCustomerToolNames` because broad tool access can make agents over-weight high-revenue accounts with weak evidence. Use broader toolsets only when you intentionally want internal analysis or custom reporting.
 
