@@ -15,6 +15,7 @@ Use Outlit tools to ground customer signal work in actual customer data. These a
    - Activation failure: trials, new accounts, or recently converted accounts that are not reaching first value.
    - Expansion readiness: healthy customers with evidence they may upgrade, add seats, or buy more.
 2. Discover candidates.
+   - For usage decay churn, call `outlit_churn_pretriage` first when it is available. Treat the surfaced customers as the investigation set unless the user explicitly asks for a broader scan.
    - Use `outlit_schema` before SQL when you need table names, columns, or valid query surfaces.
    - Use `outlit_query` for cohorts, usage trends, active-user counts, activation gaps, revenue filters, event aggregates, and repeated signal patterns.
    - Use `outlit_list_customers` for portfolio scans, billing status, MRR, activity recency, and customer search.
@@ -67,6 +68,7 @@ Look for:
 - core workflows no longer used
 - power users or champions disappearing
 - paying accounts with no meaningful product activity
+- deterministic pretriage matches from `outlit_churn_pretriage`, including stale activity, low active days, usage drops, past-due billing, stale users, or all recently active users becoming inactive
 
 Avoid:
 
@@ -74,6 +76,14 @@ Avoid:
 - ranking subscription cancellation, subscription pause, renewal negotiation, legal review, or procurement delay as usage decay unless there is also declining or stale product usage
 - treating a new or tiny customer like a mature account
 - treating renewal negotiation as churn without product or cancellation evidence
+- padding a ranking when pretriage or discovery candidates do not survive evidence review
+
+Output discipline:
+
+- Start with candidate accounting: reviewed, ranked, and excluded.
+- For each ranked customer, include a hard signal, supporting context, confidence, recommended action, and missing data.
+- Include excluded candidates with a short reason when candidates were reviewed but not ranked.
+- If the usage-decay command or prompt asks for notification, call `outlit_send_notification` exactly once after evidence review when at least one ranked churn risk remains. Do not notify when no customer survives the evidence gate.
 
 ### Friction-to-Churn
 
@@ -143,7 +153,7 @@ Then include short evidence notes for each ranked customer:
 - why the category applies
 - what would change the assessment
 
-You may call `outlit_send_notification` only when the user explicitly asks you to send, post, or notify a result to Slack.
+You may call `outlit_send_notification` only when the user explicitly asks you to send, post, or notify a result to Slack. The usage-decay command and prompt are notification-enabled and explicitly ask for one Slack notification after ranked churn risks are found.
 
 When using `outlit_send_notification`:
 

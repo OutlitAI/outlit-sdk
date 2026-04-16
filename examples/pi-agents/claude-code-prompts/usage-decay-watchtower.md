@@ -36,6 +36,11 @@ Return this exact structure:
 BEGIN_RESULT_JSON
 {
   "methodology": ["short bullet"],
+  "candidateReviewSummary": {
+    "reviewed": 0,
+    "ranked": 0,
+    "excluded": 0
+  },
   "topCustomers": [
     {
       "rank": 1,
@@ -45,8 +50,17 @@ BEGIN_RESULT_JSON
       "signalStrength": "high|medium|low|unscorable",
       "confidence": "high|medium|low",
       "whyNow": "short reason",
-      "evidence": ["specific evidence from Outlit"],
-      "recommendedAction": "specific next action"
+      "hardEvidence": ["specific dated metric, event, billing state, or user activity from Outlit"],
+      "supportingContext": ["specific fact, timeline event, source snippet, or customer record"],
+      "recommendedAction": "specific next action",
+      "missingData": "what would change confidence or ranking"
+    }
+  ],
+  "excludedCandidates": [
+    {
+      "name": "Customer name",
+      "domain": "customer-domain",
+      "reason": "why this candidate did not survive evidence review"
     }
   ],
   "dataQualityNotes": ["short note"],

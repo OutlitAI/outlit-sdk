@@ -25,10 +25,12 @@
     ]
   },
   "scripts": {
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@outlit/pi": "^0.1.0"
+    "@outlit/pi": "canary",
+    "@outlit/tools": "canary"
   },
   "peerDependencies": {
     "@mariozechner/pi-coding-agent": "*",
@@ -37,6 +39,7 @@
   "devDependencies": {
     "@mariozechner/pi-coding-agent": "^0.67.1",
     "@sinclair/typebox": "^0.34.41",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }

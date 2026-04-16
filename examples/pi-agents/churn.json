@@ -1,0 +1,89 @@
+{
+  "version": 2,
+  "scopeProfiles": {
+    "all_accounts": {
+      "billingStatuses": []
+    },
+    "revenue_accounts": {
+      "billingStatuses": ["PAYING", "PAST_DUE", "CHURNED"]
+    }
+  },
+  "autoScopeSchedule": {
+    "intervalHours": 6,
+    "scopeOrder": ["revenue_accounts", "all_accounts"]
+  },
+  "promptSelection": {
+    "rotationWindowHours": 1
+  },
+  "defaults": {
+    "scope": {
+      "billingStatuses": []
+    },
+    "activityDefinition": {
+      "includeEventNames": [],
+      "excludeEventNames": [
+        "$autocapture",
+        "$exception",
+        "$feature_flag_called",
+        "$groupidentify",
+        "$identify",
+        "$pageleave",
+        "$rageclick",
+        "$set",
+        "$web_vitals"
+      ],
+      "fallbackMode": "all_non_excluded_events"
+    },
+    "customerHeuristics": {
+      "pastDueBillingStatus": {
+        "enabled": true,
+        "disposition": "likely_churn",
+        "reminderWindowDays": 7
+      },
+      "daysSinceLastMeaningfulActivity": {
+        "enabled": true,
+        "thresholds": [
+          { "days": 14, "disposition": "investigate" },
+          { "days": 30, "disposition": "likely_churn", "reminderWindowDays": 14 },
+          { "days": 120, "disposition": "likely_churn", "reminderWindowDays": 7 }
+        ]
+      },
+      "activeDaysLast30d": {
+        "enabled": true,
+        "minimumCustomerAgeDays": 21,
+        "thresholds": [
+          { "maxDays": 4, "disposition": "likely_churn", "reminderWindowDays": 7 },
+          { "maxDays": 0, "disposition": "likely_churn", "reminderWindowDays": 7 }
+        ]
+      },
+      "dropVsBaseline": {
+        "enabled": true,
+        "windowDays": 14,
+        "baselineDays": 28,
+        "minimumBaselineActiveDays": 4,
+        "minimumBaselineEventCount": 20,
+        "dropPercent": 0.5,
+        "disposition": "investigate"
+      }
+    },
+    "userHeuristics": {
+      "daysSinceLastMeaningfulActivity": {
+        "enabled": true,
+        "minimumPriorActiveDays": 3,
+        "thresholds": [
+          { "days": 7, "disposition": "investigate" },
+          { "days": 14, "disposition": "investigate", "reminderWindowDays": 14 }
+        ]
+      },
+      "allRecentlyActiveUsersNowInactive": {
+        "enabled": true,
+        "lookbackDays": 30,
+        "inactiveDays": 14,
+        "minimumPreviouslyActiveUsers": 2,
+        "minimumPriorActiveDays": 3,
+        "disposition": "investigate",
+        "reminderWindowDays": 14
+      }
+    }
+  }
+}
