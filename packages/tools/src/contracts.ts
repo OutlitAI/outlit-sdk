@@ -745,7 +745,7 @@ export const schemaTables = [
 ] as const
 
 export const customerToolContractHash =
-  "a178699faa46c81cf8a1439dd85be9ccc998188b94ccf880910b5615e091fabd" as const
+  "b778bd2aae7899361ac9ae4f098f4627582cd8513a1e686125ee2d44e3b5a082" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 
