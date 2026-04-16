@@ -499,7 +499,7 @@ outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
 Send a Slack notification to the organization's configured notification channel.
 
 ```bash
-outlit notify --title <title> [payload] [flags]
+outlit notify --title <title> <payload> [flags]
 outlit notify --title <title> --payload-file <path> [flags]
 ```
 
@@ -507,7 +507,7 @@ outlit notify --title <title> --payload-file <path> [flags]
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `payload` | No | Notification payload as JSON or a raw string. Any JSON-serializable object, array, scalar, or string is accepted. |
+| `payload` | Yes* | Notification payload as JSON or a raw string. Any JSON-serializable object, array, scalar, or string is accepted. |
 
 ### Flags
 
@@ -537,7 +537,7 @@ outlit notify --title "Escalation" --severity high --message "Check this account
 ```
 
 <Note>
-  `--payload-file` takes precedence over the positional payload. The CLI reads file contents first, then falls back to the positional payload when no file is provided.
+  Provide either the positional payload or `--payload-file`. When both are provided, `--payload-file` takes precedence.
 </Note>
 
 ## SQL
