@@ -16,11 +16,32 @@ function parsePayload(raw: string): unknown {
   }
 }
 
+function validateTrimmedText(
+  value: string | undefined,
+  maxLength: number,
+): string | null | undefined {
+  if (value === undefined) {
+    return undefined
+  }
+
+  const trimmed = value.trim()
+  if (trimmed.length === 0 || trimmed.length > maxLength) {
+    return null
+  }
+
+  return trimmed
+}
+
 function normalizeSeverity(severity: string): NotificationSeverity | null {
   const normalized = severity.trim().toLowerCase()
   return notificationSeverityValues.includes(normalized as NotificationSeverity)
     ? (normalized as NotificationSeverity)
     : null
+}
+
+function payloadSizeIsValid(payload: unknown): boolean {
+  const serialized = JSON.stringify(payload)
+  return typeof serialized === "string" && serialized.length <= 100000
 }
 
 export default defineCommand({
@@ -35,7 +56,7 @@ export default defineCommand({
       "Examples:",
       "  outlit notify --title 'Risk found' '{\"customer\":\"acme.com\"}'",
       "  outlit notify --title 'Risk found' --payload-file ./payload.json",
-      "  outlit notify --title 'Escalation' --severity HIGH --message 'Check this account'",
+      "  outlit notify --title 'Escalation' --severity HIGH --message 'Check this account' '{\"customer\":\"acme.com\"}'",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -77,8 +98,51 @@ export default defineCommand({
   async run({ args }) {
     const json = !!args.json
 
-    if (!args.title?.trim()) {
+    const title = args.title?.trim()
+    if (!title) {
       return outputError({ message: "Provide --title", code: "missing_input" }, json)
+    }
+    if (title.length > 160) {
+      return outputError(
+        {
+          message: "--title must be 160 characters or fewer after trimming",
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+
+    const message = validateTrimmedText(args.message, 1200)
+    if (message === null) {
+      return outputError(
+        {
+          message: "--message must be between 1 and 1200 characters after trimming",
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+
+    const source = validateTrimmedText(args.source, 120)
+    if (source === null) {
+      return outputError(
+        {
+          message: "--source must be between 1 and 120 characters after trimming",
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+
+    const subject = validateTrimmedText(args.subject, 240)
+    if (subject === null) {
+      return outputError(
+        {
+          message: "--subject must be between 1 and 240 characters after trimming",
+          code: "invalid_input",
+        },
+        json,
+      )
     }
 
     let severity: NotificationSeverity | undefined
@@ -120,27 +184,37 @@ export default defineCommand({
     }
 
     const payload = parsePayload(payloadInput)
+    if (!payloadSizeIsValid(payload)) {
+      return outputError(
+        {
+          message: "Payload must serialize to 100000 characters or fewer",
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+
     const client = await getClientOrExit(args["api-key"], json)
 
     const params: Record<string, unknown> = {
-      title: args.title,
+      title,
       payload,
     }
 
-    if (args.message !== undefined) {
-      params.message = args.message
+    if (message !== undefined) {
+      params.message = message
     }
 
     if (severity) {
       params.severity = severity
     }
 
-    if (args.source !== undefined) {
-      params.source = args.source
+    if (source !== undefined) {
+      params.source = source
     }
 
-    if (args.subject !== undefined) {
-      params.subject = args.subject
+    if (subject !== undefined) {
+      params.subject = subject
     }
 
     return runTool(client, customerToolContracts.outlit_send_notification.toolName, params, json)
