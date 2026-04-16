@@ -1,7 +1,12 @@
 import { defaultAgentToolNames, getCustomerToolContract } from "@outlit/tools"
 import { describe, expect, test, vi } from "vitest"
 
-import { createOutlitPiExtension, type OutlitPiToolDefinition } from "../src/index.js"
+import {
+  actionToolNames,
+  createOutlitPiExtension,
+  createOutlitPiTool,
+  type OutlitPiToolDefinition,
+} from "../src/index.js"
 
 function createPiMock() {
   const registeredTools: OutlitPiToolDefinition[] = []
@@ -59,8 +64,13 @@ describe("createOutlitPiExtension", () => {
 
     const registeredNames = pi.registeredTools.map((tool) => tool.name)
     expect(registeredNames).toEqual([...defaultAgentToolNames])
+    expect(registeredNames).toContain("outlit_send_notification")
     expect(registeredNames).not.toContain("outlit_query")
     expect(registeredNames).not.toContain("outlit_schema")
+  })
+
+  test("exports the action tool names from Pi", () => {
+    expect(actionToolNames).toEqual(["outlit_send_notification"])
   })
 
   test("deduplicates custom tool names before registration", () => {
@@ -128,6 +138,30 @@ describe("createOutlitPiExtension", () => {
         result: apiResult,
       },
     })
+  })
+
+  test("exposes the notification tool contract through Pi", () => {
+    const tool = createOutlitPiTool("outlit_send_notification", {
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn(),
+    })
+    const contract = getCustomerToolContract("outlit_send_notification")
+
+    expect(tool.name).toBe("outlit_send_notification")
+    expect(tool.label).toBe("Outlit Send Notification")
+    expect(tool.description).toBe(contract.description)
+    expect(tool.parameters).toEqual(contract.inputSchema)
+
+    if (
+      tool.parameters &&
+      typeof tool.parameters === "object" &&
+      "required" in tool.parameters &&
+      Array.isArray(tool.parameters.required)
+    ) {
+      expect(tool.parameters.required).toEqual(["title", "payload"])
+    } else {
+      throw new Error("Expected notification tool parameters to expose required fields")
+    }
   })
 
   test("requires an Outlit API key when a tool is executed", async () => {

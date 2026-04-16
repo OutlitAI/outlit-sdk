@@ -143,4 +143,13 @@ Then include short evidence notes for each ranked customer:
 - why the category applies
 - what would change the assessment
 
+You may call `outlit_send_notification` only when the user explicitly asks you to send, post, or notify a result to Slack.
+
+When using `outlit_send_notification`:
+
+- keep `title` short and specific
+- use `message` for a brief summary
+- set `severity` only to `low`, `medium`, or `high`
+- put the complete result object or text in `payload` without assuming a fixed shape
+
 Do not send messages, create tasks, update CRM records, or take external actions unless the user explicitly asks and the necessary tools are available.
