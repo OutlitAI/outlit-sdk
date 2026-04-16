@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
+import { writeFileSync } from "node:fs"
+import { join } from "node:path"
 import {
   expectErrorExit,
   mockExitThrow,
@@ -12,10 +14,6 @@ const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
   rowCount: 0,
 }))
 
-const mockReadFileSync = mock((_path: string, _encoding: string): string => {
-  throw new Error("readFileSync not mocked for this test")
-})
-
 mock.module("../../src/lib/client", () => ({
   createClient: async () => ({
     key: TEST_API_KEY,
@@ -24,18 +22,13 @@ mock.module("../../src/lib/client", () => ({
   }),
 }))
 
-mock.module("node:fs", () => ({
-  readFileSync: mockReadFileSync,
-}))
-
 setNonInteractive()
 
 describe("notify", () => {
-  useTempEnv("notify-test")
+  const testDir = useTempEnv("notify-test")
 
   beforeEach(() => {
     mockCallTool.mockClear()
-    mockReadFileSync.mockClear()
   })
 
   test("sends positional payload as raw string", async () => {
@@ -178,7 +171,8 @@ describe("notify", () => {
   })
 
   test("--payload-file parses JSON and takes precedence over positional payload", async () => {
-    mockReadFileSync.mockReturnValueOnce('{"customer":"acme.com"}')
+    const payloadPath = join(testDir, "payload.json")
+    writeFileSync(payloadPath, '{"customer":"acme.com"}')
     const { default: notifyCmd } = await import("../../src/commands/notify")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
 
@@ -187,7 +181,7 @@ describe("notify", () => {
         args: {
           title: "Risk found",
           payload: "ignored",
-          "payload-file": "/tmp/payload.json",
+          "payload-file": payloadPath,
           json: true,
         },
       } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
@@ -282,10 +276,6 @@ describe("notify", () => {
   })
 
   test("file_error when --payload-file path is bad", async () => {
-    mockReadFileSync.mockImplementationOnce((_path: string, _encoding: string): string => {
-      throw new Error("ENOENT: no such file or directory")
-    })
-
     const { default: notifyCmd } = await import("../../src/commands/notify")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
