@@ -116,7 +116,7 @@ These agents are therefore agentic: the prompt and skill tell the model what evi
 
 ## Tool Scope
 
-These launch examples use the default customer intelligence tools plus SQL/schema tools:
+These launch examples use the default customer intelligence tools, notification action tools, plus SQL/schema tools:
 
 - customer discovery
 - user discovery
