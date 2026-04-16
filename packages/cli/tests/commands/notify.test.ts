@@ -63,19 +63,19 @@ describe("notify", () => {
     }
   })
 
-  test("parses JSON positional payload, normalizes severity, and includes optional fields", async () => {
+  test("trims title and optional fields, parses JSON payload, and normalizes severity", async () => {
     const { default: notifyCmd } = await import("../../src/commands/notify")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
 
     try {
       await notifyCmd.run!({
         args: {
-          title: "Risk found",
+          title: "  Risk found  ",
           payload: '{"customer":"acme.com"}',
-          severity: "HIGH",
-          message: "Check this account",
-          source: "ops-bot",
-          subject: "Escalation",
+          severity: "  HiGh  ",
+          message: "  Check this account  ",
+          source: "  ops-bot  ",
+          subject: "  Escalation  ",
           json: true,
         },
       } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
@@ -93,6 +93,87 @@ describe("notify", () => {
       )
     } finally {
       writeSpy.mockRestore()
+    }
+  })
+
+  test("empty optional message, source, or subject returns invalid_input", async () => {
+    const { default: notifyCmd } = await import("../../src/commands/notify")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await notifyCmd.run!({
+        args: {
+          title: "Risk found",
+          payload: "plain text payload",
+          message: " ",
+          source: " ",
+          subject: " ",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
+    } catch (error) {
+      thrown = error
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  })
+
+  test("title over 160 characters returns invalid_input", async () => {
+    const { default: notifyCmd } = await import("../../src/commands/notify")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await notifyCmd.run!({
+        args: {
+          title: `${"a".repeat(161)}`,
+          payload: "plain text payload",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
+    } catch (error) {
+      thrown = error
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  })
+
+  test("oversized payload returns invalid_input", async () => {
+    const { default: notifyCmd } = await import("../../src/commands/notify")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await notifyCmd.run!({
+        args: {
+          title: "Risk found",
+          payload: JSON.stringify({ blob: "x".repeat(100001) }),
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
+    } catch (error) {
+      thrown = error
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
     }
   })
 
