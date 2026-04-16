@@ -1,4 +1,7 @@
-# Skill: outlit-pr-coderabbit-followthrough
+---
+name: outlit-pr-coderabbit-followthrough
+description: Use when an Outlit repository pull request needs follow-through after creation, especially CI status, staging-base PRs, CodeRabbit review comments, or unresolved review threads.
+---
 
 # Outlit PR CodeRabbit Followthrough
 
