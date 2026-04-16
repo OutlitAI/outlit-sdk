@@ -588,12 +588,22 @@ function validateChurnPretriageConfig(config: ChurnPretriageConfig): ChurnPretri
   validateScope(config.defaults.scope, "defaults.scope")
   validateScope(config.scopeProfiles.all_accounts, "scopeProfiles.all_accounts")
   validateScope(config.scopeProfiles.revenue_accounts, "scopeProfiles.revenue_accounts")
+  validateAutoScopeSchedule(config.autoScopeSchedule)
   validatePromptSelection(config.promptSelection)
   validateActivityDefinition(config.defaults.activityDefinition)
-  validateThresholds(config.defaults.customerHeuristics.daysSinceLastMeaningfulActivity.thresholds)
-  validateActiveDayThresholds(config.defaults.customerHeuristics.activeDaysLast30d.thresholds)
+  validatePastDueBillingStatus(config.defaults.customerHeuristics.pastDueBillingStatus)
+  validateThresholdHeuristic(
+    config.defaults.customerHeuristics.daysSinceLastMeaningfulActivity,
+    "customerHeuristics.daysSinceLastMeaningfulActivity",
+  )
+  validateActiveDaysLast30d(config.defaults.customerHeuristics.activeDaysLast30d)
   validateDropVsBaseline(config.defaults.customerHeuristics.dropVsBaseline)
-  validateThresholds(config.defaults.userHeuristics.daysSinceLastMeaningfulActivity.thresholds)
+  validateUserDaysSinceLastMeaningfulActivity(
+    config.defaults.userHeuristics.daysSinceLastMeaningfulActivity,
+  )
+  validateAllRecentlyActiveUsersNowInactive(
+    config.defaults.userHeuristics.allRecentlyActiveUsersNowInactive,
+  )
 
   return config
 }
@@ -619,23 +629,102 @@ function validateActivityDefinition(
   assertStringArray(definition.excludeEventNames, "activityDefinition.excludeEventNames")
 }
 
+function validateAutoScopeSchedule(config: ChurnPretriageConfig["autoScopeSchedule"]): void {
+  if (!isRecord(config)) {
+    throw new Error("autoScopeSchedule must be an object")
+  }
+
+  if (
+    !Number.isInteger(config.intervalHours) ||
+    config.intervalHours <= 0 ||
+    24 % config.intervalHours !== 0
+  ) {
+    throw new Error("autoScopeSchedule.intervalHours must be a positive divisor of 24")
+  }
+
+  if (!Array.isArray(config.scopeOrder) || config.scopeOrder.length === 0) {
+    throw new Error("autoScopeSchedule.scopeOrder must be a non-empty array")
+  }
+
+  for (const scope of config.scopeOrder) {
+    if (scope !== "all_accounts" && scope !== "revenue_accounts") {
+      throw new Error("autoScopeSchedule.scopeOrder contains an unsupported scope")
+    }
+  }
+}
+
+function validatePastDueBillingStatus(
+  heuristic: ChurnPretriageConfig["defaults"]["customerHeuristics"]["pastDueBillingStatus"],
+): void {
+  if (!isRecord(heuristic)) {
+    throw new Error("pastDueBillingStatus must be an object")
+  }
+
+  assertBoolean(heuristic.enabled, "pastDueBillingStatus.enabled")
+  assertDisposition(heuristic.disposition)
+  assertOptionalPositiveInteger(
+    heuristic.reminderWindowDays,
+    "pastDueBillingStatus.reminderWindowDays",
+  )
+}
+
+function validateThresholdHeuristic(
+  heuristic: {
+    enabled: boolean
+    thresholds: Array<{
+      days: number
+      disposition: ChurnDisposition
+      reminderWindowDays?: number
+    }>
+  },
+  path: string,
+): void {
+  if (!isRecord(heuristic)) {
+    throw new Error(`${path} must be an object`)
+  }
+
+  assertBoolean(heuristic.enabled, `${path}.enabled`)
+  validateThresholds(heuristic.thresholds, path)
+}
+
 function validateThresholds(
-  thresholds: Array<{ days: number; disposition: ChurnDisposition }>,
+  thresholds: Array<{ days: number; disposition: ChurnDisposition; reminderWindowDays?: number }>,
+  path: string,
 ): void {
   if (!Array.isArray(thresholds) || thresholds.length === 0) {
-    throw new Error("churn pretriage thresholds must be a non-empty array")
+    throw new Error(`${path}.thresholds must be a non-empty array`)
   }
 
   for (const threshold of thresholds) {
     if (!Number.isInteger(threshold.days) || threshold.days < 0) {
-      throw new Error("days thresholds must use non-negative integers")
+      throw new Error(`${path}.thresholds.days must use non-negative integers`)
     }
     assertDisposition(threshold.disposition)
+    assertOptionalPositiveInteger(threshold.reminderWindowDays, `${path}.reminderWindowDays`)
   }
 }
 
+function validateActiveDaysLast30d(
+  heuristic: ChurnPretriageConfig["defaults"]["customerHeuristics"]["activeDaysLast30d"],
+): void {
+  if (!isRecord(heuristic)) {
+    throw new Error("activeDaysLast30d must be an object")
+  }
+
+  assertBoolean(heuristic.enabled, "activeDaysLast30d.enabled")
+  assertNonNegativeInteger(
+    heuristic.minimumCustomerAgeDays,
+    "activeDaysLast30d.minimumCustomerAgeDays",
+  )
+  validateActiveDayThresholds(heuristic.thresholds)
+}
+
 function validateActiveDayThresholds(
-  thresholds: Array<{ maxDays: number; disposition: ChurnDisposition }>,
+  thresholds: Array<{
+    maxDays: number
+    disposition: ChurnDisposition
+    reminderWindowDays?: number
+  }>,
 ): void {
   if (!Array.isArray(thresholds) || thresholds.length === 0) {
     throw new Error("active day thresholds must be a non-empty array")
@@ -646,15 +735,74 @@ function validateActiveDayThresholds(
       throw new Error("active day thresholds must use non-negative integers")
     }
     assertDisposition(threshold.disposition)
+    assertOptionalPositiveInteger(
+      threshold.reminderWindowDays,
+      "activeDaysLast30d.reminderWindowDays",
+    )
   }
 }
 
 function validateDropVsBaseline(
   heuristic: ChurnPretriageConfig["defaults"]["customerHeuristics"]["dropVsBaseline"],
 ): void {
+  if (!isRecord(heuristic)) {
+    throw new Error("dropVsBaseline must be an object")
+  }
+
+  assertBoolean(heuristic.enabled, "dropVsBaseline.enabled")
+  assertPositiveInteger(heuristic.windowDays, "dropVsBaseline.windowDays")
+  assertPositiveInteger(heuristic.baselineDays, "dropVsBaseline.baselineDays")
+  assertNonNegativeInteger(
+    heuristic.minimumBaselineActiveDays,
+    "dropVsBaseline.minimumBaselineActiveDays",
+  )
+  assertNonNegativeInteger(
+    heuristic.minimumBaselineEventCount,
+    "dropVsBaseline.minimumBaselineEventCount",
+  )
   if (heuristic.dropPercent < 0 || heuristic.dropPercent > 1) {
     throw new Error("dropVsBaseline.dropPercent must be between 0 and 1")
   }
+  assertDisposition(heuristic.disposition)
+  assertOptionalPositiveInteger(heuristic.reminderWindowDays, "dropVsBaseline.reminderWindowDays")
+}
+
+function validateUserDaysSinceLastMeaningfulActivity(
+  heuristic: ChurnPretriageConfig["defaults"]["userHeuristics"]["daysSinceLastMeaningfulActivity"],
+): void {
+  validateThresholdHeuristic(heuristic, "userHeuristics.daysSinceLastMeaningfulActivity")
+  assertOptionalNonNegativeInteger(
+    heuristic.minimumPriorActiveDays,
+    "userHeuristics.daysSinceLastMeaningfulActivity.minimumPriorActiveDays",
+  )
+}
+
+function validateAllRecentlyActiveUsersNowInactive(
+  heuristic: ChurnPretriageConfig["defaults"]["userHeuristics"]["allRecentlyActiveUsersNowInactive"],
+): void {
+  if (!isRecord(heuristic)) {
+    throw new Error("allRecentlyActiveUsersNowInactive must be an object")
+  }
+
+  assertBoolean(heuristic.enabled, "allRecentlyActiveUsersNowInactive.enabled")
+  assertPositiveInteger(heuristic.lookbackDays, "allRecentlyActiveUsersNowInactive.lookbackDays")
+  assertPositiveInteger(heuristic.inactiveDays, "allRecentlyActiveUsersNowInactive.inactiveDays")
+  if (heuristic.inactiveDays >= heuristic.lookbackDays) {
+    throw new Error("allRecentlyActiveUsersNowInactive.inactiveDays must be less than lookbackDays")
+  }
+  assertPositiveInteger(
+    heuristic.minimumPreviouslyActiveUsers,
+    "allRecentlyActiveUsersNowInactive.minimumPreviouslyActiveUsers",
+  )
+  assertNonNegativeInteger(
+    heuristic.minimumPriorActiveDays,
+    "allRecentlyActiveUsersNowInactive.minimumPriorActiveDays",
+  )
+  assertDisposition(heuristic.disposition)
+  assertOptionalPositiveInteger(
+    heuristic.reminderWindowDays,
+    "allRecentlyActiveUsersNowInactive.reminderWindowDays",
+  )
 }
 
 function validatePromptSelection(promptSelection: ChurnPretriageConfig["promptSelection"]): void {
@@ -688,6 +836,46 @@ function assertStringArray(value: unknown, path: string): asserts value is strin
       throw new Error(`${path} must contain strings shorter than 500 characters`)
     }
   }
+}
+
+function assertBoolean(value: unknown, path: string): asserts value is boolean {
+  if (typeof value !== "boolean") {
+    throw new Error(`${path} must be a boolean`)
+  }
+}
+
+function assertPositiveInteger(value: unknown, path: string): asserts value is number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+    throw new Error(`${path} must be a positive integer`)
+  }
+}
+
+function assertNonNegativeInteger(value: unknown, path: string): asserts value is number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new Error(`${path} must be a non-negative integer`)
+  }
+}
+
+function assertOptionalPositiveInteger(
+  value: unknown,
+  path: string,
+): asserts value is number | undefined {
+  if (value === undefined) {
+    return
+  }
+
+  assertPositiveInteger(value, path)
+}
+
+function assertOptionalNonNegativeInteger(
+  value: unknown,
+  path: string,
+): asserts value is number | undefined {
+  if (value === undefined) {
+    return
+  }
+
+  assertNonNegativeInteger(value, path)
 }
 
 function assertBillingStatus(value: unknown, path: string): asserts value is ChurnBillingStatus {
@@ -1450,7 +1638,10 @@ function finalizeSurfacedCustomers(
       (left.customerHeuristics.length + left.userHeuristics.length)
     if (signalDelta !== 0) return signalDelta
 
-    return (right.mrrCents ?? 0) - (left.mrrCents ?? 0)
+    const mrrDelta = (right.mrrCents ?? 0) - (left.mrrCents ?? 0)
+    if (mrrDelta !== 0) return mrrDelta
+
+    return left.customerId.localeCompare(right.customerId)
   })
 }
 
@@ -1482,9 +1673,11 @@ function selectCustomersForPrompt(params: {
     return rotatedLikelyChurnCustomers.slice(0, maxPromptCustomers)
   }
 
+  const remainingSlots = maxPromptCustomers - rotatedLikelyChurnCustomers.length
+
   return [
     ...rotatedLikelyChurnCustomers,
-    ...rotateCustomersForPrompt(investigateCustomers, now, maxPromptCustomers, rotationWindowHours),
+    ...rotateCustomersForPrompt(investigateCustomers, now, remainingSlots, rotationWindowHours),
   ].slice(0, maxPromptCustomers)
 }
 

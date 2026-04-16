@@ -24,7 +24,7 @@ sumIf(mrr_cents, billing_status = 'PAYING')
 JSONExtractString(properties, 'path')
 ```
 
-Use `event_name` when you need the raw tracked event name for include/exclude lists or product workflow analysis. Use `event_type` for broader event classes.
+Prefer `event_name` when you need the raw tracked event name for include/exclude lists or product workflow analysis, and `event_type` for broader event classes.
 
 Use ClickHouse syntax, not MySQL or Postgres helpers like `DATE_SUB()`.
 
