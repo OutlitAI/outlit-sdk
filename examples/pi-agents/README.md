@@ -1,6 +1,6 @@
 # Outlit Pi Agents
 
-This example shows how to build Pi agents with `@outlit/pi`. It includes four customer-signal agents that use Outlit customer intelligence tools, a shared Pi skill, and reusable prompt templates.
+This example shows how to build Pi agents with `@outlit/pi`. It includes four customer-signal agents that use Outlit customer intelligence tools, notification action tools, a shared Pi skill, and reusable prompt templates.
 
 These examples focus on harder revenue and retention questions where the agent has to connect product behavior, billing, conversations, support context, timelines, facts, and source evidence.
 
@@ -156,6 +156,7 @@ Treat these agents as evidence reviewers, not label generators. They should:
 
 - Use domains or stable customer IDs for follow-up lookups when names are ambiguous.
 - Use SQL/schema for candidate discovery, then customer, timeline, fact, source, and search tools for account-level evidence.
+- Use `outlit_send_notification` only when the user explicitly asks you to send, post, or notify a result to Slack.
 - Use `factTypes` to narrow facts, but do not request behavioral/anomaly fact types as filters.
 - Keep usage decay, product/support friction, activation failure, expansion readiness, and renewal/procurement risk separate.
 - Return fewer accounts when the evidence is weak.
