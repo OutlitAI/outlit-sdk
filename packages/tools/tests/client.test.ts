@@ -34,7 +34,9 @@ describe("toolsets", () => {
     expect(analyticalAgentToolNames).toContain("outlit_send_notification")
     expect(analyticalAgentToolNames).toContain("outlit_schema")
     expect(analyticalAgentToolNames).toContain("outlit_query")
-    expect(analyticalAgentToolNames).not.toEqual([...allCustomerToolNames])
+    expect(allCustomerToolNames).toContain("outlit_send_notification")
+    expect(allCustomerToolNames).toContain("outlit_schema")
+    expect(allCustomerToolNames).toContain("outlit_query")
   })
 })
 
