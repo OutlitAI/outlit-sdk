@@ -1,5 +1,14 @@
 # @outlit/cli
 
+## 1.6.2
+
+### Patch Changes
+
+- [#107](https://github.com/OutlitAI/outlit-sdk/pull/107) [`e6d0927`](https://github.com/OutlitAI/outlit-sdk/commit/e6d092704287a7e49b274e847d5afa87080111df) Thanks [@leo-paz](https://github.com/leo-paz)! - Add the `outlit notify` command for sending Slack notifications from the CLI.
+
+- Updated dependencies [[`7de9c83`](https://github.com/OutlitAI/outlit-sdk/commit/7de9c8358b0eb622c93487c1ddb6046446873c13), [`4548ed5`](https://github.com/OutlitAI/outlit-sdk/commit/4548ed5df90e1f3e99a3172b093b93b10c2fa0b7)]:
+  - @outlit/tools@0.1.1
+
 ## 1.6.1
 
 ### Patch Changes

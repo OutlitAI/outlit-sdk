@@ -1,5 +1,13 @@
 # @outlit/tools
 
+## 0.1.1
+
+### Patch Changes
+
+- [#107](https://github.com/OutlitAI/outlit-sdk/pull/107) [`7de9c83`](https://github.com/OutlitAI/outlit-sdk/commit/7de9c8358b0eb622c93487c1ddb6046446873c13) Thanks [@leo-paz](https://github.com/leo-paz)! - Add the generic Slack notification action tool contract and expose `actionToolNames` for side-effectful tools.
+
+- [#109](https://github.com/OutlitAI/outlit-sdk/pull/109) [`4548ed5`](https://github.com/OutlitAI/outlit-sdk/commit/4548ed5df90e1f3e99a3172b093b93b10c2fa0b7) Thanks [@leo-paz](https://github.com/leo-paz)! - Add generic Pi toolset helpers and improve Outlit query schema guidance for agent use.
+
 ## 0.1.0
 
 ### Minor Changes

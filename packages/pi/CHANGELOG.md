@@ -1,5 +1,16 @@
 # @outlit/pi
 
+## 0.1.1
+
+### Patch Changes
+
+- [#107](https://github.com/OutlitAI/outlit-sdk/pull/107) [`7a0811a`](https://github.com/OutlitAI/outlit-sdk/commit/7a0811a355c6a74b0222b2773bf3f6a54e3b903e) Thanks [@leo-paz](https://github.com/leo-paz)! - Export `actionToolNames` from `@outlit/pi` and keep the default Pi tool registration aligned with `outlit_send_notification`, so custom Pi agents can include notification actions explicitly while the default Pi toolset already includes them.
+
+- [#109](https://github.com/OutlitAI/outlit-sdk/pull/109) [`4548ed5`](https://github.com/OutlitAI/outlit-sdk/commit/4548ed5df90e1f3e99a3172b093b93b10c2fa0b7) Thanks [@leo-paz](https://github.com/leo-paz)! - Add generic Pi toolset helpers and improve Outlit query schema guidance for agent use.
+
+- Updated dependencies [[`7de9c83`](https://github.com/OutlitAI/outlit-sdk/commit/7de9c8358b0eb622c93487c1ddb6046446873c13), [`4548ed5`](https://github.com/OutlitAI/outlit-sdk/commit/4548ed5df90e1f3e99a3172b093b93b10c2fa0b7)]:
+  - @outlit/tools@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
