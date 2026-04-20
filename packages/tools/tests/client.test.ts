@@ -100,6 +100,9 @@ describe("tool contracts", () => {
     expect(normalizeCustomerSourceType("CRM")).toBe("OPPORTUNITY")
     expect(normalizeCustomerSourceType("CRM_OPPORTUNITY")).toBe("OPPORTUNITY")
     expect(normalizeCustomerSourceType("ZENDESK_TICKET")).toBeNull()
+    expect(normalizeCustomerSourceType("toString")).toBeNull()
+    expect(normalizeCustomerSourceType("constructor")).toBeNull()
+    expect(normalizeCustomerSourceType("__proto__")).toBeNull()
 
     const exactSourceContract = getCustomerToolContract("outlit_get_source")
     const exactSourceProperties = exactSourceContract.inputSchema.properties as Record<
