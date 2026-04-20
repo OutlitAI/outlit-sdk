@@ -16,6 +16,26 @@ export const customerToolNames = [
   "outlit_send_notification",
 ] as const
 
+export const customerSourceTypes = [
+  "EMAIL",
+  "CALL",
+  "CALENDAR_EVENT",
+  "SUPPORT_TICKET",
+  "OPPORTUNITY",
+] as const
+
+export const customerSourceTypeAliases = ["CRM", "CRM_OPPORTUNITY"] as const
+
+export const customerSourceTypeInputs = [
+  "EMAIL",
+  "CALL",
+  "CALENDAR_EVENT",
+  "SUPPORT_TICKET",
+  "OPPORTUNITY",
+  "CRM",
+  "CRM_OPPORTUNITY",
+] as const
+
 export const customerToolContracts = {
   outlit_list_customers: {
     toolName: "outlit_list_customers",
@@ -309,15 +329,7 @@ export const customerToolContracts = {
           type: "array",
           items: {
             type: "string",
-            enum: [
-              "EMAIL",
-              "CALL",
-              "CALENDAR_EVENT",
-              "SUPPORT_TICKET",
-              "OPPORTUNITY",
-              "CRM",
-              "CRM_OPPORTUNITY",
-            ],
+            enum: customerSourceTypeInputs,
           },
         },
         factTypes: {
@@ -424,15 +436,7 @@ export const customerToolContracts = {
       properties: {
         sourceType: {
           type: "string",
-          enum: [
-            "EMAIL",
-            "CALL",
-            "CALENDAR_EVENT",
-            "SUPPORT_TICKET",
-            "OPPORTUNITY",
-            "CRM",
-            "CRM_OPPORTUNITY",
-          ],
+          enum: customerSourceTypeInputs,
         },
         sourceId: {
           type: "string",
@@ -496,15 +500,7 @@ export const customerToolContracts = {
           type: "array",
           items: {
             type: "string",
-            enum: [
-              "EMAIL",
-              "CALL",
-              "CALENDAR_EVENT",
-              "SUPPORT_TICKET",
-              "OPPORTUNITY",
-              "CRM",
-              "CRM_OPPORTUNITY",
-            ],
+            enum: customerSourceTypeInputs,
           },
         },
       },
@@ -730,26 +726,6 @@ export const customerIncludeSections = [
   "revenue",
   "recentTimeline",
   "behaviorMetrics",
-] as const
-
-export const customerSourceTypes = [
-  "EMAIL",
-  "CALL",
-  "CALENDAR_EVENT",
-  "SUPPORT_TICKET",
-  "OPPORTUNITY",
-] as const
-
-export const customerSourceTypeAliases = ["CRM", "CRM_OPPORTUNITY"] as const
-
-export const customerSourceTypeInputs = [
-  "EMAIL",
-  "CALL",
-  "CALENDAR_EVENT",
-  "SUPPORT_TICKET",
-  "OPPORTUNITY",
-  "CRM",
-  "CRM_OPPORTUNITY",
 ] as const
 
 export const customerTimeframes = ["7d", "14d", "30d", "90d"] as const
