@@ -75,7 +75,7 @@ describe("completions command", () => {
     expect(out).toContain("'sources:Get a concrete source by type and id'")
     expect(out).toContain("'--status:Filter by fact status'")
     expect(out).toContain("'--fact-id:Fact ID to fetch'")
-    expect(out).toContain("'--source-type:Canonical source type'")
+    expect(out).toContain("'--source-type:Source type'")
     expect(out).toContain("facts.list)")
     expect(out).toContain("sources.get)")
   })

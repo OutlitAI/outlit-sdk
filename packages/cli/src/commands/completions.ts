@@ -139,7 +139,7 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "Get one exact source record",
         flags: [
           ...COMMON,
-          { name: "--source-type", desc: "Canonical source type" },
+          { name: "--source-type", desc: "Source type" },
           { name: "--source-id", desc: "Exact source ID" },
         ],
       },

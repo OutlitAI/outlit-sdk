@@ -41,7 +41,7 @@ describe("search", () => {
           "top-k": "10",
           after: "2025-01-01T00:00:00Z",
           before: "2025-03-31T23:59:59Z",
-          "source-types": "CALL,EMAIL",
+          "source-types": "CALL,CRM",
           json: true,
         },
       } as Parameters<NonNullable<typeof searchCmd.run>>[0]),
@@ -53,7 +53,7 @@ describe("search", () => {
       topK: 10,
       after: "2025-01-01T00:00:00Z",
       before: "2025-03-31T23:59:59Z",
-      sourceTypes: ["CALL", "EMAIL"],
+      sourceTypes: ["CALL", "OPPORTUNITY"],
     })
   })
 
