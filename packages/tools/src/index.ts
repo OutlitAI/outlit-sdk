@@ -2,6 +2,8 @@ export type { OutlitToolsClient, OutlitToolsClientOptions, OutlitToolsFetch } fr
 export { createOutlitClient, DEFAULT_OUTLIT_API_URL } from "./client.js"
 export type {
   CustomerContextSearchInput,
+  CustomerSourceType,
+  CustomerSourceTypeInput,
   CustomerToolContract,
   CustomerToolName,
   JsonSchema,
@@ -16,6 +18,8 @@ export {
   customerFactTypes,
   customerIncludeSections,
   customerListOrderFields,
+  customerSourceTypeAliases,
+  customerSourceTypeInputs,
   customerSourceTypes,
   customerTimeframes,
   customerToolContractHash,
@@ -23,6 +27,7 @@ export {
   customerToolNames,
   getCustomerToolContract,
   isCustomerToolName,
+  normalizeCustomerSourceType,
   notificationSeverityValues,
   resolveCustomerContextSearchInput,
   schemaTables,

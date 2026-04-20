@@ -80,13 +80,13 @@ const result = await outlit.callTool(
   {
     query: "What pricing concerns came up recently?",
     customer: "acme.com",
-    sourceTypes: ["CALL", "EMAIL", "SUPPORT_TICKET"],
+    sourceTypes: ["CALL", "EMAIL", "SUPPORT_TICKET", "OPPORTUNITY"],
     topK: 5,
   },
 )
 ```
 
-The package also exports `customerToolContracts`, `defaultAgentToolNames`, `actionToolNames`, `sqlToolNames`, `allCustomerToolNames`, and enum lists such as `customerSourceTypes` for schema-driven agent integrations.
+The package also exports `customerToolContracts`, `defaultAgentToolNames`, `actionToolNames`, `sqlToolNames`, `allCustomerToolNames`, and enum lists such as `customerSourceTypes` for schema-driven agent integrations. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases.
 
 ## Examples
 
@@ -126,14 +126,14 @@ curl -X POST https://app.outlit.ai/api/tools/call \
   "input": {
     "customer": "acme.com",
     "query": "What renewal concerns came up recently?",
-    "sourceTypes": ["EMAIL", "CALL", "SUPPORT_TICKET"],
+    "sourceTypes": ["EMAIL", "CALL", "SUPPORT_TICKET", "OPPORTUNITY"],
     "after": "2026-01-01T00:00:00Z",
     "topK": 5
   }
 }
 ```
 
-### List Active Facts From Calls
+### List Active Facts From Calls And Opportunities
 
 ```json
 {
@@ -141,7 +141,7 @@ curl -X POST https://app.outlit.ai/api/tools/call \
   "input": {
     "customer": "acme.com",
     "status": ["ACTIVE"],
-    "sourceTypes": ["CALL"],
+    "sourceTypes": ["CALL", "OPPORTUNITY"],
     "after": "2026-01-01T00:00:00Z",
     "limit": 20
   }
@@ -154,8 +154,8 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 {
   "tool": "outlit_get_source",
   "input": {
-    "sourceType": "SUPPORT_TICKET",
-    "sourceId": "ticket_456"
+    "sourceType": "OPPORTUNITY",
+    "sourceId": "opp_123"
   }
 }
 ```

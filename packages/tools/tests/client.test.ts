@@ -6,8 +6,11 @@ import {
   analyticalAgentToolNames,
   type CustomerContextSearchInput,
   createOutlitClient,
+  customerSourceTypeInputs,
+  customerSourceTypes,
   defaultAgentToolNames,
   getCustomerToolContract,
+  normalizeCustomerSourceType,
   notificationSeverityValues,
   resolveCustomerContextSearchInput,
   sqlToolNames,
@@ -75,6 +78,42 @@ describe("tool contracts", () => {
     expect(properties.factTypes?.items?.enum).not.toContain("CHAMPION_AT_RISK")
     expect(properties.factCategories?.items?.enum).not.toContain("CHURN")
     expect(properties.factCategories?.items?.enum).not.toContain("JOURNEY")
+  })
+
+  test("exposes opportunity as the canonical CRM source type with aliases for inputs", () => {
+    expect(customerSourceTypes).toEqual([
+      "EMAIL",
+      "CALL",
+      "CALENDAR_EVENT",
+      "SUPPORT_TICKET",
+      "OPPORTUNITY",
+    ])
+    expect(customerSourceTypeInputs).toEqual([
+      "EMAIL",
+      "CALL",
+      "CALENDAR_EVENT",
+      "SUPPORT_TICKET",
+      "OPPORTUNITY",
+      "CRM",
+      "CRM_OPPORTUNITY",
+    ])
+    expect(normalizeCustomerSourceType("CRM")).toBe("OPPORTUNITY")
+    expect(normalizeCustomerSourceType("CRM_OPPORTUNITY")).toBe("OPPORTUNITY")
+    expect(normalizeCustomerSourceType("ZENDESK_TICKET")).toBeNull()
+
+    const exactSourceContract = getCustomerToolContract("outlit_get_source")
+    const exactSourceProperties = exactSourceContract.inputSchema.properties as Record<
+      string,
+      { enum?: string[] }
+    >
+    expect(exactSourceProperties.sourceType?.enum).toEqual(customerSourceTypeInputs)
+
+    const searchContract = getCustomerToolContract("outlit_search_customer_context")
+    const searchProperties = searchContract.inputSchema.properties as Record<
+      string,
+      { items?: { enum?: string[] } }
+    >
+    expect(searchProperties.sourceTypes?.items?.enum).toEqual(customerSourceTypeInputs)
   })
 
   test("exposes the notification contract and severity values", () => {
@@ -231,6 +270,36 @@ describe("resolveCustomerContextSearchInput", () => {
     ).toEqual({
       ok: false,
       message: "--after must be a valid ISO 8601 datetime",
+    })
+  })
+
+  test("normalizes CRM source aliases in search input", () => {
+    expect(
+      resolveCustomerContextSearchInput({
+        query: "renewal",
+        sourceTypes: ["CALL", "CRM"],
+      }),
+    ).toEqual({
+      ok: true,
+      request: {
+        query: "renewal",
+        customer: undefined,
+        topK: undefined,
+        after: undefined,
+        before: undefined,
+        sourceTypes: ["CALL", "OPPORTUNITY"],
+      },
+    })
+
+    expect(
+      resolveCustomerContextSearchInput({
+        query: "renewal",
+        sourceTypes: ["ZENDESK_TICKET"],
+      }),
+    ).toEqual({
+      ok: false,
+      message:
+        "Unknown source types: ZENDESK_TICKET. Allowed: EMAIL, CALL, CALENDAR_EVENT, SUPPORT_TICKET, OPPORTUNITY, CRM, CRM_OPPORTUNITY",
     })
   })
 })

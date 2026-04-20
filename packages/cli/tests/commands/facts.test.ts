@@ -38,7 +38,7 @@ describe("facts commands", () => {
         args: {
           customer: "acme.com",
           status: "ACTIVE",
-          "source-types": "CALL,EMAIL",
+          "source-types": "CALL,CRM_OPPORTUNITY",
           "fact-types": "CHURN_RISK,EXPANSION",
           "fact-categories": "MEMORY",
           after: "2025-01-01T00:00:00Z",
@@ -54,7 +54,7 @@ describe("facts commands", () => {
       expect.objectContaining({
         customer: "acme.com",
         status: ["ACTIVE"],
-        sourceTypes: ["CALL", "EMAIL"],
+        sourceTypes: ["CALL", "OPPORTUNITY"],
         factTypes: ["CHURN_RISK", "EXPANSION"],
         factCategories: ["MEMORY"],
         after: "2025-01-01T00:00:00Z",

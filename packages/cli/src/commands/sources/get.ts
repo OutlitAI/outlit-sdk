@@ -1,9 +1,17 @@
-import { customerSourceTypes, customerToolContracts } from "@outlit/tools"
+import {
+  customerSourceTypeAliases,
+  customerSourceTypeInputs,
+  customerSourceTypes,
+  customerToolContracts,
+  normalizeCustomerSourceType,
+} from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
+
+const sourceTypeDescription = `${customerSourceTypes.join(", ")} (aliases: ${customerSourceTypeAliases.join(", ")})`
 
 export default defineCommand({
   meta: {
@@ -13,9 +21,10 @@ export default defineCommand({
       "",
       "Examples:",
       "  outlit sources get --source-type CALL --source-id call_123",
+      "  outlit sources get --source-type OPPORTUNITY --source-id opp_123",
       "  outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json",
       "",
-      `Source types: ${customerSourceTypes.join(", ")}`,
+      `Source types: ${sourceTypeDescription}`,
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -25,7 +34,7 @@ export default defineCommand({
     ...outputArgs,
     "source-type": {
       type: "string",
-      description: "Canonical source type",
+      description: "Source type",
       required: true,
     },
     "source-id": {
@@ -37,12 +46,11 @@ export default defineCommand({
   async run({ args }) {
     const json = !!args.json
 
-    if (
-      !customerSourceTypes.includes(args["source-type"] as (typeof customerSourceTypes)[number])
-    ) {
+    const sourceType = normalizeCustomerSourceType(args["source-type"])
+    if (!sourceType) {
       return outputError(
         {
-          message: `--source-type must be one of ${customerSourceTypes.join(", ")}`,
+          message: `--source-type must be one of ${customerSourceTypeInputs.join(", ")}`,
           code: "invalid_input",
         },
         json,
@@ -55,7 +63,7 @@ export default defineCommand({
       client,
       customerToolContracts.outlit_get_source.toolName,
       {
-        sourceType: args["source-type"],
+        sourceType,
         sourceId: args["source-id"],
       },
       json,

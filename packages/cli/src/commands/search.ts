@@ -1,4 +1,5 @@
 import {
+  customerSourceTypeAliases,
   customerSourceTypes,
   customerToolContracts,
   resolveCustomerContextSearchInput,
@@ -9,6 +10,8 @@ import { AGENT_JSON_HINT, outputArgs } from "../args/output"
 import { getClientOrExit, runTool } from "../lib/api"
 import { splitCsv } from "../lib/config"
 import { outputError } from "../lib/output"
+
+const sourceTypeDescription = `${customerSourceTypes.join(", ")} (aliases: ${customerSourceTypeAliases.join(", ")})`
 
 export default defineCommand({
   meta: {
@@ -24,7 +27,7 @@ export default defineCommand({
       "  outlit search 'churn risk signals' --customer acme.com",
       "  outlit search 'expansion opportunities' --top-k 50 --json",
       "  outlit search 'support escalations' --after 2025-01-01T00:00:00Z --before 2025-03-31T23:59:59Z",
-      "  outlit search 'onboarding issues' --source-types CALL,EMAIL",
+      "  outlit search 'renewal opportunities' --source-types CALL,OPPORTUNITY",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -57,7 +60,7 @@ export default defineCommand({
     },
     "source-types": {
       type: "string",
-      description: `Comma-separated generic source type filter (${customerSourceTypes.join(", ")})`,
+      description: `Comma-separated generic source type filter (${sourceTypeDescription})`,
     },
   },
   async run({ args }) {
@@ -80,19 +83,6 @@ export default defineCommand({
           .map((item) => item.trim())
           .filter(Boolean)
       : undefined
-
-    const invalidSourceTypes = sourceTypes?.filter(
-      (value) => !customerSourceTypes.includes(value as (typeof customerSourceTypes)[number]),
-    )
-    if (invalidSourceTypes && invalidSourceTypes.length > 0) {
-      return outputError(
-        {
-          message: `Unknown source types: ${invalidSourceTypes.join(", ")}. Allowed: ${customerSourceTypes.join(", ")}`,
-          code: "invalid_input",
-        },
-        json,
-      )
-    }
 
     const resolved = resolveCustomerContextSearchInput({
       query: args.query,

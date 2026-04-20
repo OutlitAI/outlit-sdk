@@ -318,7 +318,7 @@ outlit facts get --fact-id <id> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--status` | string | — | Comma-separated fact status filter: `ACTIVE`, `ACKNOWLEDGED`, `RESOLVED`, `SNOOZED`, `CANDIDATE` |
-| `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET` |
+| `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--fact-types` | string | — | Comma-separated customer-memory fact type filter: e.g. `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `PRODUCT_USAGE` |
 | `--fact-categories` | string | — | Comma-separated fact category filter: `MEMORY`, `CUSTOM` |
 | `--after` | string | — | Lower bound on fact occurrence time (ISO 8601 datetime) |
@@ -340,7 +340,7 @@ outlit facts get --fact-id <id> [flags]
 outlit facts list acme.com
 
 # Filter by status and source type
-outlit facts list acme.com --status ACTIVE --source-types CALL,EMAIL --after 2025-01-01T00:00:00Z
+outlit facts list acme.com --status ACTIVE --source-types CALL,OPPORTUNITY --after 2025-01-01T00:00:00Z
 
 # Filter customer-memory facts by public fact type
 outlit facts list acme.com --fact-types CHURN_RISK,PRODUCT_USAGE
@@ -420,7 +420,7 @@ outlit search <query> [flags]
 | `--top-k` | number | `20` | Maximum results to return (1–50) |
 | `--after` | string | — | Filter to events after this ISO 8601 datetime |
 | `--before` | string | — | Filter to events before this ISO 8601 datetime |
-| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`) |
+| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`). Aliases: `CRM`, `CRM_OPPORTUNITY` |
 
 ### Examples
 
@@ -435,7 +435,7 @@ outlit search "budget concerns" --customer acme.com
 outlit search "expansion signals" --after 2025-01-01T00:00:00Z --before 2025-03-31T23:59:59Z
 
 # Filter by source type
-outlit search "onboarding issues" --source-types CALL,EMAIL
+outlit search "renewal opportunities" --source-types CALL,OPPORTUNITY
 
 # More results (max 50)
 outlit search "churn risk" --top-k 50 --json
@@ -484,13 +484,14 @@ outlit sources get --source-type <type> --source-id <id>
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Canonical source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET` |
+| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--source-id` | string | — | Exact source identifier |
 
 ### Examples
 
 ```bash
 outlit sources get --source-type CALL --source-id call_123
+outlit sources get --source-type OPPORTUNITY --source-id opp_123
 outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
 ```
 

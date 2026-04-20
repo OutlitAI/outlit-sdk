@@ -1,9 +1,13 @@
 import {
+  type CustomerSourceType,
   customerFactCategories,
   customerFactStatuses,
   customerFactTypes,
+  customerSourceTypeAliases,
+  customerSourceTypeInputs,
   customerSourceTypes,
   customerToolContracts,
+  normalizeCustomerSourceType,
   unsupportedCustomerFactTypes,
 } from "@outlit/tools"
 import { defineCommand } from "citty"
@@ -29,6 +33,16 @@ function invalidValues(values: string[] | undefined, allowed: readonly string[])
   return values.filter((value) => !allowed.includes(value))
 }
 
+function normalizeSourceTypes(values: string[] | undefined): CustomerSourceType[] | undefined {
+  if (!values) return undefined
+
+  return Array.from(new Set(values.map((value) => normalizeCustomerSourceType(value)))).filter(
+    (sourceType): sourceType is CustomerSourceType => sourceType !== null,
+  )
+}
+
+const sourceTypeDescription = `${customerSourceTypes.join(", ")} (aliases: ${customerSourceTypeAliases.join(", ")})`
+
 export default defineCommand({
   meta: {
     name: "list",
@@ -41,11 +55,11 @@ export default defineCommand({
       "  outlit facts list acme.com",
       "  outlit facts list acme.com --status ACTIVE",
       "  outlit facts list acme.com --fact-types CHURN_RISK,EXPANSION",
-      "  outlit facts list acme.com --source-types CALL,EMAIL --after 2025-01-01T00:00:00Z",
+      "  outlit facts list acme.com --source-types CALL,OPPORTUNITY --after 2025-01-01T00:00:00Z",
       "  outlit facts list acme.com --limit 50 --json",
       "",
       `Statuses: ${customerFactStatuses.join(", ")}`,
-      `Source types: ${customerSourceTypes.join(", ")}`,
+      `Source types: ${sourceTypeDescription}`,
       `Fact categories: ${customerFactCategories.join(", ")}`,
       "",
       AGENT_JSON_HINT,
@@ -66,7 +80,7 @@ export default defineCommand({
     },
     "source-types": {
       type: "string",
-      description: `Comma-separated generic source type filter (${customerSourceTypes.join(", ")})`,
+      description: `Comma-separated generic source type filter (${sourceTypeDescription})`,
     },
     "fact-types": {
       type: "string",
@@ -104,16 +118,19 @@ export default defineCommand({
       )
     }
 
-    const invalidSourceTypes = invalidValues(sourceTypes, customerSourceTypes)
+    const invalidSourceTypes =
+      sourceTypes?.filter((value) => !normalizeCustomerSourceType(value)) ?? []
     if (invalidSourceTypes.length > 0) {
       return outputError(
         {
-          message: `Unknown source types: ${invalidSourceTypes.join(", ")}. Allowed: ${customerSourceTypes.join(", ")}`,
+          message: `Unknown source types: ${invalidSourceTypes.join(", ")}. Allowed: ${customerSourceTypeInputs.join(", ")}`,
           code: "invalid_input",
         },
         json,
       )
     }
+
+    const normalizedSourceTypes = normalizeSourceTypes(sourceTypes)
 
     const invalidFactTypes = invalidValues(factTypes, customerFactTypes)
     if (invalidFactTypes.length > 0) {
@@ -201,7 +218,7 @@ export default defineCommand({
       customer: args.customer,
     }
     if (statuses) params.status = statuses
-    if (sourceTypes) params.sourceTypes = sourceTypes
+    if (normalizedSourceTypes) params.sourceTypes = normalizedSourceTypes
     if (factTypes) params.factTypes = factTypes
     if (factCategories) params.factCategories = factCategories
     if (args.after) params.after = args.after
