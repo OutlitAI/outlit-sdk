@@ -59,4 +59,23 @@ describe("sources get", () => {
       sourceId: "opp_123",
     })
   })
+
+  test("normalizes direct CRM source alias before lookup", async () => {
+    const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
+
+    await captureStdout(() =>
+      sourcesGetCmd.run!({
+        args: {
+          "source-type": "CRM",
+          "source-id": "opp_456",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_source", {
+      sourceType: "OPPORTUNITY",
+      sourceId: "opp_456",
+    })
+  })
 })

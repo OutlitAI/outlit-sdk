@@ -34,7 +34,7 @@ export default defineCommand({
     ...outputArgs,
     "source-type": {
       type: "string",
-      description: "Source type",
+      description: `Source type (${sourceTypeDescription})`,
       required: true,
     },
     "source-id": {
