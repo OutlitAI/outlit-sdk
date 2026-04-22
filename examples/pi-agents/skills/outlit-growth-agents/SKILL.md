@@ -74,7 +74,7 @@ Avoid:
 
 - ranking a customer only because usage is low
 - ranking subscription cancellation, subscription pause, renewal negotiation, legal review, or procurement delay as usage decay unless there is also declining or stale product usage
-- ranking already-churned accounts as live churn risks unless the user explicitly asks for postmortems
+- ranking already-churned accounts as live churn risks
 - treating a new or tiny customer like a mature account
 - treating renewal negotiation as churn without product or cancellation evidence
 - padding a ranking when pretriage or discovery candidates do not survive evidence review
