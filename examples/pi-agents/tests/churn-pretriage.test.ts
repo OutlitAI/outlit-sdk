@@ -10,6 +10,13 @@ import {
 const fixedNow = new Date("2026-04-15T12:00:00Z")
 
 describe("runOutlitChurnPretriage", () => {
+  test("defaults revenue account scans to live save-motion billing statuses", () => {
+    expect(defaultChurnPretriageConfig.scopeProfiles.revenue_accounts.billingStatuses).toEqual([
+      "PAYING",
+      "PAST_DUE",
+    ])
+  })
+
   test("rotates capped prompt customers by full pages across hourly schedule windows", async () => {
     const firstRun = await runOutlitChurnPretriage({
       client: { callTool: createRotationQueryMock() },
@@ -282,6 +289,7 @@ describe("runOutlitChurnPretriage", () => {
     })
     expect(result.context).toContain("BEGIN_PRETRIAGE_JSON")
     expect(result.context).toContain('"signals"')
+    expect(result.context).toContain("The payload's activity metrics are hard behavior evidence")
     expect(result.context).not.toContain('"customerHeuristics"')
     expect(result.context).not.toContain('"fingerprint"')
 

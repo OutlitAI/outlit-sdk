@@ -284,7 +284,7 @@ export const defaultChurnPretriageConfig: ChurnPretriageConfig = {
       billingStatuses: [],
     },
     revenue_accounts: {
-      billingStatuses: ["PAYING", "PAST_DUE", "CHURNED"],
+      billingStatuses: ["PAYING", "PAST_DUE"],
     },
   },
   autoScopeSchedule: {
@@ -1751,12 +1751,14 @@ You may still use broader portfolio analysis if the user asks for a general chur
 
   return `DETERMINISTIC CHURN PRETRIAGE RESULTS:
 - These customers were surfaced by deterministic usage, billing, and user-inactivity rules before the model review.
+- The payload's activity metrics are hard behavior evidence from product event data, even when timeline/search/fact context is sparse.
 - Treat these customers as the investigation set for this churn run. Do not add unrelated customers unless the user explicitly asks for a broader scan.
 - Prioritize likely_churn customers before investigate customers.
 - You may drop a listed customer only if richer Outlit evidence clearly contradicts the risk.
 - Candidate accounting is required in the final answer: state how many pretriage candidates were reviewed, how many were ranked, and how many were excluded.
 - Do not rank a customer unless you can cite at least one hard churn signal and one supporting evidence point from Outlit tools or the pretriage payload.
-- Exclude or lower confidence for customers whose recent meaningful activity recovered, whose evidence is only passive/noisy activity, or whose only support is stale qualitative context.
+- Exclude customers whose recent meaningful activity recovered, whose evidence is only passive/noisy activity, or whose only support is stale qualitative context.
+- Lower confidence, rather than excluding, when the hard activity metrics show paid non-use but timeline, search, facts, or relationship context are sparse.
 - Do not expose the words "heuristic", "deterministic pretriage", "SQL", or internal event names in final customer-facing recommendations.
 BEGIN_PRETRIAGE_JSON
 ${JSON.stringify(payload, null, 2)}

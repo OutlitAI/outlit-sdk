@@ -20,7 +20,10 @@ type GrowthAgentPiApi = {
       description: string
       handler: (
         args: string | undefined,
-        ctx: { ui: { notify: (message: string, level: "info") => void } },
+        ctx: {
+          ui: { notify: (message: string, level: "info") => void }
+          waitForIdle?: () => Promise<void>
+        },
       ) => Promise<void>
     },
   ) => void
@@ -33,7 +36,7 @@ type GrowthAgentPiApi = {
       | undefined
     >,
   ) => void
-  sendUserMessage: (prompt: string) => void
+  sendUserMessage: (prompt: string) => void | Promise<void>
 }
 
 type OutlitPiRegistry = Parameters<ReturnType<typeof createOutlitPiExtension>>[0]
@@ -70,11 +73,10 @@ Outlit customer signal agent guidance:
 `.trim()
 
 // Keep the toolset visible in the example instead of hiding it behind a helper.
-const analyticalAgentToolNames = [
-  ...defaultAgentToolNames,
-  ...actionToolNames,
-  ...sqlToolNames,
-] as const satisfies readonly CustomerToolName[]
+// Action tools are registered so demo workflows can notify Slack when explicitly requested.
+const analyticalAgentToolNames = Array.from(
+  new Set<CustomerToolName>([...defaultAgentToolNames, ...actionToolNames, ...sqlToolNames]),
+) satisfies readonly CustomerToolName[]
 
 const COMMANDS: AgentCommand[] = [
   {
@@ -91,7 +93,7 @@ const COMMANDS: AgentCommand[] = [
         scope,
         pretriageContext,
         pretriageNote,
-        notificationInstructions: buildUsageDecayNotificationInstructions(),
+        structuredOutputInstructions: buildUsageDecayStructuredOutputInstructions(),
         objective:
           "Find paying customers whose product behavior suggests they may cancel soon, even when there is no renewal date or explicit renewal conversation.",
         signals: [
@@ -102,7 +104,7 @@ const COMMANDS: AgentCommand[] = [
           "support or success conversations going quiet after an unresolved problem",
         ],
         avoid:
-          "Do not rank a customer just because usage is low, or because a subscription was cancelled or paused. Explain why the usage pattern is a change from prior behavior, a missed activation path, or a risk for a paying account.",
+          "Do not rank a customer just because usage is low, because a subscription was cancelled or paused, or because the account has already churned. Already-churned accounts belong in excluded candidates unless the user explicitly asks for postmortems. Explain why the usage pattern is a change from prior behavior, a missed activation path, or a risk for a paying account.",
       }),
     trigger:
       /\b(usage decay|usage decline|declining usage|inactive paying|paying inactive|usage churn|product inactivity|cancel anytime|month[-\s]to[-\s]month)\b/i,
@@ -115,6 +117,7 @@ const COMMANDS: AgentCommand[] = [
       buildPortfolioPrompt({
         title: "Friction-to-Churn Agent",
         scope,
+        structuredOutputInstructions: buildFrictionToChurnNotificationInstructions(),
         objective:
           "Find customers where support issues, product blockers, failed integrations, bugs, or repeated complaints are turning into churn risk.",
         signals: [
@@ -122,10 +125,11 @@ const COMMANDS: AgentCommand[] = [
           "failed setup, onboarding, or integration work",
           "negative sentiment tied to value realization",
           "missing features or bugs blocking core workflows",
-          "continued complaints paired with declining usage, payment risk, or stakeholder disengagement",
+          "continued complaints paired with declining usage, payment risk, stakeholder disengagement, manual workarounds, paused rollout, or customer proof requests",
+          "source-backed patterns that connect support, conversations, facts, and product behavior into one account story",
         ],
         avoid:
-          "Do not fill the ranking with generic churn-risk, renewal-risk, legal/procurement, spend-pressure, or usage-slowdown accounts. If you cannot find product, implementation, integration, bug, support, or blocker evidence, return fewer accounts and say friction evidence is insufficient.",
+          "Do not fill the ranking with generic churn-risk, renewal-risk, legal/procurement, spend-pressure, or usage-slowdown accounts. Do not let billing or CRM status do all the work; explain the product/support friction creating retention risk. If you cannot find product, implementation, integration, bug, support, or blocker evidence, return fewer accounts and say friction evidence is insufficient.",
       }),
     trigger:
       /\b(friction[-\s]to[-\s]churn|product friction|support friction|support.*churn|repeated complaints?|customer complaints?|product blockers?|setup blockers?|integration blockers?|critical bugs?|bug reports?|failed integration|missing integration|support escalation|negative sentiment)\b/i,
@@ -205,7 +209,8 @@ export default function outlitGrowthAgents(pi: GrowthAgentPiApi) {
         } else if (command.pretriage && scope) {
           ctx.ui.notify("Skipping deterministic churn pretriage for explicit scope", "info")
         }
-        pi.sendUserMessage(command.prompt(scope, pretriage?.context, pretriageNote))
+        await pi.sendUserMessage(command.prompt(scope, pretriage?.context, pretriageNote))
+        await waitForStartedModelTurn(ctx)
       },
     })
   }
@@ -223,6 +228,17 @@ export default function outlitGrowthAgents(pi: GrowthAgentPiApi) {
       systemPrompt: `${event.systemPrompt}\n\n${SHARED_AGENT_SYSTEM_PROMPT}`,
     }
   })
+}
+
+async function waitForStartedModelTurn(ctx: { waitForIdle?: () => Promise<void> }): Promise<void> {
+  if (!ctx.waitForIdle) {
+    return
+  }
+
+  // Older Pi extension APIs start user messages asynchronously; yield once so
+  // print mode can observe the model turn before waiting for completion.
+  await new Promise<void>((resolve) => setTimeout(resolve, 0))
+  await ctx.waitForIdle()
 }
 
 function shouldApplyOutlitSignalGuidance(prompt: string): boolean {
@@ -273,7 +289,7 @@ function buildPortfolioPrompt({
   scope,
   pretriageContext,
   pretriageNote,
-  notificationInstructions,
+  structuredOutputInstructions,
   objective,
   signals,
   avoid,
@@ -282,7 +298,7 @@ function buildPortfolioPrompt({
   scope: string | undefined
   pretriageContext?: string
   pretriageNote?: string
-  notificationInstructions?: string
+  structuredOutputInstructions?: string
   objective: string
   signals: string[]
   avoid: string
@@ -322,19 +338,83 @@ Final answer contract:
 - Include "Excluded candidates:" when any reviewed customer was dropped, with a one-line reason for each exclusion.
 - For each ranked customer, cite concrete Outlit evidence. Do not rely on vague phrasing like "low engagement" without a date, metric, source, or fact.
 - If no customer survives the evidence gate, say that directly and do not produce a ranked table.
-${notificationInstructions ? `\nNotification action:\n${notificationInstructions}` : ""}
+${structuredOutputInstructions ? `\n${structuredOutputInstructions}` : ""}
 `.trim()
 }
 
-function buildUsageDecayNotificationInstructions(): string {
+function buildUsageDecayStructuredOutputInstructions(): string {
   return `
-- After evidence review, if at least one customer survives the evidence gate, call outlit_send_notification exactly once before your final answer.
-- Use title "Usage Decay Churn Watchtower: Churn Risks".
-- Set source to "outlit-pi-usage-decay-watchtower".
-- Set severity to "high" when any ranked customer has high confidence or high signal strength; otherwise set severity to "medium".
-- Use message to summarize how many usage-decay churn risks were found.
-- Set payload to a JSON-compatible object with candidateReviewSummary, topCustomers, excludedCandidates, dataQualityNotes, and openQuestions.
-- Do not call outlit_send_notification if no customer survives the evidence gate.
-- After the notification tool call, return the same ranked findings to the user.
+Structured Slack-ready payload:
+- After the human-readable summary, include exactly one valid JSON object between BEGIN_CHURN_WATCHTOWER_JSON and END_CHURN_WATCHTOWER_JSON.
+- Do not wrap the JSON in a markdown code fence. Do not include comments, trailing commas, or markdown inside string arrays.
+- Do not rename keys, omit required keys, or replace required objects with null.
+- Use confidence values exactly: "high", "medium", or "low".
+- Use mrrCents for revenue. Do not use mrr, mrrDollars, or other revenue keys.
+- slackNotificationDraft must be an object even when there are no ranked customers.
+- The JSON object must use this shape:
+{
+  "candidateReviewSummary": {
+    "reviewed": 0,
+    "ranked": 0,
+    "excluded": 0,
+    "scope": "current workspace paying or past-due accounts",
+    "liveSaveMotionOnly": true
+  },
+  "rankedCustomers": [
+    {
+      "customer": "Customer name",
+      "domain": "example.com",
+      "billingStatus": "PAYING",
+      "mrrCents": 0,
+      "signal": "Short usage-decay signal",
+      "hardEvidence": ["dated metric or record"],
+      "supportingContext": ["source, timeline, fact, or search context"],
+      "confidence": "high",
+      "recommendedAction": "Concrete next action",
+      "missingData": ["data that would change confidence"]
+    }
+  ],
+  "excludedCandidates": [
+    {
+      "customer": "Customer name",
+      "domain": "example.com",
+      "reason": "Why this candidate did not survive the evidence gate"
+    }
+  ],
+  "dataQualityNotes": ["workspace-wide caveats, if any"],
+  "openQuestions": ["questions for the account owner, if any"],
+  "slackNotificationDraft": {
+    "title": "Usage Decay Churn Watchtower",
+    "severity": "low",
+    "message": "One-sentence summary suitable for Slack",
+    "payload": {
+      "candidateReviewSummary": {},
+      "topCustomers": [],
+      "excludedCandidates": [],
+      "dataQualityNotes": [],
+      "openQuestions": []
+    }
+  }
+}
+- Use severity "high" only when at least one ranked customer has high confidence and meaningful current or future revenue at risk; otherwise use "medium" for credible live risks and "low" when no live save-motion account survives.
+- If no live customer survives the evidence gate, set rankedCustomers to [] and make slackNotificationDraft.severity "low".
+- If candidate evidence is sparse but the pretriage activity metrics show paid non-use, keep the candidate ranked with lower confidence instead of excluding solely for sparse timeline/search/fact context. Exclude only when richer evidence clearly contradicts the activity signal.
+- Do not call notification or action tools; this is only a draft payload for later use.
+`.trim()
+}
+
+function buildFrictionToChurnNotificationInstructions(): string {
+  return `
+Friction-to-churn investigation discipline:
+- Prefer live-risk accounts where the customer still uses the product, but support tickets, emails, calls, Slack/internal notes, facts, or usage events show trust erosion.
+- For a scoped account such as Atlas Assist, build one account story instead of broad portfolio filler: identify the product/support blocker, show why it threatens retention, connect it to billing, usage, pipeline, or engagement context, and recommend the concrete save motion.
+- Inspect facts and source evidence when they are available. If a fact references an email, support ticket, call, or Slack context, use source lookups when needed before treating the claim as cited evidence.
+
+Slack notification:
+- You may call outlit_send_notification only when the user explicitly asks to send, post, or notify Slack and at least one actionable live friction-to-churn risk survives evidence review.
+- Do not call notification or action tools when the user only asks for analysis, when no account survives the evidence gate, or when the account is only useful as a closed-lost/postmortem example.
+- When notifying Slack, call outlit_send_notification exactly once after evidence review and before the final answer.
+- Use a short title naming the account and risk, severity "high" only for immediate revenue or retention risk, otherwise "medium" for credible live risks.
+- Put the account, domain, friction type, evidence, recommended action, confidence, and missing data in the payload so the Slack alert can stand alone.
 `.trim()
 }

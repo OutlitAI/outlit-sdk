@@ -57,7 +57,7 @@ export function createOutlitPiTool(
     label,
     description: contract.description,
     promptSnippet: `${label}: ${firstLine(contract.description)}`,
-    parameters: contract.inputSchema as unknown as TSchema,
+    parameters: toPiToolParameters(contract.inputSchema),
     async execute(_toolCallId, params) {
       const client = createOutlitClient({
         apiKey: resolveApiKey(options),
@@ -69,6 +69,15 @@ export function createOutlitPiTool(
       return formatToolResult(toolName, result)
     },
   }
+}
+
+function toPiToolParameters(inputSchema: unknown): TSchema {
+  if (inputSchema === null || typeof inputSchema !== "object" || Array.isArray(inputSchema)) {
+    return inputSchema as TSchema
+  }
+
+  const { $schema: _schema, ...schema } = inputSchema as Record<string, unknown>
+  return schema as unknown as TSchema
 }
 
 export function formatOutlitToolLabel(toolName: CustomerToolName): string {
