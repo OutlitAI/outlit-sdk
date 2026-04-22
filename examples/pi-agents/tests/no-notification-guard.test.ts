@@ -2,8 +2,6 @@ import { describe, expect, test, vi } from "vitest"
 
 import outlitGrowthAgents from "../extensions/outlit-growth-agents.js"
 
-const ENABLE_ACTION_TOOLS_ENV = "OUTLIT_PI_ENABLE_ACTION_TOOLS"
-
 type RegisteredTool = {
   name?: string
 }
@@ -21,39 +19,24 @@ type CommandConfig = {
   handler: CommandHandler
 }
 
-function createPiHarness({ enableActionTools = false }: { enableActionTools?: boolean } = {}) {
-  const previousActionToolOptIn = process.env[ENABLE_ACTION_TOOLS_ENV]
+function createPiHarness() {
   const registeredTools: RegisteredTool[] = []
   const registeredCommands = new Map<string, CommandConfig>()
   const sentMessages: string[] = []
   const waitForIdle = vi.fn(async () => {})
 
-  if (enableActionTools) {
-    process.env[ENABLE_ACTION_TOOLS_ENV] = "true"
-  } else {
-    delete process.env[ENABLE_ACTION_TOOLS_ENV]
-  }
-
-  try {
-    outlitGrowthAgents({
-      registerTool: (tool) => {
-        registeredTools.push(tool as RegisteredTool)
-      },
-      registerCommand: (name, config) => {
-        registeredCommands.set(name, config)
-      },
-      on: vi.fn(),
-      sendUserMessage: (prompt) => {
-        sentMessages.push(prompt)
-      },
-    })
-  } finally {
-    if (previousActionToolOptIn === undefined) {
-      delete process.env[ENABLE_ACTION_TOOLS_ENV]
-    } else {
-      process.env[ENABLE_ACTION_TOOLS_ENV] = previousActionToolOptIn
-    }
-  }
+  outlitGrowthAgents({
+    registerTool: (tool) => {
+      registeredTools.push(tool as RegisteredTool)
+    },
+    registerCommand: (name, config) => {
+      registeredCommands.set(name, config)
+    },
+    on: vi.fn(),
+    sendUserMessage: (prompt) => {
+      sentMessages.push(prompt)
+    },
+  })
 
   return {
     registeredTools,
@@ -64,14 +47,8 @@ function createPiHarness({ enableActionTools = false }: { enableActionTools?: bo
 }
 
 describe("outlit growth agents notification guard", () => {
-  test("does not register notification action tools by default", () => {
+  test("registers notification action tools by default", () => {
     const { registeredTools } = createPiHarness()
-
-    expect(registeredTools.map((tool) => tool.name)).not.toContain("outlit_send_notification")
-  })
-
-  test("registers notification action tools with explicit opt-in", () => {
-    const { registeredTools } = createPiHarness({ enableActionTools: true })
 
     expect(registeredTools.map((tool) => tool.name)).toContain("outlit_send_notification")
   })
@@ -189,6 +166,5 @@ describe("outlit growth agents notification guard", () => {
     expect(sentMessages[0]).toContain("outlit_send_notification")
     expect(sentMessages[0]).toContain("only when the user explicitly asks")
     expect(sentMessages[0]).toContain("Do not call notification or action tools")
-    expect(sentMessages[0]).toContain("If outlit_send_notification is unavailable")
   })
 })

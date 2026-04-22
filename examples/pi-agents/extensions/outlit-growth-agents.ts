@@ -1,10 +1,4 @@
-import {
-  actionToolNames,
-  type CustomerToolName,
-  createOutlitPiExtension,
-  defaultAgentToolNames,
-  sqlToolNames,
-} from "@outlit/pi"
+import { analyticalAgentToolNames, createOutlitPiExtension } from "@outlit/pi"
 
 import {
   createOutlitChurnPretriageTool,
@@ -54,7 +48,6 @@ type AgentCommand = {
 }
 
 const CHURN_CONFIG_PATH = new URL("../churn.json", import.meta.url)
-const ENABLE_ACTION_TOOLS_ENV = "OUTLIT_PI_ENABLE_ACTION_TOOLS"
 
 const SHARED_AGENT_SYSTEM_PROMPT = `
 Outlit customer signal agent guidance:
@@ -72,25 +65,6 @@ Outlit customer signal agent guidance:
 - Do not let billing, renewal, legal, procurement, or generic spend-pressure evidence replace the specific evidence required by the selected agent.
 - Tie every recommendation to specific evidence from customer records, timeline events, facts, search results, or source snippets whenever available.
 `.trim()
-
-function buildAnalyticalAgentToolNames(): readonly CustomerToolName[] {
-  const toolNames = [
-    ...withoutActionTools(defaultAgentToolNames),
-    ...sqlToolNames,
-    ...(shouldEnableActionTools() ? actionToolNames : []),
-  ]
-
-  return Array.from(new Set<CustomerToolName>(toolNames))
-}
-
-function withoutActionTools(toolNames: readonly CustomerToolName[]): CustomerToolName[] {
-  const actionToolNameSet = new Set<CustomerToolName>(actionToolNames)
-  return toolNames.filter((toolName) => !actionToolNameSet.has(toolName))
-}
-
-function shouldEnableActionTools(): boolean {
-  return process.env[ENABLE_ACTION_TOOLS_ENV] === "true"
-}
 
 const COMMANDS: AgentCommand[] = [
   {
@@ -198,7 +172,7 @@ const COMMANDS: AgentCommand[] = [
 
 export default function outlitGrowthAgents(pi: GrowthAgentPiApi) {
   createOutlitPiExtension({
-    toolNames: buildAnalyticalAgentToolNames(),
+    toolNames: analyticalAgentToolNames,
   })(pi as OutlitPiRegistry)
   pi.registerTool(
     createOutlitChurnPretriageTool({
@@ -430,7 +404,6 @@ Slack notification:
 - You may call outlit_send_notification only when the user explicitly asks to send, post, or notify Slack and at least one actionable live friction-to-churn risk survives evidence review.
 - Do not call notification or action tools when the user only asks for analysis, when no account survives the evidence gate, or when the account is only useful as a closed-lost/postmortem example.
 - When notifying Slack, call outlit_send_notification exactly once after evidence review and before the final answer.
-- If outlit_send_notification is unavailable in this Pi session, return a Slack-ready payload and state that no notification was sent.
 - Use a short title naming the account and risk, severity "high" only for immediate revenue or retention risk, otherwise "medium" for credible live risks.
 - Put the account, domain, friction type, evidence, recommended action, confidence, and missing data in the payload so the Slack alert can stand alone.
 `.trim()
