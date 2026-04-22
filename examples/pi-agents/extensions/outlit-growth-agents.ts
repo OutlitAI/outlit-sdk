@@ -118,7 +118,7 @@ const COMMANDS: AgentCommand[] = [
           "support or success conversations going quiet after an unresolved problem",
         ],
         avoid:
-          "Do not rank a customer just because usage is low, because a subscription was cancelled or paused, or because the account has already churned. Already-churned accounts belong in excluded candidates unless the user explicitly asks for postmortems. Explain why the usage pattern is a change from prior behavior, a missed activation path, or a risk for a paying account.",
+          "Do not rank a customer just because usage is low, because a subscription was cancelled or paused, or because the account has already churned. Already-churned accounts belong in excluded candidates. Explain why the usage pattern is a change from prior behavior, a missed activation path, or a risk for a paying account.",
       }),
     trigger:
       /\b(usage decay|usage decline|declining usage|inactive paying|paying inactive|usage churn|product inactivity|cancel anytime|month[-\s]to[-\s]month)\b/i,

@@ -117,6 +117,8 @@ describe("outlit growth agents notification guard", () => {
     expect(sentMessages[0]).toContain("Do not rename keys")
     expect(sentMessages[0]).toContain("slackNotificationDraft must be an object")
     expect(sentMessages[0]).toContain('"mrrCents"')
+    expect(sentMessages[0]).toContain("Already-churned accounts belong in excluded candidates")
+    expect(sentMessages[0]).not.toContain("unless the user explicitly asks for postmortems")
     const boundedJson = sentMessages[0].match(
       /BEGIN_CHURN_WATCHTOWER_JSON\s*([\s\S]*?)\s*END_CHURN_WATCHTOWER_JSON/,
     )
