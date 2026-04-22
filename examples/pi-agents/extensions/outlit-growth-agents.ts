@@ -345,13 +345,14 @@ ${structuredOutputInstructions ? `\n${structuredOutputInstructions}` : ""}
 function buildUsageDecayStructuredOutputInstructions(): string {
   return `
 Structured Slack-ready payload:
-- After the human-readable summary, include exactly one valid JSON object between BEGIN_CHURN_WATCHTOWER_JSON and END_CHURN_WATCHTOWER_JSON.
+- After the human-readable summary, include exactly one valid JSON object between the churn watchtower markers shown below.
 - Do not wrap the JSON in a markdown code fence. Do not include comments, trailing commas, or markdown inside string arrays.
 - Do not rename keys, omit required keys, or replace required objects with null.
 - Use confidence values exactly: "high", "medium", or "low".
 - Use mrrCents for revenue. Do not use mrr, mrrDollars, or other revenue keys.
 - slackNotificationDraft must be an object even when there are no ranked customers.
 - The JSON object must use this shape:
+BEGIN_CHURN_WATCHTOWER_JSON
 {
   "candidateReviewSummary": {
     "reviewed": 0,
@@ -396,6 +397,7 @@ Structured Slack-ready payload:
     }
   }
 }
+END_CHURN_WATCHTOWER_JSON
 - Use severity "high" only when at least one ranked customer has high confidence and meaningful current or future revenue at risk; otherwise use "medium" for credible live risks and "low" when no live save-motion account survives.
 - If no live customer survives the evidence gate, set rankedCustomers to [] and make slackNotificationDraft.severity "low".
 - If candidate evidence is sparse but the pretriage activity metrics show paid non-use, keep the candidate ranked with lower confidence instead of excluding solely for sparse timeline/search/fact context. Exclude only when richer evidence clearly contradicts the activity signal.

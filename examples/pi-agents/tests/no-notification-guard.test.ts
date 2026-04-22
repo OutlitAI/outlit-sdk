@@ -94,7 +94,21 @@ describe("outlit growth agents notification guard", () => {
     expect(sentMessages[0]).toContain("Do not rename keys")
     expect(sentMessages[0]).toContain("slackNotificationDraft must be an object")
     expect(sentMessages[0]).toContain('"mrrCents"')
-    expect(sentMessages[0]).toMatch(/\n}\n- Use severity/)
+    const boundedJson = sentMessages[0].match(
+      /BEGIN_CHURN_WATCHTOWER_JSON\s*([\s\S]*?)\s*END_CHURN_WATCHTOWER_JSON/,
+    )
+
+    expect(boundedJson?.[1]).toBeTruthy()
+    const parsed = JSON.parse(boundedJson?.[1] ?? "{}")
+    expect(parsed).toMatchObject({
+      candidateReviewSummary: expect.any(Object),
+      rankedCustomers: expect.any(Array),
+      excludedCandidates: expect.any(Array),
+      dataQualityNotes: expect.any(Array),
+      openQuestions: expect.any(Array),
+      slackNotificationDraft: expect.any(Object),
+    })
+    expect(parsed.slackNotificationDraft).not.toBeNull()
   })
 
   test("usage-decay command waits for the Pi model turn it starts", async () => {

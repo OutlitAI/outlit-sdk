@@ -84,6 +84,7 @@ Output discipline:
 - Start with `Candidate review summary:` and state reviewed, ranked, and excluded counts.
 - For each ranked customer, include a hard signal, supporting context, confidence, recommended action, and missing data.
 - Include excluded candidates with a short reason when candidates were reviewed but not ranked.
+- If a usage-decay review inspects an already-churned account, include it in `excludedCandidates` with an exclusion reason instead of `rankedCustomers`; keep `candidateReviewSummary` counts aligned with the reviewed, ranked, and excluded totals in `slackNotificationDraft`.
 - Do not send notifications from the usage-decay command or prompt. Return the churn review findings only.
 - For usage-decay, include one parseable JSON object between `BEGIN_CHURN_WATCHTOWER_JSON` and `END_CHURN_WATCHTOWER_JSON` with `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, `openQuestions`, and `slackNotificationDraft`.
 - Do not rename JSON keys. Use `mrrCents`, confidence values `high`/`medium`/`low`, and a non-null `slackNotificationDraft` object.
