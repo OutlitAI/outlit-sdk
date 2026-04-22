@@ -2,6 +2,8 @@ import { describe, expect, test, vi } from "vitest"
 
 import outlitGrowthAgents from "../extensions/outlit-growth-agents.js"
 
+const ENABLE_ACTION_TOOLS_ENV = "OUTLIT_PI_ENABLE_ACTION_TOOLS"
+
 type RegisteredTool = {
   name?: string
 }
@@ -10,7 +12,7 @@ type CommandHandler = (
   args: string | undefined,
   ctx: {
     ui: { notify: (message: string, level: "info") => void }
-    waitForIdle: () => Promise<void>
+    waitForIdle?: () => Promise<void>
   },
 ) => Promise<void>
 
@@ -19,24 +21,39 @@ type CommandConfig = {
   handler: CommandHandler
 }
 
-function createPiHarness() {
+function createPiHarness({ enableActionTools = false }: { enableActionTools?: boolean } = {}) {
+  const previousActionToolOptIn = process.env[ENABLE_ACTION_TOOLS_ENV]
   const registeredTools: RegisteredTool[] = []
   const registeredCommands = new Map<string, CommandConfig>()
   const sentMessages: string[] = []
   const waitForIdle = vi.fn(async () => {})
 
-  outlitGrowthAgents({
-    registerTool: (tool) => {
-      registeredTools.push(tool as RegisteredTool)
-    },
-    registerCommand: (name, config) => {
-      registeredCommands.set(name, config)
-    },
-    on: vi.fn(),
-    sendUserMessage: (prompt) => {
-      sentMessages.push(prompt)
-    },
-  })
+  if (enableActionTools) {
+    process.env[ENABLE_ACTION_TOOLS_ENV] = "true"
+  } else {
+    delete process.env[ENABLE_ACTION_TOOLS_ENV]
+  }
+
+  try {
+    outlitGrowthAgents({
+      registerTool: (tool) => {
+        registeredTools.push(tool as RegisteredTool)
+      },
+      registerCommand: (name, config) => {
+        registeredCommands.set(name, config)
+      },
+      on: vi.fn(),
+      sendUserMessage: (prompt) => {
+        sentMessages.push(prompt)
+      },
+    })
+  } finally {
+    if (previousActionToolOptIn === undefined) {
+      delete process.env[ENABLE_ACTION_TOOLS_ENV]
+    } else {
+      process.env[ENABLE_ACTION_TOOLS_ENV] = previousActionToolOptIn
+    }
+  }
 
   return {
     registeredTools,
@@ -47,8 +64,14 @@ function createPiHarness() {
 }
 
 describe("outlit growth agents notification guard", () => {
-  test("registers notification action tool for explicitly requested Slack workflows", () => {
+  test("does not register notification action tools by default", () => {
     const { registeredTools } = createPiHarness()
+
+    expect(registeredTools.map((tool) => tool.name)).not.toContain("outlit_send_notification")
+  })
+
+  test("registers notification action tools with explicit opt-in", () => {
+    const { registeredTools } = createPiHarness({ enableActionTools: true })
 
     expect(registeredTools.map((tool) => tool.name)).toContain("outlit_send_notification")
   })
@@ -127,6 +150,21 @@ describe("outlit growth agents notification guard", () => {
     expect(waitForIdle).toHaveBeenCalledTimes(1)
   })
 
+  test("usage-decay command works when older Pi APIs do not expose waitForIdle", async () => {
+    const { registeredCommands } = createPiHarness()
+    const command = registeredCommands.get("outlit-usage-decay-watchtower")
+
+    expect(command).toBeDefined()
+
+    await expect(
+      command?.handler("customer org_39wh8g1uck5vdznhqtKVgHe4NUR", {
+        ui: {
+          notify: vi.fn(),
+        },
+      }),
+    ).resolves.toBeUndefined()
+  })
+
   test("friction-to-churn command includes demo and explicit notification guidance", async () => {
     const { registeredCommands, sentMessages, waitForIdle } = createPiHarness()
     const command = registeredCommands.get("outlit-friction-to-churn")
@@ -149,5 +187,6 @@ describe("outlit growth agents notification guard", () => {
     expect(sentMessages[0]).toContain("outlit_send_notification")
     expect(sentMessages[0]).toContain("only when the user explicitly asks")
     expect(sentMessages[0]).toContain("Do not call notification or action tools")
+    expect(sentMessages[0]).toContain("If outlit_send_notification is unavailable")
   })
 })
