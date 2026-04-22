@@ -169,7 +169,7 @@ Then include short evidence notes for each ranked customer:
 - why the category applies
 - what would change the assessment
 
-You may call `outlit_send_notification` only when the user explicitly asks you to send, post, or notify a result to Slack and the action tool is available. The usage-decay command and prompt are read-only and should return findings without sending Slack notifications.
+You may call `outlit_send_notification` only when the user explicitly asks you to send, post, or notify a result to Slack and the action tool is available. In this example package, action tools are opt-in with `OUTLIT_PI_ENABLE_ACTION_TOOLS=true`. The usage-decay command and prompt are read-only and should return findings without sending Slack notifications.
 
 When using `outlit_send_notification`:
 

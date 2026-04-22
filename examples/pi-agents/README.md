@@ -1,6 +1,6 @@
 # Outlit Pi Agents
 
-This example shows how to build Pi agents with `@outlit/pi`. It includes four customer-signal agents that use Outlit customer intelligence tools, SQL/schema tools, guarded Slack notification actions, a shared Pi skill, and reusable prompt templates for the fully agentic examples.
+This example shows how to build Pi agents with `@outlit/pi`. It includes four customer-signal agents that use Outlit customer intelligence tools, SQL/schema tools, opt-in Slack notification actions, a shared Pi skill, and reusable prompt templates for the fully agentic examples.
 
 These examples focus on harder revenue and retention questions where the agent has to connect product behavior, billing, conversations, support context, timelines, facts, and source evidence.
 
@@ -46,6 +46,12 @@ Set your Outlit API key:
 export OUTLIT_API_KEY=your_outlit_api_key
 ```
 
+Slack notification tools are disabled by default so you can safely test against customer workspaces. Enable them only when you intentionally want a Pi run to send notifications:
+
+```bash
+export OUTLIT_PI_ENABLE_ACTION_TOOLS=true
+```
+
 To try the agents from this example directory:
 
 ```bash
@@ -78,6 +84,12 @@ Use a command without arguments for a portfolio scan:
 /outlit-usage-decay-watchtower
 ```
 
+For a friction-to-churn demo that can notify Slack after evidence review, opt into action tools for that Pi session:
+
+```bash
+OUTLIT_PI_ENABLE_ACTION_TOOLS=true OUTLIT_API_KEY=your_outlit_api_key pi -p '/outlit-friction-to-churn Atlas Assist. Find actionable churn risk, cite source evidence, and notify Slack if it meets the threshold.'
+```
+
 Use prompt templates for the fully agentic examples when you want to edit the prompt before sending:
 
 ```text
@@ -107,7 +119,7 @@ Those prompts assume the `outlit` CLI is on `PATH` and authenticated through env
 
 ## How It Works
 
-`extensions/outlit-growth-agents.ts` imports `createOutlitPiExtension`, `defaultAgentToolNames`, `actionToolNames`, and `sqlToolNames` from `@outlit/pi`, registers customer intelligence, guarded Slack notification actions, SQL tools, and four slash commands.
+`extensions/outlit-growth-agents.ts` imports `createOutlitPiExtension`, `defaultAgentToolNames`, `actionToolNames`, and `sqlToolNames` from `@outlit/pi`, registers customer intelligence, SQL tools, optional Slack notification actions, and four slash commands.
 
 The extension also registers `outlit_churn_pretriage`, a local deterministic helper from `lib/churn-pretriage.ts`. The `/outlit-usage-decay-watchtower` command calls that helper before sending the model prompt. Free-form Pi prompts can call the helper too when the model decides deterministic churn candidate discovery is useful.
 
@@ -145,7 +157,7 @@ Edit this file when your product has a clearer definition of meaningful activity
 
 ## Tool Scope
 
-These launch examples use the default customer intelligence tools, guarded Slack notification actions, plus SQL/schema tools:
+These launch examples use the default customer intelligence tools plus SQL/schema tools:
 
 - customer discovery
 - user discovery
@@ -154,11 +166,10 @@ These launch examples use the default customer intelligence tools, guarded Slack
 - facts
 - source lookup
 - semantic customer context search
-- Slack notification
 - schema discovery
 - SQL query
 
-The base `@outlit/pi` default toolset does not include SQL, but these harder examples opt into schema and SQL because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks. They also register action tools so demo workflows can notify Slack, but the skill and command prompts tell the model to call `outlit_send_notification` only when the user explicitly asks to send, post, or notify Slack.
+The base `@outlit/pi` default toolset does not include SQL, but these harder examples opt into schema and SQL because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks. The example filters action tools out of the default set unless `OUTLIT_PI_ENABLE_ACTION_TOOLS=true` is set. With that opt-in, demo workflows can notify Slack, and the skill and command prompts still tell the model to call `outlit_send_notification` only when the user explicitly asks to send, post, or notify Slack.
 
 Facts can also be narrowed with `factTypes`. These examples use those filters for extracted customer-memory facts such as `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `BUDGET`, `REQUIREMENTS`, `PRODUCT_USAGE`, and `CHAMPION_RISK`.
 
