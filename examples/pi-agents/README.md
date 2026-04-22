@@ -46,11 +46,7 @@ Set your Outlit API key:
 export OUTLIT_API_KEY=your_outlit_api_key
 ```
 
-Slack notification tools are disabled by default so you can safely test against customer workspaces. Enable them only when you intentionally want a Pi run to send notifications:
-
-```bash
-export OUTLIT_PI_ENABLE_ACTION_TOOLS=true
-```
+Slack notification tools are disabled by default so you can safely test against customer workspaces. Enable them only for a Pi session or command where you intentionally want the agent to be able to send notifications.
 
 To try the agents from this example directory:
 
@@ -175,7 +171,7 @@ Facts can also be narrowed with `factTypes`. These examples use those filters fo
 
 The usage-decay and activation agents do not depend on behavioral/anomaly fact types like `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF`. Those fact types are not supported as public filters because many customers will not have configured core actions, activation paths, or funnels. The examples use SQL and customer/user/event evidence as the primary signal for those jobs.
 
-When your installed `@outlit/pi` version includes `analyticalAgentToolNames`, you can use that helper directly instead of combining `defaultAgentToolNames`, `actionToolNames`, and `sqlToolNames` yourself.
+`@outlit/pi` also exports `analyticalAgentToolNames`, which combines the default tools with SQL. That helper includes action tools, so use it only when notification actions are acceptable for the agent you are building. This example builds its own tool list so usage-decay review stays read-only by default.
 
 The examples still avoid `allCustomerToolNames` because broad tool access can make agents over-weight high-revenue accounts with weak evidence. Use broader toolsets only when you intentionally want internal analysis or custom reporting.
 
@@ -214,7 +210,7 @@ Common failure modes to watch for:
 
 ## Minimal Agent
 
-If you only want the Outlit tools with no example commands or signal-specific guidance, your extension can be this small:
+If you only want the default `@outlit/pi` tools with no example commands or signal-specific guidance, your extension can be this small:
 
 ```ts
 import { createOutlitPiExtension } from "@outlit/pi"
@@ -222,4 +218,4 @@ import { createOutlitPiExtension } from "@outlit/pi"
 export default createOutlitPiExtension()
 ```
 
-That registers the default customer intelligence tools, reads `OUTLIT_API_KEY` from the environment, and uses `https://app.outlit.ai` by default.
+That registers the default `@outlit/pi` toolset, including notification actions. It reads `OUTLIT_API_KEY` from the environment and uses `https://app.outlit.ai` by default. For read-only customer-facing agents, pass an explicit `toolNames` list that excludes `actionToolNames`, as this example does.
