@@ -17,7 +17,7 @@ The prompts are intentionally conservative. A good run may return fewer than 5 a
 
 The usage-decay command runs deterministic churn pretriage before the model starts. It reads `churn.json`, surfaces customers that match the configured usage, billing, and user-inactivity thresholds, and then asks Pi to review only those customers with the rest of the Outlit tools.
 
-After evidence review, the usage-decay command returns a Slack-ready JSON payload. It does not ask Pi to call the notification action tool, so cloned examples can test usage-decay review safely against customer workspaces.
+After evidence review, each command asks Pi to call the Slack notification tool once with a JSON-compatible `payload` object, then return the same findings in chat. Usage decay keeps the deterministic pretriage step, but it now follows the same notification-first workflow as the other growth agents.
 
 By default, the command includes 5 surfaced customers in the prompt. If more customers match, the pretriage helper rotates to the next page of customers every hour within the same risk bucket so scheduled runs do not keep reviewing the same 5 unchanged accounts. You can tune that cadence with `promptSelection.rotationWindowHours` in `churn.json`.
 
@@ -46,7 +46,7 @@ Set your Outlit API key:
 export OUTLIT_API_KEY=your_outlit_api_key
 ```
 
-Slack notification tools are available to the agents, but the prompts only ask Pi to notify when the user explicitly asks to send, post, or notify Slack.
+Slack notification tools are part of the default workflow for these growth agents. Each command instructs Pi to call `outlit_send_notification` after evidence review and to put structured JSON-compatible data in the notification `payload` field.
 
 To try the agents from this example directory:
 
@@ -80,10 +80,10 @@ Use a command without arguments for a portfolio scan:
 /outlit-usage-decay-watchtower
 ```
 
-For a friction-to-churn demo that can notify Slack after evidence review:
+For a friction-to-churn demo that sends Slack after evidence review:
 
 ```bash
-OUTLIT_API_KEY=your_outlit_api_key pi -p '/outlit-friction-to-churn Atlas Assist. Find actionable churn risk, cite source evidence, and notify Slack if it meets the threshold.'
+OUTLIT_API_KEY=your_outlit_api_key pi -p '/outlit-friction-to-churn Atlas Assist. Find actionable churn risk, cite source evidence, and send the Slack notification.'
 ```
 
 Use prompt templates for the fully agentic examples when you want to edit the prompt before sending:
@@ -135,7 +135,7 @@ The extension commands create focused prompts from the command arguments and sen
 
 Most agents here are agentic: the prompt and skill tell the model what evidence to gather, and the model chooses which Outlit tools to call and in what order.
 
-The usage-decay command is the exception. It runs deterministic churn pretriage first, then gives Pi the surfaced customer list as review context. The prompt requires a structured Slack-ready payload, but does not send it. This mirrors the internal churn-agent pattern up to the review step: deterministic candidate discovery first, LLM evidence review second, notification-ready output last.
+The usage-decay command is the exception only in how candidates are discovered. It runs deterministic churn pretriage first, then gives Pi the surfaced customer list as review context. After the model finishes evidence review, it calls `outlit_send_notification` with a structured JSON-compatible `payload` object and then returns the findings in chat. This mirrors the internal churn-agent pattern: deterministic candidate discovery first, LLM evidence review second, Slack notification last.
 
 ## Churn Pretriage Config
 
@@ -166,7 +166,7 @@ These launch examples use the default customer intelligence tools plus SQL/schem
 - SQL query
 - Slack notification
 
-The base `@outlit/pi` default toolset does not include SQL, but these harder examples use `analyticalAgentToolNames` to opt into schema and SQL because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks. The analytical toolset also includes Slack notification actions; the skill and command prompts tell the model to call `outlit_send_notification` only when the user explicitly asks to send, post, or notify Slack.
+The base `@outlit/pi` default toolset does not include SQL, but these harder examples use `analyticalAgentToolNames` to opt into schema and SQL because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks. The analytical toolset also includes Slack notification actions; the skill and command prompts tell the model to call `outlit_send_notification` by default after evidence review.
 
 Facts can also be narrowed with `factTypes`. These examples use those filters for extracted customer-memory facts such as `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `BUDGET`, `REQUIREMENTS`, `PRODUCT_USAGE`, and `CHAMPION_RISK`.
 
@@ -194,7 +194,8 @@ Treat these agents as evidence reviewers, not label generators. They should:
 
 - Use domains or stable customer IDs for follow-up lookups when names are ambiguous.
 - Use SQL/schema for candidate discovery, then customer, timeline, fact, source, and search tools for account-level evidence.
-- Use `outlit_send_notification` only when the user explicitly asks you to send, post, or notify a result to Slack. The usage-decay command returns a Slack-ready payload instead of sending it.
+- Use `outlit_send_notification` by default after evidence review for these growth-agent commands.
+- Put a JSON-compatible object in the notification `payload` field, not a JSON string, markdown table, code fence, or prose blob.
 - Use `factTypes` to narrow facts, but do not request behavioral/anomaly fact types as filters.
 - Keep usage decay, product/support friction, activation failure, expansion readiness, and renewal/procurement risk separate.
 - Return fewer accounts when the evidence is weak.

@@ -30,3 +30,10 @@ Return:
 - A table of ranked customers with customer, domain, friction type, churn risk, confidence, why now, and recommended action.
 - Evidence notes for each customer, including the specific blocker and why it threatens retention.
 - Open questions or missing data that would change the assessment.
+
+Slack notification:
+- Call `outlit_send_notification` exactly once after evidence review and before the final answer.
+- The notification payload must be a JSON-compatible object.
+- Do not pass `payload` as a JSON string, markdown table, code fence, or prose blob.
+- Include `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, and `openQuestions` in the payload.
+- If no customer survives the evidence gate, send a low-severity notification with `rankedCustomers: []` and explain why no account was ranked.
