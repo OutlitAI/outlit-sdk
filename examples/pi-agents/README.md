@@ -1,6 +1,6 @@
 # Outlit Pi Agents
 
-This example shows how to build Pi agents with `@outlit/pi`. It includes four customer-signal agents that use Outlit customer intelligence tools, SQL/schema tools, opt-in Slack notification actions, a shared Pi skill, and reusable prompt templates for the fully agentic examples.
+This example shows how to build Pi agents with `@outlit/pi`. It includes four customer-signal agents that use Outlit customer intelligence tools, SQL/schema tools, Slack notification actions, a shared Pi skill, and reusable prompt templates for the fully agentic examples.
 
 These examples focus on harder revenue and retention questions where the agent has to connect product behavior, billing, conversations, support context, timelines, facts, and source evidence.
 
@@ -46,7 +46,7 @@ Set your Outlit API key:
 export OUTLIT_API_KEY=your_outlit_api_key
 ```
 
-Slack notification tools are disabled by default so you can safely test against customer workspaces. Enable them only for a Pi session or command where you intentionally want the agent to be able to send notifications.
+Slack notification tools are available to the agents, but the prompts only ask Pi to notify when the user explicitly asks to send, post, or notify Slack.
 
 To try the agents from this example directory:
 
@@ -80,10 +80,10 @@ Use a command without arguments for a portfolio scan:
 /outlit-usage-decay-watchtower
 ```
 
-For a friction-to-churn demo that can notify Slack after evidence review, opt into action tools for that Pi session:
+For a friction-to-churn demo that can notify Slack after evidence review:
 
 ```bash
-OUTLIT_PI_ENABLE_ACTION_TOOLS=true OUTLIT_API_KEY=your_outlit_api_key pi -p '/outlit-friction-to-churn Atlas Assist. Find actionable churn risk, cite source evidence, and notify Slack if it meets the threshold.'
+OUTLIT_API_KEY=your_outlit_api_key pi -p '/outlit-friction-to-churn Atlas Assist. Find actionable churn risk, cite source evidence, and notify Slack if it meets the threshold.'
 ```
 
 Use prompt templates for the fully agentic examples when you want to edit the prompt before sending:
@@ -115,7 +115,7 @@ Those prompts assume the `outlit` CLI is on `PATH` and authenticated through env
 
 ## How It Works
 
-`extensions/outlit-growth-agents.ts` imports `createOutlitPiExtension`, `defaultAgentToolNames`, `actionToolNames`, and `sqlToolNames` from `@outlit/pi`, registers customer intelligence, SQL tools, optional Slack notification actions, and four slash commands.
+`extensions/outlit-growth-agents.ts` imports `createOutlitPiExtension` and `analyticalAgentToolNames` from `@outlit/pi`, registers customer intelligence, SQL tools, Slack notification actions, and four slash commands.
 
 The extension also registers `outlit_churn_pretriage`, a local deterministic helper from `lib/churn-pretriage.ts`. The `/outlit-usage-decay-watchtower` command calls that helper before sending the model prompt. Free-form Pi prompts can call the helper too when the model decides deterministic churn candidate discovery is useful.
 
@@ -153,7 +153,7 @@ Edit this file when your product has a clearer definition of meaningful activity
 
 ## Tool Scope
 
-These launch examples use the default customer intelligence tools plus SQL/schema tools:
+These launch examples use the default customer intelligence tools plus SQL/schema and Slack notification tools:
 
 - customer discovery
 - user discovery
@@ -164,14 +164,15 @@ These launch examples use the default customer intelligence tools plus SQL/schem
 - semantic customer context search
 - schema discovery
 - SQL query
+- Slack notification
 
-The base `@outlit/pi` default toolset does not include SQL, but these harder examples opt into schema and SQL because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks. The example filters action tools out of the default set unless `OUTLIT_PI_ENABLE_ACTION_TOOLS=true` is set. With that opt-in, demo workflows can notify Slack, and the skill and command prompts still tell the model to call `outlit_send_notification` only when the user explicitly asks to send, post, or notify Slack.
+The base `@outlit/pi` default toolset does not include SQL, but these harder examples use `analyticalAgentToolNames` to opt into schema and SQL because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks. The analytical toolset also includes Slack notification actions; the skill and command prompts tell the model to call `outlit_send_notification` only when the user explicitly asks to send, post, or notify Slack.
 
 Facts can also be narrowed with `factTypes`. These examples use those filters for extracted customer-memory facts such as `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `BUDGET`, `REQUIREMENTS`, `PRODUCT_USAGE`, and `CHAMPION_RISK`.
 
 The usage-decay and activation agents do not depend on behavioral/anomaly fact types like `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF`. Those fact types are not supported as public filters because many customers will not have configured core actions, activation paths, or funnels. The examples use SQL and customer/user/event evidence as the primary signal for those jobs.
 
-`@outlit/pi` also exports `analyticalAgentToolNames`, which combines the default tools with SQL. That helper includes action tools, so use it only when notification actions are acceptable for the agent you are building. This example builds its own tool list so usage-decay review stays read-only by default.
+`@outlit/pi` also exports narrower tool lists, such as `defaultAgentToolNames`, `sqlToolNames`, and `actionToolNames`, when you want to assemble a custom toolset.
 
 The examples still avoid `allCustomerToolNames` because broad tool access can make agents over-weight high-revenue accounts with weak evidence. Use broader toolsets only when you intentionally want internal analysis or custom reporting.
 
@@ -218,4 +219,4 @@ import { createOutlitPiExtension } from "@outlit/pi"
 export default createOutlitPiExtension()
 ```
 
-That registers the default `@outlit/pi` toolset, including notification actions. It reads `OUTLIT_API_KEY` from the environment and uses `https://app.outlit.ai` by default. For read-only customer-facing agents, pass an explicit `toolNames` list that excludes `actionToolNames`, as this example does.
+That registers the default `@outlit/pi` toolset, including notification actions. It reads `OUTLIT_API_KEY` from the environment and uses `https://app.outlit.ai` by default.
