@@ -84,10 +84,10 @@ Output discipline:
 - Start with `Candidate review summary:` and state reviewed, ranked, and excluded counts.
 - For each ranked customer, include a hard signal, supporting context, confidence, recommended action, and missing data.
 - Include excluded candidates with a short reason when candidates were reviewed but not ranked.
-- If a usage-decay review inspects an already-churned account, include it in `excludedCandidates` with an exclusion reason instead of `rankedCustomers`; keep `candidateReviewSummary` counts aligned with the reviewed, ranked, and excluded totals in `slackNotificationDraft`.
-- Do not send notifications from the usage-decay command or prompt. Return the churn review findings only.
-- For usage-decay, include one parseable JSON object between `BEGIN_CHURN_WATCHTOWER_JSON` and `END_CHURN_WATCHTOWER_JSON` with `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, `openQuestions`, and `slackNotificationDraft`.
-- Do not rename JSON keys. Use `mrrCents`, confidence values `high`/`medium`/`low`, and a non-null `slackNotificationDraft` object.
+- If a usage-decay review inspects an already-churned account, include it in `excludedCandidates` with an exclusion reason instead of `rankedCustomers`; keep `candidateReviewSummary` counts aligned with the reviewed, ranked, and excluded totals in the notification payload.
+- Call `outlit_send_notification` once after evidence review. Use severity `low` and `rankedCustomers: []` when no live account survives the evidence gate.
+- For usage-decay, the notification `payload` must include `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, and `openQuestions`.
+- Do not rename JSON keys. Use `mrrCents` and confidence values `high`/`medium`/`low`.
 - Treat pretriage activity metrics as hard behavior evidence. If timeline/search/fact context is sparse, lower confidence instead of excluding solely for sparse context.
 
 ### Friction-to-Churn
@@ -169,13 +169,15 @@ Then include short evidence notes for each ranked customer:
 - why the category applies
 - what would change the assessment
 
-You may call `outlit_send_notification` only when the user explicitly asks you to send, post, or notify a result to Slack. The usage-decay command and prompt are read-only and should return findings without sending Slack notifications.
+For these growth-agent commands, call `outlit_send_notification` by default after evidence review and before the final answer.
 
 When using `outlit_send_notification`:
 
 - keep `title` short and specific
 - use `message` for a brief summary
 - set `severity` only to `low`, `medium`, or `high`
-- put the complete result object or text in `payload` without assuming a fixed shape
+- put a JSON-compatible object in `payload`; do not pass a JSON string, markdown table, code fence, or prose blob
+- include `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, and `openQuestions` in the payload when returning portfolio or scoped growth-agent results
+- use stable payload keys so Slack receivers and downstream automation can parse the result
 
 Do not send messages, create tasks, update CRM records, or take external actions unless the user explicitly asks and the necessary tools are available.

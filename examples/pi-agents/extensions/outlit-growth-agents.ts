@@ -81,7 +81,7 @@ const COMMANDS: AgentCommand[] = [
         scope,
         pretriageContext,
         pretriageNote,
-        structuredOutputInstructions: buildUsageDecayStructuredOutputInstructions(),
+        structuredOutputInstructions: buildUsageDecayNotificationPayloadInstructions(),
         objective:
           "Find paying customers whose product behavior suggests they may cancel soon, even when there is no renewal date or explicit renewal conversation.",
         signals: [
@@ -105,7 +105,7 @@ const COMMANDS: AgentCommand[] = [
       buildPortfolioPrompt({
         title: "Friction-to-Churn Agent",
         scope,
-        structuredOutputInstructions: buildFrictionToChurnNotificationInstructions(),
+        structuredOutputInstructions: buildFrictionToChurnInvestigationInstructions(),
         objective:
           "Find customers where support issues, product blockers, failed integrations, bugs, or repeated complaints are turning into churn risk.",
         signals: [
@@ -326,85 +326,56 @@ Final answer contract:
 - Include "Excluded candidates:" when any reviewed customer was dropped, with a one-line reason for each exclusion.
 - For each ranked customer, cite concrete Outlit evidence. Do not rely on vague phrasing like "low engagement" without a date, metric, source, or fact.
 - If no customer survives the evidence gate, say that directly and do not produce a ranked table.
+${buildSlackNotificationInstructions(title)}
 ${structuredOutputInstructions ? `\n${structuredOutputInstructions}` : ""}
 `.trim()
 }
 
-function buildUsageDecayStructuredOutputInstructions(): string {
+function buildSlackNotificationInstructions(title: string): string {
   return `
-Structured Slack-ready payload:
-- After the human-readable summary, include exactly one valid JSON object between the churn watchtower markers shown below.
-- Do not wrap the JSON in a markdown code fence. Do not include comments, trailing commas, or markdown inside string arrays.
-- Do not rename keys, omit required keys, or replace required objects with null.
-- Use confidence values exactly: "high", "medium", or "low".
-- Use mrrCents for revenue. Do not use mrr, mrrDollars, or other revenue keys.
-- slackNotificationDraft must be an object even when there are no ranked customers.
-- The JSON object must use this shape:
-BEGIN_CHURN_WATCHTOWER_JSON
-{
-  "candidateReviewSummary": {
-    "reviewed": 0,
-    "ranked": 0,
-    "excluded": 0,
-    "scope": "current workspace paying or past-due accounts",
-    "liveSaveMotionOnly": true
-  },
-  "rankedCustomers": [
-    {
-      "customer": "Customer name",
-      "domain": "example.com",
-      "billingStatus": "PAYING",
-      "mrrCents": 0,
-      "signal": "Short usage-decay signal",
-      "hardEvidence": ["dated metric or record"],
-      "supportingContext": ["source, timeline, fact, or search context"],
-      "confidence": "high",
-      "recommendedAction": "Concrete next action",
-      "missingData": ["data that would change confidence"]
-    }
-  ],
-  "excludedCandidates": [
-    {
-      "customer": "Customer name",
-      "domain": "example.com",
-      "reason": "Why this candidate did not survive the evidence gate"
-    }
-  ],
-  "dataQualityNotes": ["workspace-wide caveats, if any"],
-  "openQuestions": ["questions for the account owner, if any"],
-  "slackNotificationDraft": {
-    "title": "Usage Decay Churn Watchtower",
-    "severity": "low",
-    "message": "One-sentence summary suitable for Slack",
-    "payload": {
-      "candidateReviewSummary": {},
-      "topCustomers": [],
-      "excludedCandidates": [],
-      "dataQualityNotes": [],
-      "openQuestions": []
-    }
+Slack notification:
+- After evidence review and before the final answer, call outlit_send_notification exactly once.
+- Use a short, specific title. Default to "${title}" unless an account-specific title is clearer.
+- Use message for a one-sentence Slack summary of the result.
+- Use severity "high" only for immediate revenue, retention, activation, or expansion risk/opportunity with strong evidence; use "medium" for credible actionable findings; use "low" when no customer survives the evidence gate or the data is sparse.
+- The payload must be a JSON-compatible object. Do not pass payload as a JSON string, markdown table, code fence, or prose blob.
+- Do not rename keys, omit required keys, or replace required objects with null in the payload.
+- The notification payload must use this shape:
+  {
+    "agent": "${title}",
+    "candidateReviewSummary": {
+      "reviewed": 0,
+      "ranked": 0,
+      "excluded": 0,
+      "scope": "scope reviewed"
+    },
+    "rankedCustomers": [],
+    "excludedCandidates": [],
+    "dataQualityNotes": [],
+    "openQuestions": []
   }
-}
-END_CHURN_WATCHTOWER_JSON
-- Use severity "high" only when at least one ranked customer has high confidence and meaningful current or future revenue at risk; otherwise use "medium" for credible live risks and "low" when no live save-motion account survives.
-- If no live customer survives the evidence gate, set rankedCustomers to [] and make slackNotificationDraft.severity "low".
-- If candidate evidence is sparse but the pretriage activity metrics show paid non-use, keep the candidate ranked with lower confidence instead of excluding solely for sparse timeline/search/fact context. Exclude only when richer evidence clearly contradicts the activity signal.
-- Do not call notification or action tools; this is only a draft payload for later use.
+- In rankedCustomers, include customer, domain, signal, hardEvidence, supportingContext, confidence, recommendedAction, and missingData. Include billingStatus and "mrrCents" when available.
+- In excludedCandidates, include customer, domain, and reason.
+- If no live customer survives the evidence gate, still call outlit_send_notification exactly once with severity "low", rankedCustomers: [], and a message that no actionable account survived review.
 `.trim()
 }
 
-function buildFrictionToChurnNotificationInstructions(): string {
+function buildUsageDecayNotificationPayloadInstructions(): string {
+  return `
+Usage-decay notification payload details:
+- Use confidence values exactly: "high", "medium", or "low".
+- Use mrrCents for revenue. Do not use mrr, mrrDollars, or other revenue keys.
+- Include candidateReviewSummary.liveSaveMotionOnly as true for the notification payload.
+- Use severity "high" only when at least one ranked customer has high confidence and meaningful current or future revenue at risk; otherwise use "medium" for credible live risks and "low" when no live save-motion account survives.
+- If candidate evidence is sparse but the pretriage activity metrics show paid non-use, keep the candidate ranked with lower confidence instead of excluding solely for sparse timeline/search/fact context. Exclude only when richer evidence clearly contradicts the activity signal.
+`.trim()
+}
+
+function buildFrictionToChurnInvestigationInstructions(): string {
   return `
 Friction-to-churn investigation discipline:
 - Prefer live-risk accounts where the customer still uses the product, but support tickets, emails, calls, Slack/internal notes, facts, or usage events show trust erosion.
 - For a scoped account such as Atlas Assist, build one account story instead of broad portfolio filler: identify the product/support blocker, show why it threatens retention, connect it to billing, usage, pipeline, or engagement context, and recommend the concrete save motion.
 - Inspect facts and source evidence when they are available. If a fact references an email, support ticket, call, or Slack context, use source lookups when needed before treating the claim as cited evidence.
-
-Slack notification:
-- You may call outlit_send_notification only when the user explicitly asks to send, post, or notify Slack and at least one actionable live friction-to-churn risk survives evidence review.
-- Do not call notification or action tools when the user only asks for analysis, when no account survives the evidence gate, or when the account is only useful as a closed-lost/postmortem example.
-- When notifying Slack, call outlit_send_notification exactly once after evidence review and before the final answer.
-- Use a short title naming the account and risk, severity "high" only for immediate revenue or retention risk, otherwise "medium" for credible live risks.
-- Put the account, domain, friction type, evidence, recommended action, confidence, and missing data in the payload so the Slack alert can stand alone.
 `.trim()
 }
