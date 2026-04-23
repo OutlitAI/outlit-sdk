@@ -124,7 +124,7 @@ Investigation discipline:
 Look for:
 
 - trial or new account with no activation event
-- deterministic pretriage matches from `outlit_activation_pretriage`, including no activated users, no normalized activation event, stale user activity, or no recent product activity
+- deterministic pretriage matches from `outlit_activation_pretriage`, including no activated users, no namespaced Outlit activation stage event, stale user activity, or no recent product activity
 - setup started but stalled
 - onboarding or integration blockers
 - conversation interest without product follow-through
