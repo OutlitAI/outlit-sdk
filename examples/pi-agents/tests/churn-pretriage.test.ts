@@ -128,6 +128,22 @@ describe("runOutlitChurnPretriage", () => {
     ])
   })
 
+  test("uses the injected clock in SQL instead of database now", async () => {
+    const queryMock = createRotationQueryMock()
+
+    await runOutlitChurnPretriage({
+      client: { callTool: queryMock },
+      config: defaultChurnPretriageConfig,
+      now: fixedNow,
+      scopeProfile: "revenue_accounts",
+      maxPromptCustomers: 2,
+    })
+
+    const sqlStatements = queryMock.mock.calls.map((call) => String(call[1]?.sql ?? ""))
+    expect(sqlStatements.some((sql) => sql.includes("parseDateTimeBestEffort"))).toBe(true)
+    expect(sqlStatements.join("\n")).not.toContain("now()")
+  })
+
   test("surfaces customers with the same churn heuristic classes as the internal agent", async () => {
     const queryMock = vi
       .fn()

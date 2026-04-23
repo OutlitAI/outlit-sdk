@@ -128,6 +128,7 @@ describe("Outlit", () => {
     const payload = getLastPayload()
     const event = payload.events[0]!
     expect(event.type).toBe("stage")
+    expect(event.eventName).toBe("activated")
     expect(event.properties?.__email).toBe("user@example.com")
     expect(event.properties?.__userId).toBe("usr_123")
     expect(event.properties?.__fingerprint).toBeNull()

@@ -200,4 +200,30 @@ describe("payload identity", () => {
     expect(payload.userIdentity).not.toHaveProperty("customerId")
     expect(payload.customerIdentity).not.toHaveProperty("customerTraits")
   })
+
+  it("includes an activation event name on user activation stage events", async () => {
+    const outlit = new Outlit({
+      publicKey: "pk_test",
+      autoTrack: false,
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+    })
+
+    outlit.enableTracking()
+    outlit.setUser({ userId: "user_123" })
+    outlit.user.activate({ milestone: "first_project_created" })
+
+    await outlit.flush()
+
+    const fetchOptions = vi.mocked(global.fetch).mock.calls[0]?.[1]
+    const payload = JSON.parse(String(fetchOptions?.body)) as {
+      events: Array<{ type: string; stage?: string; eventName?: string }>
+    }
+    const activationEvent = payload.events.find(
+      (event) => event.type === "stage" && event.stage === "activated",
+    )
+
+    expect(activationEvent?.eventName).toBe("activated")
+  })
 })

@@ -206,6 +206,11 @@ export interface EngagementEvent extends BaseEvent {
 
 export interface StageEvent extends BaseEvent {
   type: "stage"
+  /**
+   * Normalized event name for analytics ingestion.
+   * Mirrors `stage` so activation can appear in event-name based SQL.
+   */
+  eventName: ExplicitJourneyStage
   /** The journey stage to set (only explicit stages, discovered/signed_up are inferred) */
   stage: ExplicitJourneyStage
   /** Optional properties for context */

@@ -391,6 +391,7 @@ export async function runOutlitChurnPretriage(
   const loadedData = await loadHeuristicData({
     client,
     config: resolvedConfig,
+    now,
   })
 
   const { customersById, ensureCustomer } = createCustomerAccumulator(loadedData.customerDirectory)
@@ -949,6 +950,7 @@ function resolveAutoScopeProfile(
 async function loadHeuristicData(params: {
   client: QueryClient
   config: ResolvedChurnPretriageConfig
+  now: Date
 }): Promise<{
   customerDirectory: Map<string, CustomerDirectoryRow>
   customerActivityRows: CustomerActivityRow[]
@@ -967,16 +969,16 @@ async function loadHeuristicData(params: {
     usersNowInactiveRows,
   ] = await Promise.all([
     queryRows<CustomerDirectoryRow>(params.client, buildCustomerDirectorySql(sqlParts)),
-    queryRows<CustomerActivityRow>(params.client, buildCustomerActivitySql(sqlParts)),
+    queryRows<CustomerActivityRow>(params.client, buildCustomerActivitySql(sqlParts, params.now)),
     queryRows<CustomerDropRow>(
       params.client,
-      buildCustomerDropVsBaselineSql(sqlParts, params.config),
+      buildCustomerDropVsBaselineSql(sqlParts, params.config, params.now),
     ),
     queryRows<UserDirectoryRow>(params.client, buildUserDirectorySql(sqlParts)),
-    queryRows<UserActivityRow>(params.client, buildUserActivitySql(sqlParts)),
+    queryRows<UserActivityRow>(params.client, buildUserActivitySql(sqlParts, params.now)),
     queryRows<UserInactivityRow>(
       params.client,
-      buildUsersRecentlyActiveNowInactiveSql(sqlParts, params.config),
+      buildUsersRecentlyActiveNowInactiveSql(sqlParts, params.config, params.now),
     ),
   ])
 
@@ -1089,16 +1091,19 @@ function buildCustomerDirectorySql(sqlParts: SqlParts): string {
   `
 }
 
-function buildCustomerActivitySql(sqlParts: SqlParts): string {
+function buildCustomerActivitySql(sqlParts: SqlParts, now: Date): string {
+  const sqlNow = toSqlDateTime(now)
+
   return `
     SELECT
       customer_id AS customerId,
       min(occurred_at) AS firstMeaningfulActivityAt,
       max(occurred_at) AS lastMeaningfulActivityAt,
-      countDistinctIf(toDate(occurred_at), occurred_at >= now() - INTERVAL 30 DAY) AS activeDays30d,
-      countIf(occurred_at >= now() - INTERVAL 30 DAY) AS eventCount30d
+      countDistinctIf(toDate(occurred_at), occurred_at >= ${sqlNow} - INTERVAL 30 DAY) AS activeDays30d,
+      countIf(occurred_at >= ${sqlNow} - INTERVAL 30 DAY) AS eventCount30d
     FROM activity
-    WHERE occurred_at >= now() - INTERVAL ${ACTIVITY_LOOKBACK_DAYS} DAY
+    WHERE occurred_at >= ${sqlNow} - INTERVAL ${ACTIVITY_LOOKBACK_DAYS} DAY
+      AND occurred_at <= ${sqlNow}
       AND customer_id != ''
       AND ${sqlParts.activityScopeFilter}
       AND ${sqlParts.activityFilter}
@@ -1110,29 +1115,32 @@ function buildCustomerActivitySql(sqlParts: SqlParts): string {
 function buildCustomerDropVsBaselineSql(
   sqlParts: SqlParts,
   config: ResolvedChurnPretriageConfig,
+  now: Date,
 ): string {
   const heuristic = config.customerHeuristics.dropVsBaseline
   const baselineAndWindowDays = heuristic.windowDays + heuristic.baselineDays
+  const sqlNow = toSqlDateTime(now)
 
   return `
     SELECT
       customer_id AS customerId,
       countDistinctIf(
         toDate(occurred_at),
-        occurred_at >= now() - INTERVAL ${heuristic.windowDays} DAY
+        occurred_at >= ${sqlNow} - INTERVAL ${heuristic.windowDays} DAY
       ) AS currentActiveDays,
-      countIf(occurred_at >= now() - INTERVAL ${heuristic.windowDays} DAY) AS currentEventCount,
+      countIf(occurred_at >= ${sqlNow} - INTERVAL ${heuristic.windowDays} DAY) AS currentEventCount,
       countDistinctIf(
         toDate(occurred_at),
-        occurred_at >= now() - INTERVAL ${baselineAndWindowDays} DAY
-          AND occurred_at < now() - INTERVAL ${heuristic.windowDays} DAY
+        occurred_at >= ${sqlNow} - INTERVAL ${baselineAndWindowDays} DAY
+          AND occurred_at < ${sqlNow} - INTERVAL ${heuristic.windowDays} DAY
       ) AS baselineActiveDays,
       countIf(
-        occurred_at >= now() - INTERVAL ${baselineAndWindowDays} DAY
-          AND occurred_at < now() - INTERVAL ${heuristic.windowDays} DAY
+        occurred_at >= ${sqlNow} - INTERVAL ${baselineAndWindowDays} DAY
+          AND occurred_at < ${sqlNow} - INTERVAL ${heuristic.windowDays} DAY
       ) AS baselineEventCount
     FROM activity
-    WHERE occurred_at >= now() - INTERVAL ${baselineAndWindowDays} DAY
+    WHERE occurred_at >= ${sqlNow} - INTERVAL ${baselineAndWindowDays} DAY
+      AND occurred_at <= ${sqlNow}
       AND customer_id != ''
       AND ${sqlParts.activityScopeFilter}
       AND ${sqlParts.activityFilter}
@@ -1157,7 +1165,9 @@ function buildUserDirectorySql(sqlParts: SqlParts): string {
   `
 }
 
-function buildUserActivitySql(sqlParts: SqlParts): string {
+function buildUserActivitySql(sqlParts: SqlParts, now: Date): string {
+  const sqlNow = toSqlDateTime(now)
+
   return `
     SELECT
       customer_id AS customerId,
@@ -1165,7 +1175,8 @@ function buildUserActivitySql(sqlParts: SqlParts): string {
       max(occurred_at) AS lastMeaningfulActivityAt,
       countDistinct(toDate(occurred_at)) AS activeDaysObserved
     FROM activity
-    WHERE occurred_at >= now() - INTERVAL ${ACTIVITY_LOOKBACK_DAYS} DAY
+    WHERE occurred_at >= ${sqlNow} - INTERVAL ${ACTIVITY_LOOKBACK_DAYS} DAY
+      AND occurred_at <= ${sqlNow}
       AND customer_id != ''
       AND user_id != ''
       AND ${sqlParts.activityScopeFilter}
@@ -1178,8 +1189,10 @@ function buildUserActivitySql(sqlParts: SqlParts): string {
 function buildUsersRecentlyActiveNowInactiveSql(
   sqlParts: SqlParts,
   config: ResolvedChurnPretriageConfig,
+  now: Date,
 ): string {
   const heuristic = config.userHeuristics.allRecentlyActiveUsersNowInactive
+  const sqlNow = toSqlDateTime(now)
 
   return `
     SELECT
@@ -1187,21 +1200,22 @@ function buildUsersRecentlyActiveNowInactiveSql(
       user_id AS userId,
       maxIf(
         occurred_at,
-        occurred_at >= now() - INTERVAL ${heuristic.lookbackDays} DAY
-          AND occurred_at < now() - INTERVAL ${heuristic.inactiveDays} DAY
+        occurred_at >= ${sqlNow} - INTERVAL ${heuristic.lookbackDays} DAY
+          AND occurred_at < ${sqlNow} - INTERVAL ${heuristic.inactiveDays} DAY
       ) AS lastActivityBeforeInactiveWindow,
       countDistinctIf(
         toDate(occurred_at),
-        occurred_at >= now() - INTERVAL ${heuristic.lookbackDays} DAY
-          AND occurred_at < now() - INTERVAL ${heuristic.inactiveDays} DAY
+        occurred_at >= ${sqlNow} - INTERVAL ${heuristic.lookbackDays} DAY
+          AND occurred_at < ${sqlNow} - INTERVAL ${heuristic.inactiveDays} DAY
       ) AS priorActiveDays,
       countIf(
-        occurred_at >= now() - INTERVAL ${heuristic.lookbackDays} DAY
-          AND occurred_at < now() - INTERVAL ${heuristic.inactiveDays} DAY
+        occurred_at >= ${sqlNow} - INTERVAL ${heuristic.lookbackDays} DAY
+          AND occurred_at < ${sqlNow} - INTERVAL ${heuristic.inactiveDays} DAY
       ) AS priorEventCount,
-      countIf(occurred_at >= now() - INTERVAL ${heuristic.inactiveDays} DAY) AS recentEventCount
+      countIf(occurred_at >= ${sqlNow} - INTERVAL ${heuristic.inactiveDays} DAY) AS recentEventCount
     FROM activity
-    WHERE occurred_at >= now() - INTERVAL ${heuristic.lookbackDays} DAY
+    WHERE occurred_at >= ${sqlNow} - INTERVAL ${heuristic.lookbackDays} DAY
+      AND occurred_at <= ${sqlNow}
       AND customer_id != ''
       AND user_id != ''
       AND ${sqlParts.activityScopeFilter}
@@ -1213,6 +1227,10 @@ function buildUsersRecentlyActiveNowInactiveSql(
 
 function toSqlStringList(values: readonly string[]): string {
   return values.map((value) => `'${escapeSqlString(value)}'`).join(", ")
+}
+
+function toSqlDateTime(date: Date): string {
+  return `parseDateTimeBestEffort('${escapeSqlString(date.toISOString())}')`
 }
 
 function escapeSqlString(value: string): string {

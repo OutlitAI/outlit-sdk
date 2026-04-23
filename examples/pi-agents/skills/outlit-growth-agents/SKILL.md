@@ -16,6 +16,7 @@ Use Outlit tools to ground customer signal work in actual customer data. These a
    - Expansion readiness: healthy customers with evidence they may upgrade, add seats, or buy more.
 2. Discover candidates.
    - For usage decay churn, call `outlit_churn_pretriage` first when it is available. Treat the surfaced customers as the investigation set unless the user explicitly asks for a broader scan.
+   - For activation failure, call `outlit_activation_pretriage` first when it is available. Treat the surfaced customers as the investigation set unless the user explicitly asks for a broader scan.
    - Use `outlit_schema` before SQL when you need view names, columns, or valid query surfaces.
    - Use `outlit_query` for cohorts, usage trends, active-user counts, activation gaps, revenue filters, event aggregates, and repeated signal patterns.
    - Use `outlit_list_customers` for portfolio scans, billing status, MRR, activity recency, and customer search.
@@ -123,6 +124,7 @@ Investigation discipline:
 Look for:
 
 - trial or new account with no activation event
+- deterministic pretriage matches from `outlit_activation_pretriage`, including no activated users, no normalized activation event, stale user activity, or no recent product activity
 - setup started but stalled
 - onboarding or integration blockers
 - conversation interest without product follow-through
@@ -135,6 +137,13 @@ Avoid:
 - ranking mature paying churn-risk accounts unless they are clearly still pre-activation or post-sale onboarding is incomplete
 - classifying explicit external, anonymous, test, or API-only pseudo-customers as activation failures unless they have a real customer identity and lifecycle evidence
 - rejecting a candidate solely because sandbox or demo data uses generic names or domains; require stronger pseudo-customer evidence, such as unknown domain, external org placeholder, API-only identity, no users, and no lifecycle trail
+
+Output discipline:
+
+- Start with `Candidate review summary:` and state reviewed, ranked, and excluded counts.
+- Treat activation pretriage metrics as hard behavior evidence. Use richer Outlit evidence to explain why the activation gap matters, not to re-discover the gap from scratch.
+- Call `outlit_send_notification` once after evidence review. Use severity `low` and `rankedCustomers: []` when no account survives the evidence gate.
+- Do not expose internal event names or SQL details in customer-facing recommendations.
 
 ### Expansion Readiness
 
