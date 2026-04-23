@@ -201,7 +201,7 @@ describe("payload identity", () => {
     expect(payload.customerIdentity).not.toHaveProperty("customerTraits")
   })
 
-  it("includes an activation event name on user activation stage events", async () => {
+  it("keeps user activation stage events separate from customer event names", async () => {
     const outlit = new Outlit({
       publicKey: "pk_test",
       autoTrack: false,
@@ -224,6 +224,6 @@ describe("payload identity", () => {
       (event) => event.type === "stage" && event.stage === "activated",
     )
 
-    expect(activationEvent?.eventName).toBe("activated")
+    expect(activationEvent).not.toHaveProperty("eventName")
   })
 })

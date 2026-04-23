@@ -17,7 +17,7 @@ The prompts are intentionally conservative. A good run may return fewer than 5 a
 
 The usage-decay command runs deterministic churn pretriage before the model starts. It reads `churn.json`, surfaces customers that match the configured usage, billing, and user-inactivity thresholds, and then asks Pi to review only those customers with the rest of the Outlit tools.
 
-The activation-failure command also runs deterministic pretriage before the model starts. It checks user journey stages and normalized activation events, then asks Pi to review the surfaced accounts with customer, timeline, fact, source, and search tools.
+The activation-failure command also runs deterministic pretriage before the model starts. It checks user journey stages and namespaced Outlit activation stage events, then asks Pi to review the surfaced accounts with customer, timeline, fact, source, and search tools.
 
 After evidence review, each command asks Pi to call the Slack notification tool once with a JSON-compatible `payload` object, then return the same findings in chat. Usage decay and activation failure use deterministic pretriage for candidate discovery, then follow the same notification-first workflow as the other growth agents.
 
@@ -155,9 +155,9 @@ Edit this file when your product has a clearer definition of meaningful activity
 
 ## Activation Pretriage
 
-`/outlit-activation-failure` uses `outlit_activation_pretriage` before the model starts. The helper scans trialing, unpaid, and early paying accounts by default, then surfaces accounts that have observed users but no activated or engaged users and no normalized activation event.
+`/outlit-activation-failure` uses `outlit_activation_pretriage` before the model starts. The helper scans trialing, unpaid, and early paying accounts by default, then surfaces accounts that have observed users but no activated or engaged users and no namespaced Outlit activation stage event.
 
-The SDK activation helpers emit stage events with `eventName: "activated"` so activation queries can use one normalized event name. The pretriage helper also recognizes legacy `stage:activated` events for older ingest pipelines.
+The SDK activation helpers emit lifecycle stage events that ingestion stores under the namespaced `stage:activated` event name. This keeps Outlit lifecycle state distinct from customer-defined product events such as `track("activated")`.
 
 ## Tool Scope
 

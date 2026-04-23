@@ -114,7 +114,7 @@ describe("Outlit", () => {
     await outlit.shutdown()
   })
 
-  it("preserves stage identity markers for server batches", async () => {
+  it("preserves stage identity markers without customer event-name collisions", async () => {
     const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
 
     outlit.user.activate({
@@ -128,7 +128,7 @@ describe("Outlit", () => {
     const payload = getLastPayload()
     const event = payload.events[0]!
     expect(event.type).toBe("stage")
-    expect(event.eventName).toBe("activated")
+    expect(event).not.toHaveProperty("eventName")
     expect(event.properties?.__email).toBe("user@example.com")
     expect(event.properties?.__userId).toBe("usr_123")
     expect(event.properties?.__fingerprint).toBeNull()

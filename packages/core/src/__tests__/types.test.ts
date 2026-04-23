@@ -105,7 +105,7 @@ describe("BrowserIdentifyOptions", () => {
 })
 
 describe("StageEvent", () => {
-  it("includes an eventName for activation ingestion", () => {
+  it("keeps lifecycle stages distinct from customer product event names", () => {
     const event = buildStageEvent({
       url: "https://example.com/onboarding",
       stage: "activated",
@@ -113,6 +113,6 @@ describe("StageEvent", () => {
 
     expect(event.type).toBe("stage")
     expect(event.stage).toBe("activated")
-    expect(event.eventName).toBe("activated")
+    expect(event).not.toHaveProperty("eventName")
   })
 })

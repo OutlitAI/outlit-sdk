@@ -85,7 +85,10 @@ describe("runOutlitActivationPretriage", () => {
 
     expect(queryMock).toHaveBeenCalledTimes(3)
     expect(queryMock.mock.calls[2]?.[1]).toMatchObject({
-      sql: expect.stringContaining("'activated'"),
+      sql: expect.stringContaining("'stage:activated'"),
+    })
+    expect(queryMock.mock.calls[2]?.[1]).toMatchObject({
+      sql: expect.not.stringContaining("'activated',"),
     })
     expect(queryMock.mock.calls[2]?.[1]).toMatchObject({
       sql: expect.stringContaining("parseDateTimeBestEffort('2026-04-15T12:00:00.000Z')"),

@@ -170,7 +170,7 @@ export const defaultActivationPretriageConfig: OutlitActivationPretriageConfig =
     staleAfterDays: 7,
     recentActivityWindowDays: 14,
     activatedStages: ["ACTIVATED", "ENGAGED"],
-    activationEventNames: ["activated", "stage:activated", "user_activated"],
+    activationEventNames: ["stage:activated"],
   },
 }
 
@@ -661,7 +661,7 @@ function buildSignals(params: {
     },
     {
       key: "noActivationEvent",
-      summary: "No normalized activation event was found for this customer.",
+      summary: "No namespaced Outlit activation stage event was found for this customer.",
       value: params.activationEventCount,
     },
   ]

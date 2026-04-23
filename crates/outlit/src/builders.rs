@@ -327,7 +327,6 @@ impl StageBuilder {
             timestamp: now_ms(),
             url: server_url(email.as_deref(), user_id.as_deref(), fingerprint.as_deref()),
             path: "/".into(),
-            event_name: stage_event_name(&self.stage).into(),
             stage: self.stage,
             properties: if properties.is_empty() {
                 None
@@ -335,14 +334,6 @@ impl StageBuilder {
                 Some(properties)
             },
         })
-    }
-}
-
-fn stage_event_name(stage: &JourneyStage) -> &'static str {
-    match stage {
-        JourneyStage::Activated => "activated",
-        JourneyStage::Engaged => "engaged",
-        JourneyStage::Inactive => "inactive",
     }
 }
 
