@@ -81,6 +81,7 @@ fn test_stage_event_json_structure() {
         timestamp: 1706400000000,
         url: "server://user@test.com".into(),
         path: "/".into(),
+        event_name: "activated".into(),
         stage: JourneyStage::Activated,
         properties: None,
     });
@@ -88,6 +89,7 @@ fn test_stage_event_json_structure() {
     let json = serde_json::to_value(&event).unwrap();
 
     assert_eq!(json["type"], "stage");
+    assert_eq!(json["eventName"], "activated");
     assert_eq!(json["stage"], "activated"); // lowercase enum value
 }
 

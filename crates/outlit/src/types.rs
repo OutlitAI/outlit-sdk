@@ -64,6 +64,7 @@ pub struct StageEventData {
     pub timestamp: i64,
     pub url: String,
     pub path: String,
+    pub event_name: String,
     pub stage: JourneyStage,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub properties: Option<HashMap<String, serde_json::Value>>,
@@ -210,6 +211,7 @@ mod tests {
             timestamp: 1706400000000,
             url: "server://user@example.com".into(),
             path: "/".into(),
+            event_name: "activated".into(),
             stage: JourneyStage::Activated,
             properties: None,
         });
@@ -217,6 +219,7 @@ mod tests {
         let json = serde_json::to_value(&event).unwrap();
 
         assert_eq!(json["type"], "stage");
+        assert_eq!(json["eventName"], "activated");
         assert_eq!(json["stage"], "activated");
     }
 

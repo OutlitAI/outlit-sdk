@@ -1,5 +1,10 @@
 import { analyticalAgentToolNames, createOutlitPiExtension } from "@outlit/pi"
-
+import {
+  type ActivationScopeProfile,
+  createOutlitActivationPretriageTool,
+  type OutlitActivationPretriageResult,
+  runOutlitActivationPretriage,
+} from "../lib/activation-pretriage.js"
 import {
   createOutlitChurnPretriageTool,
   type OutlitChurnPretriageResult,
@@ -40,10 +45,17 @@ type AgentCommand = {
   description: string
   notify: string
   prompt: (scope: string | undefined, pretriageContext?: string, pretriageNote?: string) => string
-  pretriage?: {
-    scopeProfile: "configured" | "revenue_accounts" | "all_accounts" | "auto"
-    maxPromptCustomers: number
-  }
+  pretriage?:
+    | {
+        kind: "churn"
+        scopeProfile: "configured" | "revenue_accounts" | "all_accounts" | "auto"
+        maxPromptCustomers: number
+      }
+    | {
+        kind: "activation"
+        scopeProfile: ActivationScopeProfile
+        maxPromptCustomers: number
+      }
   trigger: RegExp
 }
 
@@ -54,6 +66,7 @@ Outlit customer signal agent guidance:
 - Use Outlit tools for customer discovery, customer details, timeline events, facts, source evidence, billing, product activity, and semantic customer context.
 - Use outlit_schema and outlit_query for candidate discovery, cohorts, usage trends, revenue filters, activation gaps, and aggregate checks before deep account review.
 - Use outlit_churn_pretriage for deterministic usage-decay churn candidate discovery when it is registered.
+- Use outlit_activation_pretriage for deterministic activation-failure candidate discovery when it is registered.
 - Use outlit_list_facts with factTypes for extracted customer-memory evidence when helpful, such as CHURN_RISK, EXPANSION, SENTIMENT, BUDGET, REQUIREMENTS, PRODUCT_USAGE, or CHAMPION_RISK.
 - Do not assume behavioral/anomaly fact types exist for every customer. Treat usage-path and funnel facts as optional supporting evidence only.
 - Use stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
@@ -72,6 +85,7 @@ const COMMANDS: AgentCommand[] = [
     description: "Find paying customers with usage decay that may lead to churn",
     notify: "Starting Outlit deterministic churn pretriage",
     pretriage: {
+      kind: "churn",
       scopeProfile: "revenue_accounts",
       maxPromptCustomers: 5,
     },
@@ -125,11 +139,18 @@ const COMMANDS: AgentCommand[] = [
   {
     name: "outlit-activation-failure",
     description: "Find trials or new customers that are unlikely to activate or convert",
-    notify: "Starting Outlit activation-failure review",
-    prompt: (scope) =>
+    notify: "Starting Outlit deterministic activation pretriage",
+    pretriage: {
+      kind: "activation",
+      scopeProfile: "activation_accounts",
+      maxPromptCustomers: 5,
+    },
+    prompt: (scope, pretriageContext, pretriageNote) =>
       buildPortfolioPrompt({
         title: "Activation Failure Agent",
         scope,
+        pretriageContext,
+        pretriageNote,
         objective:
           "Find trials, new customers, or recently converted accounts that are unlikely to activate, convert, or reach first value.",
         signals: [
@@ -179,6 +200,7 @@ export default function outlitGrowthAgents(pi: GrowthAgentPiApi) {
       configPath: CHURN_CONFIG_PATH,
     }),
   )
+  pi.registerTool(createOutlitActivationPretriageTool())
 
   for (const command of COMMANDS) {
     pi.registerCommand(command.name, {
@@ -190,12 +212,15 @@ export default function outlitGrowthAgents(pi: GrowthAgentPiApi) {
         const pretriage = shouldRunPretriage ? await buildCommandPretriage(command) : undefined
         const pretriageNote =
           command.pretriage && scope
-            ? "Deterministic churn pretriage was skipped because this run has an explicit user scope. Use Outlit tools to discover and review candidates inside that scope only."
+            ? `${formatPretriageLabel(command.pretriage.kind)} was skipped because this run has an explicit user scope. Use Outlit tools to discover and review candidates inside that scope only.`
             : undefined
         if (pretriage) {
           ctx.ui.notify(pretriage.notification, "info")
         } else if (command.pretriage && scope) {
-          ctx.ui.notify("Skipping deterministic churn pretriage for explicit scope", "info")
+          ctx.ui.notify(
+            `Skipping ${formatPretriageLabel(command.pretriage.kind)} for explicit scope`,
+            "info",
+          )
         }
         await pi.sendUserMessage(command.prompt(scope, pretriage?.context, pretriageNote))
         await waitForStartedModelTurn(ctx)
@@ -241,26 +266,43 @@ async function buildCommandPretriage(
   }
 
   try {
-    const result = await runOutlitChurnPretriage({
-      configPath: CHURN_CONFIG_PATH,
-      scopeProfile: command.pretriage.scopeProfile,
-      maxPromptCustomers: command.pretriage.maxPromptCustomers,
-    })
+    const result =
+      command.pretriage.kind === "churn"
+        ? await runOutlitChurnPretriage({
+            configPath: CHURN_CONFIG_PATH,
+            scopeProfile: command.pretriage.scopeProfile,
+            maxPromptCustomers: command.pretriage.maxPromptCustomers,
+          })
+        : await runOutlitActivationPretriage({
+            scopeProfile: command.pretriage.scopeProfile,
+            maxPromptCustomers: command.pretriage.maxPromptCustomers,
+          })
 
     return {
       context: result.context,
       notification: formatPretriageNotification(result),
     }
   } catch (error) {
+    const label = formatPretriageLabel(command.pretriage.kind)
     return {
-      context: `Deterministic churn pretriage could not run before this prompt: ${formatError(error)}. Continue with the registered Outlit tools and say that deterministic pretriage was unavailable.`,
-      notification: "Outlit deterministic churn pretriage was unavailable",
+      context: `${label} could not run before this prompt: ${formatError(error)}. Continue with the registered Outlit tools and say that deterministic pretriage was unavailable.`,
+      notification: `${label} was unavailable`,
     }
   }
 }
 
-function formatPretriageNotification(result: OutlitChurnPretriageResult): string {
-  return `Outlit deterministic churn pretriage surfaced ${result.summary.customersIncludedThisRun} of ${result.summary.totalSurfacedCustomers} customers`
+function formatPretriageNotification(
+  result: OutlitChurnPretriageResult | OutlitActivationPretriageResult,
+): string {
+  const label =
+    "likelyChurnCustomers" in result.summary
+      ? "Outlit deterministic churn pretriage"
+      : "Outlit deterministic activation pretriage"
+  return `${label} surfaced ${result.summary.customersIncludedThisRun} of ${result.summary.totalSurfacedCustomers} customers`
+}
+
+function formatPretriageLabel(kind: "activation" | "churn"): string {
+  return kind === "churn" ? "Deterministic churn pretriage" : "Deterministic activation pretriage"
 }
 
 function formatError(error: unknown): string {

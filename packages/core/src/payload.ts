@@ -246,6 +246,7 @@ export function buildStageEvent(
     path: extractPathFromUrl(url),
     referrer,
     utm: extractUtmParams(url),
+    eventName: stage,
     stage,
     properties,
   }

@@ -76,6 +76,14 @@ describe("outlit growth agents notification workflow", () => {
     expect(registeredTools.map((tool) => tool.name)).toContain("outlit_send_notification")
   })
 
+  test("registers deterministic pretriage tools for churn and activation", () => {
+    const { registeredTools } = createPiHarness()
+
+    expect(registeredTools.map((tool) => tool.name)).toEqual(
+      expect.arrayContaining(["outlit_churn_pretriage", "outlit_activation_pretriage"]),
+    )
+  })
+
   test.each(
     commandScopes,
   )("$commandName asks the agent to send one Slack notification with a JSON payload object", async ({
@@ -123,6 +131,24 @@ describe("outlit growth agents notification workflow", () => {
     expect(sentMessages[0]).toContain("Deterministic pretriage note")
     expect(sentMessages[0]).toContain("call outlit_send_notification exactly once")
     expect(sentMessages[0]).toContain("If no live customer survives the evidence gate")
+  })
+
+  test("activation-failure command uses activation-specific pretriage wording for scoped runs", async () => {
+    const { registeredCommands, sentMessages, waitForIdle } = createPiHarness()
+    const command = registeredCommands.get("outlit-activation-failure")
+
+    expect(command).toBeDefined()
+
+    await command?.handler("trial accounts from the last 30 days", {
+      ui: {
+        notify: vi.fn(),
+      },
+      waitForIdle,
+    })
+
+    expect(sentMessages).toHaveLength(1)
+    expect(sentMessages[0]).toContain("Deterministic activation pretriage was skipped")
+    expect(sentMessages[0]).not.toContain("Deterministic churn pretriage was skipped")
   })
 
   test("usage-decay command does not ask for a standalone draft JSON block", async () => {
