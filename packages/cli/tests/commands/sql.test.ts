@@ -136,4 +136,26 @@ describe("sql", () => {
       expectErrorExit(thrown, stderrOutput, "file_error")
     }
   })
+
+  test("invalid_input error when --limit is decimal", async () => {
+    const { default: sqlCmd } = await import("../../src/commands/sql")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await sqlCmd.run!({
+        args: { query: "SELECT 1", limit: "1.5", json: true },
+      } as Parameters<NonNullable<typeof sqlCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(stderrOutput).toContain("--limit must be a positive integer")
+    }
+  })
 })
