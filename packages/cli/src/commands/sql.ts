@@ -1,10 +1,12 @@
 import { readFileSync } from "node:fs"
-import { customerToolContracts, schemaTables } from "@outlit/tools"
+import { customerToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
 import { getClientOrExit, runTool } from "../lib/api"
 import { errorMessage, outputError } from "../lib/output"
+
+const publicSqlViews = ["activity", "customers", "users", "revenue"]
 
 export default defineCommand({
   meta: {
@@ -15,12 +17,12 @@ export default defineCommand({
       "Provide the query as a positional argument or via --query-file.",
       "When both are provided, --query-file takes precedence.",
       "",
-      `Available tables: ${schemaTables.join(", ")}`,
+      `Available views: ${publicSqlViews.join(", ")}`,
       "",
       "Examples:",
-      "  outlit sql 'SELECT * FROM events LIMIT 10'",
+      "  outlit sql 'SELECT * FROM activity LIMIT 10'",
       "  outlit sql --query-file ./my-query.sql",
-      "  outlit sql 'SELECT count(*) FROM events' --limit 1 --json",
+      "  outlit sql 'SELECT count(*) FROM activity' --limit 1 --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),

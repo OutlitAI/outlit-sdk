@@ -567,13 +567,13 @@ outlit sql --query-file <path> [flags]
 
 ```bash
 # Inline query
-outlit sql "SELECT event_type, COUNT(*) as cnt FROM events GROUP BY 1 ORDER BY cnt DESC"
+outlit sql "SELECT event_type, COUNT(*) as cnt FROM activity GROUP BY 1 ORDER BY cnt DESC"
 
 # From a file
 outlit sql --query-file ./queries/monthly-activity.sql
 
 # Pipe to jq
-outlit sql "SELECT domain, mrr_cents FROM customer_dimensions ORDER BY mrr_cents DESC LIMIT 10" | jq
+outlit sql "SELECT domain, mrr_cents FROM customers ORDER BY mrr_cents DESC LIMIT 10" | jq
 ```
 
 ### JSON Response
@@ -588,20 +588,20 @@ outlit sql "SELECT domain, mrr_cents FROM customer_dimensions ORDER BY mrr_cents
 }
 ```
 
-### Available Tables
+### Available Views
 
-Use `outlit schema` to discover all tables and their columns. Common tables:
+Use `outlit schema` to discover all views and their columns. Common views:
 
-| Table | Description |
+| View | Description |
 |-------|-------------|
-| `events` | Event stream (page views, meetings, emails, etc.) |
-| `customer_dimensions` | Denormalized customer attributes and metrics |
-| `user_dimensions` | Denormalized user attributes |
-| `mrr_snapshots` | Monthly recurring revenue snapshots |
+| `activity` | Event stream (page views, meetings, emails, etc.) |
+| `customers` | Denormalized customer attributes and metrics |
+| `users` | Denormalized user attributes |
+| `revenue` | Monthly recurring revenue snapshots |
 
 ## Schema
 
-Discover database tables and their column definitions.
+Discover database views and their column definitions.
 
 ```bash
 outlit schema [table]
@@ -611,19 +611,19 @@ outlit schema [table]
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `table` | No | Specific table name — omit to list all tables |
+| `table` | No | Specific view name — omit to list all views |
 
 ### Examples
 
 ```bash
-# List all tables
+# List all views
 outlit schema
 
-# Describe a specific table
-outlit schema events
+# Describe a specific view
+outlit schema activity
 
 # JSON output
-outlit schema customer_dimensions --json
+outlit schema customers --json
 ```
 
 ### JSON Response
@@ -632,7 +632,7 @@ outlit schema customer_dimensions --json
 {
   "tables": [
     {
-      "name": "events",
+      "name": "activity",
       "columns": [
         { "name": "id", "type": "uuid", "nullable": false },
         { "name": "event_type", "type": "varchar", "nullable": false }

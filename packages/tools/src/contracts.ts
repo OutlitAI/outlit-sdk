@@ -521,7 +521,7 @@ export const customerToolContracts = {
   outlit_query: {
     toolName: "outlit_query",
     description:
-      "Execute raw SQL queries against your analytics data.\n\nAvailable tables:\n- events: Customer activity events (event_name, event_type, event_channel, customer_id, occurred_at, properties, ...)\n- customer_dimensions: Customer attributes (customer_id, domain, name, billing_status, plan, mrr_cents, ...)\n- user_dimensions: User attributes (user_id, email, name, customer_id, ...)\n- mrr_snapshots: Revenue snapshots over time (customer_id, snapshot_date, mrr_cents, ...)\n\nAll queries are automatically filtered to your organization's data.\nOnly SELECT queries are allowed.\n\nExample queries:\n- SELECT event_name, count(*) FROM events GROUP BY 1 ORDER BY 2 DESC LIMIT 10\n- SELECT billing_status, sum(mrr_cents)/100 as mrr FROM customer_dimensions GROUP BY 1\n- SELECT * FROM events WHERE customer_id = 'cust_123' ORDER BY occurred_at DESC LIMIT 50",
+      "Execute raw SQL queries against your analytics data.\n\nAvailable tables:\n- activity: Customer activity events (event_name, event_type, event_channel, customer_id, occurred_at, properties, ...)\n- customers: Customer attributes (customer_id, domain, name, billing_status, plan, mrr_cents, traits, ...)\n- users: User attributes (user_id, email, name, customer_id, traits, ...)\n- revenue: Revenue snapshots over time (customer_id, snapshot_date, mrr_cents, ...)\n\nAll queries are automatically filtered to your organization's data.\nOnly SELECT queries are allowed.\nProperties and traits are JSON strings. Use ClickHouse JSONExtract* functions to query keys.\n\nExample queries:\n- SELECT event_name, count(*) FROM activity GROUP BY 1 ORDER BY 2 DESC LIMIT 10\n- SELECT billing_status, sum(mrr_cents)/100 as mrr FROM customers GROUP BY 1\n- SELECT * FROM activity WHERE customer_id = 'cust_123' ORDER BY occurred_at DESC LIMIT 50",
     inputSchema: {
       $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
@@ -533,7 +533,8 @@ export const customerToolContracts = {
         limit: {
           description: "Max rows to return (default 1000, max 10000)",
           default: 1000,
-          type: "number",
+          type: "integer",
+          minimum: 1,
           maximum: 10000,
         },
       },
@@ -552,7 +553,7 @@ export const customerToolContracts = {
         table: {
           description: "Specific table to describe, or omit for all tables",
           type: "string",
-          enum: ["events", "customer_dimensions", "user_dimensions", "mrr_snapshots"],
+          enum: ["activity", "customers", "users", "revenue"],
         },
       },
       additionalProperties: false,
@@ -766,15 +767,10 @@ export const userJourneyStages = [
 
 export const userListOrderFields = ["last_activity_at", "first_seen_at", "email"] as const
 
-export const schemaTables = [
-  "events",
-  "customer_dimensions",
-  "user_dimensions",
-  "mrr_snapshots",
-] as const
+export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "08b1b936a2f6aec30d5077f76377623715103f516873a5ef51b72d3ddbe1103c" as const
+  "b1d055d5ad06eabc4e86907ab7dffd746093c2f18408f909332c7bdc86a82663" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]

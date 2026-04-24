@@ -149,7 +149,7 @@ outlit customers get acme.com --include users,revenue,recentTimeline
 outlit search "customers who signed up from Google Ads last month"
 
 # SQL
-outlit sql "SELECT domain, mrr_cents FROM customer_dimensions WHERE billing_status = 'PAYING'"
+outlit sql "SELECT domain, mrr_cents FROM customers WHERE billing_status = 'PAYING'"
 ```
 
 ### AI Agents

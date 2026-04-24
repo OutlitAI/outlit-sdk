@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
-  TEST_API_KEY,
   expectErrorExit,
   mockExitThrow,
   setNonInteractive,
+  TEST_API_KEY,
   useTempEnv,
 } from "../helpers"
 
@@ -57,7 +57,7 @@ describe("sql", () => {
   })
 
   test("--query-file reads file and sends contents as sql", async () => {
-    mockReadFileSync.mockReturnValueOnce("SELECT * FROM events")
+    mockReadFileSync.mockReturnValueOnce("SELECT * FROM activity")
     const { default: sqlCmd } = await import("../../src/commands/sql")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -67,7 +67,7 @@ describe("sql", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_query",
-        expect.objectContaining({ sql: "SELECT * FROM events" }),
+        expect.objectContaining({ sql: "SELECT * FROM activity" }),
       )
     } finally {
       writeSpy.mockRestore()
@@ -75,7 +75,7 @@ describe("sql", () => {
   })
 
   test("--query-file takes precedence over positional", async () => {
-    mockReadFileSync.mockReturnValueOnce("SELECT * FROM mrr_snapshots")
+    mockReadFileSync.mockReturnValueOnce("SELECT * FROM revenue")
     const { default: sqlCmd } = await import("../../src/commands/sql")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -85,7 +85,7 @@ describe("sql", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_query",
-        expect.objectContaining({ sql: "SELECT * FROM mrr_snapshots" }),
+        expect.objectContaining({ sql: "SELECT * FROM revenue" }),
       )
     } finally {
       writeSpy.mockRestore()

@@ -1,8 +1,10 @@
-import { customerToolContracts, schemaTables } from "@outlit/tools"
+import { customerToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
 import { getClientOrExit, runTool } from "../lib/api"
+
+const publicSqlViews = ["activity", "customers", "users", "revenue"]
 
 export default defineCommand({
   meta: {
@@ -10,15 +12,15 @@ export default defineCommand({
     description: [
       "Describe the analytics database schema.",
       "",
-      "Without a table name, returns the full schema for all tables.",
-      "With a table name, returns detailed column info for that table.",
+      "Without a view name, returns the full schema for all views.",
+      "With a view name, returns detailed column info for that view.",
       "",
-      `Available tables: ${schemaTables.join(", ")}`,
+      `Available views: ${publicSqlViews.join(", ")}`,
       "",
       "Examples:",
       "  outlit schema",
-      "  outlit schema events",
-      "  outlit schema customer_dimensions --json",
+      "  outlit schema activity",
+      "  outlit schema customers --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -28,7 +30,7 @@ export default defineCommand({
     ...outputArgs,
     table: {
       type: "positional",
-      description: `Table to describe (${schemaTables.join(", ")}). Optional.`,
+      description: `View to describe (${publicSqlViews.join(", ")}). Optional.`,
       required: false,
     },
   },
