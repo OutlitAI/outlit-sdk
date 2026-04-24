@@ -73,9 +73,9 @@ export default defineCommand({
     }
 
     const limit = Number(args.limit)
-    if (!Number.isInteger(limit) || limit <= 0) {
+    if (!Number.isInteger(limit) || limit < 1 || limit > 10000) {
       return outputError(
-        { message: "--limit must be a positive integer", code: "invalid_input" },
+        { message: "--limit must be an integer between 1 and 10000", code: "invalid_input" },
         json,
       )
     }

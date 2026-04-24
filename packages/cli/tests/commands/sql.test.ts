@@ -137,7 +137,10 @@ describe("sql", () => {
     }
   })
 
-  test("invalid_input error when --limit is decimal", async () => {
+  test.each([
+    ["1.5", "--limit must be an integer between 1 and 10000"],
+    ["10001", "--limit must be an integer between 1 and 10000"],
+  ])("invalid_input error when --limit is %s", async (limit, expectedMessage) => {
     const { default: sqlCmd } = await import("../../src/commands/sql")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -145,7 +148,7 @@ describe("sql", () => {
     let thrown: unknown
     try {
       await sqlCmd.run!({
-        args: { query: "SELECT 1", limit: "1.5", json: true },
+        args: { query: "SELECT 1", limit, json: true },
       } as Parameters<NonNullable<typeof sqlCmd.run>>[0])
     } catch (e) {
       thrown = e
@@ -155,7 +158,7 @@ describe("sql", () => {
       stderrSpy.mockRestore()
 
       expectErrorExit(thrown, stderrOutput, "invalid_input")
-      expect(stderrOutput).toContain("--limit must be a positive integer")
+      expect(stderrOutput).toContain(expectedMessage)
     }
   })
 })
