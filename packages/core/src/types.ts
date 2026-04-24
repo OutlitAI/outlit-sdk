@@ -141,6 +141,7 @@ export interface CustomerIdentifier extends CustomerAttribution {
 // ============================================
 
 interface BaseEvent {
+  uuid?: string
   type: EventType
   timestamp: number // Unix timestamp in milliseconds
   url: string

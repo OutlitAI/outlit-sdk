@@ -1,9 +1,30 @@
+// @vitest-environment jsdom
+
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { Outlit } from "../../src/tracker"
 
 const mockCookies: Record<string, string> = {}
+const mockLocalStorage: Record<string, string> = {}
+const uuidV7Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 beforeEach(() => {
+  Object.defineProperty(globalThis, "localStorage", {
+    value: {
+      clear: () => {
+        for (const key of Object.keys(mockLocalStorage)) {
+          delete mockLocalStorage[key]
+        }
+      },
+      getItem: (key: string) => mockLocalStorage[key] ?? null,
+      removeItem: (key: string) => {
+        delete mockLocalStorage[key]
+      },
+      setItem: (key: string, value: string) => {
+        mockLocalStorage[key] = value
+      },
+    },
+    configurable: true,
+  })
   localStorage.clear()
   for (const key of Object.keys(mockCookies)) {
     delete mockCookies[key]
@@ -112,6 +133,30 @@ describe("payload identity", () => {
       "https://app.outlit.ai/api/i/v1/pk_test/events",
       expect.any(Object),
     )
+  })
+
+  it("sends custom track events with an event uuid", async () => {
+    const outlit = new Outlit({
+      publicKey: "pk_test",
+      autoTrack: false,
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+    })
+
+    outlit.enableTracking()
+    outlit.track("button_clicked", { buttonId: "cta" })
+
+    await outlit.flush()
+
+    const fetchOptions = vi.mocked(global.fetch).mock.calls[0]?.[1]
+    const payload = JSON.parse(String(fetchOptions?.body)) as {
+      events: Array<{ type: string; uuid?: string }>
+    }
+    const event = payload.events[0]
+
+    expect(event?.type).toBe("custom")
+    expect(event?.uuid).toMatch(uuidV7Regex)
   })
 
   it("does not include profile traits in non-identify browser batches", async () => {

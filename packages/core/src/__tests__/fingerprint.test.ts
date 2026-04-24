@@ -146,6 +146,27 @@ describe("validateServerIdentity with fingerprint", () => {
 // ============================================
 
 describe("buildCustomEvent with fingerprint", () => {
+  it("assigns a uuidv7 to each built event", () => {
+    const firstEvent = buildCustomEvent({
+      url: "server://device_abc123",
+      eventName: "page_view",
+      fingerprint: "device_abc123",
+    })
+    const secondEvent = buildCustomEvent({
+      url: "server://device_abc123",
+      eventName: "page_view",
+      fingerprint: "device_abc123",
+    })
+
+    expect(firstEvent.uuid).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    )
+    expect(secondEvent.uuid).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    )
+    expect(firstEvent.uuid).not.toBe(secondEvent.uuid)
+  })
+
   it("includes fingerprint as a top-level event field", () => {
     const event = buildCustomEvent({
       url: "server://device_abc123",

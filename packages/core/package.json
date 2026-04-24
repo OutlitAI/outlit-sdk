@@ -45,6 +45,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "uuid": "^14.0.0"
+  },
   "devDependencies": {
     "@outlit/typescript-config": "workspace:*",
     "tsup": "^8.5.1",

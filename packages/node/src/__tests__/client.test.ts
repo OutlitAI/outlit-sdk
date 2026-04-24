@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { Outlit } from "../client"
 
 const fetchMock = vi.fn()
+const uuidV7Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 function getLastPayload() {
   const call = fetchMock.mock.calls.at(-1)
@@ -64,6 +65,24 @@ describe("Outlit", () => {
     const event = payload.events[0]!
     expect(event.customerId).toBe("cust_123")
     expect(event).not.toHaveProperty("customerDomain")
+
+    await outlit.shutdown()
+  })
+
+  it("sends server custom track events with an event uuid", async () => {
+    const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
+
+    outlit.track({
+      customerId: "cust_123",
+      eventName: "account_synced",
+    })
+
+    await outlit.flush()
+
+    const payload = getLastPayload()
+    const event = payload.events[0]!
+    expect(event.type).toBe("custom")
+    expect(event.uuid).toMatch(uuidV7Regex)
 
     await outlit.shutdown()
   })
