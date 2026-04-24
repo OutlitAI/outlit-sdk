@@ -1,17 +1,35 @@
 import { readFile } from "node:fs/promises"
 
 import type { AgentToolResult, ToolDefinition } from "@mariozechner/pi-coding-agent"
-import {
-  createOutlitClient,
-  DEFAULT_OUTLIT_API_URL,
-  type OutlitToolsClient,
-  type OutlitToolsFetch,
-} from "@outlit/tools"
+import type { OutlitToolsFetch } from "@outlit/tools"
 import type { TSchema } from "@sinclair/typebox"
+import {
+  type CustomerActivityRow,
+  type CustomerDirectoryRow,
+  type CustomerDropRow,
+  loadHeuristicData,
+  type UserActivityRow,
+  type UserDirectoryRow,
+  type UserInactivityRow,
+} from "./churn-pretriage-data.js"
+import {
+  assertBoolean,
+  assertNonNegativeInteger,
+  assertOptionalNonNegativeInteger,
+  assertOptionalPositiveInteger,
+  assertPositiveInteger,
+  assertStringArray,
+  buildFingerprint,
+  createPretriageClient,
+  daysBetween,
+  isRecord,
+  normalizeMaxPromptCustomers,
+  normalizeNow,
+  normalizeToolInput,
+  parseOutlitDate,
+  type QueryClient,
+} from "./pretriage-utils.js"
 
-const OUTLIT_API_KEY_ENV = "OUTLIT_API_KEY"
-const OUTLIT_API_URL_ENV = "OUTLIT_API_URL"
-const ACTIVITY_LOOKBACK_DAYS = 365
 const DEFAULT_PROMPT_ROTATION_WINDOW_HOURS = 1
 
 const churnPretriageToolParameters = {
@@ -122,55 +140,7 @@ export type ChurnPretriageConfig = {
 }
 
 export type OutlitChurnPretriageConfig = ChurnPretriageConfig
-
-type ResolvedChurnPretriageConfig = ChurnPretriageConfig["defaults"]
-
-type CustomerDirectoryRow = {
-  customerId: string
-  customerName: string | null
-  domain: string | null
-  billingStatus: ChurnBillingStatus | null
-  mrrCents: number | null
-}
-
-type CustomerActivityRow = {
-  customerId: string
-  firstMeaningfulActivityAt: string
-  lastMeaningfulActivityAt: string
-  activeDays30d: number
-  eventCount30d: number
-}
-
-type CustomerDropRow = {
-  customerId: string
-  currentActiveDays: number
-  currentEventCount: number
-  baselineActiveDays: number
-  baselineEventCount: number
-}
-
-type UserDirectoryRow = {
-  customerId: string
-  userId: string
-  email: string | null
-  name: string | null
-}
-
-type UserActivityRow = {
-  customerId: string
-  userId: string
-  lastMeaningfulActivityAt: string
-  activeDaysObserved: number
-}
-
-type UserInactivityRow = {
-  customerId: string
-  userId: string
-  lastActivityBeforeInactiveWindow: string
-  priorActiveDays: number
-  priorEventCount: number
-  recentEventCount: number
-}
+export type ResolvedChurnPretriageConfig = ChurnPretriageConfig["defaults"]
 
 type HeuristicMatch = {
   level: "customer" | "user"
@@ -243,7 +213,7 @@ export type OutlitChurnPretriageRunnerOptions = {
   apiKey?: string
   baseUrl?: string
   fetch?: OutlitToolsFetch
-  client?: Pick<OutlitToolsClient, "callTool">
+  client?: QueryClient
   config?: ChurnPretriageConfig
   configPath?: string | URL
   now?: Date | string
@@ -265,8 +235,6 @@ export type OutlitChurnPretriageToolDefinition = ToolDefinition<
   TSchema,
   OutlitChurnPretriageToolDetails
 >
-
-type QueryClient = Pick<OutlitToolsClient, "callTool">
 
 type CustomerAccumulator = {
   customersById: Map<string, InternalPretriageCustomer>
@@ -454,7 +422,7 @@ export function createOutlitChurnPretriageTool(
       "Outlit Churn Pretriage: deterministically surfaces likely churn candidates before review.",
     parameters: churnPretriageToolParameters as unknown as TSchema,
     async execute(_toolCallId, params) {
-      const input = normalizeToolInput(params)
+      const input = normalizeToolInput(params, "churn")
       const result = await runOutlitChurnPretriage({
         ...options,
         scopeProfile: normalizeScopeProfile(input.scopeProfile),
@@ -477,63 +445,7 @@ async function loadConfigOption(
 }
 
 function createRunnerClient(options: OutlitChurnPretriageRunnerOptions): QueryClient {
-  return createOutlitClient({
-    apiKey: resolveApiKey(options),
-    baseUrl: resolveBaseUrl(options),
-    fetch: options.fetch,
-  })
-}
-
-function resolveApiKey(options: OutlitChurnPretriageRunnerOptions): string {
-  const apiKey = normalizeString(options.apiKey) ?? normalizeString(process.env[OUTLIT_API_KEY_ENV])
-
-  if (!apiKey) {
-    throw new Error(`${OUTLIT_API_KEY_ENV} is required to run Outlit churn pretriage`)
-  }
-
-  return apiKey
-}
-
-function resolveBaseUrl(options: OutlitChurnPretriageRunnerOptions): string {
-  return (
-    normalizeString(options.baseUrl) ??
-    normalizeString(process.env[OUTLIT_API_URL_ENV]) ??
-    DEFAULT_OUTLIT_API_URL
-  )
-}
-
-function normalizeString(value: string | undefined): string | undefined {
-  const trimmed = value?.trim()
-  return trimmed ? trimmed : undefined
-}
-
-function normalizeNow(now: Date | string | undefined): Date {
-  if (now instanceof Date) {
-    return now
-  }
-
-  if (typeof now === "string") {
-    const date = new Date(now)
-    if (Number.isNaN(date.getTime())) {
-      throw new Error("now must be a valid date")
-    }
-
-    return date
-  }
-
-  return new Date()
-}
-
-function normalizeToolInput(params: unknown): Record<string, unknown> {
-  if (params === undefined) {
-    return {}
-  }
-
-  if (params === null || typeof params !== "object" || Array.isArray(params)) {
-    throw new TypeError("Outlit churn pretriage input must be an object")
-  }
-
-  return params as Record<string, unknown>
+  return createPretriageClient(options, "churn")
 }
 
 function normalizeScopeProfile(value: unknown): ChurnScopeProfile | undefined {
@@ -551,18 +463,6 @@ function normalizeScopeProfile(value: unknown): ChurnScopeProfile | undefined {
   }
 
   throw new Error("scopeProfile must be configured, revenue_accounts, all_accounts, or auto")
-}
-
-function normalizeMaxPromptCustomers(value: unknown): number | undefined {
-  if (value === undefined) {
-    return undefined
-  }
-
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 50) {
-    throw new Error("maxPromptCustomers must be an integer from 1 to 50")
-  }
-
-  return value
 }
 
 function formatChurnToolResult(
@@ -827,58 +727,6 @@ function validatePromptSelection(promptSelection: ChurnPretriageConfig["promptSe
   }
 }
 
-function assertStringArray(value: unknown, path: string): asserts value is string[] {
-  if (!Array.isArray(value)) {
-    throw new Error(`${path} must be an array`)
-  }
-
-  for (const item of value) {
-    if (typeof item !== "string" || item.length > 500) {
-      throw new Error(`${path} must contain strings shorter than 500 characters`)
-    }
-  }
-}
-
-function assertBoolean(value: unknown, path: string): asserts value is boolean {
-  if (typeof value !== "boolean") {
-    throw new Error(`${path} must be a boolean`)
-  }
-}
-
-function assertPositiveInteger(value: unknown, path: string): asserts value is number {
-  if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
-    throw new Error(`${path} must be a positive integer`)
-  }
-}
-
-function assertNonNegativeInteger(value: unknown, path: string): asserts value is number {
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
-    throw new Error(`${path} must be a non-negative integer`)
-  }
-}
-
-function assertOptionalPositiveInteger(
-  value: unknown,
-  path: string,
-): asserts value is number | undefined {
-  if (value === undefined) {
-    return
-  }
-
-  assertPositiveInteger(value, path)
-}
-
-function assertOptionalNonNegativeInteger(
-  value: unknown,
-  path: string,
-): asserts value is number | undefined {
-  if (value === undefined) {
-    return
-  }
-
-  assertNonNegativeInteger(value, path)
-}
-
 function assertBillingStatus(value: unknown, path: string): asserts value is ChurnBillingStatus {
   if (
     value !== "NONE" &&
@@ -895,10 +743,6 @@ function assertDisposition(value: unknown): asserts value is ChurnDisposition {
   if (value !== "investigate" && value !== "likely_churn") {
     throw new Error("churn pretriage disposition must be investigate or likely_churn")
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value)
 }
 
 function resolveScope(
@@ -945,334 +789,6 @@ function resolveAutoScopeProfile(
   }
 
   return scopeProfile
-}
-
-async function loadHeuristicData(params: {
-  client: QueryClient
-  config: ResolvedChurnPretriageConfig
-  now: Date
-}): Promise<{
-  customerDirectory: Map<string, CustomerDirectoryRow>
-  customerActivityRows: CustomerActivityRow[]
-  customerDropRows: CustomerDropRow[]
-  userDirectory: Map<string, UserDirectoryRow>
-  userActivityRows: UserActivityRow[]
-  usersNowInactiveRows: UserInactivityRow[]
-}> {
-  const sqlParts = buildSqlParts(params.config)
-  const [
-    customerDirectoryRows,
-    customerActivityRows,
-    customerDropRows,
-    userDirectoryRows,
-    userActivityRows,
-    usersNowInactiveRows,
-  ] = await Promise.all([
-    queryRows<CustomerDirectoryRow>(params.client, buildCustomerDirectorySql(sqlParts)),
-    queryRows<CustomerActivityRow>(params.client, buildCustomerActivitySql(sqlParts, params.now)),
-    queryRows<CustomerDropRow>(
-      params.client,
-      buildCustomerDropVsBaselineSql(sqlParts, params.config, params.now),
-    ),
-    queryRows<UserDirectoryRow>(params.client, buildUserDirectorySql(sqlParts)),
-    queryRows<UserActivityRow>(params.client, buildUserActivitySql(sqlParts, params.now)),
-    queryRows<UserInactivityRow>(
-      params.client,
-      buildUsersRecentlyActiveNowInactiveSql(sqlParts, params.config, params.now),
-    ),
-  ])
-
-  return {
-    customerDirectory: new Map(customerDirectoryRows.map((row) => [row.customerId, row])),
-    customerActivityRows: customerActivityRows.map(normalizeCustomerActivityRow),
-    customerDropRows: customerDropRows.map(normalizeCustomerDropRow),
-    userDirectory: new Map(
-      userDirectoryRows.map((row) => [`${row.customerId}:${row.userId}`, row]),
-    ),
-    userActivityRows: userActivityRows.map(normalizeUserActivityRow),
-    usersNowInactiveRows: usersNowInactiveRows.map(normalizeUserInactivityRow),
-  }
-}
-
-async function queryRows<TRow>(client: QueryClient, sql: string): Promise<TRow[]> {
-  const result = await client.callTool("outlit_query", { sql, limit: 10000 })
-
-  if (!isRecord(result)) {
-    throw new Error("outlit_query returned an unexpected response")
-  }
-
-  const rows = result.rows ?? result.data
-  if (!Array.isArray(rows)) {
-    throw new Error("outlit_query response must include rows")
-  }
-
-  return rows as TRow[]
-}
-
-type SqlParts = {
-  activityFilter: string
-  customerScopeFilter: string
-  activityScopeFilter: string
-  userScopeFilter: string
-}
-
-function buildSqlParts(config: ResolvedChurnPretriageConfig): SqlParts {
-  const scopeFilter = buildScopeFilter(config.scope)
-
-  return {
-    activityFilter: buildMeaningfulActivityFilter(config.activityDefinition),
-    customerScopeFilter: scopeFilter.customers,
-    activityScopeFilter: scopeFilter.activity,
-    userScopeFilter: scopeFilter.users,
-  }
-}
-
-function buildScopeFilter(scope: ChurnScope): {
-  customers: string
-  activity: string
-  users: string
-} {
-  if (scope.billingStatuses.length === 0) {
-    return {
-      customers: "1 = 1",
-      activity: "1 = 1",
-      users: "1 = 1",
-    }
-  }
-
-  const statuses = toSqlStringList(scope.billingStatuses)
-
-  return {
-    customers: `billing_status IN (${statuses})`,
-    activity: `customer_id IN (
-      SELECT customer_id
-      FROM customers
-      WHERE billing_status IN (${statuses})
-    )`,
-    users: `customer_id IN (
-      SELECT customer_id
-      FROM customers
-      WHERE billing_status IN (${statuses})
-    )`,
-  }
-}
-
-function buildMeaningfulActivityFilter(
-  activityDefinition: ResolvedChurnPretriageConfig["activityDefinition"],
-): string {
-  const normalizedEventName = "lower(trim(event_name))"
-  const includeEventNames = normalizeEventNames(activityDefinition.includeEventNames)
-  if (includeEventNames.length > 0) {
-    return `${normalizedEventName} IN (${toSqlStringList(includeEventNames)})`
-  }
-
-  const excludeEventNames = normalizeEventNames(activityDefinition.excludeEventNames)
-  if (excludeEventNames.length > 0) {
-    return `${normalizedEventName} NOT IN (${toSqlStringList(excludeEventNames)})`
-  }
-
-  return "1 = 1"
-}
-
-function buildCustomerDirectorySql(sqlParts: SqlParts): string {
-  return `
-    SELECT
-      customer_id AS customerId,
-      any(name) AS customerName,
-      any(domain) AS domain,
-      any(billing_status) AS billingStatus,
-      any(mrr_cents) AS mrrCents
-    FROM customers
-    WHERE customer_id != ''
-      AND ${sqlParts.customerScopeFilter}
-    GROUP BY customer_id
-    ORDER BY mrrCents DESC
-    LIMIT 10000
-  `
-}
-
-function buildCustomerActivitySql(sqlParts: SqlParts, now: Date): string {
-  const sqlNow = toSqlDateTime(now)
-
-  return `
-    SELECT
-      customer_id AS customerId,
-      min(occurred_at) AS firstMeaningfulActivityAt,
-      max(occurred_at) AS lastMeaningfulActivityAt,
-      countDistinctIf(toDate(occurred_at), occurred_at >= ${sqlNow} - INTERVAL 30 DAY) AS activeDays30d,
-      countIf(occurred_at >= ${sqlNow} - INTERVAL 30 DAY) AS eventCount30d
-    FROM activity
-    WHERE occurred_at >= ${sqlNow} - INTERVAL ${ACTIVITY_LOOKBACK_DAYS} DAY
-      AND occurred_at <= ${sqlNow}
-      AND customer_id != ''
-      AND ${sqlParts.activityScopeFilter}
-      AND ${sqlParts.activityFilter}
-    GROUP BY customer_id
-    LIMIT 10000
-  `
-}
-
-function buildCustomerDropVsBaselineSql(
-  sqlParts: SqlParts,
-  config: ResolvedChurnPretriageConfig,
-  now: Date,
-): string {
-  const heuristic = config.customerHeuristics.dropVsBaseline
-  const baselineAndWindowDays = heuristic.windowDays + heuristic.baselineDays
-  const sqlNow = toSqlDateTime(now)
-
-  return `
-    SELECT
-      customer_id AS customerId,
-      countDistinctIf(
-        toDate(occurred_at),
-        occurred_at >= ${sqlNow} - INTERVAL ${heuristic.windowDays} DAY
-      ) AS currentActiveDays,
-      countIf(occurred_at >= ${sqlNow} - INTERVAL ${heuristic.windowDays} DAY) AS currentEventCount,
-      countDistinctIf(
-        toDate(occurred_at),
-        occurred_at >= ${sqlNow} - INTERVAL ${baselineAndWindowDays} DAY
-          AND occurred_at < ${sqlNow} - INTERVAL ${heuristic.windowDays} DAY
-      ) AS baselineActiveDays,
-      countIf(
-        occurred_at >= ${sqlNow} - INTERVAL ${baselineAndWindowDays} DAY
-          AND occurred_at < ${sqlNow} - INTERVAL ${heuristic.windowDays} DAY
-      ) AS baselineEventCount
-    FROM activity
-    WHERE occurred_at >= ${sqlNow} - INTERVAL ${baselineAndWindowDays} DAY
-      AND occurred_at <= ${sqlNow}
-      AND customer_id != ''
-      AND ${sqlParts.activityScopeFilter}
-      AND ${sqlParts.activityFilter}
-    GROUP BY customer_id
-    LIMIT 10000
-  `
-}
-
-function buildUserDirectorySql(sqlParts: SqlParts): string {
-  return `
-    SELECT
-      customer_id AS customerId,
-      user_id AS userId,
-      any(email) AS email,
-      any(name) AS name
-    FROM users
-    WHERE customer_id != ''
-      AND user_id != ''
-      AND ${sqlParts.userScopeFilter}
-    GROUP BY customer_id, user_id
-    LIMIT 10000
-  `
-}
-
-function buildUserActivitySql(sqlParts: SqlParts, now: Date): string {
-  const sqlNow = toSqlDateTime(now)
-
-  return `
-    SELECT
-      customer_id AS customerId,
-      user_id AS userId,
-      max(occurred_at) AS lastMeaningfulActivityAt,
-      countDistinct(toDate(occurred_at)) AS activeDaysObserved
-    FROM activity
-    WHERE occurred_at >= ${sqlNow} - INTERVAL ${ACTIVITY_LOOKBACK_DAYS} DAY
-      AND occurred_at <= ${sqlNow}
-      AND customer_id != ''
-      AND user_id != ''
-      AND ${sqlParts.activityScopeFilter}
-      AND ${sqlParts.activityFilter}
-    GROUP BY customer_id, user_id
-    LIMIT 10000
-  `
-}
-
-function buildUsersRecentlyActiveNowInactiveSql(
-  sqlParts: SqlParts,
-  config: ResolvedChurnPretriageConfig,
-  now: Date,
-): string {
-  const heuristic = config.userHeuristics.allRecentlyActiveUsersNowInactive
-  const sqlNow = toSqlDateTime(now)
-
-  return `
-    SELECT
-      customer_id AS customerId,
-      user_id AS userId,
-      maxIf(
-        occurred_at,
-        occurred_at >= ${sqlNow} - INTERVAL ${heuristic.lookbackDays} DAY
-          AND occurred_at < ${sqlNow} - INTERVAL ${heuristic.inactiveDays} DAY
-      ) AS lastActivityBeforeInactiveWindow,
-      countDistinctIf(
-        toDate(occurred_at),
-        occurred_at >= ${sqlNow} - INTERVAL ${heuristic.lookbackDays} DAY
-          AND occurred_at < ${sqlNow} - INTERVAL ${heuristic.inactiveDays} DAY
-      ) AS priorActiveDays,
-      countIf(
-        occurred_at >= ${sqlNow} - INTERVAL ${heuristic.lookbackDays} DAY
-          AND occurred_at < ${sqlNow} - INTERVAL ${heuristic.inactiveDays} DAY
-      ) AS priorEventCount,
-      countIf(occurred_at >= ${sqlNow} - INTERVAL ${heuristic.inactiveDays} DAY) AS recentEventCount
-    FROM activity
-    WHERE occurred_at >= ${sqlNow} - INTERVAL ${heuristic.lookbackDays} DAY
-      AND occurred_at <= ${sqlNow}
-      AND customer_id != ''
-      AND user_id != ''
-      AND ${sqlParts.activityScopeFilter}
-      AND ${sqlParts.activityFilter}
-    GROUP BY customer_id, user_id
-    LIMIT 10000
-  `
-}
-
-function toSqlStringList(values: readonly string[]): string {
-  return values.map((value) => `'${escapeSqlString(value)}'`).join(", ")
-}
-
-function toSqlDateTime(date: Date): string {
-  return `parseDateTimeBestEffort('${escapeSqlString(date.toISOString())}')`
-}
-
-function escapeSqlString(value: string): string {
-  return value.replaceAll("\\", "\\\\").replaceAll("'", "''")
-}
-
-function normalizeEventNames(eventNames: string[]): string[] {
-  return eventNames.map((name) => name.trim().toLowerCase()).filter(Boolean)
-}
-
-function normalizeCustomerActivityRow(row: CustomerActivityRow): CustomerActivityRow {
-  return {
-    ...row,
-    activeDays30d: Number(row.activeDays30d),
-    eventCount30d: Number(row.eventCount30d),
-  }
-}
-
-function normalizeCustomerDropRow(row: CustomerDropRow): CustomerDropRow {
-  return {
-    ...row,
-    currentActiveDays: Number(row.currentActiveDays),
-    currentEventCount: Number(row.currentEventCount),
-    baselineActiveDays: Number(row.baselineActiveDays),
-    baselineEventCount: Number(row.baselineEventCount),
-  }
-}
-
-function normalizeUserActivityRow(row: UserActivityRow): UserActivityRow {
-  return {
-    ...row,
-    activeDaysObserved: Number(row.activeDaysObserved),
-  }
-}
-
-function normalizeUserInactivityRow(row: UserInactivityRow): UserInactivityRow {
-  return {
-    ...row,
-    priorActiveDays: Number(row.priorActiveDays),
-    priorEventCount: Number(row.priorEventCount),
-    recentEventCount: Number(row.recentEventCount),
-  }
 }
 
 function createCustomerAccumulator(
@@ -1359,7 +875,7 @@ function applyCustomerHeuristics(params: {
 
   if (resolvedConfig.customerHeuristics.daysSinceLastMeaningfulActivity.enabled) {
     for (const row of customerActivityRows) {
-      const daysSince = daysBetween(parseDate(row.lastMeaningfulActivityAt), now)
+      const daysSince = daysBetween(parseOutlitDate(row.lastMeaningfulActivityAt), now)
       const match = pickDaysThresholdMatch(
         "customer",
         "daysSinceLastMeaningfulActivity",
@@ -1385,7 +901,7 @@ function applyCustomerHeuristics(params: {
   if (resolvedConfig.customerHeuristics.activeDaysLast30d.enabled) {
     for (const row of customerActivityRows) {
       if (
-        daysBetween(parseDate(row.firstMeaningfulActivityAt), now) <
+        daysBetween(parseOutlitDate(row.firstMeaningfulActivityAt), now) <
         resolvedConfig.customerHeuristics.activeDaysLast30d.minimumCustomerAgeDays
       ) {
         continue
@@ -1482,7 +998,7 @@ function applyStaleUserHeuristic(params: {
       continue
     }
 
-    const daysSince = daysBetween(parseDate(row.lastMeaningfulActivityAt), params.now)
+    const daysSince = daysBetween(parseOutlitDate(row.lastMeaningfulActivityAt), params.now)
     const match = pickDaysThresholdMatch(
       "user",
       "daysSinceLastMeaningfulActivity",
@@ -1566,7 +1082,7 @@ function applyAllRecentlyActiveUsersNowInactiveHeuristic(params: {
       email: directoryUser?.email ?? null,
       name: directoryUser?.name ?? null,
       daysSinceLastMeaningfulActivity: daysBetween(
-        parseDate(row.lastActivityBeforeInactiveWindow),
+        parseOutlitDate(row.lastActivityBeforeInactiveWindow),
         params.now,
       ),
     })
@@ -1864,31 +1380,10 @@ function buildStateKey(level: "customer" | "user", key: string, bucket: string):
   return `${level}|${key}|${bucket}`
 }
 
-function buildFingerprint(stateKeys: string[]): string {
-  return [...stateKeys].sort().join(",")
-}
-
 function getHigherDisposition(left: ChurnDisposition, right: ChurnDisposition): ChurnDisposition {
   return dispositionRank(left) >= dispositionRank(right) ? left : right
 }
 
 function dispositionRank(disposition: ChurnDisposition): number {
   return disposition === "likely_churn" ? 2 : 1
-}
-
-function daysBetween(from: Date, to: Date): number {
-  return Math.floor((to.getTime() - from.getTime()) / (24 * 60 * 60 * 1000))
-}
-
-function parseDate(value: string): Date {
-  const date = new Date(hasExplicitTimezone(value) ? value : `${value}Z`)
-  if (Number.isNaN(date.getTime())) {
-    throw new Error(`Invalid date returned by Outlit query: ${value}`)
-  }
-
-  return date
-}
-
-function hasExplicitTimezone(value: string): boolean {
-  return /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value)
 }

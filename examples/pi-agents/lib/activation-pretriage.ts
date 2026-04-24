@@ -1,14 +1,23 @@
 import type { AgentToolResult, ToolDefinition } from "@mariozechner/pi-coding-agent"
-import {
-  createOutlitClient,
-  DEFAULT_OUTLIT_API_URL,
-  type OutlitToolsClient,
-  type OutlitToolsFetch,
-} from "@outlit/tools"
+import type { OutlitToolsFetch } from "@outlit/tools"
 import type { TSchema } from "@sinclair/typebox"
-
-const OUTLIT_API_KEY_ENV = "OUTLIT_API_KEY"
-const OUTLIT_API_URL_ENV = "OUTLIT_API_URL"
+import {
+  type CustomerDirectoryRow,
+  type EventActivationRow,
+  loadActivationData,
+  type UserActivationRow,
+} from "./activation-pretriage-data.js"
+import {
+  assertNonNegativeInteger,
+  assertPositiveInteger,
+  assertStringArray,
+  createPretriageClient,
+  isRecord,
+  normalizeMaxPromptCustomers,
+  normalizeNow,
+  normalizeToolInput,
+  type QueryClient,
+} from "./pretriage-utils.js"
 
 const activationPretriageToolParameters = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -55,32 +64,7 @@ export type OutlitActivationPretriageConfig = {
   }
 }
 
-type ResolvedActivationPretriageConfig = OutlitActivationPretriageConfig["defaults"]
-
-type CustomerDirectoryRow = {
-  customerId: string
-  customerName: string | null
-  domain: string | null
-  billingStatus: ActivationBillingStatus | null
-  mrrCents: number | null
-}
-
-type UserActivationRow = {
-  customerId: string
-  usersObserved: number
-  activatedUsers: number
-  firstUserSeenAt: string | null
-  lastUserActivityAt: string | null
-}
-
-type EventActivationRow = {
-  customerId: string
-  firstProductEventAt: string | null
-  lastProductEventAt: string | null
-  recentEventCount: number
-  recentActiveDays: number
-  activationEventCount: number
-}
+export type ResolvedActivationPretriageConfig = OutlitActivationPretriageConfig["defaults"]
 
 export type OutlitActivationPretriageSignal = {
   key: "noActivatedUsers" | "noActivationEvent" | "noRecentProductActivity" | "stalledAfterSignup"
@@ -128,7 +112,7 @@ export type OutlitActivationPretriageRunnerOptions = {
   apiKey?: string
   baseUrl?: string
   fetch?: OutlitToolsFetch
-  client?: Pick<OutlitToolsClient, "callTool">
+  client?: QueryClient
   config?: OutlitActivationPretriageConfig
   now?: Date | string
   scopeProfile?: ActivationScopeProfile
@@ -149,8 +133,6 @@ export type OutlitActivationPretriageToolDefinition = ToolDefinition<
   TSchema,
   OutlitActivationPretriageToolDetails
 >
-
-type QueryClient = Pick<OutlitToolsClient, "callTool">
 
 export const defaultActivationPretriageConfig: OutlitActivationPretriageConfig = {
   version: 1,
@@ -236,7 +218,7 @@ export function createOutlitActivationPretriageTool(
       "Outlit Activation Pretriage: deterministically surfaces accounts that have not reached first value.",
     parameters: activationPretriageToolParameters as unknown as TSchema,
     async execute(_toolCallId, params) {
-      const input = normalizeToolInput(params)
+      const input = normalizeToolInput(params, "activation")
       const result = await runOutlitActivationPretriage({
         ...options,
         scopeProfile: normalizeScopeProfile(input.scopeProfile),
@@ -249,63 +231,7 @@ export function createOutlitActivationPretriageTool(
 }
 
 function createRunnerClient(options: OutlitActivationPretriageRunnerOptions): QueryClient {
-  return createOutlitClient({
-    apiKey: resolveApiKey(options),
-    baseUrl: resolveBaseUrl(options),
-    fetch: options.fetch,
-  })
-}
-
-function resolveApiKey(options: OutlitActivationPretriageRunnerOptions): string {
-  const apiKey = normalizeString(options.apiKey) ?? normalizeString(process.env[OUTLIT_API_KEY_ENV])
-
-  if (!apiKey) {
-    throw new Error(`${OUTLIT_API_KEY_ENV} is required to run Outlit activation pretriage`)
-  }
-
-  return apiKey
-}
-
-function resolveBaseUrl(options: OutlitActivationPretriageRunnerOptions): string {
-  return (
-    normalizeString(options.baseUrl) ??
-    normalizeString(process.env[OUTLIT_API_URL_ENV]) ??
-    DEFAULT_OUTLIT_API_URL
-  )
-}
-
-function normalizeString(value: string | undefined): string | undefined {
-  const trimmed = value?.trim()
-  return trimmed ? trimmed : undefined
-}
-
-function normalizeNow(now: Date | string | undefined): Date {
-  if (now instanceof Date) {
-    return now
-  }
-
-  if (typeof now === "string") {
-    const date = new Date(now)
-    if (Number.isNaN(date.getTime())) {
-      throw new Error("now must be a valid date")
-    }
-
-    return date
-  }
-
-  return new Date()
-}
-
-function normalizeToolInput(params: unknown): Record<string, unknown> {
-  if (params === undefined) {
-    return {}
-  }
-
-  if (params === null || typeof params !== "object" || Array.isArray(params)) {
-    throw new TypeError("Outlit activation pretriage input must be an object")
-  }
-
-  return params as Record<string, unknown>
+  return createPretriageClient(options, "activation")
 }
 
 function normalizeScopeProfile(value: unknown): ActivationScopeProfile | undefined {
@@ -318,18 +244,6 @@ function normalizeScopeProfile(value: unknown): ActivationScopeProfile | undefin
   }
 
   throw new Error("scopeProfile must be configured, activation_accounts, or all_accounts")
-}
-
-function normalizeMaxPromptCustomers(value: unknown): number | undefined {
-  if (value === undefined) {
-    return undefined
-  }
-
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 50) {
-    throw new Error("maxPromptCustomers must be an integer from 1 to 50")
-  }
-
-  return value
 }
 
 function formatActivationToolResult(
@@ -391,28 +305,6 @@ function assertBillingStatus(
   }
 }
 
-function assertPositiveInteger(value: unknown, path: string): void {
-  if (!Number.isInteger(value) || Number(value) <= 0) {
-    throw new Error(`${path} must be a positive integer`)
-  }
-}
-
-function assertNonNegativeInteger(value: unknown, path: string): void {
-  if (!Number.isInteger(value) || Number(value) < 0) {
-    throw new Error(`${path} must be a non-negative integer`)
-  }
-}
-
-function assertStringArray(value: unknown, path: string): asserts value is string[] {
-  if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
-    throw new Error(`${path} must be an array of strings`)
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value)
-}
-
 function resolveScope(
   config: OutlitActivationPretriageConfig,
   scopeProfile: ActivationScopeProfile,
@@ -422,163 +314,6 @@ function resolveScope(
   }
 
   return config.scopeProfiles[scopeProfile]
-}
-
-async function loadActivationData(params: {
-  client: QueryClient
-  config: ResolvedActivationPretriageConfig
-  now: Date
-}): Promise<{
-  customerDirectory: Map<string, CustomerDirectoryRow>
-  userActivationRows: Map<string, UserActivationRow>
-  eventActivationRows: Map<string, EventActivationRow>
-}> {
-  const sqlParts = buildSqlParts(params.config)
-  const [customerDirectoryRows, userActivationRows, eventActivationRows] = await Promise.all([
-    queryRows<CustomerDirectoryRow>(params.client, buildCustomerDirectorySql(sqlParts)),
-    queryRows<UserActivationRow>(params.client, buildUserActivationSql(sqlParts, params.config)),
-    queryRows<EventActivationRow>(
-      params.client,
-      buildEventActivationSql(sqlParts, params.config, params.now),
-    ),
-  ])
-
-  return {
-    customerDirectory: new Map(
-      customerDirectoryRows.map((row) => [row.customerId, normalizeCustomerDirectoryRow(row)]),
-    ),
-    userActivationRows: new Map(
-      userActivationRows.map((row) => [row.customerId, normalizeUserActivationRow(row)]),
-    ),
-    eventActivationRows: new Map(
-      eventActivationRows.map((row) => [row.customerId, normalizeEventActivationRow(row)]),
-    ),
-  }
-}
-
-async function queryRows<TRow>(client: QueryClient, sql: string): Promise<TRow[]> {
-  const result = await client.callTool("outlit_query", { sql, limit: 10000 })
-
-  if (!isRecord(result)) {
-    throw new Error("outlit_query returned an unexpected response")
-  }
-
-  const rows = result.rows ?? result.data
-  if (!Array.isArray(rows)) {
-    throw new Error("outlit_query response must include rows")
-  }
-
-  return rows as TRow[]
-}
-
-type SqlParts = {
-  customerScopeFilter: string
-  eventScopeFilter: string
-  userScopeFilter: string
-}
-
-function buildSqlParts(config: ResolvedActivationPretriageConfig): SqlParts {
-  const scopeFilter = buildScopeFilter(config.scope)
-
-  return {
-    customerScopeFilter: scopeFilter.customerDimensions,
-    eventScopeFilter: scopeFilter.events,
-    userScopeFilter: scopeFilter.userDimensions,
-  }
-}
-
-function buildScopeFilter(scope: ActivationScope): {
-  customerDimensions: string
-  events: string
-  userDimensions: string
-} {
-  if (scope.billingStatuses.length === 0) {
-    return {
-      customerDimensions: "1 = 1",
-      events: "1 = 1",
-      userDimensions: "1 = 1",
-    }
-  }
-
-  const statuses = toSqlStringList(scope.billingStatuses)
-
-  return {
-    customerDimensions: `billing_status IN (${statuses})`,
-    events: `customer_id IN (
-      SELECT customer_id
-      FROM customer_dimensions
-      WHERE billing_status IN (${statuses})
-    )`,
-    userDimensions: `customer_id IN (
-      SELECT customer_id
-      FROM customer_dimensions
-      WHERE billing_status IN (${statuses})
-    )`,
-  }
-}
-
-function buildCustomerDirectorySql(sqlParts: SqlParts): string {
-  return `
-    SELECT
-      customer_id AS customerId,
-      any(name) AS customerName,
-      any(domain) AS domain,
-      any(billing_status) AS billingStatus,
-      any(mrr_cents) AS mrrCents
-    FROM customer_dimensions
-    WHERE customer_id != ''
-      AND ${sqlParts.customerScopeFilter}
-    GROUP BY customer_id
-    ORDER BY mrrCents DESC
-    LIMIT 10000
-  `
-}
-
-function buildUserActivationSql(
-  sqlParts: SqlParts,
-  config: ResolvedActivationPretriageConfig,
-): string {
-  return `
-    SELECT
-      customer_id AS customerId,
-      countDistinct(user_id) AS usersObserved,
-      countDistinctIf(user_id, journey_stage IN (${toSqlStringList(config.activatedStages)})) AS activatedUsers,
-      min(first_seen_at) AS firstUserSeenAt,
-      max(last_activity_at) AS lastUserActivityAt
-    FROM user_dimensions
-    WHERE customer_id != ''
-      AND user_id != ''
-      AND ${sqlParts.userScopeFilter}
-    GROUP BY customer_id
-    LIMIT 10000
-  `
-}
-
-function buildEventActivationSql(
-  sqlParts: SqlParts,
-  config: ResolvedActivationPretriageConfig,
-  now: Date,
-): string {
-  const sqlNow = toSqlDateTime(now)
-
-  return `
-    SELECT
-      customer_id AS customerId,
-      min(occurred_at) AS firstProductEventAt,
-      max(occurred_at) AS lastProductEventAt,
-      countIf(occurred_at >= ${sqlNow} - INTERVAL ${config.recentActivityWindowDays} DAY) AS recentEventCount,
-      countDistinctIf(
-        toDate(occurred_at),
-        occurred_at >= ${sqlNow} - INTERVAL ${config.recentActivityWindowDays} DAY
-      ) AS recentActiveDays,
-      countIf(lower(trim(event_name)) IN (${toSqlStringList(normalizeEventNames(config.activationEventNames))})) AS activationEventCount
-    FROM events
-    WHERE occurred_at <= ${sqlNow}
-      AND customer_id != ''
-      AND ${sqlParts.eventScopeFilter}
-    GROUP BY customer_id
-    LIMIT 10000
-  `
 }
 
 function finalizeActivationCustomers(params: {
@@ -763,30 +498,6 @@ function toPromptActivationCustomer(customer: OutlitActivationPretriageCustomer)
   }
 }
 
-function normalizeCustomerDirectoryRow(row: CustomerDirectoryRow): CustomerDirectoryRow {
-  return {
-    ...row,
-    mrrCents: row.mrrCents === null ? null : Number(row.mrrCents),
-  }
-}
-
-function normalizeUserActivationRow(row: UserActivationRow): UserActivationRow {
-  return {
-    ...row,
-    usersObserved: Number(row.usersObserved),
-    activatedUsers: Number(row.activatedUsers),
-  }
-}
-
-function normalizeEventActivationRow(row: EventActivationRow): EventActivationRow {
-  return {
-    ...row,
-    recentEventCount: Number(row.recentEventCount),
-    recentActiveDays: Number(row.recentActiveDays),
-    activationEventCount: Number(row.activationEventCount),
-  }
-}
-
 function daysSince(now: Date, value: string | null | undefined): number | null {
   if (!value) {
     return null
@@ -809,20 +520,4 @@ function buildFingerprint(
     customer.billingStatus ?? "UNKNOWN",
     ...signals.map((signal) => `${signal.key}:${signal.value ?? ""}`),
   ].join("|")
-}
-
-function toSqlDateTime(date: Date): string {
-  return `parseDateTimeBestEffort('${escapeSqlString(date.toISOString())}')`
-}
-
-function toSqlStringList(values: readonly string[]): string {
-  return values.map((value) => `'${escapeSqlString(value)}'`).join(", ")
-}
-
-function escapeSqlString(value: string): string {
-  return value.replaceAll("\\", "\\\\").replaceAll("'", "''")
-}
-
-function normalizeEventNames(eventNames: string[]): string[] {
-  return eventNames.map((name) => name.trim().toLowerCase()).filter(Boolean)
 }
