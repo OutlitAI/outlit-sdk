@@ -193,6 +193,7 @@ export type OutlitChurnPretriageCustomer = {
 }
 
 export type OutlitChurnPretriageResult = {
+  kind: "churn"
   enabled: true
   generatedAt: string
   scopeProfile: ChurnScopeProfile
@@ -396,6 +397,7 @@ export async function runOutlitChurnPretriage(
   const summary = buildPretriageSummary(surfacedCustomers, includedCustomers)
 
   return {
+    kind: "churn",
     enabled: true,
     generatedAt: now.toISOString(),
     scopeProfile,
