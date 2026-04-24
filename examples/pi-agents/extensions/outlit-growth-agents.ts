@@ -295,7 +295,7 @@ function formatPretriageNotification(
   result: OutlitChurnPretriageResult | OutlitActivationPretriageResult,
 ): string {
   const label =
-    "likelyChurnCustomers" in result.summary
+    result.kind === "churn"
       ? "Outlit deterministic churn pretriage"
       : "Outlit deterministic activation pretriage"
   return `${label} surfaced ${result.summary.customersIncludedThisRun} of ${result.summary.totalSurfacedCustomers} customers`

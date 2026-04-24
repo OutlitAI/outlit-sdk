@@ -95,6 +95,7 @@ export type OutlitActivationPretriageCustomer = {
 }
 
 export type OutlitActivationPretriageResult = {
+  kind: "activation"
   enabled: true
   generatedAt: string
   scopeProfile: ActivationScopeProfile
@@ -192,6 +193,7 @@ export async function runOutlitActivationPretriage(
   }
 
   return {
+    kind: "activation",
     enabled: true,
     generatedAt: now.toISOString(),
     scopeProfile,
@@ -352,10 +354,6 @@ function finalizeActivationCustomers(params: {
       recentActiveDays: eventRow?.recentActiveDays ?? 0,
       lastUserActivityDays,
     })
-
-    if (signals.length === 0) {
-      continue
-    }
 
     customers.push({
       ...customer,

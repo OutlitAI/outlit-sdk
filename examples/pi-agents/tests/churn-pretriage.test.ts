@@ -4,6 +4,7 @@ import {
   createOutlitChurnPretriageTool,
   defaultChurnPretriageConfig,
   type OutlitChurnPretriageConfig,
+  type OutlitChurnPretriageToolDefinition,
   runOutlitChurnPretriage,
 } from "../lib/churn-pretriage.js"
 
@@ -297,6 +298,7 @@ describe("runOutlitChurnPretriage", () => {
     expect(normalizedSql).toContain("event_name")
     expect(normalizedSql).toContain("$autocapture")
 
+    expect(result.kind).toBe("churn")
     expect(result.summary).toMatchObject({
       totalSurfacedCustomers: 5,
       customersIncludedThisRun: 5,
@@ -535,13 +537,10 @@ describe("createOutlitChurnPretriageTool", () => {
       now: fixedNow,
     })
 
-    const result = await tool.execute(
-      "call_1",
-      { scopeProfile: "revenue_accounts", maxPromptCustomers: 5 },
-      undefined,
-      undefined,
-      undefined as never,
-    )
+    const result = await executeChurnToolWithDefaults(tool, "call_1", {
+      scopeProfile: "revenue_accounts",
+      maxPromptCustomers: 5,
+    })
 
     expect(tool.name).toBe("outlit_churn_pretriage")
     expect(result.details.toolName).toBe("outlit_churn_pretriage")
@@ -557,3 +556,11 @@ describe("createOutlitChurnPretriageTool", () => {
     expect(content.text).toContain("Do not rank a customer")
   })
 })
+
+function executeChurnToolWithDefaults(
+  tool: OutlitChurnPretriageToolDefinition,
+  callId: string,
+  params: Record<string, unknown>,
+) {
+  return tool.execute(callId, params, undefined, undefined, undefined as never)
+}

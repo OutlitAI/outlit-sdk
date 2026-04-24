@@ -4,6 +4,7 @@ import {
   createOutlitActivationPretriageTool,
   defaultActivationPretriageConfig,
   type OutlitActivationPretriageConfig,
+  type OutlitActivationPretriageToolDefinition,
   runOutlitActivationPretriage,
 } from "../lib/activation-pretriage.js"
 
@@ -93,6 +94,7 @@ describe("runOutlitActivationPretriage", () => {
     expect(queryMock.mock.calls[2]?.[1]).toMatchObject({
       sql: expect.stringContaining("parseDateTimeBestEffort('2026-04-15T12:00:00.000Z')"),
     })
+    expect(result.kind).toBe("activation")
     expect(result.summary).toMatchObject({
       totalSurfacedCustomers: 1,
       customersIncludedThisRun: 1,
@@ -146,13 +148,10 @@ describe("createOutlitActivationPretriageTool", () => {
       now: fixedNow,
     })
 
-    const result = await tool.execute(
-      "call_1",
-      { scopeProfile: "activation_accounts", maxPromptCustomers: 5 },
-      undefined,
-      undefined,
-      undefined as never,
-    )
+    const result = await executeActivationToolWithDefaults(tool, "call_1", {
+      scopeProfile: "activation_accounts",
+      maxPromptCustomers: 5,
+    })
 
     expect(tool.name).toBe("outlit_activation_pretriage")
     expect(result.details.toolName).toBe("outlit_activation_pretriage")
@@ -167,3 +166,11 @@ describe("createOutlitActivationPretriageTool", () => {
     expect(content.text).toContain("Candidate accounting")
   })
 })
+
+function executeActivationToolWithDefaults(
+  tool: OutlitActivationPretriageToolDefinition,
+  callId: string,
+  params: Record<string, unknown>,
+) {
+  return tool.execute(callId, params, undefined, undefined, undefined as never)
+}
