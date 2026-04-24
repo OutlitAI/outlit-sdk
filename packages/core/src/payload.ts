@@ -1,3 +1,4 @@
+import { v7 as uuidv7 } from "uuid"
 import type {
   BillingEvent,
   BillingStatus,
@@ -36,6 +37,7 @@ interface BaseEventParams {
 export function buildPageviewEvent(params: BaseEventParams & { title?: string }): PageviewEvent {
   const { url, referrer, timestamp, title } = params
   return {
+    uuid: uuidv7(),
     type: "pageview",
     timestamp: timestamp ?? Date.now(),
     url,
@@ -57,6 +59,7 @@ export function buildFormEvent(
 ): FormEvent {
   const { url, referrer, timestamp, formId, formFields } = params
   return {
+    uuid: uuidv7(),
     type: "form",
     timestamp: timestamp ?? Date.now(),
     url,
@@ -93,6 +96,7 @@ export function buildIdentifyEvent(
     customerTraits,
   } = params
   return {
+    uuid: uuidv7(),
     type: "identify",
     timestamp: timestamp ?? Date.now(),
     url,
@@ -133,6 +137,7 @@ export function buildCustomEvent(
     customerId,
   } = params
   return {
+    uuid: uuidv7(),
     type: "custom",
     timestamp: timestamp ?? Date.now(),
     url,
@@ -177,6 +182,7 @@ export function buildCalendarEvent(
     inviteeName,
   } = params
   return {
+    uuid: uuidv7(),
     type: "calendar",
     timestamp: timestamp ?? Date.now(),
     url,
@@ -207,6 +213,7 @@ export function buildEngagementEvent(
 ): EngagementEvent {
   const { url, referrer, timestamp, activeTimeMs, totalTimeMs, sessionId } = params
   return {
+    uuid: uuidv7(),
     type: "engagement",
     timestamp: timestamp ?? Date.now(),
     url,
@@ -232,6 +239,7 @@ export function buildStageEvent(
 ): StageEvent {
   const { url, referrer, timestamp, stage, properties } = params
   return {
+    uuid: uuidv7(),
     type: "stage",
     timestamp: timestamp ?? Date.now(),
     url,
@@ -257,6 +265,7 @@ export function buildBillingEvent(
 ): BillingEvent {
   const { url, referrer, timestamp, status, customerId, stripeCustomerId, properties } = params
   return {
+    uuid: uuidv7(),
     type: "billing",
     timestamp: timestamp ?? Date.now(),
     url,
