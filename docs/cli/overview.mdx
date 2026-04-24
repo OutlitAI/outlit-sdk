@@ -74,7 +74,7 @@ outlit --version
     outlit search "pricing objections last quarter"
 
     # Run SQL
-    outlit sql "SELECT event_type, COUNT(*) FROM events GROUP BY 1"
+    outlit sql "SELECT event_type, COUNT(*) FROM activity GROUP BY 1"
     ```
   </Step>
   <Step title="Set up AI agents (optional)">
@@ -147,8 +147,8 @@ ok_ab...1234 (config)
 | [`facts`](/cli/commands#facts) | Retrieve AI-generated facts and signals for a customer |
 | [`search`](/cli/commands#search) | Natural language search across customer context |
 | [`sources get`](/cli/commands#sources) | Retrieve one exact source record behind a fact or search result |
-| [`sql`](/cli/commands#sql) | Run SQL queries against analytics tables |
-| [`schema`](/cli/commands#schema) | Discover database tables and columns |
+| [`sql`](/cli/commands#sql) | Run SQL queries against analytics views |
+| [`schema`](/cli/commands#schema) | Discover database views and columns |
 | [`integrations list`](/cli/integrations#integrations-list) | List available integrations and connection status |
 | [`integrations add`](/cli/integrations#integrations-add) | Connect a new integration (OAuth or API key) |
 | [`integrations remove`](/cli/integrations#integrations-remove) | Disconnect an integration and remove synced data |

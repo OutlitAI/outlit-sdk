@@ -4,12 +4,12 @@ Use this when writing or debugging `outlit_query` queries.
 
 Always inspect schema first with `outlit_schema`.
 
-## Tables
+## Views
 
-- `events`: product and communication activity
-- `customer_dimensions`: customer attributes, billing, revenue
-- `user_dimensions`: user attributes and journey stages
-- `mrr_snapshots`: daily MRR snapshots
+- `activity`: product and communication activity
+- `customers`: customer attributes, billing, revenue
+- `users`: user attributes and journey stages
+- `revenue`: daily MRR snapshots
 
 ## ClickHouse Patterns
 
@@ -22,6 +22,7 @@ occurred_at >= now() - INTERVAL 30 DAY
 countIf(billing_status = 'PAYING')
 sumIf(mrr_cents, billing_status = 'PAYING')
 JSONExtractString(properties, 'path')
+JSONExtractString(traits, 'plan')
 ```
 
 Prefer `event_name` when you need the raw tracked event name for include/exclude lists or product workflow analysis, and `event_type` for broader event classes.

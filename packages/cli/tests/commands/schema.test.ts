@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
-  TEST_API_KEY,
   expectErrorExit,
   mockExitThrow,
   setNonInteractive,
+  TEST_API_KEY,
   useTempEnv,
 } from "../helpers"
 
@@ -33,12 +33,12 @@ describe("schema", () => {
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await schemaCmd.run!({
-        args: { table: "events", json: true },
+        args: { table: "activity", json: true },
       } as Parameters<NonNullable<typeof schemaCmd.run>>[0])
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_schema",
-        expect.objectContaining({ table: "events" }),
+        expect.objectContaining({ table: "activity" }),
       )
     } finally {
       writeSpy.mockRestore()

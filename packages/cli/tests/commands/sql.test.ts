@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
-  TEST_API_KEY,
   expectErrorExit,
   mockExitThrow,
   setNonInteractive,
+  TEST_API_KEY,
   useTempEnv,
 } from "../helpers"
 
@@ -57,7 +57,7 @@ describe("sql", () => {
   })
 
   test("--query-file reads file and sends contents as sql", async () => {
-    mockReadFileSync.mockReturnValueOnce("SELECT * FROM events")
+    mockReadFileSync.mockReturnValueOnce("SELECT * FROM activity")
     const { default: sqlCmd } = await import("../../src/commands/sql")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -67,7 +67,7 @@ describe("sql", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_query",
-        expect.objectContaining({ sql: "SELECT * FROM events" }),
+        expect.objectContaining({ sql: "SELECT * FROM activity" }),
       )
     } finally {
       writeSpy.mockRestore()
@@ -75,7 +75,7 @@ describe("sql", () => {
   })
 
   test("--query-file takes precedence over positional", async () => {
-    mockReadFileSync.mockReturnValueOnce("SELECT * FROM mrr_snapshots")
+    mockReadFileSync.mockReturnValueOnce("SELECT * FROM revenue")
     const { default: sqlCmd } = await import("../../src/commands/sql")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -85,7 +85,7 @@ describe("sql", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_query",
-        expect.objectContaining({ sql: "SELECT * FROM mrr_snapshots" }),
+        expect.objectContaining({ sql: "SELECT * FROM revenue" }),
       )
     } finally {
       writeSpy.mockRestore()
@@ -134,6 +134,31 @@ describe("sql", () => {
       stderrSpy.mockRestore()
 
       expectErrorExit(thrown, stderrOutput, "file_error")
+    }
+  })
+
+  test.each([
+    ["1.5", "--limit must be an integer between 1 and 10000"],
+    ["10001", "--limit must be an integer between 1 and 10000"],
+  ])("invalid_input error when --limit is %s", async (limit, expectedMessage) => {
+    const { default: sqlCmd } = await import("../../src/commands/sql")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await sqlCmd.run!({
+        args: { query: "SELECT 1", limit, json: true },
+      } as Parameters<NonNullable<typeof sqlCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(stderrOutput).toContain(expectedMessage)
     }
   })
 })

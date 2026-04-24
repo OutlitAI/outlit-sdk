@@ -92,7 +92,7 @@ Once the skill is installed, OpenClaw learns how to use the full `outlit` CLI. Y
 | "Search for pricing concerns across all customers" | `outlit search "pricing concerns"` |
 | "What do we know about acme.com recently?" | `outlit facts list acme.com --status ACTIVE --limit 20` |
 | "Open the exact call behind that search result" | `outlit sources get --source-type CALL --source-id call_123` |
-| "Which event types fire most often?" | `outlit sql "SELECT event_type, COUNT(*) FROM events GROUP BY 1 ORDER BY 2 DESC LIMIT 10"` |
+| "Which event types fire most often?" | `outlit sql "SELECT event_type, COUNT(*) FROM activity GROUP BY 1 ORDER BY 2 DESC LIMIT 10"` |
 | "Show me the database schema" | `outlit schema` |
 
 OpenClaw parses JSON responses, converts monetary values from cents to dollars, and handles pagination automatically, all guided by the skill's built-in rules.
@@ -136,7 +136,7 @@ openclaw cron add \
   --name "Revenue Snapshot" \
   --cron "0 9 * * 1" \
   --tz "America/New_York" \
-  --message "Run: outlit sql \"SELECT domain, mrr_cents FROM customer_dimensions ORDER BY mrr_cents DESC LIMIT 15\". Format as a revenue snapshot table, convert cents to dollars, show rank, and note the total MRR across all listed accounts." \
+  --message "Run: outlit sql \"SELECT domain, mrr_cents FROM customers ORDER BY mrr_cents DESC LIMIT 15\". Format as a revenue snapshot table, convert cents to dollars, show rank, and note the total MRR across all listed accounts." \
   --announce
 ```
 
