@@ -252,11 +252,21 @@ export const customerToolContracts = {
           description: "Customer ID or domain",
         },
         channels: {
-          description: "Filter by event channel (e.g., EMAIL, SLACK, CALL)",
+          description: "Filter by event channel (e.g., EMAIL, SLACK, CALL, CALENDAR)",
           type: "array",
           items: {
             type: "string",
-            enum: ["SDK", "EMAIL", "SLACK", "CALL", "CRM", "BILLING", "SUPPORT", "INTERNAL"],
+            enum: [
+              "SDK",
+              "EMAIL",
+              "SLACK",
+              "CALL",
+              "CALENDAR",
+              "CRM",
+              "BILLING",
+              "SUPPORT",
+              "INTERNAL",
+            ],
           },
         },
         eventTypes: {
@@ -737,6 +747,7 @@ export const timelineChannels = [
   "EMAIL",
   "SLACK",
   "CALL",
+  "CALENDAR",
   "CRM",
   "BILLING",
   "SUPPORT",
@@ -763,7 +774,7 @@ export const schemaTables = [
 ] as const
 
 export const customerToolContractHash =
-  "418e8b5f0f3f6e5eefefcf32aabbb0d53e87e04b98d3626e88f7e0e7a7cb564c" as const
+  "08b1b936a2f6aec30d5077f76377623715103f516873a5ef51b72d3ddbe1103c" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]
