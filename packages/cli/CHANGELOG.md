@@ -1,5 +1,20 @@
 # @outlit/cli
 
+## 1.6.3
+
+### Patch Changes
+
+- [#110](https://github.com/OutlitAI/outlit-sdk/pull/110) [`85eeca2`](https://github.com/OutlitAI/outlit-sdk/commit/85eeca2f5c4ae3155665852c9294bf89ddbd36fb) Thanks [@leo-paz](https://github.com/leo-paz)! - Add OPPORTUNITY as the canonical CRM opportunity source type and accept CRM and CRM_OPPORTUNITY as input aliases.
+
+- [#116](https://github.com/OutlitAI/outlit-sdk/pull/116) [`591dcaa`](https://github.com/OutlitAI/outlit-sdk/commit/591dcaa51cb8cee2d144de137f404b9a13cfd99a) Thanks [@leo-paz](https://github.com/leo-paz)! - Finish SDK-facing SQL view updates by aligning schema wording and example agent queries with public analytics views.
+
+- [#115](https://github.com/OutlitAI/outlit-sdk/pull/115) [`842bbe8`](https://github.com/OutlitAI/outlit-sdk/commit/842bbe852b511dcabb50e610bfd13e69f99d8092) Thanks [@leo-paz](https://github.com/leo-paz)! - Update SQL tool contracts, CLI help, and Pi SQL guidance to use the public analytics views.
+
+- [#117](https://github.com/OutlitAI/outlit-sdk/pull/117) [`dad1680`](https://github.com/OutlitAI/outlit-sdk/commit/dad168054587355d64ab50fec133cec005957627) Thanks [@leo-paz](https://github.com/leo-paz)! - Remove backend-specific SQL wording from public analytics view guidance.
+
+- Updated dependencies [[`d0dff81`](https://github.com/OutlitAI/outlit-sdk/commit/d0dff81fbc11c030b728ccf057601c8437e6215d), [`85eeca2`](https://github.com/OutlitAI/outlit-sdk/commit/85eeca2f5c4ae3155665852c9294bf89ddbd36fb), [`591dcaa`](https://github.com/OutlitAI/outlit-sdk/commit/591dcaa51cb8cee2d144de137f404b9a13cfd99a), [`842bbe8`](https://github.com/OutlitAI/outlit-sdk/commit/842bbe852b511dcabb50e610bfd13e69f99d8092), [`dad1680`](https://github.com/OutlitAI/outlit-sdk/commit/dad168054587355d64ab50fec133cec005957627)]:
+  - @outlit/tools@0.1.2
+
 ## 1.6.2
 
 ### Patch Changes

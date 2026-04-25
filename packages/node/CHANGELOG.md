@@ -1,5 +1,14 @@
 # @outlit/node
 
+## 1.5.1
+
+### Patch Changes
+
+- [#113](https://github.com/OutlitAI/outlit-sdk/pull/113) [`36b1ce4`](https://github.com/OutlitAI/outlit-sdk/commit/36b1ce48cb211ababdf51e24c37842880c3b73a8) Thanks [@leo-paz](https://github.com/leo-paz)! - Generate UUIDv7 identifiers on SDK events so ingestion can deduplicate retries consistently.
+
+- Updated dependencies [[`36b1ce4`](https://github.com/OutlitAI/outlit-sdk/commit/36b1ce48cb211ababdf51e24c37842880c3b73a8)]:
+  - @outlit/core@1.5.1
+
 ## 1.5.0
 
 ### Minor Changes
