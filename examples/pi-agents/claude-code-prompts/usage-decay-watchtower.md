@@ -13,7 +13,7 @@ Use only Outlit customer data through the `outlit` CLI. Do not inspect local rep
 Objective: find paying customers whose product behavior suggests they may cancel soon, even when there is no renewal date or explicit renewal conversation.
 
 Process:
-1. Run `outlit schema` when you need table names or fields, then use `outlit sql` to find paying customers with stale activity, declining event volume, shrinking active-user counts, or meaningful MRR.
+1. Run `outlit schema` when you need view names or fields, then use `outlit sql` to find paying customers with stale activity, declining event volume, shrinking active-user counts, or meaningful MRR.
 2. Discover paying customers with CLI customer commands as needed. Prefer meaningful MRR and signs of stale or declining activity.
 3. For each candidate, gather customer details, recent timeline, users, facts, billing context, and semantic search evidence.
    Use fact filters such as `outlit facts list <customer> --fact-types CHURN_RISK,SENTIMENT,PRODUCT_USAGE,CHAMPION_RISK,BUDGET --json` for customer-memory context when available.

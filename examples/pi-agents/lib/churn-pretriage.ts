@@ -1010,7 +1010,7 @@ async function queryRows<TRow>(client: QueryClient, sql: string): Promise<TRow[]
 type SqlParts = {
   activityFilter: string
   customerScopeFilter: string
-  eventScopeFilter: string
+  activityScopeFilter: string
   userScopeFilter: string
 }
 
@@ -1019,37 +1019,37 @@ function buildSqlParts(config: ResolvedChurnPretriageConfig): SqlParts {
 
   return {
     activityFilter: buildMeaningfulActivityFilter(config.activityDefinition),
-    customerScopeFilter: scopeFilter.customerDimensions,
-    eventScopeFilter: scopeFilter.events,
-    userScopeFilter: scopeFilter.userDimensions,
+    customerScopeFilter: scopeFilter.customers,
+    activityScopeFilter: scopeFilter.activity,
+    userScopeFilter: scopeFilter.users,
   }
 }
 
 function buildScopeFilter(scope: ChurnScope): {
-  customerDimensions: string
-  events: string
-  userDimensions: string
+  customers: string
+  activity: string
+  users: string
 } {
   if (scope.billingStatuses.length === 0) {
     return {
-      customerDimensions: "1 = 1",
-      events: "1 = 1",
-      userDimensions: "1 = 1",
+      customers: "1 = 1",
+      activity: "1 = 1",
+      users: "1 = 1",
     }
   }
 
   const statuses = toSqlStringList(scope.billingStatuses)
 
   return {
-    customerDimensions: `billing_status IN (${statuses})`,
-    events: `customer_id IN (
+    customers: `billing_status IN (${statuses})`,
+    activity: `customer_id IN (
       SELECT customer_id
-      FROM customer_dimensions
+      FROM customers
       WHERE billing_status IN (${statuses})
     )`,
-    userDimensions: `customer_id IN (
+    users: `customer_id IN (
       SELECT customer_id
-      FROM customer_dimensions
+      FROM customers
       WHERE billing_status IN (${statuses})
     )`,
   }
@@ -1080,7 +1080,7 @@ function buildCustomerDirectorySql(sqlParts: SqlParts): string {
       any(domain) AS domain,
       any(billing_status) AS billingStatus,
       any(mrr_cents) AS mrrCents
-    FROM customer_dimensions
+    FROM customers
     WHERE customer_id != ''
       AND ${sqlParts.customerScopeFilter}
     GROUP BY customer_id
@@ -1097,10 +1097,10 @@ function buildCustomerActivitySql(sqlParts: SqlParts): string {
       max(occurred_at) AS lastMeaningfulActivityAt,
       countDistinctIf(toDate(occurred_at), occurred_at >= now() - INTERVAL 30 DAY) AS activeDays30d,
       countIf(occurred_at >= now() - INTERVAL 30 DAY) AS eventCount30d
-    FROM events
+    FROM activity
     WHERE occurred_at >= now() - INTERVAL ${ACTIVITY_LOOKBACK_DAYS} DAY
       AND customer_id != ''
-      AND ${sqlParts.eventScopeFilter}
+      AND ${sqlParts.activityScopeFilter}
       AND ${sqlParts.activityFilter}
     GROUP BY customer_id
     LIMIT 10000
@@ -1131,10 +1131,10 @@ function buildCustomerDropVsBaselineSql(
         occurred_at >= now() - INTERVAL ${baselineAndWindowDays} DAY
           AND occurred_at < now() - INTERVAL ${heuristic.windowDays} DAY
       ) AS baselineEventCount
-    FROM events
+    FROM activity
     WHERE occurred_at >= now() - INTERVAL ${baselineAndWindowDays} DAY
       AND customer_id != ''
-      AND ${sqlParts.eventScopeFilter}
+      AND ${sqlParts.activityScopeFilter}
       AND ${sqlParts.activityFilter}
     GROUP BY customer_id
     LIMIT 10000
@@ -1148,7 +1148,7 @@ function buildUserDirectorySql(sqlParts: SqlParts): string {
       user_id AS userId,
       any(email) AS email,
       any(name) AS name
-    FROM user_dimensions
+    FROM users
     WHERE customer_id != ''
       AND user_id != ''
       AND ${sqlParts.userScopeFilter}
@@ -1164,11 +1164,11 @@ function buildUserActivitySql(sqlParts: SqlParts): string {
       user_id AS userId,
       max(occurred_at) AS lastMeaningfulActivityAt,
       countDistinct(toDate(occurred_at)) AS activeDaysObserved
-    FROM events
+    FROM activity
     WHERE occurred_at >= now() - INTERVAL ${ACTIVITY_LOOKBACK_DAYS} DAY
       AND customer_id != ''
       AND user_id != ''
-      AND ${sqlParts.eventScopeFilter}
+      AND ${sqlParts.activityScopeFilter}
       AND ${sqlParts.activityFilter}
     GROUP BY customer_id, user_id
     LIMIT 10000
@@ -1200,11 +1200,11 @@ function buildUsersRecentlyActiveNowInactiveSql(
           AND occurred_at < now() - INTERVAL ${heuristic.inactiveDays} DAY
       ) AS priorEventCount,
       countIf(occurred_at >= now() - INTERVAL ${heuristic.inactiveDays} DAY) AS recentEventCount
-    FROM events
+    FROM activity
     WHERE occurred_at >= now() - INTERVAL ${heuristic.lookbackDays} DAY
       AND customer_id != ''
       AND user_id != ''
-      AND ${sqlParts.eventScopeFilter}
+      AND ${sqlParts.activityScopeFilter}
       AND ${sqlParts.activityFilter}
     GROUP BY customer_id, user_id
     LIMIT 10000

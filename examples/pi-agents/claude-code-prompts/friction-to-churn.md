@@ -13,7 +13,7 @@ Use only Outlit customer data through the `outlit` CLI. Do not inspect local rep
 Objective: find accounts where support issues, product blockers, failed integrations, bugs, repeated complaints, or negative sentiment are threatening retention.
 
 Process:
-1. Run `outlit schema` when you need table names or fields, then use `outlit sql` to find repeated friction patterns, event counts, affected customers, or high-MRR accounts with support/context signals.
+1. Run `outlit schema` when you need view names or fields, then use `outlit sql` to find repeated friction patterns, event counts, affected customers, or high-MRR accounts with support/context signals.
 2. Search across customer context for complaints, bugs, blockers, failed setup, failed integrations, missing integrations, negative sentiment, escalation, refund, cancel, downgrade, and no value.
 3. For each candidate, gather customer details, recent timeline, facts, source evidence, billing context, and usage context.
    Use fact filters such as `outlit facts list <customer> --fact-types CHURN_RISK,SENTIMENT,REQUIREMENTS,PRODUCT_USAGE --source-types SUPPORT_TICKET --json` when you need support-backed customer-memory evidence.

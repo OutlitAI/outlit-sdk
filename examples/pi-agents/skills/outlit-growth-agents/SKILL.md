@@ -16,7 +16,7 @@ Use Outlit tools to ground customer signal work in actual customer data. These a
    - Expansion readiness: healthy customers with evidence they may upgrade, add seats, or buy more.
 2. Discover candidates.
    - For usage decay churn, call `outlit_churn_pretriage` first when it is available. Treat the surfaced customers as the investigation set unless the user explicitly asks for a broader scan.
-   - Use `outlit_schema` before SQL when you need table names, columns, or valid query surfaces.
+   - Use `outlit_schema` before SQL when you need view names, columns, or valid query surfaces.
    - Use `outlit_query` for cohorts, usage trends, active-user counts, activation gaps, revenue filters, event aggregates, and repeated signal patterns.
    - Use `outlit_list_customers` for portfolio scans, billing status, MRR, activity recency, and customer search.
    - Use `outlit_list_users` when account-level behavior depends on user activation, active users, or champion disappearance.
@@ -44,7 +44,7 @@ Keep these categories separate:
 - Expansion readiness: account shows buying intent, capacity pressure, plan-limit pain, seat growth, or strong value realization.
 - Renewal or procurement risk: contract, legal, pricing, or procurement risk. Do not call this churn unless there is cancellation, downgrade, non-use, or failed value realization evidence.
 - Billing cancellation, subscription pause, legal review, procurement delay, or renewal risk can support a finding, but they do not replace the specific evidence required by each agent.
-- Behavioral/anomaly fact types can be useful if present, but do not require or assume them. Many customers will not have configured core actions, activation paths, or funnel paths. Use SQL over events/users/revenue as the primary source for usage decay and activation analysis.
+- Behavioral/anomaly fact types can be useful if present, but do not require or assume them. Many customers will not have configured core actions, activation paths, or funnel paths. Use SQL over the activity, users, and revenue views as the primary source for usage decay and activation analysis.
 
 ## Useful Fact Filters
 

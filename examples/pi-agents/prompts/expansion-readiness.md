@@ -7,7 +7,7 @@ Run the Expansion Readiness Agent for $ARGUMENTS.
 If no customer or segment is provided, scan active paying customers and identify the 5-8 strongest expansion opportunities.
 
 Use Outlit tools to gather evidence before ranking:
-- Use `outlit_schema` if you need table names, then use `outlit_query` to find usage growth, active-user growth, plan-limit patterns, high product volume, or small-plan accounts with power-user behavior.
+- Use `outlit_schema` if you need view names, then use `outlit_query` to find usage growth, active-user growth, plan-limit patterns, high product volume, or small-plan accounts with power-user behavior.
 - Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
 - Start with active paying customers, especially small-plan or starter-plan accounts with meaningful usage.
 - Pull customer details with revenue, users, recent timeline, and behavior metrics when available.

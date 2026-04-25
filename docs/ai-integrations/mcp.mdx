@@ -52,7 +52,7 @@ Outlit's remote MCP endpoint uses OAuth-based authentication. In practice that m
     Ask your client:
 
     ```text
-    Show me the available Outlit analytics tables.
+    Show me the available Outlit analytics views.
     ```
   </Step>
 </Steps>
@@ -74,4 +74,4 @@ Outlit's remote MCP endpoint uses OAuth-based authentication. In practice that m
 | `outlit_get_fact` | Retrieve one exact fact by ID, optionally expanding best-effort related data like evidence | "Get fact_123 with evidence" |
 | `outlit_get_source` | Retrieve one exact source record by generic `sourceType` and `sourceId` | "Open the support ticket source for ticket_456" |
 | `outlit_query` | Run read-only SQL queries against your customer data | "Which channels lead to the most revenue?" |
-| `outlit_schema` | Get table schemas to help write accurate SQL queries | "Show me the available analytics tables" |
+| `outlit_schema` | Get view schemas to help write accurate SQL queries | "Show me the available analytics views" |

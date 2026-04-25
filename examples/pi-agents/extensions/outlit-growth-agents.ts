@@ -304,7 +304,7 @@ ${pretriageNote ? `Deterministic pretriage note:\n${pretriageNote}\n` : ""}
 
 Process:
 1. If deterministic pretriage context is present, treat those customers as the investigation set for this run. Do not add unrelated customers unless the user explicitly asked for a broader scan. If deterministic pretriage was skipped for an explicit scope, stay inside that scope.
-2. Use outlit_schema when you need table names or fields, then use outlit_query for candidate discovery, cohorts, usage trends, revenue filters, activation gaps, or aggregate checks.
+2. Use outlit_schema when you need view names or fields, then use outlit_query for candidate discovery, cohorts, usage trends, revenue filters, activation gaps, or aggregate checks.
 3. Gather customer, user, fact, timeline, search, billing, and source evidence for each candidate before ranking them. Use customer domains or IDs for follow-up lookups whenever possible.
 4. Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
 5. Prefer paying customers when the job is about churn or expansion. Include trials or new accounts for activation failure.

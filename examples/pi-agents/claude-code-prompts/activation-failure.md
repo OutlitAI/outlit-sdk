@@ -13,7 +13,7 @@ Use only Outlit customer data through the `outlit` CLI. Do not inspect local rep
 Objective: find accounts that have not reached first value for their lifecycle stage.
 
 Process:
-1. Run `outlit schema` when you need table names or fields, then use `outlit sql` to find trials, new accounts, missing activation events, stalled onboarding, or no recent activity after signup.
+1. Run `outlit schema` when you need view names or fields, then use `outlit sql` to find trials, new accounts, missing activation events, stalled onboarding, or no recent activity after signup.
 2. Discover trialing, unpaid, recently seen, or newly converted customers with CLI customer and user commands as needed. Include paying customers only when they are still onboarding or clearly pre-activation.
 3. Gather customer details, user journey stage, activity recency, timeline, facts, billing/payment context, and semantic search evidence.
    Use fact filters such as `outlit facts list <customer> --fact-types REQUIREMENTS,PRODUCT_USAGE,SENTIMENT,CHURN_RISK --json` for blockers, stated intent, and missing-first-value context.

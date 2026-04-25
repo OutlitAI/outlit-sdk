@@ -545,13 +545,14 @@ export const customerToolContracts = {
   outlit_schema: {
     toolName: "outlit_schema",
     description:
-      "Get table schemas for available analytics tables.\n\nUse this to discover column names, types, and descriptions before writing SQL queries.\nReturns column definitions and example queries for each table.",
+      "Get schemas for available public analytics views.\n\nUse this to discover column names, types, and descriptions before writing SQL queries.\nReturns column definitions and example queries for each view.",
     inputSchema: {
       $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
       properties: {
         table: {
-          description: "Specific table to describe, or omit for all tables",
+          description:
+            "Specific public view to describe, or omit for all views. Parameter is named table for backwards compatibility.",
           type: "string",
           enum: ["activity", "customers", "users", "revenue"],
         },

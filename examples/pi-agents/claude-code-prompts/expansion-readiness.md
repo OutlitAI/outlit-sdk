@@ -13,7 +13,7 @@ Use only Outlit customer data through the `outlit` CLI. Do not inspect local rep
 Objective: find customers likely to upgrade, expand seats, increase usage, or move to a higher plan.
 
 Process:
-1. Run `outlit schema` when you need table names or fields, then use `outlit sql` to find usage growth, active-user growth, plan-limit patterns, high product volume, or small-plan accounts with power-user behavior.
+1. Run `outlit schema` when you need view names or fields, then use `outlit sql` to find usage growth, active-user growth, plan-limit patterns, high product volume, or small-plan accounts with power-user behavior.
 2. Discover active paying customers with CLI customer and user commands as needed, especially small-plan or starter-plan accounts with meaningful usage.
 3. Gather customer details, revenue, users, timeline, behavior metrics, facts, semantic search evidence, and source evidence.
    Use fact filters such as `outlit facts list <customer> --fact-types EXPANSION,PRODUCT_USAGE,REQUIREMENTS,SENTIMENT --json` for buying intent, plan-limit pain, premium requests, and value realization evidence.
