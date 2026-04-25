@@ -140,7 +140,7 @@ The usage-decay command is the exception. It runs deterministic churn pretriage 
 - surface users who were previously active and are now stale for 7 or 14 days
 - surface accounts where all recently active users are now inactive
 
-Edit this file when your product has a clearer definition of meaningful activity. The include/exclude lists match against the raw `events.event_name` value. For example, set `activityDefinition.includeEventNames` to your core activation or workflow events when you want the agent to ignore all other events.
+Edit this file when your product has a clearer definition of meaningful activity. The include/exclude lists match against the public `activity.event_name` value. For example, set `activityDefinition.includeEventNames` to your core activation or workflow events when you want the agent to ignore all other events.
 
 ## Tool Scope
 

@@ -166,7 +166,7 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "--limit", desc: "Max rows to return" },
     ],
   },
-  { name: "schema", desc: "Discover table schemas", flags: [...COMMON] },
+  { name: "schema", desc: "Discover analytics view schemas", flags: [...COMMON] },
   {
     name: "integrations",
     desc: "Manage platform integrations",

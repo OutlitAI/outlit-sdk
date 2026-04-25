@@ -62,7 +62,7 @@
 | Test File | Status | Description |
 |-----------|--------|-------------|
 | `doctor.test.ts` | PASS | Version check, API key validation, connectivity, agent detection |
-| `schema.test.ts` | PASS | Full schema listing, per-table columns |
+| `schema.test.ts` | PASS | Full schema listing, per-view columns |
 | `completions.test.ts` | PASS | Bash/zsh/fish script generation |
 | `api.test.ts` | PASS | Tool invocation, error handling, output modes |
 
@@ -124,7 +124,7 @@
 | `outlit facts --help` | PASS | Positional customer arg, timeframe flag |
 | `outlit search --help` | PASS | Positional query arg, customer/top-k/date flags |
 | `outlit sql --help` | PASS | Positional query, query-file flag |
-| `outlit schema --help` | PASS | Optional table arg |
+| `outlit schema --help` | PASS | Optional view arg |
 | `outlit doctor --help` | PASS | Diagnostics with JSON output |
 | `outlit completions --help` | PASS | Shell arg (bash/zsh/fish) |
 | `outlit setup --help` | PASS | Shows 6 agent subcommands + --yes flag |

@@ -7,7 +7,7 @@ Run the Friction-to-Churn Agent for $ARGUMENTS.
 If no customer or segment is provided, scan paying customers and identify the 5-8 accounts where unresolved friction is most likely to become churn.
 
 Use Outlit tools to gather evidence before ranking:
-- Use `outlit_schema` if you need table names, then use `outlit_query` to find repeated friction patterns, event counts, affected customers, or high-MRR accounts with support/context signals.
+- Use `outlit_schema` if you need view names, then use `outlit_query` to find repeated friction patterns, event counts, affected customers, or high-MRR accounts with support/context signals.
 - Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
 - Search customer context for support complaints, bugs, failed setup, failed integrations, missing integrations, blockers, negative sentiment, escalation, refund, cancel, downgrade, and no value.
 - Use customer details and timeline events to connect friction to product usage, billing status, recency, and account engagement.

@@ -7,7 +7,7 @@ Run the Activation Failure Agent for $ARGUMENTS.
 If no customer or segment is provided, scan trialing, unpaid, new, or recently converted customers and identify the 5-8 accounts most likely to miss activation or conversion.
 
 Use Outlit tools to gather evidence before ranking:
-- Use `outlit_schema` if you need table names, then use `outlit_query` to find trials, new accounts, missing activation events, stalled onboarding, or no recent activity after signup.
+- Use `outlit_schema` if you need view names, then use `outlit_query` to find trials, new accounts, missing activation events, stalled onboarding, or no recent activity after signup.
 - Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
 - Start with trialing, unpaid, or recently seen customers. Include paying customers only when they are new or still onboarding.
 - Check users and customer details for journey stage, activity recency, team adoption, activation indicators, and recent behavior.

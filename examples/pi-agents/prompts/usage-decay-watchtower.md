@@ -8,7 +8,7 @@ If no customer or segment is provided, scan paying customers and identify the 5-
 
 Use Outlit tools to gather evidence before ranking:
 - If `outlit_churn_pretriage` is available, call it first with `scopeProfile: "revenue_accounts"` and use the surfaced customers as the investigation set.
-- Use `outlit_schema` if you need table names, then use `outlit_query` to find paying customers with stale activity, declining event volume, shrinking active-user counts, or meaningful MRR.
+- Use `outlit_schema` if you need view names, then use `outlit_query` to find paying customers with stale activity, declining event volume, shrinking active-user counts, or meaningful MRR.
 - Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
 - Start with paying customer discovery. Prioritize meaningful MRR, stale recent activity, and customers that were previously active.
 - Pull customer details with revenue, users, recent timeline, and behavior metrics when available.
