@@ -264,14 +264,15 @@ describe("runOutlitChurnPretriage", () => {
     const generatedSql = queryMock.mock.calls
       .map((call) => (call[1] as { sql?: string }).sql ?? "")
       .join("\n")
-    expect(generatedSql).toContain("FROM customers")
-    expect(generatedSql).toContain("FROM activity")
-    expect(generatedSql).toContain("FROM users")
-    expect(generatedSql).not.toContain("customer_dimensions")
-    expect(generatedSql).not.toContain("user_dimensions")
-    expect(generatedSql).not.toContain("FROM events")
-    expect(generatedSql).toContain("event_name")
-    expect(generatedSql).toContain("$autocapture")
+    const normalizedSql = generatedSql.toLowerCase()
+    expect(normalizedSql).toMatch(/\bfrom\s+customers\b|\bjoin\s+customers\b/)
+    expect(normalizedSql).toMatch(/\bfrom\s+activity\b|\bjoin\s+activity\b/)
+    expect(normalizedSql).toMatch(/\bfrom\s+users\b|\bjoin\s+users\b/)
+    expect(normalizedSql).not.toMatch(/\bcustomer_dimensions\b/)
+    expect(normalizedSql).not.toMatch(/\buser_dimensions\b/)
+    expect(normalizedSql).not.toMatch(/\bfrom\s+events\b/)
+    expect(normalizedSql).toContain("event_name")
+    expect(normalizedSql).toContain("$autocapture")
 
     expect(result.summary).toMatchObject({
       totalSurfacedCustomers: 5,
