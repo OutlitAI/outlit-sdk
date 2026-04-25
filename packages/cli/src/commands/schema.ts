@@ -10,7 +10,7 @@ export default defineCommand({
   meta: {
     name: "schema",
     description: [
-      "Describe the analytics database schema.",
+      "Describe the available analytics views.",
       "",
       "Without a view name, returns the full schema for all views.",
       "With a view name, returns detailed column info for that view.",
@@ -28,7 +28,7 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    table: {
+    view: {
       type: "positional",
       description: `View to describe (${publicSqlViews.join(", ")}). Optional.`,
       required: false,
@@ -39,7 +39,8 @@ export default defineCommand({
     const client = await getClientOrExit(args["api-key"], json)
 
     const params: Record<string, unknown> = {}
-    if (args.table) params.table = args.table
+    const view = args.view ?? args.table
+    if (view) params.table = view
 
     return runTool(client, customerToolContracts.outlit_schema.toolName, params, json)
   },

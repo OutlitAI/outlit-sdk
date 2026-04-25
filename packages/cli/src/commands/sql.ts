@@ -12,7 +12,7 @@ export default defineCommand({
   meta: {
     name: "sql",
     description: [
-      "Run a SQL query against Outlit's analytics database.",
+      "Run a SQL query against Outlit analytics views.",
       "",
       "Provide the query as a positional argument or via --query-file.",
       "When both are provided, --query-file takes precedence.",

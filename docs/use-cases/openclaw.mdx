@@ -93,7 +93,7 @@ Once the skill is installed, OpenClaw learns how to use the full `outlit` CLI. Y
 | "What do we know about acme.com recently?" | `outlit facts list acme.com --status ACTIVE --limit 20` |
 | "Open the exact call behind that search result" | `outlit sources get --source-type CALL --source-id call_123` |
 | "Which event types fire most often?" | `outlit sql "SELECT event_type, COUNT(*) FROM activity GROUP BY 1 ORDER BY 2 DESC LIMIT 10"` |
-| "Show me the database schema" | `outlit schema` |
+| "Show me the available analytics views" | `outlit schema` |
 
 OpenClaw parses JSON responses, converts monetary values from cents to dollars, and handles pagination automatically, all guided by the skill's built-in rules.
 

@@ -543,7 +543,7 @@ outlit notify --title "Escalation" --severity high --message "Check this account
 
 ## SQL
 
-Execute read-only SQL queries against Outlit's analytics database.
+Execute read-only SQL queries against Outlit analytics views.
 
 ```bash
 outlit sql <query> [flags]
@@ -601,17 +601,17 @@ Use `outlit schema` to discover all views and their columns. Common views:
 
 ## Schema
 
-Discover database views and their column definitions.
+Discover analytics views and their column definitions.
 
 ```bash
-outlit schema [table]
+outlit schema [view]
 ```
 
 ### Arguments
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `table` | No | Specific view name — omit to list all views |
+| `view` | No | Specific view name — omit to list all views |
 
 ### Examples
 

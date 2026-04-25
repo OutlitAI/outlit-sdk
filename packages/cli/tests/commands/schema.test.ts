@@ -28,12 +28,12 @@ describe("schema", () => {
     mockCallTool.mockClear()
   })
 
-  test("sends table param when provided", async () => {
+  test("sends table param for the requested view", async () => {
     const { default: schemaCmd } = await import("../../src/commands/schema")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await schemaCmd.run!({
-        args: { table: "activity", json: true },
+        args: { view: "activity", json: true },
       } as Parameters<NonNullable<typeof schemaCmd.run>>[0])
 
       expect(mockCallTool).toHaveBeenCalledWith(
