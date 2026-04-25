@@ -262,7 +262,7 @@ describe("runOutlitChurnPretriage", () => {
 
     expect(queryMock).toHaveBeenCalledTimes(6)
     const generatedSql = queryMock.mock.calls
-      .map((call) => (call[1] as { sql?: string }).sql ?? "")
+      .map((call) => (call[1] as { sql?: string } | undefined)?.sql ?? "")
       .join("\n")
     const normalizedSql = generatedSql.toLowerCase()
     expect(normalizedSql).toMatch(/\bfrom\s+customers\b|\bjoin\s+customers\b/)
@@ -270,7 +270,7 @@ describe("runOutlitChurnPretriage", () => {
     expect(normalizedSql).toMatch(/\bfrom\s+users\b|\bjoin\s+users\b/)
     expect(normalizedSql).not.toMatch(/\bcustomer_dimensions\b/)
     expect(normalizedSql).not.toMatch(/\buser_dimensions\b/)
-    expect(normalizedSql).not.toMatch(/\bfrom\s+events\b/)
+    expect(normalizedSql).not.toMatch(/\b(?:from|join)\s+events\b/)
     expect(normalizedSql).toContain("event_name")
     expect(normalizedSql).toContain("$autocapture")
 
