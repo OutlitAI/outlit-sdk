@@ -40,13 +40,13 @@ Only use SQL if `outlit_schema` and `outlit_query` are available in the current 
 - Call `outlit_schema` before writing SQL.
 - Prefer customer lookups, facts, timeline, and search before SQL for account-specific analysis.
 - Use SQL for aggregates, cohorts, joins, custom reporting, and questions that need exact counts or revenue math.
-- Use ClickHouse syntax, not MySQL or Postgres helpers.
+- Use the query patterns in the SQL reference. Do not assume another database's date or JSON helpers.
 - Add explicit time filters for event queries.
 - Use `LIMIT`.
 - Divide money fields in cents by `100` for display.
 - Request only the fields needed for the answer.
 
-For ClickHouse syntax and query patterns, read [references/sql-reference.md](references/sql-reference.md).
+For supported query patterns, read [references/sql-reference.md](references/sql-reference.md).
 
 ## Working Rules
 

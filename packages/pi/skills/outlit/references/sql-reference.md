@@ -11,7 +11,7 @@ Always inspect schema first with `outlit_schema`.
 - `users`: user attributes and journey stages
 - `revenue`: daily MRR snapshots
 
-## ClickHouse Patterns
+## Useful Patterns
 
 ```sql
 now()
@@ -25,9 +25,9 @@ JSONExtractString(properties, 'path')
 JSONExtractString(traits, 'plan')
 ```
 
-Prefer `event_name` when you need the raw tracked event name for include/exclude lists or product workflow analysis, and `event_type` for broader event classes.
+Prefer `event_name` when you need the original tracked event name for include/exclude lists or product workflow analysis, and `event_type` for broader event classes.
 
-Use ClickHouse syntax, not MySQL or Postgres helpers like `DATE_SUB()`.
+Use the patterns above instead of unsupported date helpers like `DATE_SUB()`.
 
 ## Rules
 
