@@ -1,6 +1,6 @@
 {
   "name": "@outlit/cli",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "CLI for Outlit customer intelligence platform",
   "license": "Apache-2.0",
   "repository": {
@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.0.1",
-    "@outlit/tools": "^0.1.1",
+    "@outlit/tools": "^0.1.2",
     "citty": "^0.2.1"
   },
   "devDependencies": {
