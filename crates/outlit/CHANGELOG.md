@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2](https://github.com/OutlitAI/outlit-sdk/compare/outlit-v0.2.1...outlit-v0.2.2) - 2026-04-14
+
+### Other
+
+- refresh customer context and SDK guidance
+
 ## [0.2.0](https://github.com/OutlitAI/outlit-sdk/compare/outlit-v0.1.0...outlit-v0.2.0) - 2026-01-29
 
 ### Added
