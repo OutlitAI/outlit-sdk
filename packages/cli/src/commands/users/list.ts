@@ -54,7 +54,7 @@ export default defineCommand({
       description: "Search by user name or email",
     },
   },
-  async run({ args }) {
+  async run({ args, rawArgs }) {
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
@@ -77,7 +77,7 @@ export default defineCommand({
         )
       }
     }
-    applyListFilters(params, args)
+    applyListFilters(params, args, rawArgs)
     applyPagination(params, args, json)
 
     return runTool(client, customerToolContracts.outlit_list_users.toolName, params, json, {

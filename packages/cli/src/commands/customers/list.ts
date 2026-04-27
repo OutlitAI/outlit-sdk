@@ -14,6 +14,38 @@ import { getClientOrExit, runTool } from "../../lib/api"
 import { formatCents, relativeDate, truncate } from "../../lib/format"
 import { outputError } from "../../lib/output"
 
+function normalizeCustomerListResult(data: unknown): unknown {
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    return data
+  }
+
+  const record = data as Record<string, unknown>
+  if (!Array.isArray(record.items)) {
+    return data
+  }
+
+  return {
+    ...record,
+    items: record.items.map((item) => {
+      if (typeof item !== "object" || item === null || Array.isArray(item)) {
+        return item
+      }
+
+      const customer = item as Record<string, unknown>
+      const daysSinceActivity = customer.daysSinceActivity
+      if (typeof daysSinceActivity !== "number" || daysSinceActivity >= 0) {
+        return item
+      }
+
+      return {
+        ...customer,
+        lastActivityAt: null,
+        daysSinceActivity: null,
+      }
+    }),
+  }
+}
+
 export default defineCommand({
   meta: {
     name: "list",
@@ -60,7 +92,7 @@ export default defineCommand({
       description: "Search by customer name or domain",
     },
   },
-  async run({ args }) {
+  async run({ args, rawArgs }) {
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
@@ -96,11 +128,12 @@ export default defineCommand({
         )
       }
     }
-    applyListFilters(params, args)
+    applyListFilters(params, args, rawArgs)
     applyPagination(params, args, json)
 
     return runTool(client, customerToolContracts.outlit_list_customers.toolName, params, json, {
       spinnerMessage: "Fetching customers...",
+      transform: normalizeCustomerListResult,
       table: {
         columns: [
           { header: "Name", key: "name", format: (v) => truncate(v, 24) },

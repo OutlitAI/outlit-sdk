@@ -5,6 +5,29 @@ import { getClientOrExit, runTool } from "../../lib/api"
 import { capitalize, formatNumber, relativeDate, truncate } from "../../lib/format"
 import { resolveProviderOrExit } from "../../lib/providers"
 
+function hideBlankModelSyncs(data: unknown): unknown {
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    return data
+  }
+
+  const record = data as Record<string, unknown>
+  if (!Array.isArray(record.syncs)) {
+    return data
+  }
+
+  return {
+    ...record,
+    syncs: record.syncs.filter((sync) => {
+      if (typeof sync !== "object" || sync === null || Array.isArray(sync)) {
+        return true
+      }
+
+      const model = (sync as Record<string, unknown>).model
+      return typeof model !== "string" || model.trim().length > 0
+    }),
+  }
+}
+
 export default defineCommand({
   meta: {
     name: "status",
@@ -38,6 +61,7 @@ export default defineCommand({
       const { provider } = resolveProviderOrExit(args.provider, json)
       return runTool(client, "outlit_integration_sync_status", { provider: provider.id }, json, {
         spinnerMessage: "Fetching sync status...",
+        transform: hideBlankModelSyncs,
         table: {
           columns: [
             { header: "Model", key: "model" },
