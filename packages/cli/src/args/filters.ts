@@ -32,6 +32,43 @@ export const traitFilterArgs = {
   },
 } satisfies ArgsDef
 
+function findRawStringFlagValue(
+  rawArgs: string[] | undefined,
+  flagName: string,
+): string | undefined {
+  if (!rawArgs) return undefined
+
+  const flag = `--${flagName}`
+  for (let i = 0; i < rawArgs.length; i++) {
+    const arg = rawArgs[i]
+    if (!arg) continue
+
+    if (arg.startsWith(`${flag}=`)) {
+      const value = arg.slice(flag.length + 1)
+      return value.length > 0 ? value : undefined
+    }
+
+    if (arg === flag) {
+      const value = rawArgs[i + 1]
+      if (!value || value.startsWith("-")) return undefined
+      return value
+    }
+  }
+
+  return undefined
+}
+
+function readStringArg(
+  args: Record<string, unknown>,
+  flagName: string,
+  rawArgs: string[] | undefined,
+): string | undefined {
+  const value = args[flagName]
+  if (typeof value === "string" && value.length > 0) return value
+
+  return findRawStringFlagValue(rawArgs, flagName)
+}
+
 function parseTraitFilterValue(value: string): string | number | boolean {
   if (value === "true") return true
   if (value === "false") return false
@@ -89,9 +126,14 @@ export function applyListFilters(
     "order-by"?: string
     "order-direction"?: string
   },
+  rawArgs?: string[],
 ): void {
-  if (args["no-activity-in"]) params.noActivityInLast = args["no-activity-in"]
-  if (args["has-activity-in"]) params.hasActivityInLast = args["has-activity-in"]
+  const argsRecord = args as Record<string, unknown>
+  const noActivityIn = readStringArg(argsRecord, "no-activity-in", rawArgs)
+  const hasActivityIn = readStringArg(argsRecord, "has-activity-in", rawArgs)
+
+  if (noActivityIn) params.noActivityInLast = noActivityIn
+  if (hasActivityIn) params.hasActivityInLast = hasActivityIn
   if (args.search) params.search = args.search
   if (args["order-by"]) params.orderBy = args["order-by"]
   if (args["order-direction"]) params.orderDirection = args["order-direction"]

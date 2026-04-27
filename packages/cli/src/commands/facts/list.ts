@@ -43,6 +43,41 @@ function normalizeSourceTypes(values: string[] | undefined): CustomerSourceType[
 
 const sourceTypeDescription = `${customerSourceTypes.join(", ")} (aliases: ${customerSourceTypeAliases.join(", ")})`
 
+function isOneOf(values: readonly string[], value: unknown): value is string {
+  return typeof value === "string" && values.includes(value)
+}
+
+function annotateFactFilterability(data: unknown): unknown {
+  if (typeof data !== "object" || data === null || Array.isArray(data)) {
+    return data
+  }
+
+  const record = data as Record<string, unknown>
+  if (!Array.isArray(record.facts)) {
+    return data
+  }
+
+  return {
+    ...record,
+    facts: record.facts.map((fact) => {
+      if (typeof fact !== "object" || fact === null || Array.isArray(fact)) {
+        return fact
+      }
+
+      const factRecord = fact as Record<string, unknown>
+      return {
+        ...factRecord,
+        filterability: {
+          factType: isOneOf(customerFactTypes, factRecord.factType) ? "public" : "internal",
+          factCategory: isOneOf(customerFactCategories, factRecord.factCategory)
+            ? "public"
+            : "internal",
+        },
+      }
+    }),
+  }
+}
+
 export default defineCommand({
   meta: {
     name: "list",
@@ -225,6 +260,8 @@ export default defineCommand({
     if (args.before) params.before = args.before
     applyPagination(params, args, json)
 
-    return runTool(client, customerToolContracts.outlit_list_facts.toolName, params, json)
+    return runTool(client, customerToolContracts.outlit_list_facts.toolName, params, json, {
+      transform: annotateFactFilterability,
+    })
   },
 })

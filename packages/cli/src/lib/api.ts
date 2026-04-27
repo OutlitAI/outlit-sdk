@@ -20,6 +20,8 @@ export interface RunToolOptions {
   }
   /** Spinner message shown during the API call (TTY only). */
   spinnerMessage?: string
+  /** Optional response normalization before JSON/table output. */
+  transform?: (data: unknown) => unknown
 }
 
 /**
@@ -139,7 +141,8 @@ export async function runTool(
   const spinner = opts?.spinnerMessage ? createSpinner(opts.spinnerMessage) : null
 
   try {
-    const data = await client.callTool(toolName, params)
+    const rawData = await client.callTool(toolName, params)
+    const data = opts?.transform ? opts.transform(rawData) : rawData
     spinner?.stop("Done")
 
     const table = opts?.table

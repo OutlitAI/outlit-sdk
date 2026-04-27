@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
+import { runCommand } from "citty"
 import {
-  TEST_API_KEY,
   expectErrorExit,
   mockExitThrow,
   setInteractive,
   setNonInteractive,
+  TEST_API_KEY,
   useTempEnv,
 } from "../../helpers"
 
@@ -75,6 +76,56 @@ describe("customers list", () => {
         "outlit_list_customers",
         expect.objectContaining({ noActivityInLast: "30d" }),
       )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("parses --no-activity-in through citty without treating it as a negated boolean", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await runCommand(listCmd, {
+        rawArgs: ["--no-activity-in", "30d", "--limit", "3", "--json"],
+      })
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({ noActivityInLast: "30d", limit: 3 }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("normalizes future last activity values in customer list output", async () => {
+    mockCallTool.mockImplementationOnce(async () => ({
+      items: [
+        {
+          id: "1",
+          name: "Future Activity",
+          domain: "future.example",
+          billingStatus: "NONE",
+          lastActivityAt: "2026-05-05 19:00:00.000",
+          daysSinceActivity: -9,
+        },
+      ],
+      pagination: { hasMore: false, nextCursor: null, total: 1 },
+    }))
+
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: { json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      const written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
+      const parsed = JSON.parse(written) as {
+        items: Array<{ lastActivityAt: string | null; daysSinceActivity: number | null }>
+      }
+      expect(parsed.items[0]?.lastActivityAt).toBeNull()
+      expect(parsed.items[0]?.daysSinceActivity).toBeNull()
     } finally {
       writeSpy.mockRestore()
     }

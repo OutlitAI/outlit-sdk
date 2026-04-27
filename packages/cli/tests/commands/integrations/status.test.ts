@@ -97,6 +97,66 @@ describe("integrations status", () => {
     })
   })
 
+  test("accepts canonical provider IDs returned by integrations list", async () => {
+    const { default: statusCmd } = await import("../../../src/commands/integrations/status")
+
+    for (const provider of ["google-mail", "granola", "hubspot"]) {
+      mockCallTool.mockClear()
+      await captureStdout(() =>
+        statusCmd.run!({
+          args: { provider, json: true },
+        } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+      )
+
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_sync_status", {
+        provider,
+      })
+    }
+  })
+
+  test("hides blank-model sync rows from per-provider status output", async () => {
+    mockCallTool.mockImplementationOnce(async () => ({
+      provider: "google-mail",
+      syncs: [
+        {
+          model: "",
+          status: "ERROR",
+          lastSyncedAt: "2026-04-20T07:08:52.438Z",
+          errorMessage: "script_error",
+        },
+        {
+          model: "Email",
+          status: "IDLE",
+          lastSyncedAt: "2026-04-26T19:48:49.002Z",
+          errorMessage: null,
+        },
+      ],
+    }))
+
+    const { default: statusCmd } = await import("../../../src/commands/integrations/status")
+    const parsed = await captureStdout<{
+      syncs: Array<{
+        model: string
+        status: string
+        lastSyncedAt: string
+        errorMessage: string | null
+      }>
+    }>(() =>
+      statusCmd.run!({
+        args: { provider: "gmail", json: true },
+      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+    )
+
+    expect(parsed.syncs).toEqual([
+      {
+        model: "Email",
+        status: "IDLE",
+        lastSyncedAt: "2026-04-26T19:48:49.002Z",
+        errorMessage: null,
+      },
+    ])
+  })
+
   test("rejects unknown provider", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
     await runExpectingError(

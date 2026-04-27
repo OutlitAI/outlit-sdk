@@ -64,6 +64,49 @@ describe("facts commands", () => {
     )
   })
 
+  test("list annotates whether returned fact type and category values are public filters", async () => {
+    mockCallTool.mockImplementationOnce(async () => ({
+      items: [],
+      customer: { id: "cust_1", domain: "acme.com" },
+      facts: [
+        {
+          id: "fact_1",
+          factType: "CADENCE_BREAK",
+          factCategory: "CHURN",
+        },
+        {
+          id: "fact_2",
+          factType: "CHURN_RISK",
+          factCategory: "MEMORY",
+        },
+      ],
+      pagination: { hasMore: false, nextCursor: null, total: 0 },
+    }))
+
+    const { default: factsListCmd } = await import("../../src/commands/facts/list")
+    const parsed = await captureStdout<{
+      facts: Array<{
+        filterability: { factType: "public" | "internal"; factCategory: "public" | "internal" }
+      }>
+    }>(() =>
+      factsListCmd.run!({
+        args: {
+          customer: "acme.com",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof factsListCmd.run>>[0]),
+    )
+
+    expect(parsed.facts[0]?.filterability).toEqual({
+      factType: "internal",
+      factCategory: "internal",
+    })
+    expect(parsed.facts[1]?.filterability).toEqual({
+      factType: "public",
+      factCategory: "public",
+    })
+  })
+
   test("list rejects invalid date range", async () => {
     const { default: factsListCmd } = await import("../../src/commands/facts/list")
     const exitSpy = mockExitThrow()

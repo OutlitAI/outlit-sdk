@@ -4,6 +4,7 @@ export type ProviderCategory =
   | "communication"
   | "calls"
   | "calendar"
+  | "crm"
   | "analytics"
   | "billing"
   | "support"
@@ -41,14 +42,22 @@ export interface ProviderInfo {
  */
 export const INTEGRATION_PROVIDERS: Record<string, ProviderInfo> = {
   // OAuth providers
+  hubspot: { id: "hubspot", name: "HubSpot", category: "crm", authType: "oauth" },
   slack: { id: "slack", name: "Slack", category: "communication", authType: "oauth" },
   gmail: { id: "google-mail", name: "Gmail", category: "communication", authType: "oauth" },
+  "google-mail": {
+    id: "google-mail",
+    name: "Gmail",
+    category: "communication",
+    authType: "oauth",
+  },
   "google-calendar": {
     id: "google-calendar",
     name: "Google Calendar",
     category: "calendar",
     authType: "oauth",
   },
+  granola: { id: "granola", name: "Granola", category: "calls", authType: "oauth" },
   // API-key providers
   pylon: {
     id: "pylon",
