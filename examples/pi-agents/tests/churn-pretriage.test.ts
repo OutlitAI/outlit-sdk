@@ -4,12 +4,20 @@ import {
   createOutlitChurnPretriageTool,
   defaultChurnPretriageConfig,
   type OutlitChurnPretriageConfig,
+  type OutlitChurnPretriageToolDefinition,
   runOutlitChurnPretriage,
 } from "../lib/churn-pretriage.js"
 
 const fixedNow = new Date("2026-04-15T12:00:00Z")
 
 describe("runOutlitChurnPretriage", () => {
+  test("defaults revenue account scans to live save-motion billing statuses", () => {
+    expect(defaultChurnPretriageConfig.scopeProfiles.revenue_accounts.billingStatuses).toEqual([
+      "PAYING",
+      "PAST_DUE",
+    ])
+  })
+
   test("rotates capped prompt customers by full pages across hourly schedule windows", async () => {
     const firstRun = await runOutlitChurnPretriage({
       client: { callTool: createRotationQueryMock() },
@@ -119,6 +127,22 @@ describe("runOutlitChurnPretriage", () => {
       "cust_b",
       "cust_c",
     ])
+  })
+
+  test("uses the injected clock in SQL instead of database now", async () => {
+    const queryMock = createRotationQueryMock()
+
+    await runOutlitChurnPretriage({
+      client: { callTool: queryMock },
+      config: defaultChurnPretriageConfig,
+      now: fixedNow,
+      scopeProfile: "revenue_accounts",
+      maxPromptCustomers: 2,
+    })
+
+    const sqlStatements = queryMock.mock.calls.map((call) => String(call[1]?.sql ?? ""))
+    expect(sqlStatements.some((sql) => sql.includes("parseDateTimeBestEffort"))).toBe(true)
+    expect(sqlStatements.join("\n")).not.toContain("now()")
   })
 
   test("surfaces customers with the same churn heuristic classes as the internal agent", async () => {
@@ -274,6 +298,7 @@ describe("runOutlitChurnPretriage", () => {
     expect(normalizedSql).toContain("event_name")
     expect(normalizedSql).toContain("$autocapture")
 
+    expect(result.kind).toBe("churn")
     expect(result.summary).toMatchObject({
       totalSurfacedCustomers: 5,
       customersIncludedThisRun: 5,
@@ -282,6 +307,7 @@ describe("runOutlitChurnPretriage", () => {
     })
     expect(result.context).toContain("BEGIN_PRETRIAGE_JSON")
     expect(result.context).toContain('"signals"')
+    expect(result.context).toContain("The payload's activity metrics are hard behavior evidence")
     expect(result.context).not.toContain('"customerHeuristics"')
     expect(result.context).not.toContain('"fingerprint"')
 
@@ -511,13 +537,10 @@ describe("createOutlitChurnPretriageTool", () => {
       now: fixedNow,
     })
 
-    const result = await tool.execute(
-      "call_1",
-      { scopeProfile: "revenue_accounts", maxPromptCustomers: 5 },
-      undefined,
-      undefined,
-      undefined as never,
-    )
+    const result = await executeChurnToolWithDefaults(tool, "call_1", {
+      scopeProfile: "revenue_accounts",
+      maxPromptCustomers: 5,
+    })
 
     expect(tool.name).toBe("outlit_churn_pretriage")
     expect(result.details.toolName).toBe("outlit_churn_pretriage")
@@ -533,3 +556,11 @@ describe("createOutlitChurnPretriageTool", () => {
     expect(content.text).toContain("Do not rank a customer")
   })
 })
+
+function executeChurnToolWithDefaults(
+  tool: OutlitChurnPretriageToolDefinition,
+  callId: string,
+  params: Record<string, unknown>,
+) {
+  return tool.execute(callId, params, undefined, undefined, undefined as never)
+}

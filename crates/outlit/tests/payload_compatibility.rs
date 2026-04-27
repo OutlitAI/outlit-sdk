@@ -88,6 +88,7 @@ fn test_stage_event_json_structure() {
     let json = serde_json::to_value(&event).unwrap();
 
     assert_eq!(json["type"], "stage");
+    assert!(json.get("eventName").is_none());
     assert_eq!(json["stage"], "activated"); // lowercase enum value
 }
 

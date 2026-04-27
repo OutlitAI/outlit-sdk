@@ -16,16 +16,17 @@ Use Outlit tools to ground customer signal work in actual customer data. These a
    - Expansion readiness: healthy customers with evidence they may upgrade, add seats, or buy more.
 2. Discover candidates.
    - For usage decay churn, call `outlit_churn_pretriage` first when it is available. Treat the surfaced customers as the investigation set unless the user explicitly asks for a broader scan.
+   - For activation failure, call `outlit_activation_pretriage` first when it is available. Treat the surfaced customers as the investigation set unless the user explicitly asks for a broader scan.
    - Use `outlit_schema` before SQL when you need view names, columns, or valid query surfaces.
    - Use `outlit_query` for cohorts, usage trends, active-user counts, activation gaps, revenue filters, event aggregates, and repeated signal patterns.
    - Use `outlit_list_customers` for portfolio scans, billing status, MRR, activity recency, and customer search.
-   - Use `outlit_list_users` when account-level behavior depends on user activation, active users, or champion disappearance.
+   - Use `outlit_list_users` when account-level behavior depends on user activation, active users, or champion disappearance. When using the CLI directly, filter users with the stable customer ID, not a display name or domain.
    - Use `outlit_search_customer_context` for thematic discovery across customers.
 3. Gather account evidence.
    - Use `outlit_get_customer` with relevant includes before deep analysis.
    - Prefer stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
    - Use `outlit_get_timeline` when recency, sequence, or behavior changes matter.
-   - Use `outlit_list_facts` for known account facts, health indicators, support issues, billing context, activation context, and relationship notes. Use `factTypes` to narrow extracted customer-memory facts when helpful.
+   - Use `outlit_list_facts` for known account facts, health indicators, support issues, billing context, activation context, and relationship notes. Default to active facts for live reviews, and use `factTypes` to narrow extracted customer-memory facts when helpful.
    - Use `outlit_get_fact` or `outlit_get_source` when a claim needs stronger evidence.
 4. Rank only after reviewing evidence.
    - Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
@@ -74,6 +75,7 @@ Avoid:
 
 - ranking a customer only because usage is low
 - ranking subscription cancellation, subscription pause, renewal negotiation, legal review, or procurement delay as usage decay unless there is also declining or stale product usage
+- ranking already-churned accounts as live churn risks
 - treating a new or tiny customer like a mature account
 - treating renewal negotiation as churn without product or cancellation evidence
 - padding a ranking when pretriage or discovery candidates do not survive evidence review
@@ -83,7 +85,11 @@ Output discipline:
 - Start with `Candidate review summary:` and state reviewed, ranked, and excluded counts.
 - For each ranked customer, include a hard signal, supporting context, confidence, recommended action, and missing data.
 - Include excluded candidates with a short reason when candidates were reviewed but not ranked.
-- If the usage-decay command or prompt asks for notification, call `outlit_send_notification` exactly once after evidence review when at least one ranked churn risk remains. Do not notify when no customer survives the evidence gate.
+- If a usage-decay review inspects an already-churned account, include it in `excludedCandidates` with an exclusion reason instead of `rankedCustomers`; keep `candidateReviewSummary` counts aligned with the reviewed, ranked, and excluded totals in the notification payload.
+- Call `outlit_send_notification` once after evidence review. Use severity `low` and `rankedCustomers: []` when no live account survives the evidence gate.
+- For usage-decay, the notification `payload` must include `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, and `openQuestions`.
+- Do not rename JSON keys. Use `mrrCents` and confidence values `high`/`medium`/`low`.
+- Treat pretriage activity metrics as hard behavior evidence. If timeline/search/fact context is sparse, lower confidence instead of excluding solely for sparse context.
 
 ### Friction-to-Churn
 
@@ -94,19 +100,31 @@ Look for:
 - failed implementation or integration attempts
 - negative sentiment tied to value realization
 - support pain paired with usage decay, payment risk, or disengagement
+- continued usage with declining trust, manual workarounds, paused rollout, or proof requests after a product/support issue
+- source-backed patterns that connect support, conversations, facts, and product behavior into one account story
 
 Avoid:
 
 - treating support volume alone as risk
 - ignoring customers who are noisy because they are deeply engaged
+- ranking already-churned or closed-lost accounts as live friction-to-churn unless the user explicitly asks for postmortems
+- treating a closed-lost CRM stage as stronger evidence than current support, conversation, usage, and fact context
 - treating legal review, procurement delay, security addendum negotiation, renewal pushback, or generic spend pressure as product or support friction
 - filling the ranking with generic churn-risk, renewal-risk, spend-pressure, or usage-slowdown accounts when direct product, implementation, integration, bug, support, or blocker evidence is missing
+
+Investigation discipline:
+
+- For top candidates, use facts and search before final ranking when those tools are available.
+- Prefer live-risk accounts where the risk is subtle but source-backed: the customer still uses the product, but support tickets, emails, calls, Slack/internal notes, or usage events show trust erosion.
+- When facts reference underlying sources, inspect the fact or source when needed instead of relying only on the assertion text.
+- Do not let billing or CRM status do all the work; the finding should still explain the product/support friction that is creating the retention risk.
 
 ### Activation Failure
 
 Look for:
 
 - trial or new account with no activation event
+- deterministic pretriage matches from `outlit_activation_pretriage`, including no activated users, no namespaced Outlit activation stage event, stale user activity, or no recent product activity
 - setup started but stalled
 - onboarding or integration blockers
 - conversation interest without product follow-through
@@ -119,6 +137,13 @@ Avoid:
 - ranking mature paying churn-risk accounts unless they are clearly still pre-activation or post-sale onboarding is incomplete
 - classifying explicit external, anonymous, test, or API-only pseudo-customers as activation failures unless they have a real customer identity and lifecycle evidence
 - rejecting a candidate solely because sandbox or demo data uses generic names or domains; require stronger pseudo-customer evidence, such as unknown domain, external org placeholder, API-only identity, no users, and no lifecycle trail
+
+Output discipline:
+
+- Start with `Candidate review summary:` and state reviewed, ranked, and excluded counts.
+- Treat activation pretriage metrics as hard behavior evidence. Use richer Outlit evidence to explain why the activation gap matters, not to re-discover the gap from scratch.
+- Call `outlit_send_notification` once after evidence review. Use severity `low` and `rankedCustomers: []` when no account survives the evidence gate.
+- Do not expose internal event names or SQL details in customer-facing recommendations.
 
 ### Expansion Readiness
 
@@ -153,13 +178,15 @@ Then include short evidence notes for each ranked customer:
 - why the category applies
 - what would change the assessment
 
-You may call `outlit_send_notification` only when the user explicitly asks you to send, post, or notify a result to Slack. The usage-decay command and prompt are notification-enabled and explicitly ask for one Slack notification after ranked churn risks are found.
+For these growth-agent commands, call `outlit_send_notification` by default after evidence review and before the final answer.
 
 When using `outlit_send_notification`:
 
 - keep `title` short and specific
 - use `message` for a brief summary
 - set `severity` only to `low`, `medium`, or `high`
-- put the complete result object or text in `payload` without assuming a fixed shape
+- put a JSON-compatible object in `payload`; do not pass a JSON string, markdown table, code fence, or prose blob
+- include `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, and `openQuestions` in the payload when returning portfolio or scoped growth-agent results
+- use stable payload keys so Slack receivers and downstream automation can parse the result
 
 Do not send messages, create tasks, update CRM records, or take external actions unless the user explicitly asks and the necessary tools are available.

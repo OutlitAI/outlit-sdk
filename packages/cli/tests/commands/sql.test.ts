@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
+import { writeFileSync } from "node:fs"
+import { join } from "node:path"
 import {
   expectErrorExit,
   mockExitThrow,
@@ -12,11 +14,6 @@ const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
   rowCount: 0,
 }))
 
-// readFileSync mock: default throws so we can override per-test
-const mockReadFileSync = mock((_path: string, _encoding: string): string => {
-  throw new Error("readFileSync not mocked for this test")
-})
-
 mock.module("../../src/lib/client", () => ({
   createClient: async () => ({
     key: TEST_API_KEY,
@@ -25,18 +22,13 @@ mock.module("../../src/lib/client", () => ({
   }),
 }))
 
-mock.module("node:fs", () => ({
-  readFileSync: mockReadFileSync,
-}))
-
 setNonInteractive()
 
 describe("sql", () => {
-  useTempEnv("sql-test")
+  const testDir = useTempEnv("sql-test")
 
   beforeEach(() => {
     mockCallTool.mockClear()
-    mockReadFileSync.mockClear()
   })
 
   test("sends positional query as sql param", async () => {
@@ -57,12 +49,13 @@ describe("sql", () => {
   })
 
   test("--query-file reads file and sends contents as sql", async () => {
-    mockReadFileSync.mockReturnValueOnce("SELECT * FROM activity")
+    const queryPath = join(testDir, "query.sql")
+    writeFileSync(queryPath, "SELECT * FROM activity")
     const { default: sqlCmd } = await import("../../src/commands/sql")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await sqlCmd.run!({
-        args: { "query-file": "/tmp/query.sql", limit: "1000", json: true },
+        args: { "query-file": queryPath, limit: "1000", json: true },
       } as Parameters<NonNullable<typeof sqlCmd.run>>[0])
 
       expect(mockCallTool).toHaveBeenCalledWith(
@@ -75,12 +68,13 @@ describe("sql", () => {
   })
 
   test("--query-file takes precedence over positional", async () => {
-    mockReadFileSync.mockReturnValueOnce("SELECT * FROM revenue")
+    const queryPath = join(testDir, "query.sql")
+    writeFileSync(queryPath, "SELECT * FROM revenue")
     const { default: sqlCmd } = await import("../../src/commands/sql")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await sqlCmd.run!({
-        args: { query: "SELECT 1", "query-file": "/tmp/query.sql", limit: "1000", json: true },
+        args: { query: "SELECT 1", "query-file": queryPath, limit: "1000", json: true },
       } as Parameters<NonNullable<typeof sqlCmd.run>>[0])
 
       expect(mockCallTool).toHaveBeenCalledWith(
@@ -114,9 +108,6 @@ describe("sql", () => {
   })
 
   test("file_error when --query-file path is bad", async () => {
-    mockReadFileSync.mockImplementationOnce((_path: string, _encoding: string): string => {
-      throw new Error("ENOENT: no such file or directory")
-    })
     const { default: sqlCmd } = await import("../../src/commands/sql")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -124,7 +115,7 @@ describe("sql", () => {
     let thrown: unknown
     try {
       await sqlCmd.run!({
-        args: { "query-file": "/nonexistent/path.sql", limit: "1000", json: true },
+        args: { "query-file": join(testDir, "missing.sql"), limit: "1000", json: true },
       } as Parameters<NonNullable<typeof sqlCmd.run>>[0])
     } catch (e) {
       thrown = e

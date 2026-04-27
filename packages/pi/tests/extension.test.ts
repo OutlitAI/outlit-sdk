@@ -19,6 +19,11 @@ function createPiMock() {
   }
 }
 
+function withoutRootSchema<T extends Record<string, unknown>>(schema: T): Omit<T, "$schema"> {
+  const { $schema: _schema, ...rest } = schema
+  return rest
+}
+
 describe("createOutlitPiExtension", () => {
   test("defaults tools to the hosted Outlit endpoint", async () => {
     const previousApiUrl = process.env.OUTLIT_API_URL
@@ -109,8 +114,10 @@ describe("createOutlitPiExtension", () => {
 
     expect(tool.name).toBe("outlit_list_customers")
     expect(tool.label).toBe("Outlit List Customers")
-    expect(tool.description).toBe(getCustomerToolContract("outlit_list_customers").description)
-    expect(tool.parameters).toEqual(getCustomerToolContract("outlit_list_customers").inputSchema)
+    const contract = getCustomerToolContract("outlit_list_customers")
+
+    expect(tool.description).toBe(contract.description)
+    expect(tool.parameters).toEqual(withoutRootSchema(contract.inputSchema))
 
     const result = await tool.execute(
       "call_1",
@@ -140,6 +147,15 @@ describe("createOutlitPiExtension", () => {
     })
   })
 
+  test("registers Pi-compatible parameters without root JSON Schema metadata", () => {
+    const tool = createOutlitPiTool("outlit_list_customers", {
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn(),
+    })
+
+    expect(tool.parameters).not.toHaveProperty("$schema")
+  })
+
   test("exposes the notification tool contract through Pi", () => {
     const tool = createOutlitPiTool("outlit_send_notification", {
       apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
@@ -150,7 +166,7 @@ describe("createOutlitPiExtension", () => {
     expect(tool.name).toBe("outlit_send_notification")
     expect(tool.label).toBe("Outlit Send Notification")
     expect(tool.description).toBe(contract.description)
-    expect(tool.parameters).toEqual(contract.inputSchema)
+    expect(tool.parameters).toEqual(withoutRootSchema(contract.inputSchema))
 
     if (
       tool.parameters &&

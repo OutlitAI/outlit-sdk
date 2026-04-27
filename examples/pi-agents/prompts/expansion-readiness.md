@@ -27,3 +27,10 @@ Return:
 - A table of ranked customers with customer, domain, current MRR or plan context, expansion signal, confidence, likely expansion path, and recommended action.
 - Evidence notes for each customer, tied to usage, conversations, facts, timeline events, or source snippets.
 - Missing data that would improve the expansion recommendation.
+
+Slack notification:
+- Call `outlit_send_notification` exactly once after evidence review and before the final answer.
+- The notification payload must be a JSON-compatible object.
+- Do not pass `payload` as a JSON string, markdown table, code fence, or prose blob.
+- Include `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, and `openQuestions` in the payload.
+- If no customer survives the evidence gate, send a low-severity notification with `rankedCustomers: []` and explain why no account was ranked.
