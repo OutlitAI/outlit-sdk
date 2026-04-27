@@ -98,6 +98,23 @@ describe("customers list", () => {
     }
   })
 
+  test("uses the last repeated --no-activity-in value from raw args", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await runCommand(listCmd, {
+        rawArgs: ["--no-activity-in", "14d", "--no-activity-in", "30d", "--json"],
+      })
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({ noActivityInLast: "30d" }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("normalizes future last activity values in customer list output", async () => {
     mockCallTool.mockImplementationOnce(async () => ({
       items: [

@@ -125,6 +125,17 @@ describe("integrations status", () => {
           errorMessage: "script_error",
         },
         {
+          model: null,
+          status: "ERROR",
+          lastSyncedAt: "2026-04-20T07:08:52.438Z",
+          errorMessage: "missing_model",
+        },
+        {
+          status: "ERROR",
+          lastSyncedAt: "2026-04-20T07:08:52.438Z",
+          errorMessage: "missing_model_key",
+        },
+        {
           model: "Email",
           status: "IDLE",
           lastSyncedAt: "2026-04-26T19:48:49.002Z",
