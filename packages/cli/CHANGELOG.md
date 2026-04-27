@@ -1,5 +1,11 @@
 # @outlit/cli
 
+## 1.6.4
+
+### Patch Changes
+
+- [#118](https://github.com/OutlitAI/outlit-sdk/pull/118) [`66353bb`](https://github.com/OutlitAI/outlit-sdk/commit/66353bb8771288a0c033056eefa8604b41464756) Thanks [@leo-paz](https://github.com/leo-paz)! - Fix customer inactivity parsing, integration status provider IDs, and CLI response normalization for stale sync rows and internal fact metadata.
+
 ## 1.6.3
 
 ### Patch Changes
