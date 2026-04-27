@@ -19,11 +19,11 @@ function hideBlankModelSyncs(data: unknown): unknown {
     ...record,
     syncs: record.syncs.filter((sync) => {
       if (typeof sync !== "object" || sync === null || Array.isArray(sync)) {
-        return true
+        return false
       }
 
       const model = (sync as Record<string, unknown>).model
-      return typeof model !== "string" || model.trim().length > 0
+      return typeof model === "string" && model.trim().length > 0
     }),
   }
 }

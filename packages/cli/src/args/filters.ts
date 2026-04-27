@@ -39,23 +39,24 @@ function findRawStringFlagValue(
   if (!rawArgs) return undefined
 
   const flag = `--${flagName}`
+  let found: string | undefined
   for (let i = 0; i < rawArgs.length; i++) {
     const arg = rawArgs[i]
     if (!arg) continue
 
     if (arg.startsWith(`${flag}=`)) {
       const value = arg.slice(flag.length + 1)
-      return value.length > 0 ? value : undefined
+      if (value.length > 0) found = value
+      continue
     }
 
     if (arg === flag) {
       const value = rawArgs[i + 1]
-      if (!value || value.startsWith("-")) return undefined
-      return value
+      if (value && !value.startsWith("-")) found = value
     }
   }
 
-  return undefined
+  return found
 }
 
 function readStringArg(
