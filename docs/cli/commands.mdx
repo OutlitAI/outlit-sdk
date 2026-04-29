@@ -318,7 +318,7 @@ outlit facts get --fact-id <id> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--status` | string | — | Comma-separated fact status filter: `ACTIVE`, `ACKNOWLEDGED`, `RESOLVED`, `SNOOZED`, `CANDIDATE` |
-| `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--fact-types` | string | — | Comma-separated customer-memory fact type filter: e.g. `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `PRODUCT_USAGE` |
 | `--fact-categories` | string | — | Comma-separated fact category filter: `MEMORY`, `CUSTOM` |
 | `--after` | string | — | Lower bound on fact occurrence time (ISO 8601 datetime) |
@@ -420,7 +420,7 @@ outlit search <query> [flags]
 | `--top-k` | number | `20` | Maximum results to return (1–50) |
 | `--after` | string | — | Filter to events after this ISO 8601 datetime |
 | `--before` | string | — | Filter to events before this ISO 8601 datetime |
-| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`). Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 
 ### Examples
 
@@ -484,7 +484,7 @@ outlit sources get --source-type <type> --source-id <id>
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--source-id` | string | — | Exact source identifier |
 
 ### Examples

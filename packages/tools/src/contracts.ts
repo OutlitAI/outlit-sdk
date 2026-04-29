@@ -803,11 +803,16 @@ export function getCustomerToolContract(name: CustomerToolName): CustomerToolCon
 }
 
 export function normalizeCustomerSourceType(value: string): CustomerSourceType | null {
-  if (customerSourceTypeSet.has(value)) {
-    return value as CustomerSourceType
+  const normalizedValue = value.trim().toUpperCase()
+
+  if (customerSourceTypeSet.has(normalizedValue)) {
+    return normalizedValue as CustomerSourceType
   }
 
-  return customerSourceTypeAliasMap.get(value as (typeof customerSourceTypeAliases)[number]) ?? null
+  return (
+    customerSourceTypeAliasMap.get(normalizedValue as (typeof customerSourceTypeAliases)[number]) ??
+    null
+  )
 }
 
 export type SearchArgsLike = {

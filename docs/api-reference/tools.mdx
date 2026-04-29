@@ -86,7 +86,7 @@ const result = await outlit.callTool(
 )
 ```
 
-The package also exports `customerToolContracts`, `defaultAgentToolNames`, `actionToolNames`, `sqlToolNames`, `allCustomerToolNames`, and enum lists such as `customerSourceTypes` for schema-driven agent integrations. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases.
+The package also exports `customerToolContracts`, `defaultAgentToolNames`, `actionToolNames`, `sqlToolNames`, `allCustomerToolNames`, and enum lists such as `customerSourceTypes` for schema-driven agent integrations. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases. SDK helpers and CLI commands trim and normalize source type filters before calling the tool gateway.
 
 ## Examples
 
