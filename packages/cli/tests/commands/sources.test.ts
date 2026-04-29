@@ -85,7 +85,7 @@ describe("sources get", () => {
     await captureStdout(() =>
       sourcesGetCmd.run!({
         args: {
-          "source-type": "crm",
+          "source-type": " crm ",
           "source-id": "opp_789",
           json: true,
         },
