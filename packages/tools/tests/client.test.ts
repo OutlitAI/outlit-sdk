@@ -99,6 +99,9 @@ describe("tool contracts", () => {
     ])
     expect(normalizeCustomerSourceType("CRM")).toBe("OPPORTUNITY")
     expect(normalizeCustomerSourceType("CRM_OPPORTUNITY")).toBe("OPPORTUNITY")
+    expect(normalizeCustomerSourceType("crm")).toBe("OPPORTUNITY")
+    expect(normalizeCustomerSourceType(" crm_opportunity ")).toBe("OPPORTUNITY")
+    expect(normalizeCustomerSourceType(" opportunity ")).toBe("OPPORTUNITY")
     expect(normalizeCustomerSourceType("ZENDESK_TICKET")).toBeNull()
     expect(normalizeCustomerSourceType("toString")).toBeNull()
     expect(normalizeCustomerSourceType("constructor")).toBeNull()
@@ -281,6 +284,23 @@ describe("resolveCustomerContextSearchInput", () => {
       resolveCustomerContextSearchInput({
         query: "renewal",
         sourceTypes: ["CALL", "CRM"],
+      }),
+    ).toEqual({
+      ok: true,
+      request: {
+        query: "renewal",
+        customer: undefined,
+        topK: undefined,
+        after: undefined,
+        before: undefined,
+        sourceTypes: ["CALL", "OPPORTUNITY"],
+      },
+    })
+
+    expect(
+      resolveCustomerContextSearchInput({
+        query: "renewal",
+        sourceTypes: [" call ", "crm_opportunity", "opportunity"],
       }),
     ).toEqual({
       ok: true,

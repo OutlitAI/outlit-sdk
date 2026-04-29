@@ -78,4 +78,23 @@ describe("sources get", () => {
       sourceId: "opp_456",
     })
   })
+
+  test("normalizes case-insensitive CRM source aliases before lookup", async () => {
+    const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
+
+    await captureStdout(() =>
+      sourcesGetCmd.run!({
+        args: {
+          "source-type": " crm ",
+          "source-id": "opp_789",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_source", {
+      sourceType: "OPPORTUNITY",
+      sourceId: "opp_789",
+    })
+  })
 })

@@ -57,6 +57,29 @@ describe("search", () => {
     })
   })
 
+  test("normalizes case-insensitive CRM opportunity source filters", async () => {
+    const { default: searchCmd } = await import("../../src/commands/search")
+
+    await captureStdout(() =>
+      searchCmd.run!({
+        args: {
+          query: "renewal risks",
+          "source-types": " call ,crm_opportunity, opportunity ",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof searchCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_search_customer_context", {
+      query: "renewal risks",
+      customer: undefined,
+      topK: undefined,
+      after: undefined,
+      before: undefined,
+      sourceTypes: ["CALL", "OPPORTUNITY"],
+    })
+  })
+
   test("error when --top-k exceeds 50", async () => {
     const { default: searchCmd } = await import("../../src/commands/search")
     const exitSpy = mockExitThrow()
