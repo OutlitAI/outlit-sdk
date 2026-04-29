@@ -1,5 +1,16 @@
 # @outlit/cli
 
+## 1.6.4
+
+### Patch Changes
+
+- [#120](https://github.com/OutlitAI/outlit-sdk/pull/120) [`ad0340c`](https://github.com/OutlitAI/outlit-sdk/commit/ad0340c0974659ee5846460e9a5ff48579891f0a) Thanks [@leo-paz](https://github.com/leo-paz)! - Normalize customer context source type inputs case-insensitively so CRM, CRM_OPPORTUNITY, and OPPORTUNITY filters all resolve to the canonical OPPORTUNITY source type before CLI and SDK helper requests are sent.
+
+- [#118](https://github.com/OutlitAI/outlit-sdk/pull/118) [`66353bb`](https://github.com/OutlitAI/outlit-sdk/commit/66353bb8771288a0c033056eefa8604b41464756) Thanks [@leo-paz](https://github.com/leo-paz)! - Fix customer inactivity parsing, integration status provider IDs, and CLI response normalization for stale sync rows and internal fact metadata.
+
+- Updated dependencies [[`ad0340c`](https://github.com/OutlitAI/outlit-sdk/commit/ad0340c0974659ee5846460e9a5ff48579891f0a)]:
+  - @outlit/tools@0.1.3
+
 ## 1.6.3
 
 ### Patch Changes
