@@ -132,8 +132,22 @@ const COMMANDS: readonly CmdDef[] = [
   },
   {
     name: "sources",
-    desc: "Get a concrete source by type and id",
+    desc: "List or fetch concrete source records",
     subs: [
+      {
+        name: "list",
+        desc: "List source records",
+        flags: [
+          ...PAGINATED,
+          { name: "--source-type", desc: "Source type" },
+          { name: "--customer", desc: "Scope to customer" },
+          { name: "--participant", desc: "Filter by participant" },
+          { name: "--provider", desc: "Filter by provider" },
+          { name: "--has-transcript", desc: "Only calls with transcripts" },
+          { name: "--after", desc: "Sources after date (ISO 8601)" },
+          { name: "--before", desc: "Sources before date (ISO 8601)" },
+        ],
+      },
       {
         name: "get",
         desc: "Get one exact source record",
@@ -446,7 +460,7 @@ function generateFish(): string {
     }
   }
 
-  return lines.join("\n") + "\n"
+  return `${lines.join("\n")}\n`
 }
 
 // ── Script registry ─────────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ export default defineCommand({
       "Search customer context using natural language.",
       "",
       "Performs a semantic search over grouped source and fact results.",
+      "Use `outlit sources list` when you need deterministic source enumeration rather than semantic ranking.",
       "Optionally scope to a specific customer with --customer.",
       "",
       "Examples:",

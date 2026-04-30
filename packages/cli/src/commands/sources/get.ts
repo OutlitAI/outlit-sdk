@@ -18,6 +18,7 @@ export default defineCommand({
     name: "get",
     description: [
       "Get one exact source by source type and source id.",
+      "Returns the same normalized source envelope as `sources list`, with more detailed source-specific fields when available.",
       "",
       "Examples:",
       "  outlit sources get --source-type CALL --source-id call_123",
@@ -25,6 +26,7 @@ export default defineCommand({
       "  outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json",
       "",
       `Source types: ${sourceTypeDescription}`,
+      "Use `outlit sources list` when you need deterministic enumeration rather than exact lookup.",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),

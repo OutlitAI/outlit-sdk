@@ -5,15 +5,17 @@ export default defineCommand({
   meta: {
     name: "sources",
     description: [
-      "Fetch concrete customer sources by type and id.",
+      "List or fetch concrete customer source records.",
       "",
       "Subcommands:",
+      "  list -- list source records with deterministic filters",
       "  get  -- fetch one exact source by sourceType and sourceId",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
   },
   subCommands: {
+    list: () => import("./list").then((m) => m.default),
     get: () => import("./get").then((m) => m.default),
   },
 })

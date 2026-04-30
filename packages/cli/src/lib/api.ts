@@ -24,6 +24,31 @@ export interface RunToolOptions {
   transform?: (data: unknown) => unknown
 }
 
+export interface ApiKeyValidationPayload {
+  valid: boolean
+  error?: string
+  organizationId?: string
+  createdById?: string | null
+  organization?: {
+    id: string
+    name: string | null
+    slug: string | null
+  }
+  createdBy?: {
+    id: string
+    email: string
+    name: string | null
+  } | null
+  apiKey?: {
+    id: string
+    name: string
+    prefix: string
+    createdAt: string
+    lastUsedAt: string | null
+    totalRequests: number
+  }
+}
+
 /**
  * Creates an authenticated API client, or exits with auth_required on failure.
  */
@@ -43,7 +68,7 @@ export async function getClientOrExit(
  * Makes a lightweight validation ping against the API.
  * Throws on failure — callers decide how to handle the error.
  */
-export async function pingApiKey(apiKey: string): Promise<void> {
+export async function pingApiKey(apiKey: string): Promise<ApiKeyValidationPayload> {
   const baseUrl = process.env.OUTLIT_API_URL ?? DEFAULT_API_URL
   const url = new URL("/api/validate-api-key", baseUrl).toString()
 
@@ -59,7 +84,7 @@ export async function pingApiKey(apiKey: string): Promise<void> {
     text.length > 0
       ? (() => {
           try {
-            return JSON.parse(text) as { valid?: boolean; error?: string }
+            return JSON.parse(text) as ApiKeyValidationPayload
           } catch {
             return null
           }
@@ -70,15 +95,20 @@ export async function pingApiKey(apiKey: string): Promise<void> {
     const message = payload?.error ?? (text.length > 0 ? text : `API error (${response.status})`)
     throw new Error(message)
   }
+
+  return payload
 }
 
 /**
  * Validates an API key by making a lightweight ping call.
  * Exits with invalid_key on failure.
  */
-export async function validateKeyOrExit(apiKey: string, json: boolean): Promise<void> {
+export async function validateKeyOrExit(
+  apiKey: string,
+  json: boolean,
+): Promise<ApiKeyValidationPayload> {
   try {
-    await pingApiKey(apiKey)
+    return await pingApiKey(apiKey)
   } catch (err) {
     return outputError(
       {
@@ -116,7 +146,7 @@ function renderApiTable(data: unknown, table: NonNullable<RunToolOptions["table"
   console.log(renderTable(headers, rows))
 
   const pagination = record.pagination as
-    | { hasMore: boolean; nextCursor: string | null; total: number }
+    | { hasMore: boolean; nextCursor: string | null; total?: number }
     | undefined
   if (pagination) {
     const hint = renderPaginationHint(pagination, items.length)

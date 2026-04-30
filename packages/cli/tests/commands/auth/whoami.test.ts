@@ -51,7 +51,24 @@ describe("auth whoami", () => {
       source: "config",
     })
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+      new Response(
+        JSON.stringify({
+          valid: true,
+          organizationId: "org_123",
+          createdById: "user_123",
+          organization: { id: "org_123", name: "Acme", slug: "acme" },
+          createdBy: { id: "user_123", email: "admin@acme.com", name: "Ada Lovelace" },
+          apiKey: {
+            id: "key_123",
+            name: "Local CLI",
+            prefix: "ok_ABC123",
+            createdAt: "2026-01-01T00:00:00.000Z",
+            lastUsedAt: "2026-01-02T00:00:00.000Z",
+            totalRequests: 42,
+          },
+        }),
+        { status: 200 },
+      ),
     )
     const stdoutSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
 
@@ -80,6 +97,22 @@ describe("auth whoami", () => {
     expect(parsed.key).toBe("ok_Ab...0123")
     expect(parsed.source).toBe("config")
     expect(parsed.valid).toBe(true)
+    expect(parsed.organizationId).toBe("org_123")
+    expect(parsed.createdById).toBe("user_123")
+    expect(parsed.organization).toEqual({ id: "org_123", name: "Acme", slug: "acme" })
+    expect(parsed.createdBy).toEqual({
+      id: "user_123",
+      email: "admin@acme.com",
+      name: "Ada Lovelace",
+    })
+    expect(parsed.apiKey).toEqual({
+      id: "key_123",
+      name: "Local CLI",
+      prefix: "ok_ABC123",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      lastUsedAt: "2026-01-02T00:00:00.000Z",
+      totalRequests: 42,
+    })
   })
 
   test("valid key — outputs single line for scripting (interactive mode)", async () => {

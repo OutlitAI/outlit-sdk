@@ -10,6 +10,7 @@ export const customerToolNames = [
   "outlit_list_facts",
   "outlit_get_fact",
   "outlit_get_source",
+  "outlit_list_sources",
   "outlit_search_customer_context",
   "outlit_query",
   "outlit_schema",
@@ -35,8 +36,6 @@ export const customerSourceTypeInputs = [
   "CRM",
   "CRM_OPPORTUNITY",
 ] as const
-
-export const notificationProviderValues = ["slack"] as const
 
 export const customerToolContracts = {
   outlit_list_customers: {
@@ -460,6 +459,72 @@ export const customerToolContracts = {
       additionalProperties: false,
     },
   },
+  outlit_list_sources: {
+    toolName: "outlit_list_sources",
+    description:
+      "List concrete source records deterministically. Use this instead of semantic search when you need enumerated calls, emails, calendar events, support tickets, or opportunities.",
+    inputSchema: {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      type: "object",
+      properties: {
+        sourceType: {
+          description: "Generic source type to list.",
+          type: "string",
+          enum: customerSourceTypeInputs,
+        },
+        customer: {
+          description: "Customer ID, domain, or name to scope source listing.",
+          type: "string",
+          minLength: 1,
+          maxLength: 200,
+        },
+        after: {
+          description: "ISO 8601 datetime lower bound.",
+          type: "string",
+          format: "date-time",
+          pattern:
+            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+        },
+        before: {
+          description: "ISO 8601 datetime upper bound.",
+          type: "string",
+          format: "date-time",
+          pattern:
+            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+        },
+        participant: {
+          description: "Participant email or name to filter source records.",
+          type: "string",
+          minLength: 1,
+          maxLength: 500,
+        },
+        provider: {
+          description: "Provider identifier such as gmail, gong, or google-calendar.",
+          type: "string",
+          minLength: 1,
+          maxLength: 200,
+        },
+        hasTranscript: {
+          description: "Filter call sources by transcript presence.",
+          type: "boolean",
+        },
+        limit: {
+          description: "Results per page.",
+          default: 50,
+          type: "integer",
+          minimum: 1,
+          maximum: 100,
+        },
+        cursor: {
+          description: "Pagination cursor.",
+          type: "string",
+          minLength: 1,
+          maxLength: 2000,
+        },
+      },
+      additionalProperties: false,
+    },
+  },
   outlit_search_customer_context: {
     toolName: "outlit_search_customer_context",
     description:
@@ -621,7 +686,7 @@ export const customerToolContracts = {
               provider: {
                 description: "Notification provider",
                 type: "string",
-                enum: notificationProviderValues,
+                enum: ["slack"],
               },
               channelId: {
                 description: "Provider-specific destination channel ID",
@@ -751,6 +816,8 @@ export const customerIncludeSections = [
 
 export const customerTimeframes = ["7d", "14d", "30d", "90d"] as const
 
+export const notificationProviderValues = ["slack"] as const
+
 export const notificationSeverityValues = ["low", "medium", "high"] as const
 
 export const timelineChannels = [
@@ -780,7 +847,7 @@ export const userListOrderFields = ["last_activity_at", "first_seen_at", "email"
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "006ce091382509c3224815c4f6ead4c5e78e34f54df281fe8f143811890b04af" as const
+  "5016d146842452855bfdd9ecc8f6be1a122125d0c392ceff315aeb2e44fefc7f" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]
