@@ -29,10 +29,19 @@ export default defineCommand({
 
     const masked = maskKey(credential.key)
 
-    await validateKeyOrExit(credential.key, json)
+    const validation = await validateKeyOrExit(credential.key, json)
 
     if (isJsonMode(json)) {
-      return outputResult({ key: masked, source: credential.source, valid: true })
+      return outputResult({
+        key: masked,
+        source: credential.source,
+        valid: true,
+        organizationId: validation.organizationId,
+        createdById: validation.createdById,
+        organization: validation.organization,
+        createdBy: validation.createdBy,
+        apiKey: validation.apiKey,
+      })
     }
 
     process.stdout.write(`${masked} (${credential.source})\n`)

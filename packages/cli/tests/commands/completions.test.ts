@@ -29,7 +29,7 @@ describe("completions command", () => {
   test("bash — subcommand dispatch", async () => {
     const out = await captureCompletions("bash")
     expect(out).toContain('facts) COMPREPLY=($(compgen -W "list get')
-    expect(out).toContain('sources) COMPREPLY=($(compgen -W "get')
+    expect(out).toContain('sources) COMPREPLY=($(compgen -W "list get')
     expect(out).toContain('customers) COMPREPLY=($(compgen -W "list get timeline')
     expect(out).toContain("COMP_CWORD -eq 2")
     expect(out).toContain("signup login logout status whoami")
@@ -46,6 +46,9 @@ describe("completions command", () => {
     )
     expect(out).toContain(
       'facts.get) COMPREPLY=($(compgen -W "--api-key --json --fact-id --include"',
+    )
+    expect(out).toContain(
+      'sources.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --source-type --customer --participant --provider --has-transcript --after --before"',
     )
     expect(out).toContain(
       'sources.get) COMPREPLY=($(compgen -W "--api-key --json --source-type --source-id"',
@@ -72,11 +75,12 @@ describe("completions command", () => {
   test("zsh — flag completions with descriptions", async () => {
     const out = await captureCompletions("zsh")
     expect(out).toContain("'facts:Get customer facts'")
-    expect(out).toContain("'sources:Get a concrete source by type and id'")
+    expect(out).toContain("'sources:List or fetch concrete source records'")
     expect(out).toContain("'--status:Filter by fact status'")
     expect(out).toContain("'--fact-id:Fact ID to fetch'")
     expect(out).toContain("'--source-type:Source type'")
     expect(out).toContain("facts.list)")
+    expect(out).toContain("sources.list)")
     expect(out).toContain("sources.get)")
   })
 
@@ -85,6 +89,7 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd search' -l source-types")
     expect(out).toContain("-n '__outlit_using_cmd facts list' -l status")
     expect(out).toContain("-n '__outlit_using_cmd facts get' -l fact-id")
+    expect(out).toContain("-n '__outlit_using_cmd sources list' -l participant")
     expect(out).toContain("-n '__outlit_using_cmd sources get' -l source-type")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l trait")

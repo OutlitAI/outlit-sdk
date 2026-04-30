@@ -68,12 +68,15 @@ export function renderTable(
  * Returns empty string when there are no items.
  */
 export function renderPaginationHint(
-  pagination: { hasMore: boolean; nextCursor: string | null; total: number },
+  pagination: { hasMore: boolean; nextCursor: string | null; total?: number },
   itemCount: number,
 ): string {
   if (itemCount === 0) return ""
+  const total = typeof pagination.total === "number" ? pagination.total : null
+
   if (pagination.hasMore && pagination.nextCursor) {
-    return `Showing ${itemCount} of ${pagination.total} total. Next page: --cursor ${pagination.nextCursor}`
+    const countLabel = total === null ? `${itemCount} results` : `${itemCount} of ${total} total`
+    return `Showing ${countLabel}. Next page: --cursor ${pagination.nextCursor}`
   }
-  return `Showing all ${pagination.total} results.`
+  return total === null ? `Showing ${itemCount} results.` : `Showing all ${total} results.`
 }
