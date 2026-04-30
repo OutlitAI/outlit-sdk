@@ -1,5 +1,16 @@
 # @outlit/cli
 
+## 1.7.0
+
+### Minor Changes
+
+- [#123](https://github.com/OutlitAI/outlit-sdk/pull/123) [`4e86cbb`](https://github.com/OutlitAI/outlit-sdk/commit/4e86cbb7af5f13e34654e132d7960f36bb3ffa7c) Thanks [@leo-paz](https://github.com/leo-paz)! - Add markdown notification bodies and explicit Slack destinations while keeping Slack as the default notifier.
+
+### Patch Changes
+
+- Updated dependencies [[`4e86cbb`](https://github.com/OutlitAI/outlit-sdk/commit/4e86cbb7af5f13e34654e132d7960f36bb3ffa7c)]:
+  - @outlit/tools@0.2.0
+
 ## 1.6.4
 
 ### Patch Changes
