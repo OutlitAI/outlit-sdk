@@ -20,6 +20,9 @@
   "contextual": {
     "options": ["copy", "chatgpt", "claude"]
   },
+  "settings": {
+    "customScripts": ["/outlit.js"]
+  },
   "navigation": {
     "tabs": [
       {
