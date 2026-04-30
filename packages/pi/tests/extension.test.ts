@@ -158,7 +158,10 @@ describe("createOutlitPiExtension", () => {
       "required" in tool.parameters &&
       Array.isArray(tool.parameters.required)
     ) {
-      expect(tool.parameters.required).toEqual(["title", "payload"])
+      expect(tool.parameters.required).toEqual(["title"])
+      expect(Object.keys(tool.parameters.properties ?? {})).toEqual(
+        expect.arrayContaining(["title", "markdown", "payload", "destinations"]),
+      )
     } else {
       throw new Error("Expected notification tool parameters to expose required fields")
     }
