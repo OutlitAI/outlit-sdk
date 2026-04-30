@@ -17,6 +17,9 @@ type NotificationDestination = {
   channelId?: string
 }
 
+const MAX_DESTINATION_COUNT = 10
+const MAX_DESTINATION_CHANNEL_ID_LENGTH = 240
+
 function parsePayload(raw: string): unknown {
   try {
     return JSON.parse(raw) as unknown
@@ -59,7 +62,10 @@ function parseDestinations(raw: string | undefined): NotificationDestination[] |
   }
 
   const destinations = raw.split(",").map((entry) => entry.trim())
-  if (destinations.some((entry) => entry.length === 0)) {
+  if (
+    destinations.length > MAX_DESTINATION_COUNT ||
+    destinations.some((entry) => entry.length === 0)
+  ) {
     return null
   }
 
@@ -70,6 +76,10 @@ function parseDestinations(raw: string | undefined): NotificationDestination[] |
     const channelId = channelParts.join(":").trim()
 
     if (!notificationProviderValues.includes(provider as NotificationProvider)) {
+      return null
+    }
+
+    if (channelId.length > MAX_DESTINATION_CHANNEL_ID_LENGTH) {
       return null
     }
 
