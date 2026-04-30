@@ -145,6 +145,47 @@ describe("runOutlitChurnPretriage", () => {
     expect(sqlStatements.join("\n")).not.toContain("now()")
   })
 
+  test("limits churn follow-up queries to the capped customer directory", async () => {
+    const queryMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            customerId: "cust_a",
+            customerName: "Alpha",
+            domain: "alpha.example",
+            billingStatus: "PAYING",
+            mrrCents: 20000,
+          },
+          {
+            customerId: "cust_b",
+            customerName: "Beta",
+            domain: "beta.example",
+            billingStatus: "PAST_DUE",
+            mrrCents: 10000,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+
+    await runOutlitChurnPretriage({
+      client: { callTool: queryMock },
+      config: defaultChurnPretriageConfig,
+      now: fixedNow,
+      scopeProfile: "revenue_accounts",
+      maxPromptCustomers: 5,
+    })
+
+    const sqlStatements = queryMock.mock.calls.map((call) => String(call[1]?.sql ?? ""))
+    for (const sql of sqlStatements.slice(1)) {
+      expect(sql).toContain("customer_id IN ('cust_a', 'cust_b')")
+    }
+  })
+
   test("surfaces customers with the same churn heuristic classes as the internal agent", async () => {
     const queryMock = vi
       .fn()

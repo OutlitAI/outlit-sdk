@@ -1,6 +1,7 @@
 import type { ChurnBillingStatus, ResolvedChurnPretriageConfig } from "./churn-pretriage.js"
 import {
   buildBillingScopeFilter,
+  buildCustomerIdFilter,
   normalizeEventNames,
   type QueryClient,
   queryRows,
@@ -77,25 +78,39 @@ export async function loadHeuristicData(params: {
   usersNowInactiveRows: UserInactivityRow[]
 }> {
   const sqlParts = buildSqlParts(params.config)
+  const customerDirectoryRows = await queryRows<CustomerDirectoryRow>(
+    params.client,
+    buildCustomerDirectorySql(sqlParts),
+  )
+  const boundedCustomerIds = customerDirectoryRows.map((row) => row.customerId)
   const [
-    customerDirectoryRows,
     customerActivityRows,
     customerDropRows,
     userDirectoryRows,
     userActivityRows,
     usersNowInactiveRows,
   ] = await Promise.all([
-    queryRows<CustomerDirectoryRow>(params.client, buildCustomerDirectorySql(sqlParts)),
-    queryRows<CustomerActivityRow>(params.client, buildCustomerActivitySql(sqlParts, params.now)),
+    queryRows<CustomerActivityRow>(
+      params.client,
+      buildCustomerActivitySql(sqlParts, params.now, boundedCustomerIds),
+    ),
     queryRows<CustomerDropRow>(
       params.client,
-      buildCustomerDropVsBaselineSql(sqlParts, params.config, params.now),
+      buildCustomerDropVsBaselineSql(sqlParts, params.config, params.now, boundedCustomerIds),
     ),
-    queryRows<UserDirectoryRow>(params.client, buildUserDirectorySql(sqlParts)),
-    queryRows<UserActivityRow>(params.client, buildUserActivitySql(sqlParts, params.now)),
+    queryRows<UserDirectoryRow>(params.client, buildUserDirectorySql(sqlParts, boundedCustomerIds)),
+    queryRows<UserActivityRow>(
+      params.client,
+      buildUserActivitySql(sqlParts, params.now, boundedCustomerIds),
+    ),
     queryRows<UserInactivityRow>(
       params.client,
-      buildUsersRecentlyActiveNowInactiveSql(sqlParts, params.config, params.now),
+      buildUsersRecentlyActiveNowInactiveSql(
+        sqlParts,
+        params.config,
+        params.now,
+        boundedCustomerIds,
+      ),
     ),
   ])
 
@@ -156,8 +171,13 @@ function buildCustomerDirectorySql(sqlParts: SqlParts): string {
   `
 }
 
-function buildCustomerActivitySql(sqlParts: SqlParts, now: Date): string {
+function buildCustomerActivitySql(
+  sqlParts: SqlParts,
+  now: Date,
+  boundedCustomerIds: readonly string[],
+): string {
   const sqlNow = toSqlDateTime(now)
+  const boundedCustomerFilter = buildCustomerIdFilter("customer_id", boundedCustomerIds)
 
   return `
     SELECT
@@ -171,6 +191,7 @@ function buildCustomerActivitySql(sqlParts: SqlParts, now: Date): string {
       AND occurred_at <= ${sqlNow}
       AND customer_id != ''
       AND ${sqlParts.activityScopeFilter}
+      AND ${boundedCustomerFilter}
       AND ${sqlParts.activityFilter}
     GROUP BY customer_id
     LIMIT 10000
@@ -181,10 +202,12 @@ function buildCustomerDropVsBaselineSql(
   sqlParts: SqlParts,
   config: ResolvedChurnPretriageConfig,
   now: Date,
+  boundedCustomerIds: readonly string[],
 ): string {
   const heuristic = config.customerHeuristics.dropVsBaseline
   const baselineAndWindowDays = heuristic.windowDays + heuristic.baselineDays
   const sqlNow = toSqlDateTime(now)
+  const boundedCustomerFilter = buildCustomerIdFilter("customer_id", boundedCustomerIds)
 
   return `
     SELECT
@@ -208,13 +231,16 @@ function buildCustomerDropVsBaselineSql(
       AND occurred_at <= ${sqlNow}
       AND customer_id != ''
       AND ${sqlParts.activityScopeFilter}
+      AND ${boundedCustomerFilter}
       AND ${sqlParts.activityFilter}
     GROUP BY customer_id
     LIMIT 10000
   `
 }
 
-function buildUserDirectorySql(sqlParts: SqlParts): string {
+function buildUserDirectorySql(sqlParts: SqlParts, boundedCustomerIds: readonly string[]): string {
+  const boundedCustomerFilter = buildCustomerIdFilter("customer_id", boundedCustomerIds)
+
   return `
     SELECT
       customer_id AS customerId,
@@ -225,13 +251,19 @@ function buildUserDirectorySql(sqlParts: SqlParts): string {
     WHERE customer_id != ''
       AND user_id != ''
       AND ${sqlParts.userScopeFilter}
+      AND ${boundedCustomerFilter}
     GROUP BY customer_id, user_id
     LIMIT 10000
   `
 }
 
-function buildUserActivitySql(sqlParts: SqlParts, now: Date): string {
+function buildUserActivitySql(
+  sqlParts: SqlParts,
+  now: Date,
+  boundedCustomerIds: readonly string[],
+): string {
   const sqlNow = toSqlDateTime(now)
+  const boundedCustomerFilter = buildCustomerIdFilter("customer_id", boundedCustomerIds)
 
   return `
     SELECT
@@ -245,6 +277,7 @@ function buildUserActivitySql(sqlParts: SqlParts, now: Date): string {
       AND customer_id != ''
       AND user_id != ''
       AND ${sqlParts.activityScopeFilter}
+      AND ${boundedCustomerFilter}
       AND ${sqlParts.activityFilter}
     GROUP BY customer_id, user_id
     LIMIT 10000
@@ -255,9 +288,11 @@ function buildUsersRecentlyActiveNowInactiveSql(
   sqlParts: SqlParts,
   config: ResolvedChurnPretriageConfig,
   now: Date,
+  boundedCustomerIds: readonly string[],
 ): string {
   const heuristic = config.userHeuristics.allRecentlyActiveUsersNowInactive
   const sqlNow = toSqlDateTime(now)
+  const boundedCustomerFilter = buildCustomerIdFilter("customer_id", boundedCustomerIds)
 
   return `
     SELECT
@@ -284,6 +319,7 @@ function buildUsersRecentlyActiveNowInactiveSql(
       AND customer_id != ''
       AND user_id != ''
       AND ${sqlParts.activityScopeFilter}
+      AND ${boundedCustomerFilter}
       AND ${sqlParts.activityFilter}
     GROUP BY customer_id, user_id
     LIMIT 10000

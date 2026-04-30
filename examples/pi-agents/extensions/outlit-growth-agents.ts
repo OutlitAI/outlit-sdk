@@ -222,7 +222,8 @@ export default function outlitGrowthAgents(pi: GrowthAgentPiApi) {
             "info",
           )
         }
-        await pi.sendUserMessage(command.prompt(scope, pretriage?.context, pretriageNote))
+        const effectivePretriageNote = pretriage?.note ?? pretriageNote
+        await pi.sendUserMessage(command.prompt(scope, pretriage?.context, effectivePretriageNote))
         await waitForStartedModelTurn(ctx)
       },
     })
@@ -260,7 +261,7 @@ function shouldApplyOutlitSignalGuidance(prompt: string): boolean {
 
 async function buildCommandPretriage(
   command: AgentCommand,
-): Promise<{ context: string; notification: string } | undefined> {
+): Promise<{ context?: string; note?: string; notification: string } | undefined> {
   if (!command.pretriage) {
     return undefined
   }
@@ -285,7 +286,7 @@ async function buildCommandPretriage(
   } catch (error) {
     const label = formatPretriageLabel(command.pretriage.kind)
     return {
-      context: `${label} could not run before this prompt: ${formatError(error)}. Continue with the registered Outlit tools and say that deterministic pretriage was unavailable.`,
+      note: `${label} could not run before this prompt: ${formatError(error)}. Continue with the registered Outlit tools and say that deterministic pretriage was unavailable.`,
       notification: `${label} was unavailable`,
     }
   }

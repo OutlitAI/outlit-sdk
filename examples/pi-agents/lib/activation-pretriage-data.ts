@@ -4,6 +4,7 @@ import type {
 } from "./activation-pretriage.js"
 import {
   buildBillingScopeFilter,
+  buildCustomerIdFilter,
   normalizeEventNames,
   type QueryClient,
   queryRows,
@@ -52,12 +53,19 @@ export async function loadActivationData(params: {
   eventActivationRows: Map<string, EventActivationRow>
 }> {
   const sqlParts = buildSqlParts(params.config)
-  const [customerDirectoryRows, userActivationRows, eventActivationRows] = await Promise.all([
-    queryRows<CustomerDirectoryRow>(params.client, buildCustomerDirectorySql(sqlParts)),
-    queryRows<UserActivationRow>(params.client, buildUserActivationSql(sqlParts, params.config)),
+  const customerDirectoryRows = await queryRows<CustomerDirectoryRow>(
+    params.client,
+    buildCustomerDirectorySql(sqlParts),
+  )
+  const boundedCustomerIds = customerDirectoryRows.map((row) => row.customerId)
+  const [userActivationRows, eventActivationRows] = await Promise.all([
+    queryRows<UserActivationRow>(
+      params.client,
+      buildUserActivationSql(sqlParts, params.config, boundedCustomerIds),
+    ),
     queryRows<EventActivationRow>(
       params.client,
-      buildEventActivationSql(sqlParts, params.config, params.now),
+      buildEventActivationSql(sqlParts, params.config, params.now, boundedCustomerIds),
     ),
   ])
 
@@ -104,7 +112,10 @@ function buildCustomerDirectorySql(sqlParts: SqlParts): string {
 function buildUserActivationSql(
   sqlParts: SqlParts,
   config: ResolvedActivationPretriageConfig,
+  boundedCustomerIds: readonly string[],
 ): string {
+  const boundedCustomerFilter = buildCustomerIdFilter("customer_id", boundedCustomerIds)
+
   return `
     SELECT
       customer_id AS customerId,
@@ -116,6 +127,7 @@ function buildUserActivationSql(
     WHERE customer_id != ''
       AND user_id != ''
       AND ${sqlParts.userScopeFilter}
+      AND ${boundedCustomerFilter}
     GROUP BY customer_id
     LIMIT 10000
   `
@@ -125,8 +137,10 @@ function buildEventActivationSql(
   sqlParts: SqlParts,
   config: ResolvedActivationPretriageConfig,
   now: Date,
+  boundedCustomerIds: readonly string[],
 ): string {
   const sqlNow = toSqlDateTime(now)
+  const boundedCustomerFilter = buildCustomerIdFilter("customer_id", boundedCustomerIds)
 
   return `
     SELECT
@@ -143,6 +157,7 @@ function buildEventActivationSql(
     WHERE occurred_at <= ${sqlNow}
       AND customer_id != ''
       AND ${sqlParts.activityScopeFilter}
+      AND ${boundedCustomerFilter}
     GROUP BY customer_id
     LIMIT 10000
   `

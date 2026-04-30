@@ -135,6 +135,10 @@ export type OutlitActivationPretriageToolDefinition = ToolDefinition<
   OutlitActivationPretriageToolDetails
 >
 
+const ALLOWED_ACTIVATION_STAGES = new Set<
+  OutlitActivationPretriageConfig["defaults"]["activatedStages"][number]
+>(["ACTIVATED", "ENGAGED"])
+
 export const defaultActivationPretriageConfig: OutlitActivationPretriageConfig = {
   version: 1,
   scopeProfiles: {
@@ -277,6 +281,12 @@ function validateActivationPretriageConfig(
   assertNonNegativeInteger(config.defaults.minimumAccountAgeDays, "minimumAccountAgeDays")
   assertPositiveInteger(config.defaults.staleAfterDays, "staleAfterDays")
   assertPositiveInteger(config.defaults.recentActivityWindowDays, "recentActivityWindowDays")
+  assertStringArray(config.defaults.activatedStages, "defaults.activatedStages")
+  for (const stage of config.defaults.activatedStages) {
+    if (!ALLOWED_ACTIVATION_STAGES.has(stage as (typeof config.defaults.activatedStages)[number])) {
+      throw new Error("defaults.activatedStages contains an unsupported journey stage")
+    }
+  }
   assertStringArray(config.defaults.activationEventNames, "activationEventNames")
 
   return config

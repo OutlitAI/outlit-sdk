@@ -124,6 +124,14 @@ export function buildBillingScopeFilter(scope: BillingScope): BillingScopeFilter
   }
 }
 
+export function buildCustomerIdFilter(columnName: string, customerIds: readonly string[]): string {
+  if (customerIds.length === 0) {
+    return "0 = 1"
+  }
+
+  return `${columnName} IN (${toSqlStringList(customerIds)})`
+}
+
 export function assertStringArray(
   value: unknown,
   path: string,

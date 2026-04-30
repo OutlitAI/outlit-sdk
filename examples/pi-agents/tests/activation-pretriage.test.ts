@@ -132,6 +132,62 @@ describe("runOutlitActivationPretriage", () => {
     ).rejects.toThrow("activation pretriage config version must be 1")
     expect(queryMock).not.toHaveBeenCalled()
   })
+
+  test("rejects unsupported activated journey stages before running SQL", async () => {
+    const invalidConfig = {
+      ...defaultActivationPretriageConfig,
+      defaults: {
+        ...defaultActivationPretriageConfig.defaults,
+        activatedStages: ["ACTIVATED", "NOT_A_STAGE"],
+      },
+    } as unknown as OutlitActivationPretriageConfig
+    const queryMock = vi.fn()
+
+    await expect(
+      runOutlitActivationPretriage({
+        client: { callTool: queryMock },
+        config: invalidConfig,
+        now: fixedNow,
+      }),
+    ).rejects.toThrow("defaults.activatedStages contains an unsupported journey stage")
+    expect(queryMock).not.toHaveBeenCalled()
+  })
+
+  test("limits activation follow-up queries to the capped customer directory", async () => {
+    const queryMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            customerId: "cust_a",
+            customerName: "Alpha",
+            domain: "alpha.example",
+            billingStatus: "TRIALING",
+            mrrCents: 0,
+          },
+          {
+            customerId: "cust_b",
+            customerName: "Beta",
+            domain: "beta.example",
+            billingStatus: "NONE",
+            mrrCents: 0,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+
+    await runOutlitActivationPretriage({
+      client: { callTool: queryMock },
+      config: defaultActivationPretriageConfig,
+      now: fixedNow,
+      maxPromptCustomers: 5,
+    })
+
+    const sqlStatements = queryMock.mock.calls.map((call) => String(call[1]?.sql ?? ""))
+    expect(sqlStatements[1]).toContain("customer_id IN ('cust_a', 'cust_b')")
+    expect(sqlStatements[2]).toContain("customer_id IN ('cust_a', 'cust_b')")
+  })
 })
 
 describe("createOutlitActivationPretriageTool", () => {

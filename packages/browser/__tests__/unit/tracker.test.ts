@@ -224,6 +224,7 @@ describe("payload identity", () => {
       (event) => event.type === "stage" && event.stage === "activated",
     )
 
+    expect(activationEvent).toBeDefined()
     expect(activationEvent).not.toHaveProperty("eventName")
   })
 })
