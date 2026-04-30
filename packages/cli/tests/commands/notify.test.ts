@@ -127,6 +127,34 @@ describe("notify", () => {
     }
   })
 
+  test("--markdown-file reads markdown and takes precedence over --markdown", async () => {
+    const markdownPath = join(testDir, "notification.md")
+    writeFileSync(markdownPath, "  **Risk found**\n\n- Customer: Acme  ")
+    const { default: notifyCmd } = await import("../../src/commands/notify")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+
+    try {
+      await notifyCmd.run!({
+        args: {
+          title: "Risk found",
+          markdown: "**ignored**",
+          "markdown-file": markdownPath,
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_send_notification",
+        expect.objectContaining({
+          title: "Risk found",
+          markdown: "**Risk found**\n\n- Customer: Acme",
+        }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("empty optional message, source, or subject returns invalid_input", async () => {
     const { default: notifyCmd } = await import("../../src/commands/notify")
     const exitSpy = mockExitThrow()
