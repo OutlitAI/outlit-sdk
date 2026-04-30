@@ -497,18 +497,19 @@ outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
 
 ## Notify
 
-Send a Slack notification to the organization's configured notification channel.
+Send a notification to the organization's configured default notifier. Slack is the default notifier when no destination is supplied.
 
 ```bash
 outlit notify --title <title> <payload> [flags]
 outlit notify --title <title> --payload-file <path> [flags]
+outlit notify --title <title> --markdown <markdown> [flags]
 ```
 
 ### Arguments
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `payload` | Yes* | Notification payload as JSON or a raw string. Any JSON-serializable object, array, scalar, or string is accepted. |
+| `payload` | No* | Notification payload as JSON or a raw string. Any JSON-serializable object, array, scalar, or string is accepted. Provide a payload, `--payload-file`, `--markdown`, or `--markdown-file`. |
 
 ### Flags
 
@@ -516,14 +517,20 @@ outlit notify --title <title> --payload-file <path> [flags]
 |------|------|---------|-------------|
 | `--title` | string | — | Notification title |
 | `--payload-file` | string | — | Path to a payload file. Takes precedence over the positional payload. |
-| `--message` | string | — | Optional Slack message |
+| `--markdown` | string | — | Markdown notification body |
+| `--markdown-file` | string | — | Path to a markdown file. Takes precedence over `--markdown`. |
+| `--message` | string | — | Optional summary message |
 | `--severity` | string | — | Optional severity: `low`, `medium`, `high` |
 | `--source` | string | — | Optional source label |
 | `--subject` | string | — | Optional subject line |
+| `--destination` | string | — | Optional comma-separated destinations in `provider[:channelId]` form. Supported provider: `slack`. |
 
 ### Examples
 
 ```bash
+# Markdown body
+outlit notify --title "Expansion signal" --markdown "**Expansion signal**\n\n- Customer: acme.com"
+
 # Inline JSON payload
 outlit notify --title "Expansion signal" '{"customer":"acme.com","score":0.91}'
 
@@ -533,12 +540,15 @@ outlit notify --title "Escalation" "Check this account before renewal"
 # Payload from a file
 outlit notify --title "Usage decay" --payload-file ./payload.json
 
+# Explicit Slack destination
+outlit notify --title "Escalation" --markdown "**Check this account**" --destination slack:C123
+
 # High-severity notification with a message
 outlit notify --title "Escalation" --severity high --message "Check this account" '{"customer":"acme.com"}'
 ```
 
 <Note>
-  Provide either the positional payload or `--payload-file`. When both are provided, `--payload-file` takes precedence.
+  Provide `--markdown`, `--markdown-file`, a positional payload, or `--payload-file`. When both payload forms are provided, `--payload-file` takes precedence. When both markdown forms are provided, `--markdown-file` takes precedence.
 </Note>
 
 ## SQL

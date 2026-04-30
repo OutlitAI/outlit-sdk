@@ -28,6 +28,7 @@ export {
   getCustomerToolContract,
   isCustomerToolName,
   normalizeCustomerSourceType,
+  notificationProviderValues,
   notificationSeverityValues,
   resolveCustomerContextSearchInput,
   schemaTables,

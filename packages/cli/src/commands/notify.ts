@@ -1,5 +1,9 @@
 import { readFileSync } from "node:fs"
-import { customerToolContracts, notificationSeverityValues } from "@outlit/tools"
+import {
+  customerToolContracts,
+  notificationProviderValues,
+  notificationSeverityValues,
+} from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
@@ -7,6 +11,11 @@ import { getClientOrExit, runTool } from "../lib/api"
 import { errorMessage, outputError } from "../lib/output"
 
 type NotificationSeverity = (typeof notificationSeverityValues)[number]
+type NotificationProvider = (typeof notificationProviderValues)[number]
+type NotificationDestination = {
+  provider: NotificationProvider
+  channelId?: string
+}
 
 function parsePayload(raw: string): unknown {
   try {
@@ -44,18 +53,50 @@ function payloadSizeIsValid(payload: unknown): boolean {
   return typeof serialized === "string" && serialized.length <= 100000
 }
 
+function parseDestinations(raw: string | undefined): NotificationDestination[] | null | undefined {
+  if (raw === undefined) {
+    return undefined
+  }
+
+  const destinations = raw.split(",").map((entry) => entry.trim())
+  if (destinations.some((entry) => entry.length === 0)) {
+    return null
+  }
+
+  const parsed: NotificationDestination[] = []
+  for (const destination of destinations) {
+    const [providerInput, ...channelParts] = destination.split(":")
+    const provider = providerInput?.trim().toLowerCase()
+    const channelId = channelParts.join(":").trim()
+
+    if (!notificationProviderValues.includes(provider as NotificationProvider)) {
+      return null
+    }
+
+    parsed.push({
+      provider: provider as NotificationProvider,
+      ...(channelId.length > 0 ? { channelId } : {}),
+    })
+  }
+
+  return parsed
+}
+
 export default defineCommand({
   meta: {
     name: "notify",
     description: [
-      "Send a Slack notification through Outlit.",
+      "Send a notification through Outlit.",
       "",
-      "Provide the payload as a positional argument or via --payload-file.",
+      "Provide markdown, a payload positional argument, or --payload-file.",
       "When both are provided, --payload-file takes precedence.",
+      "When --destination is omitted, Outlit uses the organization's default notifier.",
       "",
       "Examples:",
+      "  outlit notify --title 'Risk found' --markdown '**Risk found**\\n\\n- Customer: acme.com'",
       "  outlit notify --title 'Risk found' '{\"customer\":\"acme.com\"}'",
       "  outlit notify --title 'Risk found' --payload-file ./payload.json",
+      "  outlit notify --title 'Escalation' --markdown '**Check this account**' --destination slack:C123",
       "  outlit notify --title 'Escalation' --severity HIGH --message 'Check this account' '{\"customer\":\"acme.com\"}'",
       "",
       AGENT_JSON_HINT,
@@ -78,9 +119,17 @@ export default defineCommand({
       type: "string",
       description: "Path to a payload file to read (takes precedence over positional payload)",
     },
+    markdown: {
+      type: "string",
+      description: "Markdown notification body",
+    },
+    "markdown-file": {
+      type: "string",
+      description: "Path to a markdown file to read (takes precedence over --markdown)",
+    },
     message: {
       type: "string",
-      description: "Optional Slack message",
+      description: "Optional summary message",
     },
     severity: {
       type: "string",
@@ -94,6 +143,11 @@ export default defineCommand({
       type: "string",
       description: "Optional subject line",
     },
+    destination: {
+      type: "string",
+      description:
+        "Optional comma-separated destinations in provider[:channelId] form. Supported provider: slack",
+    },
   },
   async run({ args }) {
     const json = !!args.json
@@ -106,6 +160,32 @@ export default defineCommand({
       return outputError(
         {
           message: "--title must be 160 characters or fewer after trimming",
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+
+    let markdownInput = args.markdown
+    if (args["markdown-file"]) {
+      try {
+        markdownInput = readFileSync(args["markdown-file"], "utf-8")
+      } catch (err) {
+        return outputError(
+          {
+            message: `Cannot read markdown file: ${errorMessage(err, "unknown error")}`,
+            code: "file_error",
+          },
+          json,
+        )
+      }
+    }
+
+    const markdown = validateTrimmedText(markdownInput, 100000)
+    if (markdown === null) {
+      return outputError(
+        {
+          message: "--markdown must be between 1 and 100000 characters after trimming",
           code: "invalid_input",
         },
         json,
@@ -161,6 +241,17 @@ export default defineCommand({
       severity = normalized
     }
 
+    const destinations = parseDestinations(args.destination)
+    if (destinations === null) {
+      return outputError(
+        {
+          message: `--destination must use provider[:channelId] with provider one of: ${notificationProviderValues.join(", ")}`,
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+
     let payloadInput: string | undefined
     if (args["payload-file"]) {
       try {
@@ -176,15 +267,20 @@ export default defineCommand({
       }
     } else if (typeof args.payload === "string" && args.payload.trim().length > 0) {
       payloadInput = args.payload
-    } else {
+    }
+
+    if (!payloadInput && markdown === undefined) {
       return outputError(
-        { message: "Provide a payload or --payload-file", code: "missing_input" },
+        {
+          message: "Provide --markdown, --markdown-file, a payload, or --payload-file",
+          code: "missing_input",
+        },
         json,
       )
     }
 
-    const payload = parsePayload(payloadInput)
-    if (!payloadSizeIsValid(payload)) {
+    const payload = payloadInput === undefined ? undefined : parsePayload(payloadInput)
+    if (payload !== undefined && !payloadSizeIsValid(payload)) {
       return outputError(
         {
           message: "Payload must serialize to 100000 characters or fewer",
@@ -198,7 +294,14 @@ export default defineCommand({
 
     const params: Record<string, unknown> = {
       title,
-      payload,
+    }
+
+    if (markdown !== undefined) {
+      params.markdown = markdown
+    }
+
+    if (payload !== undefined) {
+      params.payload = payload
     }
 
     if (message !== undefined) {
@@ -215,6 +318,10 @@ export default defineCommand({
 
     if (subject !== undefined) {
       params.subject = subject
+    }
+
+    if (destinations !== undefined) {
+      params.destinations = destinations
     }
 
     return runTool(client, customerToolContracts.outlit_send_notification.toolName, params, json)

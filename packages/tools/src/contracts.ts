@@ -562,7 +562,7 @@ export const customerToolContracts = {
   outlit_send_notification: {
     toolName: "outlit_send_notification",
     description:
-      "Send or post a Slack notification. Use only when the user explicitly asks you to send, post, or notify. The payload is rendered as a Slack code block.",
+      "Send or post a notification. Use only when the user explicitly asks you to send, post, or notify. Slack is the default notifier when destinations are omitted.",
     inputSchema: {
       $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
@@ -573,42 +573,19 @@ export const customerToolContracts = {
           maxLength: 160,
           description: "Notification title",
         },
+        markdown: {
+          description: "Markdown notification body rendered for the target provider",
+          type: "string",
+          minLength: 1,
+          maxLength: 100000,
+        },
         payload: {
           description:
-            "JSON-compatible payload rendered in Slack as a code block. Serialized size must be 100,000 characters or fewer.",
-          anyOf: [
-            {
-              type: "string",
-            },
-            {
-              type: "number",
-            },
-            {
-              type: "boolean",
-            },
-            {
-              type: "null",
-            },
-            {
-              type: "array",
-              items: {
-                $ref: "#/$defs/__schema0",
-              },
-            },
-            {
-              type: "object",
-              propertyNames: {
-                type: "string",
-              },
-              additionalProperties: {
-                $ref: "#/$defs/__schema0",
-              },
-            },
-          ],
+            "Optional JSON-compatible payload. Serialized size must be 100,000 characters or fewer.",
           $ref: "#/$defs/__schema0",
         },
         message: {
-          description: "Optional Slack message",
+          description: "Optional summary message",
           type: "string",
           minLength: 1,
           maxLength: 1200,
@@ -630,8 +607,39 @@ export const customerToolContracts = {
           minLength: 1,
           maxLength: 240,
         },
+        destinations: {
+          description:
+            "Optional explicit notification destinations. Omit to use the default notifier.",
+          minItems: 1,
+          maxItems: 10,
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              provider: {
+                description: "Notification provider",
+                type: "string",
+                enum: ["slack"],
+              },
+              channelId: {
+                description: "Provider-specific destination channel ID",
+                type: "string",
+                minLength: 1,
+                maxLength: 240,
+              },
+              label: {
+                description: "Optional destination label",
+                type: "string",
+                minLength: 1,
+                maxLength: 120,
+              },
+            },
+            required: ["provider"],
+            additionalProperties: false,
+          },
+        },
       },
-      required: ["title", "payload"],
+      required: ["title"],
       additionalProperties: false,
       $defs: {
         __schema0: {
@@ -741,6 +749,8 @@ export const customerIncludeSections = [
 
 export const customerTimeframes = ["7d", "14d", "30d", "90d"] as const
 
+export const notificationProviderValues = ["slack"] as const
+
 export const notificationSeverityValues = ["low", "medium", "high"] as const
 
 export const timelineChannels = [
@@ -770,7 +780,7 @@ export const userListOrderFields = ["last_activity_at", "first_seen_at", "email"
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "f619a7dcc1845bc494a193d11e76c6fcee66ecaa2ea60a9a30b51750feb8b11a" as const
+  "006ce091382509c3224815c4f6ead4c5e78e34f54df281fe8f143811890b04af" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]
@@ -803,15 +813,13 @@ export function getCustomerToolContract(name: CustomerToolName): CustomerToolCon
 }
 
 export function normalizeCustomerSourceType(value: string): CustomerSourceType | null {
-  const normalizedValue = value.trim().toUpperCase()
-
-  if (customerSourceTypeSet.has(normalizedValue)) {
-    return normalizedValue as CustomerSourceType
+  const normalized = value.trim().toUpperCase()
+  if (customerSourceTypeSet.has(normalized)) {
+    return normalized as CustomerSourceType
   }
 
   return (
-    customerSourceTypeAliasMap.get(normalizedValue as (typeof customerSourceTypeAliases)[number]) ??
-    null
+    customerSourceTypeAliasMap.get(normalized as (typeof customerSourceTypeAliases)[number]) ?? null
   )
 }
 
