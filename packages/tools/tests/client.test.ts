@@ -126,11 +126,21 @@ describe("tool contracts", () => {
     const contract = getCustomerToolContract("outlit_send_notification")
     const properties = contract.inputSchema.properties as Record<
       string,
-      { enum?: string[]; type?: string }
+      {
+        enum?: string[]
+        type?: string
+        items?: { properties?: Record<string, { enum?: string[] }> }
+      }
     >
 
-    expect(contract.inputSchema.required).toEqual(["title", "payload"])
+    expect(contract.inputSchema.required).toEqual(["title"])
     expect(contract.inputSchema.additionalProperties).toBe(false)
+    expect(properties.markdown).toEqual(
+      expect.objectContaining({
+        type: "string",
+      }),
+    )
+    expect(properties.destinations?.items?.properties?.provider?.enum).toEqual(["slack"])
     expect(properties.severity).toEqual(
       expect.objectContaining({
         enum: ["low", "medium", "high"],
@@ -201,8 +211,9 @@ describe("createOutlitClient", () => {
 
     await client.callTool("outlit_send_notification", {
       title: "Reminder",
-      payload: { customerId: "cust_123" },
+      markdown: "**Reminder**\n\n- Customer: Acme",
       severity: "low",
+      destinations: [{ provider: "slack", channelId: "C123" }],
     })
 
     expect(fetchMock).toHaveBeenCalledWith("https://example.outlit.test/api/tools/call", {
@@ -215,8 +226,9 @@ describe("createOutlitClient", () => {
         tool: "outlit_send_notification",
         input: {
           title: "Reminder",
-          payload: { customerId: "cust_123" },
+          markdown: "**Reminder**\n\n- Customer: Acme",
           severity: "low",
+          destinations: [{ provider: "slack", channelId: "C123" }],
         },
       }),
     })

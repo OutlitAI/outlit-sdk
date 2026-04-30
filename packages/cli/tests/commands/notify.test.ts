@@ -89,6 +89,33 @@ describe("notify", () => {
     }
   })
 
+  test("sends markdown without a payload and forwards explicit destinations", async () => {
+    const { default: notifyCmd } = await import("../../src/commands/notify")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+
+    try {
+      await notifyCmd.run!({
+        args: {
+          title: "Risk found",
+          markdown: "  **Risk found**\n\n- Customer: Acme  ",
+          destination: "slack:C456",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_send_notification",
+        expect.objectContaining({
+          title: "Risk found",
+          markdown: "**Risk found**\n\n- Customer: Acme",
+          destinations: [{ provider: "slack", channelId: "C456" }],
+        }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("empty optional message, source, or subject returns invalid_input", async () => {
     const { default: notifyCmd } = await import("../../src/commands/notify")
     const exitSpy = mockExitThrow()
@@ -250,7 +277,7 @@ describe("notify", () => {
     }
   })
 
-  test("missing payload returns missing_input", async () => {
+  test("missing payload and markdown returns missing_input", async () => {
     const { default: notifyCmd } = await import("../../src/commands/notify")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -271,6 +298,33 @@ describe("notify", () => {
       stderrSpy.mockRestore()
 
       expectErrorExit(thrown, stderrOutput, "missing_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  })
+
+  test("invalid destination returns invalid_input", async () => {
+    const { default: notifyCmd } = await import("../../src/commands/notify")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await notifyCmd.run!({
+        args: {
+          title: "Risk found",
+          markdown: "**Risk found**",
+          destination: "teams:C123",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
+    } catch (error) {
+      thrown = error
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
       expect(mockCallTool).not.toHaveBeenCalled()
     }
   })

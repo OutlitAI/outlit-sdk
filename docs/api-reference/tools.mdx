@@ -48,7 +48,7 @@ POST https://app.outlit.ai/api/tools/call
 | `outlit_get_fact` | Retrieve one exact customer fact |
 | `outlit_get_source` | Retrieve one exact source record behind a fact or search result |
 | `outlit_search_customer_context` | Search customer context semantically |
-| `outlit_send_notification` | Send a Slack notification to the organization's configured notification channel |
+| `outlit_send_notification` | Send a notification through the organization's configured notifier; Slack is the default notifier |
 | `outlit_query` | Run SQL against customer intelligence views |
 | `outlit_schema` | Inspect available analytics views |
 
@@ -57,7 +57,7 @@ POST https://app.outlit.ai/api/tools/call
 </Info>
 
 <Note>
-  `outlit_send_notification` is an action tool. Call it only when the user explicitly asks you to send, post, or notify a result to Slack. Its `payload` can be any JSON-serializable value and is rendered in Slack as a code block; the gateway does not assume a Pi-specific schema.
+  `outlit_send_notification` is an action tool. Call it only when the user explicitly asks you to send, post, or notify a result. Prefer `markdown` for the human-readable body; `payload` can still carry JSON-serializable context. If `destinations` is omitted, Outlit uses the organization's default notifier, currently Slack.
 </Note>
 
 ## TypeScript Client
