@@ -36,6 +36,8 @@ export const customerSourceTypeInputs = [
   "CRM_OPPORTUNITY",
 ] as const
 
+export const notificationProviderValues = ["slack"] as const
+
 export const customerToolContracts = {
   outlit_list_customers: {
     toolName: "outlit_list_customers",
@@ -619,7 +621,7 @@ export const customerToolContracts = {
               provider: {
                 description: "Notification provider",
                 type: "string",
-                enum: ["slack"],
+                enum: notificationProviderValues,
               },
               channelId: {
                 description: "Provider-specific destination channel ID",
@@ -748,8 +750,6 @@ export const customerIncludeSections = [
 ] as const
 
 export const customerTimeframes = ["7d", "14d", "30d", "90d"] as const
-
-export const notificationProviderValues = ["slack"] as const
 
 export const notificationSeverityValues = ["low", "medium", "high"] as const
 
