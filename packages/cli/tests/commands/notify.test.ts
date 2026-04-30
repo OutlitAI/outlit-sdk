@@ -329,6 +329,60 @@ describe("notify", () => {
     }
   })
 
+  test("more than 10 destinations returns invalid_input", async () => {
+    const { default: notifyCmd } = await import("../../src/commands/notify")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await notifyCmd.run!({
+        args: {
+          title: "Risk found",
+          markdown: "**Risk found**",
+          destination: Array.from({ length: 11 }, (_, index) => `slack:C${index}`).join(","),
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
+    } catch (error) {
+      thrown = error
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  })
+
+  test("destination channelId over 240 characters returns invalid_input", async () => {
+    const { default: notifyCmd } = await import("../../src/commands/notify")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await notifyCmd.run!({
+        args: {
+          title: "Risk found",
+          markdown: "**Risk found**",
+          destination: `slack:${"C".repeat(241)}`,
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
+    } catch (error) {
+      thrown = error
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  })
+
   test("file_error when --payload-file path is bad", async () => {
     const { default: notifyCmd } = await import("../../src/commands/notify")
     const exitSpy = mockExitThrow()
