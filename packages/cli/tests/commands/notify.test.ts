@@ -31,6 +31,17 @@ describe("notify", () => {
     mockCallTool.mockClear()
   })
 
+  test("help metadata concisely explains markdown notification behavior", async () => {
+    const { default: notifyCmd } = await import("../../src/commands/notify")
+    const description = (notifyCmd.meta as { description?: string } | undefined)?.description
+    const args = notifyCmd.args as { markdown: { description: string } }
+
+    expect(description).toContain(
+      "Use --markdown or --markdown-file for the human-readable body; Outlit renders it for the destination platform.",
+    )
+    expect(args.markdown.description).toBe("Markdown body rendered for the destination platform.")
+  })
+
   test("sends positional payload as raw string", async () => {
     const { default: notifyCmd } = await import("../../src/commands/notify")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
