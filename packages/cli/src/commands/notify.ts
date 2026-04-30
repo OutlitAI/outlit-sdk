@@ -96,11 +96,10 @@ export default defineCommand({
   meta: {
     name: "notify",
     description: [
-      "Send a notification through Outlit.",
+      "Send a notification through Outlit to the organization's configured notifier.",
       "",
-      "Provide markdown, a payload positional argument, or --payload-file.",
-      "When both are provided, --payload-file takes precedence.",
-      "When --destination is omitted, Outlit uses the organization's default notifier.",
+      "Use --markdown or --markdown-file for the human-readable body; Outlit renders it for the destination platform.",
+      "Add a JSON or raw payload when useful for structured context. When --destination is omitted, Outlit uses the default notifier.",
       "",
       "Examples:",
       "  outlit notify --title 'Risk found' --markdown '**Risk found**\\n\\n- Customer: acme.com'",
@@ -131,11 +130,11 @@ export default defineCommand({
     },
     markdown: {
       type: "string",
-      description: "Markdown notification body",
+      description: "Markdown body rendered for the destination platform.",
     },
     "markdown-file": {
       type: "string",
-      description: "Path to a markdown file to read (takes precedence over --markdown)",
+      description: "Path to a markdown file to render for the destination platform.",
     },
     message: {
       type: "string",
