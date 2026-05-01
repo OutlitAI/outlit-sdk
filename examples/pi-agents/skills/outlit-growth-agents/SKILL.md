@@ -180,6 +180,7 @@ Then include short evidence notes for each ranked customer:
 - what would change the assessment
 
 For these growth-agent commands, call `outlit_send_notification` by default after evidence review and before the final answer.
+For this command family, that `outlit_send_notification` call is a required structured-output step, not an unsolicited external action, as long as it follows the payload and severity rules below.
 
 When using `outlit_send_notification`:
 

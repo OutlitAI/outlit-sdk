@@ -44,11 +44,15 @@ export function normalizeString(value: string | undefined): string | undefined {
 
 export function normalizeNow(now: Date | string | undefined): Date {
   if (now instanceof Date) {
+    if (Number.isNaN(now.getTime())) {
+      throw new Error("now must be a valid date")
+    }
+
     return now
   }
 
   if (typeof now === "string") {
-    const date = new Date(now)
+    const date = parseOutlitDate(now)
     if (Number.isNaN(date.getTime())) {
       throw new Error("now must be a valid date")
     }

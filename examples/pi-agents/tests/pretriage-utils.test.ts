@@ -4,6 +4,7 @@ import {
   buildBillingScopeFilter,
   buildFingerprint,
   normalizeEventNames,
+  normalizeNow,
   toSqlDateTime,
   toSqlStringList,
 } from "../lib/pretriage-utils.js"
@@ -38,5 +39,13 @@ describe("pretriage utilities", () => {
       activity: expect.stringContaining("billing_status IN ('PAYING')"),
       users: expect.stringContaining("billing_status IN ('PAYING')"),
     })
+  })
+
+  test("normalizes timezone-less now strings as UTC", () => {
+    expect(normalizeNow("2026-04-01T00:00:00").toISOString()).toBe("2026-04-01T00:00:00.000Z")
+  })
+
+  test("rejects invalid Date instances for now", () => {
+    expect(() => normalizeNow(new Date("invalid"))).toThrow("now must be a valid date")
   })
 })
