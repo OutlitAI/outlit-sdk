@@ -5,6 +5,14 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
+    "@outlit/cli#build": {
+      "dependsOn": ["@outlit/tools#build"],
+      "outputs": ["dist/**"]
+    },
+    "@outlit/pi#build": {
+      "dependsOn": ["@outlit/tools#build"],
+      "outputs": ["dist/**"]
+    },
     "test": {
       "dependsOn": ["build"]
     },

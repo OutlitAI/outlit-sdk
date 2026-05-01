@@ -35,6 +35,12 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Test changeset release-plan validation
+        run: node --test .github/scripts/validate-changesets.test.mjs
+
+      - name: Validate changeset release plan
+        run: node .github/scripts/validate-changesets.mjs
+
       - name: Check for changeset
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
         run: |
@@ -83,7 +89,7 @@ jobs:
         run: |
           CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -v '^$' || true)
           # Root-level config changes (biome, tsconfig, lockfile, etc.) affect all packages
-          ROOT_CHANGED=$(echo "$CHANGED" | grep -v '^$' | grep -v '^packages/' | grep -v '^docs/' | grep -v '^\.changeset/' | grep -v '^crates/' || true)
+          ROOT_CHANGED=$(echo "$CHANGED" | grep -v '^$' | grep -v '^packages/' | grep -v '^docs/' | grep -v '^\.changeset/' | grep -v '^crates/' | grep -v '^\.github/' | grep -v '^turbo\.json$' || true)
           if [ -n "$ROOT_CHANGED" ] || echo "$CHANGED" | grep -q '^packages/browser/'; then
             echo "browser=true" >> "$GITHUB_OUTPUT"
           else
