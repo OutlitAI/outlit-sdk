@@ -5,7 +5,7 @@
       "billingStatuses": []
     },
     "revenue_accounts": {
-      "billingStatuses": ["PAYING", "PAST_DUE", "CHURNED"]
+      "billingStatuses": ["PAYING", "PAST_DUE"]
     }
   },
   "autoScopeSchedule": {

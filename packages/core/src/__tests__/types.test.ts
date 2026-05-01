@@ -1,4 +1,5 @@
 import { describe, expect, expectTypeOf, it } from "vitest"
+import { buildStageEvent } from "../payload"
 import type {
   BrowserIdentifyOptions,
   CustomerTraits,
@@ -100,5 +101,18 @@ describe("BrowserIdentifyOptions", () => {
     }
 
     expectTypeOf(options).toMatchTypeOf<BrowserIdentifyOptions>()
+  })
+})
+
+describe("StageEvent", () => {
+  it("keeps lifecycle stages distinct from customer product event names", () => {
+    const event = buildStageEvent({
+      url: "https://example.com/onboarding",
+      stage: "activated",
+    })
+
+    expect(event.type).toBe("stage")
+    expect(event.stage).toBe("activated")
+    expect(event).not.toHaveProperty("eventName")
   })
 })

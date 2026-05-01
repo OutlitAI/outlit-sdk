@@ -1,6 +1,6 @@
 # Outlit Pi Agents
 
-This example shows how to build Pi agents with `@outlit/pi`. It includes four customer-signal agents that use Outlit customer intelligence tools, notification action tools, a shared Pi skill, and reusable prompt templates.
+This example shows how to build Pi agents with `@outlit/pi`. It includes four customer-signal agents that use Outlit customer intelligence tools, SQL/schema tools, Slack notification actions, a shared Pi skill, and reusable prompt templates for the fully agentic examples.
 
 These examples focus on harder revenue and retention questions where the agent has to connect product behavior, billing, conversations, support context, timelines, facts, and source evidence.
 
@@ -10,14 +10,16 @@ The prompts are intentionally conservative. A good run may return fewer than 5 a
 
 | Agent | Use it for | Pi command | Prompt template |
 | --- | --- | --- | --- |
-| Usage Decay Churn Watchtower | Paying customers whose product behavior suggests they may cancel soon | `/outlit-usage-decay-watchtower` | `/usage-decay-watchtower` |
+| Usage Decay Churn Watchtower | Paying customers whose product behavior suggests they may cancel soon | `/outlit-usage-decay-watchtower` | Use the command |
 | Friction-to-Churn Agent | Accounts where product or support friction is becoming churn risk | `/outlit-friction-to-churn` | `/friction-to-churn` |
 | Activation Failure Agent | Trials, new accounts, or recently converted customers that are not reaching first value | `/outlit-activation-failure` | `/activation-failure` |
 | Expansion Readiness Agent | Customers likely to upgrade, expand seats, or buy more | `/outlit-expansion-readiness` | `/expansion-readiness` |
 
 The usage-decay command runs deterministic churn pretriage before the model starts. It reads `churn.json`, surfaces customers that match the configured usage, billing, and user-inactivity thresholds, and then asks Pi to review only those customers with the rest of the Outlit tools.
 
-After evidence review, the usage-decay command also asks Pi to call `outlit_send_notification` exactly once when at least one customer survives the churn-risk evidence gate. It does not send a Slack notification when no ranked churn risks remain.
+The activation-failure command also runs deterministic pretriage before the model starts. It checks user journey stages and namespaced Outlit activation stage events, then asks Pi to review the surfaced accounts with customer, timeline, fact, source, and search tools.
+
+After evidence review, each command asks Pi to call the Slack notification tool once with a JSON-compatible `payload` object, then return the same findings in chat. Usage decay and activation failure use deterministic pretriage for candidate discovery, then follow the same notification-first workflow as the other growth agents.
 
 By default, the command includes 5 surfaced customers in the prompt. If more customers match, the pretriage helper rotates to the next page of customers every hour within the same risk bucket so scheduled runs do not keep reviewing the same 5 unchanged accounts. You can tune that cadence with `promptSelection.rotationWindowHours` in `churn.json`.
 
@@ -38,13 +40,15 @@ cd examples/pi-agents
 npm install
 ```
 
-This example uses the `canary` dist-tag for `@outlit/pi` and `@outlit/tools` until the notification-capable packages are promoted to a stable release.
+This example uses the `canary` dist-tag for `@outlit/pi` and `@outlit/tools` while the Pi agent package is still moving quickly.
 
 Set your Outlit API key:
 
 ```bash
 export OUTLIT_API_KEY=your_outlit_api_key
 ```
+
+Slack notification tools are part of the default workflow for these growth agents. Each command instructs Pi to call `outlit_send_notification` after evidence review and to put structured JSON-compatible data in the notification `payload` field.
 
 To try the agents from this example directory:
 
@@ -78,14 +82,21 @@ Use a command without arguments for a portfolio scan:
 /outlit-usage-decay-watchtower
 ```
 
-Use prompt templates when you want to edit the prompt before sending:
+For a friction-to-churn demo that sends Slack after evidence review:
+
+```bash
+OUTLIT_API_KEY=your_outlit_api_key pi -p '/outlit-friction-to-churn Atlas Assist. Find actionable churn risk, cite source evidence, and send the Slack notification.'
+```
+
+Use prompt templates for the fully agentic examples when you want to edit the prompt before sending:
 
 ```text
-/usage-decay-watchtower paying customers over $500 MRR
 /friction-to-churn customers with repeated setup blockers
 /activation-failure trials with no payment method
 /expansion-readiness active starter-plan customers
 ```
+
+Usage decay is intentionally command-only because `/outlit-usage-decay-watchtower` runs deterministic pretriage before the model starts. Activation failure has both options: the `/outlit-activation-failure` command includes deterministic pretriage, while `/activation-failure` is a fully agentic prompt template.
 
 Free-form requests also work because the package includes a shared skill:
 
@@ -106,27 +117,27 @@ Those prompts assume the `outlit` CLI is on `PATH` and authenticated through env
 
 ## How It Works
 
-`extensions/outlit-growth-agents.ts` imports `createOutlitPiExtension`, `defaultAgentToolNames`, `actionToolNames`, and `sqlToolNames` from `@outlit/pi`, registers focused customer intelligence, notification action tools, and SQL tools, and adds four slash commands.
+`extensions/outlit-growth-agents.ts` imports `createOutlitPiExtension` and `analyticalAgentToolNames` from `@outlit/pi`, registers customer intelligence, SQL tools, Slack notification actions, and four slash commands.
 
-The extension also registers `outlit_churn_pretriage`, a local deterministic helper from `lib/churn-pretriage.ts`. The `/outlit-usage-decay-watchtower` command calls that helper before sending the model prompt. Free-form Pi prompts can call the helper too when the model decides deterministic churn candidate discovery is useful.
+The extension also registers local deterministic helpers from `lib/churn-pretriage.ts` and `lib/activation-pretriage.ts`. The `/outlit-usage-decay-watchtower` and `/outlit-activation-failure` commands call those helpers before sending the model prompt. Free-form Pi prompts can call the helpers too when the model decides deterministic candidate discovery is useful.
 
-Most tools are created by `@outlit/pi` from `@outlit/tools`, and `@outlit/tools` calls Outlit's public `/api/tools/call` endpoint with your `OUTLIT_API_KEY`. The local churn pretriage helper uses the same public `outlit_query` tool internally, so it stays on the public tool gateway rather than reaching into private Outlit services.
+Most tools are created by `@outlit/pi` from `@outlit/tools`, and `@outlit/tools` calls Outlit's public `/api/tools/call` endpoint with your `OUTLIT_API_KEY`. The local pretriage helpers use the same public `outlit_query` tool internally, so they stay on the public tool gateway rather than reaching into private Outlit services.
 
 The example package loads both the shared local `outlit-growth-agents` skill and the generic `outlit` skill from `@outlit/pi`. Pi does not automatically expose resources from dependency packages, so this package references `./node_modules/@outlit/pi/skills` in `package.json`.
 
-`skills/outlit-growth-agents/SKILL.md` gives the model the category boundaries and review playbooks. The `prompts` directory gives users reusable slash prompts.
+`skills/outlit-growth-agents/SKILL.md` gives the model the category boundaries and review playbooks. The `prompts` directory gives users reusable slash prompts for the fully agentic examples.
 
 ## Prompt vs Workflow
 
 The Outlit tools are registered when Pi loads this package. Any prompt in that Pi session can use those tools when the model decides they are relevant.
 
-The prompt templates expand into text and start normal agent turns with access to the registered tools.
+The prompt templates expand into text and start normal agent turns with access to the registered tools. Usage decay is not exposed as a prompt template because its deterministic pretriage pass is part of the workflow.
 
 The extension commands create focused prompts from the command arguments and send those prompts to Pi. They do not run fixed API sequences.
 
 Most agents here are agentic: the prompt and skill tell the model what evidence to gather, and the model chooses which Outlit tools to call and in what order.
 
-The usage-decay command is the exception. It runs deterministic churn pretriage first, then gives Pi the surfaced customer list as review context. After Pi ranks credible churn risks, the prompt requires one `outlit_send_notification` call with the same structured findings. This mirrors the internal churn-agent pattern: deterministic candidate discovery first, LLM evidence review second, notification last.
+The usage-decay and activation-failure commands are the exceptions only in how candidates are discovered. They run deterministic pretriage first, then give Pi the surfaced customer list as review context. After the model finishes evidence review, it calls `outlit_send_notification` with a structured JSON-compatible `payload` object and then returns the findings in chat. This mirrors the internal agent pattern: deterministic candidate discovery first, LLM evidence review second, Slack notification last.
 
 ## Churn Pretriage Config
 
@@ -142,9 +153,15 @@ The usage-decay command is the exception. It runs deterministic churn pretriage 
 
 Edit this file when your product has a clearer definition of meaningful activity. The include/exclude lists match against the public `activity.event_name` value. For example, set `activityDefinition.includeEventNames` to your core activation or workflow events when you want the agent to ignore all other events.
 
+## Activation Pretriage
+
+`/outlit-activation-failure` uses `outlit_activation_pretriage` before the model starts. The helper scans trialing, unpaid, and early paying accounts by default, then surfaces accounts that have observed users but no activated or engaged users and no namespaced Outlit activation stage event.
+
+The SDK activation helpers emit lifecycle stage events that ingestion stores under the namespaced `stage:activated` event name. This keeps Outlit lifecycle state distinct from customer-defined product events such as `track("activated")`.
+
 ## Tool Scope
 
-These launch examples use the default customer intelligence tools, notification action tools, plus SQL/schema tools:
+These launch examples use the default customer intelligence tools plus SQL/schema and Slack notification tools:
 
 - customer discovery
 - user discovery
@@ -155,14 +172,15 @@ These launch examples use the default customer intelligence tools, notification 
 - semantic customer context search
 - schema discovery
 - SQL query
+- Slack notification
 
-The base `@outlit/pi` default toolset does not include SQL, but these harder examples opt into notification action tools plus schema and SQL because they benefit from cohorting, revenue filters, usage trends, activation gaps, aggregate checks, and Slack notification support. The usage-decay command explicitly asks Pi to send one notification after ranked churn risks are found.
+The base `@outlit/pi` default toolset does not include SQL, but these harder examples use `analyticalAgentToolNames` to opt into schema and SQL because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks. The analytical toolset also includes Slack notification actions; the skill and command prompts tell the model to call `outlit_send_notification` by default after evidence review.
 
 Facts can also be narrowed with `factTypes`. These examples use those filters for extracted customer-memory facts such as `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `BUDGET`, `REQUIREMENTS`, `PRODUCT_USAGE`, and `CHAMPION_RISK`.
 
 The usage-decay and activation agents do not depend on behavioral/anomaly fact types like `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF`. Those fact types are not supported as public filters because many customers will not have configured core actions, activation paths, or funnels. The examples use SQL and customer/user/event evidence as the primary signal for those jobs.
 
-When your installed `@outlit/pi` version includes `analyticalAgentToolNames`, you can use that helper directly instead of combining `defaultAgentToolNames`, `actionToolNames`, and `sqlToolNames` yourself.
+`@outlit/pi` also exports narrower tool lists, such as `defaultAgentToolNames`, `sqlToolNames`, and `actionToolNames`, when you want to assemble a custom toolset.
 
 The examples still avoid `allCustomerToolNames` because broad tool access can make agents over-weight high-revenue accounts with weak evidence. Use broader toolsets only when you intentionally want internal analysis or custom reporting.
 
@@ -184,7 +202,8 @@ Treat these agents as evidence reviewers, not label generators. They should:
 
 - Use domains or stable customer IDs for follow-up lookups when names are ambiguous.
 - Use SQL/schema for candidate discovery, then customer, timeline, fact, source, and search tools for account-level evidence.
-- Use `outlit_send_notification` only when the user explicitly asks you to send, post, or notify a result to Slack. The usage-decay command is notification-enabled and explicitly asks for one Slack notification after ranked churn risks are found.
+- Use `outlit_send_notification` by default after evidence review for these growth-agent commands.
+- Put a JSON-compatible object in the notification `payload` field, not a JSON string, markdown table, code fence, or prose blob.
 - Use `factTypes` to narrow facts, but do not request behavioral/anomaly fact types as filters.
 - Keep usage decay, product/support friction, activation failure, expansion readiness, and renewal/procurement risk separate.
 - Return fewer accounts when the evidence is weak.
@@ -201,7 +220,7 @@ Common failure modes to watch for:
 
 ## Minimal Agent
 
-If you only want the Outlit tools with no example commands or signal-specific guidance, your extension can be this small:
+If you only want the default `@outlit/pi` tools with no example commands or signal-specific guidance, your extension can be this small:
 
 ```ts
 import { createOutlitPiExtension } from "@outlit/pi"
@@ -209,4 +228,4 @@ import { createOutlitPiExtension } from "@outlit/pi"
 export default createOutlitPiExtension()
 ```
 
-That registers the default customer intelligence tools, reads `OUTLIT_API_KEY` from the environment, and uses `https://app.outlit.ai` by default.
+That registers the default `@outlit/pi` toolset, including notification actions. It reads `OUTLIT_API_KEY` from the environment and uses `https://app.outlit.ai` by default.
