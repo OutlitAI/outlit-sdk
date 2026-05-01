@@ -1,5 +1,16 @@
 # @outlit/pi
 
+## 0.1.4
+
+### Patch Changes
+
+- [#125](https://github.com/OutlitAI/outlit-sdk/pull/125) [`c488098`](https://github.com/OutlitAI/outlit-sdk/commit/c488098520191ee75dbfa8c61325393a4dd5ffbc) Thanks [@leo-paz](https://github.com/leo-paz)! - Add deterministic source listing CLI support and updated customer tool contracts.
+
+- [#112](https://github.com/OutlitAI/outlit-sdk/pull/112) [`1d59be9`](https://github.com/OutlitAI/outlit-sdk/commit/1d59be9bf44ae08fc28de8fad98fc2826e7e2d41) Thanks [@leo-paz](https://github.com/leo-paz)! - Improve Pi tool parameter compatibility and update the Outlit growth-agent examples with safer churn review, activation pretriage, default Slack notification guidance, and cleaner deterministic pretriage helpers.
+
+- Updated dependencies [[`c488098`](https://github.com/OutlitAI/outlit-sdk/commit/c488098520191ee75dbfa8c61325393a4dd5ffbc)]:
+  - @outlit/tools@0.2.1
+
 ## 0.1.3
 
 ### Patch Changes
