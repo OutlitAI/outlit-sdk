@@ -1,5 +1,11 @@
 # @outlit/tools
 
+## 0.2.1
+
+### Patch Changes
+
+- [#125](https://github.com/OutlitAI/outlit-sdk/pull/125) [`c488098`](https://github.com/OutlitAI/outlit-sdk/commit/c488098520191ee75dbfa8c61325393a4dd5ffbc) Thanks [@leo-paz](https://github.com/leo-paz)! - Add deterministic source listing CLI support and updated customer tool contracts.
+
 ## 0.2.0
 
 ### Minor Changes
