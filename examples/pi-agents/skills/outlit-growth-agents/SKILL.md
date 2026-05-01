@@ -18,6 +18,7 @@ Use Outlit tools to ground customer signal work in actual customer data. These a
    - For usage decay churn, call `outlit_churn_pretriage` first when it is available. Treat the surfaced customers as the investigation set unless the user explicitly asks for a broader scan.
    - For activation failure, call `outlit_activation_pretriage` first when it is available. Treat the surfaced customers as the investigation set unless the user explicitly asks for a broader scan.
    - Use `outlit_schema` before SQL when you need view names, columns, or valid query surfaces.
+   - Keep SQL on the public `activity`, `customers`, `users`, and `revenue` views. Do not query a non-public `events` view.
    - Use `outlit_query` for cohorts, usage trends, active-user counts, activation gaps, revenue filters, event aggregates, and repeated signal patterns.
    - Use `outlit_list_customers` for portfolio scans, billing status, MRR, activity recency, and customer search.
    - Use `outlit_list_users` when account-level behavior depends on user activation, active users, or champion disappearance. When using the CLI directly, filter users with the stable customer ID, not a display name or domain.

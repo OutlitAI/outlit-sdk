@@ -85,15 +85,16 @@ describe("runOutlitActivationPretriage", () => {
     })
 
     expect(queryMock).toHaveBeenCalledTimes(3)
-    expect(queryMock.mock.calls[2]?.[1]).toMatchObject({
-      sql: expect.stringContaining("'stage:activated'"),
+    expect(queryMock.mock.calls[1]?.[1]).toMatchObject({
+      sql: expect.stringContaining("discovered_at"),
     })
-    expect(queryMock.mock.calls[2]?.[1]).toMatchObject({
-      sql: expect.not.stringContaining("'activated',"),
+    expect(queryMock.mock.calls[1]?.[1]).toMatchObject({
+      sql: expect.not.stringContaining("first_seen_at"),
     })
-    expect(queryMock.mock.calls[2]?.[1]).toMatchObject({
-      sql: expect.stringContaining("parseDateTimeBestEffort('2026-04-15T12:00:00.000Z')"),
-    })
+    const eventActivationSql = String(queryMock.mock.calls[2]?.[1]?.sql ?? "")
+    expect(eventActivationSql).toContain("'stage:activated'")
+    expect(eventActivationSql).not.toContain("'activated',")
+    expect(eventActivationSql).toContain("parseDateTimeBestEffort('2026-04-15T12:00:00.000Z')")
     expect(result.kind).toBe("activation")
     expect(result.summary).toMatchObject({
       totalSurfacedCustomers: 1,

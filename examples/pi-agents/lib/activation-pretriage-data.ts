@@ -121,7 +121,7 @@ function buildUserActivationSql(
       customer_id AS customerId,
       countDistinct(user_id) AS usersObserved,
       countDistinctIf(user_id, journey_stage IN (${toSqlStringList(config.activatedStages)})) AS activatedUsers,
-      min(first_seen_at) AS firstUserSeenAt,
+      min(coalesce(discovered_at, signed_up_at, activated_at, engaged_at, inactive_at, last_activity_at)) AS firstUserSeenAt,
       max(last_activity_at) AS lastUserActivityAt
     FROM users
     WHERE customer_id != ''

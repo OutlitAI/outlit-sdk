@@ -107,11 +107,42 @@ describe("outlit growth agents notification workflow", () => {
     expect(sentMessages[0]).toContain("call outlit_send_notification exactly once")
     expect(sentMessages[0]).toContain("payload must be a JSON-compatible object")
     expect(sentMessages[0]).toContain("Do not pass payload as a JSON string")
+    expect(sentMessages[0]).toContain("public activity, customers, users, and revenue views")
+    expect(sentMessages[0]).toContain("Do not query a non-public events view")
     expect(sentMessages[0]).toContain("candidateReviewSummary")
     expect(sentMessages[0]).toContain("rankedCustomers")
     expect(sentMessages[0]).toContain("excludedCandidates")
     expect(sentMessages[0]).toContain("dataQualityNotes")
     expect(sentMessages[0]).toContain("openQuestions")
+  })
+
+  test.each(
+    commandScopes,
+  )("$commandName keeps explicit scopes narrow instead of widening into a portfolio scan", async ({
+    commandName,
+    scope,
+  }) => {
+    const { registeredCommands, sentMessages, waitForIdle } = createPiHarness()
+    const command = registeredCommands.get(commandName)
+
+    expect(command).toBeDefined()
+
+    await command?.handler(scope, {
+      ui: {
+        notify: vi.fn(),
+      },
+      waitForIdle,
+    })
+
+    expect(sentMessages).toHaveLength(1)
+    expect(sentMessages[0]).toContain(
+      "If the scope resolves to a single customer, review that customer only.",
+    )
+    expect(sentMessages[0]).toContain("Do not broaden to unrelated customers or portfolio filler")
+    expect(sentMessages[0]).not.toContain(
+      "Keep the search bounded: inspect the strongest 20-30 candidates",
+    )
+    expect(sentMessages[0]).not.toContain("Return the strongest 5-8 accounts")
   })
 
   test("usage-decay command notifies after deterministic evidence review", async () => {

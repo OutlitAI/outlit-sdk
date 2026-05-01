@@ -65,6 +65,7 @@ const SHARED_AGENT_SYSTEM_PROMPT = `
 Outlit customer signal agent guidance:
 - Use Outlit tools for customer discovery, customer details, timeline events, facts, source evidence, billing, product activity, and semantic customer context.
 - Use outlit_schema and outlit_query for candidate discovery, cohorts, usage trends, revenue filters, activation gaps, and aggregate checks before deep account review.
+- Use only the public SQL views activity, customers, users, and revenue. Do not query a non-public events view.
 - Use outlit_churn_pretriage for deterministic usage-decay churn candidate discovery when it is registered.
 - Use outlit_activation_pretriage for deterministic activation-failure candidate discovery when it is registered.
 - Use outlit_list_facts with factTypes for extracted customer-memory evidence when helpful, such as CHURN_RISK, EXPANSION, SENTIMENT, BUDGET, REQUIREMENTS, PRODUCT_USAGE, or CHAMPION_RISK.
@@ -338,6 +339,32 @@ function buildPortfolioPrompt({
   const scopeLine = normalizedScope
     ? `Scope: ${normalizedScope}.`
     : "Scope: scan the workspace and prioritize customers where the evidence is strongest."
+  const processSection = normalizedScope
+    ? `
+Process:
+1. Resolve the explicit scope to stable customer IDs or domains first. Prefer outlit_get_customer or outlit_list_customers before broader SQL.
+2. If deterministic pretriage context is present, treat those customers as the investigation set for this run. If deterministic pretriage was skipped for an explicit scope, stay inside that resolved scope only.
+3. Use outlit_schema when you need view names or fields, then keep SQL on the public activity, customers, users, and revenue views. Do not query a non-public events view.
+4. Use outlit_query for scope-specific candidate discovery, cohorts, usage trends, revenue filters, activation gaps, or aggregate checks inside that scope only.
+5. Gather customer, user, fact, timeline, search, billing, and source evidence for each scoped candidate before ranking them. Use stable customer IDs or domains for follow-up lookups whenever possible.
+6. If the scope resolves to a single customer, review that customer only. If the scope resolves to a cohort, review only the matched customers inside that scope.
+7. Do not broaden to unrelated customers or portfolio filler because evidence is sparse, stale, contradictory, or low-signal.
+8. Return only customers from the resolved scope. If none survive the evidence gate, say that directly.
+`.trim()
+    : `
+Process:
+1. If deterministic pretriage context is present, treat those customers as the investigation set for this run. Do not add unrelated customers unless the user explicitly asked for a broader scan. If deterministic pretriage was skipped for an explicit scope, stay inside that scope.
+2. Use outlit_schema when you need view names or fields, then keep SQL on the public activity, customers, users, and revenue views. Do not query a non-public events view.
+3. Use outlit_query for candidate discovery, cohorts, usage trends, revenue filters, activation gaps, or aggregate checks.
+4. Gather customer, user, fact, timeline, search, billing, and source evidence for each candidate before ranking them. Use customer domains or IDs for follow-up lookups whenever possible.
+5. Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
+6. Prefer paying customers when the job is about churn or expansion. Include trials or new accounts for activation failure.
+7. Return the strongest 5-8 accounts. If fewer accounts have enough evidence, return fewer and explain why.
+8. Do not pad the ranking. Exclude candidates whose evidence is missing, stale, contradicted, or only adjacent to the selected signal.
+`.trim()
+  const scopedFinalAnswerLine = normalizedScope
+    ? "- If the scope resolves to a single customer, candidateReviewSummary should normally show reviewed: 1, with ranked + excluded totaling 1."
+    : ""
 
   return `
 Run the ${title} with Outlit customer intelligence.
@@ -349,14 +376,7 @@ Objective: ${objective}
 ${pretriageContext ? `Deterministic pretriage context:\n${pretriageContext}\n` : ""}
 ${pretriageNote ? `Deterministic pretriage note:\n${pretriageNote}\n` : ""}
 
-Process:
-1. If deterministic pretriage context is present, treat those customers as the investigation set for this run. Do not add unrelated customers unless the user explicitly asked for a broader scan. If deterministic pretriage was skipped for an explicit scope, stay inside that scope.
-2. Use outlit_schema when you need view names or fields, then use outlit_query for candidate discovery, cohorts, usage trends, revenue filters, activation gaps, or aggregate checks.
-3. Gather customer, user, fact, timeline, search, billing, and source evidence for each candidate before ranking them. Use customer domains or IDs for follow-up lookups whenever possible.
-4. Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
-5. Prefer paying customers when the job is about churn or expansion. Include trials or new accounts for activation failure.
-6. Return the strongest 5-8 accounts. If fewer accounts have enough evidence, return fewer and explain why.
-7. Do not pad the ranking. Exclude candidates whose evidence is missing, stale, contradicted, or only adjacent to the selected signal.
+${processSection}
 
 Primary signals:
 ${signals.map((signal) => `- ${signal}`).join("\n")}
@@ -369,6 +389,7 @@ Final answer contract:
 - Include "Excluded candidates:" when any reviewed customer was dropped, with a one-line reason for each exclusion.
 - For each ranked customer, cite concrete Outlit evidence. Do not rely on vague phrasing like "low engagement" without a date, metric, source, or fact.
 - If no customer survives the evidence gate, say that directly and do not produce a ranked table.
+${scopedFinalAnswerLine}
 ${buildSlackNotificationInstructions(title)}
 ${structuredOutputInstructions ? `\n${structuredOutputInstructions}` : ""}
 `.trim()
