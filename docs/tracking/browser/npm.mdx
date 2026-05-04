@@ -225,7 +225,7 @@ outlit.clearUser()
 
 ### Activation
 
-Mark the current user as activated after they complete your product's activation milestone. The user must be identified first via `setUser()` or `identify()`.
+Mark the current user as activated after they complete your product's activation milestone. For immediate delivery, identify first via `setUser()` or `identify()`.
 
 #### `outlit.user.activate(properties?)`
 
@@ -238,7 +238,7 @@ outlit.user.activate({ flow: 'onboarding', step: 'completed' })
 Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Use `track()` for product events instead of calling manual stage methods. See [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity) for the current rules.
 
 <Warning>
-  `user.activate()` requires the user to be identified first. If called without a user identity, the event is queued until `setUser()` or `identify()` is called.
+  `user.activate()` is associated to an identified user. If called before `setUser()` or `identify()`, it is queued and sent once identity is available.
 </Warning>
 
 <Info>
