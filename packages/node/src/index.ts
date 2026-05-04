@@ -8,5 +8,5 @@ export type {
   ServerTrackOptions,
   TrackerConfig,
 } from "@outlit/core"
-export type { BillingOptions, OutlitOptions, StageOptions } from "./client"
+export type { BillingOptions, OutlitOptions, StageOptions, UserMethods } from "./client"
 export { Outlit } from "./client"

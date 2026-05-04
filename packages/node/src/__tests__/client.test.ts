@@ -137,6 +137,21 @@ describe("Outlit", () => {
     await outlit.shutdown()
   })
 
+  it("warns when derived journey stages are sent manually", async () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
+
+    outlit.user.engaged({ email: "user@example.com" })
+    outlit.user.inactive({ email: "user@example.com" })
+
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("user.engaged() is deprecated"))
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("user.inactive() is deprecated"),
+    )
+
+    await outlit.shutdown()
+  })
+
   it("publishes billing events using customerId", async () => {
     const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
 

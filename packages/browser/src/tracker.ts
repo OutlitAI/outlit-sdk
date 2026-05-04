@@ -31,6 +31,19 @@ import {
 import { initSessionTracking, type SessionTracker, stopSessionTracking } from "./session-tracker"
 import { getConsentState, getOrCreateVisitorId, setConsentState } from "./storage"
 
+function warnIfDerivedJourneyStage(
+  warnedStages: Set<ExplicitJourneyStage>,
+  stage: ExplicitJourneyStage,
+): void {
+  if (stage === "activated") return
+  if (warnedStages.has(stage)) return
+  warnedStages.add(stage)
+
+  console.warn(
+    `[Outlit] user.${stage}() is deprecated. Outlit now derives ENGAGED and INACTIVE from tracked activity. Keep using user.activate() for product-specific activation milestones.`,
+  )
+}
+
 // ============================================
 // OUTLIT CLIENT
 // ============================================
@@ -87,6 +100,21 @@ export interface BillingOptions extends CustomerIdentifier {
   properties?: Record<string, string | number | boolean | null>
 }
 
+export interface UserMethods {
+  identify: (options: BrowserIdentifyOptions) => void
+  activate: (properties?: Record<string, string | number | boolean | null>) => void
+  /**
+   * @deprecated Outlit derives ENGAGED from tracked activity. Keep tracking product activity
+   * with track() and only send activation manually with user.activate().
+   */
+  engaged: (properties?: Record<string, string | number | boolean | null>) => void
+  /**
+   * @deprecated Outlit derives INACTIVE from tracked activity. Keep tracking product activity
+   * with track() and only send activation manually with user.activate().
+   */
+  inactive: (properties?: Record<string, string | number | boolean | null>) => void
+}
+
 export class Outlit {
   private publicKey: string
   private apiHost: string
@@ -94,11 +122,11 @@ export class Outlit {
   private eventQueue: TrackerEvent[] = []
   private flushTimer: ReturnType<typeof setInterval> | null = null
   private flushInterval: number
-  private isInitialized = false
   private isTrackingEnabled = false
   private options: OutlitOptions
   private hasHandledExit = false
   private sessionTracker: SessionTracker | null = null
+  private warnedDerivedJourneyStages = new Set<ExplicitJourneyStage>()
   // User identity state for stage events
   private currentUser: UserIdentity | null = null
   private pendingUser: UserIdentity | null = null
@@ -165,8 +193,6 @@ export class Outlit {
         () => window.removeEventListener("beforeunload", handleExit),
       ]
     }
-
-    this.isInitialized = true
 
     // Check persisted consent state, falling back to autoTrack option
     const consent = getConsentState()
@@ -292,7 +318,7 @@ export class Outlit {
    * Links the anonymous visitor to a known user.
    *
    * When email or userId is provided, also sets the current user identity
-   * for stage events (activate, engaged, inactive).
+   * for activation events.
    */
   identify(options: BrowserIdentifyOptions): void {
     if (!this.isTrackingEnabled) {
@@ -407,7 +433,7 @@ export class Outlit {
   /**
    * User namespace methods for contact journey stages.
    */
-  readonly user = {
+  readonly user: UserMethods = {
     identify: (options: BrowserIdentifyOptions) => this.identify(options),
     activate: (properties?: Record<string, string | number | boolean | null>) =>
       this.sendStageEvent("activated", properties),
@@ -433,6 +459,8 @@ export class Outlit {
     stage: ExplicitJourneyStage,
     properties?: Record<string, string | number | boolean | null>,
   ): void {
+    warnIfDerivedJourneyStage(this.warnedDerivedJourneyStages, stage)
+
     if (!this.isTrackingEnabled) {
       console.warn("[Outlit] Tracking not enabled. Call enableTracking() first.")
       return

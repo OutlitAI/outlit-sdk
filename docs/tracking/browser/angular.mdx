@@ -100,14 +100,6 @@ export class OutlitService {
     outlit.user.activate(properties)
   }
 
-  engaged(properties?: Record<string, any>): void {
-    outlit.user.engaged(properties)
-  }
-
-  inactive(properties?: Record<string, any>): void {
-    outlit.user.inactive(properties)
-  }
-
   getVisitorId(): string | null {
     return outlit.getInstance().getVisitorId()
   }
@@ -382,7 +374,7 @@ export const appConfig: ApplicationConfig = {
 }
 ```
 
-## Contact Stage Events
+## Activation
 
 Track contact lifecycle:
 
@@ -414,8 +406,10 @@ export class OnboardingComponent {
 ```
 
 <Warning>
-  Stage methods (`activate`, `engaged`) require the user to be identified first using `setUser()` or `identify()`.
+  `activate()` requires the user to be identified first using `setUser()` or `identify()`.
 </Warning>
+
+Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Use `track()` for product events instead of calling manual stage methods. See [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity) for the current rules.
 
 <Info>
   Account billing (`paid`, `churned`, `trialing`) is tracked separately. If you've connected Stripe, billing is automatic. For manual billing, see [Stages & Billing](/concepts/customer-journey).

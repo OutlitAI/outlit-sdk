@@ -195,9 +195,9 @@ outlit.identify({
   At least one of `email` or `userId` is required for `identify()`. Customer fields are optional additions.
 </Info>
 
-### Contact Stage Methods
+### Activation
 
-Track contact progression through your product lifecycle. These methods require at least one of `fingerprint`, `email`, or `userId`.
+Mark activation after a contact completes your product's activation milestone. This method requires at least one of `fingerprint`, `email`, or `userId`.
 
 #### `outlit.user.activate(options)`
 
@@ -210,30 +210,8 @@ outlit.user.activate({
 })
 ```
 
-#### `outlit.user.engaged(options)`
-
-Mark a contact as engaged. Typically called when a user reaches a usage milestone. Can also be computed automatically based on activity.
-
-```typescript
-outlit.user.engaged({
-  userId: 'usr_123',
-  properties: { milestone: 'first_project_created' }
-})
-```
-
-#### `outlit.user.inactive(options)`
-
-Mark a contact as inactive. Use this when a user's engagement has lapsed.
-
-```typescript
-outlit.user.inactive({
-  email: 'user@example.com',
-  properties: { reason: 'no_login_30_days' }
-})
-```
-
 <Info>
-  The `discovered` and `signed_up` stages are automatically inferred from identify calls.
+  The `discovered` and `signed_up` stages are automatically inferred from identify calls. Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Use `track()` for product events instead of calling manual stage methods. See [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity) for the current rules.
 </Info>
 
 ### Account Billing Methods

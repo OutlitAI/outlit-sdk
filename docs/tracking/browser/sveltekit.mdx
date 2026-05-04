@@ -268,9 +268,9 @@ export const POST: RequestHandler = async ({ request }) => {
 <slot />
 ```
 
-## Contact Stage Events
+## Activation
 
-Track contact lifecycle events:
+Track activation after the user completes your product milestone:
 
 ```svelte
 <script>
@@ -283,7 +283,7 @@ Track contact lifecycle events:
   })
 
   function handleEngagementMilestone() {
-    outlit.user.engaged({ milestone: 'first_project' })
+    outlit.track('first_project_created')
   }
 </script>
 
@@ -293,8 +293,10 @@ Track contact lifecycle events:
 ```
 
 <Warning>
-  Stage methods (`user.activate`, `user.engaged`) require the user to be identified first using `setUser()` or `identify()`.
+  `user.activate()` requires the user to be identified first using `setUser()` or `identify()`.
 </Warning>
+
+Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Use `track()` for product events instead of calling manual stage methods. See [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity) for the current rules.
 
 <Info>
   Account billing (`paid`, `churned`, `trialing`) is tracked separately. If you've connected Stripe, billing is automatic. For manual billing, see [Stages & Billing](/concepts/customer-journey).

@@ -343,7 +343,7 @@ Track calendar booking from embedded widgets (Cal.com, Calendly).
 
 ### Stage Event
 
-Track contact journey stage transitions. Use this to mark users as activated, engaged, or inactive.
+Track explicit activation milestones. Engaged and Inactive are derived automatically from tracked product activity — Engaged from qualifying activity on multiple distinct days in the configured rolling window, and Inactive after no qualifying activity for 30 days by default — but the ingest API continues to accept those values for older SDKs and direct API callers.
 
 ```json
 {
@@ -364,7 +364,7 @@ Track contact journey stage transitions. Use this to mark users as activated, en
 </ParamField>
 
 <ParamField body="stage" type="string" required>
-  The journey stage. One of: `"activated"`, `"engaged"`, `"inactive"`.
+  The journey stage. Use `"activated"` for new integrations. `"engaged"` and `"inactive"` remain accepted for compatibility.
 </ParamField>
 
 <ParamField body="properties" type="object">
@@ -372,7 +372,7 @@ Track contact journey stage transitions. Use this to mark users as activated, en
 </ParamField>
 
 <Info>
-  The `discovered` and `signed_up` stages are automatically inferred from identify events. Only use stage events for explicit milestone tracking.
+  The `discovered` and `signed_up` stages are automatically inferred from identify events. Only use stage events for explicit activation milestone tracking.
 </Info>
 
 ---

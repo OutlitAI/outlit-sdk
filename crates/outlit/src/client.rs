@@ -564,7 +564,10 @@ impl<'a> UserMethods<'a> {
         }
     }
 
-    /// Mark user as engaged.
+    /// Deprecated: Outlit derives engaged from tracked activity.
+    #[deprecated(
+        note = "Outlit derives ENGAGED from tracked activity. Keep tracking product activity and only send activation manually with user().activate()."
+    )]
     pub fn engaged(&self, identity: impl Into<Email>) -> SendableStage<'a> {
         SendableStage {
             builder: StageBuilder::new(JourneyStage::Engaged, identity.into()),
@@ -572,7 +575,10 @@ impl<'a> UserMethods<'a> {
         }
     }
 
-    /// Mark user as engaged by user_id.
+    /// Deprecated: Outlit derives engaged from tracked activity.
+    #[deprecated(
+        note = "Outlit derives ENGAGED from tracked activity. Keep tracking product activity and only send activation manually with user().activate_by_user_id()."
+    )]
     pub fn engaged_by_user_id(&self, identity: impl Into<UserId>) -> SendableStage<'a> {
         SendableStage {
             builder: StageBuilder::new(JourneyStage::Engaged, identity.into()),
@@ -580,7 +586,10 @@ impl<'a> UserMethods<'a> {
         }
     }
 
-    /// Mark user as engaged by fingerprint.
+    /// Deprecated: Outlit derives engaged from tracked activity.
+    #[deprecated(
+        note = "Outlit derives ENGAGED from tracked activity. Keep tracking product activity and only send activation manually with user().activate_by_fingerprint()."
+    )]
     pub fn engaged_by_fingerprint(&self, identity: impl Into<Fingerprint>) -> SendableStage<'a> {
         SendableStage {
             builder: StageBuilder::new(JourneyStage::Engaged, identity.into()),
@@ -588,7 +597,10 @@ impl<'a> UserMethods<'a> {
         }
     }
 
-    /// Mark user as inactive.
+    /// Deprecated: Outlit derives inactive from tracked activity.
+    #[deprecated(
+        note = "Outlit derives INACTIVE from tracked activity. Keep tracking product activity and only send activation manually with user().activate()."
+    )]
     pub fn inactive(&self, identity: impl Into<Email>) -> SendableStage<'a> {
         SendableStage {
             builder: StageBuilder::new(JourneyStage::Inactive, identity.into()),
@@ -596,7 +608,10 @@ impl<'a> UserMethods<'a> {
         }
     }
 
-    /// Mark user as inactive by user_id.
+    /// Deprecated: Outlit derives inactive from tracked activity.
+    #[deprecated(
+        note = "Outlit derives INACTIVE from tracked activity. Keep tracking product activity and only send activation manually with user().activate_by_user_id()."
+    )]
     pub fn inactive_by_user_id(&self, identity: impl Into<UserId>) -> SendableStage<'a> {
         SendableStage {
             builder: StageBuilder::new(JourneyStage::Inactive, identity.into()),
@@ -604,7 +619,10 @@ impl<'a> UserMethods<'a> {
         }
     }
 
-    /// Mark user as inactive by fingerprint.
+    /// Deprecated: Outlit derives inactive from tracked activity.
+    #[deprecated(
+        note = "Outlit derives INACTIVE from tracked activity. Keep tracking product activity and only send activation manually with user().activate_by_fingerprint()."
+    )]
     pub fn inactive_by_fingerprint(&self, identity: impl Into<Fingerprint>) -> SendableStage<'a> {
         SendableStage {
             builder: StageBuilder::new(JourneyStage::Inactive, identity.into()),

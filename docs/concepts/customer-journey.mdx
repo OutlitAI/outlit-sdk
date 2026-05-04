@@ -18,7 +18,7 @@ flowchart LR
     B --> C([Activated])
     C --> D([Engaged])
     D -.->|no activity| E([Inactive])
-    E -.->|new activity| D
+    E -.->|meets engagement threshold| D
 ```
 
 ### Account Billing (per company)
@@ -52,7 +52,7 @@ Each person (contact) progresses through stages based on their product engagemen
 
 ### How stages progress
 
-Contacts move forward through Discovered, Signed Up, Activated, and Engaged. They can never move backwards—an Engaged contact can't become Activated again. The one exception is Inactive: contacts automatically return to Engaged when they have new activity.
+Contacts move forward through Discovered, Signed Up, Activated, and Engaged. They can never move backwards—an Engaged contact can't become Activated again. The one exception is Inactive: contacts return to Engaged when their activity again meets the configured engagement threshold.
 
 ---
 
@@ -96,14 +96,14 @@ The difference is determined by the identifiers you provide:
 
 ### Automatic engagement and inactivity
 
-Outlit monitors product activity and automatically advances contacts to Engaged when they show consistent usage — active on multiple distinct days within a rolling time window. Activity signals come from the browser SDK, server SDK, and connected integrations like PostHog. When contacts haven't had any product activity for an extended period (default: 30 days), they're marked Inactive. When an inactive contact returns, they automatically recover to Engaged.
+Outlit monitors product activity and automatically advances contacts to Engaged when they show consistent usage — active on multiple distinct days within the configured rolling time window. Activity signals come from the browser SDK, server SDK, and connected integrations like PostHog. When contacts haven't had any product activity for an extended period (default: 30 days), they're marked Inactive. When an inactive contact returns, they recover to Engaged after they meet the same rolling-window engagement threshold again.
 
 ---
 
-## How do I manually set contact stages?
+## How do I manually mark activation?
 
 <Info>
-  These examples show browser SDK usage where the user is already identified. For server-side usage, see [Node.js SDK → Contact Stage Methods](/tracking/server/nodejs#contact-stage-methods).
+  These examples show browser SDK usage where the user is already identified. For server-side usage, see [Node.js SDK → Activation](/tracking/server/nodejs#activation).
 </Info>
 
 ### user.activate()
@@ -119,16 +119,7 @@ outlit.user.activate({
 
 Call this when users complete your onboarding flow, perform a key "aha moment" action, or reach your definition of activation.
 
-### user.engaged()
-
-While engagement is calculated automatically, you can explicitly mark it for specific milestones:
-
-```typescript
-outlit.user.engaged({
-  milestone: 'power_user',
-  actionsThisWeek: 50
-})
-```
+Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Use `track()` for product events instead of calling manual stage methods.
 
 ---
 
@@ -196,11 +187,11 @@ outlit.customer.churned({
 
 ## Best practices
 
-**Let integrations handle what they can.** Discovered and Signed Up are auto-detected by the browser SDK based on identifiers. Engaged and Inactive are auto-inferred from product activity via PostHog or your SDK. Stripe handles billing status. The main stage you need to instrument manually is Activated — call `user.activate()` when users complete your definition of activation.
+**Let integrations handle what they can.** Discovered and Signed Up are auto-detected by the browser SDK based on identifiers. Engaged and Inactive are derived from tracked product activity captured by the browser SDK, server SDK, and connected product integrations. Stripe handles billing status. The main stage you need to instrument manually is Activated — call `user.activate()` when users complete your definition of activation.
 
-**Understand the separation.** Contact journey and account billing are independent. Jane can be Engaged while her company is on None, or Inactive while her company is Paying. When Jane returns after being Inactive, she auto-recovers to Engaged regardless of billing status.
+**Understand the separation.** Contact journey and account billing are independent. Jane can be Engaged while her company is on None, or Inactive while her company is Paying. When Jane returns after being Inactive, she can recover to Engaged after meeting the engagement threshold regardless of billing status.
 
-**Call stage methods at the right time.** Stage methods like `user.activate()` should be called when the action is confirmed complete, not when the user clicks a button. Wait for the backend to confirm success before tracking.
+**Call activation at the right time.** `user.activate()` should be called when the action is confirmed complete, not when the user clicks a button. Wait for the backend to confirm success before tracking.
 
 **Include useful properties.** Properties help you analyze stage transitions. Include context like which onboarding flow was completed, time-to-activate, and which steps were skipped.
 
@@ -214,11 +205,11 @@ outlit.customer.churned({
   </Accordion>
 
   <Accordion title="Which stages require manual instrumentation?">
-    Activated is the main stage you instrument manually by calling `user.activate()`. Discovered and Signed Up are auto-detected by the browser SDK. Engaged and Inactive are auto-inferred from product activity. If Stripe is connected, billing statuses sync automatically; otherwise, set billing status manually with the customer billing methods.
+    Activated is the main stage you instrument manually by calling `user.activate()`. Discovered and Signed Up are auto-detected by the browser SDK. Engaged and Inactive are derived from tracked product activity and inactivity. If Stripe is connected, billing statuses sync automatically; otherwise, set billing status manually with the customer billing methods.
   </Accordion>
 
   <Accordion title="Can contacts move backward in journey stages?">
-    No. Contacts progress forward through Discovered, Signed Up, Activated, and Engaged. The one exception is the Engaged ↔ Inactive cycle: inactive contacts automatically return to Engaged when they show new activity.
+    No. Contacts progress forward through Discovered, Signed Up, Activated, and Engaged. The one exception is the Engaged ↔ Inactive cycle: inactive contacts return to Engaged after their activity again meets the configured rolling-window engagement threshold.
   </Accordion>
 </AccordionGroup>
 

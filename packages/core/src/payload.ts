@@ -228,7 +228,9 @@ export function buildEngagementEvent(
 
 /**
  * Build a stage event.
- * Used to explicitly set customer journey stage (activated, engaged, inactive).
+ * Used to explicitly send customer journey stage events.
+ * New SDK callers should only send activated; engaged and inactive are derived
+ * by Outlit from tracked activity but remain accepted for wire compatibility.
  * discovered/signed_up stages are inferred from identify calls.
  */
 export function buildStageEvent(
