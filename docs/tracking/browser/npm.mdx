@@ -235,7 +235,7 @@ Mark the current user as activated. Typically called after a user completes onbo
 outlit.user.activate({ flow: 'onboarding', step: 'completed' })
 ```
 
-Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Use `track()` for product events instead of calling manual stage methods. See [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity) for the current rules.
+Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Use `track()` for product events instead of calling deprecated `engaged()`/`inactive()` stage methods. See [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity) for the current rules.
 
 <Warning>
   `user.activate()` is associated to an identified user. If called before `setUser()` or `identify()`, it is queued and sent once identity is available.
