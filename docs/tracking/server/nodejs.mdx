@@ -211,7 +211,7 @@ outlit.user.activate({
 ```
 
 <Info>
-  The `discovered` and `signed_up` stages are automatically inferred from identify calls. Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Use `track()` for product events instead of calling manual stage methods. See [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity) for the current rules.
+  The `discovered` and `signed_up` stages are automatically inferred from identify calls. Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Use `track()` for product events instead of calling deprecated `engaged()`/`inactive()` stage methods. See [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity) for the current rules.
 </Info>
 
 ### Account Billing Methods
