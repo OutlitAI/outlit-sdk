@@ -117,13 +117,13 @@ client.identify(email("user@example.com"))
     .await?;
 ```
 
-### User Journey Stages
+### Activation
 
 ```rust
 client.user().activate(email("...")).send().await?;
-client.user().engaged(email("...")).send().await?;
-client.user().inactive(email("...")).send().await?;
 ```
+
+Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default.
 
 ### Customer Billing
 

@@ -271,7 +271,7 @@ const {
   identify,
   setUser,
   clearUser,
-  user,       // User stage methods: identify, activate, engaged, inactive
+  user,       // User identity and activation helpers
   customer,   // Customer billing methods: trialing, paid, churned
   getVisitorId,
   isInitialized,
@@ -286,9 +286,8 @@ track('button_clicked', { buttonId: 'cta' })
 // Identify the user
 identify({ email: 'user@example.com', traits: { plan: 'pro' } })
 
-// User stage methods
+// User activation
 user.activate({ flow: 'onboarding' })
-user.engaged({ milestone: 'first_project' })
 
 // Customer billing methods (requires account identifier)
 customer.paid({
@@ -320,11 +319,9 @@ const visitorId = getVisitorId()
 </ParamField>
 
 <ParamField path="user" type="object">
-  User stage methods namespace:
+  User identity and activation namespace:
   - `user.identify(options)` - Identify the user
   - `user.activate(properties?)` - Mark user as activated
-  - `user.engaged(properties?)` - Mark user as engaged
-  - `user.inactive(properties?)` - Mark user as inactive
 </ParamField>
 
 <ParamField path="customer" type="object">
@@ -469,7 +466,7 @@ function acceptTracking() {
 </template>
 ```
 
-## Journey Stage Events
+## Activation
 
 Track user progression through your product lifecycle:
 
@@ -482,10 +479,6 @@ const { user } = useOutlit()
 function handleOnboardingComplete() {
   user.activate({ flow: 'onboarding', step: 'completed' })
 }
-
-function handleFirstProjectCreated() {
-  user.engaged({ milestone: 'first_project' })
-}
 </script>
 
 <template>
@@ -496,8 +489,10 @@ function handleFirstProjectCreated() {
 ```
 
 <Warning>
-  User stage methods (`user.activate`, `user.engaged`, `user.inactive`) require the user to be identified first. Use `useOutlitUser()`, `setUser()`, or `identify()` before calling stage methods.
+  `user.activate()` requires the user to be identified first. Use `useOutlitUser()`, `setUser()`, or `identify()` before calling it.
 </Warning>
+
+Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Use `track()` for product events instead of calling manual stage methods. See [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity) for the current rules.
 
 <Info>
   Account billing status (`customer.paid`, `customer.churned`, `customer.trialing`) is tracked separately at the account level. If you've connected Stripe, this is handled automatically.

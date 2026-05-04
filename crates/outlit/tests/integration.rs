@@ -70,6 +70,7 @@ async fn test_identify_sends_correct_payload() {
 }
 
 #[tokio::test]
+#[allow(deprecated)]
 async fn test_stage_events() {
     let mock_server = MockServer::start().await;
 

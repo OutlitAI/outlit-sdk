@@ -298,17 +298,16 @@ Call when the user logs out:
 window.outlit.clearUser()
 ```
 
-### Contact Stage Methods
+### Activation
 
-Track contact progression through your product lifecycle. These require the user to be identified first (via `setUser()` or `identify()`).
+Mark the current user as activated after they complete your product's activation milestone. The user must be identified first via `setUser()` or `identify()`.
 
 ```javascript
 // After user completes onboarding
 window.outlit.user.activate({ flow: 'onboarding' })
-
-// When user reaches an engagement milestone
-window.outlit.user.engaged({ milestone: 'first_project' })
 ```
+
+Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Use `track()` for product events instead of calling manual stage methods. See [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity) for the current rules.
 
 <Info>
   Account billing status (`paid`, `churned`, `trialing`) is tracked separately at the account level. If you've connected Stripe, this is handled automatically. For manual billing tracking, see [Stages & Billing](/concepts/customer-journey).

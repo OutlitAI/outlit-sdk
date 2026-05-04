@@ -47,6 +47,9 @@
     // Queue calls BEFORE SDK loads - these should be processed after init
     window.outlit.track('early_event_1', { queued: true, order: 1 });
     window.outlit.track('early_event_2', { queued: true, order: 2 });
+    window.outlit.setUser({ userId: 'queued-user' });
+    window.outlit.user.engaged({ queued: true, order: 3 });
+    window.outlit.user.inactive({ queued: true, order: 4 });
 
     console.log('[Test] Queued 2 early events, queue length:', window.outlit._q.length);
   </script>
@@ -69,4 +72,3 @@
   </script>
 </body>
 </html>
-

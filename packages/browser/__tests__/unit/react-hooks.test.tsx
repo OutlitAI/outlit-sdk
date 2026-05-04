@@ -3,7 +3,8 @@
  *
  * Tests the React hooks (useOutlit) to ensure they:
  * - Warn when used outside OutlitProvider
- * - Expose user namespace (activate, engaged, inactive) and customer namespace (trialing, paid, churned)
+ * - Expose user namespace and deprecated derived-stage aliases for compatibility
+ * - Expose customer namespace (trialing, paid, churned)
  * - Handle consent flow correctly
  *
  * Run with: bun run test:unit
@@ -69,7 +70,7 @@ describe("useOutlit hook", () => {
     consoleSpy.mockRestore()
   })
 
-  it("exposes user namespace with stage methods", () => {
+  it("exposes user namespace with activation and deprecated derived-stage aliases", () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <OutlitProvider publicKey="pk_test" autoTrack={false}>
         {children}
@@ -233,7 +234,8 @@ describe("OutlitProvider", () => {
 })
 
 describe("Stage methods behavior", () => {
-  it("inactive method can be called without properties", () => {
+  it("deprecated inactive method can be called without properties", () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
     const wrapper = ({ children }: { children: ReactNode }) => (
       <OutlitProvider publicKey="pk_test" autoTrack={false}>
         {children}
@@ -254,9 +256,14 @@ describe("Stage methods behavior", () => {
         result.current.user.inactive()
       })
     }).not.toThrow()
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("user.inactive() is deprecated"),
+    )
   })
 
-  it("inactive method can be called with properties", () => {
+  it("deprecated inactive method can be called with properties", () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
     const wrapper = ({ children }: { children: ReactNode }) => (
       <OutlitProvider publicKey="pk_test" autoTrack={false}>
         {children}
@@ -276,6 +283,10 @@ describe("Stage methods behavior", () => {
         result.current.user.inactive({ reason: "cancelled", plan: "pro" })
       })
     }).not.toThrow()
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("user.inactive() is deprecated"),
+    )
   })
 })
 

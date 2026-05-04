@@ -9,7 +9,7 @@ export type {
   TrackerConfig,
   UtmParams,
 } from "@outlit/core"
-export type { BillingOptions, OutlitOptions, UserIdentity } from "./tracker"
+export type { BillingOptions, OutlitOptions, UserIdentity, UserMethods } from "./tracker"
 export {
   clearUser,
   customer,

@@ -158,9 +158,9 @@ client.identify(email("user@example.com"))
   Add a trait to the user profile.
 </ParamField>
 
-### Contact Stage Methods
+### Activation
 
-Track contact progression through your product lifecycle.
+Mark activation after a contact completes your product's activation milestone.
 
 ```rust
 // Mark user as activated
@@ -170,25 +170,14 @@ client.user()
     .send()
     .await?;
 
-// Mark user as engaged
-client.user()
-    .engaged(email("user@example.com"))
-    .send()
-    .await?;
-
-// Mark user as inactive
-client.user()
-    .inactive(email("user@example.com"))
-    .property("reason", "no_login_30_days")
-    .send()
-    .await?;
-
 // With fingerprint
 client.user()
     .activate_by_fingerprint(fingerprint("device_abc123"))
     .send()
     .await?;
 ```
+
+Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Use custom track events for product activity instead of calling manual stage methods. See [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity) for the current rules.
 
 ### Account Billing Methods
 

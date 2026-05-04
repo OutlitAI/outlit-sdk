@@ -3,7 +3,8 @@
  *
  * Tests the Vue composables (useOutlit) to ensure they:
  * - Throw when used outside OutlitPlugin
- * - Expose user namespace (activate, engaged, inactive) and customer namespace (trialing, paid, churned)
+ * - Expose user namespace and deprecated derived-stage aliases for compatibility
+ * - Expose customer namespace (trialing, paid, churned)
  * - Handle consent flow correctly
  *
  * Run with: bun run test:unit
@@ -127,7 +128,7 @@ describe("useOutlit composable", () => {
     document.body.removeChild(root)
   })
 
-  it("exposes user namespace with stage methods", () => {
+  it("exposes user namespace with activation and deprecated derived-stage aliases", () => {
     let result: ReturnType<typeof useOutlit> | null = null
 
     const TestComponent = defineComponent({
@@ -419,7 +420,8 @@ describe("useOutlitUser composable", () => {
 })
 
 describe("Stage methods behavior", () => {
-  it("inactive method can be called without properties", async () => {
+  it("deprecated inactive method can be called without properties", async () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
     let result: ReturnType<typeof useOutlit> | null = null
 
     const TestComponent = defineComponent({
@@ -442,10 +444,15 @@ describe("Stage methods behavior", () => {
       result!.user.inactive()
     }).not.toThrow()
 
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("user.inactive() is deprecated"),
+    )
+
     unmount()
   })
 
-  it("inactive method can be called with properties", async () => {
+  it("deprecated inactive method can be called with properties", async () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
     let result: ReturnType<typeof useOutlit> | null = null
 
     const TestComponent = defineComponent({
@@ -467,6 +474,10 @@ describe("Stage methods behavior", () => {
     expect(() => {
       result!.user.inactive({ reason: "cancelled", plan: "pro" })
     }).not.toThrow()
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("user.inactive() is deprecated"),
+    )
 
     unmount()
   })

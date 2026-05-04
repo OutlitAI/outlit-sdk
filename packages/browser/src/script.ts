@@ -62,7 +62,15 @@ interface OutlitGlobal {
   user: {
     identify: (options: BrowserIdentifyOptions) => void
     activate: (properties?: Record<string, string | number | boolean | null>) => void
+    /**
+     * @deprecated Outlit derives ENGAGED from tracked activity. Keep tracking product activity
+     * with track() and only send activation manually with user.activate().
+     */
     engaged: (properties?: Record<string, string | number | boolean | null>) => void
+    /**
+     * @deprecated Outlit derives INACTIVE from tracked activity. Keep tracking product activity
+     * with track() and only send activation manually with user.activate().
+     */
     inactive: (properties?: Record<string, string | number | boolean | null>) => void
   }
   customer: {
@@ -220,6 +228,10 @@ const outlit: OutlitGlobal & { _loaded?: boolean } = {
       }
       outlit._instance.user.activate(properties)
     },
+    /**
+     * @deprecated Outlit derives ENGAGED from tracked activity. Keep tracking product activity
+     * with track() and only send activation manually with user.activate().
+     */
     engaged(properties?: Record<string, string | number | boolean | null>) {
       if (!outlit._initialized || !outlit._instance) {
         outlit._queue.push(() => outlit.user.engaged(properties))
@@ -227,6 +239,10 @@ const outlit: OutlitGlobal & { _loaded?: boolean } = {
       }
       outlit._instance.user.engaged(properties)
     },
+    /**
+     * @deprecated Outlit derives INACTIVE from tracked activity. Keep tracking product activity
+     * with track() and only send activation manually with user.activate().
+     */
     inactive(properties?: Record<string, string | number | boolean | null>) {
       if (!outlit._initialized || !outlit._instance) {
         outlit._queue.push(() => outlit.user.inactive(properties))

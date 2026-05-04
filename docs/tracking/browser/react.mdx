@@ -434,7 +434,7 @@ function MyComponent() {
     identify,
     setUser,
     clearUser,
-    user,       // User stage methods: identify, activate, engaged, inactive
+    user,       // User identity and activation helpers
     customer,   // Customer billing methods: trialing, paid, churned
     getVisitorId,
     isInitialized,
@@ -449,9 +449,8 @@ function MyComponent() {
   // Identify the user
   identify({ email: 'user@example.com', traits: { plan: 'pro' } })
 
-  // User stage methods
+  // User activation
   user.activate({ flow: 'onboarding' })
-  user.engaged({ milestone: 'first_project' })
 
   // Customer billing methods (requires account identifier)
   customer.paid({
@@ -488,11 +487,9 @@ function MyComponent() {
 </ParamField>
 
 <ParamField path="user" type="object">
-  User stage methods namespace:
+  User identity and activation namespace:
   - `user.identify(options)` - Identify the user
   - `user.activate(properties?)` - Mark user as activated
-  - `user.engaged(properties?)` - Mark user as engaged
-  - `user.inactive(properties?)` - Mark user as inactive
 </ParamField>
 
 <ParamField path="customer" type="object">
@@ -565,9 +562,9 @@ function LoginForm() {
 }
 ```
 
-## Journey Stage Events
+## Activation
 
-Track user progression through your product lifecycle:
+Mark users as activated when they complete your product's activation milestone:
 
 ```tsx
 'use client'
@@ -585,21 +582,10 @@ function OnboardingComplete() {
 }
 ```
 
-```tsx
-// Track engagement milestone
-function FirstProjectCreated() {
-  const { user } = useOutlit()
-
-  useEffect(() => {
-    user.engaged({ milestone: 'first_project' })
-  }, [user])
-
-  return <div>Congratulations on your first project!</div>
-}
-```
+Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Use `track()` for product events instead of calling manual stage methods. See [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity) for the current rules.
 
 <Warning>
-  User stage methods (`user.activate`, `user.engaged`, `user.inactive`) require the user to be identified first. Use `setUser()`, `identify()`, or the `user` prop before calling stage methods.
+  `user.activate()` requires the user to be identified first. Use `setUser()`, `identify()`, or the `user` prop before calling it.
 </Warning>
 
 <Info>

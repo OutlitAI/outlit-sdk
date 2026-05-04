@@ -12,7 +12,9 @@ export type EventType =
   | "stage"
   | "billing"
 
-// Only explicit stages - discovered/signed_up are inferred from identify calls
+// Explicit stage event values accepted by ingest for wire compatibility.
+// New SDK callers should only send "activated"; "engaged" and "inactive"
+// are derived by Outlit from tracked activity.
 export type ExplicitJourneyStage = "activated" | "engaged" | "inactive"
 
 export type BillingStatus = "trialing" | "paid" | "churned"
@@ -206,7 +208,7 @@ export interface EngagementEvent extends BaseEvent {
 
 export interface StageEvent extends BaseEvent {
   type: "stage"
-  /** The journey stage to set (only explicit stages, discovered/signed_up are inferred) */
+  /** Stage event value. New SDK callers should only send "activated". */
   stage: ExplicitJourneyStage
   /** Optional properties for context */
   properties?: Record<string, string | number | boolean | null>

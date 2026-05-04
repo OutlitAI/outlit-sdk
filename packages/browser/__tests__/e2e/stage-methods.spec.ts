@@ -1,8 +1,7 @@
 /**
  * Stage Methods E2E Tests
  *
- * Tests the stage tracking methods (activate, engaged, inactive)
- * to ensure they correctly send stage events to the API.
+ * Tests activation stage tracking and deprecated engaged/inactive compatibility.
  */
 
 import { expect, type Request, type Route, test } from "@playwright/test"
@@ -61,8 +60,13 @@ async function interceptApiCalls(page: import("@playwright/test").Page): Promise
 // ============================================
 
 test.describe("Stage Methods", () => {
-  test("inactive() sends stage event with properties", async ({ page }) => {
+  test("deprecated inactive() sends stage event with properties and warns", async ({ page }) => {
     const apiCalls = await interceptApiCalls(page)
+    const warnings: string[] = []
+    page.on("console", (msg) => {
+      if (msg.type() === "warning") warnings.push(msg.text())
+    })
+
     await page.goto("/test-page.html")
     await page.waitForFunction(() => window.outlit?._initialized)
 
@@ -85,9 +89,10 @@ test.describe("Stage Methods", () => {
     expect(stageEvent?.stage).toBe("inactive")
     expect(stageEvent?.properties?.reason).toBe("cancelled")
     expect(stageEvent?.properties?.plan).toBe("pro")
+    expect(warnings.some((w) => w.includes("user.inactive() is deprecated"))).toBe(true)
   })
 
-  test("inactive() queues event when user identity not set (no warning)", async ({ page }) => {
+  test("deprecated inactive() queues event when user identity not set", async ({ page }) => {
     const warnings: string[] = []
 
     // Set up console listener before navigation
@@ -106,7 +111,8 @@ test.describe("Stage Methods", () => {
     // Wait a bit to ensure no warning is logged
     await page.waitForTimeout(100)
 
-    // Should NOT log a warning when queuing (only when queue is full)
+    expect(warnings.some((w) => w.includes("user.inactive() is deprecated"))).toBe(true)
+    // Should NOT log the missing identity warning when queuing (only when queue is full)
     expect(warnings.some((w) => w.includes("setUser") || w.includes("identify"))).toBe(false)
   })
 
@@ -134,8 +140,13 @@ test.describe("Stage Methods", () => {
     expect(stageEvent?.properties?.milestone).toBe("onboarding_complete")
   })
 
-  test("engaged() sends stage event", async ({ page }) => {
+  test("deprecated engaged() sends stage event and warns", async ({ page }) => {
     const apiCalls = await interceptApiCalls(page)
+    const warnings: string[] = []
+    page.on("console", (msg) => {
+      if (msg.type() === "warning") warnings.push(msg.text())
+    })
+
     await page.goto("/test-page.html")
     await page.waitForFunction(() => window.outlit?._initialized)
 
@@ -156,6 +167,7 @@ test.describe("Stage Methods", () => {
     expect(stageEvent?.type).toBe("stage")
     expect(stageEvent?.stage).toBe("engaged")
     expect(stageEvent?.properties?.sessions).toBe(10)
+    expect(warnings.some((w) => w.includes("user.engaged() is deprecated"))).toBe(true)
   })
 
   test("paid() sends billing event", async ({ page }) => {
@@ -239,7 +251,7 @@ test.describe("Stage Methods", () => {
     expect(billingEvent?.properties?.reason).toBe("cancelled")
   })
 
-  test("all stage methods work in sequence: activate, engaged, inactive", async ({ page }) => {
+  test("deprecated stage methods still work in sequence with activate", async ({ page }) => {
     const apiCalls = await interceptApiCalls(page)
     await page.goto("/test-page.html")
     await page.waitForFunction(() => window.outlit?._initialized)
