@@ -42,3 +42,6 @@ Cargo.lock
 # Git worktrees
 .worktrees/
 worktrees/
+
+# Codex environment runtime marker
+.codex/environments/.cloud-env-bundle-materialized
