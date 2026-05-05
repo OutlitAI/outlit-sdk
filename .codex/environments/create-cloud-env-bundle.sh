@@ -33,7 +33,6 @@ find "$root_path" \
     -o -path "$root_path/.env.local" \
     -o -path "$root_path/.env.development.local" \
     -o -path "$root_path/.env.staging.local" \
-    -o -path "$root_path/packages/nango-integrations/.env" \
   \) \
   ! -path "*/node_modules/*" \
   ! -path "*/.git/*" \

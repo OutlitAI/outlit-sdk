@@ -84,7 +84,6 @@ step_copy_env_files() {
       -o -path "$root_path/.env.local" \
       -o -path "$root_path/.env.development.local" \
       -o -path "$root_path/.env.staging.local" \
-      -o -path "$root_path/packages/nango-integrations/.env" \
     \) \
     -not -path "*/node_modules/*" \
     -not -path "*/.git/*" \
