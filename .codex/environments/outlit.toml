@@ -1,0 +1,24 @@
+version = 1
+name = "Outlit SDK"
+
+[setup]
+script = """
+. ./.codex/environments/lib/codex-env.sh
+codex_environment_init
+./.superset/setup.sh
+"""
+
+[[actions]]
+name = "Build"
+icon = "test"
+command = "bun run build"
+
+[[actions]]
+name = "Typecheck"
+icon = "test"
+command = "bun run typecheck"
+
+[[actions]]
+name = "Install"
+icon = "run"
+command = "bun install"
