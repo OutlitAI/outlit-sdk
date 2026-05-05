@@ -136,7 +136,7 @@ Journey stages are properties on graph nodes — structured labels that Outlit m
 - **Contact journey stages** (Discovered, Signed Up, Activated, Engaged, Inactive) describe where each person is in their product engagement
 - **Account billing statuses** (None, Trialing, Paying, Churned) describe the commercial relationship
 
-Some stages are inferred automatically from integrations. The Outlit browser SDK auto-detects Discovered and Signed Up based on the identifiers provided. Engaged and Inactive are derived from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. Activated is the one stage you instrument manually — since the definition of "activated" is specific to your product, you call `user.activate()` when a contact completes your onboarding or key milestone.
+Some stages are inferred automatically from integrations. The Outlit browser SDK auto-detects Discovered and Signed Up based on the identifiers provided. Engaged and Inactive are derived from tracked product activity. Activated is the one stage you instrument manually — since the definition of "activated" is specific to your product, you call `user.activate()` when a contact completes your onboarding or key milestone.
 
 Billing statuses update automatically when Stripe is connected.
 

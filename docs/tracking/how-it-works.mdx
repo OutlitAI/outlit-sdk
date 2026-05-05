@@ -126,7 +126,7 @@ Journey stages are properties maintained on graph entities:
 - Contacts carry a journey stage: Discovered → Signed Up → Activated → Engaged → Inactive
 - Accounts carry a billing status: None → Trialing → Paying → Churned
 
-The Outlit browser SDK auto-detects **Discovered** (email known, no userId) and **Signed Up** (both email and userId provided). **Engaged** and **Inactive** are derived from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default. **Activated** is the one stage you call manually — `user.activate()` — because the definition of activation is specific to your product. Billing statuses update automatically when Stripe is connected.
+The Outlit browser SDK auto-detects **Discovered** (email known, no userId) and **Signed Up** (both email and userId provided). **Engaged** and **Inactive** are derived from tracked product activity. **Activated** is the one stage you call manually — `user.activate()` — because the definition of activation is specific to your product. Billing statuses update automatically when Stripe is connected.
 
 <Info>
   For the full breakdown of journey stages and billing statuses, see [Customer Journey](/concepts/customer-journey).
