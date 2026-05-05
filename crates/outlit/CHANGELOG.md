@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3](https://github.com/OutlitAI/outlit-sdk/compare/outlit-v0.2.2...outlit-v0.2.3) - 2026-05-05
+
+### Other
+
+- Trim derived stage docs detail
+- Deprecate manual engaged inactive SDK calls
+- Add Pi growth agent pretriage and notifications ([#112](https://github.com/OutlitAI/outlit-sdk/pull/112))
+
 ## [0.2.2](https://github.com/OutlitAI/outlit-sdk/compare/outlit-v0.2.1...outlit-v0.2.2) - 2026-04-14
 
 ### Other
