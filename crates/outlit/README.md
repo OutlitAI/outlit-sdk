@@ -123,7 +123,7 @@ client.identify(email("user@example.com"))
 client.user().activate(email("...")).send().await?;
 ```
 
-Engaged and Inactive are derived automatically from tracked product activity: Engaged requires qualifying activity on multiple distinct days in the configured rolling window, and Inactive is applied after no qualifying activity for 30 days by default.
+Outlit handles engagement and inactivity automatically from tracked product activity.
 
 ### Customer Billing
 
