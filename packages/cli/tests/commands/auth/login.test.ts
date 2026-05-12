@@ -290,7 +290,9 @@ describe("auth login", () => {
       } as Parameters<NonNullable<typeof loginCmd.run>>[0])
     } catch (e) {
       thrown = e
-      stderrWritten = (stderrSpy.mock.calls.at(-1)?.[0] as string) ?? ""
+      const stderrOutput = stderrSpy.mock.calls.map((call) => String(call[0])).join("")
+      const jsonStart = stderrOutput.indexOf("{")
+      stderrWritten = jsonStart === -1 ? stderrOutput : stderrOutput.slice(jsonStart)
     } finally {
       fetchSpy.mockRestore()
       exitSpy.mockRestore()
