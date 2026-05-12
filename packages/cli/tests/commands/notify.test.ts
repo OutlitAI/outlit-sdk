@@ -109,7 +109,7 @@ describe("notify", () => {
         args: {
           title: "Risk found",
           markdown: "  **Risk found**\n\n- Customer: Acme  ",
-          destination: "slack:C456",
+          destination: "00000000-0000-4000-8000-000000000001",
           json: true,
         },
       } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
@@ -119,7 +119,7 @@ describe("notify", () => {
         expect.objectContaining({
           title: "Risk found",
           markdown: "**Risk found**\n\n- Customer: Acme",
-          destinations: [{ provider: "slack", channelId: "C456" }],
+          destinationIds: ["00000000-0000-4000-8000-000000000001"],
         }),
       )
     } finally {
@@ -352,7 +352,7 @@ describe("notify", () => {
         args: {
           title: "Risk found",
           markdown: "**Risk found**",
-          destination: "teams:C123",
+          destination: "not-a-destination-id",
           json: true,
         },
       } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
@@ -379,7 +379,10 @@ describe("notify", () => {
         args: {
           title: "Risk found",
           markdown: "**Risk found**",
-          destination: Array.from({ length: 11 }, (_, index) => `slack:C${index}`).join(","),
+          destination: Array.from(
+            { length: 11 },
+            (_, index) => `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+          ).join(","),
           json: true,
         },
       } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
@@ -395,7 +398,7 @@ describe("notify", () => {
     }
   })
 
-  test("destination channelId over 240 characters returns invalid_input", async () => {
+  test("malformed destination id returns invalid_input", async () => {
     const { default: notifyCmd } = await import("../../src/commands/notify")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -406,7 +409,7 @@ describe("notify", () => {
         args: {
           title: "Risk found",
           markdown: "**Risk found**",
-          destination: `slack:${"C".repeat(241)}`,
+          destination: "00000000-0000-0000-0000-000000000001",
           json: true,
         },
       } as Parameters<NonNullable<typeof notifyCmd.run>>[0])

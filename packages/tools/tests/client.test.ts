@@ -129,7 +129,7 @@ describe("tool contracts", () => {
       {
         enum?: string[]
         type?: string
-        items?: { properties?: Record<string, { enum?: string[] }> }
+        items?: { format?: string; type?: string }
       }
     >
 
@@ -140,7 +140,18 @@ describe("tool contracts", () => {
         type: "string",
       }),
     )
-    expect(properties.destinations?.items?.properties?.provider?.enum).toEqual(["slack"])
+    expect(properties.destinations).toBeUndefined()
+    expect(properties.destinationIds).toEqual(
+      expect.objectContaining({
+        type: "array",
+        minItems: 1,
+        maxItems: 10,
+        items: expect.objectContaining({
+          type: "string",
+          format: "uuid",
+        }),
+      }),
+    )
     expect(properties.severity).toEqual(
       expect.objectContaining({
         enum: ["low", "medium", "high"],
@@ -213,7 +224,7 @@ describe("createOutlitClient", () => {
       title: "Reminder",
       markdown: "**Reminder**\n\n- Customer: Acme",
       severity: "low",
-      destinations: [{ provider: "slack", channelId: "C123" }],
+      destinationIds: ["00000000-0000-4000-8000-000000000001"],
     })
 
     expect(fetchMock).toHaveBeenCalledWith("https://example.outlit.test/api/tools/call", {
@@ -228,7 +239,7 @@ describe("createOutlitClient", () => {
           title: "Reminder",
           markdown: "**Reminder**\n\n- Customer: Acme",
           severity: "low",
-          destinations: [{ provider: "slack", channelId: "C123" }],
+          destinationIds: ["00000000-0000-4000-8000-000000000001"],
         },
       }),
     })

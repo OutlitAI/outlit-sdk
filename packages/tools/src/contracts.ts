@@ -674,35 +674,14 @@ export const customerToolContracts = {
           minLength: 1,
           maxLength: 240,
         },
-        destinations: {
-          description:
-            "Optional explicit notification destinations. Omit to use the default notifier.",
+        destinationIds: {
+          description: "Optional NotificationDestination ids. Omit to use the default notifier.",
           minItems: 1,
           maxItems: 10,
           type: "array",
           items: {
-            type: "object",
-            properties: {
-              provider: {
-                description: "Notification provider",
-                type: "string",
-                enum: ["slack"],
-              },
-              channelId: {
-                description: "Provider-specific destination channel ID",
-                type: "string",
-                minLength: 1,
-                maxLength: 240,
-              },
-              label: {
-                description: "Optional destination label",
-                type: "string",
-                minLength: 1,
-                maxLength: 120,
-              },
-            },
-            required: ["provider"],
-            additionalProperties: false,
+            type: "string",
+            format: "uuid",
           },
         },
       },
@@ -847,7 +826,7 @@ export const userListOrderFields = ["last_activity_at", "first_seen_at", "email"
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "5016d146842452855bfdd9ecc8f6be1a122125d0c392ceff315aeb2e44fefc7f" as const
+  "0374a55c4eb25b31c9ac41f50b890992691ea9be233d0febe64724b7b3c2fba6" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]
