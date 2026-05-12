@@ -1,4 +1,3 @@
 [install]
 # Require npm package versions to be at least 24 hours old before installation.
 minimumReleaseAge = 86400
-peer = false
