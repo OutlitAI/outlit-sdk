@@ -73,6 +73,27 @@ describe("CLI browser auth client", () => {
     fetchSpy.mockRestore()
   })
 
+  test("returns invalid CLI auth poll credentials without treating them as transient", async () => {
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          error: "Invalid CLI auth polling credentials",
+          status: "invalid",
+        }),
+        { status: 401 },
+      ),
+    )
+
+    const result = await pollCliAuthRequest("https://app.outlit.ai", {
+      requestId: "req_123",
+      pollToken: "wrong_poll_token",
+    })
+
+    expect(result).toEqual({ status: "invalid" })
+
+    fetchSpy.mockRestore()
+  })
+
   test("waits until polling returns an approved API key", async () => {
     let callCount = 0
     const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async () => {
