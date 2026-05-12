@@ -1,3 +1,4 @@
+// Keep this on bun:test so the assertion uses Bun.TOML.parse directly instead of a mock.
 import { describe, expect, test } from "bun:test"
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
 import path from "node:path"
