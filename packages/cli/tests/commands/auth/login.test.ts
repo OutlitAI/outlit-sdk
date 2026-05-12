@@ -168,6 +168,7 @@ describe("auth login", () => {
     const { default: loginCmd } = await import("../../../src/commands/auth/login")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    const previousCi = process.env.CI
     process.env.CI = "true"
 
     let thrown: unknown
@@ -180,7 +181,11 @@ describe("auth login", () => {
       thrown = e
       stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
     } finally {
-      Reflect.deleteProperty(process.env, "CI")
+      if (previousCi === undefined) {
+        Reflect.deleteProperty(process.env, "CI")
+      } else {
+        process.env.CI = previousCi
+      }
       exitSpy.mockRestore()
       stderrSpy.mockRestore()
     }
@@ -222,18 +227,20 @@ describe("auth login", () => {
 
     let fetchCalls: Array<unknown[]> = []
     let stderrOutput = ""
+    let stdout = ""
     try {
       await loginCmd.run!({
         args: { browser: true, json: true },
       } as Parameters<NonNullable<typeof loginCmd.run>>[0])
       fetchCalls = [...fetchSpy.mock.calls]
       stderrOutput = stderrSpy.mock.calls.map((call) => String(call[0])).join("")
+      stdout = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
     } finally {
       fetchSpy.mockRestore()
       stderrSpy.mockRestore()
+      writeSpy.mockRestore()
     }
 
-    const stdout = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
     const parsed = JSON.parse(stdout) as Record<string, unknown>
     expect(parsed.success).toBe(true)
     expect(typeof parsed.config_path).toBe("string")
@@ -245,7 +252,6 @@ describe("auth login", () => {
     ])
     expect(stderrOutput).toContain("https://app.outlit.ai/cli-auth?request=req_123")
     expect(stderrOutput).toContain("ABCD-1234")
-    writeSpy.mockRestore()
   })
 
   test("exits with a validation error when browser auth fails server-side", async () => {
