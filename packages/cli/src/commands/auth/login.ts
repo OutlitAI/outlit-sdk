@@ -2,9 +2,64 @@ import * as p from "@clack/prompts"
 import { defineCommand } from "citty"
 import { outputArgs } from "../../args/output"
 import { pingApiKey } from "../../lib/api"
-import { OUTLIT_DASHBOARD_URL, resolveApiKey, storeApiKey } from "../../lib/config"
+import { startCliAuthRequest, waitForCliAuthApproval } from "../../lib/cli-auth"
+import { DEFAULT_API_URL, OUTLIT_DASHBOARD_URL, resolveApiKey, storeApiKey } from "../../lib/config"
 import { errorMessage, isJsonMode, outputError, outputResult } from "../../lib/output"
-import { isInteractive, openBrowser } from "../../lib/tty"
+import { isCiEnvironment, isInteractive, openBrowser } from "../../lib/tty"
+
+async function runBrowserAuthFlow(json: boolean): Promise<string> {
+  const baseUrl = process.env.OUTLIT_API_URL ?? DEFAULT_API_URL
+  const session = await startCliAuthRequest(baseUrl)
+  const opened = isInteractive() ? openBrowser(session.approveUrl) : false
+
+  process.stderr.write(
+    [
+      "",
+      "Authorize Outlit CLI in your browser:",
+      `  ${session.approveUrl}`,
+      "",
+      `Confirm this terminal code: ${session.userCode}`,
+      opened ? "Waiting for browser approval..." : "Waiting after you approve the request...",
+      "",
+    ].join("\n"),
+  )
+
+  const spinner = isInteractive() ? p.spinner() : null
+  spinner?.start("Waiting for browser approval...")
+
+  const result = await waitForCliAuthApproval(baseUrl, session, {
+    spinnerMessage: "Waiting for browser approval...",
+  })
+
+  if (!result) {
+    spinner?.stop("Approval timed out")
+    return outputError(
+      {
+        message: "Timed out waiting for browser approval. Run `outlit auth login --browser` again.",
+        code: "auth_timeout",
+      },
+      json,
+    )
+  }
+
+  if (result.status !== "approved") {
+    spinner?.stop("Approval did not complete")
+    const message =
+      result.status === "failed" && result.error
+        ? `Browser authorization failed: ${result.error}`
+        : `Browser authorization ${result.status}. Run \`outlit auth login --browser\` again.`
+    return outputError(
+      {
+        message,
+        code: `auth_${result.status}`,
+      },
+      json,
+    )
+  }
+
+  spinner?.stop("Browser authorization approved")
+  return result.apiKey
+}
 
 export default defineCommand({
   meta: {
@@ -19,6 +74,7 @@ export default defineCommand({
       "",
       "Examples:",
       "  outlit auth login               # interactive (TTY)",
+      "  outlit auth login --browser     # browser approval, works in agent shells",
       "  outlit auth login --key ok_xxx  # non-interactive (CI, scripts, agents)",
     ].join("\n"),
   },
@@ -29,15 +85,40 @@ export default defineCommand({
       description:
         "API key to store (required in non-interactive / CI mode).\nFormat: ok_ followed by 32+ alphanumeric characters.",
     },
+    browser: {
+      type: "boolean",
+      description: "Create a scoped CLI key through browser approval instead of pasting a key.",
+    },
   },
   async run({ args }) {
     const json = !!args.json
     let apiKey = args.key
+    const interactive = isInteractive()
+    const shouldUseBrowserAuth = args.browser || (!interactive && !isCiEnvironment())
 
     if (!apiKey) {
-      if (!isInteractive()) {
+      if (shouldUseBrowserAuth) {
+        apiKey = await runBrowserAuthFlow(json)
+      } else if (!interactive) {
         return outputError(
-          { message: "--key <apiKey> is required in non-interactive mode", code: "missing_key" },
+          {
+            message:
+              "--key <apiKey> is required in non-interactive mode. For browser approval, run `outlit auth login --browser`.",
+            code: "missing_key",
+          },
+          json,
+        )
+      }
+    }
+
+    if (!apiKey) {
+      if (!interactive) {
+        return outputError(
+          {
+            message:
+              "--key <apiKey> is required in non-interactive mode. For browser approval, run `outlit auth login --browser`.",
+            code: "missing_key",
+          },
           json,
         )
       }
@@ -59,31 +140,33 @@ export default defineCommand({
       const method = await p.select({
         message: "How would you like to get your API key?",
         options: [
-          { value: "browser", label: "Open app.outlit.ai in browser" },
+          { value: "browser", label: "Authorize in browser" },
           { value: "manual", label: "Enter API key manually" },
         ],
       })
       if (p.isCancel(method)) cancelLogin()
 
       if (method === "browser") {
+        apiKey = await runBrowserAuthFlow(json)
+      } else {
         const opened = openBrowser(OUTLIT_DASHBOARD_URL)
         if (opened) {
           p.log.info("Opening browser... paste your key once you have it.")
         } else {
           p.log.info(`Could not open browser. Visit ${OUTLIT_DASHBOARD_URL} manually.`)
         }
-      }
 
-      const result = await p.password({
-        message: "Paste your Outlit API key:",
-        validate: (v) => {
-          if (!v) return "API key is required"
-          if (!v.startsWith("ok_")) return 'Outlit API keys start with "ok_"'
-          return undefined
-        },
-      })
-      if (p.isCancel(result)) cancelLogin()
-      apiKey = result as string
+        const result = await p.password({
+          message: "Paste your Outlit API key:",
+          validate: (v) => {
+            if (!v) return "API key is required"
+            if (!v.startsWith("ok_")) return 'Outlit API keys start with "ok_"'
+            return undefined
+          },
+        })
+        if (p.isCancel(result)) cancelLogin()
+        apiKey = result as string
+      }
     }
 
     if (!apiKey.startsWith("ok_")) {

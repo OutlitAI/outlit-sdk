@@ -86,10 +86,66 @@ describe("auth login", () => {
     writeSpy.mockRestore()
   })
 
-  test("exits 1 and outputs error JSON when in non-interactive mode without --key", async () => {
+  test("starts browser auth by default in non-interactive non-CI mode without --key", async () => {
+    const { default: loginCmd } = await import("../../../src/commands/auth/login")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    const fetchSpy = spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            requestId: "req_123",
+            pollToken: "poll_token_123",
+            userCode: "ABCD-1234",
+            approveUrl: "https://app.outlit.ai/cli-auth?request=req_123",
+            expiresAt: new Date(Date.now() + 5_000).toISOString(),
+            intervalSeconds: 1,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            status: "approved",
+            apiKey: TEST_API_KEY,
+            keyPrefix: "ok_aaa",
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+      )
+
+    let fetchCalls: Array<unknown[]> = []
+    let stdout = ""
+    try {
+      await loginCmd.run!({
+        args: { json: true },
+      } as Parameters<NonNullable<typeof loginCmd.run>>[0])
+      fetchCalls = [...fetchSpy.mock.calls]
+      stdout = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
+    } finally {
+      fetchSpy.mockRestore()
+      stderrSpy.mockRestore()
+      writeSpy.mockRestore()
+    }
+
+    const parsed = JSON.parse(stdout) as Record<string, unknown>
+    expect(parsed.success).toBe(true)
+    expect(fetchCalls.map((call) => call[0])).toEqual([
+      "https://app.outlit.ai/api/cli-auth/start",
+      "https://app.outlit.ai/api/cli-auth/poll",
+      "https://app.outlit.ai/api/validate-api-key",
+    ])
+  })
+
+  test("exits 1 and outputs error JSON when in CI mode without --key", async () => {
     const { default: loginCmd } = await import("../../../src/commands/auth/login")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    process.env.CI = "true"
 
     let thrown: unknown
     let stderrWritten = ""
@@ -101,11 +157,119 @@ describe("auth login", () => {
       thrown = e
       stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
     } finally {
+      Reflect.deleteProperty(process.env, "CI")
       exitSpy.mockRestore()
       stderrSpy.mockRestore()
     }
 
     expectErrorExit(thrown, stderrWritten, "missing_key")
+  })
+
+  test("browser auth works in non-interactive mode when --browser is provided", async () => {
+    const { default: loginCmd } = await import("../../../src/commands/auth/login")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    const fetchSpy = spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            requestId: "req_123",
+            pollToken: "poll_token_123",
+            userCode: "ABCD-1234",
+            approveUrl: "https://app.outlit.ai/cli-auth?request=req_123",
+            expiresAt: new Date(Date.now() + 5_000).toISOString(),
+            intervalSeconds: 1,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            status: "approved",
+            apiKey: TEST_API_KEY,
+            keyPrefix: "ok_aaa",
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+      )
+
+    let fetchCalls: Array<unknown[]> = []
+    let stderrOutput = ""
+    try {
+      await loginCmd.run!({
+        args: { browser: true, json: true },
+      } as Parameters<NonNullable<typeof loginCmd.run>>[0])
+      fetchCalls = [...fetchSpy.mock.calls]
+      stderrOutput = stderrSpy.mock.calls.map((call) => String(call[0])).join("")
+    } finally {
+      fetchSpy.mockRestore()
+      stderrSpy.mockRestore()
+    }
+
+    const stdout = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
+    const parsed = JSON.parse(stdout) as Record<string, unknown>
+    expect(parsed.success).toBe(true)
+    expect(typeof parsed.config_path).toBe("string")
+
+    expect(fetchCalls.map((call) => call[0])).toEqual([
+      "https://app.outlit.ai/api/cli-auth/start",
+      "https://app.outlit.ai/api/cli-auth/poll",
+      "https://app.outlit.ai/api/validate-api-key",
+    ])
+    expect(stderrOutput).toContain("https://app.outlit.ai/cli-auth?request=req_123")
+    expect(stderrOutput).toContain("ABCD-1234")
+    writeSpy.mockRestore()
+  })
+
+  test("exits with a validation error when browser auth fails server-side", async () => {
+    const { default: loginCmd } = await import("../../../src/commands/auth/login")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    const fetchSpy = spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            requestId: "req_123",
+            pollToken: "poll_token_123",
+            userCode: "ABCD-1234",
+            approveUrl: "https://app.outlit.ai/cli-auth?request=req_123",
+            expiresAt: new Date(Date.now() + 5_000).toISOString(),
+            intervalSeconds: 1,
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            status: "failed",
+            error: "Could not verify CLI key before returning it.",
+          }),
+          { status: 200 },
+        ),
+      )
+
+    let thrown: unknown
+    let stderrWritten = ""
+    try {
+      await loginCmd.run!({
+        args: { browser: true, json: true },
+      } as Parameters<NonNullable<typeof loginCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+      stderrWritten = (stderrSpy.mock.calls.at(-1)?.[0] as string) ?? ""
+    } finally {
+      fetchSpy.mockRestore()
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+    }
+
+    expectErrorExit(thrown, stderrWritten, "auth_failed")
+    expect(stderrWritten).toContain("Could not verify CLI key before returning it.")
   })
 
   test("exits 1 when API key has wrong prefix", async () => {
