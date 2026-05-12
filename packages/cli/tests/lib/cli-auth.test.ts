@@ -1,13 +1,26 @@
-import { describe, expect, spyOn, test } from "bun:test"
+import { afterEach, describe, expect, spyOn, test } from "bun:test"
 import {
   pollCliAuthRequest,
   startCliAuthRequest,
   waitForCliAuthApproval,
 } from "../../src/lib/cli-auth"
 
+let activeFetchSpy: ReturnType<typeof spyOn> | undefined
+
+function spyOnFetch() {
+  const fetchSpy = spyOn(globalThis, "fetch")
+  activeFetchSpy = fetchSpy
+  return fetchSpy
+}
+
+afterEach(() => {
+  activeFetchSpy?.mockRestore()
+  activeFetchSpy = undefined
+})
+
 describe("CLI browser auth client", () => {
   test("starts a CLI auth request against the platform API", async () => {
-    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
+    const fetchSpy = spyOnFetch().mockResolvedValueOnce(
       new Response(
         JSON.stringify({
           requestId: "req_123",
@@ -27,12 +40,10 @@ describe("CLI browser auth client", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1)
     expect(fetchSpy.mock.calls[0]?.[0]).toBe("https://app.outlit.ai/api/cli-auth/start")
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("POST")
-
-    fetchSpy.mockRestore()
   })
 
   test("polls a CLI auth request with the terminal-only poll token", async () => {
-    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
+    const fetchSpy = spyOnFetch().mockResolvedValueOnce(
       new Response(JSON.stringify({ status: "pending", intervalSeconds: 2 }), { status: 200 }),
     )
 
@@ -49,12 +60,10 @@ describe("CLI browser auth client", () => {
       requestId: "req_123",
       pollToken: "poll_token_123",
     })
-
-    fetchSpy.mockRestore()
   })
 
   test("parses a failed CLI auth poll response", async () => {
-    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
+    spyOnFetch().mockResolvedValueOnce(
       new Response(JSON.stringify({ status: "failed", error: "Could not verify CLI key" }), {
         status: 200,
       }),
@@ -69,12 +78,10 @@ describe("CLI browser auth client", () => {
       status: "failed",
       error: "Could not verify CLI key",
     })
-
-    fetchSpy.mockRestore()
   })
 
   test("returns invalid CLI auth poll credentials without treating them as transient", async () => {
-    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
+    spyOnFetch().mockResolvedValueOnce(
       new Response(
         JSON.stringify({
           error: "Invalid CLI auth polling credentials",
@@ -90,13 +97,11 @@ describe("CLI browser auth client", () => {
     })
 
     expect(result).toEqual({ status: "invalid" })
-
-    fetchSpy.mockRestore()
   })
 
   test("waits until polling returns an approved API key", async () => {
     let callCount = 0
-    const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async () => {
+    const fetchSpy = spyOnFetch().mockImplementation((async () => {
       callCount += 1
       return new Response(
         JSON.stringify(
@@ -132,7 +137,5 @@ describe("CLI browser auth client", () => {
       keyPrefix: "ok_abc",
     })
     expect(fetchSpy).toHaveBeenCalledTimes(2)
-
-    fetchSpy.mockRestore()
   })
 })
