@@ -1,5 +1,6 @@
 ---
 "@outlit/cli": patch
+"@outlit/pi": patch
 "@outlit/tools": patch
 ---
 
