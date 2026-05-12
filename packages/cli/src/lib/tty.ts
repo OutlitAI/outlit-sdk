@@ -77,8 +77,11 @@ export function promptInput(label: string, opts?: { secret?: boolean }): Promise
  */
 export function isInteractive(): boolean {
   if (!process.stdin.isTTY || !process.stdout.isTTY) return false
-  if (process.env.CI === "true" || process.env.CI === "1") return false
-  if (process.env.GITHUB_ACTIONS) return false
+  if (isCiEnvironment()) return false
   if (process.env.TERM === "dumb") return false
   return true
+}
+
+export function isCiEnvironment(): boolean {
+  return process.env.CI === "true" || process.env.CI === "1" || Boolean(process.env.GITHUB_ACTIONS)
 }

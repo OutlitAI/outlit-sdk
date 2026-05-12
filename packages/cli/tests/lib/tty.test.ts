@@ -102,4 +102,13 @@ describe("isInteractive()", () => {
     process.env.TERM = "dumb"
     expect(isInteractive()).toBe(false)
   })
+
+  test("detects CI independently from piped agent shells", async () => {
+    const { isCiEnvironment } = await import("../../src/lib/tty")
+    setTTY(false, false)
+    expect(isCiEnvironment()).toBe(false)
+
+    process.env.CI = "true"
+    expect(isCiEnvironment()).toBe(true)
+  })
 })
