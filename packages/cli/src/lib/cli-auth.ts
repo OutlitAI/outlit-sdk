@@ -111,6 +111,10 @@ export async function pollCliAuthRequest(
   })
   const payload = await readJsonObject(response)
 
+  if (payload.status === "invalid") {
+    return { status: "invalid" }
+  }
+
   if (!response.ok) {
     throw new Error(errorFromPayload(payload, `CLI auth poll failed (${response.status})`))
   }
