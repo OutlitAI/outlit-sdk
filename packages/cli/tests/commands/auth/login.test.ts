@@ -13,6 +13,27 @@ const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
   pagination: { hasMore: false, nextCursor: null, total: 0 },
 }))
 
+function withoutCiEnvironment(): () => void {
+  const previousCi = process.env.CI
+  const previousGithubActions = process.env.GITHUB_ACTIONS
+  Reflect.deleteProperty(process.env, "CI")
+  Reflect.deleteProperty(process.env, "GITHUB_ACTIONS")
+
+  return () => {
+    if (previousCi === undefined) {
+      Reflect.deleteProperty(process.env, "CI")
+    } else {
+      process.env.CI = previousCi
+    }
+
+    if (previousGithubActions === undefined) {
+      Reflect.deleteProperty(process.env, "GITHUB_ACTIONS")
+    } else {
+      process.env.GITHUB_ACTIONS = previousGithubActions
+    }
+  }
+}
+
 mock.module("../../../src/lib/client", () => ({
   createClient: async () => ({
     key: TEST_API_KEY,
@@ -88,6 +109,7 @@ describe("auth login", () => {
 
   test("starts browser auth by default in non-interactive non-CI mode without --key", async () => {
     const { default: loginCmd } = await import("../../../src/commands/auth/login")
+    const restoreCiEnvironment = withoutCiEnvironment()
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
     const fetchSpy = spyOn(globalThis, "fetch")
@@ -127,6 +149,7 @@ describe("auth login", () => {
       fetchCalls = [...fetchSpy.mock.calls]
       stdout = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
     } finally {
+      restoreCiEnvironment()
       fetchSpy.mockRestore()
       stderrSpy.mockRestore()
       writeSpy.mockRestore()
