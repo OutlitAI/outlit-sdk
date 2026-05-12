@@ -1,5 +1,11 @@
 # @outlit/cli
 
+## 1.8.0
+
+### Minor Changes
+
+- [#133](https://github.com/OutlitAI/outlit-sdk/pull/133) [`dd67421`](https://github.com/OutlitAI/outlit-sdk/commit/dd674219d5b57ffb2717ac8d7b07031bfe7f81fd) Thanks [@leo-paz](https://github.com/leo-paz)! - Add browser-assisted CLI authentication for non-interactive agent shells.
+
 ## 1.7.1
 
 ### Patch Changes

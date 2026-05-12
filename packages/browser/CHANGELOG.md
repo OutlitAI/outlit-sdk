@@ -1,5 +1,14 @@
 # @outlit/browser
 
+## 1.5.2
+
+### Patch Changes
+
+- [#130](https://github.com/OutlitAI/outlit-sdk/pull/130) [`c37989d`](https://github.com/OutlitAI/outlit-sdk/commit/c37989d4f7a05ae3f3f9ef8e58e1a8842cf65971) Thanks [@leo-paz](https://github.com/leo-paz)! - Deprecate manual engaged and inactive stage helper usage while preserving wire compatibility. Activation remains the manual SDK stage; engaged and inactive are now documented as derived from tracked activity.
+
+- Updated dependencies [[`c37989d`](https://github.com/OutlitAI/outlit-sdk/commit/c37989d4f7a05ae3f3f9ef8e58e1a8842cf65971)]:
+  - @outlit/core@1.5.2
+
 ## 1.5.1
 
 ### Patch Changes
