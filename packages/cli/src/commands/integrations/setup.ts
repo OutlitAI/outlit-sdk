@@ -282,7 +282,7 @@ async function setupProviderFollowUp(
   try {
     const result = (await client.callTool("outlit_integration_setup_step", {
       provider: capability.cliName,
-      step: inputStep,
+      step: step.id,
       ...(config ? { config } : {}),
     })) as Record<string, unknown>
 

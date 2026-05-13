@@ -80,7 +80,7 @@ const mockCallTool = mock(async (toolName: string, params: Record<string, unknow
     return {
       status: "manual_setup_required",
       provider: params.provider,
-      step: params.step === "mappings" ? "crm-mapping" : "webhook-setup",
+      step: params.step === "crm-mapping" ? "crm-mapping" : "webhook-setup",
       connectionId: `${params.provider}-org_123`,
       setup: {
         mode: "manual",
@@ -252,7 +252,7 @@ describe("integrations setup", () => {
     expect(mockCallTool).not.toHaveBeenCalledWith("outlit_connect_integration", expect.anything())
     expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_setup_step", {
       provider: "pylon",
-      step: "webhooks",
+      step: "webhook-setup",
     })
     expect(parsed).toEqual(
       expect.objectContaining({
@@ -279,7 +279,7 @@ describe("integrations setup", () => {
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_setup_step", {
       provider: "hubspot",
-      step: "mappings",
+      step: "crm-mapping",
       config: { mappings: [] },
     })
   })
