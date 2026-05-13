@@ -3,24 +3,36 @@ title: "AI Agent Setup"
 description: "Install Outlit skills for Claude Code, Codex, Gemini CLI, Droid, OpenCode, Pi, OpenClaw, and other coding agents"
 ---
 
-The `outlit setup` command installs the `outlit` skill for coding agents. It does not configure MCP clients.
+The `outlit onboard` command is the first command for coding agents. It bootstraps CLI auth, installs the `outlit` skill for the selected agent, checks integration setup readiness, and prints next actions.
+
+`outlit setup` remains available when you only want to install skills. It does not configure MCP clients.
 
 If you want Cursor, VS Code, Claude, or another MCP client, use the direct [MCP Integration](/ai-integrations/mcp) guide instead.
 
 ## Supported Agents
 
-Run the command for the agent you use, or run `outlit setup --yes` to detect installed agents automatically.
+Run `onboard` for the agent you use, or run `outlit setup --yes` to detect installed agents automatically when you only need skills.
 
-| Agent | Setup command |
+| Agent | Onboard command |
 |-------|---------------|
-| Claude Code | `outlit setup claude-code` |
-| Codex | `outlit setup codex` |
-| Gemini CLI | `outlit setup gemini` |
-| Droid | `outlit setup droid` |
-| OpenCode | `outlit setup opencode` |
-| Pi | `outlit setup pi` |
-| OpenClaw | `outlit setup openclaw` |
+| Claude Code | `outlit onboard --agent claude-code --json` |
+| Codex | `outlit onboard --agent codex --json` |
+| Gemini CLI | `outlit onboard --agent gemini --json` |
+| Droid | `outlit onboard --agent droid --json` |
+| OpenCode | `outlit onboard --agent opencode --json` |
+| Pi | `outlit onboard --agent pi --json` |
+| OpenClaw | `outlit onboard --agent openclaw --json` |
 | Manual / multi-agent | `outlit setup skills` |
+
+## Onboarding
+
+```bash
+outlit onboard --agent codex --json
+```
+
+If no API key is available, `onboard` starts the browser approval flow outside CI and stores the approved CLI key. It then validates the key, installs the Outlit skill, checks integration capabilities/status, and returns next commands such as `outlit integrations setup <provider> --json`.
+
+`onboard` does not connect third-party integrations by itself. Use `outlit integrations capabilities --json`, then `outlit integrations setup <provider> --json` for auth or credentials, and follow-up commands like `outlit integrations setup hubspot mappings --json` or `outlit integrations setup pylon webhooks --json` when capabilities list required post-connect steps.
 
 ## Auto-Setup
 

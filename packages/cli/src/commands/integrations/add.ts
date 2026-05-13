@@ -13,6 +13,7 @@ import { isInteractive, openBrowser, promptInput } from "../../lib/tty"
 interface ConnectResponse {
   sessionId: string
   alreadyConnected: boolean
+  connectUrl?: string
 }
 
 interface ConnectStatusResponse {
@@ -27,12 +28,13 @@ export default defineCommand({
     description: [
       "Connect a new integration.",
       "",
-      "For OAuth providers (Slack, Gmail, etc.), opens the browser for authentication.",
-      "For API-key providers (Stripe, PostHog, etc.), accepts credentials via --config or interactive prompts.",
+      "For browser/Nango providers (Slack, Gmail, etc.), opens the browser for authentication.",
+      "For direct credential providers (Stripe, Pylon, PostHog, etc.), accepts credentials via --config or interactive prompts.",
       "",
       "Examples:",
       "  outlit integrations add slack",
       '  outlit integrations add stripe --config \'{"apiKey": "rk_xxx"}\'',
+      '  outlit integrations add pylon --config \'{"apiToken": "pylon_xxx"}\'',
       "  outlit integrations add posthog --json          # outputs required fields as JSON",
       "  outlit integrations add slack --force            # reconnect if already connected",
       "",
@@ -62,6 +64,17 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
     const { provider, cliName } = resolveProviderOrExit(args.provider, json)
+
+    if (provider.connectSupported === false) {
+      return outputError(
+        {
+          message:
+            `${provider.name} cannot be connected from the CLI yet. ${provider.notes?.join(" ") ?? ""}`.trim(),
+          code: "unsupported_provider",
+        },
+        json,
+      )
+    }
 
     if (provider.authType === "api_key") {
       await addApiKeyProvider(client, provider, cliName, json, args.config as string | undefined)
@@ -124,7 +137,7 @@ async function addApiKeyProvider(
     return outputResult({
       status: "config_required",
       provider: cliName,
-      message: `${provider.name} requires API key configuration. Pass --config with the required fields.`,
+      message: `${provider.name} requires credential configuration. Pass --config with the required fields.`,
       requiredFields: fields.map((f) => ({ key: f.key, label: f.label })),
     })
   }
@@ -193,8 +206,7 @@ async function addOAuthProvider(
     return
   }
 
-  // Open the integrations page (not the old /cli/connect URL)
-  const integrationsUrl = `${client.baseUrl}/integrations`
+  const integrationsUrl = connectData.connectUrl ?? `${client.baseUrl}/integrations`
 
   spinner.update(`Opening browser for ${provider.name} authentication...`)
   const opened = openBrowser(integrationsUrl)
@@ -221,6 +233,7 @@ async function addOAuthProvider(
       status: "awaiting_auth",
       provider: cliName,
       sessionId: connectData.sessionId,
+      connectUrl: integrationsUrl,
     })
   }
 

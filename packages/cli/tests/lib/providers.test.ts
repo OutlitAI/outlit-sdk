@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test"
-import { INTEGRATION_PROVIDERS, PROVIDER_NAMES, resolveProvider } from "../../src/lib/providers"
+import {
+  getProviderCapabilities,
+  getProviderCapability,
+  INTEGRATION_PROVIDERS,
+  PROVIDER_NAMES,
+  resolveProvider,
+} from "../../src/lib/providers"
 
 describe("INTEGRATION_PROVIDERS", () => {
   test("maps gmail to google-mail internal id", () => {
@@ -20,6 +26,10 @@ describe("INTEGRATION_PROVIDERS", () => {
       expect(info.name).toBeString()
       expect(info.category).toBeString()
       expect(info.authType).toBeString()
+      expect(
+        info.setupMode ?? (info.authType === "api_key" ? "direct_api_key" : "nango_connect"),
+      ).toBeString()
+      expect(info.credentialType ?? info.authType).toBeString()
       expect(key).toBeTruthy()
     }
   })
@@ -86,11 +96,11 @@ describe("PROVIDER_NAMES", () => {
     expect(PROVIDER_NAMES).toContain("supabase")
     expect(PROVIDER_NAMES).toContain("clerk")
     expect(PROVIDER_NAMES).toContain("pylon")
+    expect(PROVIDER_NAMES).toContain("attio")
   })
 
-  test("does not include removed CRM providers that are not exposed by integrations list", () => {
+  test("does not include CRM providers that are not exposed by integrations list", () => {
     expect(PROVIDER_NAMES).not.toContain("salesforce")
-    expect(PROVIDER_NAMES).not.toContain("attio")
     expect(PROVIDER_NAMES).not.toContain("gong")
   })
 })
@@ -166,13 +176,25 @@ describe("resolveProvider", () => {
   })
 
   test("resolves provider IDs exposed by integrations list", () => {
-    for (const name of ["google-mail", "granola", "hubspot"]) {
+    for (const name of ["google-mail", "granola", "hubspot", "attio"]) {
       const result = resolveProvider(name)
       expect("provider" in result).toBe(true)
       if ("provider" in result) {
         expect(result.provider.id).toBe(name)
         expect(result.cliName).toBe(name)
       }
+    }
+  })
+
+  test("resolves granola as API-key provider", () => {
+    const result = resolveProvider("granola")
+    expect("provider" in result).toBe(true)
+    if ("provider" in result) {
+      expect(result.provider.id).toBe("granola")
+      expect(result.provider.authType).toBe("api_key")
+      expect(result.provider.configFields).toEqual([
+        { key: "apiKey", label: "API Key", secret: true },
+      ])
     }
   })
 
@@ -184,5 +206,43 @@ describe("resolveProvider", () => {
         expect(result.provider.authType).toBe("api_key")
       }
     }
+  })
+})
+
+describe("provider capabilities", () => {
+  test("returns machine-readable capabilities for every CLI provider", () => {
+    const capabilities = getProviderCapabilities()
+    expect(capabilities.map((provider) => provider.cliName)).toEqual(PROVIDER_NAMES)
+
+    const hubspot = capabilities.find((provider) => provider.cliName === "hubspot")
+    expect(hubspot?.providerId).toBe("hubspot")
+    expect(hubspot?.authType).toBe("oauth")
+    expect(hubspot?.connectSupported).toBe(true)
+    expect(hubspot?.commands).toContain("outlit integrations setup hubspot")
+    expect(hubspot?.postConnectSteps.map((step) => step.id)).toContain("crm-mapping")
+  })
+
+  test("marks pylon as direct API-token setup with required webhook follow-up", () => {
+    const pylon = getProviderCapability("pylon")
+    expect(pylon?.providerId).toBe("pylon")
+    expect(pylon?.authType).toBe("api_key")
+    expect(pylon?.setupMode).toBe("direct_api_key")
+    expect(pylon?.credentialType).toBe("api_token")
+    expect(pylon?.connectSupported).toBe(true)
+    expect(pylon?.requiredFields).toEqual([{ key: "apiToken", label: "API Token", secret: true }])
+    expect(pylon?.commands).not.toContain("outlit integrations status --session <sessionId>")
+    expect(pylon?.postConnectSteps).toContainEqual(
+      expect.objectContaining({
+        id: "webhook-setup",
+        supported: true,
+        command: "outlit integrations setup pylon webhooks",
+      }),
+    )
+  })
+
+  test("returns required fields for API-key capabilities", () => {
+    const granola = getProviderCapability("granola")
+    expect(granola?.authType).toBe("api_key")
+    expect(granola?.requiredFields).toEqual([{ key: "apiKey", label: "API Key", secret: true }])
   })
 })

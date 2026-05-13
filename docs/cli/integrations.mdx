@@ -3,25 +3,27 @@ title: "Integrations"
 description: "Connect and manage third-party integrations from the CLI"
 ---
 
-Connect communication tools, analytics platforms, billing, and more — directly from the terminal. OAuth providers open the browser for authentication; API-key providers accept credentials inline.
+Connect communication tools, analytics platforms, billing, and more from the terminal. Browser/Nango providers open the browser for authentication; direct credential providers accept credentials inline.
 
 ## Supported Providers
 
-### OAuth (browser-based)
+### Browser/Nango
 
 | Provider | Category | CLI Name |
 |----------|----------|----------|
+| HubSpot | CRM | `hubspot` |
+| Attio | CRM | `attio` |
 | Slack | Communication | `slack` |
 | Gmail | Communication | `gmail` |
 | Google Calendar | Calendar | `google-calendar` |
 
-### API Key
+### Direct Credentials
 
 | Provider | Category | CLI Name | Required Fields |
 |----------|----------|----------|-----------------|
 | Stripe | Billing | `stripe` | `apiKey` |
 | Fireflies | Calls | `fireflies` | `apiKey` |
-| Pylon | Support | `pylon` | `apiKey` |
+| Pylon | Support | `pylon` | `apiToken` |
 | PostHog | Analytics | `posthog` | `apiKey`, `region`, `projectId` |
 | Supabase | Data | `supabase` | `projectUrl`, `serviceRoleKey` |
 | Clerk | Auth | `clerk` | `secretKey` |
@@ -46,7 +48,7 @@ outlit integrations list --json
 
 ## integrations add
 
-Connect a new integration.
+Connect a new integration. This is the legacy direct-connect command; use `integrations setup` for new agent flows because it exposes provider capabilities and follow-up steps.
 
 ```bash
 outlit integrations add <provider> [flags]
@@ -56,10 +58,10 @@ outlit integrations add <provider> [flags]
 
 | Flag | Type | Description |
 |------|------|-------------|
-| `--config` | string | JSON config for API-key providers (e.g. `'{"apiKey": "sk_xxx"}'`) |
+| `--config` | string | JSON config for direct credential providers (e.g. `'{"apiKey": "sk_xxx"}'`) |
 | `--force` | boolean | Reconnect even if already connected |
 
-### OAuth Providers
+### Browser/Nango Providers
 
 Opens the browser for authentication. In interactive mode, the CLI polls until the connection completes (up to 5 minutes).
 
@@ -78,12 +80,13 @@ In JSON mode, returns a `sessionId` immediately for agent-side polling:
 }
 ```
 
-### API-Key Providers
+### Direct Credential Providers
 
 Pass credentials via `--config`:
 
 ```bash
 outlit integrations add stripe --config '{"apiKey": "rk_live_xxx"}'
+outlit integrations add pylon --config '{"apiToken": "pylon_xxx"}'
 outlit integrations add posthog --config '{"apiKey": "phx_xxx", "region": "us", "projectId": "12345"}'
 ```
 
@@ -95,7 +98,7 @@ In non-interactive mode without `--config`, returns the required fields as JSON:
 {
   "status": "config_required",
   "provider": "posthog",
-  "message": "PostHog requires API key configuration. Pass --config with the required fields.",
+  "message": "PostHog requires credential configuration. Pass --config with the required fields.",
   "requiredFields": [
     { "key": "apiKey", "label": "API Key" },
     { "key": "region", "label": "Region (us or eu)" },
@@ -107,6 +110,47 @@ In non-interactive mode without `--config`, returns the required fields as JSON:
 <Info>
   AI agents receive `config_required` automatically (piped stdout triggers JSON mode), so they can read `requiredFields` and prompt the user or pass `--config` in a follow-up call.
 </Info>
+
+## integrations capabilities
+
+Inspect setup mode, required credential fields, supported commands, and follow-up steps before connecting a provider.
+
+```bash
+outlit integrations capabilities --json
+outlit integrations capabilities hubspot --json
+```
+
+Use this first in agent flows. Browser/Nango providers return `setupMode: "nango_connect"` and direct credential providers return `setupMode: "direct_api_key"` plus `requiredFields`.
+
+## integrations setup
+
+Run the provider-owned setup flow.
+
+```bash
+outlit integrations setup hubspot --json
+outlit integrations setup pylon --config '{"apiToken": "pylon_xxx"}' --json
+```
+
+Browser/Nango providers return a `connectUrl` and `sessionId` in JSON mode. Show the URL/code to the user when browser approval is required, then poll with:
+
+```bash
+outlit integrations status --session <sessionId> --json
+```
+
+Direct credential providers do not create setup sessions. They validate and store the provider credentials through the platform API.
+
+Provider-specific follow-up commands come after the provider name, for example:
+
+```bash
+outlit integrations setup hubspot mappings --json
+outlit integrations setup hubspot mappings --config '{"mappings":[...]}' --json
+outlit integrations setup pylon webhooks --json
+outlit integrations setup stripe webhooks --config '{"webhookSecret":"whsec_..."}' --json
+```
+
+CRM mapping setup returns `config_required` with available pipelines when `--config` is omitted, then saves mappings and starts CRM syncs when mappings are supplied. Webhook setup returns manual provider configuration details such as webhook URL, required headers, signing secret, required events, provider docs, and current status. These follow-up commands do not create `sessionId`; `--session` is only for browser/Nango setup polling.
+
+When capabilities mark a follow-up as unsupported, use Outlit platform settings for that step.
 
 ## integrations remove
 

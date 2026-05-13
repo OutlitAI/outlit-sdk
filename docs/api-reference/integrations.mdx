@@ -15,6 +15,8 @@ Use the currently enabled public provider IDs below when calling integration rou
 
 | Provider ID | Name | Category | Direct config support |
 |-------------|------|----------|-----------------------|
+| `hubspot` | HubSpot | CRM | Browser session |
+| `attio` | Attio | CRM | Browser session |
 | `slack` | Slack | Communication | Browser session |
 | `fireflies` | Fireflies.ai | Calls | `apiKey` |
 | `granola` | Granola | Calls | `apiKey` |
@@ -24,7 +26,7 @@ Use the currently enabled public provider IDs below when calling integration rou
 | `stripe` | Stripe | Billing | `apiKey` |
 | `supabase` | Supabase Auth | Analytics | `projectUrl`, `serviceRoleKey` |
 | `clerk` | Clerk | Analytics | `secretKey` |
-| `pylon` | Pylon | Support | Browser session |
+| `pylon` | Pylon | Support | `apiToken` |
 
 <Info>
   Use `google-mail` for direct API requests. The CLI also accepts `gmail` as a convenience alias.
@@ -66,6 +68,75 @@ curl https://app.outlit.ai/api/integrations?connectedOnly=true \
 }
 ```
 
+## Get Setup Capabilities
+
+```http
+GET https://app.outlit.ai/api/integrations/capabilities
+```
+
+<ParamField query="provider" type="string">
+  Optional public provider ID or CLI alias. When omitted, returns all provider capabilities.
+</ParamField>
+
+Capabilities tell agents which setup mode to use, which credential fields are required, and which post-connect steps still need follow-up.
+
+### Response
+
+```json
+{
+  "provider": {
+    "cliName": "pylon",
+    "providerId": "pylon",
+    "setupMode": "direct_api_key",
+    "credentialType": "api_token",
+    "requiredFields": [{ "key": "apiToken", "label": "API Token", "secret": true }],
+    "commands": ["outlit integrations setup pylon"],
+    "postConnectSteps": [
+      {
+        "id": "webhook-setup",
+        "required": true,
+        "supported": true,
+        "command": "outlit integrations setup pylon webhooks"
+      }
+    ]
+  }
+}
+```
+
+## Run Provider Setup Step
+
+```http
+POST https://app.outlit.ai/api/integrations/setup-step
+```
+
+Use this after a provider is connected when `postConnectSteps` reports a supported follow-up such as CRM mappings or webhooks.
+
+### Request Body
+
+```json
+{
+  "provider": "hubspot",
+  "step": "mappings",
+  "config": {
+    "mappings": []
+  }
+}
+```
+
+<ParamField body="provider" type="string" required>
+  Public provider ID from setup capabilities.
+</ParamField>
+
+<ParamField body="step" type="string" required>
+  Follow-up step token, such as `mappings` or `webhooks`.
+</ParamField>
+
+<ParamField body="config" type="object">
+  Optional step-specific config. CRM mappings use `{ "mappings": [...] }`; Stripe webhooks can use `{ "webhookSecret": "whsec_..." }`; Fireflies webhooks can use `{ "webhookSecret": "..." }`.
+</ParamField>
+
+When config is omitted, CRM mapping setup returns available pipelines and a `config_required` response. Webhook setup returns the URL, headers/secrets, required events, and status needed for manual provider setup without creating a browser session.
+
 ## Connect Integration
 
 ```http
@@ -90,10 +161,10 @@ POST https://app.outlit.ai/api/integrations/connect
 </ParamField>
 
 <ParamField body="config" type="object">
-  Required for direct API-key connections. Omit this field to create a browser-based connection session.
+  Required for direct credential connections. Omit this field to create a browser/Nango connection session.
 </ParamField>
 
-### Direct API-Key Response
+### Direct Credential Response
 
 ```json
 {
@@ -113,7 +184,7 @@ POST https://app.outlit.ai/api/integrations/connect
 }
 ```
 
-Open `connectUrl` in a browser where the user can complete the provider connection, then poll the connect status route with `sessionId`.
+Open `connectUrl` in a browser where the user can complete the provider connection, then poll the connect status route with `sessionId`. Direct credential setup, such as Pylon API-token setup, returns the direct credential response and does not create a session ID.
 
 ### Errors
 
