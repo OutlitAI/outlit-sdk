@@ -214,6 +214,7 @@ async function setupOAuthProvider(
   try {
     connectData = (await client.callTool("outlit_connect_integration", {
       provider: capability.providerId,
+      ...(force ? { force: true } : {}),
     })) as ConnectResponse
   } catch (err) {
     spinner.fail(`Failed to start ${displayName} setup`)
@@ -242,15 +243,19 @@ async function setupOAuthProvider(
     spinner.stop(`Started ${displayName} setup`)
   }
 
+  const nextActions = [
+    ...(connectData.sessionId
+      ? [`outlit integrations status --session ${connectData.sessionId} --json`]
+      : []),
+    `outlit integrations status ${capability.cliName} --json`,
+  ]
+
   return outputResult({
     status: "awaiting_auth",
     provider: capability.cliName,
     connectUrl,
     sessionId: connectData.sessionId,
-    nextActions: [
-      `outlit integrations status --session ${connectData.sessionId} --json`,
-      `outlit integrations status ${capability.cliName} --json`,
-    ],
+    nextActions,
     capabilities: capability,
   })
 }

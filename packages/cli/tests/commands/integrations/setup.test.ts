@@ -161,6 +161,42 @@ describe("integrations setup", () => {
     expect(parsed.nextActions).toContain("outlit integrations status --session sess_123 --json")
   })
 
+  test("passes force through when starting OAuth setup", async () => {
+    const { default: setupCmd } = await import("../../../src/commands/integrations/setup")
+    await captureStdout(() =>
+      setupCmd.run!({
+        args: { provider: "hubspot", force: true, json: true },
+      } as Parameters<NonNullable<typeof setupCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_connect_integration", {
+      provider: "hubspot",
+      force: true,
+    })
+  })
+
+  test("omits OAuth session polling action when Core returns no session id", async () => {
+    nextConnectResponse = {
+      alreadyConnected: false,
+      connectUrl: "https://app.outlit.ai/integrations?provider=hubspot",
+    }
+
+    const { default: setupCmd } = await import("../../../src/commands/integrations/setup")
+    const parsed = await captureStdout<{
+      status: string
+      provider: string
+      nextActions: string[]
+    }>(() =>
+      setupCmd.run!({
+        args: { provider: "hubspot", json: true },
+      } as Parameters<NonNullable<typeof setupCmd.run>>[0]),
+    )
+
+    expect(parsed.status).toBe("awaiting_auth")
+    expect(parsed.provider).toBe("hubspot")
+    expect(parsed.nextActions).toEqual(["outlit integrations status hubspot --json"])
+  })
+
   test("returns API-key requirements without config", async () => {
     const { default: setupCmd } = await import("../../../src/commands/integrations/setup")
     const parsed = await captureStdout<{
