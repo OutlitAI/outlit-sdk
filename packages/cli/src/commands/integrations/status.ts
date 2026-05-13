@@ -3,6 +3,7 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { capitalize, formatNumber, relativeDate, truncate } from "../../lib/format"
+import { outputError } from "../../lib/output"
 import { resolveProviderOrExit } from "../../lib/providers"
 
 function hideBlankModelSyncs(data: unknown): unknown {
@@ -36,10 +37,12 @@ export default defineCommand({
       "",
       "Without a provider name, shows a summary of all connected integrations.",
       "With a provider name, shows detailed per-model sync status.",
+      "With --session, checks a browser/Nango setup session returned by `integrations setup`.",
       "",
       "Examples:",
       "  outlit integrations status              # summary of all",
-      "  outlit integrations status stripe    # detailed Stripe sync status",
+      "  outlit integrations status stripe       # detailed Stripe sync status",
+      "  outlit integrations status --session sess_123 --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -52,10 +55,28 @@ export default defineCommand({
       description: "Provider name to show detailed status for (optional)",
       required: false,
     },
+    session: {
+      type: "string",
+      description:
+        "Browser/Nango setup session ID returned by `outlit integrations setup <provider>`.",
+    },
   },
   async run({ args }) {
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
+
+    if (args.session && args.provider) {
+      return outputError(
+        { message: "Use either a provider name or --session, not both.", code: "invalid_input" },
+        json,
+      )
+    }
+
+    if (args.session) {
+      return runTool(client, "outlit_connect_status", { sessionId: args.session }, json, {
+        spinnerMessage: "Checking setup session...",
+      })
+    }
 
     if (args.provider) {
       const { provider } = resolveProviderOrExit(args.provider, json)

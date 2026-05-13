@@ -25,6 +25,12 @@ const setupMockCallTool = () => {
         ],
       }
     }
+    if (toolName === "outlit_connect_status") {
+      return {
+        status: "connected",
+        provider: "hubspot",
+      }
+    }
     return {
       items: [
         {
@@ -82,6 +88,31 @@ describe("integrations status", () => {
     expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_sync_status", {
       provider: "slack",
     })
+  })
+
+  test("checks OAuth setup session status through the status command", async () => {
+    const { default: statusCmd } = await import("../../../src/commands/integrations/status")
+    const parsed = await captureStdout(() =>
+      statusCmd.run!({
+        args: { session: "sess_123", json: true },
+      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_connect_status", {
+      sessionId: "sess_123",
+    })
+    expect(parsed).toEqual({ status: "connected", provider: "hubspot" })
+  })
+
+  test("rejects provider and --session together", async () => {
+    const { default: statusCmd } = await import("../../../src/commands/integrations/status")
+    await runExpectingError(
+      () =>
+        statusCmd.run!({
+          args: { provider: "hubspot", session: "sess_123", json: true },
+        } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+      "invalid_input",
+    )
   })
 
   test("resolves provider alias for status", async () => {

@@ -7,10 +7,13 @@ import {
   useTempEnv,
 } from "../../helpers"
 
-const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
-  sessionId: "sess_123",
-  alreadyConnected: false,
-}))
+const mockCallTool = mock(
+  async (_toolName: string, _params: unknown): Promise<Record<string, unknown>> => ({
+    sessionId: "sess_123",
+    alreadyConnected: false,
+    connectUrl: "https://app.outlit.ai/integrations?provider=slack",
+  }),
+)
 
 mock.module("../../../src/lib/client", () => ({
   createClient: async () => ({
@@ -22,10 +25,19 @@ mock.module("../../../src/lib/client", () => ({
 
 const mockOpenBrowser = mock(() => true)
 mock.module("../../../src/lib/tty", () => {
-  const actual = require("../../../src/lib/tty")
   return {
-    ...actual,
+    isCiEnvironment: () =>
+      process.env.CI === "true" || process.env.CI === "1" || Boolean(process.env.GITHUB_ACTIONS),
+    isInteractive: () =>
+      Boolean(process.stdin.isTTY) &&
+      Boolean(process.stdout.isTTY) &&
+      process.env.CI !== "true" &&
+      process.env.CI !== "1" &&
+      !process.env.GITHUB_ACTIONS &&
+      process.env.TERM !== "dumb",
+    isUnicodeSupported: true,
     openBrowser: mockOpenBrowser,
+    promptInput: mock(async () => ""),
   }
 })
 
@@ -78,6 +90,19 @@ describe("integrations add", () => {
       })
     })
 
+    test("resolves attio to its platform provider id", async () => {
+      const { default: addCmd } = await import("../../../src/commands/integrations/add")
+      await captureStdout(() =>
+        addCmd.run!({
+          args: { provider: "attio", json: true },
+        } as Parameters<NonNullable<typeof addCmd.run>>[0]),
+      )
+
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_connect_integration", {
+        provider: "attio",
+      })
+    })
+
     test("returns already_connected status without --force", async () => {
       mockCallTool.mockImplementationOnce(async () => ({
         sessionId: "sess_123",
@@ -111,7 +136,7 @@ describe("integrations add", () => {
       expect(parsed.sessionId).toBe("sess_123")
     })
 
-    test("returns awaiting_auth without connectUrl in JSON mode", async () => {
+    test("returns awaiting_auth with connectUrl in JSON mode", async () => {
       const { default: addCmd } = await import("../../../src/commands/integrations/add")
       const parsed = await captureStdout(() =>
         addCmd.run!({
@@ -122,8 +147,7 @@ describe("integrations add", () => {
       expect(parsed.status).toBe("awaiting_auth")
       expect(parsed.provider).toBe("slack")
       expect(parsed.sessionId).toBe("sess_123")
-      // connectUrl is no longer in the response
-      expect(parsed.connectUrl).toBeUndefined()
+      expect(parsed.connectUrl).toBe("https://app.outlit.ai/integrations?provider=slack")
     })
 
     test("returns browser_failed when browser cannot open", async () => {
@@ -194,6 +218,60 @@ describe("integrations add", () => {
         config: { apiKey: "phx_test", region: "us", projectId: "123" },
       })
       expect(parsed.status).toBe("connected")
+    })
+
+    test("connects granola with API key config", async () => {
+      const { default: addCmd } = await import("../../../src/commands/integrations/add")
+      const parsed = await captureStdout(() =>
+        addCmd.run!({
+          args: {
+            provider: "granola",
+            config: '{"apiKey": "gr_test_123"}',
+            json: true,
+          },
+        } as Parameters<NonNullable<typeof addCmd.run>>[0]),
+      )
+
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_connect_integration", {
+        provider: "granola",
+        config: { apiKey: "gr_test_123" },
+      })
+      expect(parsed.status).toBe("connected")
+      expect(parsed.provider).toBe("granola")
+    })
+
+    test("connects pylon with API token config", async () => {
+      const { default: addCmd } = await import("../../../src/commands/integrations/add")
+      const parsed = await captureStdout(() =>
+        addCmd.run!({
+          args: {
+            provider: "pylon",
+            config: '{"apiToken": "pylon_test_token"}',
+            json: true,
+          },
+        } as Parameters<NonNullable<typeof addCmd.run>>[0]),
+      )
+
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_connect_integration", {
+        provider: "pylon",
+        config: { apiToken: "pylon_test_token" },
+      })
+      expect(parsed.status).toBe("connected")
+      expect(parsed.provider).toBe("pylon")
+    })
+
+    test("outputs config_required for pylon API token setup", async () => {
+      const { default: addCmd } = await import("../../../src/commands/integrations/add")
+      const parsed = await captureStdout(() =>
+        addCmd.run!({
+          args: { provider: "pylon", json: true },
+        } as Parameters<NonNullable<typeof addCmd.run>>[0]),
+      )
+
+      expect(parsed.status).toBe("config_required")
+      expect(parsed.provider).toBe("pylon")
+      expect(parsed.requiredFields).toEqual([{ key: "apiToken", label: "API Token" }])
+      expect(mockCallTool).not.toHaveBeenCalled()
     })
 
     test("outputs config_required in JSON mode when no --config provided", async () => {

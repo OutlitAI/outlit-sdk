@@ -186,12 +186,22 @@ const COMMANDS: readonly CmdDef[] = [
     desc: "Manage platform integrations",
     subs: [
       { name: "list", desc: "List integrations and status", flags: [...COMMON] },
+      { name: "capabilities", desc: "Show setup capabilities", flags: [JSON_F] },
+      {
+        name: "setup",
+        desc: "Run provider auth or follow-up setup",
+        flags: [
+          ...COMMON,
+          { name: "--config", desc: "JSON config for credentials or follow-up setup" },
+          { name: "--force", desc: "Reconnect if already connected" },
+        ],
+      },
       {
         name: "add",
         desc: "Connect an integration",
         flags: [
           ...COMMON,
-          { name: "--config", desc: "JSON config for API-key providers" },
+          { name: "--config", desc: "JSON config for direct credential providers" },
           { name: "--force", desc: "Reconnect if already connected" },
         ],
       },
@@ -200,8 +210,17 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "Disconnect an integration",
         flags: [...COMMON, { name: "--yes", desc: "Skip confirmation" }],
       },
-      { name: "status", desc: "Show sync status", flags: [...COMMON] },
+      {
+        name: "status",
+        desc: "Show sync or setup-session status",
+        flags: [...COMMON, { name: "--session", desc: "Browser/Nango setup session ID" }],
+      },
     ],
+  },
+  {
+    name: "onboard",
+    desc: "Prepare a coding agent for Outlit",
+    flags: [...COMMON, { name: "--agent", desc: "Agent id" }],
   },
   {
     name: "setup",

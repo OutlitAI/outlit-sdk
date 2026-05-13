@@ -112,6 +112,10 @@ describe("client.callTool()", () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ status: "pending" }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ status: "connected" }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ status: "manual_setup_required" }), { status: 200 }),
+      )
 
     const client = await createClient()
     await client.callTool("outlit_list_integrations", { connectedOnly: true })
@@ -119,6 +123,11 @@ describe("client.callTool()", () => {
     await client.callTool("outlit_connect_status", { sessionId: "session_123" })
     await client.callTool("outlit_disconnect_integration", { provider: "slack" })
     await client.callTool("outlit_integration_sync_status", { provider: "slack" })
+    await client.callTool("outlit_integration_capabilities", { provider: "hubspot" })
+    await client.callTool("outlit_integration_setup_step", {
+      provider: "pylon",
+      step: "webhooks",
+    })
 
     expect(fetchSpy.mock.calls[0]?.[0] as string).toContain("/api/integrations?connectedOnly=true")
     expect(fetchSpy.mock.calls[1]?.[0] as string).toContain("/api/integrations/connect")
@@ -129,6 +138,10 @@ describe("client.callTool()", () => {
     expect(fetchSpy.mock.calls[4]?.[0] as string).toContain(
       "/api/integrations/sync-status?provider=slack",
     )
+    expect(fetchSpy.mock.calls[5]?.[0] as string).toContain(
+      "/api/integrations/capabilities?provider=hubspot",
+    )
+    expect(fetchSpy.mock.calls[6]?.[0] as string).toContain("/api/integrations/setup-step")
 
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("GET")
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).body).toBeUndefined()
@@ -139,6 +152,11 @@ describe("client.callTool()", () => {
     expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).method).toBe("GET")
     expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).method).toBe("POST")
     expect((fetchSpy.mock.calls[4]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[5]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[6]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[6]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({ provider: "pylon", step: "webhooks" }),
+    )
 
     fetchSpy.mockRestore()
   })
