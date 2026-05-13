@@ -249,7 +249,9 @@ describe("integrations setup", () => {
       } as Parameters<NonNullable<typeof setupCmd.run>>[0]),
     )
 
-    expect(mockCallTool).not.toHaveBeenCalledWith("outlit_connect_integration", expect.anything())
+    expect(
+      mockCallTool.mock.calls.some(([toolName]) => toolName === "outlit_connect_integration"),
+    ).toBe(false)
     expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_setup_step", {
       provider: "pylon",
       step: "webhook-setup",
