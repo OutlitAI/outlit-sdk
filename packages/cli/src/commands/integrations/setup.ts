@@ -16,7 +16,8 @@ import { createSpinner } from "../../lib/spinner"
 import { openBrowser } from "../../lib/tty"
 
 interface ConnectResponse {
-  sessionId: string
+  sessionId?: string
+  connectionId?: string
   alreadyConnected: boolean
   connectUrl?: string
 }
@@ -108,7 +109,13 @@ export default defineCommand({
     const setupMode = capability.setupMode ?? defaultSetupMode(capability.authType)
 
     if (setupMode === "direct_api_key") {
-      return setupApiKeyProvider(client, capability, json, args.config as string | undefined)
+      return setupApiKeyProvider(
+        client,
+        capability,
+        json,
+        args.config as string | undefined,
+        !!args.force,
+      )
     }
 
     if (args.config) {
@@ -130,6 +137,7 @@ async function setupApiKeyProvider(
   capability: SetupCapability,
   json: boolean,
   rawConfig: string | undefined,
+  force: boolean,
 ): Promise<void> {
   const fields = capability.requiredFields ?? []
   const displayName = capability.displayName ?? capability.cliName
@@ -158,13 +166,14 @@ async function setupApiKeyProvider(
 
   const config = parseConfigOrExit(rawConfig, fields, json)
   const spinner = createSpinner(`Connecting ${displayName}...`)
+  let connectData: ConnectResponse
 
   try {
-    await client.callTool("outlit_connect_integration", {
+    connectData = (await client.callTool("outlit_connect_integration", {
       provider: capability.providerId,
       config,
-    })
-    spinner.stop(`${displayName} connected successfully!`)
+      ...(force ? { force: true } : {}),
+    })) as ConnectResponse
   } catch (err) {
     spinner.fail(`Failed to connect ${displayName}`)
     return outputError(
@@ -173,6 +182,17 @@ async function setupApiKeyProvider(
     )
   }
 
+  if (connectData.alreadyConnected && !force) {
+    spinner.stop(`${displayName} is already connected`)
+    return outputResult({
+      status: "already_connected",
+      provider: capability.cliName,
+      nextActions: buildConnectedNextActions(capability.cliName, capability),
+      capabilities: capability,
+    })
+  }
+
+  spinner.stop(`${displayName} connected successfully!`)
   return outputResult({
     status: "connected",
     provider: capability.cliName,

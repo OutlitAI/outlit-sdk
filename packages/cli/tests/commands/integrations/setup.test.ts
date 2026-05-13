@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test"
 import { captureStdout, setNonInteractive, TEST_API_KEY, useTempEnv } from "../../helpers"
 
+let nextConnectResponse: Record<string, unknown> | null = null
+
 const mockCallTool = mock(async (toolName: string, params: Record<string, unknown>) => {
   if (toolName === "outlit_integration_capabilities") {
     const provider = params.provider
@@ -90,6 +92,8 @@ const mockCallTool = mock(async (toolName: string, params: Record<string, unknow
     }
   }
 
+  if (nextConnectResponse) return nextConnectResponse
+
   return {
     sessionId: "sess_123",
     alreadyConnected: false,
@@ -130,6 +134,7 @@ describe("integrations setup", () => {
     setNonInteractive()
     mockCallTool.mockClear()
     mockOpenBrowser.mockClear()
+    nextConnectResponse = null
   })
 
   test("starts OAuth setup and returns pollable session details", async () => {
@@ -234,6 +239,68 @@ describe("integrations setup", () => {
     expect(parsed.capabilities.postConnectSteps).toContainEqual(
       expect.objectContaining({ id: "webhook-setup", supported: true }),
     )
+  })
+
+  test("returns already_connected for API-token setup when Core reports an existing connection", async () => {
+    nextConnectResponse = {
+      connected: true,
+      connectionId: "pylon-org_123",
+      alreadyConnected: true,
+    }
+
+    const { default: setupCmd } = await import("../../../src/commands/integrations/setup")
+    const parsed = await captureStdout<{
+      status: string
+      provider: string
+      nextActions: string[]
+    }>(() =>
+      setupCmd.run!({
+        args: {
+          provider: "pylon",
+          config: '{"apiToken": "pylon_test_token"}',
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof setupCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_connect_integration", {
+      provider: "pylon",
+      config: { apiToken: "pylon_test_token" },
+    })
+    expect(parsed.status).toBe("already_connected")
+    expect(parsed.provider).toBe("pylon")
+    expect(parsed.nextActions).toContain("outlit integrations setup pylon webhooks --json")
+  })
+
+  test("passes force through when reconnecting an API-token provider", async () => {
+    nextConnectResponse = {
+      connected: true,
+      connectionId: "pylon-org_123",
+      alreadyConnected: false,
+    }
+
+    const { default: setupCmd } = await import("../../../src/commands/integrations/setup")
+    const parsed = await captureStdout<{
+      status: string
+      provider: string
+    }>(() =>
+      setupCmd.run!({
+        args: {
+          provider: "pylon",
+          config: '{"apiToken": "pylon_replacement_token"}',
+          force: true,
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof setupCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_connect_integration", {
+      provider: "pylon",
+      config: { apiToken: "pylon_replacement_token" },
+      force: true,
+    })
+    expect(parsed.status).toBe("connected")
+    expect(parsed.provider).toBe("pylon")
   })
 
   test("runs provider follow-up setup through the Core setup-step API", async () => {
