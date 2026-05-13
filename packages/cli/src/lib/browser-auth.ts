@@ -24,9 +24,21 @@ export async function runBrowserAuthFlow(json: boolean): Promise<string> {
   const spinner = isInteractive() ? p.spinner() : null
   spinner?.start("Waiting for browser approval...")
 
-  const result = await waitForCliAuthApproval(baseUrl, session, {
-    spinnerMessage: "Waiting for browser approval...",
-  })
+  let result: Awaited<ReturnType<typeof waitForCliAuthApproval>>
+  try {
+    result = await waitForCliAuthApproval(baseUrl, session, {
+      spinnerMessage: "Waiting for browser approval...",
+    })
+  } catch (err) {
+    spinner?.stop("Browser authorization failed")
+    return outputError(
+      {
+        message: `Browser authorization failed: ${err instanceof Error ? err.message : String(err)}`,
+        code: "auth_request_failed",
+      },
+      json,
+    )
+  }
 
   if (!result) {
     spinner?.stop("Approval timed out")
