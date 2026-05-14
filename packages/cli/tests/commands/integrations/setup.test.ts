@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
   captureStdout,
+  ExitError,
+  mockExitThrow,
   setInteractive,
   setNonInteractive,
   TEST_API_KEY,
@@ -214,6 +216,29 @@ describe("integrations setup", () => {
     expect(mockCallTool).toHaveBeenCalledWith("outlit_connect_status", {
       sessionId: "sess_123",
     })
+  })
+
+  test("exits non-zero when OAuth setup status is unexpected", async () => {
+    setInteractive()
+    nextConnectStatusResponse = { status: "unexpected" }
+    const exitSpy = mockExitThrow()
+    const logSpy = spyOn(console, "log").mockImplementation(() => {})
+    let thrown: unknown
+
+    try {
+      const { default: setupCmd } = await import("../../../src/commands/integrations/setup")
+      await setupCmd.run!({
+        args: { provider: "hubspot" },
+      } as Parameters<NonNullable<typeof setupCmd.run>>[0])
+    } catch (error) {
+      thrown = error
+    } finally {
+      exitSpy.mockRestore()
+      logSpy.mockRestore()
+    }
+
+    expect(thrown).toBeInstanceOf(ExitError)
+    expect((thrown as ExitError).code).toBe(1)
   })
 
   test("passes force through when starting OAuth setup", async () => {

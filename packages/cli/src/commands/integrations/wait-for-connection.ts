@@ -2,8 +2,10 @@ import type { OutlitClient } from "../../lib/client"
 import { pollUntil } from "../../lib/poll"
 import { createSpinner } from "../../lib/spinner"
 
+const terminalConnectStatuses = new Set(["connected", "failed", "expired"])
+
 interface ConnectStatusResponse {
-  status: "pending" | "connected" | "failed" | "expired"
+  status?: string
   provider?: string
   error?: string
 }
@@ -31,7 +33,7 @@ export async function waitForIntegrationConnection({
       client
         .callTool("outlit_connect_status", { sessionId })
         .then((r) => r as ConnectStatusResponse),
-    (r) => r.status !== "pending",
+    (r) => terminalConnectStatuses.has(r.status ?? ""),
     {
       intervalMs: 2_000,
       timeoutMs: 300_000,
@@ -50,6 +52,12 @@ export async function waitForIntegrationConnection({
   if (result.status === "failed") {
     spinner.fail(`${displayName} connection failed`)
     if (result.error) console.log(`\n  ${result.error}`)
+    process.exit(1)
+  }
+
+  if (result.status !== "connected") {
+    spinner.fail(`${displayName} connection returned an invalid status`)
+    if (result.status) console.log(`\n  Unexpected status: ${result.status}`)
     process.exit(1)
   }
 
