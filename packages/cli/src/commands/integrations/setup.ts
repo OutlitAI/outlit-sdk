@@ -22,6 +22,16 @@ interface ConnectResponse {
   connectUrl?: string
 }
 
+interface IntegrationListItem {
+  id?: string
+  provider?: string
+  providerId?: string
+  status?: string
+  connectionId?: string
+  syncStatus?: string | null
+  errorMessage?: string | null
+}
+
 type SetupCapability = ProviderCapability & {
   cliName: string
   providerId: string
@@ -143,6 +153,21 @@ async function setupApiKeyProvider(
   const displayName = capability.displayName ?? capability.cliName
 
   if (!rawConfig) {
+    if (!force) {
+      const existing = await fetchConnectedIntegration(client, capability)
+      if (existing) {
+        return outputResult({
+          status: "already_connected",
+          provider: capability.cliName,
+          connectionId: existing.connectionId,
+          syncStatus: existing.syncStatus,
+          errorMessage: existing.errorMessage,
+          nextActions: buildConnectedNextActions(capability.cliName, capability),
+          capabilities: capability,
+        })
+      }
+    }
+
     const nextActions = [
       `outlit integrations setup ${capability.cliName} --config '${buildConfigTemplate(fields)}' --json`,
       `outlit integrations capabilities ${capability.cliName} --json`,
@@ -187,6 +212,7 @@ async function setupApiKeyProvider(
     return outputResult({
       status: "already_connected",
       provider: capability.cliName,
+      connectionId: connectData.connectionId,
       nextActions: buildConnectedNextActions(capability.cliName, capability),
       capabilities: capability,
     })
@@ -196,6 +222,7 @@ async function setupApiKeyProvider(
   return outputResult({
     status: "connected",
     provider: capability.cliName,
+    connectionId: connectData.connectionId,
     nextActions: buildConnectedNextActions(capability.cliName, capability),
     capabilities: capability,
   })
@@ -382,6 +409,50 @@ async function fetchProviderCapability(
       json,
     )
   }
+}
+
+async function fetchConnectedIntegration(
+  client: OutlitClient,
+  capability: SetupCapability,
+): Promise<IntegrationListItem | null> {
+  try {
+    const result = await client.callTool("outlit_list_integrations", {
+      connectedOnly: true,
+    })
+    const items = normalizeIntegrationList(result)
+    return (
+      items.find((item) => {
+        const id = item.id ?? item.provider ?? item.providerId
+        return id === capability.cliName || id === capability.providerId
+      }) ?? null
+    )
+  } catch {
+    return null
+  }
+}
+
+function normalizeIntegrationList(result: unknown): IntegrationListItem[] {
+  if (Array.isArray(result)) {
+    return result.filter(isIntegrationListItem)
+  }
+
+  if (!result || typeof result !== "object") {
+    return []
+  }
+
+  const record = result as Record<string, unknown>
+  for (const key of ["items", "integrations", "providers"]) {
+    const value = record[key]
+    if (Array.isArray(value)) {
+      return value.filter(isIntegrationListItem)
+    }
+  }
+
+  return []
+}
+
+function isIntegrationListItem(value: unknown): value is IntegrationListItem {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
 function parseConfigOrExit(
