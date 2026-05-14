@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, mock, test } from "bun:test"
 import { captureStdout, setNonInteractive, TEST_API_KEY, useTempEnv } from "../../helpers"
 
 let nextConnectResponse: Record<string, unknown> | null = null
+let nextConnectedIntegrations: Array<Record<string, unknown>> = []
 
 const mockCallTool = mock(async (toolName: string, params: Record<string, unknown>) => {
   if (toolName === "outlit_integration_capabilities") {
@@ -92,10 +93,15 @@ const mockCallTool = mock(async (toolName: string, params: Record<string, unknow
     }
   }
 
+  if (toolName === "outlit_list_integrations") {
+    return nextConnectedIntegrations
+  }
+
   if (nextConnectResponse) return nextConnectResponse
 
   return {
     sessionId: "sess_123",
+    connectionId: `${params.provider}-org_123`,
     alreadyConnected: false,
     connectUrl: `https://app.outlit.ai/integrations?provider=${params.provider}`,
   }
@@ -135,6 +141,7 @@ describe("integrations setup", () => {
     mockCallTool.mockClear()
     mockOpenBrowser.mockClear()
     nextConnectResponse = null
+    nextConnectedIntegrations = []
   })
 
   test("starts OAuth setup and returns pollable session details", async () => {
@@ -216,6 +223,41 @@ describe("integrations setup", () => {
     expect(parsed.nextActions).toContain(
       'outlit integrations setup stripe --config \'{"apiKey":"..."}\' --json',
     )
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_integrations", {
+      connectedOnly: true,
+    })
+  })
+
+  test("returns already_connected for API-key setup without config when connected", async () => {
+    nextConnectedIntegrations = [
+      {
+        id: "pylon",
+        status: "connected",
+        connectionId: "pylon-org_123",
+        syncStatus: "IDLE",
+        errorMessage: null,
+      },
+    ]
+
+    const { default: setupCmd } = await import("../../../src/commands/integrations/setup")
+    const parsed = await captureStdout<{
+      status: string
+      provider: string
+      connectionId: string
+      nextActions: string[]
+    }>(() =>
+      setupCmd.run!({
+        args: { provider: "pylon", json: true },
+      } as Parameters<NonNullable<typeof setupCmd.run>>[0]),
+    )
+
+    expect(parsed.status).toBe("already_connected")
+    expect(parsed.provider).toBe("pylon")
+    expect(parsed.connectionId).toBe("pylon-org_123")
+    expect(parsed.nextActions).toContain("outlit integrations setup pylon webhooks --json")
+    expect(
+      mockCallTool.mock.calls.some(([toolName]) => toolName === "outlit_connect_integration"),
+    ).toBe(false)
   })
 
   test("connects granola through API-key setup", async () => {
@@ -238,6 +280,7 @@ describe("integrations setup", () => {
       expect.objectContaining({
         status: "connected",
         provider: "granola",
+        connectionId: "granola-org_123",
       }),
     )
   })
@@ -305,6 +348,7 @@ describe("integrations setup", () => {
     })
     expect(parsed.status).toBe("already_connected")
     expect(parsed.provider).toBe("pylon")
+    expect(parsed).toEqual(expect.objectContaining({ connectionId: "pylon-org_123" }))
     expect(parsed.nextActions).toContain("outlit integrations setup pylon webhooks --json")
   })
 
@@ -337,6 +381,7 @@ describe("integrations setup", () => {
     })
     expect(parsed.status).toBe("connected")
     expect(parsed.provider).toBe("pylon")
+    expect(parsed).toEqual(expect.objectContaining({ connectionId: "pylon-org_123" }))
   })
 
   test("runs provider follow-up setup through the Core setup-step API", async () => {
