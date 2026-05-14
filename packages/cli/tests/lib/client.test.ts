@@ -110,7 +110,6 @@ describe("client.callTool()", () => {
         new Response(JSON.stringify({ sessionId: "session_123" }), { status: 200 }),
       )
       .mockResolvedValueOnce(new Response(JSON.stringify({ status: "pending" }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ status: "connected" }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify({ providers: [] }), { status: 200 }))
       .mockResolvedValueOnce(
@@ -121,7 +120,6 @@ describe("client.callTool()", () => {
     await client.callTool("outlit_list_integrations", { connectedOnly: true })
     await client.callTool("outlit_connect_integration", { provider: "slack" })
     await client.callTool("outlit_connect_status", { sessionId: "session_123" })
-    await client.callTool("outlit_disconnect_integration", { provider: "slack" })
     await client.callTool("outlit_integration_sync_status", { provider: "slack" })
     await client.callTool("outlit_integration_capabilities", { provider: "hubspot" })
     await client.callTool("outlit_integration_setup_step", {
@@ -134,14 +132,13 @@ describe("client.callTool()", () => {
     expect(fetchSpy.mock.calls[2]?.[0] as string).toContain(
       "/api/integrations/connect/status?sessionId=session_123",
     )
-    expect(fetchSpy.mock.calls[3]?.[0] as string).toContain("/api/integrations/disconnect")
-    expect(fetchSpy.mock.calls[4]?.[0] as string).toContain(
+    expect(fetchSpy.mock.calls[3]?.[0] as string).toContain(
       "/api/integrations/sync-status?provider=slack",
     )
-    expect(fetchSpy.mock.calls[5]?.[0] as string).toContain(
+    expect(fetchSpy.mock.calls[4]?.[0] as string).toContain(
       "/api/integrations/capabilities?provider=hubspot",
     )
-    expect(fetchSpy.mock.calls[6]?.[0] as string).toContain("/api/integrations/setup-step")
+    expect(fetchSpy.mock.calls[5]?.[0] as string).toContain("/api/integrations/setup-step")
 
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("GET")
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).body).toBeUndefined()
@@ -150,15 +147,23 @@ describe("client.callTool()", () => {
       JSON.stringify({ provider: "slack" }),
     )
     expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).method).toBe("GET")
-    expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).method).toBe("GET")
     expect((fetchSpy.mock.calls[4]?.[1] as RequestInit).method).toBe("GET")
-    expect((fetchSpy.mock.calls[5]?.[1] as RequestInit).method).toBe("GET")
-    expect((fetchSpy.mock.calls[6]?.[1] as RequestInit).method).toBe("POST")
-    expect((fetchSpy.mock.calls[6]?.[1] as RequestInit).body).toBe(
+    expect((fetchSpy.mock.calls[5]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[5]?.[1] as RequestInit).body).toBe(
       JSON.stringify({ provider: "pylon", step: "webhooks" }),
     )
 
     fetchSpy.mockRestore()
+  })
+
+  test("does not expose destructive disconnect through the CLI tool map", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const client = await createClient()
+    await expect(
+      client.callTool("outlit_disconnect_integration", { provider: "slack" }),
+    ).rejects.toThrow("Unknown tool")
   })
 
   test("delegates exact fact retrieval through the public tools endpoint", async () => {

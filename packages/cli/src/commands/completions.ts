@@ -197,20 +197,6 @@ const COMMANDS: readonly CmdDef[] = [
         ],
       },
       {
-        name: "add",
-        desc: "Connect an integration",
-        flags: [
-          ...COMMON,
-          { name: "--config", desc: "JSON config for direct credential providers" },
-          { name: "--force", desc: "Reconnect if already connected" },
-        ],
-      },
-      {
-        name: "remove",
-        desc: "Disconnect an integration",
-        flags: [...COMMON, { name: "--yes", desc: "Skip confirmation" }],
-      },
-      {
         name: "status",
         desc: "Show sync or setup-session status",
         flags: [...COMMON, { name: "--session", desc: "Browser/Nango setup session ID" }],

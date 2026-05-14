@@ -1,6 +1,6 @@
 ---
 title: "Integration Routes"
-description: "List, connect, poll, disconnect, and inspect integration sync status"
+description: "List, connect, poll, and inspect integration sync status"
 ---
 
 Every integration request requires an Outlit API key:
@@ -221,41 +221,6 @@ GET https://app.outlit.ai/api/integrations/connect/status
 ```
 
 `status` is one of `pending`, `connected`, `failed`, or `expired`. Failed responses may include `error`.
-
-## Disconnect Integration
-
-```http
-POST https://app.outlit.ai/api/integrations/disconnect
-```
-
-### Request Body
-
-```json
-{
-  "provider": "stripe"
-}
-```
-
-<ParamField body="provider" type="string" required>
-  Public provider ID from the provider table.
-</ParamField>
-
-### Response
-
-```json
-{
-  "success": true
-}
-```
-
-If the provider is valid but not connected, the route returns `404`:
-
-```json
-{
-  "success": false,
-  "message": "Integration is not connected"
-}
-```
 
 ## Get Sync Status
 

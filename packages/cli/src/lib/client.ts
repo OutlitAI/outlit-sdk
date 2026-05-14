@@ -24,10 +24,6 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
   outlit_list_integrations: { method: "GET", path: "/api/integrations" },
   outlit_connect_integration: { method: "POST", path: "/api/integrations/connect" },
   outlit_connect_status: { method: "GET", path: "/api/integrations/connect/status" },
-  outlit_disconnect_integration: {
-    method: "POST",
-    path: "/api/integrations/disconnect",
-  },
   outlit_integration_sync_status: {
     method: "GET",
     path: "/api/integrations/sync-status",
