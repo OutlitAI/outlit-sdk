@@ -1,5 +1,10 @@
-// mock.module() must be first statement before any imports — Bun hoists it.
+// Register mocks before dynamically importing command modules.
 import { mock } from "bun:test"
+import {
+  installChildProcessMock,
+  mockExecFileSync,
+  resetChildProcessMocks,
+} from "../../child-process-mock"
 
 const mockExistsSync = mock((_path: string) => false)
 
@@ -7,11 +12,7 @@ mock.module("node:fs", () => ({
   existsSync: mockExistsSync,
 }))
 
-const mockExecFileSync = mock((_cmd: string, _args: string[], _opts?: unknown) => undefined)
-
-mock.module("node:child_process", () => ({
-  execFileSync: mockExecFileSync,
-}))
+installChildProcessMock()
 
 import { beforeEach, describe, expect, spyOn, test } from "bun:test"
 import { setNonInteractive } from "../../helpers"
@@ -33,8 +34,8 @@ function lastJsonWrite(calls: unknown[][]): Record<string, unknown> {
 describe("setup auto-detect", () => {
   beforeEach(() => {
     mockExistsSync.mockClear()
-    mockExecFileSync.mockClear()
     mockExistsSync.mockImplementation((_path: string) => false)
+    resetChildProcessMocks()
     mockExecFileSync.mockImplementation((_cmd: string, _args: string[], _opts?: unknown): never => {
       throw new Error("not found")
     })

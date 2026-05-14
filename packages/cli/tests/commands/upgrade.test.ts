@@ -1,19 +1,17 @@
-import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
+import { beforeEach, describe, expect, spyOn, test } from "bun:test"
 import { CLI_VERSION } from "../../src/lib/config"
+import {
+  installChildProcessMock,
+  mockSpawnSync,
+  resetChildProcessMocks,
+} from "../child-process-mock"
 import { ExitError, mockExitThrow } from "../helpers"
 
-const mockSpawnSync = mock(() => ({ status: 0 }))
-const mockSpawn = mock(() => ({ unref: mock(() => {}) }))
-
-mock.module("node:child_process", () => ({
-  spawn: mockSpawn,
-  spawnSync: mockSpawnSync,
-}))
+installChildProcessMock()
 
 describe("upgrade command", () => {
   beforeEach(() => {
-    mockSpawn.mockClear()
-    mockSpawnSync.mockClear()
+    resetChildProcessMocks()
   })
 
   test("does not run the installer when the CLI is already current", async () => {

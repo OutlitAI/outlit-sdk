@@ -1,11 +1,10 @@
-// mock.module() must be first statement before imports — Bun hoists it.
-import { mock } from "bun:test"
+import {
+  installChildProcessMock,
+  mockExecFileSync,
+  resetChildProcessMocks,
+} from "../child-process-mock"
 
-const mockExecFileSync = mock((_cmd: string, _args: string[], _opts?: unknown) => undefined)
-
-mock.module("node:child_process", () => ({
-  execFileSync: mockExecFileSync,
-}))
+installChildProcessMock()
 
 mock.module("../../src/lib/client", () => ({
   createClient: async (apiKey?: string) => ({
@@ -26,7 +25,7 @@ mock.module("../../src/lib/client", () => ({
   }),
 }))
 
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test"
+import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
   captureStdout,
   runExpectingError,
@@ -73,10 +72,7 @@ describe("onboard", () => {
   let fetchSpy: ReturnType<typeof spyOn>
 
   beforeEach(() => {
-    mockExecFileSync.mockClear()
-    mockExecFileSync.mockImplementation(
-      (_cmd: string, _args: string[], _opts?: unknown) => undefined,
-    )
+    resetChildProcessMocks()
     fetchSpy = spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({ valid: true }), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(capabilitiesPayload), { status: 200 }))
