@@ -14,6 +14,7 @@ import type {
 import { PROVIDER_NAMES, resolveProviderOrExit } from "../../lib/providers"
 import { createSpinner } from "../../lib/spinner"
 import { openBrowser } from "../../lib/tty"
+import { waitForIntegrationConnection } from "./wait-for-connection"
 
 interface ConnectResponse {
   sessionId?: string
@@ -51,7 +52,8 @@ export default defineCommand({
     description: [
       "Run the provider-owned setup flow for an integration.",
       "",
-      "Browser/Nango providers return a connect URL and pollable session ID in JSON mode.",
+      "Browser/Nango providers open the browser and wait in interactive mode.",
+      "In JSON mode, they return a connect URL and pollable session ID.",
       "Direct credential providers require --config with the provider-specific fields.",
       "Use `capabilities` first when choosing integrations programmatically.",
       "",
@@ -266,6 +268,17 @@ async function setupOAuthProvider(
     const opened = openBrowser(connectUrl)
     spinner.stop(opened ? `Browser opened for ${displayName}` : "Could not open browser")
     if (!opened) console.log(`Open this URL to continue: ${connectUrl}`)
+
+    if (connectData.sessionId) {
+      await waitForIntegrationConnection({
+        client,
+        sessionId: connectData.sessionId,
+        displayName,
+        cliName: capability.cliName,
+        retryCommand: `outlit integrations setup ${capability.cliName}`,
+      })
+      return
+    }
   } else {
     spinner.stop(`Started ${displayName} setup`)
   }

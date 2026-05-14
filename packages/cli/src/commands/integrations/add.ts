@@ -4,22 +4,16 @@ import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit } from "../../lib/api"
 import type { OutlitClient } from "../../lib/client"
 import { errorMessage, isJsonMode, outputError, outputResult } from "../../lib/output"
-import { pollUntil } from "../../lib/poll"
 import type { ProviderInfo } from "../../lib/providers"
 import { PROVIDER_NAMES, resolveProviderOrExit } from "../../lib/providers"
 import { createSpinner } from "../../lib/spinner"
 import { isInteractive, openBrowser, promptInput } from "../../lib/tty"
+import { waitForIntegrationConnection } from "./wait-for-connection"
 
 interface ConnectResponse {
   sessionId: string
   alreadyConnected: boolean
   connectUrl?: string
-}
-
-interface ConnectStatusResponse {
-  status: "pending" | "connected" | "failed" | "expired"
-  provider?: string
-  error?: string
 }
 
 export default defineCommand({
@@ -238,46 +232,11 @@ async function addOAuthProvider(
   }
 
   // Interactive mode: poll until connected or timeout
-  await waitForConnection(client, connectData.sessionId, provider, cliName)
-}
-
-/** Polls the connect status endpoint until the OAuth flow completes or times out. */
-async function waitForConnection(
-  client: OutlitClient,
-  sessionId: string,
-  provider: ProviderInfo,
-  cliName: string,
-): Promise<void> {
-  const spinner = createSpinner(`Waiting for ${provider.name} authentication...`)
-
-  const result = await pollUntil<ConnectStatusResponse>(
-    () =>
-      client
-        .callTool("outlit_connect_status", { sessionId })
-        .then((r) => r as ConnectStatusResponse),
-    (r) => r.status !== "pending",
-    {
-      intervalMs: 2_000,
-      timeoutMs: 300_000,
-      spinner,
-      spinnerMessage: `Waiting for ${provider.name} authentication...`,
-    },
-  )
-
-  if (!result || result.status === "expired") {
-    spinner.fail("Connection timed out")
-    console.log(`\n  The authentication session expired.`)
-    console.log(`  Run \`outlit integrations add ${cliName}\` to try again.`)
-    process.exit(1)
-  }
-
-  if (result.status === "failed") {
-    spinner.fail(`${provider.name} connection failed`)
-    if (result.error) console.log(`\n  ${result.error}`)
-    process.exit(1)
-  }
-
-  spinner.stop(`${provider.name} connected successfully!`)
-  console.log(`    Sync will begin automatically.`)
-  console.log(`    Use \`outlit integrations status ${cliName}\` to check progress.`)
+  await waitForIntegrationConnection({
+    client,
+    sessionId: connectData.sessionId,
+    displayName: provider.name,
+    cliName,
+    retryCommand: `outlit integrations add ${cliName}`,
+  })
 }

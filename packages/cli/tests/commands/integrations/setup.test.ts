@@ -1,7 +1,14 @@
-import { beforeEach, describe, expect, mock, test } from "bun:test"
-import { captureStdout, setNonInteractive, TEST_API_KEY, useTempEnv } from "../../helpers"
+import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
+import {
+  captureStdout,
+  setInteractive,
+  setNonInteractive,
+  TEST_API_KEY,
+  useTempEnv,
+} from "../../helpers"
 
 let nextConnectResponse: Record<string, unknown> | null = null
+let nextConnectStatusResponse: Record<string, unknown> = { status: "connected" }
 let nextConnectedIntegrations: Array<Record<string, unknown>> = []
 
 const mockCallTool = mock(async (toolName: string, params: Record<string, unknown>) => {
@@ -97,6 +104,10 @@ const mockCallTool = mock(async (toolName: string, params: Record<string, unknow
     return nextConnectedIntegrations
   }
 
+  if (toolName === "outlit_connect_status") {
+    return nextConnectStatusResponse
+  }
+
   if (nextConnectResponse) return nextConnectResponse
 
   return {
@@ -106,6 +117,20 @@ const mockCallTool = mock(async (toolName: string, params: Record<string, unknow
     connectUrl: `https://app.outlit.ai/integrations?provider=${params.provider}`,
   }
 })
+
+const mockPollUntil = mock(
+  async (
+    fn: () => Promise<Record<string, unknown>>,
+    predicate: (result: Record<string, unknown>) => boolean,
+  ) => {
+    const result = await fn()
+    return predicate(result) ? result : null
+  },
+)
+
+mock.module("../../../src/lib/poll", () => ({
+  pollUntil: mockPollUntil,
+}))
 
 mock.module("../../../src/lib/client", () => ({
   createClient: async () => ({
@@ -140,7 +165,9 @@ describe("integrations setup", () => {
     setNonInteractive()
     mockCallTool.mockClear()
     mockOpenBrowser.mockClear()
+    mockPollUntil.mockClear()
     nextConnectResponse = null
+    nextConnectStatusResponse = { status: "connected" }
     nextConnectedIntegrations = []
   })
 
@@ -166,6 +193,27 @@ describe("integrations setup", () => {
     expect(parsed.connectUrl).toBe("https://app.outlit.ai/integrations?provider=hubspot")
     expect(parsed.sessionId).toBe("sess_123")
     expect(parsed.nextActions).toContain("outlit integrations status --session sess_123 --json")
+  })
+
+  test("waits for OAuth setup to complete in interactive mode", async () => {
+    setInteractive()
+    const logSpy = spyOn(console, "log").mockImplementation(() => {})
+    try {
+      const { default: setupCmd } = await import("../../../src/commands/integrations/setup")
+      await setupCmd.run!({
+        args: { provider: "hubspot" },
+      } as Parameters<NonNullable<typeof setupCmd.run>>[0])
+    } finally {
+      logSpy.mockRestore()
+    }
+
+    expect(mockOpenBrowser).toHaveBeenCalledWith(
+      "https://app.outlit.ai/integrations?provider=hubspot",
+    )
+    expect(mockPollUntil).toHaveBeenCalled()
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_connect_status", {
+      sessionId: "sess_123",
+    })
   })
 
   test("passes force through when starting OAuth setup", async () => {

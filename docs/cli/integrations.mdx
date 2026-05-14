@@ -48,7 +48,7 @@ outlit integrations list --json
 
 ## integrations add
 
-Connect a new integration. This is the legacy direct-connect command; use `integrations setup` for new agent flows because it exposes provider capabilities and follow-up steps.
+Connect a new integration. This legacy command remains available for compatibility. Use `integrations setup` for new agent flows because it exposes provider capabilities and follow-up steps.
 
 ```bash
 outlit integrations add <provider> [flags]
@@ -131,7 +131,7 @@ outlit integrations setup hubspot --json
 outlit integrations setup pylon --config '{"apiToken": "pylon_xxx"}' --json
 ```
 
-Browser/Nango providers return a `connectUrl` and `sessionId` in JSON mode. Show the URL/code to the user when browser approval is required, then poll with:
+Browser/Nango providers open the browser and wait for authentication in interactive terminals. In JSON mode they return a `connectUrl` and `sessionId` instead. Show the URL to the user when browser approval is required, then poll with:
 
 ```bash
 outlit integrations status --session <sessionId> --json
