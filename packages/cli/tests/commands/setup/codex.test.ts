@@ -1,11 +1,11 @@
-// mock.module() must be first statement before any imports — Bun hoists it.
-import { mock } from "bun:test"
+// Register the mock before dynamically importing command modules.
+import {
+  installChildProcessMock,
+  mockExecFileSync,
+  resetChildProcessMocks,
+} from "../../child-process-mock"
 
-const mockExecFileSync = mock((_cmd: string, _args: string[], _opts?: unknown) => undefined)
-
-mock.module("node:child_process", () => ({
-  execFileSync: mockExecFileSync,
-}))
+installChildProcessMock()
 
 import { beforeEach, describe, expect, spyOn, test } from "bun:test"
 import { ExitError, mockExitThrow, setNonInteractive } from "../../helpers"
@@ -14,10 +14,7 @@ setNonInteractive()
 
 describe("setup codex", () => {
   beforeEach(() => {
-    mockExecFileSync.mockClear()
-    mockExecFileSync.mockImplementation(
-      (_cmd: string, _args: string[], _opts?: unknown) => undefined,
-    )
+    resetChildProcessMocks()
   })
 
   test("installs the outlit skill for Codex", async () => {
