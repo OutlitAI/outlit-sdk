@@ -1,9 +1,13 @@
 ---
 title: "Integrations"
-description: "Connect and manage third-party integrations from the CLI"
+description: "Connect and inspect third-party integrations from the CLI"
 ---
 
-Connect communication tools, analytics platforms, billing, and more from the terminal. Browser/Nango providers open the browser for authentication; direct credential providers accept credentials inline.
+Connect communication tools, analytics platforms, billing, and more from the terminal. Browser/Nango providers open the browser for authentication; direct credential providers accept credentials through JSON config.
+
+<Info>
+  Use the Outlit web app to disconnect integrations. The CLI intentionally does not expose a destructive disconnect command.
+</Info>
 
 ## Supported Providers
 
@@ -46,71 +50,6 @@ outlit integrations list
 outlit integrations list --json
 ```
 
-## integrations add
-
-Connect a new integration. This legacy command remains available for compatibility. Use `integrations setup` for new agent flows because it exposes provider capabilities and follow-up steps.
-
-```bash
-outlit integrations add <provider> [flags]
-```
-
-### Flags
-
-| Flag | Type | Description |
-|------|------|-------------|
-| `--config` | string | JSON config for direct credential providers (e.g. `'{"apiKey": "sk_xxx"}'`) |
-| `--force` | boolean | Reconnect even if already connected |
-
-### Browser/Nango Providers
-
-Opens the browser for authentication. In interactive mode, the CLI polls until the connection completes (up to 5 minutes).
-
-```bash
-outlit integrations add slack
-outlit integrations add gmail --force
-```
-
-In JSON mode, returns a `sessionId` immediately for agent-side polling:
-
-```json
-{
-  "status": "awaiting_auth",
-  "provider": "slack",
-  "sessionId": "uuid"
-}
-```
-
-### Direct Credential Providers
-
-Pass credentials via `--config`:
-
-```bash
-outlit integrations add stripe --config '{"apiKey": "rk_live_xxx"}'
-outlit integrations add pylon --config '{"apiToken": "pylon_xxx"}'
-outlit integrations add posthog --config '{"apiKey": "phx_xxx", "region": "us", "projectId": "12345"}'
-```
-
-In interactive mode without `--config`, the CLI prompts for each field (secrets are masked).
-
-In non-interactive mode without `--config`, returns the required fields as JSON:
-
-```json
-{
-  "status": "config_required",
-  "provider": "posthog",
-  "message": "PostHog requires credential configuration. Pass --config with the required fields.",
-  "requiredFields": [
-    { "key": "apiKey", "label": "API Key" },
-    { "key": "region", "label": "Region (us or eu)" },
-    { "key": "projectId", "label": "Project ID" }
-  ]
-}
-```
-
-<Info>
-  AI agents receive `config_required` automatically (piped stdout triggers JSON mode), so they can read `requiredFields` and prompt the user or pass `--config` in a follow-up call.
-</Info>
-
 ## integrations capabilities
 
 Inspect setup mode, required credential fields, supported commands, and follow-up steps before connecting a provider.
@@ -139,6 +78,22 @@ outlit integrations status --session <sessionId> --json
 
 Direct credential providers do not create setup sessions. They validate and store the provider credentials through the platform API.
 
+When `--config` is omitted, direct credential providers return the required fields as JSON:
+
+```json
+{
+  "status": "config_required",
+  "provider": "posthog",
+  "requiredFields": [
+    { "key": "apiKey", "label": "API Key", "secret": true },
+    { "key": "region", "label": "Region", "secret": false },
+    { "key": "projectId", "label": "Project ID", "secret": false }
+  ]
+}
+```
+
+The setup command is agent-first: pass `--config` explicitly rather than relying on interactive credential prompts.
+
 Provider-specific follow-up commands come after the provider name, for example:
 
 ```bash
@@ -151,34 +106,6 @@ outlit integrations setup stripe webhooks --config '{"webhookSecret":"whsec_..."
 CRM mapping setup returns `config_required` with available pipelines when `--config` is omitted, then saves mappings and starts CRM syncs when mappings are supplied. Webhook setup returns manual provider configuration details such as webhook URL, required headers, signing secret, required events, provider docs, and current status. These follow-up commands do not create `sessionId`; `--session` is only for browser/Nango setup polling.
 
 When capabilities mark a follow-up as unsupported, use Outlit platform settings for that step.
-
-## integrations remove
-
-Disconnect an integration and remove all synced data.
-
-```bash
-outlit integrations remove <provider> [flags]
-```
-
-### Flags
-
-| Flag | Type | Description |
-|------|------|-------------|
-| `--yes` | boolean | Skip confirmation prompt (required in non-interactive mode) |
-
-### Examples
-
-```bash
-# Interactive (prompts for confirmation)
-outlit integrations remove posthog
-
-# Non-interactive / scripting
-outlit integrations remove slack --yes
-```
-
-<Warning>
-  This permanently deletes all synced data for the integration. This action cannot be undone.
-</Warning>
 
 ## integrations status
 
