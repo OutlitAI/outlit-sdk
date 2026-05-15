@@ -17,7 +17,7 @@ export default defineCommand({
       "  setup <provider> [step]",
       "                      Run provider auth setup or inspect follow-up steps",
       "  status --session <id>",
-      "                      Poll browser/Nango setup status returned by setup JSON output",
+      "                      Poll browser-auth setup status returned by setup JSON output",
       "  status [provider]   Show sync status for connected integrations",
       "",
       "Disconnect integrations from the Outlit web app.",

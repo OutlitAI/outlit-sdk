@@ -10,7 +10,7 @@ export default defineCommand({
     description: [
       "Show machine-readable integration setup capabilities.",
       "",
-      "Use this before setup so agents know whether a provider uses browser/Nango auth,",
+      "Use this before setup so agents know whether a provider uses browser auth,",
       "direct credential config, or has required follow-up steps such as CRM mappings.",
       "",
       "Examples:",

@@ -3,7 +3,7 @@ title: "Integrations"
 description: "Connect and inspect third-party integrations from the CLI"
 ---
 
-Connect communication tools, analytics platforms, billing, and more from the terminal. Browser/Nango providers open the browser for authentication; direct credential providers accept credentials through JSON config.
+Connect communication tools, analytics platforms, billing, and more from the terminal. Browser-auth providers open the browser for authentication; direct credential providers accept credentials through JSON config.
 
 <Info>
   Use the Outlit web app to disconnect integrations. The CLI intentionally does not expose a destructive disconnect command.
@@ -11,7 +11,7 @@ Connect communication tools, analytics platforms, billing, and more from the ter
 
 ## Supported Providers
 
-### Browser/Nango
+### Browser Auth
 
 | Provider | Category | CLI Name |
 |----------|----------|----------|
@@ -59,7 +59,7 @@ outlit integrations capabilities --json
 outlit integrations capabilities hubspot --json
 ```
 
-Use this first in agent flows. Browser/Nango providers return `setupMode: "nango_connect"` and direct credential providers return `setupMode: "direct_api_key"` plus `requiredFields`.
+Use this first in agent flows. Browser-auth providers return `setupMode: "browser_auth"` and direct credential providers return `setupMode: "direct_api_key"` plus `requiredFields`.
 
 ## integrations setup
 
@@ -70,7 +70,7 @@ outlit integrations setup hubspot --json
 outlit integrations setup pylon --config '{"apiToken": "pylon_xxx"}' --json
 ```
 
-Browser/Nango providers open the browser and wait for authentication in interactive terminals. In JSON mode they return a `connectUrl` and `sessionId` instead. Show the URL to the user when browser approval is required, then poll with:
+Browser-auth providers open the browser and wait for authentication in interactive terminals. In JSON mode they return a `connectUrl` and `sessionId` instead. Show the URL to the user when browser approval is required, then poll with:
 
 ```bash
 outlit integrations status --session <sessionId> --json
@@ -103,7 +103,7 @@ outlit integrations setup pylon webhooks --json
 outlit integrations setup stripe webhooks --config '{"webhookSecret":"whsec_..."}' --json
 ```
 
-CRM mapping setup returns `config_required` with available pipelines when `--config` is omitted, then saves mappings and starts CRM syncs when mappings are supplied. Webhook setup returns manual provider configuration details such as webhook URL, required headers, signing secret, required events, provider docs, and current status. These follow-up commands do not create `sessionId`; `--session` is only for browser/Nango setup polling.
+CRM mapping setup returns `config_required` with available pipelines when `--config` is omitted, then saves mappings and starts CRM syncs when mappings are supplied. Webhook setup returns manual provider configuration details such as webhook URL, required headers, signing secret, required events, provider docs, and current status. These follow-up commands do not create `sessionId`; `--session` is only for browser-auth setup polling.
 
 When capabilities mark a follow-up as unsupported, use Outlit platform settings for that step.
 

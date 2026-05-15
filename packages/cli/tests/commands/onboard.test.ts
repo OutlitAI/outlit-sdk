@@ -41,7 +41,7 @@ const capabilitiesPayload = {
     {
       cliName: "hubspot",
       providerId: "hubspot",
-      setupMode: "nango_connect",
+      setupMode: "browser_auth",
       credentialType: "oauth",
       connectSupported: true,
       requiredFields: [],
@@ -141,7 +141,7 @@ describe("onboard", () => {
       providerCount: 2,
       connectedCount: 1,
       setupModes: {
-        nango_connect: 1,
+        browser_auth: 1,
         direct_api_key: 1,
       },
     })
