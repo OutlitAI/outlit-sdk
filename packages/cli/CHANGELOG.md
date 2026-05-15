@@ -1,5 +1,13 @@
 # @outlit/cli
 
+## 1.9.0
+
+### Minor Changes
+
+- [#136](https://github.com/OutlitAI/outlit-sdk/pull/136) [`332efcc`](https://github.com/OutlitAI/outlit-sdk/commit/332efccf97feede381825d9c7cd0f511ec099e25) Thanks [@leo-paz](https://github.com/leo-paz)! - Add agent onboarding and integration setup helpers for non-interactive CLI flows. `outlit integrations setup` is now the canonical provider setup command, and legacy `integrations add` plus destructive CLI disconnect/remove access are no longer exposed.
+
+- [#138](https://github.com/OutlitAI/outlit-sdk/pull/138) [`0ef8f2d`](https://github.com/OutlitAI/outlit-sdk/commit/0ef8f2da1e55aec852c1abf0638b640448a39205) Thanks [@leo-paz](https://github.com/leo-paz)! - Rename the public integration setup mode for browser-based provider setup to `browser_auth` and remove backend-specific wording from CLI help and docs.
+
 ## 1.8.0
 
 ### Minor Changes
