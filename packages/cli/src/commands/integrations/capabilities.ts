@@ -2,7 +2,7 @@ import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
-import { PROVIDER_NAMES, resolveProviderOrExit } from "../../lib/providers"
+import { normalizeProviderInput, PROVIDER_NAMES } from "../../lib/providers"
 
 export default defineCommand({
   meta: {
@@ -36,10 +36,15 @@ export default defineCommand({
     const client = await getClientOrExit(args["api-key"], json)
 
     if (args.provider) {
-      const { cliName } = resolveProviderOrExit(args.provider, json)
-      return runTool(client, "outlit_integration_capabilities", { provider: cliName }, json, {
-        spinnerMessage: "Fetching integration capabilities...",
-      })
+      return runTool(
+        client,
+        "outlit_integration_capabilities",
+        { provider: normalizeProviderInput(args.provider) },
+        json,
+        {
+          spinnerMessage: "Fetching integration capabilities...",
+        },
+      )
     }
 
     return runTool(client, "outlit_integration_capabilities", {}, json, {

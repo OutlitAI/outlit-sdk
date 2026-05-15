@@ -4,7 +4,7 @@ import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { capitalize, formatNumber, relativeDate, truncate } from "../../lib/format"
 import { outputError } from "../../lib/output"
-import { resolveProviderOrExit } from "../../lib/providers"
+import { normalizeProviderInput } from "../../lib/providers"
 
 function hideBlankModelSyncs(data: unknown): unknown {
   if (typeof data !== "object" || data === null || Array.isArray(data)) {
@@ -79,20 +79,25 @@ export default defineCommand({
     }
 
     if (args.provider) {
-      const { provider } = resolveProviderOrExit(args.provider, json)
-      return runTool(client, "outlit_integration_sync_status", { provider: provider.id }, json, {
-        spinnerMessage: "Fetching sync status...",
-        transform: hideBlankModelSyncs,
-        table: {
-          columns: [
-            { header: "Model", key: "model" },
-            { header: "Status", key: "status" },
-            { header: "Records", key: "recordCount", format: formatNumber },
-            { header: "Last Synced", key: "lastSyncedAt", format: relativeDate },
-          ],
-          itemsKey: "syncs",
+      return runTool(
+        client,
+        "outlit_integration_sync_status",
+        { provider: normalizeProviderInput(args.provider) },
+        json,
+        {
+          spinnerMessage: "Fetching sync status...",
+          transform: hideBlankModelSyncs,
+          table: {
+            columns: [
+              { header: "Model", key: "model" },
+              { header: "Status", key: "status" },
+              { header: "Records", key: "recordCount", format: formatNumber },
+              { header: "Last Synced", key: "lastSyncedAt", format: relativeDate },
+            ],
+            itemsKey: "syncs",
+          },
         },
-      })
+      )
     }
 
     return runTool(client, "outlit_list_integrations", { connectedOnly: true }, json, {
