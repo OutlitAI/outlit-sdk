@@ -10,7 +10,7 @@ export type ProviderCategory =
   | "data"
 
 export type ProviderAuthType = "api_key" | "oauth"
-export type ProviderSetupMode = "direct_api_key" | "nango_connect" | "manual"
+export type ProviderSetupMode = "direct_api_key" | "browser_auth" | "manual"
 export type ProviderCredentialType = "api_key" | "api_token" | "oauth"
 
 export interface ConfigField {

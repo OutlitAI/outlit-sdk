@@ -52,7 +52,7 @@ export default defineCommand({
     description: [
       "Run the provider-owned setup flow for an integration.",
       "",
-      "Browser/Nango providers open the browser and wait in interactive mode.",
+      "Browser-auth providers open the browser and wait in interactive mode.",
       "In JSON mode, they return a connect URL and pollable session ID.",
       "Direct credential providers require --config with the provider-specific fields.",
       "Use `capabilities` first when choosing integrations programmatically.",
@@ -395,7 +395,7 @@ function normalizeSetupStep(value: string): string {
 }
 
 function defaultSetupMode(authType: ProviderAuthType): ProviderSetupMode {
-  return authType === "api_key" ? "direct_api_key" : "nango_connect"
+  return authType === "api_key" ? "direct_api_key" : "browser_auth"
 }
 
 async function fetchProviderCapability(

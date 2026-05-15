@@ -199,7 +199,7 @@ const COMMANDS: readonly CmdDef[] = [
       {
         name: "status",
         desc: "Show sync or setup-session status",
-        flags: [...COMMON, { name: "--session", desc: "Browser/Nango setup session ID" }],
+        flags: [...COMMON, { name: "--session", desc: "Browser-auth setup session ID" }],
       },
     ],
   },

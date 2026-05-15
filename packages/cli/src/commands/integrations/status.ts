@@ -37,7 +37,7 @@ export default defineCommand({
       "",
       "Without a provider name, shows a summary of all connected integrations.",
       "With a provider name, shows detailed per-model sync status.",
-      "With --session, checks a browser/Nango setup session returned by `integrations setup`.",
+      "With --session, checks a browser-auth setup session returned by `integrations setup`.",
       "",
       "Examples:",
       "  outlit integrations status              # summary of all",
@@ -58,7 +58,7 @@ export default defineCommand({
     session: {
       type: "string",
       description:
-        "Browser/Nango setup session ID returned by `outlit integrations setup <provider>`.",
+        "Browser-auth setup session ID returned by `outlit integrations setup <provider>`.",
     },
   },
   async run({ args }) {

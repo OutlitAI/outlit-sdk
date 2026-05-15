@@ -71,7 +71,7 @@ const mockCallTool = mock(async (toolName: string, params: Record<string, unknow
         cliName: provider,
         providerId: provider,
         authType: "oauth",
-        setupMode: "nango_connect",
+        setupMode: "browser_auth",
         credentialType: "oauth",
         connectSupported: true,
         requiredFields: [],

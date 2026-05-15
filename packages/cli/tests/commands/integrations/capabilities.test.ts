@@ -7,7 +7,7 @@ const mockCallTool = mock(async (_toolName: string, params: Record<string, unkno
       cliName: "hubspot",
       providerId: "hubspot",
       authType: "oauth",
-      setupMode: "nango_connect",
+      setupMode: "browser_auth",
       credentialType: "oauth",
       connectSupported: true,
       commands: [
@@ -21,7 +21,7 @@ const mockCallTool = mock(async (_toolName: string, params: Record<string, unkno
       cliName: "attio",
       providerId: "attio",
       authType: "oauth",
-      setupMode: "nango_connect",
+      setupMode: "browser_auth",
       credentialType: "oauth",
       connectSupported: true,
       commands: ["outlit integrations setup attio"],
