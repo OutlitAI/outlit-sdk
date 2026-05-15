@@ -92,6 +92,7 @@ describe("PROVIDER_NAMES", () => {
     expect(PROVIDER_NAMES).toContain("fireflies")
     expect(PROVIDER_NAMES).toContain("granola")
     expect(PROVIDER_NAMES).toContain("hubspot")
+    expect(PROVIDER_NAMES).toContain("salesforce")
     expect(PROVIDER_NAMES).toContain("posthog")
     expect(PROVIDER_NAMES).toContain("supabase")
     expect(PROVIDER_NAMES).toContain("clerk")
@@ -99,8 +100,7 @@ describe("PROVIDER_NAMES", () => {
     expect(PROVIDER_NAMES).toContain("attio")
   })
 
-  test("does not include CRM providers that are not exposed by integrations list", () => {
-    expect(PROVIDER_NAMES).not.toContain("salesforce")
+  test("does not include providers that are not exposed by integrations list", () => {
     expect(PROVIDER_NAMES).not.toContain("gong")
   })
 })
@@ -176,7 +176,7 @@ describe("resolveProvider", () => {
   })
 
   test("resolves provider IDs exposed by integrations list", () => {
-    for (const name of ["google-mail", "granola", "hubspot", "attio"]) {
+    for (const name of ["google-mail", "granola", "hubspot", "attio", "salesforce"]) {
       const result = resolveProvider(name)
       expect("provider" in result).toBe(true)
       if ("provider" in result) {
