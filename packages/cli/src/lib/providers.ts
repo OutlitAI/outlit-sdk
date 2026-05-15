@@ -109,6 +109,7 @@ const WEBHOOK_SETUP_BY_PROVIDER: Record<string, Omit<ProviderPostConnectStep, "i
  */
 export const INTEGRATION_PROVIDERS: Record<string, ProviderInfo> = {
   // Browser/Nango providers
+  salesforce: { id: "salesforce", name: "Salesforce", category: "crm", authType: "oauth" },
   hubspot: { id: "hubspot", name: "HubSpot", category: "crm", authType: "oauth" },
   attio: { id: "attio", name: "Attio", category: "crm", authType: "oauth" },
   slack: { id: "slack", name: "Slack", category: "communication", authType: "oauth" },
