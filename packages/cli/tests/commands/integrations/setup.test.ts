@@ -20,7 +20,7 @@ const mockCallTool = mock(async (toolName: string, params: Record<string, unknow
       return {
         provider: {
           cliName: "stripe",
-          providerId: "brex-api-key",
+          providerId: "stripe",
           authType: "api_key",
           setupMode: "direct_api_key",
           credentialType: "api_key",

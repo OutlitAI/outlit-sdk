@@ -11,7 +11,7 @@ import type {
   ProviderCredentialType,
   ProviderSetupMode,
 } from "../../lib/providers"
-import { PROVIDER_NAMES, resolveProviderOrExit } from "../../lib/providers"
+import { normalizeProviderInput, PROVIDER_NAMES } from "../../lib/providers"
 import { createSpinner } from "../../lib/spinner"
 import { openBrowser } from "../../lib/tty"
 import { waitForIntegrationConnection } from "./wait-for-connection"
@@ -35,7 +35,7 @@ interface IntegrationListItem {
 
 type SetupCapability = ProviderCapability & {
   cliName: string
-  providerId: string
+  providerId?: string
   displayName?: string
   authType: ProviderAuthType
   setupMode?: ProviderSetupMode
@@ -94,9 +94,9 @@ export default defineCommand({
   },
   async run({ args }) {
     const json = !!args.json
-    const { cliName } = resolveProviderOrExit(args.provider, json)
+    const provider = normalizeProviderInput(args.provider)
     const client = await getClientOrExit(args["api-key"], json)
-    const capability = await fetchProviderCapability(client, cliName, json)
+    const capability = await fetchProviderCapability(client, provider, json)
 
     if (typeof args.step === "string" && args.step.trim()) {
       return setupProviderFollowUp(
@@ -111,7 +111,7 @@ export default defineCommand({
     if (!capability.connectSupported) {
       return outputResult({
         status: "unsupported",
-        provider: cliName,
+        provider: capability.cliName,
         connectSupported: false,
         notes: capability.notes,
         capabilities: capability,
@@ -197,7 +197,7 @@ async function setupApiKeyProvider(
 
   try {
     connectData = (await client.callTool("outlit_connect_integration", {
-      provider: capability.providerId,
+      provider: capability.cliName,
       config,
       ...(force ? { force: true } : {}),
     })) as ConnectResponse
@@ -242,7 +242,7 @@ async function setupOAuthProvider(
 
   try {
     connectData = (await client.callTool("outlit_connect_integration", {
-      provider: capability.providerId,
+      provider: capability.cliName,
       ...(force ? { force: true } : {}),
     })) as ConnectResponse
   } catch (err) {

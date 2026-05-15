@@ -115,7 +115,7 @@ describe("integrations status", () => {
     )
   })
 
-  test("resolves provider alias for status", async () => {
+  test("passes provider aliases through to Core for status", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
     await captureStdout(() =>
       statusCmd.run!({
@@ -124,7 +124,7 @@ describe("integrations status", () => {
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_sync_status", {
-      provider: "google-mail",
+      provider: "gmail",
     })
   })
 
@@ -199,15 +199,17 @@ describe("integrations status", () => {
     ])
   })
 
-  test("rejects unknown provider", async () => {
+  test("passes unknown providers through so Core owns provider validation", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    await runExpectingError(
-      () =>
-        statusCmd.run!({
-          args: { provider: "nonexistent", json: true },
-        } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
-      "unknown_provider",
+    await captureStdout(() =>
+      statusCmd.run!({
+        args: { provider: "nonexistent", json: true },
+      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
     )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_sync_status", {
+      provider: "nonexistent",
+    })
   })
 
   test("outputs JSON for summary view", async () => {
