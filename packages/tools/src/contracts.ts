@@ -254,7 +254,7 @@ export const customerToolContracts = {
         },
         channels: {
           description:
-            "Filter by event channel. Use values such as PRODUCT, COMMUNICATION, MEETING, CRM, BILLING, SUPPORT, IDENTITY, DOCUMENT, SYSTEM, or CALENDAR.",
+            "Filter by event channel. Use values such as PRODUCT, COMMUNICATION, MEETING, CRM, BILLING, SUPPORT, IDENTITY, DOCUMENT, or SYSTEM.",
           type: "array",
           items: {
             type: "string",
@@ -262,7 +262,6 @@ export const customerToolContracts = {
               "PRODUCT",
               "COMMUNICATION",
               "MEETING",
-              "CALENDAR",
               "CRM",
               "BILLING",
               "SUPPORT",
@@ -826,7 +825,6 @@ export const timelineChannels = [
   "PRODUCT",
   "COMMUNICATION",
   "MEETING",
-  "CALENDAR",
   "CRM",
   "BILLING",
   "SUPPORT",
@@ -850,7 +848,7 @@ export const userListOrderFields = ["last_activity_at", "first_seen_at", "email"
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "58b34ccc3e46d1b16654420eff336fb8f09259aaa89881be5c971ed96a589c6a" as const
+  "f22823a4cf15348c11d7ce5127480b47a655cf1fc13d498f494fc7d2033d40e4" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]

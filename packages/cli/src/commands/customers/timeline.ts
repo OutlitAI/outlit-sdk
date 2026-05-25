@@ -11,6 +11,7 @@ const legacyTimelineChannelMap = {
   EMAIL: "COMMUNICATION",
   SLACK: "COMMUNICATION",
   CALL: "MEETING",
+  CALENDAR: "MEETING",
   INTERNAL: "SYSTEM",
 } as const
 
