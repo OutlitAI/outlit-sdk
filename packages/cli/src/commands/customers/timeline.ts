@@ -6,6 +6,28 @@ import { applyPagination, paginationArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
 
+const legacyTimelineChannelMap = {
+  SDK: "PRODUCT",
+  EMAIL: "COMMUNICATION",
+  SLACK: "COMMUNICATION",
+  CALL: "MEETING",
+  INTERNAL: "SYSTEM",
+} as const
+
+function normalizeTimelineChannels(value: string): string[] {
+  return [
+    ...new Set(
+      splitCsv(value).map((channel) => {
+        const normalized = channel.toUpperCase()
+        return (
+          legacyTimelineChannelMap[normalized as keyof typeof legacyTimelineChannelMap] ??
+          normalized
+        )
+      }),
+    ),
+  ]
+}
+
 export default defineCommand({
   meta: {
     name: "timeline",
@@ -24,7 +46,7 @@ export default defineCommand({
       "Examples:",
       "  outlit customers timeline acme.com",
       "  outlit customers timeline acme.com --timeframe 90d",
-      "  outlit customers timeline acme.com --channels EMAIL,SLACK",
+      "  outlit customers timeline acme.com --channels COMMUNICATION,MEETING",
       "  outlit customers timeline acme.com --start-date 2025-01-01T00:00:00Z --end-date 2025-03-01T23:59:59Z",
       "  outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50",
       "",
@@ -81,7 +103,7 @@ export default defineCommand({
     }
 
     if (args.channels) {
-      params.channels = splitCsv(args.channels)
+      params.channels = normalizeTimelineChannels(args.channels)
     }
     if (args["event-types"]) {
       params.eventTypes = splitCsv(args["event-types"])

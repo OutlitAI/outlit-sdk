@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
-  TEST_API_KEY,
   expectErrorExit,
   mockExitThrow,
   setNonInteractive,
+  TEST_API_KEY,
   useTempEnv,
 } from "../../helpers"
 
@@ -81,7 +81,29 @@ describe("customers timeline", () => {
     }
   })
 
-  test("splits --channels on comma", async () => {
+  test("splits canonical --channels on comma", async () => {
+    const { default: timelineCmd } = await import("../../../src/commands/customers/timeline")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await timelineCmd.run!({
+        args: {
+          customer: "acme.com",
+          channels: "COMMUNICATION,MEETING",
+          timeframe: "30d",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof timelineCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_get_timeline",
+        expect.objectContaining({ channels: ["COMMUNICATION", "MEETING"] }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("normalizes legacy --channels to canonical values", async () => {
     const { default: timelineCmd } = await import("../../../src/commands/customers/timeline")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -91,7 +113,7 @@ describe("customers timeline", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_get_timeline",
-        expect.objectContaining({ channels: ["EMAIL", "SLACK"] }),
+        expect.objectContaining({ channels: ["COMMUNICATION"] }),
       )
     } finally {
       writeSpy.mockRestore()
