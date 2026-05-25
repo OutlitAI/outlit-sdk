@@ -108,12 +108,17 @@ describe("customers timeline", () => {
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await timelineCmd.run!({
-        args: { customer: "acme.com", channels: "EMAIL,SLACK", timeframe: "30d", json: true },
+        args: {
+          customer: "acme.com",
+          channels: "EMAIL,SLACK,CALENDAR",
+          timeframe: "30d",
+          json: true,
+        },
       } as Parameters<NonNullable<typeof timelineCmd.run>>[0])
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_get_timeline",
-        expect.objectContaining({ channels: ["COMMUNICATION"] }),
+        expect.objectContaining({ channels: ["COMMUNICATION", "MEETING"] }),
       )
     } finally {
       writeSpy.mockRestore()
