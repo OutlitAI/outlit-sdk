@@ -125,6 +125,28 @@ describe("customers timeline", () => {
     }
   })
 
+  test("drops empty --channels tokens", async () => {
+    const { default: timelineCmd } = await import("../../../src/commands/customers/timeline")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await timelineCmd.run!({
+        args: {
+          customer: "acme.com",
+          channels: "COMMUNICATION,,MEETING,",
+          timeframe: "30d",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof timelineCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_get_timeline",
+        expect.objectContaining({ channels: ["COMMUNICATION", "MEETING"] }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("auth_required error — createClient throws → outputError called", async () => {
     const clientModule = await import("../../../src/lib/client")
     const createClientSpy = spyOn(clientModule, "createClient").mockRejectedValue(
