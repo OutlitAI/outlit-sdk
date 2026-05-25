@@ -18,13 +18,15 @@ const legacyTimelineChannelMap = {
 function normalizeTimelineChannels(value: string): string[] {
   return [
     ...new Set(
-      splitCsv(value).map((channel) => {
-        const normalized = channel.toUpperCase()
-        return (
-          legacyTimelineChannelMap[normalized as keyof typeof legacyTimelineChannelMap] ??
-          normalized
-        )
-      }),
+      splitCsv(value)
+        .filter((channel) => channel.length > 0)
+        .map((channel) => {
+          const normalized = channel.toUpperCase()
+          return (
+            legacyTimelineChannelMap[normalized as keyof typeof legacyTimelineChannelMap] ??
+            normalized
+          )
+        }),
     ),
   ]
 }
