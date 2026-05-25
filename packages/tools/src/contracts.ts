@@ -253,20 +253,22 @@ export const customerToolContracts = {
           description: "Customer ID or domain",
         },
         channels: {
-          description: "Filter by event channel (e.g., EMAIL, SLACK, CALL, CALENDAR)",
+          description:
+            "Filter by event channel. Use values such as PRODUCT, COMMUNICATION, MEETING, CRM, BILLING, SUPPORT, IDENTITY, DOCUMENT, SYSTEM, or CALENDAR.",
           type: "array",
           items: {
             type: "string",
             enum: [
-              "SDK",
-              "EMAIL",
-              "SLACK",
-              "CALL",
+              "PRODUCT",
+              "COMMUNICATION",
+              "MEETING",
               "CALENDAR",
               "CRM",
               "BILLING",
               "SUPPORT",
-              "INTERNAL",
+              "IDENTITY",
+              "DOCUMENT",
+              "SYSTEM",
             ],
           },
         },
@@ -821,15 +823,16 @@ export const notificationProviderValues = ["slack"] as const
 export const notificationSeverityValues = ["low", "medium", "high"] as const
 
 export const timelineChannels = [
-  "SDK",
-  "EMAIL",
-  "SLACK",
-  "CALL",
+  "PRODUCT",
+  "COMMUNICATION",
+  "MEETING",
   "CALENDAR",
   "CRM",
   "BILLING",
   "SUPPORT",
-  "INTERNAL",
+  "IDENTITY",
+  "DOCUMENT",
+  "SYSTEM",
 ] as const
 
 export const timelineTimeframes = ["7d", "14d", "30d", "90d", "all"] as const
@@ -847,7 +850,7 @@ export const userListOrderFields = ["last_activity_at", "first_seen_at", "email"
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "5016d146842452855bfdd9ecc8f6be1a122125d0c392ceff315aeb2e44fefc7f" as const
+  "58b34ccc3e46d1b16654420eff336fb8f09259aaa89881be5c971ed96a589c6a" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]
