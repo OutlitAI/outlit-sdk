@@ -112,11 +112,13 @@ const mockCallTool = mock(async (toolName: string, params: Record<string, unknow
 
   if (nextConnectResponse) return nextConnectResponse
 
+  const connectUrlProvider = params.provider === "gong-oauth" ? "gong" : params.provider
+
   return {
     sessionId: "sess_123",
     connectionId: `${params.provider}-org_123`,
     alreadyConnected: false,
-    connectUrl: `https://app.outlit.ai/integrations?provider=${params.provider}`,
+    connectUrl: `https://app.outlit.ai/integrations?provider=${connectUrlProvider}`,
   }
 })
 
@@ -195,6 +197,28 @@ describe("integrations setup", () => {
     expect(parsed.connectUrl).toBe("https://app.outlit.ai/integrations?provider=hubspot")
     expect(parsed.sessionId).toBe("sess_123")
     expect(parsed.nextActions).toContain("outlit integrations status --session sess_123 --json")
+  })
+
+  test("starts Gong OAuth setup through the internal Core provider id", async () => {
+    const { default: setupCmd } = await import("../../../src/commands/integrations/setup")
+    const parsed = await captureStdout<{
+      status: string
+      provider: string
+      connectUrl: string
+      sessionId: string
+    }>(() =>
+      setupCmd.run!({
+        args: { provider: "gong", json: true },
+      } as Parameters<NonNullable<typeof setupCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_connect_integration", {
+      provider: "gong-oauth",
+    })
+    expect(parsed.status).toBe("awaiting_auth")
+    expect(parsed.provider).toBe("gong")
+    expect(parsed.connectUrl).toBe("https://app.outlit.ai/integrations?provider=gong")
+    expect(parsed.sessionId).toBe("sess_123")
   })
 
   test("waits for OAuth setup to complete in interactive mode", async () => {

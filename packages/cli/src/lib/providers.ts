@@ -31,7 +31,7 @@ export interface ProviderPostConnectStep {
 
 export interface ProviderCapability {
   cliName: string
-  /** Public provider ID returned by Core. The CLI should pass cliName/providerId back unchanged. */
+  /** Public provider ID returned by Core. Internal provider aliases are resolved before setup calls. */
   providerId?: string
   displayName: string
   category: ProviderCategory
@@ -54,6 +54,7 @@ export const PROVIDER_NAMES = [
   "clerk",
   "fireflies",
   "gmail",
+  "gong",
   "google-calendar",
   "google-mail",
   "granola",
@@ -66,9 +67,21 @@ export const PROVIDER_NAMES = [
   "supabase",
 ] as const
 
+const PROVIDER_ID_OVERRIDES: Partial<Record<(typeof PROVIDER_NAMES)[number], string>> = {
+  gong: "gong-oauth",
+}
+
 export function normalizeProviderInput(input: string): string {
   return input
     .trim()
     .toLowerCase()
     .replace(/[\s_]+/g, "-")
+}
+
+export function resolveProvider(input: string): { cliName: string; id: string } {
+  const cliName = normalizeProviderInput(input)
+  return {
+    cliName,
+    id: PROVIDER_ID_OVERRIDES[cliName as (typeof PROVIDER_NAMES)[number]] ?? cliName,
+  }
 }

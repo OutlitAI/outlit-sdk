@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { normalizeProviderInput, PROVIDER_NAMES } from "../../src/lib/providers"
+import { normalizeProviderInput, PROVIDER_NAMES, resolveProvider } from "../../src/lib/providers"
 
 describe("PROVIDER_NAMES", () => {
   test("is sorted alphabetically", () => {
@@ -11,10 +11,10 @@ describe("PROVIDER_NAMES", () => {
     expect(PROVIDER_NAMES).toContain("gmail")
     expect(PROVIDER_NAMES).toContain("google-mail")
     expect(PROVIDER_NAMES).toContain("stripe")
+    expect(PROVIDER_NAMES).toContain("gong")
     expect(PROVIDER_NAMES).toContain("pylon")
     expect(PROVIDER_NAMES).toContain("salesforce")
     expect(PROVIDER_NAMES.every((provider) => !provider.endsWith("-api-key"))).toBe(true)
-    expect(PROVIDER_NAMES).not.toContain("gong")
   })
 })
 
@@ -24,5 +24,14 @@ describe("normalizeProviderInput", () => {
     expect(normalizeProviderInput("google_mail")).toBe("google-mail")
     expect(normalizeProviderInput("GMail")).toBe("gmail")
     expect(normalizeProviderInput("stripe")).toBe("stripe")
+  })
+})
+
+describe("resolveProvider", () => {
+  test("maps Gong's public CLI key to Core's internal provider id", () => {
+    expect(resolveProvider("gong")).toEqual({
+      cliName: "gong",
+      id: "gong-oauth",
+    })
   })
 })

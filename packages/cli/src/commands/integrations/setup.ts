@@ -11,7 +11,7 @@ import type {
   ProviderCredentialType,
   ProviderSetupMode,
 } from "../../lib/providers"
-import { normalizeProviderInput, PROVIDER_NAMES } from "../../lib/providers"
+import { normalizeProviderInput, PROVIDER_NAMES, resolveProvider } from "../../lib/providers"
 import { createSpinner } from "../../lib/spinner"
 import { openBrowser } from "../../lib/tty"
 import { waitForIntegrationConnection } from "./wait-for-connection"
@@ -197,7 +197,7 @@ async function setupApiKeyProvider(
 
   try {
     connectData = (await client.callTool("outlit_connect_integration", {
-      provider: capability.cliName,
+      provider: resolveCapabilityProviderId(capability),
       config,
       ...(force ? { force: true } : {}),
     })) as ConnectResponse
@@ -242,7 +242,7 @@ async function setupOAuthProvider(
 
   try {
     connectData = (await client.callTool("outlit_connect_integration", {
-      provider: capability.cliName,
+      provider: resolveCapabilityProviderId(capability),
       ...(force ? { force: true } : {}),
     })) as ConnectResponse
   } catch (err) {
@@ -346,7 +346,7 @@ async function setupProviderFollowUp(
 
   try {
     const result = (await client.callTool("outlit_integration_setup_step", {
-      provider: capability.cliName,
+      provider: resolveCapabilityProviderId(capability),
       step: step.id,
       ...(config ? { config } : {}),
     })) as Record<string, unknown>
@@ -396,6 +396,14 @@ function normalizeSetupStep(value: string): string {
 
 function defaultSetupMode(authType: ProviderAuthType): ProviderSetupMode {
   return authType === "api_key" ? "direct_api_key" : "browser_auth"
+}
+
+function resolveCapabilityProviderId(capability: SetupCapability): string {
+  if (capability.providerId && capability.providerId !== capability.cliName) {
+    return capability.providerId
+  }
+
+  return resolveProvider(capability.cliName).id
 }
 
 async function fetchProviderCapability(
