@@ -3,7 +3,7 @@ import { AGENT_JSON_HINT } from "../../args/output"
 
 export default defineCommand({
   meta: {
-    name: "workspace-users",
+    name: "ws-users",
     description: [
       "Query internal workspace users such as CSMs and account owners.",
       "",

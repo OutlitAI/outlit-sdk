@@ -31,15 +31,15 @@ mock.module("../../../src/lib/client", () => ({
 
 setNonInteractive()
 
-describe("workspace-users list", () => {
-  useTempEnv("workspace-users-list-test")
+describe("ws-users list", () => {
+  useTempEnv("ws-users-list-test")
 
   beforeEach(() => {
     mockCallTool.mockClear()
   })
 
   async function expectInvalidSortArgs(args: Record<string, unknown>) {
-    const { default: listCmd } = await import("../../../src/commands/workspace-users/list")
+    const { default: listCmd } = await import("../../../src/commands/ws-users/list")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
 
@@ -64,7 +64,7 @@ describe("workspace-users list", () => {
   }
 
   test("maps list flags to outlit_list_workspace_users params", async () => {
-    const { default: listCmd } = await import("../../../src/commands/workspace-users/list")
+    const { default: listCmd } = await import("../../../src/commands/ws-users/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await listCmd.run!({
@@ -100,7 +100,7 @@ describe("workspace-users list", () => {
   })
 
   test("forwards explicit false for has-owned-customers", async () => {
-    const { default: listCmd } = await import("../../../src/commands/workspace-users/list")
+    const { default: listCmd } = await import("../../../src/commands/ws-users/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await listCmd.run!({
@@ -137,7 +137,7 @@ describe("workspace-users list", () => {
     const createClientSpy = spyOn(clientModule, "createClient").mockRejectedValue(
       new Error("No API key found. Run `outlit auth login` or set OUTLIT_API_KEY."),
     )
-    const { default: listCmd } = await import("../../../src/commands/workspace-users/list")
+    const { default: listCmd } = await import("../../../src/commands/ws-users/list")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
 
@@ -160,7 +160,7 @@ describe("workspace-users list", () => {
 
   test("renders table with workspace user columns in interactive mode", async () => {
     setInteractive()
-    const { default: listCmd } = await import("../../../src/commands/workspace-users/list")
+    const { default: listCmd } = await import("../../../src/commands/ws-users/list")
     const logSpy = spyOn(console, "log").mockImplementation(() => {})
     try {
       await listCmd.run!({

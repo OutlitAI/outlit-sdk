@@ -3,4 +3,4 @@
 "@outlit/cli": minor
 ---
 
-Expose workspace-user discovery tools and customer owner filters for dynamic customer reports.
+Expose the `ws-users` CLI command, workspace-user discovery tools, and customer owner filters for dynamic customer reports.
