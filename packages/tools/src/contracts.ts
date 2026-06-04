@@ -5,6 +5,7 @@ export type JsonSchema = {
 export const customerToolNames = [
   "outlit_list_customers",
   "outlit_list_users",
+  "outlit_list_workspace_users",
   "outlit_get_customer",
   "outlit_get_timeline",
   "outlit_list_facts",
@@ -97,6 +98,20 @@ export const customerToolContracts = {
           description: "Search by customer name or domain (case-insensitive)",
           type: "string",
           maxLength: 500,
+        },
+        ownerId: {
+          description: "Filter customers by internal owner user ID",
+          type: "string",
+          maxLength: 500,
+        },
+        ownerEmail: {
+          description: "Filter customers by internal owner email address",
+          type: "string",
+          maxLength: 500,
+        },
+        hasOwner: {
+          description: "Filter customers by whether they have an owner",
+          type: "boolean",
         },
         limit: {
           description: "Results per page (max 1000)",
@@ -198,6 +213,60 @@ export const customerToolContracts = {
           default: "last_activity_at",
           type: "string",
           enum: ["last_activity_at", "first_seen_at", "email"],
+        },
+        orderDirection: {
+          description: "Sort direction",
+          default: "desc",
+          type: "string",
+          enum: ["asc", "desc"],
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  outlit_list_workspace_users: {
+    toolName: "outlit_list_workspace_users",
+    description:
+      "Browse internal workspace users such as CSMs, managers, account owners, and admins. Use this to discover who owns customers before composing dynamic reports across account books.",
+    inputSchema: {
+      $schema: "https://json-schema.org/draft/2020-12/schema",
+      type: "object",
+      properties: {
+        search: {
+          description: "Search internal workspace users by name, email, title, role, or territory",
+          type: "string",
+          maxLength: 500,
+        },
+        role: {
+          description: "Filter internal workspace users by role metadata when available",
+          type: "string",
+          maxLength: 100,
+        },
+        managerEmail: {
+          description: "Filter internal workspace users by manager email metadata when available",
+          type: "string",
+          maxLength: 500,
+        },
+        hasOwnedCustomers: {
+          description: "When true, return only workspace users who own at least one customer",
+          type: "boolean",
+        },
+        limit: {
+          description: "Results per page (max 1000)",
+          default: 50,
+          type: "number",
+          minimum: 1,
+          maximum: 1000,
+        },
+        cursor: {
+          description: "Pagination cursor from previous response",
+          type: "string",
+        },
+        orderBy: {
+          description: "Field to order workspace users by",
+          default: "owned_customer_count",
+          type: "string",
+          enum: ["name", "email", "owned_customer_count"],
         },
         orderDirection: {
           description: "Sort direction",
@@ -844,6 +913,8 @@ export const userJourneyStages = [
 ] as const
 
 export const userListOrderFields = ["last_activity_at", "first_seen_at", "email"] as const
+
+export const workspaceUserListOrderFields = ["name", "email", "owned_customer_count"] as const
 
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 

@@ -7,6 +7,7 @@ export const actionToolNames = [
 export const defaultAgentToolNames = [
   "outlit_list_customers",
   "outlit_list_users",
+  "outlit_list_workspace_users",
   "outlit_get_customer",
   "outlit_get_timeline",
   "outlit_list_facts",

@@ -26,12 +26,13 @@ async function startCli() {
       name: "outlit",
       version: CLI_VERSION,
       description:
-        "Outlit CLI -- customer intelligence from the terminal.\n\nUsage examples:\n  outlit onboard --agent codex --json\n  outlit customers list --billing-status PAYING --no-activity-in 30d\n  outlit customers get acme.com --include users,revenue\n  outlit customers timeline acme.com --timeframe 90d\n  outlit users list --journey-stage CHAMPION\n  outlit facts list acme.com --fact-types CHURN_RISK,EXPANSION\n  outlit facts get --fact-id fact_123 --include evidence\n  outlit sources get --source-type OPPORTUNITY --source-id opp_123\n  outlit search 'pricing objections last quarter' --source-types CALL,OPPORTUNITY\n  outlit sql 'SELECT * FROM activity LIMIT 10'\n  outlit notify --title 'Risk found' '{\"customer\":\"acme.com\"}'\n  outlit schema activity\n  outlit doctor --json\n\nFor AI agents: commands auto-output JSON when stdout is piped. No --json flag needed.",
+        "Outlit CLI -- customer intelligence from the terminal.\n\nUsage examples:\n  outlit onboard --agent codex --json\n  outlit customers list --billing-status PAYING --no-activity-in 30d\n  outlit customers get acme.com --include users,revenue\n  outlit customers timeline acme.com --timeframe 90d\n  outlit users list --journey-stage CHAMPION\n  outlit workspace-users list --role CSM --has-owned-customers\n  outlit facts list acme.com --fact-types CHURN_RISK,EXPANSION\n  outlit facts get --fact-id fact_123 --include evidence\n  outlit sources get --source-type OPPORTUNITY --source-id opp_123\n  outlit search 'pricing objections last quarter' --source-types CALL,OPPORTUNITY\n  outlit sql 'SELECT * FROM activity LIMIT 10'\n  outlit notify --title 'Risk found' '{\"customer\":\"acme.com\"}'\n  outlit schema activity\n  outlit doctor --json\n\nFor AI agents: commands auto-output JSON when stdout is piped. No --json flag needed.",
     },
     subCommands: {
       auth: () => import("./commands/auth/index").then((m) => m.default),
       customers: () => import("./commands/customers/index").then((m) => m.default),
       users: () => import("./commands/users/index").then((m) => m.default),
+      "workspace-users": () => import("./commands/workspace-users/index").then((m) => m.default),
       onboard: () => import("./commands/onboard").then((m) => m.default),
       doctor: () => import("./commands/doctor").then((m) => m.default),
       upgrade: () => import("./commands/upgrade").then((m) => m.default),
