@@ -24,12 +24,15 @@ describe("completions command", () => {
     expect(out).toContain("complete -F _outlit_completions outlit")
     expect(out).toContain("facts")
     expect(out).toContain("sources")
+    expect(out).toContain("ws-users")
+    expect(out).not.toContain("workspace-users")
   })
 
   test("bash — subcommand dispatch", async () => {
     const out = await captureCompletions("bash")
     expect(out).toContain('facts) COMPREPLY=($(compgen -W "list get')
     expect(out).toContain('sources) COMPREPLY=($(compgen -W "list get')
+    expect(out).toContain('ws-users) COMPREPLY=($(compgen -W "list')
     expect(out).toContain('customers) COMPREPLY=($(compgen -W "list get timeline')
     expect(out).toContain('integrations) COMPREPLY=($(compgen -W "list capabilities setup status')
     expect(out).not.toContain('integrations) COMPREPLY=($(compgen -W "list capabilities setup add')
@@ -56,6 +59,9 @@ describe("completions command", () => {
     expect(out).toContain(
       'sources.get) COMPREPLY=($(compgen -W "--api-key --json --source-type --source-id"',
     )
+    expect(out).toContain(
+      'customers.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --owner-id --owner-email --has-owner --search"',
+    )
   })
 
   // ── Zsh ─────────────────────────────────────────────────────────────────
@@ -65,12 +71,15 @@ describe("completions command", () => {
     expect(out).toContain("#compdef outlit")
     expect(out).toContain("CURRENT == 2")
     expect(out).toContain("'auth:Manage authentication'")
+    expect(out).toContain("'ws-users:Workspace-user operations'")
+    expect(out).not.toContain("workspace-users")
   })
 
   test("zsh — subcommand dispatch", async () => {
     const out = await captureCompletions("zsh")
     expect(out).toContain("CURRENT == 3")
     expect(out).toContain("'list:List and filter customers'")
+    expect(out).toContain("'list:List and filter internal workspace users'")
     expect(out).toContain("'signup:Create an Outlit account'")
     expect(out).toContain("'setup:Run provider auth or follow-up setup'")
     expect(out).not.toContain("'add:Connect an integration'")
@@ -85,6 +94,9 @@ describe("completions command", () => {
     expect(out).toContain("'--status:Filter by fact status'")
     expect(out).toContain("'--fact-id:Fact ID to fetch'")
     expect(out).toContain("'--source-type:Source type'")
+    expect(out).toContain("'--owner-id:Filter by owner user ID'")
+    expect(out).toContain("'--owner-email:Filter by owner email'")
+    expect(out).toContain("'--has-owner:Only customers with an owner'")
     expect(out).toContain("facts.list)")
     expect(out).toContain("sources.list)")
     expect(out).toContain("sources.get)")
@@ -98,10 +110,16 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd sources list' -l participant")
     expect(out).toContain("-n '__outlit_using_cmd sources get' -l source-type")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
+    expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-id")
+    expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-email")
+    expect(out).toContain("-n '__outlit_using_cmd customers list' -l has-owner")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l trait")
     expect(out).toContain("-n '__outlit_using_cmd auth login' -l key")
     expect(out).toContain("-n '__outlit_using_cmd users list' -l journey-stage")
     expect(out).toContain("-n '__outlit_using_cmd users list' -l trait")
+    expect(out).toContain("-n '__outlit_using_cmd ws-users list' -l role")
+    expect(out).toContain("-n '__outlit_using_cmd ws-users list' -l has-owned-customers")
+    expect(out).not.toContain("__outlit_using_cmd workspace-users")
     expect(out).toContain("-n '__outlit_using_cmd integrations setup' -l force")
     expect(out).not.toContain("__outlit_using_cmd integrations add")
     expect(out).not.toContain("__outlit_using_cmd integrations remove")

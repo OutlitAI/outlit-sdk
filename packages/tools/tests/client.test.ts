@@ -24,11 +24,13 @@ describe("toolsets", () => {
   test("keeps SQL out of the default agent toolset", () => {
     expect(defaultAgentToolNames).toContain("outlit_search_customer_context")
     expect(defaultAgentToolNames).toContain("outlit_get_customer")
+    expect(defaultAgentToolNames).toContain("outlit_list_workspace_users")
     expect(defaultAgentToolNames).toContain("outlit_send_notification")
     expect(defaultAgentToolNames).not.toContain("outlit_query")
     expect(defaultAgentToolNames).not.toContain("outlit_schema")
     expect(sqlToolNames).toEqual(["outlit_schema", "outlit_query"])
     expect(allCustomerToolNames).toContain("outlit_query")
+    expect(allCustomerToolNames).toContain("outlit_list_workspace_users")
     expect(allCustomerToolNames).toContain("outlit_send_notification")
   })
 
@@ -44,6 +46,36 @@ describe("toolsets", () => {
 })
 
 describe("tool contracts", () => {
+  test("exposes workspace users and customer owner filters", () => {
+    const workspaceUsersContract = getCustomerToolContract("outlit_list_workspace_users")
+    const workspaceProperties = workspaceUsersContract.inputSchema.properties as Record<
+      string,
+      { type?: string; enum?: string[] }
+    >
+
+    expect(workspaceProperties.search).toEqual(
+      expect.objectContaining({
+        type: "string",
+      }),
+    )
+    expect(workspaceProperties.hasOwnedCustomers).toEqual(
+      expect.objectContaining({
+        type: "boolean",
+      }),
+    )
+    expect(workspaceProperties.orderBy?.enum).toEqual(["name", "email", "owned_customer_count"])
+
+    const customerContract = getCustomerToolContract("outlit_list_customers")
+    const customerProperties = customerContract.inputSchema.properties as Record<
+      string,
+      { type?: string }
+    >
+
+    expect(customerProperties.ownerId).toEqual(expect.objectContaining({ type: "string" }))
+    expect(customerProperties.ownerEmail).toEqual(expect.objectContaining({ type: "string" }))
+    expect(customerProperties.hasOwner).toEqual(expect.objectContaining({ type: "boolean" }))
+  })
+
   test("exposes fact type and category filters on facts listing", () => {
     const contract = getCustomerToolContract("outlit_list_facts")
     const properties = contract.inputSchema.properties as Record<string, unknown>

@@ -37,6 +37,7 @@ export {
   unsupportedCustomerFactTypes,
   userJourneyStages,
   userListOrderFields,
+  workspaceUserListOrderFields,
 } from "./contracts.js"
 
 export {

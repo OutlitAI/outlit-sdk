@@ -81,6 +81,32 @@ describe("customers list", () => {
     }
   })
 
+  test("passes owner filters when owner flags are set", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: {
+          "owner-id": "user_123",
+          "owner-email": "kevin@nooks.ai",
+          "has-owner": true,
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({
+          ownerId: "user_123",
+          ownerEmail: "kevin@nooks.ai",
+          hasOwner: true,
+        }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("parses --no-activity-in through citty without treating it as a negated boolean", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)

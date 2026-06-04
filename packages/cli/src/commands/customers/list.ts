@@ -87,6 +87,18 @@ export default defineCommand({
       type: "string",
       description: "Filter by MRR below threshold in cents",
     },
+    "owner-id": {
+      type: "string",
+      description: "Filter by internal customer owner user ID",
+    },
+    "owner-email": {
+      type: "string",
+      description: "Filter by internal customer owner email",
+    },
+    "has-owner": {
+      type: "boolean",
+      description: "Filter to customers that have an internal owner",
+    },
     search: {
       type: "string",
       description: "Search by customer name or domain",
@@ -112,6 +124,9 @@ export default defineCommand({
       }
       params.mrrBelow = value
     }
+    if (args["owner-id"]) params.ownerId = args["owner-id"]
+    if (args["owner-email"]) params.ownerEmail = args["owner-email"]
+    if (typeof args["has-owner"] === "boolean") params.hasOwner = args["has-owner"]
     if (args.trait) {
       try {
         const traitFilters = parseTraitFilters(args.trait)
