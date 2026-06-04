@@ -59,6 +59,9 @@ describe("completions command", () => {
     expect(out).toContain(
       'sources.get) COMPREPLY=($(compgen -W "--api-key --json --source-type --source-id"',
     )
+    expect(out).toContain(
+      'customers.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --owner-id --owner-email --has-owner --search"',
+    )
   })
 
   // ── Zsh ─────────────────────────────────────────────────────────────────
@@ -91,6 +94,9 @@ describe("completions command", () => {
     expect(out).toContain("'--status:Filter by fact status'")
     expect(out).toContain("'--fact-id:Fact ID to fetch'")
     expect(out).toContain("'--source-type:Source type'")
+    expect(out).toContain("'--owner-id:Filter by owner user ID'")
+    expect(out).toContain("'--owner-email:Filter by owner email'")
+    expect(out).toContain("'--has-owner:Only customers with an owner'")
     expect(out).toContain("facts.list)")
     expect(out).toContain("sources.list)")
     expect(out).toContain("sources.get)")
@@ -104,6 +110,9 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd sources list' -l participant")
     expect(out).toContain("-n '__outlit_using_cmd sources get' -l source-type")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
+    expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-id")
+    expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-email")
+    expect(out).toContain("-n '__outlit_using_cmd customers list' -l has-owner")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l trait")
     expect(out).toContain("-n '__outlit_using_cmd auth login' -l key")
     expect(out).toContain("-n '__outlit_using_cmd users list' -l journey-stage")
