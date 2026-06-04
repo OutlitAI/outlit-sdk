@@ -919,7 +919,7 @@ export const workspaceUserListOrderFields = ["name", "email", "owned_customer_co
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "f22823a4cf15348c11d7ce5127480b47a655cf1fc13d498f494fc7d2033d40e4" as const
+  "3d90dd80324e763f760e5f57a537cbc5475890b96902eef33da4401660468b2e" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]

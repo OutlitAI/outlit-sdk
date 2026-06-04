@@ -74,6 +74,54 @@ describe("workspace-users list", () => {
     }
   })
 
+  test("forwards explicit false for has-owned-customers", async () => {
+    const { default: listCmd } = await import("../../../src/commands/workspace-users/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: {
+          "has-owned-customers": false,
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_workspace_users",
+        expect.objectContaining({
+          hasOwnedCustomers: false,
+        }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("invalid sort inputs return invalid_input before calling the tool", async () => {
+    const { default: listCmd } = await import("../../../src/commands/workspace-users/list")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await listCmd.run!({
+        args: {
+          "order-by": "last_activity_at",
+          "order-direction": "sideways",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  })
+
   test("auth_required error on createClient failure", async () => {
     const clientModule = await import("../../../src/lib/client")
     const createClientSpy = spyOn(clientModule, "createClient").mockRejectedValue(

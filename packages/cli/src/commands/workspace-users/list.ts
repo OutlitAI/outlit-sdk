@@ -5,6 +5,9 @@ import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { truncate } from "../../lib/format"
+import { outputError } from "../../lib/output"
+
+const orderDirections = ["asc", "desc"] as const
 
 const workspaceUserOrderArgs = {
   "order-by": {
@@ -18,6 +21,16 @@ const workspaceUserOrderArgs = {
     default: "desc",
   },
 } as const
+
+function isWorkspaceUserOrderField(
+  value: unknown,
+): value is (typeof workspaceUserListOrderFields)[number] {
+  return typeof value === "string" && workspaceUserListOrderFields.some((field) => field === value)
+}
+
+function isOrderDirection(value: unknown): value is (typeof orderDirections)[number] {
+  return typeof value === "string" && orderDirections.some((direction) => direction === value)
+}
 
 export default defineCommand({
   meta: {
@@ -60,13 +73,32 @@ export default defineCommand({
   },
   async run({ args }) {
     const json = !!args.json
+
+    if (args["order-by"] && !isWorkspaceUserOrderField(args["order-by"])) {
+      return outputError(
+        {
+          message: `--order-by must be one of: ${workspaceUserListOrderFields.join(", ")}`,
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+    if (args["order-direction"] && !isOrderDirection(args["order-direction"])) {
+      return outputError(
+        { message: "--order-direction must be one of: asc, desc", code: "invalid_input" },
+        json,
+      )
+    }
+
     const client = await getClientOrExit(args["api-key"], json)
 
     const params: Record<string, unknown> = {}
     if (args.search) params.search = args.search
     if (args.role) params.role = args.role
     if (args["manager-email"]) params.managerEmail = args["manager-email"]
-    if (args["has-owned-customers"]) params.hasOwnedCustomers = true
+    if (typeof args["has-owned-customers"] === "boolean") {
+      params.hasOwnedCustomers = args["has-owned-customers"]
+    }
     if (args["order-by"]) params.orderBy = args["order-by"]
     if (args["order-direction"]) params.orderDirection = args["order-direction"]
     applyPagination(params, args, json)
