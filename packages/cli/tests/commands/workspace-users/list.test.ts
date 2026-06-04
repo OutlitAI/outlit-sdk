@@ -38,6 +38,31 @@ describe("workspace-users list", () => {
     mockCallTool.mockClear()
   })
 
+  async function expectInvalidSortArgs(args: Record<string, unknown>) {
+    const { default: listCmd } = await import("../../../src/commands/workspace-users/list")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await listCmd.run!({
+        args: {
+          ...args,
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  }
+
   test("maps list flags to outlit_list_workspace_users params", async () => {
     const { default: listCmd } = await import("../../../src/commands/workspace-users/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
@@ -96,30 +121,15 @@ describe("workspace-users list", () => {
     }
   })
 
-  test("invalid sort inputs return invalid_input before calling the tool", async () => {
-    const { default: listCmd } = await import("../../../src/commands/workspace-users/list")
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+  test("invalid order-by returns invalid_input before calling the tool", async () => {
+    await expectInvalidSortArgs({ "order-by": "last_activity_at" })
+  })
 
-    let thrown: unknown
-    try {
-      await listCmd.run!({
-        args: {
-          "order-by": "last_activity_at",
-          "order-direction": "sideways",
-          json: true,
-        },
-      } as Parameters<NonNullable<typeof listCmd.run>>[0])
-    } catch (e) {
-      thrown = e
-    } finally {
-      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-
-      expectErrorExit(thrown, stderrOutput, "invalid_input")
-      expect(mockCallTool).not.toHaveBeenCalled()
-    }
+  test("invalid order-direction returns invalid_input before calling the tool", async () => {
+    await expectInvalidSortArgs({
+      "order-by": "owned_customer_count",
+      "order-direction": "sideways",
+    })
   })
 
   test("auth_required error on createClient failure", async () => {
