@@ -363,18 +363,20 @@ Track events from server actions:
 import { Outlit } from '@outlit/node'
 
 const outlit = new Outlit({
-  privateKey: process.env.OUTLIT_PRIVATE_KEY!
+  publicKey: process.env.OUTLIT_KEY!
 })
 
 export async function trackServerEvent(userId: string) {
-  await outlit.track({
-    visitorId: userId,
-    event: 'server_action_completed',
+  outlit.track({
+    userId,
+    eventName: 'server_action_completed',
     properties: {
       action: 'data_export',
       timestamp: new Date().toISOString()
     }
   })
+
+  await outlit.flush()
 }
 ```
 
@@ -392,17 +394,19 @@ import { NextResponse } from 'next/server'
 import { Outlit } from '@outlit/node'
 
 const outlit = new Outlit({
-  privateKey: process.env.OUTLIT_PRIVATE_KEY!
+  publicKey: process.env.OUTLIT_KEY!
 })
 
 export async function POST(request: Request) {
   const { userId, amount } = await request.json()
 
-  await outlit.track({
-    visitorId: userId,
-    event: 'checkout_completed',
+  outlit.track({
+    userId,
+    eventName: 'checkout_completed',
     properties: { amount }
   })
+
+  await outlit.flush()
 
   return NextResponse.json({ success: true })
 }
@@ -437,12 +441,12 @@ Set up your environment variables:
 # Public key (used in browser)
 NEXT_PUBLIC_OUTLIT_KEY=pk_your_public_key_here
 
-# Private key (used in server actions/API routes)
-OUTLIT_PRIVATE_KEY=sk_your_private_key_here
+# Server key (used in server actions/API routes)
+OUTLIT_KEY=pk_your_public_key_here
 ```
 
 <Warning>
-  Never expose your private key in client-side code. Only use it in server components, API routes, or server actions.
+  Keep server environment variables out of client-side code. Only use `OUTLIT_KEY` in server components, API routes, or server actions.
 </Warning>
 
 ## TypeScript Support

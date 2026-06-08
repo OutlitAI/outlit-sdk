@@ -493,7 +493,7 @@ function MyComponent() {
 </ParamField>
 
 <ParamField path="customer" type="object">
-  Customer billing methods namespace. Requires `customerId` or `stripeCustomerId`; public calls should use `customerId`:
+  Customer billing methods namespace. Use `customerId` for public billing calls:
   - `customer.trialing(options)` - Mark account as trialing
   - `customer.paid(options)` - Mark account as paid
   - `customer.churned(options)` - Mark account as churned

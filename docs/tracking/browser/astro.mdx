@@ -339,20 +339,22 @@ import type { APIRoute } from 'astro'
 import { Outlit } from '@outlit/node'
 
 const outlit = new Outlit({
-  privateKey: import.meta.env.OUTLIT_PRIVATE_KEY
+  publicKey: import.meta.env.OUTLIT_KEY
 })
 
 export const POST: APIRoute = async ({ request }) => {
   const body = await request.json()
 
-  await outlit.track({
-    visitorId: body.userId,
-    event: 'checkout_completed',
+  outlit.track({
+    userId: body.userId,
+    eventName: 'checkout_completed',
     properties: {
       amount: body.amount,
       plan: body.plan
     }
   })
+
+  await outlit.flush()
 
   return new Response(JSON.stringify({ success: true }), {
     status: 200,
@@ -518,12 +520,12 @@ Configure environment variables:
 # Public key (used in browser)
 PUBLIC_OUTLIT_KEY=pk_your_public_key_here
 
-# Private key (used in API routes)
-OUTLIT_PRIVATE_KEY=sk_your_private_key_here
+# Server key (used in API routes)
+OUTLIT_KEY=pk_your_public_key_here
 ```
 
 <Warning>
-  Never expose your private key in client-side code. Only use it in API routes.
+  Keep server environment variables out of client-side code. Only use `OUTLIT_KEY` in API routes.
 </Warning>
 
 ## TypeScript Support
