@@ -48,7 +48,7 @@ const outlit = new Outlit({
 // Track an event
 outlit.track({
   email: 'user@example.com',
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   eventName: 'subscription_upgraded',
   properties: {
     fromPlan: 'starter',
@@ -104,7 +104,7 @@ Track a custom event for a user, a customer, or both.
 outlit.track({
   email: 'jane@acme.com',
   userId: 'usr_12345', // optional if email provided
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   eventName: 'report_exported',
   properties: {
     reportType: 'sales',
@@ -155,7 +155,7 @@ Update user traits without tracking an event. Customer metadata can be included 
 outlit.identify({
   email: 'jane@acme.com',
   userId: 'usr_12345',
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   customerTraits: {
     plan: 'enterprise',
     seats: 50
@@ -224,7 +224,7 @@ Mark an account as trialing.
 
 ```typescript
 outlit.customer.trialing({
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   properties: { trialEndsAt: '2024-02-15' }
 })
 ```
@@ -235,7 +235,7 @@ Mark an account as paying.
 
 ```typescript
 outlit.customer.paid({
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   properties: { plan: 'pro', amount: 99 }
 })
 ```
@@ -246,7 +246,7 @@ Mark an account as churned.
 
 ```typescript
 outlit.customer.churned({
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   properties: { reason: 'cancelled_by_user' }
 })
 ```
@@ -520,7 +520,7 @@ const outlit = new Outlit(options)
 
 const trackOptions: ServerTrackOptions = {
   email: 'user@test.com',
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   eventName: 'test',
   properties: { key: 'value' }
 }
@@ -537,7 +537,7 @@ outlit.user.activate(stageOptions)
 
 // Account billing options
 const billingOptions: BillingOptions = {
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   properties: { plan: 'pro' }
 }
 
