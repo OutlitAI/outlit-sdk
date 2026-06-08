@@ -1,9 +1,5 @@
 import { readFileSync } from "node:fs"
-import {
-  customerToolContracts,
-  notificationProviderValues,
-  notificationSeverityValues,
-} from "@outlit/tools"
+import { customerToolContracts, notificationSeverityValues } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
@@ -11,14 +7,9 @@ import { getClientOrExit, runTool } from "../lib/api"
 import { errorMessage, outputError } from "../lib/output"
 
 type NotificationSeverity = (typeof notificationSeverityValues)[number]
-type NotificationProvider = (typeof notificationProviderValues)[number]
-type NotificationDestination = {
-  provider: NotificationProvider
-  channelId?: string
-}
 
-const MAX_DESTINATION_COUNT = 10
-const MAX_DESTINATION_CHANNEL_ID_LENGTH = 240
+const MAX_DESTINATION_ID_COUNT = 10
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 function parsePayload(raw: string): unknown {
   try {
@@ -56,40 +47,20 @@ function payloadSizeIsValid(payload: unknown): boolean {
   return typeof serialized === "string" && serialized.length <= 100000
 }
 
-function parseDestinations(raw: string | undefined): NotificationDestination[] | null | undefined {
+function parseDestinationIds(raw: string | undefined): string[] | null | undefined {
   if (raw === undefined) {
     return undefined
   }
 
-  const destinations = raw.split(",").map((entry) => entry.trim())
+  const destinationIds = raw.split(",").map((entry) => entry.trim())
   if (
-    destinations.length > MAX_DESTINATION_COUNT ||
-    destinations.some((entry) => entry.length === 0)
+    destinationIds.length > MAX_DESTINATION_ID_COUNT ||
+    destinationIds.some((entry) => entry.length === 0 || !UUID_PATTERN.test(entry))
   ) {
     return null
   }
 
-  const parsed: NotificationDestination[] = []
-  for (const destination of destinations) {
-    const [providerInput, ...channelParts] = destination.split(":")
-    const provider = providerInput?.trim().toLowerCase()
-    const channelId = channelParts.join(":").trim()
-
-    if (!notificationProviderValues.includes(provider as NotificationProvider)) {
-      return null
-    }
-
-    if (channelId.length > MAX_DESTINATION_CHANNEL_ID_LENGTH) {
-      return null
-    }
-
-    parsed.push({
-      provider: provider as NotificationProvider,
-      ...(channelId.length > 0 ? { channelId } : {}),
-    })
-  }
-
-  return parsed
+  return destinationIds
 }
 
 export default defineCommand({
@@ -99,13 +70,13 @@ export default defineCommand({
       "Send a notification through Outlit to the organization's configured notifier.",
       "",
       "Use --markdown or --markdown-file for the human-readable body; Outlit renders it for the destination platform.",
-      "Add a JSON or raw payload when useful for structured context. When --destination is omitted, Outlit uses the default notifier.",
+      "Add a JSON or raw payload when useful for structured context. When --destination-id is omitted, Outlit uses the default notifier.",
       "",
       "Examples:",
       "  outlit notify --title 'Risk found' --markdown '**Risk found**\\n\\n- Customer: acme.com'",
       "  outlit notify --title 'Risk found' '{\"customer\":\"acme.com\"}'",
       "  outlit notify --title 'Risk found' --payload-file ./payload.json",
-      "  outlit notify --title 'Escalation' --markdown '**Check this account**' --destination slack:C123",
+      "  outlit notify --title 'Escalation' --markdown '**Check this account**' --destination-id 00000000-0000-4000-8000-000000000001",
       "  outlit notify --title 'Escalation' --severity HIGH --message 'Check this account' '{\"customer\":\"acme.com\"}'",
       "",
       AGENT_JSON_HINT,
@@ -152,10 +123,10 @@ export default defineCommand({
       type: "string",
       description: "Optional subject line",
     },
-    destination: {
+    "destination-id": {
       type: "string",
       description:
-        "Optional comma-separated destinations in provider[:channelId] form. Supported provider: slack",
+        "Optional comma-separated notification destination IDs. Omit to use the default notifier.",
     },
   },
   async run({ args }) {
@@ -250,11 +221,11 @@ export default defineCommand({
       severity = normalized
     }
 
-    const destinations = parseDestinations(args.destination)
-    if (destinations === null) {
+    const destinationIds = parseDestinationIds(args["destination-id"])
+    if (destinationIds === null) {
       return outputError(
         {
-          message: `--destination must use provider[:channelId] with provider one of: ${notificationProviderValues.join(", ")}`,
+          message: "--destination-id must be one or more comma-separated UUIDs",
           code: "invalid_input",
         },
         json,
@@ -329,8 +300,8 @@ export default defineCommand({
       params.subject = subject
     }
 
-    if (destinations !== undefined) {
-      params.destinations = destinations
+    if (destinationIds !== undefined) {
+      params.destinationIds = destinationIds
     }
 
     return runTool(client, customerToolContracts.outlit_send_notification.toolName, params, json)

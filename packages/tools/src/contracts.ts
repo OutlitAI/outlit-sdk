@@ -744,35 +744,16 @@ export const customerToolContracts = {
           minLength: 1,
           maxLength: 240,
         },
-        destinations: {
-          description:
-            "Optional explicit notification destinations. Omit to use the default notifier.",
+        destinationIds: {
+          description: "Optional NotificationDestination ids. Omit to use the default notifier.",
           minItems: 1,
           maxItems: 10,
           type: "array",
           items: {
-            type: "object",
-            properties: {
-              provider: {
-                description: "Notification provider",
-                type: "string",
-                enum: ["slack"],
-              },
-              channelId: {
-                description: "Provider-specific destination channel ID",
-                type: "string",
-                minLength: 1,
-                maxLength: 240,
-              },
-              label: {
-                description: "Optional destination label",
-                type: "string",
-                minLength: 1,
-                maxLength: 120,
-              },
-            },
-            required: ["provider"],
-            additionalProperties: false,
+            type: "string",
+            format: "uuid",
+            pattern:
+              "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
           },
         },
       },
@@ -919,7 +900,7 @@ export const workspaceUserListOrderFields = ["name", "email", "owned_customer_co
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "2dde2d1482c1e2c81bfd57e48e2f8d5e32d1a8f482fa8fd062708884833fa07a" as const
+  "c483d23afc5530cdfae07e5e806b092ce0fb73baec919ef7f2b68afd03252844" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]
