@@ -190,7 +190,8 @@ export const load: PageLoad = async ({ params, fetch }) => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      event: 'product_viewed',
+      eventName: 'product_viewed',
+      userId: 'usr_123',
       properties: { productId: params.id }
     })
   })
@@ -208,20 +209,24 @@ Track events from API routes:
 import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 import { Outlit } from '@outlit/node'
-import { OUTLIT_PRIVATE_KEY } from '$env/static/private'
+import { OUTLIT_KEY } from '$env/static/private'
 
 const outlit = new Outlit({
-  privateKey: OUTLIT_PRIVATE_KEY
+  publicKey: OUTLIT_KEY
 })
 
 export const POST: RequestHandler = async ({ request }) => {
-  const { event, properties, visitorId } = await request.json()
+  const { eventName, properties, userId, email, customerId } = await request.json()
 
-  await outlit.track({
-    visitorId,
-    event,
+  outlit.track({
+    eventName,
+    userId,
+    email,
+    customerId,
     properties
   })
+
+  await outlit.flush()
 
   return json({ success: true })
 }
@@ -412,12 +417,12 @@ Configure environment variables:
 # Public key (used in browser)
 PUBLIC_OUTLIT_KEY=pk_your_public_key_here
 
-# Private key (used in server API routes)
-OUTLIT_PRIVATE_KEY=sk_your_private_key_here
+# Server key (used in server API routes)
+OUTLIT_KEY=pk_your_public_key_here
 ```
 
 <Warning>
-  Never expose your private key in client-side code. Only use it in server-side API routes.
+  Keep server environment variables out of client-side code. Only use `OUTLIT_KEY` in server-side API routes.
 </Warning>
 
 ## TypeScript Support
