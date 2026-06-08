@@ -45,7 +45,7 @@ const outlit = new Outlit({
 outlit.user.identify({
   email: 'user@example.com',
   traits: { name: 'John Doe' },
-  customerId: 'cust_123', // The stable account/workspace ID you also use on track()
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   customerTraits: { plan: 'pro' },
 })
 
@@ -57,7 +57,7 @@ outlit.track('button_clicked', {
 
 // Mark billing status on a customer
 outlit.customer.trialing({
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   properties: { plan: 'pro' },
 })
 ```
@@ -74,10 +74,10 @@ init({ publicKey: 'pk_xxx' })
 track('page_viewed', { page: '/home' })
 user().identify({
   email: 'user@example.com',
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
 })
 customer().paid({
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   properties: { plan: 'pro' },
 })
 ```
@@ -119,7 +119,7 @@ const outlit = new Outlit({
 
 // Track server-side events (requires identity)
 outlit.track({
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   eventName: 'api_request',
   properties: {
     endpoint: '/api/users',
@@ -135,13 +135,13 @@ outlit.track({
 outlit.user.identify({
   email: 'user@example.com',
   traits: { plan: 'pro' },
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   customerTraits: { plan: 'pro' },
 })
 
 // Mark customer billing status
 outlit.customer.paid({
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   properties: { plan: 'pro' },
 })
 

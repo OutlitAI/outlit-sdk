@@ -151,7 +151,7 @@ Your system-owned customer, account, or workspace ID. Use this when product usag
 outlit.identify({
   email: 'jane@acme.com',
   userId: 'usr_12345',
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   customerTraits: { plan: 'enterprise' }
 })
 ```
@@ -160,7 +160,7 @@ Server-side `track()` calls can also use `customerId` without a user identity:
 
 ```typescript
 outlit.track({
-  customerId: 'cust_123',
+  customerId: 'cust_123', // Your app's account/workspace/customer ID
   eventName: 'account_synced'
 })
 ```
@@ -280,7 +280,7 @@ When Outlit detects the same person with different identifiers, profiles are mer
 
     // Account/workspace-scoped event
     outlit.track({
-      customerId: 'cust_123',
+      customerId: 'cust_123', // Your app's account/workspace/customer ID
       eventName: 'workspace_synced'
     })
     ```
