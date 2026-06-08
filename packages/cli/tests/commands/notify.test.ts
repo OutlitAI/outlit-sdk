@@ -100,16 +100,17 @@ describe("notify", () => {
     }
   })
 
-  test("sends markdown without a payload and forwards explicit destinations", async () => {
+  test("sends markdown without a payload and forwards explicit destination IDs", async () => {
     const { default: notifyCmd } = await import("../../src/commands/notify")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const destinationId = "00000000-0000-4000-8000-000000000001"
 
     try {
       await notifyCmd.run!({
         args: {
           title: "Risk found",
           markdown: "  **Risk found**\n\n- Customer: Acme  ",
-          destination: "slack:C456",
+          "destination-id": destinationId,
           json: true,
         },
       } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
@@ -119,7 +120,7 @@ describe("notify", () => {
         expect.objectContaining({
           title: "Risk found",
           markdown: "**Risk found**\n\n- Customer: Acme",
-          destinations: [{ provider: "slack", channelId: "C456" }],
+          destinationIds: [destinationId],
         }),
       )
     } finally {
@@ -341,7 +342,7 @@ describe("notify", () => {
     }
   })
 
-  test("invalid destination returns invalid_input", async () => {
+  test("invalid destination ID returns invalid_input", async () => {
     const { default: notifyCmd } = await import("../../src/commands/notify")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -352,7 +353,7 @@ describe("notify", () => {
         args: {
           title: "Risk found",
           markdown: "**Risk found**",
-          destination: "teams:C123",
+          "destination-id": "not-a-uuid",
           json: true,
         },
       } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
@@ -372,6 +373,10 @@ describe("notify", () => {
     const { default: notifyCmd } = await import("../../src/commands/notify")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    const destinationIds = Array.from(
+      { length: 11 },
+      (_, index) => `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+    ).join(",")
 
     let thrown: unknown
     try {
@@ -379,7 +384,7 @@ describe("notify", () => {
         args: {
           title: "Risk found",
           markdown: "**Risk found**",
-          destination: Array.from({ length: 11 }, (_, index) => `slack:C${index}`).join(","),
+          "destination-id": destinationIds,
           json: true,
         },
       } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
@@ -395,7 +400,7 @@ describe("notify", () => {
     }
   })
 
-  test("destination channelId over 240 characters returns invalid_input", async () => {
+  test("mixed valid and invalid destination IDs return invalid_input", async () => {
     const { default: notifyCmd } = await import("../../src/commands/notify")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -406,7 +411,7 @@ describe("notify", () => {
         args: {
           title: "Risk found",
           markdown: "**Risk found**",
-          destination: `slack:${"C".repeat(241)}`,
+          "destination-id": "00000000-0000-4000-8000-000000000001,not-a-uuid",
           json: true,
         },
       } as Parameters<NonNullable<typeof notifyCmd.run>>[0])
