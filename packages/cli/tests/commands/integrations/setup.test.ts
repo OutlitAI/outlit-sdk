@@ -33,7 +33,7 @@ function setupProgressFor(provider: string, step: unknown) {
     }
   }
 
-  if (provider === "hubspot" || step === "crm-mapping") {
+  if (provider === "hubspot" && step === "crm-mapping") {
     return {
       currentState: "configuration_required",
       blockingStep: {
