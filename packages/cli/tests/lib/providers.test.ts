@@ -9,12 +9,13 @@ describe("PROVIDER_NAMES", () => {
 
   test("contains public provider names and common aliases for help/completions", () => {
     expect(PROVIDER_NAMES).toContain("gmail")
+    expect(PROVIDER_NAMES).toContain("gong")
     expect(PROVIDER_NAMES).toContain("google-mail")
+    expect(PROVIDER_NAMES).toContain("mixpanel")
     expect(PROVIDER_NAMES).toContain("stripe")
     expect(PROVIDER_NAMES).toContain("pylon")
     expect(PROVIDER_NAMES).toContain("salesforce")
     expect(PROVIDER_NAMES.every((provider) => !provider.endsWith("-api-key"))).toBe(true)
-    expect(PROVIDER_NAMES).not.toContain("gong")
   })
 })
 
