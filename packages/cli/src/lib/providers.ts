@@ -9,9 +9,9 @@ export type ProviderCategory =
   | "auth"
   | "data"
 
-export type ProviderAuthType = "api_key" | "oauth"
+export type ProviderAuthType = "api_key" | "basic_auth" | "oauth"
 export type ProviderSetupMode = "direct_api_key" | "browser_auth" | "manual"
-export type ProviderCredentialType = "api_key" | "api_token" | "oauth"
+export type ProviderCredentialType = "api_key" | "api_token" | "basic_auth" | "oauth"
 
 export interface ConfigField {
   key: string
@@ -56,8 +56,10 @@ export const PROVIDER_NAMES = [
   "gmail",
   "google-calendar",
   "google-mail",
+  "gong",
   "granola",
   "hubspot",
+  "mixpanel",
   "posthog",
   "pylon",
   "salesforce",

@@ -13,6 +13,82 @@ let nextConnectResponse: Record<string, unknown> | null = null
 let nextConnectStatusResponse: Record<string, unknown> = { status: "connected" }
 let nextConnectedIntegrations: Array<Record<string, unknown>> = []
 
+function setupProgressFor(provider: string, step: unknown) {
+  if (provider === "gong") {
+    return {
+      currentState: "blocked",
+      blockingStep: {
+        id: "gong-oauth-refresh",
+        provider,
+        label: "Refresh Gong OAuth connection",
+        apiStep: null,
+        required: true,
+      },
+      nextAction: {
+        id: "refresh-gong-oauth",
+        provider,
+        label: "Refresh Gong connection",
+        command: "outlit integrations setup gong --force --json",
+      },
+    }
+  }
+
+  if (provider === "hubspot" || step === "crm-mapping") {
+    return {
+      currentState: "configuration_required",
+      blockingStep: {
+        id: "crm-mapping",
+        provider,
+        label: "Configure CRM pipeline and stage mappings",
+        apiStep: "mappings",
+        required: true,
+      },
+      nextAction: {
+        id: "configure-crm-mapping",
+        provider,
+        label: "Configure CRM mappings",
+        command: `outlit integrations setup ${provider} mappings --json`,
+      },
+    }
+  }
+
+  if (provider === "mixpanel") {
+    return {
+      currentState: "configuration_required",
+      blockingStep: {
+        id: "mapping",
+        provider,
+        label: "Confirm Mixpanel account mapping",
+        apiStep: "mapping",
+        required: true,
+      },
+      nextAction: {
+        id: "configure-mixpanel-mapping",
+        provider,
+        label: "Configure Mixpanel mapping",
+        command: "outlit integrations setup mixpanel mapping --json",
+      },
+    }
+  }
+
+  return {
+    currentState: "manual_setup_required",
+    blockingStep: {
+      id: "webhook-setup",
+      provider,
+      label: "Configure realtime webhook",
+      apiStep: "webhooks",
+      required: true,
+    },
+    nextAction: {
+      id: "configure-webhook",
+      provider,
+      label: "Configure webhook",
+      command: `outlit integrations setup ${provider} webhooks --json`,
+    },
+  }
+}
+
 const mockCallTool = mock(async (toolName: string, params: Record<string, unknown>) => {
   if (toolName === "outlit_integration_capabilities") {
     const provider = params.provider
@@ -26,7 +102,90 @@ const mockCallTool = mock(async (toolName: string, params: Record<string, unknow
           credentialType: "api_key",
           connectSupported: true,
           requiredFields: [{ key: "apiKey", label: "API Key", secret: true }],
-          postConnectSteps: [],
+          postConnectSteps: [
+            {
+              id: "webhook-setup",
+              label: "Configure Stripe realtime webhooks",
+              required: true,
+              supported: true,
+              command: "outlit integrations setup stripe webhooks",
+            },
+          ],
+        },
+      }
+    }
+    if (provider === "posthog") {
+      return {
+        provider: {
+          cliName: "posthog",
+          providerId: "posthog",
+          authType: "api_key",
+          setupMode: "direct_api_key",
+          credentialType: "api_key",
+          connectSupported: true,
+          requiredFields: [
+            { key: "apiKey", label: "API Key", secret: true },
+            { key: "region", label: "Region (us or eu)" },
+            { key: "projectId", label: "Project ID" },
+          ],
+          postConnectSteps: [
+            {
+              id: "webhook-setup",
+              label: "Configure PostHog Data Pipeline webhooks",
+              required: true,
+              supported: true,
+              command: "outlit integrations setup posthog webhooks",
+            },
+          ],
+        },
+      }
+    }
+    if (provider === "mixpanel") {
+      return {
+        provider: {
+          cliName: "mixpanel",
+          providerId: "mixpanel",
+          authType: "basic_auth",
+          setupMode: "direct_api_key",
+          credentialType: "basic_auth",
+          connectSupported: true,
+          requiredFields: [
+            { key: "username", label: "Service Account Username", secret: true },
+            { key: "secret", label: "Service Account Secret", secret: true },
+            { key: "projectId", label: "Project ID" },
+            { key: "region", label: "Region (us, eu, or in)" },
+          ],
+          postConnectSteps: [
+            {
+              id: "mapping",
+              label: "Confirm Mixpanel account mapping",
+              required: true,
+              supported: true,
+              command: "outlit integrations setup mixpanel mapping",
+            },
+          ],
+        },
+      }
+    }
+    if (provider === "gong") {
+      return {
+        provider: {
+          cliName: "gong",
+          providerId: "gong",
+          authType: "oauth",
+          setupMode: "browser_auth",
+          credentialType: "oauth",
+          connectSupported: true,
+          requiredFields: [],
+          postConnectSteps: [
+            {
+              id: "webhook-setup",
+              label: "Configure Gong Automation Rule webhooks",
+              required: true,
+              supported: true,
+              command: "outlit integrations setup gong webhooks",
+            },
+          ],
         },
       }
     }
@@ -89,16 +248,21 @@ const mockCallTool = mock(async (toolName: string, params: Record<string, unknow
   }
 
   if (toolName === "outlit_integration_setup_step") {
+    const setupProgress = setupProgressFor(String(params.provider), params.step)
     return {
-      status: "manual_setup_required",
+      status:
+        setupProgress.currentState === "configuration_required"
+          ? "config_required"
+          : "manual_setup_required",
       provider: params.provider,
-      step: params.step === "crm-mapping" ? "crm-mapping" : "webhook-setup",
+      step: params.step,
       connectionId: `${params.provider}-org_123`,
       setup: {
         mode: "manual",
         webhookUrl: `https://app.outlit.ai/api/webhooks/${params.provider}`,
       },
       nextActions: [`outlit integrations status ${params.provider} --json`],
+      setupProgress,
     }
   }
 
@@ -485,6 +649,77 @@ describe("integrations setup", () => {
       }),
     )
     expect(parsed.nextActions).toContain("outlit integrations status pylon --json")
+  })
+
+  test("preserves Core setup progress for representative follow-up states", async () => {
+    const cases = [
+      {
+        provider: "hubspot",
+        step: "mappings",
+        currentState: "configuration_required",
+        blockingStepId: "crm-mapping",
+        nextActionId: "configure-crm-mapping",
+      },
+      {
+        provider: "mixpanel",
+        step: "mapping",
+        currentState: "configuration_required",
+        blockingStepId: "mapping",
+        nextActionId: "configure-mixpanel-mapping",
+      },
+      {
+        provider: "stripe",
+        step: "webhooks",
+        currentState: "manual_setup_required",
+        blockingStepId: "webhook-setup",
+        nextActionId: "configure-webhook",
+      },
+      {
+        provider: "posthog",
+        step: "webhooks",
+        currentState: "manual_setup_required",
+        blockingStepId: "webhook-setup",
+        nextActionId: "configure-webhook",
+      },
+      {
+        provider: "gong",
+        step: "webhooks",
+        currentState: "blocked",
+        blockingStepId: "gong-oauth-refresh",
+        nextActionId: "refresh-gong-oauth",
+      },
+    ] as const
+
+    const { default: setupCmd } = await import("../../../src/commands/integrations/setup")
+
+    for (const testCase of cases) {
+      const parsed = await captureStdout<{
+        setupProgress: {
+          currentState: string
+          blockingStep: { id: string; provider: string }
+          nextAction: { id: string; provider: string; command: string }
+        }
+      }>(() =>
+        setupCmd.run!({
+          args: { provider: testCase.provider, step: testCase.step, json: true },
+        } as Parameters<NonNullable<typeof setupCmd.run>>[0]),
+      )
+
+      expect(parsed.setupProgress).toEqual(
+        expect.objectContaining({
+          currentState: testCase.currentState,
+          blockingStep: expect.objectContaining({
+            id: testCase.blockingStepId,
+            provider: testCase.provider,
+          }),
+          nextAction: expect.objectContaining({
+            id: testCase.nextActionId,
+            provider: testCase.provider,
+            command: expect.stringContaining(testCase.provider),
+          }),
+        }),
+      )
+    }
   })
 
   test("passes follow-up setup config through to Core", async () => {
