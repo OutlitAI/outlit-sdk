@@ -442,7 +442,7 @@ Track activation after the user completes your product milestone:
   import outlit from '@outlit/browser'
 
   document.getElementById('complete-onboarding')?.addEventListener('click', () => {
-    outlit.user.activate({ flow: 'onboarding', step: 'completed' })
+    outlit.user().activate({ flow: 'onboarding', step: 'completed' })
   })
 </script>
 ```

@@ -284,7 +284,7 @@ Track activation after the user completes your product milestone:
 
   onMount(() => {
     // Track activation after onboarding
-    outlit.user.activate({ flow: 'onboarding', step: 'completed' })
+    outlit.user().activate({ flow: 'onboarding', step: 'completed' })
   })
 
   function handleEngagementMilestone() {
