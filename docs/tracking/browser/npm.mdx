@@ -227,12 +227,12 @@ outlit.clearUser()
 
 Mark the current user as activated after they complete your product's activation milestone. For immediate delivery, identify first via `setUser()` or `identify()`.
 
-#### `outlit.user.activate(properties?)`
+#### `outlit.user().activate(properties?)`
 
 Mark the current user as activated. Typically called after a user completes onboarding or a key activation milestone.
 
 ```typescript
-outlit.user.activate({ flow: 'onboarding', step: 'completed' })
+outlit.user().activate({ flow: 'onboarding', step: 'completed' })
 ```
 
 Use `track()` for product activity. Outlit handles engagement and inactivity automatically; see [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity).

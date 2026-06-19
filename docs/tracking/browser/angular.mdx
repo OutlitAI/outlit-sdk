@@ -97,7 +97,7 @@ export class OutlitService {
   }
 
   activate(properties?: Record<string, any>): void {
-    outlit.user.activate(properties)
+    outlit.user().activate(properties)
   }
 
   getVisitorId(): string | null {
