@@ -67,11 +67,18 @@ Outlit's remote MCP endpoint uses OAuth-based authentication. In practice that m
 |------|-------------|----------------|
 | `outlit_list_customers` | Filter customers by billing status, activity recency, revenue, and exact trait values | "Show me paying enterprise customers with `segment=enterprise` who haven't been active in 30 days" |
 | `outlit_list_users` | Filter users by journey stage, activity, customer, and exact trait values | "Find all signed-up users at Acme Corp with `role=admin` who went inactive this week" |
+| `outlit_list_workspace_users` | Browse internal workspace users such as CSMs, managers, account owners, and admins | "List workspace users who own customers in the enterprise segment" |
 | `outlit_get_customer` | Get a complete customer profile with users, revenue, timeline, and metrics | "Get the full profile for acme.com including their users and revenue" |
 | `outlit_get_timeline` | Get the activity timeline for a customer, filtered by channel and event type | "Show me Acme Corp's email and Slack activity from the last 7 days" |
-| `outlit_search_customer_context` | Search across customer facts, emails, calls, calendar events, support tickets, and CRM opportunities using natural language. Returns grouped artifact-level matches for `source` and `fact` results, with `sourceTypes` and time-range filters | "What pricing concerns does Acme have?" |
 | `outlit_list_facts` | Retrieve structured customer facts with status, source type, customer-memory fact type, public category, occurrence time filters, pagination, and source provenance (`sourceMetadata` includes `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink`) | "Show me active churn-risk facts for acme.com from calls last quarter" |
 | `outlit_get_fact` | Retrieve one exact fact by ID, optionally expanding best-effort related data like evidence | "Get fact_123 with evidence" |
 | `outlit_get_source` | Retrieve one exact source record by generic `sourceType` and `sourceId` | "Open the support ticket source for ticket_456" |
+| `outlit_list_sources` | List concrete source records such as calls, emails, calendar events, support tickets, and opportunities | "List Acme's support tickets and calls from January" |
+| `outlit_search_customer_context` | Search across customer facts, emails, calls, calendar events, support tickets, and CRM opportunities using natural language. Returns grouped artifact-level matches for `source` and `fact` results, with `sourceTypes` and time-range filters | "What pricing concerns does Acme have?" |
 | `outlit_query` | Run read-only SQL queries against your customer data | "Which channels lead to the most revenue?" |
 | `outlit_schema` | Get view schemas to help write accurate SQL queries | "Show me the available analytics views" |
+| `outlit_send_notification` | Send a notification through the organization's configured notifier; Slack is the default notifier | "Post the renewal-risk summary to the default Slack notifier" |
+
+<Note>
+  `outlit_send_notification` is an action tool. Use it only when the user explicitly asks you to send, post, or notify a result.
+</Note>
