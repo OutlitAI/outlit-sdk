@@ -80,5 +80,5 @@ Outlit's remote MCP endpoint uses OAuth-based authentication. In practice that m
 | `outlit_send_notification` | Send a notification through the organization's configured notifier; Slack is the default notifier | "Post the renewal-risk summary to the default Slack notifier" |
 
 <Note>
-  `outlit_send_notification` is an action tool. Use it only when the user explicitly asks you to send, post, or notify a result.
+  `outlit_send_notification` is an action tool for deliberate send, post, or notify workflows. It should not be used for passive analysis or previewing results.
 </Note>
