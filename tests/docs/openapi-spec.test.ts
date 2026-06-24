@@ -99,6 +99,28 @@ describe("docs OpenAPI spec", () => {
     })
   })
 
+  test("bounds integration list responses to the public provider set", () => {
+    const spec = readJson<{
+      components?: {
+        schemas?: {
+          ProviderId?: { enum?: readonly string[] }
+        }
+      }
+      paths?: Record<string, any>
+    }>("docs/openapi.json")
+    const providerCount = spec.components?.schemas?.ProviderId?.enum?.length
+    const integrationItems =
+      spec.paths?.["/api/integrations"]?.get?.responses?.["200"]?.content?.["application/json"]
+        ?.schema?.properties?.items
+
+    expect(providerCount).toBeGreaterThan(0)
+    expect(integrationItems).toMatchObject({
+      type: "array",
+      maxItems: providerCount,
+      items: { $ref: "#/components/schemas/Integration" },
+    })
+  })
+
   test("keeps tool gateway enum aligned with @outlit/tools", () => {
     const spec = readJson<{
       components?: {

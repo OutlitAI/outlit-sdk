@@ -169,6 +169,7 @@
                   "properties": {
                     "items": {
                       "type": "array",
+                      "maxItems": 12,
                       "items": {
                         "$ref": "#/components/schemas/Integration"
                       }
