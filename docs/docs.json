@@ -18,7 +18,7 @@
   },
   "favicon": "/favicon.svg",
   "contextual": {
-    "options": ["copy", "chatgpt", "claude"]
+    "options": ["copy", "download-spec", "chatgpt", "claude"]
   },
   "settings": {
     "customScripts": ["/outlit.js"]
@@ -82,6 +82,7 @@
       },
       {
         "tab": "API Reference",
+        "openapi": "openapi.json",
         "groups": [
           {
             "group": "Overview",

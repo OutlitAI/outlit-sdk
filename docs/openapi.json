@@ -1,0 +1,1501 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Outlit API",
+    "summary": "Public Outlit Platform and Ingest APIs.",
+    "description": "Canonical OpenAPI specification for the public Outlit API surfaces documented at docs.outlit.ai.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://app.outlit.ai"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Platform API",
+      "description": "Authenticated API key routes for customer intelligence tools and integration management."
+    },
+    {
+      "name": "Ingest API",
+      "description": "Public-key event ingestion routes used by Outlit SDKs."
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/validate-api-key": {
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Validate API key",
+        "description": "Verify that the API key in the Authorization header can authenticate Platform API requests.",
+        "operationId": "validateApiKey",
+        "responses": {
+          "200": {
+            "description": "The API key is valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidateApiKeySuccess"
+                },
+                "example": {
+                  "valid": true,
+                  "organizationId": "org_123",
+                  "createdById": "user_123"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/tools/call": {
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Call customer intelligence tool",
+        "description": "Call a public customer intelligence tool through the shared Outlit tool gateway.",
+        "operationId": "callTool",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolCallRequest"
+              },
+              "example": {
+                "tool": "outlit_search_customer_context",
+                "input": {
+                  "customer": "acme.com",
+                  "query": "What renewal concerns came up recently?",
+                  "topK": 5
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tool-specific JSON result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON, unknown tool name, or invalid tool input.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid tool input",
+                  "details": [
+                    {
+                      "path": ["limit"],
+                      "message": "Too big: expected number to be <=1000"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PlanLimit"
+          },
+          "429": {
+            "$ref": "#/components/responses/PlanLimit"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/integrations": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "List integrations",
+        "description": "List available integrations and current connection status for the authenticated organization.",
+        "operationId": "listIntegrations",
+        "parameters": [
+          {
+            "name": "connectedOnly",
+            "in": "query",
+            "description": "When true, only returns currently connected integrations.",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Integration list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "maxItems": 12,
+                      "items": {
+                        "$ref": "#/components/schemas/Integration"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/integrations/capabilities": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get integration setup capabilities",
+        "description": "Inspect setup mode, required credential fields, and follow-up steps for one provider or all providers.",
+        "operationId": "getIntegrationCapabilities",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "query",
+            "description": "Optional public provider ID or CLI alias. When omitted, returns all provider capabilities.",
+            "schema": {
+              "$ref": "#/components/schemas/ProviderId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider capability metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationCapabilitiesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/integrations/setup-step": {
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Run provider setup step",
+        "description": "Run a supported follow-up setup step for a connected provider, such as CRM mappings or webhook setup.",
+        "operationId": "runIntegrationSetupStep",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationSetupStepRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Step-specific setup response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/integrations/connect": {
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Connect integration",
+        "description": "Connect a provider with direct credentials or create a browser-auth connection session.",
+        "operationId": "connectIntegration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationConnectRequest"
+              },
+              "example": {
+                "provider": "posthog",
+                "config": {
+                  "apiKey": "phx_...",
+                  "region": "us",
+                  "projectId": "12345"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Direct credential connection or browser session response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/IntegrationDirectConnectionResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/IntegrationBrowserSessionResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/PlanConnectionLimit"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/integrations/connect/status": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Poll connection status",
+        "description": "Poll the state of a browser-auth integration connection session.",
+        "operationId": "getIntegrationConnectionStatus",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "query",
+            "required": true,
+            "description": "Session ID returned by POST /api/integrations/connect.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current connection session status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationConnectionStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/integrations/disconnect": {
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Disconnect integration",
+        "description": "Disconnect a currently connected provider for the authenticated organization.",
+        "operationId": "disconnectIntegration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationDisconnectRequest"
+              },
+              "example": {
+                "provider": "stripe"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Integration disconnected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationDisconnectResponse"
+                },
+                "example": {
+                  "success": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "The provider is valid but no active connection exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationDisconnectNotConnectedResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Integration is not connected"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/integrations/sync-status": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get integration sync status",
+        "description": "Inspect the connection and model sync status for one public provider.",
+        "operationId": "getIntegrationSyncStatus",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "query",
+            "required": true,
+            "description": "Public provider ID from the provider table.",
+            "schema": {
+              "$ref": "#/components/schemas/ProviderId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider sync status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationSyncStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/i/v1/{publicKey}/events": {
+      "post": {
+        "tags": ["Ingest API"],
+        "summary": "Ingest events",
+        "description": "Send tracking events to Outlit. The public key in the URL path identifies the workspace; no secret bearer token is required for this endpoint.",
+        "operationId": "ingestEvents",
+        "security": [],
+        "parameters": [
+          {
+            "name": "publicKey",
+            "in": "path",
+            "required": true,
+            "description": "Your organization's public key. Starts with pk_.",
+            "schema": {
+              "type": "string",
+              "pattern": "^pk_"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestEventsRequest"
+              },
+              "example": {
+                "visitorId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                "source": "client",
+                "events": [
+                  {
+                    "type": "pageview",
+                    "url": "https://example.com/pricing",
+                    "path": "/pricing",
+                    "title": "Pricing - Example",
+                    "timestamp": 1699999999999
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Events accepted.",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestEventsSuccess"
+                },
+                "example": {
+                  "success": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body or event payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestEventsError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invalid public key or unauthorized domain.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestEventsError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestEventsError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestEventsError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Outlit API key using the Bearer ok_... format."
+      }
+    },
+    "headers": {
+      "RateLimitLimit": {
+        "description": "Maximum requests allowed in the current window.",
+        "schema": {
+          "type": "integer",
+          "example": 100
+        }
+      },
+      "RateLimitRemaining": {
+        "description": "Requests remaining in the current window.",
+        "schema": {
+          "type": "integer",
+          "example": 95
+        }
+      },
+      "RateLimitReset": {
+        "description": "Unix timestamp when the current rate limit window resets.",
+        "schema": {
+          "type": "integer",
+          "example": 1699999999
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request body or parameters.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "error": "Invalid request"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Invalid or missing API key.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "error": "Invalid credentials"
+            }
+          }
+        }
+      },
+      "PlanLimit": {
+        "description": "Plan API-call limit reached.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PlanLimitError"
+            }
+          }
+        }
+      },
+      "PlanConnectionLimit": {
+        "description": "Plan integration connection limit reached.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/PlanConnectionLimitError"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponse"
+            },
+            "example": {
+              "error": "Internal server error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ValidateApiKeySuccess": {
+        "type": "object",
+        "required": ["valid", "organizationId"],
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "const": true
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "createdById": {
+            "type": ["string", "null"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "ToolCallRequest": {
+        "type": "object",
+        "required": ["tool"],
+        "properties": {
+          "tool": {
+            "type": "string",
+            "description": "Customer intelligence tool name from @outlit/tools.",
+            "enum": [
+              "outlit_list_customers",
+              "outlit_list_users",
+              "outlit_list_workspace_users",
+              "outlit_get_customer",
+              "outlit_get_timeline",
+              "outlit_list_facts",
+              "outlit_get_fact",
+              "outlit_get_source",
+              "outlit_list_sources",
+              "outlit_search_customer_context",
+              "outlit_query",
+              "outlit_schema",
+              "outlit_send_notification"
+            ]
+          },
+          "input": {
+            "type": "object",
+            "description": "Tool-specific input object validated against the shared @outlit/tools contract.",
+            "additionalProperties": true,
+            "default": {}
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProviderId": {
+        "type": "string",
+        "description": "Public integration provider ID.",
+        "enum": [
+          "hubspot",
+          "attio",
+          "slack",
+          "fireflies",
+          "granola",
+          "google-calendar",
+          "google-mail",
+          "posthog",
+          "stripe",
+          "supabase",
+          "clerk",
+          "pylon"
+        ]
+      },
+      "Integration": {
+        "type": "object",
+        "required": ["id", "name", "category", "status"],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ProviderId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "examples": ["billing", "crm", "analytics"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["connected", "not_connected"]
+          },
+          "connectionId": {
+            "type": ["string", "null"]
+          },
+          "lastDataReceivedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "syncStatus": {
+            "type": ["string", "null"],
+            "examples": ["SUCCESS"]
+          },
+          "errorMessage": {
+            "type": ["string", "null"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "IntegrationCapabilitiesResponse": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ProviderCapabilityEnvelope"
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ProviderCapability"
+            }
+          }
+        ]
+      },
+      "ProviderCapabilityEnvelope": {
+        "type": "object",
+        "required": ["provider"],
+        "properties": {
+          "provider": {
+            "$ref": "#/components/schemas/ProviderCapability"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProviderCapability": {
+        "type": "object",
+        "required": ["cliName", "providerId", "setupMode"],
+        "properties": {
+          "cliName": {
+            "type": "string"
+          },
+          "providerId": {
+            "$ref": "#/components/schemas/ProviderId"
+          },
+          "setupMode": {
+            "type": "string",
+            "examples": ["direct_api_key", "browser_session"]
+          },
+          "credentialType": {
+            "type": ["string", "null"],
+            "examples": ["api_token"]
+          },
+          "requiredFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderCredentialField"
+            }
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "postConnectSteps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProviderPostConnectStep"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "ProviderCredentialField": {
+        "type": "object",
+        "required": ["key", "label"],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true
+      },
+      "ProviderPostConnectStep": {
+        "type": "object",
+        "required": ["id", "required", "supported"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "examples": ["webhook-setup", "mappings"]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "supported": {
+            "type": "boolean"
+          },
+          "command": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "IntegrationSetupStepRequest": {
+        "type": "object",
+        "required": ["provider", "step"],
+        "properties": {
+          "provider": {
+            "$ref": "#/components/schemas/ProviderId"
+          },
+          "step": {
+            "type": "string",
+            "minLength": 1,
+            "examples": ["mappings", "webhooks"]
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "IntegrationConnectRequest": {
+        "type": "object",
+        "required": ["provider"],
+        "properties": {
+          "provider": {
+            "$ref": "#/components/schemas/ProviderId"
+          },
+          "config": {
+            "type": "object",
+            "description": "Direct credential config. Omit to create a browser-auth connection session.",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "IntegrationDisconnectRequest": {
+        "type": "object",
+        "required": ["provider"],
+        "properties": {
+          "provider": {
+            "$ref": "#/components/schemas/ProviderId"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IntegrationDirectConnectionResponse": {
+        "type": "object",
+        "required": ["connected", "connectionId", "alreadyConnected"],
+        "properties": {
+          "connected": {
+            "type": "boolean"
+          },
+          "connectionId": {
+            "type": "string"
+          },
+          "alreadyConnected": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IntegrationDisconnectResponse": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "IntegrationDisconnectNotConnectedResponse": {
+        "type": "object",
+        "required": ["success", "message"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": false
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IntegrationBrowserSessionResponse": {
+        "type": "object",
+        "required": ["sessionId", "connectUrl", "alreadyConnected"],
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "connectUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "alreadyConnected": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IntegrationConnectionStatusResponse": {
+        "type": "object",
+        "required": ["status", "provider"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["pending", "connected", "failed", "expired"]
+          },
+          "provider": {
+            "$ref": "#/components/schemas/ProviderId"
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IntegrationSyncStatusResponse": {
+        "type": "object",
+        "required": ["provider", "name", "category", "status", "syncs"],
+        "properties": {
+          "provider": {
+            "$ref": "#/components/schemas/ProviderId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["connected", "not_connected"]
+          },
+          "syncs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationSync"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "IntegrationSync": {
+        "type": "object",
+        "required": ["model", "status"],
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "examples": ["SUCCESS", "FAILED", "PENDING"]
+          },
+          "lastSyncedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "errorMessage": {
+            "type": ["string", "null"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "IngestEventsRequest": {
+        "type": "object",
+        "required": ["events"],
+        "properties": {
+          "visitorId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Browser visitor identifier. Required for client tracking."
+          },
+          "source": {
+            "type": "string",
+            "enum": ["client", "server", "integration"],
+            "default": "client"
+          },
+          "userIdentity": {
+            "$ref": "#/components/schemas/UserIdentity"
+          },
+          "customerIdentity": {
+            "$ref": "#/components/schemas/CustomerIdentity"
+          },
+          "events": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/IngestEvent"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserIdentity": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "traits": {
+            "$ref": "#/components/schemas/JsonObject"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerIdentity": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string"
+          },
+          "customerTraits": {
+            "$ref": "#/components/schemas/JsonObject"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IngestEvent": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/PageviewEvent"
+          },
+          {
+            "$ref": "#/components/schemas/CustomEvent"
+          },
+          {
+            "$ref": "#/components/schemas/FormEvent"
+          },
+          {
+            "$ref": "#/components/schemas/IdentifyEvent"
+          },
+          {
+            "$ref": "#/components/schemas/EngagementEvent"
+          },
+          {
+            "$ref": "#/components/schemas/CalendarEvent"
+          },
+          {
+            "$ref": "#/components/schemas/StageEvent"
+          },
+          {
+            "$ref": "#/components/schemas/BillingEvent"
+          }
+        ]
+      },
+      "BaseEventFields": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "number",
+            "description": "Unix timestamp in milliseconds."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "path": {
+            "type": "string"
+          },
+          "referrer": {
+            "type": "string"
+          },
+          "utm": {
+            "$ref": "#/components/schemas/UtmParameters"
+          }
+        }
+      },
+      "PageviewEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseEventFields"
+          },
+          {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": {
+                "const": "pageview"
+              },
+              "title": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "CustomEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseEventFields"
+          },
+          {
+            "type": "object",
+            "required": ["type", "eventName"],
+            "properties": {
+              "type": {
+                "const": "custom"
+              },
+              "eventName": {
+                "type": "string"
+              },
+              "properties": {
+                "$ref": "#/components/schemas/JsonObject"
+              }
+            }
+          }
+        ]
+      },
+      "FormEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseEventFields"
+          },
+          {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": {
+                "const": "form"
+              },
+              "formId": {
+                "type": "string"
+              },
+              "formFields": {
+                "$ref": "#/components/schemas/JsonObject"
+              }
+            }
+          }
+        ]
+      },
+      "IdentifyEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseEventFields"
+          },
+          {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": {
+                "const": "identify"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "userId": {
+                "type": "string"
+              },
+              "customerId": {
+                "type": "string"
+              },
+              "traits": {
+                "$ref": "#/components/schemas/JsonObject"
+              },
+              "customerTraits": {
+                "$ref": "#/components/schemas/JsonObject"
+              }
+            }
+          }
+        ]
+      },
+      "EngagementEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseEventFields"
+          },
+          {
+            "type": "object",
+            "required": ["type", "activeTimeMs", "totalTimeMs", "sessionId"],
+            "properties": {
+              "type": {
+                "const": "engagement"
+              },
+              "activeTimeMs": {
+                "type": "number",
+                "minimum": 0
+              },
+              "totalTimeMs": {
+                "type": "number",
+                "minimum": 0
+              },
+              "sessionId": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        ]
+      },
+      "CalendarEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseEventFields"
+          },
+          {
+            "type": "object",
+            "required": ["type", "provider"],
+            "properties": {
+              "type": {
+                "const": "calendar"
+              },
+              "provider": {
+                "type": "string",
+                "enum": ["cal.com", "calendly", "unknown"]
+              },
+              "eventType": {
+                "type": "string"
+              },
+              "startTime": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "endTime": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "duration": {
+                "type": "number"
+              },
+              "isRecurring": {
+                "type": "boolean"
+              },
+              "inviteeEmail": {
+                "type": "string",
+                "format": "email"
+              },
+              "inviteeName": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "StageEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseEventFields"
+          },
+          {
+            "type": "object",
+            "required": ["type", "stage"],
+            "properties": {
+              "type": {
+                "const": "stage"
+              },
+              "stage": {
+                "type": "string",
+                "enum": ["activated", "engaged", "inactive"]
+              },
+              "properties": {
+                "$ref": "#/components/schemas/JsonObject"
+              }
+            }
+          }
+        ]
+      },
+      "BillingEvent": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseEventFields"
+          },
+          {
+            "type": "object",
+            "required": ["type", "status"],
+            "properties": {
+              "type": {
+                "const": "billing"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["trialing", "paid", "churned"]
+              },
+              "customerId": {
+                "type": "string"
+              },
+              "stripeCustomerId": {
+                "type": "string"
+              },
+              "properties": {
+                "$ref": "#/components/schemas/JsonObject"
+              }
+            }
+          }
+        ]
+      },
+      "UtmParameters": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "medium": {
+            "type": "string"
+          },
+          "campaign": {
+            "type": "string"
+          },
+          "term": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "JsonObject": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "IngestEventsSuccess": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "IngestEventsError": {
+        "type": "object",
+        "required": ["success", "message"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": false
+          },
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "ValidationIssue": {
+        "type": "object",
+        "required": ["path", "message"],
+        "properties": {
+          "path": {
+            "type": "array",
+            "items": {
+              "type": ["string", "number"]
+            }
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "PlanLimitError": {
+        "type": "object",
+        "required": ["error", "code"],
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "examples": ["api_limit_exceeded"]
+          },
+          "plan": {
+            "type": "string"
+          },
+          "feature": {
+            "type": "string",
+            "examples": ["api_calls"]
+          },
+          "resetAt": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": true
+      },
+      "PlanConnectionLimitError": {
+        "type": "object",
+        "required": ["error", "code"],
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "examples": ["plan_connection_limit_exceeded"]
+          },
+          "feature": {
+            "type": "string",
+            "examples": ["integration_connections"]
+          },
+          "plan": {
+            "type": "string"
+          },
+          "currentConnections": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}
