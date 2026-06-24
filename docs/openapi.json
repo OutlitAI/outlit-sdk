@@ -21,6 +21,11 @@
       "description": "Public-key event ingestion routes used by Outlit SDKs."
     }
   ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
   "paths": {
     "/api/validate-api-key": {
       "post": {
@@ -28,11 +33,6 @@
         "summary": "Validate API key",
         "description": "Verify that the API key in the Authorization header can authenticate Platform API requests.",
         "operationId": "validateApiKey",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
         "responses": {
           "200": {
             "description": "The API key is valid.",
@@ -67,11 +67,6 @@
         "summary": "Call customer intelligence tool",
         "description": "Call a public customer intelligence tool through the shared Outlit tool gateway.",
         "operationId": "callTool",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -142,11 +137,6 @@
         "summary": "List integrations",
         "description": "List available integrations and current connection status for the authenticated organization.",
         "operationId": "listIntegrations",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
         "parameters": [
           {
             "name": "connectedOnly",
@@ -195,11 +185,6 @@
         "summary": "Get integration setup capabilities",
         "description": "Inspect setup mode, required credential fields, and follow-up steps for one provider or all providers.",
         "operationId": "getIntegrationCapabilities",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
         "parameters": [
           {
             "name": "provider",
@@ -239,11 +224,6 @@
         "summary": "Run provider setup step",
         "description": "Run a supported follow-up setup step for a connected provider, such as CRM mappings or webhook setup.",
         "operationId": "runIntegrationSetupStep",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -284,11 +264,6 @@
         "summary": "Connect integration",
         "description": "Connect a provider with direct credentials or create a browser-auth connection session.",
         "operationId": "connectIntegration",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -346,11 +321,6 @@
         "summary": "Poll connection status",
         "description": "Poll the state of a browser-auth integration connection session.",
         "operationId": "getIntegrationConnectionStatus",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
         "parameters": [
           {
             "name": "sessionId",
@@ -392,11 +362,6 @@
         "summary": "Get integration sync status",
         "description": "Inspect the connection and model sync status for one public provider.",
         "operationId": "getIntegrationSyncStatus",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
         "parameters": [
           {
             "name": "provider",

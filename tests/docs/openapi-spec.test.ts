@@ -5,6 +5,7 @@ import { allCustomerToolNames } from "../../packages/tools/src/toolsets.js"
 
 type OpenApiSpec = {
   openapi: string
+  security?: Array<Record<string, unknown>>
   servers?: Array<{ url: string }>
   paths?: Record<string, Record<string, unknown>>
   components?: {
@@ -74,7 +75,7 @@ describe("docs OpenAPI spec", () => {
     ])
   })
 
-  test("applies bearer auth only to Platform API operations", () => {
+  test("applies root bearer auth while keeping ingest public", () => {
     const spec = readJson<OpenApiSpec>("docs/openapi.json")
     const bearerAuth = spec.components?.securitySchemes?.bearerAuth
 
@@ -83,20 +84,38 @@ describe("docs OpenAPI spec", () => {
       scheme: "bearer",
       description: "Outlit API key using the Bearer ok_... format.",
     })
+    expect(spec.security).toEqual([{ bearerAuth: [] }])
 
     const paths = spec.paths ?? {}
-    expect(paths["/api/validate-api-key"]?.post).toMatchObject({
-      security: [{ bearerAuth: [] }],
+    const ingestOperation = paths["/api/i/v1/{publicKey}/events"]?.post as
+      | { security?: unknown }
+      | undefined
+    const platformOperations = Object.entries(paths).flatMap(([path, pathItem]) => {
+      if (path === "/api/i/v1/{publicKey}/events") {
+        return []
+      }
+
+      return Object.entries(pathItem)
+        .filter(([method]) => ["delete", "get", "patch", "post", "put"].includes(method))
+        .map(([method, operation]) => ({ method, operation, path }))
     })
-    expect(paths["/api/tools/call"]?.post).toMatchObject({
-      security: [{ bearerAuth: [] }],
-    })
-    expect(paths["/api/integrations"]?.get).toMatchObject({
-      security: [{ bearerAuth: [] }],
-    })
-    expect(paths["/api/i/v1/{publicKey}/events"]?.post).toMatchObject({
-      security: [],
-    })
+
+    expect(
+      platformOperations.map(({ method, path }) => `${method.toUpperCase()} ${path}`).sort(),
+    ).toEqual([
+      "GET /api/integrations",
+      "GET /api/integrations/capabilities",
+      "GET /api/integrations/connect/status",
+      "GET /api/integrations/sync-status",
+      "POST /api/integrations/connect",
+      "POST /api/integrations/setup-step",
+      "POST /api/tools/call",
+      "POST /api/validate-api-key",
+    ])
+    expect(ingestOperation?.security).toEqual([])
+    for (const { operation } of platformOperations) {
+      expect((operation as { security?: unknown }).security).toBeUndefined()
+    }
   })
 
   test("bounds integration list responses to the public provider set", () => {
