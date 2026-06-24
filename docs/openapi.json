@@ -356,6 +356,65 @@
         }
       }
     },
+    "/api/integrations/disconnect": {
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Disconnect integration",
+        "description": "Disconnect a currently connected provider for the authenticated organization.",
+        "operationId": "disconnectIntegration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationDisconnectRequest"
+              },
+              "example": {
+                "provider": "stripe"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Integration disconnected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationDisconnectResponse"
+                },
+                "example": {
+                  "success": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "The provider is valid but no active connection exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationDisconnectNotConnectedResponse"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Integration is not connected"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/api/integrations/sync-status": {
       "get": {
         "tags": ["Platform API"],
@@ -834,6 +893,16 @@
         },
         "additionalProperties": false
       },
+      "IntegrationDisconnectRequest": {
+        "type": "object",
+        "required": ["provider"],
+        "properties": {
+          "provider": {
+            "$ref": "#/components/schemas/ProviderId"
+          }
+        },
+        "additionalProperties": false
+      },
       "IntegrationDirectConnectionResponse": {
         "type": "object",
         "required": ["connected", "connectionId", "alreadyConnected"],
@@ -846,6 +915,31 @@
           },
           "alreadyConnected": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IntegrationDisconnectResponse": {
+        "type": "object",
+        "required": ["success"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "IntegrationDisconnectNotConnectedResponse": {
+        "type": "object",
+        "required": ["success", "message"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": false
+          },
+          "message": {
+            "type": "string"
           }
         },
         "additionalProperties": false
