@@ -1,14 +1,26 @@
 {
   "name": "@outlit/cli",
   "version": "1.8.0",
-  "description": "CLI for Outlit customer intelligence platform",
+  "description": "CLI for querying Outlit customer context and installing agent skills",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/OutlitAI/outlit-sdk.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://outlit.ai",
+  "homepage": "https://docs.outlit.ai/cli/overview",
+  "bugs": {
+    "url": "https://github.com/OutlitAI/outlit-sdk/issues"
+  },
+  "keywords": [
+    "outlit",
+    "cli",
+    "customer-context",
+    "customer-intelligence",
+    "ai-agents",
+    "mcp",
+    "skills"
+  ],
   "publishConfig": {
     "access": "public"
   },

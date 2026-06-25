@@ -1,7 +1,7 @@
 {
   "name": "@outlit/tools",
   "version": "0.2.1",
-  "description": "Outlit customer intelligence tool contracts and client helpers",
+  "description": "Customer intelligence tool contracts and API client helpers for Outlit agents",
   "license": "Apache-2.0",
   "author": "Outlit AI",
   "repository": {
@@ -12,11 +12,14 @@
   "bugs": {
     "url": "https://github.com/OutlitAI/outlit-sdk/issues"
   },
-  "homepage": "https://github.com/OutlitAI/outlit-sdk#readme",
+  "homepage": "https://docs.outlit.ai/api-reference/tools",
   "keywords": [
     "outlit",
     "tools",
     "agents",
+    "ai-agents",
+    "mcp",
+    "customer-context",
     "customer-intelligence"
   ],
   "publishConfig": {

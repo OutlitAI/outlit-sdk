@@ -1,7 +1,7 @@
 {
   "name": "@outlit/pi",
   "version": "0.1.4",
-  "description": "Pi package for Outlit customer intelligence tools",
+  "description": "Pi package for Outlit customer intelligence tools and skill guidance",
   "license": "Apache-2.0",
   "author": "Outlit AI",
   "repository": {
@@ -12,12 +12,14 @@
   "bugs": {
     "url": "https://github.com/OutlitAI/outlit-sdk/issues"
   },
-  "homepage": "https://github.com/OutlitAI/outlit-sdk#readme",
+  "homepage": "https://docs.outlit.ai/ai-integrations/pi",
   "keywords": [
     "outlit",
     "pi",
     "pi-package",
     "agents",
+    "ai-agents",
+    "mcp",
     "customer-intelligence"
   ],
   "pi": {

@@ -1,7 +1,7 @@
 {
   "name": "@outlit/browser",
   "version": "1.5.2",
-  "description": "Outlit browser tracking SDK with React and Vue bindings",
+  "description": "Browser tracking SDK for Outlit customer context with React and Vue bindings",
   "license": "Apache-2.0",
   "author": "Outlit AI",
   "repository": {
@@ -12,11 +12,14 @@
   "bugs": {
     "url": "https://github.com/OutlitAI/outlit-sdk/issues"
   },
-  "homepage": "https://github.com/OutlitAI/outlit-sdk#readme",
+  "homepage": "https://docs.outlit.ai/tracking/browser/npm",
   "keywords": [
     "outlit",
     "analytics",
     "tracking",
+    "event-tracking",
+    "customer-context",
+    "identity-resolution",
     "sdk",
     "browser",
     "react",

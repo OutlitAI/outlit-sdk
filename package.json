@@ -2,7 +2,24 @@
   "name": "@outlit/sdk-monorepo",
   "version": "0.0.0",
   "private": true,
-  "description": "TypeScript SDK for Outlit events ingestion API",
+  "description": "Outlit SDK packages for tracking customer context and powering agent integrations",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OutlitAI/outlit-sdk.git"
+  },
+  "homepage": "https://docs.outlit.ai",
+  "bugs": {
+    "url": "https://github.com/OutlitAI/outlit-sdk/issues"
+  },
+  "keywords": [
+    "outlit",
+    "customer-context",
+    "customer-intelligence",
+    "ai-agents",
+    "sdk",
+    "tracking",
+    "mcp"
+  ],
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",

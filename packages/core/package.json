@@ -1,7 +1,7 @@
 {
   "name": "@outlit/core",
   "version": "1.5.2",
-  "description": "Shared types and utilities for Outlit tracking SDKs",
+  "description": "Shared types and utilities for Outlit browser and Node.js tracking SDKs",
   "license": "Apache-2.0",
   "author": "Outlit AI",
   "repository": {
@@ -12,11 +12,13 @@
   "bugs": {
     "url": "https://github.com/OutlitAI/outlit-sdk/issues"
   },
-  "homepage": "https://github.com/OutlitAI/outlit-sdk#readme",
+  "homepage": "https://docs.outlit.ai/tracking/how-it-works",
   "keywords": [
     "outlit",
     "analytics",
     "tracking",
+    "event-tracking",
+    "customer-context",
     "sdk"
   ],
   "publishConfig": {

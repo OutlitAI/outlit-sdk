@@ -5,8 +5,11 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-description = "Outlit analytics SDK for Rust"
-keywords = ["analytics", "tracking", "outlit"]
+description = "Outlit customer context tracking SDK for Rust"
+homepage = "https://docs.outlit.ai/tracking/server/rust"
+documentation = "https://docs.outlit.ai/tracking/server/rust"
+readme = "README.md"
+keywords = ["analytics", "tracking", "outlit", "customer-context", "events"]
 categories = ["api-bindings", "development-tools"]
 
 [dependencies]
