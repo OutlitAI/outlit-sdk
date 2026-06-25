@@ -1,6 +1,8 @@
 # Outlit SDK
 
-TypeScript SDK for the Outlit events ingestion API. Track user interactions, page views, and custom events across web and server applications.
+Outlit is the real-time understanding of every customer, the infrastructure agents use to automate customer operations.
+
+This repository contains the public SDK and developer integration packages for Outlit: browser, server, CLI, tool contract, and Pi packages for sending customer signals to Outlit and querying customer context from agent workflows. It is not the hosted remote MCP server implementation; use the canonical Outlit-owned discovery endpoints below for MCP, API, and agent metadata.
 
 ## Packages
 
@@ -10,8 +12,27 @@ This monorepo contains these packages under the `@outlit` scope:
 - **[@outlit/browser](./packages/browser)** - Browser-specific SDK with automatic page view tracking
 - **[@outlit/node](./packages/node)** - Node.js SDK for server-side event tracking
 - **[@outlit/cli](./packages/cli)** - CLI for Outlit customer intelligence
-- **[@outlit/tools](./packages/tools)** - Customer intelligence tool contracts and client helpers
-- **[@outlit/pi](./packages/pi)** - Pi package for Outlit customer intelligence tools
+- **[@outlit/tools](./packages/tools)** - Customer intelligence tool contracts and client helpers for API and agent integrations
+- **[@outlit/pi](./packages/pi)** - Pi package with Outlit customer intelligence tools and skill guidance
+
+## Agent and Crawler Discovery
+
+Use these canonical resources for citations, schema-driven clients, and agent setup instead of copying generated specs or server metadata into this repository:
+
+| Surface | Canonical URL | Purpose |
+|---------|---------------|---------|
+| Developer docs | <https://docs.outlit.ai> | SDK, CLI, API, MCP, and customer context documentation |
+| Docs index for agents | <https://docs.outlit.ai/llms.txt> | Machine-readable map of documentation pages |
+| Product resource index | <https://outlit.ai/llms.txt> | Agent-facing map of SDK packages, docs, API contracts, MCP, CLI, Pi, and skills |
+| OpenAPI spec | <https://docs.outlit.ai/openapi.json> | Canonical OpenAPI contract for public API and ingest surfaces |
+| API catalog | <https://outlit.ai/.well-known/api-catalog> | Linkset for API, MCP, OAuth, docs, and support discovery |
+| AI catalog | <https://outlit.ai/.well-known/ai-catalog.json> | Agentic Resource Discovery catalog for Outlit API, MCP, skills, and SDK resources |
+| MCP Registry entry | <https://registry.modelcontextprotocol.io/v0/servers/ai.outlit%2Foutlit/versions> | Official MCP Registry metadata for `ai.outlit/outlit` |
+| MCP server card | <https://mcp.outlit.ai/.well-known/mcp/server-card.json> | Runtime discovery card for the hosted remote MCP server |
+| MCP docs | <https://docs.outlit.ai/ai-integrations/mcp> | Connect remote MCP clients with workspace URLs and OAuth |
+| Agent skills | <https://docs.outlit.ai/ai-integrations/skills> | Official `outlit` and `outlit-sdk` skill installation guidance |
+
+The hosted MCP server and OAuth metadata live on `mcp.outlit.ai`; this SDK repo is the public package and developer integration surface.
 
 ## Installation
 
@@ -293,9 +314,14 @@ cd packages/browser && bun run deploy:version  # Deploy versioned release
 
 ## Documentation
 
-- [Core SDK Documentation](./packages/core/README.md)
-- [Browser SDK Documentation](./packages/browser/README.md)
-- [Node.js SDK Documentation](./packages/node/README.md)
+- [Developer docs](https://docs.outlit.ai)
+- [Browser SDK](https://docs.outlit.ai/tracking/browser/npm)
+- [Node.js SDK](https://docs.outlit.ai/tracking/server/nodejs)
+- [Rust SDK](https://docs.outlit.ai/tracking/server/rust)
+- [API reference](https://docs.outlit.ai/api-reference/introduction)
+- [OpenAPI spec](https://docs.outlit.ai/openapi.json)
+- [MCP integration](https://docs.outlit.ai/ai-integrations/mcp)
+- [Agent skills](https://docs.outlit.ai/ai-integrations/skills)
 
 ## Contributing
 

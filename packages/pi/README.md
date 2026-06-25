@@ -2,6 +2,8 @@
 
 Pi package for Outlit customer intelligence tools.
 
+Outlit is the real-time understanding of every customer, the infrastructure agents use to automate customer operations.
+
 ## Install
 
 ```bash
@@ -68,3 +70,11 @@ export default createOutlitPiExtension({
 You can also pass `apiKey`, `baseUrl`, and `fetch` directly to `createOutlitPiExtension` for embedded or test environments.
 
 See [`examples/pi-agents`](../../examples/pi-agents) for complete customer-signal Pi agents built on this package, including usage-decay churn, friction-to-churn, activation-failure, and expansion-readiness examples.
+
+## Canonical Docs
+
+- Pi agents: <https://docs.outlit.ai/ai-integrations/pi>
+- Tool gateway API docs: <https://docs.outlit.ai/api-reference/tools>
+- Agent skills: <https://docs.outlit.ai/ai-integrations/skills>
+- MCP integration for remote MCP clients: <https://docs.outlit.ai/ai-integrations/mcp>
+- Agent-facing docs index: <https://docs.outlit.ai/llms.txt>

@@ -1,6 +1,8 @@
 # outlit
 
-Outlit analytics SDK for Rust.
+Outlit customer context tracking SDK for Rust.
+
+Outlit is the real-time understanding of every customer, the infrastructure agents use to automate customer operations.
 
 ## Installation
 
@@ -153,3 +155,11 @@ client.shutdown().await?;
 ## License
 
 MIT
+
+## Canonical Docs
+
+- Rust SDK docs: <https://docs.outlit.ai/tracking/server/rust>
+- Quick start: <https://docs.outlit.ai/tracking/quickstart>
+- Ingest API reference: <https://docs.outlit.ai/api-reference/ingest>
+- OpenAPI spec: <https://docs.outlit.ai/openapi.json>
+- Agent-facing docs index: <https://docs.outlit.ai/llms.txt>

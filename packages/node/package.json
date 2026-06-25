@@ -1,7 +1,7 @@
 {
   "name": "@outlit/node",
   "version": "1.5.2",
-  "description": "Outlit server-side tracking SDK for Node.js",
+  "description": "Node.js tracking SDK for Outlit customer context",
   "license": "Apache-2.0",
   "author": "Outlit AI",
   "repository": {
@@ -12,11 +12,13 @@
   "bugs": {
     "url": "https://github.com/OutlitAI/outlit-sdk/issues"
   },
-  "homepage": "https://github.com/OutlitAI/outlit-sdk#readme",
+  "homepage": "https://docs.outlit.ai/tracking/server/nodejs",
   "keywords": [
     "outlit",
     "analytics",
     "tracking",
+    "event-tracking",
+    "customer-context",
     "sdk",
     "node",
     "server"
