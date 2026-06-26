@@ -23,11 +23,12 @@ Use these canonical resources for citations, schema-driven clients, and agent se
 |---------|---------------|---------|
 | Developer docs | <https://docs.outlit.ai> | SDK, CLI, API, MCP, and customer context documentation |
 | Docs index for agents | <https://docs.outlit.ai/llms.txt> | Machine-readable map of documentation pages |
-| Product resource index | <https://outlit.ai/llms.txt> | Agent-facing map of SDK packages, docs, API contracts, MCP, CLI, Pi, and skills |
+| Product resource index | <https://www.outlit.ai/llms.txt> | Agent-facing map of SDK packages, docs, API contracts, MCP, CLI, Pi, and skills |
 | OpenAPI spec | <https://docs.outlit.ai/openapi.json> | Canonical OpenAPI contract for public API and ingest surfaces |
-| API catalog | <https://outlit.ai/.well-known/api-catalog> | Linkset for API, MCP, OAuth, docs, and support discovery |
-| AI catalog | <https://outlit.ai/.well-known/ai-catalog.json> | Agentic Resource Discovery catalog for Outlit API, MCP, skills, and SDK resources |
-| MCP Registry entry | <https://registry.modelcontextprotocol.io/v0/servers/ai.outlit%2Foutlit/versions> | Official MCP Registry metadata for `ai.outlit/outlit` |
+| API catalog | <https://www.outlit.ai/.well-known/api-catalog> | Linkset for API, MCP, OAuth, docs, and support discovery |
+| AI catalog | <https://www.outlit.ai/.well-known/ai-catalog.json> | Agentic Resource Discovery catalog for Outlit API, MCP, skills, and SDK resources |
+| MCP Registry listing | <https://registry.modelcontextprotocol.io/v0.1/servers?search=ai.outlit/outlit> | Official MCP Registry search surface for `ai.outlit/outlit` |
+| MCP server metadata | <https://mcp.outlit.ai/.well-known/mcp/server.json> | Runtime metadata for the hosted remote MCP server |
 | MCP server card | <https://mcp.outlit.ai/.well-known/mcp/server-card.json> | Runtime discovery card for the hosted remote MCP server |
 | MCP docs | <https://docs.outlit.ai/ai-integrations/mcp> | Connect remote MCP clients with workspace URLs and OAuth |
 | Agent skills | <https://docs.outlit.ai/ai-integrations/skills> | Official `outlit` and `outlit-sdk` skill installation guidance |
@@ -36,7 +37,19 @@ The hosted MCP server and OAuth metadata live on `mcp.outlit.ai`; this SDK repo 
 
 ## Installation
 
-Choose the package that matches your environment:
+Choose the package that matches the integration surface:
+
+| Package | Install | Use when |
+|---------|---------|----------|
+| `@outlit/browser` | `npm install @outlit/browser` | Browser apps, React, Next.js, Vue, Nuxt, SvelteKit, Angular, Astro, and script-tag tracking |
+| `@outlit/node` | `npm install @outlit/node` | Node.js servers, API routes, jobs, webhooks, CLIs, desktop main processes, and native JavaScript runtimes |
+| `@outlit/core` | `npm install @outlit/core` | Lower-level custom SDK implementations that do not need browser or Node runtime helpers |
+| `@outlit/cli` | `npm install -g @outlit/cli` | Terminal access to Outlit customer intelligence and setup workflows |
+| `@outlit/tools` | `npm install @outlit/tools` | Custom API or agent integrations that need typed Outlit tool gateway contracts and client helpers |
+| `@outlit/pi` | `npm install @outlit/pi` | Pi agents that need Outlit customer intelligence tools and skill guidance |
+| Rust crate | `cargo add outlit` | Rust backends, CLIs, and Tauri backends |
+
+Tracking SDK examples:
 
 ```bash
 # For browser applications
