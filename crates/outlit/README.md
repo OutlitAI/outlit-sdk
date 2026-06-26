@@ -154,7 +154,7 @@ client.shutdown().await?;
 
 ## License
 
-MIT
+Apache-2.0
 
 ## Canonical Docs
 
