@@ -1,5 +1,15 @@
 import { createOutlitClient, isCustomerToolName } from "@outlit/tools"
 import { DEFAULT_API_URL, OUTLIT_DASHBOARD_URL, resolveApiKey } from "./config"
+import {
+  createPlatformCommandError,
+  isCommandErrorEnvelope,
+  isPlatformCommandError,
+  type PlatformCommandError,
+  type PlatformCommandErrorEnvelope,
+} from "./platform-command-error"
+
+export { isPlatformCommandError }
+export type { PlatformCommandError, PlatformCommandErrorEnvelope }
 
 export interface OutlitClient {
   /** The validated API key in use for this client instance */
@@ -13,24 +23,6 @@ export interface OutlitClient {
    * with the appropriate HTTP method (GET with query params, or POST with JSON body).
    */
   callTool(toolName: string, params: Record<string, unknown>): Promise<unknown>
-}
-
-export interface PlatformCommandErrorEnvelope {
-  ok: false
-  commandId: string
-  commandVersion: number
-  error: {
-    code: string
-    message: string
-    correlationId: string
-    retryable: boolean
-    details?: unknown
-  }
-}
-
-export type PlatformCommandError = Error & {
-  status: number
-  commandEnvelope: PlatformCommandErrorEnvelope
 }
 
 // ok_ prefix + at least 32 alphanumeric/dash/underscore characters (minimum 35 chars total).
@@ -66,14 +58,6 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
     method: "POST",
     path: "/api/agents",
   },
-}
-
-export function isPlatformCommandError(error: unknown): error is PlatformCommandError {
-  return (
-    error instanceof Error &&
-    isRecord((error as Partial<PlatformCommandError>).commandEnvelope) &&
-    isCommandErrorEnvelope((error as Partial<PlatformCommandError>).commandEnvelope)
-  )
 }
 
 /**
@@ -174,17 +158,6 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
   }
 }
 
-function createPlatformCommandError(
-  status: number,
-  commandEnvelope: PlatformCommandErrorEnvelope,
-): PlatformCommandError {
-  const error = new Error(commandEnvelope.error.message) as PlatformCommandError
-  error.name = "PlatformCommandError"
-  error.status = status
-  error.commandEnvelope = commandEnvelope
-  return error
-}
-
 function parseJson(text: string): unknown {
   if (text.length === 0) return undefined
   try {
@@ -192,22 +165,4 @@ function parseJson(text: string): unknown {
   } catch {
     return undefined
   }
-}
-
-function isCommandErrorEnvelope(payload: unknown): payload is PlatformCommandErrorEnvelope {
-  if (!isRecord(payload) || payload.ok !== false) return false
-  if (typeof payload.commandId !== "string") return false
-  if (typeof payload.commandVersion !== "number") return false
-  if (!isRecord(payload.error)) return false
-
-  return (
-    typeof payload.error.code === "string" &&
-    typeof payload.error.message === "string" &&
-    typeof payload.error.correlationId === "string" &&
-    typeof payload.error.retryable === "boolean"
-  )
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

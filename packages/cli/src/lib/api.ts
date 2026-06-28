@@ -1,7 +1,8 @@
 import type { OutlitClient } from "./client"
-import { createClient, isPlatformCommandError } from "./client"
+import { createClient } from "./client"
 import { DEFAULT_API_URL } from "./config"
 import { errorMessage, isJsonMode, outputError, outputResult } from "./output"
+import { isPlatformCommandError } from "./platform-command-error"
 import { createSpinner } from "./spinner"
 import { renderPaginationHint, renderTable } from "./table"
 
