@@ -1,5 +1,5 @@
 import type { OutlitClient } from "./client"
-import { createClient } from "./client"
+import { createClient, isPlatformCommandError } from "./client"
 import { DEFAULT_API_URL } from "./config"
 import { errorMessage, isJsonMode, outputError, outputResult } from "./output"
 import { createSpinner } from "./spinner"
@@ -15,7 +15,7 @@ export interface RunToolOptions {
   /** Column definitions for TTY table rendering. */
   table?: {
     columns: TableColumn[]
-    /** Key path to the items array in the response (default: "items"). */
+    /** Dot-separated key path to the items array in the response (default: "items"). */
     itemsKey?: string
   }
   /** Spinner message shown during the API call (TTY only). */
@@ -127,7 +127,7 @@ function renderApiTable(data: unknown, table: NonNullable<RunToolOptions["table"
       ? (data as Record<string, unknown>)
       : {}
   const itemsKey = table.itemsKey ?? "items"
-  const rawItems = record[itemsKey]
+  const rawItems = readPath(record, itemsKey)
   const items = Array.isArray(rawItems) ? (rawItems as Array<Record<string, unknown>>) : undefined
 
   if (!items || items.length === 0) {
@@ -152,6 +152,19 @@ function renderApiTable(data: unknown, table: NonNullable<RunToolOptions["table"
     const hint = renderPaginationHint(pagination, items.length)
     if (hint) console.log(`\n${hint}`)
   }
+}
+
+function readPath(record: Record<string, unknown>, path: string): unknown {
+  let current: unknown = record
+
+  for (const part of path.split(".")) {
+    if (typeof current !== "object" || current === null || Array.isArray(current)) {
+      return undefined
+    }
+    current = (current as Record<string, unknown>)[part]
+  }
+
+  return current
 }
 
 /**
@@ -183,6 +196,17 @@ export async function runTool(
     renderApiTable(data, table)
   } catch (err) {
     spinner?.fail("Failed")
+    if (isPlatformCommandError(err)) {
+      if (isJsonMode(json)) {
+        process.stderr.write(`${JSON.stringify(err.commandEnvelope, null, 2)}\n`)
+        process.exit(1)
+      }
+
+      return outputError(
+        { message: err.commandEnvelope.error.message, code: err.commandEnvelope.error.code },
+        json,
+      )
+    }
     return outputError({ message: errorMessage(err, "Request failed"), code: "api_error" }, json)
   }
 }

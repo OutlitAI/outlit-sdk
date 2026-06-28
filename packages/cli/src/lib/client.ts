@@ -15,11 +15,29 @@ export interface OutlitClient {
   callTool(toolName: string, params: Record<string, unknown>): Promise<unknown>
 }
 
+export interface PlatformCommandErrorEnvelope {
+  ok: false
+  commandId: string
+  commandVersion: number
+  error: {
+    code: string
+    message: string
+    correlationId: string
+    retryable: boolean
+    details?: unknown
+  }
+}
+
+export type PlatformCommandError = Error & {
+  status: number
+  commandEnvelope: PlatformCommandErrorEnvelope
+}
+
 // ok_ prefix + at least 32 alphanumeric/dash/underscore characters (minimum 35 chars total).
 // Widened from {32} to {32,} since real API keys may be longer than 32 suffix chars.
 const API_KEY_REGEX = /^ok_[A-Za-z0-9_-]{32,}$/
 
-/** Maps CLI integration-management tools to Platform REST endpoints. */
+/** Maps CLI-owned direct API commands to Platform REST endpoints outside `/api/tools/call`. */
 const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string }> = {
   outlit_list_integrations: { method: "GET", path: "/api/integrations" },
   outlit_connect_integration: { method: "POST", path: "/api/integrations/connect" },
@@ -36,6 +54,26 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
     method: "POST",
     path: "/api/integrations/setup-step",
   },
+  outlit_agent_list_templates: {
+    method: "GET",
+    path: "/api/agent-templates",
+  },
+  outlit_agent_list_available_actions: {
+    method: "GET",
+    path: "/api/agent-actions",
+  },
+  outlit_agent_create_from_template: {
+    method: "POST",
+    path: "/api/agents",
+  },
+}
+
+export function isPlatformCommandError(error: unknown): error is PlatformCommandError {
+  return (
+    error instanceof Error &&
+    isRecord((error as Partial<PlatformCommandError>).commandEnvelope) &&
+    isCommandErrorEnvelope((error as Partial<PlatformCommandError>).commandEnvelope)
+  )
 }
 
 /**
@@ -124,10 +162,52 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
 
       if (!response.ok) {
         const text = await response.text()
+        const payload = parseJson(text)
+        if (isCommandErrorEnvelope(payload)) {
+          throw createPlatformCommandError(response.status, payload)
+        }
         throw new Error(`API error (${response.status}): ${text}`)
       }
 
       return response.json()
     },
   }
+}
+
+function createPlatformCommandError(
+  status: number,
+  commandEnvelope: PlatformCommandErrorEnvelope,
+): PlatformCommandError {
+  const error = new Error(commandEnvelope.error.message) as PlatformCommandError
+  error.name = "PlatformCommandError"
+  error.status = status
+  error.commandEnvelope = commandEnvelope
+  return error
+}
+
+function parseJson(text: string): unknown {
+  if (text.length === 0) return undefined
+  try {
+    return JSON.parse(text) as unknown
+  } catch {
+    return undefined
+  }
+}
+
+function isCommandErrorEnvelope(payload: unknown): payload is PlatformCommandErrorEnvelope {
+  if (!isRecord(payload) || payload.ok !== false) return false
+  if (typeof payload.commandId !== "string") return false
+  if (typeof payload.commandVersion !== "number") return false
+  if (!isRecord(payload.error)) return false
+
+  return (
+    typeof payload.error.code === "string" &&
+    typeof payload.error.message === "string" &&
+    typeof payload.error.correlationId === "string" &&
+    typeof payload.error.retryable === "boolean"
+  )
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

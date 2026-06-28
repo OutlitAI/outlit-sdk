@@ -1,5 +1,12 @@
 import { describe, expect, mock, spyOn, test } from "bun:test"
-import { ExitError, TEST_API_KEY, expectErrorExit, mockExitThrow } from "../helpers"
+import {
+  ExitError,
+  expectErrorExit,
+  mockExitThrow,
+  setInteractive,
+  setNonInteractive,
+  TEST_API_KEY,
+} from "../helpers"
 
 const mockCallTool = mock(
   async (_toolName: string, _params: unknown): Promise<unknown> => ({ result: "ok" }),
@@ -83,5 +90,86 @@ describe("runTool()", () => {
       exitSpy.mockRestore()
     }
     expectErrorExit(thrown, written, "api_error")
+  })
+
+  test("preserves platform command error envelopes in JSON mode", async () => {
+    const commandEnvelope = {
+      ok: false,
+      commandId: "agent.createFromTemplate",
+      commandVersion: 1,
+      error: {
+        code: "authorization_denied",
+        message: "API key is missing the required agents:write scope.",
+        correlationId: "corr_denied_123",
+        retryable: false,
+        details: { requiredScope: "agents:write" },
+      },
+    }
+    const error = new Error(commandEnvelope.error.message) as Error & {
+      status: number
+      commandEnvelope: typeof commandEnvelope
+    }
+    error.status = 403
+    error.commandEnvelope = commandEnvelope
+    mockCallTool.mockRejectedValueOnce(error)
+
+    const { getClientOrExit, runTool } = await import("../../src/lib/api")
+    const client = await getClientOrExit(TEST_API_KEY, true)
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    const exitSpy = mockExitThrow()
+    let thrown: unknown
+    let written = ""
+    try {
+      await runTool(
+        client,
+        "outlit_agent_create_from_template",
+        { source: { type: "template", templateKey: "churn" }, mode: "draft" },
+        true,
+      )
+    } catch (e) {
+      thrown = e
+    } finally {
+      written = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
+      stderrSpy.mockRestore()
+      exitSpy.mockRestore()
+    }
+
+    expect(thrown).toBeInstanceOf(ExitError)
+    expect((thrown as ExitError).code).toBe(1)
+    expect(JSON.parse(written)).toEqual(commandEnvelope)
+  })
+
+  test("renders table rows from nested response paths", async () => {
+    mockCallTool.mockResolvedValueOnce({
+      ok: true,
+      result: {
+        data: {
+          templates: [{ key: "churn", name: "Churn prevention" }],
+        },
+      },
+    })
+    const { getClientOrExit, runTool } = await import("../../src/lib/api")
+    const client = await getClientOrExit(TEST_API_KEY, false)
+    const logSpy = spyOn(console, "log").mockImplementation(() => {})
+
+    setInteractive()
+    try {
+      await runTool(client, "outlit_agent_list_templates", {}, false, {
+        table: {
+          itemsKey: "result.data.templates",
+          columns: [
+            { header: "Key", key: "key" },
+            { header: "Name", key: "name" },
+          ],
+        },
+      })
+
+      const output = logSpy.mock.calls.map((call) => call[0] as string).join("\n")
+      expect(output).toContain("churn")
+      expect(output).toContain("Churn prevention")
+    } finally {
+      setNonInteractive()
+      logSpy.mockRestore()
+    }
   })
 })

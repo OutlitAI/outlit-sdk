@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test"
-import { createClient } from "../../src/lib/client"
+import { createClient, isPlatformCommandError } from "../../src/lib/client"
 import { TEST_API_KEY } from "../helpers"
 
 describe("createClient()", () => {
@@ -157,6 +157,104 @@ describe("client.callTool()", () => {
     fetchSpy.mockRestore()
   })
 
+  test("keeps agent platform actions on direct public API endpoints", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const createParams = {
+      source: { type: "template", templateKey: "churn" },
+      mode: "draft",
+    }
+    const fetchSpy = spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            commandId: "agent.listTemplates",
+            commandVersion: 1,
+            correlationId: "corr_templates_123",
+            result: {
+              operationId: "agent.templates.list",
+              status: "completed",
+              resources: [],
+              data: { templates: [] },
+              warnings: [],
+            },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            commandId: "agent.listAvailableActions",
+            commandVersion: 1,
+            correlationId: "corr_actions_123",
+            result: {
+              operationId: "agent.availableActions.list",
+              status: "completed",
+              resources: [],
+              data: { actions: [] },
+              warnings: [],
+            },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            commandId: "agent.createFromTemplate",
+            commandVersion: 1,
+            correlationId: "corr_123",
+            result: {
+              operationId: "agent.template.create",
+              status: "completed",
+              resources: [{ type: "agent", id: "agent_123" }],
+              data: {
+                agentId: "agent_123",
+                templateKey: "churn",
+                templateVersion: "2026-06-01",
+                mode: "draft",
+                created: true,
+                safety: {
+                  actionGrantsAdded: [],
+                  destinationsAdded: [],
+                  schedulesAdded: [],
+                  externalEgressAdded: [],
+                  enabledAutomation: false,
+                },
+              },
+              warnings: [],
+            },
+          }),
+          { status: 200 },
+        ),
+      )
+
+    const client = await createClient()
+    await client.callTool("outlit_agent_list_templates", {})
+    await client.callTool("outlit_agent_list_available_actions", {})
+    await client.callTool("outlit_agent_create_from_template", createParams)
+
+    expect(fetchSpy.mock.calls[0]?.[0] as string).toContain("/api/agent-templates")
+    expect(fetchSpy.mock.calls[1]?.[0] as string).toContain("/api/agent-actions")
+    expect(fetchSpy.mock.calls[2]?.[0] as string).toContain("/api/agents")
+    for (const call of fetchSpy.mock.calls) {
+      expect(call[0] as string).not.toContain("/api/tools/call")
+    }
+
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[1]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[1]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).body).toBe(JSON.stringify(createParams))
+
+    fetchSpy.mockRestore()
+  })
+
   test("does not expose destructive disconnect through the CLI tool map", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
@@ -239,6 +337,44 @@ describe("client.callTool()", () => {
 
     const client = await createClient()
     await expect(client.callTool("outlit_list_customers", {})).rejects.toThrow("API error (401)")
+    fetchSpy.mockRestore()
+  })
+
+  test("preserves structured platform command error envelopes", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+    const commandEnvelope = {
+      ok: false,
+      commandId: "agent.createFromTemplate",
+      commandVersion: 1,
+      error: {
+        code: "authorization_denied",
+        message: "API key is missing the required agents:write scope.",
+        correlationId: "corr_denied_123",
+        retryable: false,
+        details: { requiredScope: "agents:write" },
+      },
+    } as const
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify(commandEnvelope), { status: 403 }),
+    )
+
+    const client = await createClient()
+    let thrown: unknown
+    try {
+      await client.callTool("outlit_agent_create_from_template", {
+        source: { type: "template", templateKey: "churn" },
+        mode: "draft",
+      })
+    } catch (error) {
+      thrown = error
+    }
+
+    expect(isPlatformCommandError(thrown)).toBe(true)
+    if (!isPlatformCommandError(thrown)) {
+      throw new Error("expected platform command error")
+    }
+    expect(thrown.status).toBe(403)
+    expect(thrown.commandEnvelope).toEqual(commandEnvelope)
     fetchSpy.mockRestore()
   })
 
