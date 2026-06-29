@@ -6,14 +6,16 @@ import { outputError } from "../../lib/output"
 import { optionalTrimmedString, requiredTrimmedString } from "../../lib/platform-input"
 
 function parseDestinationType(type: string, json: boolean): "WEBHOOK_ENDPOINT" | "SLACK_CHANNEL" {
-  if (type === "WEBHOOK_ENDPOINT" || type === "SLACK_CHANNEL") {
-    return type
+  const normalized = type.trim().toLowerCase()
+  if (normalized === "webhook" || normalized === "webhook_endpoint") {
+    return "WEBHOOK_ENDPOINT"
   }
 
-  return outputError(
-    { message: "--type must be WEBHOOK_ENDPOINT or SLACK_CHANNEL", code: "invalid_input" },
-    json,
-  )
+  if (normalized === "slack" || normalized === "slack_channel") {
+    return "SLACK_CHANNEL"
+  }
+
+  return outputError({ message: "--type must be webhook or slack", code: "invalid_input" }, json)
 }
 
 function parseEnabledFlag(args: { enabled?: boolean; disabled?: boolean }, json: boolean) {
@@ -27,10 +29,7 @@ function parseEnabledFlag(args: { enabled?: boolean; disabled?: boolean }, json:
   if (args.enabled === true) return true
   if (args.disabled === true) return false
 
-  return outputError(
-    { message: "Provide --enabled or --disabled for destination update", code: "missing_input" },
-    json,
-  )
+  return undefined
 }
 
 export default defineCommand({
@@ -39,10 +38,11 @@ export default defineCommand({
     description: [
       "Update an Outlit automation destination.",
       "",
-      "Destination updates require an explicit lifecycle state with --enabled or --disabled.",
+      "Provide --type webhook or --type slack plus one or more fields to patch.",
       "",
       "Examples:",
-      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type WEBHOOK_ENDPOINT --name 'Customer ops' --url https://hooks.example.com/outlit --enabled --json",
+      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type webhook --name 'Customer ops' --json",
+      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type webhook --url https://hooks.example.com/outlit --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -57,8 +57,7 @@ export default defineCommand({
     },
     type: {
       type: "string",
-      description: "Destination type: WEBHOOK_ENDPOINT or SLACK_CHANNEL",
-      default: "WEBHOOK_ENDPOINT",
+      description: "Required destination type: webhook or slack",
     },
     name: { type: "string", description: "Webhook destination name" },
     url: { type: "string", description: "Optional webhook URL" },
@@ -83,17 +82,37 @@ export default defineCommand({
         ? {
             id: args.id,
             type,
-            label: requiredTrimmedString(args.label ?? args.name, "--label", json),
-            enabled,
+            ...(optionalTrimmedString(args.label ?? args.name)
+              ? { label: optionalTrimmedString(args.label ?? args.name) }
+              : {}),
+            ...(enabled !== undefined ? { enabled } : {}),
           }
         : {
             id: args.id,
             type: "WEBHOOK_ENDPOINT",
-            name: requiredTrimmedString(args.name, "--name", json),
-            description: optionalTrimmedString(args.description),
-            enabled,
+            ...(optionalTrimmedString(args.name) ? { name: optionalTrimmedString(args.name) } : {}),
+            ...(args.description !== undefined
+              ? { description: optionalTrimmedString(args.description) }
+              : {}),
+            ...(enabled !== undefined ? { enabled } : {}),
             ...(optionalTrimmedString(args.url) ? { url: optionalTrimmedString(args.url) } : {}),
           }
+
+    if (
+      !("name" in input) &&
+      !("description" in input) &&
+      !("url" in input) &&
+      !("label" in input) &&
+      !("enabled" in input)
+    ) {
+      return outputError(
+        {
+          message: "Provide at least one destination field to update",
+          code: "missing_input",
+        },
+        json,
+      )
+    }
 
     return runTool(client, "outlit_destination_update", input, json, {
       spinnerMessage: "Updating destination...",

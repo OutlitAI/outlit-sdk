@@ -66,13 +66,9 @@ describe("docs OpenAPI spec", () => {
       "/api/agent-actions",
       "/api/agent-templates",
       "/api/agents",
-      "/api/agents/custom",
       "/api/agents/{id}",
-      "/api/agents/{id}/actions",
       "/api/agents/{id}/disable",
       "/api/agents/{id}/enable",
-      "/api/agents/{id}/instructions",
-      "/api/agents/{id}/profile",
       "/api/agents/{id}/rename",
       "/api/automations",
       "/api/automations/{id}",
@@ -80,7 +76,6 @@ describe("docs OpenAPI spec", () => {
       "/api/automations/{id}/disable",
       "/api/automations/{id}/enable",
       "/api/destinations",
-      "/api/destinations/webhook",
       "/api/destinations/{id}",
       "/api/destinations/{id}/archive",
       "/api/destinations/{id}/disable",
@@ -143,21 +138,19 @@ describe("docs OpenAPI spec", () => {
       "GET /api/integrations/sync-status",
       "GET /api/signals",
       "GET /api/signals/{id}",
+      "PATCH /api/agents/{id}",
+      "PATCH /api/automations/{id}",
+      "PATCH /api/destinations/{id}",
+      "PATCH /api/signals/{id}",
       "POST /api/agents",
-      "POST /api/agents/custom",
-      "POST /api/agents/{id}/actions",
       "POST /api/agents/{id}/disable",
       "POST /api/agents/{id}/enable",
-      "POST /api/agents/{id}/instructions",
-      "POST /api/agents/{id}/profile",
       "POST /api/agents/{id}/rename",
       "POST /api/automations",
-      "POST /api/automations/{id}",
       "POST /api/automations/{id}/archive",
       "POST /api/automations/{id}/disable",
       "POST /api/automations/{id}/enable",
-      "POST /api/destinations/webhook",
-      "POST /api/destinations/{id}",
+      "POST /api/destinations",
       "POST /api/destinations/{id}/archive",
       "POST /api/destinations/{id}/disable",
       "POST /api/destinations/{id}/enable",
@@ -165,7 +158,6 @@ describe("docs OpenAPI spec", () => {
       "POST /api/integrations/disconnect",
       "POST /api/integrations/setup-step",
       "POST /api/signals",
-      "POST /api/signals/{id}",
       "POST /api/signals/{id}/archive",
       "POST /api/tools/call",
       "POST /api/validate-api-key",
@@ -296,7 +288,8 @@ describe("docs OpenAPI spec", () => {
     ).not.toHaveProperty("default")
     for (const updateDestinationVariant of spec.components?.schemas?.UpdateDestinationRequest
       ?.oneOf ?? []) {
-      expect(updateDestinationVariant.required).toContain("enabled")
+      expect(updateDestinationVariant.required).toEqual(["type"])
+      expect(updateDestinationVariant.minProperties).toBe(2)
       expect(updateDestinationVariant.properties?.enabled).not.toHaveProperty("default")
     }
   })
@@ -349,7 +342,7 @@ describe("docs OpenAPI spec", () => {
     expect(schemas.EventMatchSignalDefinition.properties.subjectResolver).not.toHaveProperty(
       "default",
     )
-    expect(schemas.CreateDestinationWebhookRequest?.properties?.url).toMatchObject({
+    expect(schemas.CreateDestinationRequest?.properties?.url).toMatchObject({
       type: "string",
       format: "uri",
       pattern: expect.stringContaining("https://"),

@@ -239,15 +239,12 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "templates", desc: "List available agent templates", flags: [...COMMON] },
       { name: "actions", desc: "List available agent configuration actions", flags: [...COMMON] },
       {
-        name: "create-from-template",
-        desc: "Create a draft agent from a platform template",
-        flags: [...COMMON],
-      },
-      {
-        name: "create-custom",
-        desc: "Create a custom hosted agent",
+        name: "create",
+        desc: "Create an agent",
         flags: [
           ...COMMON,
+          { name: "--template", desc: "Agent template key to create" },
+          { name: "--type", desc: "Agent type to create" },
           { name: "--display-name", desc: "Agent display name" },
           { name: "--instructions", desc: "Agent instructions" },
           { name: "--surface-criteria", desc: "Criteria for surfacing items" },
@@ -257,22 +254,14 @@ const COMMANDS: readonly CmdDef[] = [
         ],
       },
       {
-        name: "update-profile",
-        desc: "Update an agent display profile",
-        flags: [...COMMON, { name: "--display-name", desc: "Agent display name" }],
-      },
-      {
-        name: "update-instructions",
-        desc: "Update custom agent instructions",
-        flags: [...COMMON, { name: "--instructions", desc: "Agent instructions" }],
-      },
-      {
-        name: "update-actions",
-        desc: "Update custom agent action keys",
+        name: "update",
+        desc: "Update an agent",
         flags: [
           ...COMMON,
+          { name: "--display-name", desc: "Agent display name" },
+          { name: "--instructions", desc: "Agent instructions" },
           { name: "--action-keys", desc: "Comma-separated action keys" },
-          { name: "--clear", desc: "Clear all action keys" },
+          { name: "--clear-action-keys", desc: "Clear all action keys" },
         ],
       },
       { name: "enable", desc: "Enable a configured agent", flags: [...COMMON] },
@@ -311,10 +300,11 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "list", desc: "List configured destinations", flags: [...COMMON] },
       { name: "get", desc: "Get one configured destination", flags: [...COMMON] },
       {
-        name: "create-webhook",
-        desc: "Create a webhook destination",
+        name: "create",
+        desc: "Create an automation destination",
         flags: [
           ...COMMON,
+          { name: "--type", desc: "Destination type" },
           { name: "--name", desc: "Destination name" },
           { name: "--url", desc: "Webhook URL" },
           { name: "--description", desc: "Destination description" },
