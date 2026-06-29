@@ -95,7 +95,7 @@ describe("runTool()", () => {
   test("preserves platform command error envelopes in JSON mode", async () => {
     const commandEnvelope = {
       ok: false,
-      commandId: "agent.createFromTemplate",
+      commandId: "agent.create",
       commandVersion: 1,
       error: {
         code: "authorization_denied",
@@ -122,8 +122,8 @@ describe("runTool()", () => {
     try {
       await runTool(
         client,
-        "outlit_agent_create_from_template",
-        { source: { type: "template", templateKey: "churn" }, mode: "draft" },
+        "outlit_agent_create",
+        { type: "template", templateKey: "churn", mode: "draft" },
         true,
       )
     } catch (e) {

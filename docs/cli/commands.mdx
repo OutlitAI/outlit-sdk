@@ -562,11 +562,8 @@ outlit agents list [flags]
 outlit agents get <id> [flags]
 outlit agents templates [flags]
 outlit agents actions [flags]
-outlit agents create-from-template churn [flags]
-outlit agents create-custom [flags]
-outlit agents update-profile <id> [flags]
-outlit agents update-instructions <id> [flags]
-outlit agents update-actions <id> [flags]
+outlit agents create [flags]
+outlit agents update <id> [flags]
 outlit agents enable <id> [flags]
 outlit agents disable <id> [flags]
 outlit agents rename <id> <display-name> [flags]
@@ -579,19 +576,19 @@ outlit agents list --json
 outlit agents get 10000000-0000-4000-8000-000000000004 --json
 outlit agents templates --json
 outlit agents actions --json
-outlit agents create-from-template churn --json
-outlit agents create-custom --display-name "Renewal risk" --instructions "Find risk" --surface-criteria "Surface risky customers" --json
-outlit agents update-profile 10000000-0000-4000-8000-000000000004 --display-name "Renewal risk" --json
-outlit agents update-instructions 10000000-0000-4000-8000-000000000004 --instructions "Prioritize recent escalations" --json
-outlit agents update-actions 10000000-0000-4000-8000-000000000004 --action-keys send_slack_notification --json
-outlit agents update-actions 10000000-0000-4000-8000-000000000004 --clear --json
+outlit agents create --template churn --json
+outlit agents create --type custom --display-name "Renewal risk" --instructions "Find risk" --surface-criteria "Surface risky customers" --json
+outlit agents update 10000000-0000-4000-8000-000000000004 --display-name "Renewal risk" --json
+outlit agents update 10000000-0000-4000-8000-000000000004 --instructions "Prioritize recent escalations" --json
+outlit agents update 10000000-0000-4000-8000-000000000004 --action-keys send_slack_notification --json
+outlit agents update 10000000-0000-4000-8000-000000000004 --clear-action-keys --json
 outlit agents enable 10000000-0000-4000-8000-000000000004 --json
 outlit agents disable 10000000-0000-4000-8000-000000000004 --json
 outlit agents rename 10000000-0000-4000-8000-000000000004 "Churn prevention" --json
 ```
 
 <Note>
-  `create-from-template` creates supported template resources in draft mode. `update-actions` requires either `--action-keys` or explicit `--clear`. Custom agent write commands, lifecycle commands, and rename commands require an API key with `agents:write`.
+  `agents create --template` creates supported template resources in draft mode. `agents update` patches only the fields you pass. Use `--clear-action-keys` to remove all action keys. Agent write commands require an API key with `agents:write`.
 </Note>
 
 ## Automations
@@ -622,7 +619,7 @@ outlit automations disable 10000000-0000-4000-8000-000000000001 --json
 outlit automations archive 10000000-0000-4000-8000-000000000001 --json
 ```
 
-Automation create bodies must include `agentId`; update bodies must include `agentId` and `enabled`. The API maps that agent ID to the internal hosted-agent processor; callers do not provide raw processor JSON.
+Automation create bodies must include `agentId`, `name`, and `triggerType`. Update bodies must include `agentId`, `name`, `enabled`, and `triggerType`. The API maps that agent ID to the internal hosted-agent processor; callers do not provide raw processor JSON.
 
 ### JSON Response
 
@@ -661,7 +658,7 @@ Inspect and manage configured automation destinations with masked configuration 
 ```bash
 outlit destinations list [flags]
 outlit destinations get <id> [flags]
-outlit destinations create-webhook [flags]
+outlit destinations create [flags]
 outlit destinations update <id> [flags]
 outlit destinations enable <id> [flags]
 outlit destinations disable <id> [flags]
@@ -673,14 +670,14 @@ outlit destinations archive <id> [flags]
 ```bash
 outlit destinations list --json
 outlit destinations get 10000000-0000-4000-8000-000000000003 --json
-outlit destinations create-webhook --name "Customer ops" --url https://hooks.example.com/outlit --json
-outlit destinations update 10000000-0000-4000-8000-000000000003 --type WEBHOOK_ENDPOINT --name "Customer ops" --enabled --json
+outlit destinations create --type webhook --name "Customer ops" --url https://hooks.example.com/outlit --json
+outlit destinations update 10000000-0000-4000-8000-000000000003 --type webhook --name "Customer ops" --json
 outlit destinations enable 10000000-0000-4000-8000-000000000003 --json
 outlit destinations disable 10000000-0000-4000-8000-000000000003 --json
 outlit destinations archive 10000000-0000-4000-8000-000000000003 --json
 ```
 
-Destination list results are under `result.data.destinations`; get, create, update, enable, and disable results are under `result.data.destination`. `destinations update` requires either `--enabled` or `--disabled` so URL/name edits do not silently change lifecycle state. Archive results return `result.data.destination.id` and `result.data.destination.archivedAt`. Raw destination secrets and unmasked provider configuration are not returned.
+Destination list results are under `result.data.destinations`; get, create, update, enable, and disable results are under `result.data.destination`. `destinations update` patches only the fields you pass. Archive results return `result.data.destination.id` and `result.data.destination.archivedAt`. Raw destination secrets and unmasked provider configuration are not returned.
 
 ## SQL
 

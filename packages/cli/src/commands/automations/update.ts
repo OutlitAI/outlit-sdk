@@ -10,7 +10,7 @@ export default defineCommand({
     description: [
       "Update an Outlit automation for an agent.",
       "",
-      "Pass the automation body as JSON with --data or --file. The body must include agentId.",
+      "Pass the automation body as JSON with --data or --file. The body must include agentId, name, enabled, and triggerType.",
       "",
       "Examples:",
       "  outlit automations update 10000000-0000-4000-8000-000000000001 --file ./automation.json --json",

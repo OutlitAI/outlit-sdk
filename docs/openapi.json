@@ -250,39 +250,52 @@
       },
       "post": {
         "tags": ["Platform API"],
-        "summary": "Create agent from template",
-        "description": "Create an Outlit agent from a supported template. The initial template mode is draft-only: created resources are inert until explicitly configured in the platform.",
-        "operationId": "createAgentFromTemplate",
+        "summary": "Create agent",
+        "description": "Create an Outlit agent. Use type=template for supported templates or type=custom for a custom hosted agent.",
+        "operationId": "createAgent",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateAgentFromTemplateRequest"
+                "$ref": "#/components/schemas/CreateAgentRequest"
               },
-              "example": {
-                "source": {
-                  "type": "template",
-                  "templateKey": "churn"
+              "examples": {
+                "template": {
+                  "summary": "Create from template",
+                  "value": {
+                    "type": "template",
+                    "templateKey": "churn",
+                    "mode": "draft"
+                  }
                 },
-                "mode": "draft"
+                "custom": {
+                  "summary": "Create custom agent",
+                  "value": {
+                    "type": "custom",
+                    "displayName": "Renewal risk",
+                    "instructions": "Find risk.",
+                    "surfaceCriteria": "Surface risky customers.",
+                    "actionKeys": ["send_slack_notification"]
+                  }
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Agent template resources were created in draft mode.",
+            "description": "Agent was created.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateAgentFromTemplateCommandSuccess"
+                  "$ref": "#/components/schemas/CreateAgentCommandSuccess"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid JSON or unsupported template request.",
+            "description": "Invalid JSON or unsupported agent create request.",
             "content": {
               "application/json": {
                 "schema": {
@@ -305,7 +318,7 @@
             }
           },
           "409": {
-            "description": "The requested template already exists for the organization.",
+            "description": "The requested template or agent conflicts with the current platform state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -318,7 +331,7 @@
             "$ref": "#/components/responses/InternalServerError"
           },
           "503": {
-            "description": "The platform could not verify the created resources and rolled back the request.",
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -387,6 +400,107 @@
           },
           "503": {
             "description": "The platform could not get the agent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Platform API"],
+        "summary": "Update agent",
+        "description": "Patch one configured Outlit agent. Only provided fields are changed.",
+        "operationId": "updateAgent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Agent ID.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAgentRequest"
+              },
+              "example": {
+                "displayName": "Renewal risk",
+                "instructions": "Prioritize recent support escalations.",
+                "actionKeys": ["send_slack_notification"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agent was updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateAgentCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No resource was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The requested change conflicts with the current platform state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1038,10 +1152,10 @@
           }
         }
       },
-      "post": {
+      "patch": {
         "tags": ["Platform API"],
         "summary": "Update automation",
-        "description": "Update an agent automation. Provide agentId; Outlit maps it to the hosted-agent processor internally.",
+        "description": "Update an agent automation with a full configuration body. Provide agentId, name, enabled, and triggerType; Outlit maps agentId to the hosted-agent processor internally.",
         "operationId": "updateAutomation",
         "parameters": [
           {
@@ -1321,6 +1435,97 @@
           },
           "503": {
             "description": "The platform could not list destinations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Create destination",
+        "description": "Create one automation destination. Responses include masked configuration only.",
+        "operationId": "createDestination",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDestinationRequest"
+              },
+              "example": {
+                "type": "WEBHOOK_ENDPOINT",
+                "name": "Customer ops",
+                "description": null,
+                "enabled": true,
+                "url": "https://hooks.example.com/outlit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Destination was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateDestinationCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No resource was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The requested change conflicts with the current platform state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1887,10 +2092,10 @@
           }
         }
       },
-      "post": {
+      "patch": {
         "tags": ["Platform API"],
         "summary": "Update signal",
-        "description": "Update one UI-managed Outlit automation signal.",
+        "description": "Update one UI-managed Outlit automation signal with a full signal configuration body.",
         "operationId": "updateSignal",
         "parameters": [
           {
@@ -2141,7 +2346,7 @@
           }
         }
       },
-      "post": {
+      "patch": {
         "tags": ["Platform API"],
         "summary": "Update destination",
         "description": "Update one automation destination. Responses include masked configuration only.",
@@ -2454,494 +2659,6 @@
           },
           "409": {
             "description": "The requested lifecycle change conflicts with the current platform state.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/agents/custom": {
-      "post": {
-        "tags": ["Platform API"],
-        "summary": "Create custom agent",
-        "description": "Create a custom hosted Outlit agent with instructions, surfacing criteria, and optional action capabilities.",
-        "operationId": "createCustomAgent",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateAgentCustomRequest"
-              },
-              "example": {
-                "displayName": "Renewal risk",
-                "instructions": "Find risk.",
-                "surfaceCriteria": "Surface risky customers.",
-                "actionKeys": ["send_slack_notification"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Custom agent was created.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateAgentCustomCommandSuccess"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request body failed command validation.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "description": "The API key is valid but does not have the required agent write scope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No resource was found for the authenticated organization and requested id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The requested change conflicts with the current platform state.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/agents/{id}/profile": {
-      "post": {
-        "tags": ["Platform API"],
-        "summary": "Update agent profile",
-        "description": "Update one configured Outlit agent profile.",
-        "operationId": "updateAgentProfile",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Agent ID.",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateAgentProfileRequest"
-              },
-              "example": {
-                "displayName": "Renewal risk"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Agent profile was updated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpdateAgentProfileCommandSuccess"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request body failed command validation.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "description": "The API key is valid but does not have the required agent write scope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No resource was found for the authenticated organization and requested id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The requested change conflicts with the current platform state.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/agents/{id}/instructions": {
-      "post": {
-        "tags": ["Platform API"],
-        "summary": "Update agent instructions",
-        "description": "Update one custom hosted Outlit agent's instructions.",
-        "operationId": "updateAgentInstructions",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Agent ID.",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateAgentInstructionsRequest"
-              },
-              "example": {
-                "instructions": "Prioritize recent support escalations."
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Agent instructions were updated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpdateAgentInstructionsCommandSuccess"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request body failed command validation.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "description": "The API key is valid but does not have the required agent write scope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No resource was found for the authenticated organization and requested id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The requested change conflicts with the current platform state.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/agents/{id}/actions": {
-      "post": {
-        "tags": ["Platform API"],
-        "summary": "Update agent actions",
-        "description": "Update one custom hosted Outlit agent's action keys.",
-        "operationId": "updateAgentActions",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Agent ID.",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateAgentActionsRequest"
-              },
-              "example": {
-                "actionKeys": ["send_slack_notification"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Agent actions were updated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpdateAgentActionsCommandSuccess"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request body failed command validation.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "description": "The API key is valid but does not have the required agent write scope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No resource was found for the authenticated organization and requested id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The requested change conflicts with the current platform state.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/destinations/webhook": {
-      "post": {
-        "tags": ["Platform API"],
-        "summary": "Create webhook destination",
-        "description": "Create one webhook automation destination. Responses include masked configuration only.",
-        "operationId": "createWebhookDestination",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateDestinationWebhookRequest"
-              },
-              "example": {
-                "type": "WEBHOOK_ENDPOINT",
-                "name": "Customer ops",
-                "description": null,
-                "enabled": true,
-                "url": "https://hooks.example.com/outlit"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Webhook destination was created.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateDestinationWebhookCommandSuccess"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request body failed command validation.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "description": "The API key is valid but does not have the required agent write scope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No resource was found for the authenticated organization and requested id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The requested change conflicts with the current platform state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3558,23 +3275,16 @@
         },
         "additionalProperties": false
       },
-      "CreateAgentFromTemplateRequest": {
+      "CreateAgentTemplateRequest": {
         "type": "object",
-        "required": ["source"],
+        "required": ["type", "templateKey"],
         "properties": {
-          "source": {
-            "type": "object",
-            "required": ["type", "templateKey"],
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "template"
-              },
-              "templateKey": {
-                "$ref": "#/components/schemas/AgentTemplateKey"
-              }
-            },
-            "additionalProperties": false
+          "type": {
+            "type": "string",
+            "const": "template"
+          },
+          "templateKey": {
+            "$ref": "#/components/schemas/AgentTemplateKey"
           },
           "mode": {
             "$ref": "#/components/schemas/AgentTemplateMode"
@@ -3582,7 +3292,17 @@
         },
         "additionalProperties": false
       },
-      "CreateAgentFromTemplateCommandSuccess": {
+      "CreateAgentRequest": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CreateAgentTemplateRequest"
+          },
+          {
+            "$ref": "#/components/schemas/CreateAgentCustomRequest"
+          }
+        ]
+      },
+      "CreateAgentCommandSuccess": {
         "type": "object",
         "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
         "properties": {
@@ -3592,7 +3312,7 @@
           },
           "commandId": {
             "type": "string",
-            "const": "agent.createFromTemplate"
+            "const": "agent.create"
           },
           "commandVersion": {
             "type": "integer",
@@ -3611,73 +3331,14 @@
                 "properties": {
                   "operationId": {
                     "type": "string",
-                    "const": "agent.template.create"
+                    "const": "agent.create"
                   },
                   "data": {
                     "type": "object",
-                    "required": [
-                      "agentId",
-                      "templateKey",
-                      "templateVersion",
-                      "mode",
-                      "created",
-                      "safety"
-                    ],
+                    "required": ["agent"],
                     "properties": {
-                      "agentId": {
-                        "type": "string"
-                      },
-                      "templateKey": {
-                        "$ref": "#/components/schemas/AgentTemplateKey"
-                      },
-                      "templateVersion": {
-                        "type": "string"
-                      },
-                      "mode": {
-                        "$ref": "#/components/schemas/AgentTemplateMode"
-                      },
-                      "created": {
-                        "type": "boolean"
-                      },
-                      "safety": {
-                        "type": "object",
-                        "required": [
-                          "actionGrantsAdded",
-                          "destinationsAdded",
-                          "schedulesAdded",
-                          "externalEgressAdded",
-                          "enabledAutomation"
-                        ],
-                        "properties": {
-                          "actionGrantsAdded": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "destinationsAdded": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "schedulesAdded": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "externalEgressAdded": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "enabledAutomation": {
-                            "type": "boolean"
-                          }
-                        },
-                        "additionalProperties": false
+                      "agent": {
+                        "$ref": "#/components/schemas/AgentSummary"
                       }
                     },
                     "additionalProperties": false
@@ -5597,8 +5258,12 @@
       },
       "CreateAgentCustomRequest": {
         "type": "object",
-        "required": ["displayName", "instructions", "surfaceCriteria"],
+        "required": ["type", "displayName", "instructions", "surfaceCriteria"],
         "properties": {
+          "type": {
+            "type": "string",
+            "const": "custom"
+          },
           "displayName": {
             "type": "string",
             "minLength": 1,
@@ -5636,40 +5301,26 @@
         },
         "additionalProperties": false
       },
-      "UpdateAgentProfileRequest": {
+      "UpdateAgentRequest": {
         "type": "object",
-        "required": ["displayName"],
+        "minProperties": 1,
         "properties": {
           "displayName": {
             "type": "string",
             "minLength": 1,
             "maxLength": 120
-          }
-        },
-        "additionalProperties": false
-      },
-      "UpdateAgentInstructionsRequest": {
-        "type": "object",
-        "required": ["instructions"],
-        "properties": {
+          },
           "instructions": {
             "type": "string",
             "minLength": 1,
             "maxLength": 10000
-          }
-        },
-        "additionalProperties": false
-      },
-      "UpdateAgentActionsRequest": {
-        "type": "object",
-        "properties": {
+          },
           "actionKeys": {
             "type": "array",
             "items": {
               "type": "string",
               "minLength": 1
-            },
-            "default": []
+            }
           }
         },
         "additionalProperties": false
@@ -6109,7 +5760,7 @@
           }
         ]
       },
-      "CreateDestinationWebhookRequest": {
+      "CreateDestinationRequest": {
         "type": "object",
         "required": ["name", "url"],
         "properties": {
@@ -6144,7 +5795,8 @@
         "oneOf": [
           {
             "type": "object",
-            "required": ["type", "name", "enabled"],
+            "required": ["type"],
+            "minProperties": 2,
             "properties": {
               "type": {
                 "type": "string",
@@ -6157,8 +5809,7 @@
               },
               "description": {
                 "type": ["string", "null"],
-                "maxLength": 1000,
-                "default": null
+                "maxLength": 1000
               },
               "enabled": {
                 "type": "boolean"
@@ -6173,7 +5824,8 @@
           },
           {
             "type": "object",
-            "required": ["type", "label", "enabled"],
+            "required": ["type"],
+            "minProperties": 2,
             "properties": {
               "type": {
                 "type": "string",
@@ -6192,7 +5844,7 @@
           }
         ]
       },
-      "CreateAgentCustomCommandSuccess": {
+      "UpdateAgentCommandSuccess": {
         "type": "object",
         "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
         "properties": {
@@ -6202,7 +5854,7 @@
           },
           "commandId": {
             "type": "string",
-            "const": "agent.createCustom"
+            "const": "agent.update"
           },
           "commandVersion": {
             "type": "integer",
@@ -6221,151 +5873,7 @@
                 "properties": {
                   "operationId": {
                     "type": "string",
-                    "const": "agent.createCustom"
-                  },
-                  "data": {
-                    "type": "object",
-                    "required": ["agent"],
-                    "properties": {
-                      "agent": {
-                        "$ref": "#/components/schemas/AgentSummary"
-                      }
-                    },
-                    "additionalProperties": false
-                  }
-                }
-              }
-            ]
-          }
-        },
-        "additionalProperties": false
-      },
-      "UpdateAgentProfileCommandSuccess": {
-        "type": "object",
-        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
-        "properties": {
-          "ok": {
-            "type": "boolean",
-            "const": true
-          },
-          "commandId": {
-            "type": "string",
-            "const": "agent.updateProfile"
-          },
-          "commandVersion": {
-            "type": "integer",
-            "const": 1
-          },
-          "correlationId": {
-            "type": "string"
-          },
-          "result": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/CommandResultBase"
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "operationId": {
-                    "type": "string",
-                    "const": "agent.updateProfile"
-                  },
-                  "data": {
-                    "type": "object",
-                    "required": ["agent"],
-                    "properties": {
-                      "agent": {
-                        "$ref": "#/components/schemas/AgentSummary"
-                      }
-                    },
-                    "additionalProperties": false
-                  }
-                }
-              }
-            ]
-          }
-        },
-        "additionalProperties": false
-      },
-      "UpdateAgentInstructionsCommandSuccess": {
-        "type": "object",
-        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
-        "properties": {
-          "ok": {
-            "type": "boolean",
-            "const": true
-          },
-          "commandId": {
-            "type": "string",
-            "const": "agent.updateInstructions"
-          },
-          "commandVersion": {
-            "type": "integer",
-            "const": 1
-          },
-          "correlationId": {
-            "type": "string"
-          },
-          "result": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/CommandResultBase"
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "operationId": {
-                    "type": "string",
-                    "const": "agent.updateInstructions"
-                  },
-                  "data": {
-                    "type": "object",
-                    "required": ["agent"],
-                    "properties": {
-                      "agent": {
-                        "$ref": "#/components/schemas/AgentSummary"
-                      }
-                    },
-                    "additionalProperties": false
-                  }
-                }
-              }
-            ]
-          }
-        },
-        "additionalProperties": false
-      },
-      "UpdateAgentActionsCommandSuccess": {
-        "type": "object",
-        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
-        "properties": {
-          "ok": {
-            "type": "boolean",
-            "const": true
-          },
-          "commandId": {
-            "type": "string",
-            "const": "agent.updateActions"
-          },
-          "commandVersion": {
-            "type": "integer",
-            "const": 1
-          },
-          "correlationId": {
-            "type": "string"
-          },
-          "result": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/CommandResultBase"
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "operationId": {
-                    "type": "string",
-                    "const": "agent.updateActions"
+                    "const": "agent.update"
                   },
                   "data": {
                     "type": "object",
@@ -6576,7 +6084,7 @@
         },
         "additionalProperties": false
       },
-      "CreateDestinationWebhookCommandSuccess": {
+      "CreateDestinationCommandSuccess": {
         "type": "object",
         "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
         "properties": {
@@ -6586,7 +6094,7 @@
           },
           "commandId": {
             "type": "string",
-            "const": "destination.createWebhook"
+            "const": "destination.create"
           },
           "commandVersion": {
             "type": "integer",
@@ -6605,7 +6113,7 @@
                 "properties": {
                   "operationId": {
                     "type": "string",
-                    "const": "destination.createWebhook"
+                    "const": "destination.create"
                   },
                   "data": {
                     "type": "object",

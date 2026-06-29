@@ -112,97 +112,108 @@ describe("platform lifecycle commands", () => {
     })
   })
 
-  test("runs agent create and focused update commands", async () => {
-    const { default: createCustomCmd } = await import("../../src/commands/agents/create-custom")
-    const { default: updateProfileCmd } = await import("../../src/commands/agents/update-profile")
-    const { default: updateInstructionsCmd } = await import(
-      "../../src/commands/agents/update-instructions"
-    )
-    const { default: updateActionsCmd } = await import("../../src/commands/agents/update-actions")
+  test("runs agent create and update commands", async () => {
+    const { default: createCmd } = await import("../../src/commands/agents/create")
+    const { default: updateCmd } = await import("../../src/commands/agents/update")
 
     await captureStdout(() =>
-      createCustomCmd.run!({
+      createCmd.run!({
         args: {
+          template: "churn",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof createCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      createCmd.run!({
+        args: {
+          type: "custom",
           "display-name": "Renewal risk",
           instructions: "Find renewal risk.",
           "surface-criteria": "Surface risky renewals.",
           "action-keys": "send_slack_notification",
           json: true,
         },
-      } as Parameters<NonNullable<typeof createCustomCmd.run>>[0]),
+      } as Parameters<NonNullable<typeof createCmd.run>>[0]),
     )
     await captureStdout(() =>
-      updateProfileCmd.run!({
+      updateCmd.run!({
         args: { id: "agent_123", "display-name": "Renamed", json: true },
-      } as Parameters<NonNullable<typeof updateProfileCmd.run>>[0]),
+      } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
     )
     await captureStdout(() =>
-      updateInstructionsCmd.run!({
+      updateCmd.run!({
         args: { id: "agent_123", instructions: "New instructions", json: true },
-      } as Parameters<NonNullable<typeof updateInstructionsCmd.run>>[0]),
+      } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
     )
     await captureStdout(() =>
-      updateActionsCmd.run!({
+      updateCmd.run!({
         args: { id: "agent_123", "action-keys": "send_slack_notification,create_task", json: true },
-      } as Parameters<NonNullable<typeof updateActionsCmd.run>>[0]),
+      } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
     )
     await captureStdout(() =>
-      updateActionsCmd.run!({
-        args: { id: "agent_123", clear: true, json: true },
-      } as Parameters<NonNullable<typeof updateActionsCmd.run>>[0]),
+      updateCmd.run!({
+        args: { id: "agent_123", "clear-action-keys": true, json: true },
+      } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_agent_create_custom", {
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_agent_create", {
+      type: "template",
+      templateKey: "churn",
+      mode: "draft",
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_agent_create", {
+      type: "custom",
       displayName: "Renewal risk",
       instructions: "Find renewal risk.",
       surfaceCriteria: "Surface risky renewals.",
       maxItemsToSurface: 10,
       actionKeys: ["send_slack_notification"],
     })
-    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_agent_update_profile", {
+    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_agent_update", {
       id: "agent_123",
       displayName: "Renamed",
     })
-    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_agent_update_instructions", {
+    expect(mockCallTool).toHaveBeenNthCalledWith(4, "outlit_agent_update", {
       id: "agent_123",
       instructions: "New instructions",
     })
-    expect(mockCallTool).toHaveBeenNthCalledWith(4, "outlit_agent_update_actions", {
+    expect(mockCallTool).toHaveBeenNthCalledWith(5, "outlit_agent_update", {
       id: "agent_123",
       actionKeys: ["send_slack_notification", "create_task"],
     })
-    expect(mockCallTool).toHaveBeenNthCalledWith(5, "outlit_agent_update_actions", {
+    expect(mockCallTool).toHaveBeenNthCalledWith(6, "outlit_agent_update", {
       id: "agent_123",
       actionKeys: [],
     })
   })
 
-  test("requires explicit agent action update input", async () => {
-    const { default: updateActionsCmd } = await import("../../src/commands/agents/update-actions")
+  test("requires explicit agent update input", async () => {
+    const { default: updateCmd } = await import("../../src/commands/agents/update")
 
     await runExpectingError(
       () =>
-        updateActionsCmd.run!({
+        updateCmd.run!({
           args: { id: "agent_123", json: true },
-        } as Parameters<NonNullable<typeof updateActionsCmd.run>>[0]),
+        } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
       "missing_input",
     )
     expect(mockCallTool).not.toHaveBeenCalled()
   })
 
   test("rejects conflicting agent action update inputs", async () => {
-    const { default: updateActionsCmd } = await import("../../src/commands/agents/update-actions")
+    const { default: updateCmd } = await import("../../src/commands/agents/update")
 
     await runExpectingError(
       () =>
-        updateActionsCmd.run!({
+        updateCmd.run!({
           args: {
             id: "agent_123",
             "action-keys": "review_churn_followup",
-            clear: true,
+            "clear-action-keys": true,
             json: true,
           },
-        } as Parameters<NonNullable<typeof updateActionsCmd.run>>[0]),
+        } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
       "invalid_input",
     )
     expect(mockCallTool).not.toHaveBeenCalled()
@@ -280,37 +291,35 @@ describe("platform lifecycle commands", () => {
     })
   })
 
-  test("runs destination create webhook and update commands", async () => {
-    const { default: createWebhookCmd } = await import(
-      "../../src/commands/destinations/create-webhook"
-    )
+  test("runs destination create and update commands", async () => {
+    const { default: createDestinationCmd } = await import("../../src/commands/destinations/create")
     const { default: updateDestinationCmd } = await import("../../src/commands/destinations/update")
     const destinationId = "10000000-0000-4000-8000-000000000003"
 
     await captureStdout(() =>
-      createWebhookCmd.run!({
+      createDestinationCmd.run!({
         args: {
+          type: "webhook",
           name: "Customer ops",
           url: "https://hooks.example.com/outlit",
           description: "Ops webhook",
           json: true,
         },
-      } as Parameters<NonNullable<typeof createWebhookCmd.run>>[0]),
+      } as Parameters<NonNullable<typeof createDestinationCmd.run>>[0]),
     )
     await captureStdout(() =>
       updateDestinationCmd.run!({
         args: {
           id: destinationId,
-          type: "WEBHOOK_ENDPOINT",
+          type: "webhook",
           name: "Updated webhook",
           description: "Updated",
-          disabled: true,
           json: true,
         },
       } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_destination_create_webhook", {
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_destination_create", {
       type: "WEBHOOK_ENDPOINT",
       name: "Customer ops",
       description: "Ops webhook",
@@ -322,11 +331,10 @@ describe("platform lifecycle commands", () => {
       type: "WEBHOOK_ENDPOINT",
       name: "Updated webhook",
       description: "Updated",
-      enabled: false,
     })
   })
 
-  test("requires explicit destination update lifecycle state", async () => {
+  test("requires at least one destination update field", async () => {
     const { default: updateDestinationCmd } = await import("../../src/commands/destinations/update")
 
     await runExpectingError(
@@ -334,7 +342,23 @@ describe("platform lifecycle commands", () => {
         updateDestinationCmd.run!({
           args: {
             id: "10000000-0000-4000-8000-000000000003",
-            type: "WEBHOOK_ENDPOINT",
+            type: "webhook",
+            json: true,
+          },
+        } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
+      "missing_input",
+    )
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("requires an explicit destination update type", async () => {
+    const { default: updateDestinationCmd } = await import("../../src/commands/destinations/update")
+
+    await runExpectingError(
+      () =>
+        updateDestinationCmd.run!({
+          args: {
+            id: "10000000-0000-4000-8000-000000000003",
             name: "Updated webhook",
             json: true,
           },
@@ -352,7 +376,7 @@ describe("platform lifecycle commands", () => {
         updateDestinationCmd.run!({
           args: {
             id: "10000000-0000-4000-8000-000000000003",
-            type: "WEBHOOK",
+            type: "email",
             name: "Updated webhook",
             enabled: true,
             json: true,

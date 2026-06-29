@@ -20,7 +20,7 @@ export interface OutlitClient {
    * Call an Outlit API endpoint by tool name.
    *
    * Maps the tool name to a Platform REST endpoint and sends the request
-   * with the appropriate HTTP method (GET with query params, or POST with JSON body).
+   * with the appropriate HTTP method (GET with query params, or JSON body for mutations).
    */
   callTool(toolName: string, params: Record<string, unknown>): Promise<unknown>
 }
@@ -30,7 +30,7 @@ export interface OutlitClient {
 const API_KEY_REGEX = /^ok_[A-Za-z0-9_-]{32,}$/
 
 /** Maps CLI-owned direct API commands to Platform REST endpoints outside `/api/tools/call`. */
-const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string }> = {
+const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST" | "PATCH"; path: string }> = {
   outlit_list_integrations: { method: "GET", path: "/api/integrations" },
   outlit_connect_integration: { method: "POST", path: "/api/integrations/connect" },
   outlit_connect_status: { method: "GET", path: "/api/integrations/connect/status" },
@@ -62,25 +62,13 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
     method: "GET",
     path: "/api/agents/{id}",
   },
-  outlit_agent_create_from_template: {
+  outlit_agent_create: {
     method: "POST",
     path: "/api/agents",
   },
-  outlit_agent_create_custom: {
-    method: "POST",
-    path: "/api/agents/custom",
-  },
-  outlit_agent_update_profile: {
-    method: "POST",
-    path: "/api/agents/{id}/profile",
-  },
-  outlit_agent_update_instructions: {
-    method: "POST",
-    path: "/api/agents/{id}/instructions",
-  },
-  outlit_agent_update_actions: {
-    method: "POST",
-    path: "/api/agents/{id}/actions",
+  outlit_agent_update: {
+    method: "PATCH",
+    path: "/api/agents/{id}",
   },
   outlit_agent_enable: {
     method: "POST",
@@ -107,7 +95,7 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
     path: "/api/automations",
   },
   outlit_automation_update: {
-    method: "POST",
+    method: "PATCH",
     path: "/api/automations/{id}",
   },
   outlit_automation_enable: {
@@ -135,7 +123,7 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
     path: "/api/signals",
   },
   outlit_signal_update: {
-    method: "POST",
+    method: "PATCH",
     path: "/api/signals/{id}",
   },
   outlit_signal_archive: {
@@ -150,12 +138,12 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
     method: "GET",
     path: "/api/destinations/{id}",
   },
-  outlit_destination_create_webhook: {
+  outlit_destination_create: {
     method: "POST",
-    path: "/api/destinations/webhook",
+    path: "/api/destinations",
   },
   outlit_destination_update: {
-    method: "POST",
+    method: "PATCH",
     path: "/api/destinations/{id}",
   },
   outlit_destination_enable: {
