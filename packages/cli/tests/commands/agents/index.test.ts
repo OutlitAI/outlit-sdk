@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test"
 
 describe("agents command", () => {
-  test("exposes read-only agent commands, template actions, and safe draft creation", async () => {
+  test("exposes agent read, template, and lifecycle commands", async () => {
     const { default: agentsCmd } = await import("../../../src/commands/agents")
     const subcommands = Object.keys(agentsCmd.subCommands ?? {})
     const metaSource = agentsCmd.meta
@@ -13,7 +13,9 @@ describe("agents command", () => {
     expect(subcommands).toContain("list")
     expect(subcommands).toContain("get")
     expect(subcommands).toContain("create-from-template")
-    expect(subcommands).not.toContain("enable")
+    expect(subcommands).toContain("enable")
+    expect(subcommands).toContain("disable")
+    expect(subcommands).toContain("rename")
     expect(subcommands).not.toContain("install-bundle")
     expect(subcommands).not.toContain("delete")
     expect(subcommands).not.toContain("grants")

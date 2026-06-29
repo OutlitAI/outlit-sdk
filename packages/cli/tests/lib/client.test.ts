@@ -396,6 +396,87 @@ describe("client.callTool()", () => {
     ).rejects.toThrow("Unknown tool")
   })
 
+  test("keeps lifecycle platform actions on direct public API endpoints", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const okEnvelope = {
+      ok: true,
+      commandId: "lifecycle.test",
+      commandVersion: 1,
+      correlationId: "corr_lifecycle_123",
+      result: {
+        operationId: "lifecycle.test",
+        status: "completed",
+        resources: [],
+        data: {},
+        warnings: [],
+      },
+    }
+    const fetchSpy = spyOn(globalThis, "fetch")
+    for (let i = 0; i < 12; i += 1) {
+      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(okEnvelope), { status: 200 }))
+    }
+
+    const client = await createClient()
+    await client.callTool("outlit_agent_enable", { id: "agent_123" })
+    await client.callTool("outlit_agent_disable", { id: "agent_123" })
+    await client.callTool("outlit_agent_rename", { id: "agent_123", displayName: "Renamed" })
+    await client.callTool("outlit_automation_enable", {
+      id: "10000000-0000-4000-8000-000000000001",
+    })
+    await client.callTool("outlit_automation_disable", {
+      id: "10000000-0000-4000-8000-000000000001",
+    })
+    await client.callTool("outlit_automation_archive", {
+      id: "10000000-0000-4000-8000-000000000001",
+    })
+    await client.callTool("outlit_signal_get", {
+      id: "10000000-0000-4000-8000-000000000002",
+    })
+    await client.callTool("outlit_signal_archive", {
+      id: "10000000-0000-4000-8000-000000000002",
+    })
+    await client.callTool("outlit_destination_get", {
+      id: "10000000-0000-4000-8000-000000000003",
+    })
+    await client.callTool("outlit_destination_enable", {
+      id: "10000000-0000-4000-8000-000000000003",
+    })
+    await client.callTool("outlit_destination_disable", {
+      id: "10000000-0000-4000-8000-000000000003",
+    })
+    await client.callTool("outlit_destination_archive", {
+      id: "10000000-0000-4000-8000-000000000003",
+    })
+
+    const urls = fetchSpy.mock.calls.map((call) => call[0] as string)
+    expect(urls[0]).toContain("/api/agents/agent_123/enable")
+    expect(urls[1]).toContain("/api/agents/agent_123/disable")
+    expect(urls[2]).toContain("/api/agents/agent_123/rename")
+    expect(urls[3]).toContain("/api/automations/10000000-0000-4000-8000-000000000001/enable")
+    expect(urls[4]).toContain("/api/automations/10000000-0000-4000-8000-000000000001/disable")
+    expect(urls[5]).toContain("/api/automations/10000000-0000-4000-8000-000000000001/archive")
+    expect(urls[6]).toContain("/api/signals/10000000-0000-4000-8000-000000000002")
+    expect(urls[7]).toContain("/api/signals/10000000-0000-4000-8000-000000000002/archive")
+    expect(urls[8]).toContain("/api/destinations/10000000-0000-4000-8000-000000000003")
+    expect(urls[9]).toContain("/api/destinations/10000000-0000-4000-8000-000000000003/enable")
+    expect(urls[10]).toContain("/api/destinations/10000000-0000-4000-8000-000000000003/disable")
+    expect(urls[11]).toContain("/api/destinations/10000000-0000-4000-8000-000000000003/archive")
+
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).body).toBe(JSON.stringify({}))
+    expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({ displayName: "Renamed" }),
+    )
+    expect((fetchSpy.mock.calls[6]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[6]?.[1] as RequestInit).body).toBeUndefined()
+    for (const url of urls) {
+      expect(url).not.toContain("/api/tools/call")
+    }
+
+    fetchSpy.mockRestore()
+  })
+
   test("delegates exact fact retrieval through the public tools endpoint", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 

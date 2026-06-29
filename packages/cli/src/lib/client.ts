@@ -66,6 +66,18 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
     method: "POST",
     path: "/api/agents",
   },
+  outlit_agent_enable: {
+    method: "POST",
+    path: "/api/agents/{id}/enable",
+  },
+  outlit_agent_disable: {
+    method: "POST",
+    path: "/api/agents/{id}/disable",
+  },
+  outlit_agent_rename: {
+    method: "POST",
+    path: "/api/agents/{id}/rename",
+  },
   outlit_automation_list: {
     method: "GET",
     path: "/api/automations",
@@ -74,14 +86,67 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
     method: "GET",
     path: "/api/automations/{id}",
   },
+  outlit_automation_enable: {
+    method: "POST",
+    path: "/api/automations/{id}/enable",
+  },
+  outlit_automation_disable: {
+    method: "POST",
+    path: "/api/automations/{id}/disable",
+  },
+  outlit_automation_archive: {
+    method: "POST",
+    path: "/api/automations/{id}/archive",
+  },
   outlit_signal_list: {
     method: "GET",
     path: "/api/signals",
+  },
+  outlit_signal_get: {
+    method: "GET",
+    path: "/api/signals/{id}",
+  },
+  outlit_signal_archive: {
+    method: "POST",
+    path: "/api/signals/{id}/archive",
   },
   outlit_destination_list: {
     method: "GET",
     path: "/api/destinations",
   },
+  outlit_destination_get: {
+    method: "GET",
+    path: "/api/destinations/{id}",
+  },
+  outlit_destination_enable: {
+    method: "POST",
+    path: "/api/destinations/{id}/enable",
+  },
+  outlit_destination_disable: {
+    method: "POST",
+    path: "/api/destinations/{id}/disable",
+  },
+  outlit_destination_archive: {
+    method: "POST",
+    path: "/api/destinations/{id}/archive",
+  },
+}
+
+function resolvePathParams(
+  path: string,
+  params: Record<string, unknown>,
+): { path: string; rest: Record<string, unknown> } {
+  const rest = { ...params }
+  const resolvedPath = path.replace(/\{([A-Za-z0-9_]+)\}/g, (match, key: string) => {
+    const value = rest[key]
+    if (value == null) {
+      return match
+    }
+    delete rest[key]
+    return encodeURIComponent(String(value))
+  })
+
+  return { path: resolvedPath, rest }
 }
 
 /**
@@ -89,17 +154,9 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
  * Skips null/undefined values. Arrays are joined with commas.
  */
 function buildUrl(base: string, path: string, params: Record<string, unknown>): string {
-  const pathParams = { ...params }
-  const resolvedPath = path.replace(/\{([A-Za-z0-9_]+)\}/g, (match, key: string) => {
-    const value = pathParams[key]
-    if (value == null) {
-      return match
-    }
-    delete pathParams[key]
-    return encodeURIComponent(String(value))
-  })
+  const { path: resolvedPath, rest } = resolvePathParams(path, params)
   const url = new URL(resolvedPath, base)
-  for (const [key, value] of Object.entries(pathParams)) {
+  for (const [key, value] of Object.entries(rest)) {
     if (value == null) continue
     if (Array.isArray(value)) {
       url.searchParams.set(key, value.join(","))
@@ -166,9 +223,10 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
       if (endpoint.method === "GET") {
         url = buildUrl(baseUrl, endpoint.path, params)
       } else {
-        url = new URL(endpoint.path, baseUrl).toString()
+        const resolved = resolvePathParams(endpoint.path, params)
+        url = new URL(resolved.path, baseUrl).toString()
         headers["Content-Type"] = "application/json"
-        body = JSON.stringify(params)
+        body = JSON.stringify(resolved.rest)
       }
 
       const response = await globalThis.fetch(url, {

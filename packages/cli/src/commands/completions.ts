@@ -238,6 +238,9 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "Create a draft agent from a platform template",
         flags: [...COMMON],
       },
+      { name: "enable", desc: "Enable a configured agent", flags: [...COMMON] },
+      { name: "disable", desc: "Disable a configured agent", flags: [...COMMON] },
+      { name: "rename", desc: "Rename a configured agent", flags: [...COMMON] },
     ],
   },
   {
@@ -246,17 +249,30 @@ const COMMANDS: readonly CmdDef[] = [
     subs: [
       { name: "list", desc: "List configured automations", flags: [...COMMON] },
       { name: "get", desc: "Get one configured automation", flags: [...COMMON] },
+      { name: "enable", desc: "Enable a configured automation", flags: [...COMMON] },
+      { name: "disable", desc: "Disable a configured automation", flags: [...COMMON] },
+      { name: "archive", desc: "Archive a configured automation", flags: [...COMMON] },
     ],
   },
   {
     name: "signals",
     desc: "Inspect automation signals",
-    subs: [{ name: "list", desc: "List configured signals", flags: [...COMMON] }],
+    subs: [
+      { name: "list", desc: "List configured signals", flags: [...COMMON] },
+      { name: "get", desc: "Get one configured signal", flags: [...COMMON] },
+      { name: "archive", desc: "Archive a configured signal", flags: [...COMMON] },
+    ],
   },
   {
     name: "destinations",
     desc: "Inspect automation destinations",
-    subs: [{ name: "list", desc: "List configured destinations", flags: [...COMMON] }],
+    subs: [
+      { name: "list", desc: "List configured destinations", flags: [...COMMON] },
+      { name: "get", desc: "Get one configured destination", flags: [...COMMON] },
+      { name: "enable", desc: "Enable a configured destination", flags: [...COMMON] },
+      { name: "disable", desc: "Disable a configured destination", flags: [...COMMON] },
+      { name: "archive", desc: "Archive a configured destination", flags: [...COMMON] },
+    ],
   },
   {
     name: "onboard",
