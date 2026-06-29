@@ -5,11 +5,13 @@ export default defineCommand({
   meta: {
     name: "destinations",
     description: [
-      "Inspect Outlit automation destinations.",
+      "Configure Outlit automation destinations.",
       "",
       "Commands:",
       "  list                          List configured destinations",
       "  get <id>                      Get one configured destination",
+      "  create-webhook                Create a webhook destination",
+      "  update <id>                   Update an automation destination",
       "  enable <id>                   Enable a configured destination",
       "  disable <id>                  Disable a configured destination",
       "  archive <id>                  Archive a configured destination",
@@ -17,6 +19,8 @@ export default defineCommand({
       "Examples:",
       "  outlit destinations list --json",
       "  outlit destinations get 10000000-0000-4000-8000-000000000003 --json",
+      "  outlit destinations create-webhook --name 'Customer ops' --url https://hooks.example.com/outlit --json",
+      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type WEBHOOK_ENDPOINT --name 'Customer ops' --enabled --json",
       "  outlit destinations enable 10000000-0000-4000-8000-000000000003 --json",
       "  outlit destinations disable 10000000-0000-4000-8000-000000000003 --json",
       "  outlit destinations archive 10000000-0000-4000-8000-000000000003 --json",
@@ -27,6 +31,8 @@ export default defineCommand({
   subCommands: {
     list: () => import("./list").then((m) => m.default),
     get: () => import("./get").then((m) => m.default),
+    "create-webhook": () => import("./create-webhook").then((m) => m.default),
+    update: () => import("./update").then((m) => m.default),
     enable: () => import("./enable").then((m) => m.default),
     disable: () => import("./disable").then((m) => m.default),
     archive: () => import("./archive").then((m) => m.default),

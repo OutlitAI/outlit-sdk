@@ -10,7 +10,7 @@ export default defineCommand({
       "Disable a configured Outlit agent by id.",
       "",
       "Examples:",
-      "  outlit agents disable agent_123 --json",
+      "  outlit agents disable 10000000-0000-4000-8000-000000000004 --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
