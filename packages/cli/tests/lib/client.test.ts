@@ -161,7 +161,8 @@ describe("client.callTool()", () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const createParams = {
-      source: { type: "template", templateKey: "churn" },
+      type: "template",
+      templateKey: "churn",
       mode: "draft",
     }
     const fetchSpy = spyOn(globalThis, "fetch")
@@ -205,25 +206,18 @@ describe("client.callTool()", () => {
         new Response(
           JSON.stringify({
             ok: true,
-            commandId: "agent.createFromTemplate",
+            commandId: "agent.create",
             commandVersion: 1,
             correlationId: "corr_123",
             result: {
-              operationId: "agent.template.create",
+              operationId: "agent.create",
               status: "completed",
               resources: [{ type: "agent", id: "agent_123" }],
               data: {
-                agentId: "agent_123",
-                templateKey: "churn",
-                templateVersion: "2026-06-01",
-                mode: "draft",
-                created: true,
-                safety: {
-                  actionGrantsAdded: [],
-                  destinationsAdded: [],
-                  schedulesAdded: [],
-                  externalEgressAdded: [],
-                  enabledAutomation: false,
+                agent: {
+                  id: "agent_123",
+                  displayName: "Churn prevention",
+                  status: "DISABLED",
                 },
               },
               warnings: [],
@@ -344,7 +338,7 @@ describe("client.callTool()", () => {
     const client = await createClient()
     await client.callTool("outlit_agent_list_templates", {})
     await client.callTool("outlit_agent_list_available_actions", {})
-    await client.callTool("outlit_agent_create_from_template", createParams)
+    await client.callTool("outlit_agent_create", createParams)
     await client.callTool("outlit_agent_list", {})
     await client.callTool("outlit_agent_get", { id: "agent_123" })
     await client.callTool("outlit_automation_list", {})
@@ -413,7 +407,7 @@ describe("client.callTool()", () => {
       },
     }
     const fetchSpy = spyOn(globalThis, "fetch")
-    for (let i = 0; i < 12; i += 1) {
+    for (let i = 0; i < 22; i += 1) {
       fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(okEnvelope), { status: 200 }))
     }
 
@@ -448,6 +442,84 @@ describe("client.callTool()", () => {
     await client.callTool("outlit_destination_archive", {
       id: "10000000-0000-4000-8000-000000000003",
     })
+    await client.callTool("outlit_agent_create", {
+      type: "custom",
+      displayName: "Renewal risk",
+      instructions: "Find risk",
+      surfaceCriteria: "Surface risky customers",
+      maxItemsToSurface: 10,
+      actionKeys: ["send_slack_notification"],
+    })
+    await client.callTool("outlit_agent_update", {
+      id: "agent_123",
+      displayName: "Renewal risk",
+    })
+    await client.callTool("outlit_agent_update", {
+      id: "agent_123",
+      instructions: "New instructions",
+    })
+    await client.callTool("outlit_agent_update", {
+      id: "agent_123",
+      actionKeys: ["send_slack_notification"],
+    })
+    await client.callTool("outlit_automation_create", {
+      agentId: "10000000-0000-4000-8000-000000000004",
+      name: "Churn response",
+      description: null,
+      enabled: false,
+      triggerType: "SIGNAL_OCCURRENCE",
+      signalIds: [],
+      destinationIds: [],
+    })
+    await client.callTool("outlit_automation_update", {
+      id: "10000000-0000-4000-8000-000000000001",
+      agentId: "10000000-0000-4000-8000-000000000004",
+      name: "Churn response",
+      description: null,
+      enabled: false,
+      triggerType: "SIGNAL_OCCURRENCE",
+      signalIds: [],
+      destinationIds: [],
+    })
+    await client.callTool("outlit_signal_create", {
+      kind: "EVENT_MATCH",
+      name: "Workspace inactive",
+      description: null,
+      definition: {
+        grain: "customer",
+        subjectResolver: "event_customer",
+        eventNames: ["workspace_inactive"],
+        propertyConditions: [],
+        conditionMode: "ALL",
+      },
+    })
+    await client.callTool("outlit_signal_update", {
+      id: "10000000-0000-4000-8000-000000000002",
+      kind: "EVENT_MATCH",
+      name: "Workspace inactive",
+      description: null,
+      definition: {
+        grain: "customer",
+        subjectResolver: "event_customer",
+        eventNames: ["workspace_inactive"],
+        propertyConditions: [],
+        conditionMode: "ALL",
+      },
+    })
+    await client.callTool("outlit_destination_create", {
+      type: "WEBHOOK_ENDPOINT",
+      name: "Customer ops",
+      description: null,
+      enabled: true,
+      url: "https://hooks.example.com/outlit",
+    })
+    await client.callTool("outlit_destination_update", {
+      id: "10000000-0000-4000-8000-000000000003",
+      type: "WEBHOOK_ENDPOINT",
+      name: "Customer ops",
+      description: null,
+      enabled: true,
+    })
 
     const urls = fetchSpy.mock.calls.map((call) => call[0] as string)
     expect(urls[0]).toContain("/api/agents/agent_123/enable")
@@ -462,6 +534,16 @@ describe("client.callTool()", () => {
     expect(urls[9]).toContain("/api/destinations/10000000-0000-4000-8000-000000000003/enable")
     expect(urls[10]).toContain("/api/destinations/10000000-0000-4000-8000-000000000003/disable")
     expect(urls[11]).toContain("/api/destinations/10000000-0000-4000-8000-000000000003/archive")
+    expect(urls[12]).toContain("/api/agents")
+    expect(urls[13]).toContain("/api/agents/agent_123")
+    expect(urls[14]).toContain("/api/agents/agent_123")
+    expect(urls[15]).toContain("/api/agents/agent_123")
+    expect(urls[16]).toContain("/api/automations")
+    expect(urls[17]).toContain("/api/automations/10000000-0000-4000-8000-000000000001")
+    expect(urls[18]).toContain("/api/signals")
+    expect(urls[19]).toContain("/api/signals/10000000-0000-4000-8000-000000000002")
+    expect(urls[20]).toContain("/api/destinations")
+    expect(urls[21]).toContain("/api/destinations/10000000-0000-4000-8000-000000000003")
 
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("POST")
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).body).toBe(JSON.stringify({}))
@@ -470,6 +552,35 @@ describe("client.callTool()", () => {
     )
     expect((fetchSpy.mock.calls[6]?.[1] as RequestInit).method).toBe("GET")
     expect((fetchSpy.mock.calls[6]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[12]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[12]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({
+        type: "custom",
+        displayName: "Renewal risk",
+        instructions: "Find risk",
+        surfaceCriteria: "Surface risky customers",
+        maxItemsToSurface: 10,
+        actionKeys: ["send_slack_notification"],
+      }),
+    )
+    expect((fetchSpy.mock.calls[13]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({ displayName: "Renewal risk" }),
+    )
+    expect((fetchSpy.mock.calls[13]?.[1] as RequestInit).method).toBe("PATCH")
+    expect((fetchSpy.mock.calls[17]?.[1] as RequestInit).method).toBe("PATCH")
+    expect((fetchSpy.mock.calls[19]?.[1] as RequestInit).method).toBe("PATCH")
+    expect((fetchSpy.mock.calls[21]?.[1] as RequestInit).method).toBe("PATCH")
+    expect((fetchSpy.mock.calls[17]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({
+        agentId: "10000000-0000-4000-8000-000000000004",
+        name: "Churn response",
+        description: null,
+        enabled: false,
+        triggerType: "SIGNAL_OCCURRENCE",
+        signalIds: [],
+        destinationIds: [],
+      }),
+    )
     for (const url of urls) {
       expect(url).not.toContain("/api/tools/call")
     }
@@ -557,7 +668,7 @@ describe("client.callTool()", () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
     const commandEnvelope = {
       ok: false,
-      commandId: "agent.createFromTemplate",
+      commandId: "agent.create",
       commandVersion: 1,
       error: {
         code: "authorization_denied",
@@ -574,8 +685,9 @@ describe("client.callTool()", () => {
     const client = await createClient()
     let thrown: unknown
     try {
-      await client.callTool("outlit_agent_create_from_template", {
-        source: { type: "template", templateKey: "churn" },
+      await client.callTool("outlit_agent_create", {
+        type: "template",
+        templateKey: "churn",
         mode: "draft",
       })
     } catch (error) {

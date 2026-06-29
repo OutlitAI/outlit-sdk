@@ -138,19 +138,26 @@ describe("docs OpenAPI spec", () => {
       "GET /api/integrations/sync-status",
       "GET /api/signals",
       "GET /api/signals/{id}",
+      "PATCH /api/agents/{id}",
+      "PATCH /api/automations/{id}",
+      "PATCH /api/destinations/{id}",
+      "PATCH /api/signals/{id}",
       "POST /api/agents",
       "POST /api/agents/{id}/disable",
       "POST /api/agents/{id}/enable",
       "POST /api/agents/{id}/rename",
+      "POST /api/automations",
       "POST /api/automations/{id}/archive",
       "POST /api/automations/{id}/disable",
       "POST /api/automations/{id}/enable",
+      "POST /api/destinations",
       "POST /api/destinations/{id}/archive",
       "POST /api/destinations/{id}/disable",
       "POST /api/destinations/{id}/enable",
       "POST /api/integrations/connect",
       "POST /api/integrations/disconnect",
       "POST /api/integrations/setup-step",
+      "POST /api/signals",
       "POST /api/signals/{id}/archive",
       "POST /api/tools/call",
       "POST /api/validate-api-key",
@@ -214,6 +221,163 @@ describe("docs OpenAPI spec", () => {
           schema: { $ref: "#/components/schemas/CommandErrorEnvelope" },
         },
       },
+    })
+  })
+
+  test("aligns automation write request bounds with public contracts", () => {
+    const spec = readJson<{
+      components?: {
+        schemas?: Record<string, any>
+      }
+    }>("docs/openapi.json")
+
+    for (const schemaName of ["CreateAutomationRequest", "UpdateAutomationRequest"]) {
+      const schema = spec.components?.schemas?.[schemaName]
+
+      expect(schema?.properties?.triggerThresholdCount).toMatchObject({
+        type: "integer",
+        minimum: 2,
+        maximum: 5,
+      })
+      expect(schema?.properties?.processorPolicy).toMatchObject({
+        type: "object",
+        properties: {
+          subjectHandling: {
+            type: "string",
+            enum: ["event_customer", "scheduled_customer_pool"],
+            default: "event_customer",
+          },
+          maxCustomersPerRun: {
+            type: "integer",
+            minimum: 1,
+            maximum: 500,
+          },
+          maxConcurrentRuns: {
+            type: "integer",
+            const: 1,
+          },
+          cooldownHours: {
+            type: "integer",
+            minimum: 0,
+            maximum: 2160,
+          },
+        },
+        additionalProperties: false,
+      })
+      expect(schema?.properties?.deliveryPolicy).toMatchObject({
+        type: "object",
+        properties: {
+          requireAllDestinations: {
+            type: "boolean",
+            default: false,
+          },
+        },
+        additionalProperties: false,
+        default: {
+          requireAllDestinations: false,
+        },
+      })
+      expect(schema?.properties?.audienceFilter).toEqual({
+        $ref: "#/components/schemas/AutomationAudienceFilter",
+      })
+    }
+
+    expect(spec.components?.schemas?.UpdateAutomationRequest?.required).toContain("enabled")
+    expect(
+      spec.components?.schemas?.UpdateAutomationRequest?.properties?.enabled,
+    ).not.toHaveProperty("default")
+    for (const updateDestinationVariant of spec.components?.schemas?.UpdateDestinationRequest
+      ?.oneOf ?? []) {
+      expect(updateDestinationVariant.required).toEqual(["type"])
+      expect(updateDestinationVariant.minProperties).toBe(2)
+      expect(updateDestinationVariant.properties?.enabled).not.toHaveProperty("default")
+    }
+  })
+
+  test("documents concrete signal definitions and automation audience filters", () => {
+    const spec = readJson<{
+      components?: {
+        schemas?: Record<string, any>
+      }
+    }>("docs/openapi.json")
+    const schemas = spec.components?.schemas ?? {}
+
+    expect(schemas.CreateSignalRequest?.oneOf?.[0]?.properties?.definition).toEqual({
+      $ref: "#/components/schemas/EventMatchSignalDefinition",
+    })
+    expect(schemas.CreateSignalRequest?.oneOf?.[1]?.properties?.definition).toEqual({
+      $ref: "#/components/schemas/AuthoredSignalDefinition",
+    })
+    expect(schemas.UpdateSignalRequest?.oneOf?.[0]?.properties?.definition).toEqual({
+      $ref: "#/components/schemas/EventMatchSignalDefinition",
+    })
+    expect(schemas.UpdateSignalRequest?.oneOf?.[1]?.properties?.definition).toEqual({
+      $ref: "#/components/schemas/AuthoredSignalDefinition",
+    })
+    expect(schemas.EventMatchSignalDefinition).toMatchObject({
+      type: "object",
+      required: ["grain", "subjectResolver", "eventNames"],
+      properties: {
+        grain: {
+          type: "string",
+          enum: ["organization", "customer", "segment"],
+        },
+        subjectResolver: {
+          type: "string",
+          enum: ["organization", "event_customer", "segment"],
+        },
+        eventNames: {
+          type: "array",
+          minItems: 1,
+          maxItems: 50,
+        },
+        propertyConditions: {
+          type: "array",
+          maxItems: 5,
+        },
+      },
+      additionalProperties: false,
+    })
+    expect(schemas.EventMatchSignalDefinition.properties.grain).not.toHaveProperty("default")
+    expect(schemas.EventMatchSignalDefinition.properties.subjectResolver).not.toHaveProperty(
+      "default",
+    )
+    expect(schemas.CreateDestinationRequest?.properties?.url).toMatchObject({
+      type: "string",
+      format: "uri",
+      pattern: expect.stringContaining("https://"),
+    })
+    expect(schemas.UpdateDestinationRequest?.oneOf?.[0]?.properties?.url).toMatchObject({
+      type: "string",
+      format: "uri",
+      pattern: expect.stringContaining("localhost"),
+    })
+    expect(schemas.AuthoredSignalDefinition).toMatchObject({
+      type: "object",
+      required: ["schemaVersion", "subjectType", "detection"],
+      properties: {
+        schemaVersion: { type: "string", const: "2026-06-17" },
+        subjectType: { type: "string", const: "customer" },
+        detection: { $ref: "#/components/schemas/SignalDetection" },
+      },
+      additionalProperties: false,
+    })
+    expect(schemas.AutomationAudienceFilter).toMatchObject({
+      type: "object",
+      properties: {
+        customer: {
+          type: "object",
+          properties: {
+            billingStatuses: {
+              type: "array",
+              items: { enum: ["NONE", "TRIALING", "PAYING", "PAST_DUE", "CHURNED"] },
+            },
+            revenue: { $ref: "#/components/schemas/AutomationAudienceRevenueFilter" },
+          },
+          additionalProperties: false,
+        },
+      },
+      additionalProperties: false,
     })
   })
 

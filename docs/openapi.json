@@ -250,39 +250,52 @@
       },
       "post": {
         "tags": ["Platform API"],
-        "summary": "Create agent from template",
-        "description": "Create an Outlit agent from a supported template. The initial template mode is draft-only: created resources are inert until explicitly configured in the platform.",
-        "operationId": "createAgentFromTemplate",
+        "summary": "Create agent",
+        "description": "Create an Outlit agent. Use type=template for supported templates or type=custom for a custom hosted agent.",
+        "operationId": "createAgent",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateAgentFromTemplateRequest"
+                "$ref": "#/components/schemas/CreateAgentRequest"
               },
-              "example": {
-                "source": {
-                  "type": "template",
-                  "templateKey": "churn"
+              "examples": {
+                "template": {
+                  "summary": "Create from template",
+                  "value": {
+                    "type": "template",
+                    "templateKey": "churn",
+                    "mode": "draft"
+                  }
                 },
-                "mode": "draft"
+                "custom": {
+                  "summary": "Create custom agent",
+                  "value": {
+                    "type": "custom",
+                    "displayName": "Renewal risk",
+                    "instructions": "Find risk.",
+                    "surfaceCriteria": "Surface risky customers.",
+                    "actionKeys": ["send_slack_notification"]
+                  }
+                }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Agent template resources were created in draft mode.",
+            "description": "Agent was created.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateAgentFromTemplateCommandSuccess"
+                  "$ref": "#/components/schemas/CreateAgentCommandSuccess"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid JSON or unsupported template request.",
+            "description": "Invalid JSON or unsupported agent create request.",
             "content": {
               "application/json": {
                 "schema": {
@@ -305,7 +318,7 @@
             }
           },
           "409": {
-            "description": "The requested template already exists for the organization.",
+            "description": "The requested template or agent conflicts with the current platform state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -318,7 +331,7 @@
             "$ref": "#/components/responses/InternalServerError"
           },
           "503": {
-            "description": "The platform could not verify the created resources and rolled back the request.",
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -387,6 +400,107 @@
           },
           "503": {
             "description": "The platform could not get the agent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Platform API"],
+        "summary": "Update agent",
+        "description": "Patch one configured Outlit agent. Only provided fields are changed.",
+        "operationId": "updateAgent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Agent ID.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAgentRequest"
+              },
+              "example": {
+                "displayName": "Renewal risk",
+                "instructions": "Prioritize recent support escalations.",
+                "actionKeys": ["send_slack_notification"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agent was updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateAgentCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No resource was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The requested change conflicts with the current platform state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -876,6 +990,99 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Create automation",
+        "description": "Create an agent automation. Provide agentId; Outlit maps it to the hosted-agent processor internally.",
+        "operationId": "createAutomation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAutomationRequest"
+              },
+              "example": {
+                "agentId": "10000000-0000-4000-8000-000000000004",
+                "name": "Churn response",
+                "description": null,
+                "enabled": false,
+                "triggerType": "SIGNAL_OCCURRENCE",
+                "signalIds": ["10000000-0000-4000-8000-000000000002"],
+                "destinationIds": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Automation was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateAutomationCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No resource was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The requested change conflicts with the current platform state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/automations/{id}": {
@@ -944,6 +1151,111 @@
             }
           }
         }
+      },
+      "patch": {
+        "tags": ["Platform API"],
+        "summary": "Update automation",
+        "description": "Update an agent automation with a full configuration body. Provide agentId, name, enabled, and triggerType; Outlit maps agentId to the hosted-agent processor internally.",
+        "operationId": "updateAutomation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Automation ID.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAutomationRequest"
+              },
+              "example": {
+                "agentId": "10000000-0000-4000-8000-000000000004",
+                "name": "Churn response",
+                "description": null,
+                "enabled": false,
+                "triggerType": "SIGNAL_OCCURRENCE",
+                "signalIds": ["10000000-0000-4000-8000-000000000002"],
+                "destinationIds": []
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Automation was updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateAutomationCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No resource was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The requested change conflicts with the current platform state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/signals": {
@@ -990,6 +1302,102 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Create signal",
+        "description": "Create a UI-managed Outlit automation signal.",
+        "operationId": "createSignal",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSignalRequest"
+              },
+              "example": {
+                "kind": "EVENT_MATCH",
+                "name": "Workspace inactive",
+                "description": null,
+                "definition": {
+                  "grain": "customer",
+                  "subjectResolver": "event_customer",
+                  "eventNames": ["workspace_inactive"],
+                  "propertyConditions": [],
+                  "conditionMode": "ALL"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signal was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSignalCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No resource was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The requested change conflicts with the current platform state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/destinations": {
@@ -1027,6 +1435,97 @@
           },
           "503": {
             "description": "The platform could not list destinations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Create destination",
+        "description": "Create one automation destination. Responses include masked configuration only.",
+        "operationId": "createDestination",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDestinationRequest"
+              },
+              "example": {
+                "type": "WEBHOOK_ENDPOINT",
+                "name": "Customer ops",
+                "description": null,
+                "enabled": true,
+                "url": "https://hooks.example.com/outlit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Destination was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateDestinationCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No resource was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The requested change conflicts with the current platform state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1090,11 +1589,8 @@
               }
             }
           },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
+          "409": {
+            "description": "The requested lifecycle change conflicts with the current platform state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1103,8 +1599,11 @@
               }
             }
           },
-          "409": {
-            "description": "The requested lifecycle change conflicts with the current platform state.",
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1168,11 +1667,8 @@
               }
             }
           },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
+          "409": {
+            "description": "The requested lifecycle change conflicts with the current platform state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1181,8 +1677,11 @@
               }
             }
           },
-          "409": {
-            "description": "The requested lifecycle change conflicts with the current platform state.",
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1256,11 +1755,8 @@
               }
             }
           },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
+          "409": {
+            "description": "The requested lifecycle change conflicts with the current platform state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1269,8 +1765,11 @@
               }
             }
           },
-          "409": {
-            "description": "The requested lifecycle change conflicts with the current platform state.",
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1344,11 +1843,8 @@
               }
             }
           },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
+          "409": {
+            "description": "The requested lifecycle change conflicts with the current platform state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1357,8 +1853,11 @@
               }
             }
           },
-          "409": {
-            "description": "The requested lifecycle change conflicts with the current platform state.",
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1422,11 +1921,8 @@
               }
             }
           },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
+          "409": {
+            "description": "The requested lifecycle change conflicts with the current platform state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1435,8 +1931,11 @@
               }
             }
           },
-          "409": {
-            "description": "The requested lifecycle change conflicts with the current platform state.",
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1500,11 +1999,8 @@
               }
             }
           },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
+          "409": {
+            "description": "The requested lifecycle change conflicts with the current platform state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1513,8 +2009,11 @@
               }
             }
           },
-          "409": {
-            "description": "The requested lifecycle change conflicts with the current platform state.",
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1592,6 +2091,114 @@
             }
           }
         }
+      },
+      "patch": {
+        "tags": ["Platform API"],
+        "summary": "Update signal",
+        "description": "Update one UI-managed Outlit automation signal with a full signal configuration body.",
+        "operationId": "updateSignal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Signal ID.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSignalRequest"
+              },
+              "example": {
+                "kind": "EVENT_MATCH",
+                "name": "Workspace inactive",
+                "description": null,
+                "definition": {
+                  "grain": "customer",
+                  "subjectResolver": "event_customer",
+                  "eventNames": ["workspace_inactive"],
+                  "propertyConditions": [],
+                  "conditionMode": "ALL"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signal was updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateSignalCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No resource was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The requested change conflicts with the current platform state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/signals/{id}/archive": {
@@ -1646,11 +2253,8 @@
               }
             }
           },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
+          "409": {
+            "description": "The requested lifecycle change conflicts with the current platform state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1659,8 +2263,11 @@
               }
             }
           },
-          "409": {
-            "description": "The requested lifecycle change conflicts with the current platform state.",
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1738,6 +2345,108 @@
             }
           }
         }
+      },
+      "patch": {
+        "tags": ["Platform API"],
+        "summary": "Update destination",
+        "description": "Update one automation destination. Responses include masked configuration only.",
+        "operationId": "updateDestination",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Destination ID.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDestinationRequest"
+              },
+              "example": {
+                "type": "WEBHOOK_ENDPOINT",
+                "name": "Customer ops",
+                "description": null,
+                "enabled": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Destination was updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateDestinationCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No resource was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The requested change conflicts with the current platform state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/destinations/{id}/enable": {
@@ -1792,11 +2501,8 @@
               }
             }
           },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
+          "409": {
+            "description": "The requested lifecycle change conflicts with the current platform state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1805,8 +2511,11 @@
               }
             }
           },
-          "409": {
-            "description": "The requested lifecycle change conflicts with the current platform state.",
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1870,11 +2579,8 @@
               }
             }
           },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
+          "409": {
+            "description": "The requested lifecycle change conflicts with the current platform state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1883,8 +2589,11 @@
               }
             }
           },
-          "409": {
-            "description": "The requested lifecycle change conflicts with the current platform state.",
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1948,11 +2657,8 @@
               }
             }
           },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not complete the command.",
+          "409": {
+            "description": "The requested lifecycle change conflicts with the current platform state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1961,8 +2667,11 @@
               }
             }
           },
-          "409": {
-            "description": "The requested lifecycle change conflicts with the current platform state.",
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not complete the command.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2566,23 +3275,16 @@
         },
         "additionalProperties": false
       },
-      "CreateAgentFromTemplateRequest": {
+      "CreateAgentTemplateRequest": {
         "type": "object",
-        "required": ["source"],
+        "required": ["type", "templateKey"],
         "properties": {
-          "source": {
-            "type": "object",
-            "required": ["type", "templateKey"],
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "template"
-              },
-              "templateKey": {
-                "$ref": "#/components/schemas/AgentTemplateKey"
-              }
-            },
-            "additionalProperties": false
+          "type": {
+            "type": "string",
+            "const": "template"
+          },
+          "templateKey": {
+            "$ref": "#/components/schemas/AgentTemplateKey"
           },
           "mode": {
             "$ref": "#/components/schemas/AgentTemplateMode"
@@ -2590,7 +3292,17 @@
         },
         "additionalProperties": false
       },
-      "CreateAgentFromTemplateCommandSuccess": {
+      "CreateAgentRequest": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CreateAgentTemplateRequest"
+          },
+          {
+            "$ref": "#/components/schemas/CreateAgentCustomRequest"
+          }
+        ]
+      },
+      "CreateAgentCommandSuccess": {
         "type": "object",
         "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
         "properties": {
@@ -2600,7 +3312,7 @@
           },
           "commandId": {
             "type": "string",
-            "const": "agent.createFromTemplate"
+            "const": "agent.create"
           },
           "commandVersion": {
             "type": "integer",
@@ -2619,73 +3331,14 @@
                 "properties": {
                   "operationId": {
                     "type": "string",
-                    "const": "agent.template.create"
+                    "const": "agent.create"
                   },
                   "data": {
                     "type": "object",
-                    "required": [
-                      "agentId",
-                      "templateKey",
-                      "templateVersion",
-                      "mode",
-                      "created",
-                      "safety"
-                    ],
+                    "required": ["agent"],
                     "properties": {
-                      "agentId": {
-                        "type": "string"
-                      },
-                      "templateKey": {
-                        "$ref": "#/components/schemas/AgentTemplateKey"
-                      },
-                      "templateVersion": {
-                        "type": "string"
-                      },
-                      "mode": {
-                        "$ref": "#/components/schemas/AgentTemplateMode"
-                      },
-                      "created": {
-                        "type": "boolean"
-                      },
-                      "safety": {
-                        "type": "object",
-                        "required": [
-                          "actionGrantsAdded",
-                          "destinationsAdded",
-                          "schedulesAdded",
-                          "externalEgressAdded",
-                          "enabledAutomation"
-                        ],
-                        "properties": {
-                          "actionGrantsAdded": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "destinationsAdded": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "schedulesAdded": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "externalEgressAdded": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "enabledAutomation": {
-                            "type": "boolean"
-                          }
-                        },
-                        "additionalProperties": false
+                      "agent": {
+                        "$ref": "#/components/schemas/AgentSummary"
                       }
                     },
                     "additionalProperties": false
@@ -3693,10 +4346,7 @@
           "triggerType",
           "triggerJson",
           "audienceFilterJson",
-          "outcomeType",
-          "processorJson",
-          "processorPolicyJson",
-          "deliveryPolicyJson",
+          "agentId",
           "matchMode",
           "schemaVersion",
           "configHash",
@@ -3736,12 +4386,6 @@
           },
           "triggerJson": {},
           "audienceFilterJson": {},
-          "outcomeType": {
-            "$ref": "#/components/schemas/AutomationOutcomeType"
-          },
-          "processorJson": {},
-          "processorPolicyJson": {},
-          "deliveryPolicyJson": {},
           "matchMode": {
             "$ref": "#/components/schemas/AutomationMatchMode"
           },
@@ -3800,6 +4444,10 @@
           "activeDestinationCount": {
             "type": "integer",
             "minimum": 0
+          },
+          "agentId": {
+            "type": ["string", "null"],
+            "format": "uuid"
           }
         },
         "additionalProperties": false
@@ -4604,6 +5252,1471 @@
                 }
               }
             ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateAgentCustomRequest": {
+        "type": "object",
+        "required": ["type", "displayName", "instructions", "surfaceCriteria"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "custom"
+          },
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "instructions": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000
+          },
+          "surfaceCriteria": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000
+          },
+          "skipCriteria": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000
+          },
+          "maxItemsToSurface": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 10
+          },
+          "actionKeys": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "default": []
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateAgentRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "instructions": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000
+          },
+          "actionKeys": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateAutomationRequest": {
+        "type": "object",
+        "required": ["agentId", "name", "triggerType"],
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": ["string", "null"],
+            "maxLength": 1000,
+            "default": null
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "triggerType": {
+            "$ref": "#/components/schemas/AutomationTriggerType"
+          },
+          "signalIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 50,
+            "default": []
+          },
+          "matchMode": {
+            "$ref": "#/components/schemas/AutomationMatchMode"
+          },
+          "triggerWindow": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "unit": {
+                "type": "string",
+                "enum": ["hour", "day"]
+              }
+            },
+            "required": ["value", "unit"],
+            "additionalProperties": false
+          },
+          "triggerThresholdCount": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 5
+          },
+          "schedule": {
+            "type": "object",
+            "properties": {
+              "cadence": {
+                "type": "string",
+                "enum": ["hourly", "daily", "weekly"]
+              },
+              "localTime": {
+                "type": "object",
+                "properties": {
+                  "hour": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23
+                  },
+                  "minute": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 59
+                  },
+                  "second": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 59,
+                    "default": 0
+                  },
+                  "millisecond": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 999,
+                    "default": 0
+                  }
+                },
+                "required": ["hour", "minute"],
+                "additionalProperties": false
+              },
+              "timezone": {
+                "type": "string",
+                "default": "America/Los_Angeles"
+              },
+              "weekday": {
+                "type": "string",
+                "enum": [
+                  "monday",
+                  "tuesday",
+                  "wednesday",
+                  "thursday",
+                  "friday",
+                  "saturday",
+                  "sunday"
+                ]
+              }
+            },
+            "required": ["cadence"],
+            "additionalProperties": false
+          },
+          "audienceFilter": {
+            "$ref": "#/components/schemas/AutomationAudienceFilter"
+          },
+          "processorPolicy": {
+            "type": "object",
+            "properties": {
+              "subjectHandling": {
+                "type": "string",
+                "enum": ["event_customer", "scheduled_customer_pool"],
+                "default": "event_customer"
+              },
+              "maxCustomersPerRun": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 500
+              },
+              "maxConcurrentRuns": {
+                "type": "integer",
+                "const": 1
+              },
+              "cooldownHours": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2160
+              }
+            },
+            "additionalProperties": false
+          },
+          "deliveryPolicy": {
+            "type": "object",
+            "properties": {
+              "requireAllDestinations": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            "additionalProperties": false,
+            "default": {
+              "requireAllDestinations": false
+            }
+          },
+          "destinationIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 25,
+            "default": []
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateAutomationRequest": {
+        "type": "object",
+        "required": ["agentId", "name", "enabled", "triggerType"],
+        "properties": {
+          "agentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": ["string", "null"],
+            "maxLength": 1000,
+            "default": null
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "triggerType": {
+            "$ref": "#/components/schemas/AutomationTriggerType"
+          },
+          "signalIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 50,
+            "default": []
+          },
+          "matchMode": {
+            "$ref": "#/components/schemas/AutomationMatchMode"
+          },
+          "triggerWindow": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "unit": {
+                "type": "string",
+                "enum": ["hour", "day"]
+              }
+            },
+            "required": ["value", "unit"],
+            "additionalProperties": false
+          },
+          "triggerThresholdCount": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 5
+          },
+          "schedule": {
+            "type": "object",
+            "properties": {
+              "cadence": {
+                "type": "string",
+                "enum": ["hourly", "daily", "weekly"]
+              },
+              "localTime": {
+                "type": "object",
+                "properties": {
+                  "hour": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23
+                  },
+                  "minute": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 59
+                  },
+                  "second": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 59,
+                    "default": 0
+                  },
+                  "millisecond": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 999,
+                    "default": 0
+                  }
+                },
+                "required": ["hour", "minute"],
+                "additionalProperties": false
+              },
+              "timezone": {
+                "type": "string",
+                "default": "America/Los_Angeles"
+              },
+              "weekday": {
+                "type": "string",
+                "enum": [
+                  "monday",
+                  "tuesday",
+                  "wednesday",
+                  "thursday",
+                  "friday",
+                  "saturday",
+                  "sunday"
+                ]
+              }
+            },
+            "required": ["cadence"],
+            "additionalProperties": false
+          },
+          "audienceFilter": {
+            "$ref": "#/components/schemas/AutomationAudienceFilter"
+          },
+          "processorPolicy": {
+            "type": "object",
+            "properties": {
+              "subjectHandling": {
+                "type": "string",
+                "enum": ["event_customer", "scheduled_customer_pool"],
+                "default": "event_customer"
+              },
+              "maxCustomersPerRun": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 500
+              },
+              "maxConcurrentRuns": {
+                "type": "integer",
+                "const": 1
+              },
+              "cooldownHours": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2160
+              }
+            },
+            "additionalProperties": false
+          },
+          "deliveryPolicy": {
+            "type": "object",
+            "properties": {
+              "requireAllDestinations": {
+                "type": "boolean",
+                "default": false
+              }
+            },
+            "additionalProperties": false,
+            "default": {
+              "requireAllDestinations": false
+            }
+          },
+          "destinationIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 25,
+            "default": []
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateSignalRequest": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["kind", "name", "definition"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "EVENT_MATCH"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "description": {
+                "type": ["string", "null"],
+                "maxLength": 1000,
+                "default": null
+              },
+              "definition": {
+                "$ref": "#/components/schemas/EventMatchSignalDefinition"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["kind", "name", "definition"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "EVENT_PATTERN"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "description": {
+                "type": ["string", "null"],
+                "maxLength": 1000,
+                "default": null
+              },
+              "definition": {
+                "$ref": "#/components/schemas/AuthoredSignalDefinition"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "UpdateSignalRequest": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["kind", "name", "definition"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "EVENT_MATCH"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "description": {
+                "type": ["string", "null"],
+                "maxLength": 1000,
+                "default": null
+              },
+              "definition": {
+                "$ref": "#/components/schemas/EventMatchSignalDefinition"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["kind", "name", "definition"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "EVENT_PATTERN"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "description": {
+                "type": ["string", "null"],
+                "maxLength": 1000,
+                "default": null
+              },
+              "definition": {
+                "$ref": "#/components/schemas/AuthoredSignalDefinition"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "CreateDestinationRequest": {
+        "type": "object",
+        "required": ["name", "url"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "WEBHOOK_ENDPOINT",
+            "default": "WEBHOOK_ENDPOINT"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": ["string", "null"],
+            "maxLength": 1000,
+            "default": null
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^(https://|http://(localhost|127\\.0\\.0\\.1|\\[::1\\]|::1)([:/]|$))"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateDestinationRequest": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["type"],
+            "minProperties": 2,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "WEBHOOK_ENDPOINT"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "description": {
+                "type": ["string", "null"],
+                "maxLength": 1000
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "pattern": "^(https://|http://(localhost|127\\.0\\.0\\.1|\\[::1\\]|::1)([:/]|$))"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type"],
+            "minProperties": 2,
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "SLACK_CHANNEL"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "UpdateAgentCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "agent.update"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "agent.update"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["agent"],
+                    "properties": {
+                      "agent": {
+                        "$ref": "#/components/schemas/AgentSummary"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateAutomationCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "automation.create"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "automation.create"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["automation"],
+                    "properties": {
+                      "automation": {
+                        "$ref": "#/components/schemas/AutomationRead"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateAutomationCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "automation.update"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "automation.update"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["automation"],
+                    "properties": {
+                      "automation": {
+                        "$ref": "#/components/schemas/AutomationRead"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateSignalCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "signal.create"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "signal.create"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["signal"],
+                    "properties": {
+                      "signal": {
+                        "$ref": "#/components/schemas/SignalRead"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateSignalCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "signal.update"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "signal.update"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["signal"],
+                    "properties": {
+                      "signal": {
+                        "$ref": "#/components/schemas/SignalRead"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateDestinationCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "destination.create"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "destination.create"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["destination"],
+                    "properties": {
+                      "destination": {
+                        "$ref": "#/components/schemas/DestinationRead"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateDestinationCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "destination.update"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "destination.update"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["destination"],
+                    "properties": {
+                      "destination": {
+                        "$ref": "#/components/schemas/DestinationRead"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalPropertyCondition": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["key", "operator"],
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "operator": {
+                "type": "string",
+                "const": "exists"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["key", "operator", "value"],
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "operator": {
+                "type": "string",
+                "enum": ["equals", "not_equals"]
+              },
+              "value": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["key", "operator", "value"],
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "operator": {
+                "type": "string",
+                "const": "starts_with"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "EventChannel": {
+        "type": "string",
+        "enum": [
+          "PRODUCT",
+          "COMMUNICATION",
+          "MEETING",
+          "CRM",
+          "BILLING",
+          "SUPPORT",
+          "IDENTITY",
+          "DOCUMENT",
+          "SYSTEM"
+        ]
+      },
+      "EventMatchSignalDefinition": {
+        "type": "object",
+        "required": ["grain", "subjectResolver", "eventNames"],
+        "properties": {
+          "grain": {
+            "type": "string",
+            "enum": ["organization", "customer", "segment"]
+          },
+          "subjectResolver": {
+            "type": "string",
+            "enum": ["organization", "event_customer", "segment"]
+          },
+          "eventNames": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 50,
+            "minItems": 1
+          },
+          "eventChannels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventChannel"
+            },
+            "maxItems": 9
+          },
+          "propertyConditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignalPropertyCondition"
+            },
+            "maxItems": 5,
+            "default": []
+          },
+          "conditionMode": {
+            "type": "string",
+            "const": "ALL",
+            "default": "ALL"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalWindow": {
+        "type": "object",
+        "required": ["value", "unit"],
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "unit": {
+            "type": "string",
+            "enum": ["hour", "day"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "EventOccurredDetection": {
+        "type": "object",
+        "required": ["type", "eventNames"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "event_occurred"
+          },
+          "eventNames": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 50,
+            "minItems": 1
+          },
+          "eventChannels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventChannel"
+            },
+            "maxItems": 9
+          },
+          "propertyConditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignalPropertyCondition"
+            },
+            "maxItems": 5,
+            "default": []
+          }
+        },
+        "additionalProperties": false
+      },
+      "EventCountThresholdDetection": {
+        "type": "object",
+        "required": ["type", "eventNames", "threshold", "window"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "event_count_threshold"
+          },
+          "eventNames": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 50,
+            "minItems": 1
+          },
+          "eventChannels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventChannel"
+            },
+            "maxItems": 9
+          },
+          "propertyConditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignalPropertyCondition"
+            },
+            "maxItems": 5,
+            "default": []
+          },
+          "threshold": {
+            "type": "object",
+            "required": ["operator", "count"],
+            "properties": {
+              "operator": {
+                "type": "string",
+                "enum": [">=", ">"]
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000
+              }
+            },
+            "additionalProperties": false
+          },
+          "window": {
+            "$ref": "#/components/schemas/SignalWindow"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EventAbsenceDetection": {
+        "type": "object",
+        "required": ["type", "window"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "event_absence"
+          },
+          "eventNameMode": {
+            "type": "string",
+            "enum": ["exact", "all_except"]
+          },
+          "eventNames": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 50,
+            "default": []
+          },
+          "excludeEventNames": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "maxItems": 50
+          },
+          "eventChannels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventChannel"
+            },
+            "maxItems": 9
+          },
+          "propertyConditions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignalPropertyCondition"
+            },
+            "maxItems": 5,
+            "default": []
+          },
+          "window": {
+            "type": "object",
+            "required": ["value", "unit"],
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 30
+              },
+              "unit": {
+                "type": "string",
+                "const": "day"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "ActivityWindow": {
+        "type": "object",
+        "required": ["value", "unit"],
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "unit": {
+            "type": "string",
+            "const": "day"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivityThresholdDetection": {
+        "type": "object",
+        "required": ["type", "metric", "window", "operator", "count"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "customer_activity_threshold"
+          },
+          "metric": {
+            "type": "string",
+            "const": "active_days"
+          },
+          "window": {
+            "$ref": "#/components/schemas/ActivityWindow"
+          },
+          "operator": {
+            "type": "string",
+            "enum": ["<=", "<", ">=", ">"]
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 365
+          },
+          "minimumObservedAgeDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivityDropDetection": {
+        "type": "object",
+        "required": [
+          "type",
+          "metric",
+          "window",
+          "baselineWindow",
+          "dropPercent",
+          "minimumBaselineActiveDays",
+          "minimumBaselineEventCount"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "customer_activity_drop"
+          },
+          "metric": {
+            "type": "string",
+            "const": "active_days"
+          },
+          "window": {
+            "$ref": "#/components/schemas/ActivityWindow"
+          },
+          "baselineWindow": {
+            "$ref": "#/components/schemas/ActivityWindow"
+          },
+          "dropPercent": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "minimumBaselineActiveDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "minimumBaselineEventCount": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000
+          }
+        },
+        "additionalProperties": false
+      },
+      "RelatedUserInactivityDetection": {
+        "type": "object",
+        "required": [
+          "type",
+          "priorWindow",
+          "inactiveWindow",
+          "minimumPriorActiveDays",
+          "minimumPreviouslyActiveUsers"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "related_user_inactivity"
+          },
+          "priorWindow": {
+            "$ref": "#/components/schemas/ActivityWindow"
+          },
+          "inactiveWindow": {
+            "$ref": "#/components/schemas/ActivityWindow"
+          },
+          "minimumPriorActiveDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 365
+          },
+          "minimumPreviouslyActiveUsers": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalDetection": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/EventOccurredDetection"
+          },
+          {
+            "$ref": "#/components/schemas/EventCountThresholdDetection"
+          },
+          {
+            "$ref": "#/components/schemas/EventAbsenceDetection"
+          },
+          {
+            "$ref": "#/components/schemas/CustomerActivityThresholdDetection"
+          },
+          {
+            "$ref": "#/components/schemas/CustomerActivityDropDetection"
+          },
+          {
+            "$ref": "#/components/schemas/RelatedUserInactivityDetection"
+          }
+        ]
+      },
+      "AuthoredSignalDefinition": {
+        "type": "object",
+        "required": ["schemaVersion", "subjectType", "detection"],
+        "properties": {
+          "schemaVersion": {
+            "type": "string",
+            "const": "2026-06-17"
+          },
+          "subjectType": {
+            "type": "string",
+            "const": "customer"
+          },
+          "catalogSource": {
+            "type": "object",
+            "required": ["provider", "key", "version"],
+            "properties": {
+              "provider": {
+                "type": "string",
+                "const": "outlit"
+              },
+              "key": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              }
+            },
+            "additionalProperties": false
+          },
+          "detection": {
+            "$ref": "#/components/schemas/SignalDetection"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationAudienceRevenueFilter": {
+        "type": "object",
+        "required": ["metric", "operator", "value"],
+        "properties": {
+          "metric": {
+            "type": "string",
+            "enum": ["ARR", "MRR"]
+          },
+          "operator": {
+            "type": "string",
+            "enum": [">=", ">", "<=", "<"]
+          },
+          "value": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000000000
+          },
+          "currency": {
+            "type": "string",
+            "const": "USD"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationAudienceFilter": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "type": "object",
+            "properties": {
+              "billingStatuses": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["NONE", "TRIALING", "PAYING", "PAST_DUE", "CHURNED"]
+                }
+              },
+              "customerIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "revenue": {
+                "$ref": "#/components/schemas/AutomationAudienceRevenueFilter"
+              },
+              "ownerUserIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 191
+                }
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false

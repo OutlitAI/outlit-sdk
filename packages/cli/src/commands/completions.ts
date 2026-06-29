@@ -20,6 +20,11 @@ const CURSOR_F: Flag = { name: "--cursor", desc: "Pagination cursor" }
 
 const COMMON = [API_KEY_F, JSON_F] as const
 const PAGINATED = [...COMMON, LIMIT_F, CURSOR_F] as const
+const JSON_BODY = [
+  ...COMMON,
+  { name: "--data", desc: "Inline JSON request body" },
+  { name: "--file", desc: "Path to JSON request body" },
+] as const
 const ACTIVITY_ORDER = [
   { name: "--no-activity-in", desc: "No activity in period" },
   { name: "--has-activity-in", desc: "Activity in period" },
@@ -234,9 +239,30 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "templates", desc: "List available agent templates", flags: [...COMMON] },
       { name: "actions", desc: "List available agent configuration actions", flags: [...COMMON] },
       {
-        name: "create-from-template",
-        desc: "Create a draft agent from a platform template",
-        flags: [...COMMON],
+        name: "create",
+        desc: "Create an agent",
+        flags: [
+          ...COMMON,
+          { name: "--template", desc: "Agent template key to create" },
+          { name: "--type", desc: "Agent type to create" },
+          { name: "--display-name", desc: "Agent display name" },
+          { name: "--instructions", desc: "Agent instructions" },
+          { name: "--surface-criteria", desc: "Criteria for surfacing items" },
+          { name: "--skip-criteria", desc: "Optional criteria for skipping items" },
+          { name: "--max-items-to-surface", desc: "Maximum items surfaced per run" },
+          { name: "--action-keys", desc: "Comma-separated action keys" },
+        ],
+      },
+      {
+        name: "update",
+        desc: "Update an agent",
+        flags: [
+          ...COMMON,
+          { name: "--display-name", desc: "Agent display name" },
+          { name: "--instructions", desc: "Agent instructions" },
+          { name: "--action-keys", desc: "Comma-separated action keys" },
+          { name: "--clear-action-keys", desc: "Clear all action keys" },
+        ],
       },
       { name: "enable", desc: "Enable a configured agent", flags: [...COMMON] },
       { name: "disable", desc: "Disable a configured agent", flags: [...COMMON] },
@@ -249,6 +275,8 @@ const COMMANDS: readonly CmdDef[] = [
     subs: [
       { name: "list", desc: "List configured automations", flags: [...COMMON] },
       { name: "get", desc: "Get one configured automation", flags: [...COMMON] },
+      { name: "create", desc: "Create an agent automation", flags: [...JSON_BODY] },
+      { name: "update", desc: "Update an agent automation", flags: [...JSON_BODY] },
       { name: "enable", desc: "Enable a configured automation", flags: [...COMMON] },
       { name: "disable", desc: "Disable a configured automation", flags: [...COMMON] },
       { name: "archive", desc: "Archive a configured automation", flags: [...COMMON] },
@@ -260,6 +288,8 @@ const COMMANDS: readonly CmdDef[] = [
     subs: [
       { name: "list", desc: "List configured signals", flags: [...COMMON] },
       { name: "get", desc: "Get one configured signal", flags: [...COMMON] },
+      { name: "create", desc: "Create an automation signal", flags: [...JSON_BODY] },
+      { name: "update", desc: "Update an automation signal", flags: [...JSON_BODY] },
       { name: "archive", desc: "Archive a configured signal", flags: [...COMMON] },
     ],
   },
@@ -269,6 +299,32 @@ const COMMANDS: readonly CmdDef[] = [
     subs: [
       { name: "list", desc: "List configured destinations", flags: [...COMMON] },
       { name: "get", desc: "Get one configured destination", flags: [...COMMON] },
+      {
+        name: "create",
+        desc: "Create an automation destination",
+        flags: [
+          ...COMMON,
+          { name: "--type", desc: "Destination type" },
+          { name: "--name", desc: "Destination name" },
+          { name: "--url", desc: "Webhook URL" },
+          { name: "--description", desc: "Destination description" },
+          { name: "--disabled", desc: "Create the destination disabled" },
+        ],
+      },
+      {
+        name: "update",
+        desc: "Update an automation destination",
+        flags: [
+          ...COMMON,
+          { name: "--type", desc: "Destination type" },
+          { name: "--name", desc: "Webhook destination name" },
+          { name: "--url", desc: "Webhook URL" },
+          { name: "--label", desc: "Slack channel label" },
+          { name: "--description", desc: "Destination description" },
+          { name: "--enabled", desc: "Enable the destination after update" },
+          { name: "--disabled", desc: "Disable the destination" },
+        ],
+      },
       { name: "enable", desc: "Enable a configured destination", flags: [...COMMON] },
       { name: "disable", desc: "Disable a configured destination", flags: [...COMMON] },
       { name: "archive", desc: "Archive a configured destination", flags: [...COMMON] },

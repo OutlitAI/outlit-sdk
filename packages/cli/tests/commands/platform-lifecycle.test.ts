@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test"
-import { captureStdout, setNonInteractive, TEST_API_KEY, useTempEnv } from "../helpers"
+import {
+  captureStdout,
+  runExpectingError,
+  setNonInteractive,
+  TEST_API_KEY,
+  useTempEnv,
+} from "../helpers"
 
 const mockEnvelope = {
   ok: true,
@@ -104,5 +110,280 @@ describe("platform lifecycle commands", () => {
     expect(mockCallTool).toHaveBeenNthCalledWith(4, "outlit_destination_disable", {
       id: destinationId,
     })
+  })
+
+  test("runs agent create and update commands", async () => {
+    const { default: createCmd } = await import("../../src/commands/agents/create")
+    const { default: updateCmd } = await import("../../src/commands/agents/update")
+
+    await captureStdout(() =>
+      createCmd.run!({
+        args: {
+          template: "churn",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof createCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      createCmd.run!({
+        args: {
+          type: "custom",
+          "display-name": "Renewal risk",
+          instructions: "Find renewal risk.",
+          "surface-criteria": "Surface risky renewals.",
+          "action-keys": "send_slack_notification",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof createCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      updateCmd.run!({
+        args: { id: "agent_123", "display-name": "Renamed", json: true },
+      } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      updateCmd.run!({
+        args: { id: "agent_123", instructions: "New instructions", json: true },
+      } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      updateCmd.run!({
+        args: { id: "agent_123", "action-keys": "send_slack_notification,create_task", json: true },
+      } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      updateCmd.run!({
+        args: { id: "agent_123", "clear-action-keys": true, json: true },
+      } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_agent_create", {
+      type: "template",
+      templateKey: "churn",
+      mode: "draft",
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_agent_create", {
+      type: "custom",
+      displayName: "Renewal risk",
+      instructions: "Find renewal risk.",
+      surfaceCriteria: "Surface risky renewals.",
+      maxItemsToSurface: 10,
+      actionKeys: ["send_slack_notification"],
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_agent_update", {
+      id: "agent_123",
+      displayName: "Renamed",
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(4, "outlit_agent_update", {
+      id: "agent_123",
+      instructions: "New instructions",
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(5, "outlit_agent_update", {
+      id: "agent_123",
+      actionKeys: ["send_slack_notification", "create_task"],
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(6, "outlit_agent_update", {
+      id: "agent_123",
+      actionKeys: [],
+    })
+  })
+
+  test("requires explicit agent update input", async () => {
+    const { default: updateCmd } = await import("../../src/commands/agents/update")
+
+    await runExpectingError(
+      () =>
+        updateCmd.run!({
+          args: { id: "agent_123", json: true },
+        } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
+      "missing_input",
+    )
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("rejects conflicting agent action update inputs", async () => {
+    const { default: updateCmd } = await import("../../src/commands/agents/update")
+
+    await runExpectingError(
+      () =>
+        updateCmd.run!({
+          args: {
+            id: "agent_123",
+            "action-keys": "review_churn_followup",
+            "clear-action-keys": true,
+            json: true,
+          },
+        } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
+      "invalid_input",
+    )
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("runs JSON-backed automation and signal create/update commands", async () => {
+    const { default: automationCreateCmd } = await import("../../src/commands/automations/create")
+    const { default: automationUpdateCmd } = await import("../../src/commands/automations/update")
+    const { default: signalCreateCmd } = await import("../../src/commands/signals/create")
+    const { default: signalUpdateCmd } = await import("../../src/commands/signals/update")
+    const automationId = "10000000-0000-4000-8000-000000000001"
+    const bodyAutomationId = "10000000-0000-4000-8000-000000000099"
+    const signalId = "10000000-0000-4000-8000-000000000002"
+    const bodySignalId = "10000000-0000-4000-8000-000000000098"
+    const automationBody = {
+      agentId: "10000000-0000-4000-8000-000000000004",
+      name: "Churn response",
+      description: null,
+      enabled: true,
+      triggerType: "SIGNAL_OCCURRENCE",
+      signalIds: [signalId],
+      destinationIds: ["10000000-0000-4000-8000-000000000003"],
+    }
+    const signalBody = {
+      kind: "EVENT_MATCH",
+      name: "Workspace inactive",
+      description: null,
+      definition: {
+        grain: "customer",
+        subjectResolver: "event_customer",
+        eventNames: ["workspace_inactive"],
+        propertyConditions: [],
+        conditionMode: "ALL",
+      },
+    }
+
+    await captureStdout(() =>
+      automationCreateCmd.run!({
+        args: { data: JSON.stringify(automationBody), json: true },
+      } as Parameters<NonNullable<typeof automationCreateCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      automationUpdateCmd.run!({
+        args: {
+          id: automationId,
+          data: JSON.stringify({ id: bodyAutomationId, ...automationBody }),
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof automationUpdateCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      signalCreateCmd.run!({
+        args: { data: JSON.stringify(signalBody), json: true },
+      } as Parameters<NonNullable<typeof signalCreateCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      signalUpdateCmd.run!({
+        args: {
+          id: signalId,
+          data: JSON.stringify({ id: bodySignalId, ...signalBody }),
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof signalUpdateCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_automation_create", automationBody)
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_automation_update", {
+      id: automationId,
+      ...automationBody,
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_signal_create", signalBody)
+    expect(mockCallTool).toHaveBeenNthCalledWith(4, "outlit_signal_update", {
+      id: signalId,
+      ...signalBody,
+    })
+  })
+
+  test("runs destination create and update commands", async () => {
+    const { default: createDestinationCmd } = await import("../../src/commands/destinations/create")
+    const { default: updateDestinationCmd } = await import("../../src/commands/destinations/update")
+    const destinationId = "10000000-0000-4000-8000-000000000003"
+
+    await captureStdout(() =>
+      createDestinationCmd.run!({
+        args: {
+          type: "webhook",
+          name: "Customer ops",
+          url: "https://hooks.example.com/outlit",
+          description: "Ops webhook",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof createDestinationCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      updateDestinationCmd.run!({
+        args: {
+          id: destinationId,
+          type: "webhook",
+          name: "Updated webhook",
+          description: "Updated",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_destination_create", {
+      type: "WEBHOOK_ENDPOINT",
+      name: "Customer ops",
+      description: "Ops webhook",
+      enabled: true,
+      url: "https://hooks.example.com/outlit",
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_destination_update", {
+      id: destinationId,
+      type: "WEBHOOK_ENDPOINT",
+      name: "Updated webhook",
+      description: "Updated",
+    })
+  })
+
+  test("requires at least one destination update field", async () => {
+    const { default: updateDestinationCmd } = await import("../../src/commands/destinations/update")
+
+    await runExpectingError(
+      () =>
+        updateDestinationCmd.run!({
+          args: {
+            id: "10000000-0000-4000-8000-000000000003",
+            type: "webhook",
+            json: true,
+          },
+        } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
+      "missing_input",
+    )
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("requires an explicit destination update type", async () => {
+    const { default: updateDestinationCmd } = await import("../../src/commands/destinations/update")
+
+    await runExpectingError(
+      () =>
+        updateDestinationCmd.run!({
+          args: {
+            id: "10000000-0000-4000-8000-000000000003",
+            name: "Updated webhook",
+            json: true,
+          },
+        } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
+      "missing_input",
+    )
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("rejects unsupported destination update types", async () => {
+    const { default: updateDestinationCmd } = await import("../../src/commands/destinations/update")
+
+    await runExpectingError(
+      () =>
+        updateDestinationCmd.run!({
+          args: {
+            id: "10000000-0000-4000-8000-000000000003",
+            type: "email",
+            name: "Updated webhook",
+            enabled: true,
+            json: true,
+          },
+        } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
+      "invalid_input",
+    )
+    expect(mockCallTool).not.toHaveBeenCalled()
   })
 })
