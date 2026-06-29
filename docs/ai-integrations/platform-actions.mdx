@@ -1,0 +1,92 @@
+---
+title: "Platform Actions"
+description: "Inspect and configure Outlit agents and automations through API, CLI, and MCP"
+---
+
+Platform actions expose selected Outlit platform configuration through the same API, CLI, and MCP surfaces that agents already use for customer context. They are meant for workflows where an agent needs to inspect or safely prepare configuration without clicking through the Outlit UI.
+
+Use platform actions for Outlit-hosted agents, automations, signals, and destinations. Use [Integration Routes](/api-reference/integrations) for connecting external data sources such as Slack, Stripe, HubSpot, PostHog, or support tools.
+
+## How the Surfaces Fit Together
+
+| Surface | Use it when | Entry point |
+|---------|-------------|-------------|
+| REST API | You are building your own app, backend job, or schema-driven integration | [OpenAPI spec](/openapi.json) |
+| CLI | You want a human or coding agent to run commands from a terminal | [CLI commands](/cli/commands#agents) |
+| MCP | You want an MCP client to inspect or prepare platform configuration while assisting a user | [MCP Integration](/ai-integrations/mcp#platform-configuration-tools) |
+
+Each surface calls the same platform action contracts. The transport changes, but the intent does not: the API exposes the canonical route, the CLI wraps that route for terminal use, and MCP exposes the same operation as an agent tool.
+
+## Current Scope
+
+The current platform action set focuses on the Agents and Automations areas of the Outlit platform.
+
+| Area | Read actions | Write actions |
+|------|--------------|---------------|
+| Agents | List templates, list available actions, list agents, get one agent | Create a supported agent template draft |
+| Automations | List automations, get one automation | None |
+| Signals | List configured automation signals | None |
+| Destinations | List configured destinations with masked configuration | None |
+
+The first supported write action is template creation:
+
+```bash
+outlit agents create-from-template churn --json
+```
+
+This creates supported template resources in `draft` mode. Draft creation does not enable an automation, add schedules, add external destinations, or send notifications by itself.
+
+## Safety Model
+
+Platform actions are designed to make configuration inspectable before they make it broadly mutable.
+
+- Read actions require an API key with the `agents:read` scope.
+- Template creation requires an API key with the `agents:write` scope.
+- Write actions should return explicit safety metadata describing what was created and what was not enabled.
+- Destination responses only include masked configuration through fields such as `maskedConfig`; raw secrets and unmasked provider configuration are not returned.
+- Responses are projected platform-action DTOs, not raw database rows.
+- Error responses use command envelopes with stable error codes such as `authorization_denied`, `validation_failed`, `not_found`, and `conflict`.
+
+## Response Shape
+
+Platform actions return command envelopes. Successful responses include a `commandId`, `commandVersion`, `correlationId`, and `result`. The useful payload is under `result.data`.
+
+For example, `outlit automations list --json` returns automation data under:
+
+```text
+result.data.automations
+```
+
+Errors return `ok: false` with an `error` object and correlation ID so agents can report the failure precisely or retry only when the error is retryable.
+
+## Example Agent Workflow
+
+A coding agent or MCP client can use platform actions to inspect what exists, choose a safe action, and leave the user with reviewable platform state:
+
+```bash
+outlit agents templates --json
+outlit agents actions --json
+outlit agents create-from-template churn --json
+outlit agents list --json
+outlit automations list --json
+outlit signals list --json
+outlit destinations list --json
+```
+
+This workflow lets the agent discover available templates, understand supported action capabilities, create a draft churn agent template, and then inspect the resulting agent and automation configuration.
+
+## Available REST Routes
+
+| Route | Purpose |
+|-------|---------|
+| `GET /api/agent-templates` | List supported agent templates |
+| `GET /api/agent-actions` | List available agent configuration actions |
+| `GET /api/agents` | List configured agents |
+| `GET /api/agents/{id}` | Get one configured agent |
+| `POST /api/agents` | Create an agent from a supported template |
+| `GET /api/automations` | List configured automations |
+| `GET /api/automations/{id}` | Get one configured automation |
+| `GET /api/signals` | List configured automation signals |
+| `GET /api/destinations` | List configured automation destinations with masked configuration |
+
+The [OpenAPI spec](/openapi.json) is the canonical reference for request and response schemas.

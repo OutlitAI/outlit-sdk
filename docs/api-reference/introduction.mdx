@@ -34,6 +34,8 @@ POST /api/validate-api-key
 
 The public tool gateway exposes the same customer context tools used by the CLI and agent integrations: complete customer profiles, timelines, facts, exact source lookup, semantic search across sources and facts, and read-only SQL.
 
+[Platform Actions](/ai-integrations/platform-actions) expose selected agent and automation configuration through REST routes that are also available from the CLI and MCP.
+
 ### Ingest API
 
 The Ingest API uses your **public key** in the URL path. No additional authentication headers are required for ingestion.
@@ -138,6 +140,10 @@ Access-Control-Allow-Headers: Content-Type
 
 <Card title="/api/integrations/*" icon="plug" href="/api-reference/integrations">
   List, connect, poll, and inspect integration sync status
+</Card>
+
+<Card title="/api/agents and /api/automations" icon="sliders" href="/ai-integrations/platform-actions">
+  Inspect and safely prepare platform configuration through shared platform actions
 </Card>
 
 <Card title="POST /events" icon="arrow-right" href="/api-reference/ingest">
