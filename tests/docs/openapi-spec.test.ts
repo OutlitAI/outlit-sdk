@@ -67,9 +67,19 @@ describe("docs OpenAPI spec", () => {
       "/api/agent-templates",
       "/api/agents",
       "/api/agents/{id}",
+      "/api/agents/{id}/disable",
+      "/api/agents/{id}/enable",
+      "/api/agents/{id}/rename",
       "/api/automations",
       "/api/automations/{id}",
+      "/api/automations/{id}/archive",
+      "/api/automations/{id}/disable",
+      "/api/automations/{id}/enable",
       "/api/destinations",
+      "/api/destinations/{id}",
+      "/api/destinations/{id}/archive",
+      "/api/destinations/{id}/disable",
+      "/api/destinations/{id}/enable",
       "/api/i/v1/{publicKey}/events",
       "/api/integrations",
       "/api/integrations/capabilities",
@@ -79,6 +89,8 @@ describe("docs OpenAPI spec", () => {
       "/api/integrations/setup-step",
       "/api/integrations/sync-status",
       "/api/signals",
+      "/api/signals/{id}",
+      "/api/signals/{id}/archive",
       "/api/tools/call",
       "/api/validate-api-key",
     ])
@@ -119,15 +131,27 @@ describe("docs OpenAPI spec", () => {
       "GET /api/automations",
       "GET /api/automations/{id}",
       "GET /api/destinations",
+      "GET /api/destinations/{id}",
       "GET /api/integrations",
       "GET /api/integrations/capabilities",
       "GET /api/integrations/connect/status",
       "GET /api/integrations/sync-status",
       "GET /api/signals",
+      "GET /api/signals/{id}",
       "POST /api/agents",
+      "POST /api/agents/{id}/disable",
+      "POST /api/agents/{id}/enable",
+      "POST /api/agents/{id}/rename",
+      "POST /api/automations/{id}/archive",
+      "POST /api/automations/{id}/disable",
+      "POST /api/automations/{id}/enable",
+      "POST /api/destinations/{id}/archive",
+      "POST /api/destinations/{id}/disable",
+      "POST /api/destinations/{id}/enable",
       "POST /api/integrations/connect",
       "POST /api/integrations/disconnect",
       "POST /api/integrations/setup-step",
+      "POST /api/signals/{id}/archive",
       "POST /api/tools/call",
       "POST /api/validate-api-key",
     ])
@@ -175,6 +199,22 @@ describe("docs OpenAPI spec", () => {
     expect(spec.components?.schemas?.ToolCallRequest?.properties?.tool?.enum).toEqual([
       ...allCustomerToolNames,
     ])
+  })
+
+  test("documents validation failures for agent rename", () => {
+    const spec = readJson<{
+      paths?: Record<string, any>
+    }>("docs/openapi.json")
+    const renameResponses = spec.paths?.["/api/agents/{id}/rename"]?.post?.responses
+
+    expect(renameResponses?.["400"]).toMatchObject({
+      description: "The request body failed command validation.",
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/CommandErrorEnvelope" },
+        },
+      },
+    })
   })
 
   test("uses only internal OpenAPI references", () => {

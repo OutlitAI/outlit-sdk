@@ -85,7 +85,7 @@ Outlit's remote MCP endpoint uses OAuth-based authentication. In practice that m
 
 ## Platform Configuration Tools
 
-API-key authenticated MCP clients can also inspect agent and automation configuration through read-only platform action tools:
+API-key authenticated MCP clients can also inspect and manage selected agent and automation configuration through platform action tools:
 
 | Tool | What it does |
 |------|-------------|
@@ -93,11 +93,24 @@ API-key authenticated MCP clients can also inspect agent and automation configur
 | `outlit_agent_list_available_actions` | List available agent configuration actions |
 | `outlit_agent_list` | List configured agents |
 | `outlit_agent_get` | Get one configured agent |
+| `outlit_agent_create_from_template` | Create supported template resources in draft mode |
+| `outlit_agent_enable` | Enable one configured agent |
+| `outlit_agent_disable` | Disable one configured agent |
+| `outlit_agent_rename` | Rename one configured agent |
 | `outlit_automation_list` | List configured automations |
 | `outlit_automation_get` | Get one configured automation |
+| `outlit_automation_enable` | Enable one configured automation |
+| `outlit_automation_disable` | Disable one configured automation |
+| `outlit_automation_archive` | Archive one configured automation |
 | `outlit_signal_list` | List configured automation signals |
+| `outlit_signal_get` | Get one configured automation signal |
+| `outlit_signal_archive` | Archive one configured automation signal |
 | `outlit_destination_list` | List configured automation destinations with masked configuration |
+| `outlit_destination_get` | Get one configured automation destination with masked configuration |
+| `outlit_destination_enable` | Enable one configured automation destination |
+| `outlit_destination_disable` | Disable one configured automation destination |
+| `outlit_destination_archive` | Archive one configured automation destination |
 
-The only current write action in this platform action group is `outlit_agent_create_from_template`, which creates supported template resources in draft mode.
+Read tools require `agents:read`. Write tools require `agents:write`. Destination tools return masked configuration only.
 
 See [Platform Actions](/ai-integrations/platform-actions) for the shared API, CLI, and MCP model behind these tools.

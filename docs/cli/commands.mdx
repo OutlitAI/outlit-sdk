@@ -563,6 +563,9 @@ outlit agents get <id> [flags]
 outlit agents templates [flags]
 outlit agents actions [flags]
 outlit agents create-from-template churn [flags]
+outlit agents enable <id> [flags]
+outlit agents disable <id> [flags]
+outlit agents rename <id> <display-name> [flags]
 ```
 
 ### Examples
@@ -573,10 +576,13 @@ outlit agents get agent_123 --json
 outlit agents templates --json
 outlit agents actions --json
 outlit agents create-from-template churn --json
+outlit agents enable agent_123 --json
+outlit agents disable agent_123 --json
+outlit agents rename agent_123 "Churn prevention" --json
 ```
 
 <Note>
-  `create-from-template` creates supported template resources in draft mode. Listing agents, templates, and actions is read-only.
+  `create-from-template` creates supported template resources in draft mode. `enable`, `disable`, and `rename` require an API key with `agents:write`.
 </Note>
 
 ## Automations
@@ -586,6 +592,9 @@ Inspect configured platform automations.
 ```bash
 outlit automations list [flags]
 outlit automations get <id> [flags]
+outlit automations enable <id> [flags]
+outlit automations disable <id> [flags]
+outlit automations archive <id> [flags]
 ```
 
 ### Examples
@@ -593,43 +602,58 @@ outlit automations get <id> [flags]
 ```bash
 outlit automations list --json
 outlit automations get 10000000-0000-4000-8000-000000000001 --json
+outlit automations enable 10000000-0000-4000-8000-000000000001 --json
+outlit automations disable 10000000-0000-4000-8000-000000000001 --json
+outlit automations archive 10000000-0000-4000-8000-000000000001 --json
 ```
 
 ### JSON Response
 
-Automation commands return command envelopes. List results are under `result.data.automations`; get results are under `result.data.automation`.
+Automation commands return command envelopes. List results are under `result.data.automations`; get, enable, and disable results are under `result.data.automation`. Archive results return `result.data.automation.id` and `result.data.automation.archivedAt`.
 
 ## Signals
 
-List configured automation signals.
+Inspect and archive configured automation signals.
 
 ```bash
 outlit signals list [flags]
+outlit signals get <id> [flags]
+outlit signals archive <id> [flags]
 ```
 
 ### Examples
 
 ```bash
 outlit signals list --json
+outlit signals get 10000000-0000-4000-8000-000000000002 --json
+outlit signals archive 10000000-0000-4000-8000-000000000002 --json
 ```
 
-Signal list results are under `result.data.signals`.
+Signal list results are under `result.data.signals`; get results are under `result.data.signal`. Archive results return `result.data.signal.id` and `result.data.signal.archivedAt`.
 
 ## Destinations
 
-List configured automation destinations with masked configuration only.
+Inspect and manage configured automation destinations with masked configuration only.
 
 ```bash
 outlit destinations list [flags]
+outlit destinations get <id> [flags]
+outlit destinations enable <id> [flags]
+outlit destinations disable <id> [flags]
+outlit destinations archive <id> [flags]
 ```
 
 ### Examples
 
 ```bash
 outlit destinations list --json
+outlit destinations get 10000000-0000-4000-8000-000000000003 --json
+outlit destinations enable 10000000-0000-4000-8000-000000000003 --json
+outlit destinations disable 10000000-0000-4000-8000-000000000003 --json
+outlit destinations archive 10000000-0000-4000-8000-000000000003 --json
 ```
 
-Destination list results are under `result.data.destinations`. Raw destination secrets and unmasked provider configuration are not returned.
+Destination list results are under `result.data.destinations`; get, enable, and disable results are under `result.data.destination`. Archive results return `result.data.destination.id` and `result.data.destination.archivedAt`. Raw destination secrets and unmasked provider configuration are not returned.
 
 ## SQL
 

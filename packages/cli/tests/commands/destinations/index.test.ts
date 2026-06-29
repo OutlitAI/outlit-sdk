@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test"
 
 describe("destinations command", () => {
-  test("exposes read-only destination commands", async () => {
+  test("exposes destination read and lifecycle commands", async () => {
     const { default: destinationsCmd } = await import("../../../src/commands/destinations")
     const subcommands = Object.keys(destinationsCmd.subCommands ?? {})
 
-    expect(subcommands).toEqual(["list"])
+    expect(subcommands).toEqual(["list", "get", "enable", "disable", "archive"])
     expect(subcommands).not.toContain("create")
     expect(subcommands).not.toContain("update")
     expect(subcommands).not.toContain("delete")

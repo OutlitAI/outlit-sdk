@@ -23,26 +23,29 @@ The current platform action set focuses on the Agents and Automations areas of t
 
 | Area | Read actions | Write actions |
 |------|--------------|---------------|
-| Agents | List templates, list available actions, list agents, get one agent | Create a supported agent template draft |
-| Automations | List automations, get one automation | None |
-| Signals | List configured automation signals | None |
-| Destinations | List configured destinations with masked configuration | None |
+| Agents | List templates, list available actions, list agents, get one agent | Create a supported agent template draft, enable, disable, rename |
+| Automations | List automations, get one automation | Enable, disable, archive |
+| Signals | List configured automation signals, get one signal | Archive |
+| Destinations | List configured destinations, get one destination with masked configuration | Enable, disable, archive |
 
-The first supported write action is template creation:
+For example, a CLI user or agent can create a draft template and then explicitly enable or disable lifecycle resources:
 
 ```bash
 outlit agents create-from-template churn --json
+outlit agents enable agent_123 --json
+outlit automations disable 10000000-0000-4000-8000-000000000001 --json
 ```
 
-This creates supported template resources in `draft` mode. Draft creation does not enable an automation, add schedules, add external destinations, or send notifications by itself.
+Template creation creates supported template resources in `draft` mode. Draft creation does not enable an automation, add schedules, add external destinations, or send notifications by itself. Lifecycle write actions mutate only the named resource state.
 
 ## Safety Model
 
 Platform actions are designed to make configuration inspectable before they make it broadly mutable.
 
 - Read actions require an API key with the `agents:read` scope.
-- Template creation requires an API key with the `agents:write` scope.
-- Write actions should return explicit safety metadata describing what was created and what was not enabled.
+- Write actions require an API key with the `agents:write` scope.
+- Template creation returns explicit safety metadata describing what was created and what was not enabled.
+- Enable actions validate the current platform state before enabling. For example, an automation cannot be enabled if required destinations or processor agents are unavailable.
 - Destination responses only include masked configuration through fields such as `maskedConfig`; raw secrets and unmasked provider configuration are not returned.
 - Responses are projected platform-action DTOs, not raw database rows.
 - Error responses use command envelopes with stable error codes such as `authorization_denied`, `validation_failed`, `not_found`, and `conflict`.
@@ -67,13 +70,15 @@ A coding agent or MCP client can use platform actions to inspect what exists, ch
 outlit agents templates --json
 outlit agents actions --json
 outlit agents create-from-template churn --json
+outlit agents enable agent_123 --json
 outlit agents list --json
 outlit automations list --json
+outlit automations enable 10000000-0000-4000-8000-000000000001 --json
 outlit signals list --json
 outlit destinations list --json
 ```
 
-This workflow lets the agent discover available templates, understand supported action capabilities, create a draft churn agent template, and then inspect the resulting agent and automation configuration.
+This workflow lets the agent discover available templates, understand supported action capabilities, create a draft churn agent template, inspect the resulting agent and automation configuration, and then make explicit lifecycle changes.
 
 ## Available REST Routes
 
@@ -84,9 +89,21 @@ This workflow lets the agent discover available templates, understand supported 
 | `GET /api/agents` | List configured agents |
 | `GET /api/agents/{id}` | Get one configured agent |
 | `POST /api/agents` | Create an agent from a supported template |
+| `POST /api/agents/{id}/enable` | Enable one configured agent |
+| `POST /api/agents/{id}/disable` | Disable one configured agent |
+| `POST /api/agents/{id}/rename` | Rename one configured agent |
 | `GET /api/automations` | List configured automations |
 | `GET /api/automations/{id}` | Get one configured automation |
+| `POST /api/automations/{id}/enable` | Enable one configured automation |
+| `POST /api/automations/{id}/disable` | Disable one configured automation |
+| `POST /api/automations/{id}/archive` | Archive one configured automation |
 | `GET /api/signals` | List configured automation signals |
+| `GET /api/signals/{id}` | Get one configured automation signal |
+| `POST /api/signals/{id}/archive` | Archive one configured automation signal |
 | `GET /api/destinations` | List configured automation destinations with masked configuration |
+| `GET /api/destinations/{id}` | Get one configured automation destination with masked configuration |
+| `POST /api/destinations/{id}/enable` | Enable one configured automation destination |
+| `POST /api/destinations/{id}/disable` | Disable one configured automation destination |
+| `POST /api/destinations/{id}/archive` | Archive one configured automation destination |
 
 The [OpenAPI spec](/openapi.json) is the canonical reference for request and response schemas.
