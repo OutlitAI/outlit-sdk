@@ -21,6 +21,7 @@ const mockEnvelope = {
           provider: "OUTPOST",
           kind: "WEBHOOK_ENDPOINT",
           enabled: true,
+          configJson: { url: "https://hooks.example.com/raw-secret" },
           maskedConfig: { url: "https://hooks.example.com/..." },
           syncStatus: "SYNCED",
           lastSyncedAt: null,
@@ -61,6 +62,9 @@ describe("destinations list", () => {
 
   test("lists destinations through the platform action endpoint", async () => {
     const { default: listCmd } = await import("../../../src/commands/destinations/list")
+
+    expect(mockEnvelope.result.data.destinations[0]).toHaveProperty("configJson")
+
     const parsed = await captureStdout<typeof mockEnvelope>(() =>
       listCmd.run!({
         args: { json: true },
