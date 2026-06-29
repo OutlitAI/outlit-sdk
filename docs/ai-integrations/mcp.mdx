@@ -1,6 +1,6 @@
 ---
 title: "MCP Integration"
-description: "Connect remote MCP clients to Outlit with your workspace URL and OAuth"
+description: "Connect remote MCP clients to Outlit with your workspace URL, OAuth, or scoped API keys"
 ---
 
 ## What is the Outlit MCP Server?
@@ -11,10 +11,12 @@ The Outlit CLI is not required for MCP setup. Use the workspace MCP URL directly
 
 ## Authentication Model
 
-Outlit's remote MCP endpoint uses OAuth-based authentication. In practice that means:
+Outlit's remote MCP endpoint uses OAuth-based authentication for customer-intelligence tools. In practice that means:
 - you add the workspace MCP URL to your client
 - you do not paste API keys or bearer headers into config files
 - the client opens an OAuth sign-in flow and stores the resulting session
+
+Platform configuration tools use API-key authentication today. Use an API key with `agents:read` for read-only configuration tools and `agents:write` for write tools.
 
 ## Connect Your MCP Client
 
@@ -43,7 +45,7 @@ Outlit's remote MCP endpoint uses OAuth-based authentication. In practice that m
     }
     ```
 
-    No `Authorization` header is needed.
+    No `Authorization` header is needed for OAuth-based customer-intelligence tools.
   </Step>
   <Step title="Complete OAuth in the client">
     After you add the server, your client should prompt you to sign in to Outlit and authorize access for that workspace.
@@ -60,6 +62,43 @@ Outlit's remote MCP endpoint uses OAuth-based authentication. In practice that m
 <Tip>
   Use [Agent Skills](/ai-integrations/skills) for coding agents like Claude Code, Codex, and Gemini CLI. Use MCP when your primary surface is an MCP client such as Cursor, VS Code, or another remote-MCP connector.
 </Tip>
+
+## Platform Configuration Over MCP
+
+Platform configuration tools inspect and mutate agents, automations, signals, and destinations. These tools require API-key authentication because they execute scoped platform actions.
+
+<Steps>
+  <Step title="Create a scoped API key">
+    Open [Settings > CLI & MCP](https://app.outlit.ai/settings/workspace/mcp) and create an API key for agent configuration. The key must include `agents:read` for read tools and `agents:write` for write tools.
+  </Step>
+  <Step title="Add the bearer header in supported clients">
+    For MCP clients that support custom headers or headless bearer-token setup, configure the same workspace MCP URL with an `Authorization` header:
+
+    ```json
+    {
+      "mcpServers": {
+        "outlit": {
+          "url": "https://mcp.outlit.ai/w/<workspace-slug>/mcp",
+          "headers": {
+            "Authorization": "Bearer ok_your_api_key"
+          }
+        }
+      }
+    }
+    ```
+  </Step>
+  <Step title="Verify platform tools">
+    Ask your client:
+
+    ```text
+    List my Outlit agent templates.
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  Do not add API keys to OAuth-only client configs. If your MCP client cannot send bearer headers, use the CLI or REST API for platform configuration actions.
+</Note>
 
 ## What Tools Are Available?
 
@@ -94,19 +133,29 @@ API-key authenticated MCP clients can also inspect and manage selected agent and
 | `outlit_agent_list` | List configured agents |
 | `outlit_agent_get` | Get one configured agent |
 | `outlit_agent_create_from_template` | Create supported template resources in draft mode |
+| `outlit_agent_create_custom` | Create a custom hosted agent |
 | `outlit_agent_enable` | Enable one configured agent |
 | `outlit_agent_disable` | Disable one configured agent |
 | `outlit_agent_rename` | Rename one configured agent |
+| `outlit_agent_update_profile` | Update one configured agent profile |
+| `outlit_agent_update_instructions` | Update one custom agent's instructions |
+| `outlit_agent_update_actions` | Update one custom agent's action keys |
 | `outlit_automation_list` | List configured automations |
 | `outlit_automation_get` | Get one configured automation |
+| `outlit_automation_create` | Create an agent automation from an `agentId` |
+| `outlit_automation_update` | Update an agent automation from an `agentId` |
 | `outlit_automation_enable` | Enable one configured automation |
 | `outlit_automation_disable` | Disable one configured automation |
 | `outlit_automation_archive` | Archive one configured automation |
 | `outlit_signal_list` | List configured automation signals |
 | `outlit_signal_get` | Get one configured automation signal |
+| `outlit_signal_create` | Create one automation signal |
+| `outlit_signal_update` | Update one automation signal |
 | `outlit_signal_archive` | Archive one configured automation signal |
 | `outlit_destination_list` | List configured automation destinations with masked configuration |
 | `outlit_destination_get` | Get one configured automation destination with masked configuration |
+| `outlit_destination_create_webhook` | Create one webhook automation destination |
+| `outlit_destination_update` | Update one automation destination |
 | `outlit_destination_enable` | Enable one configured automation destination |
 | `outlit_destination_disable` | Disable one configured automation destination |
 | `outlit_destination_archive` | Archive one configured automation destination |

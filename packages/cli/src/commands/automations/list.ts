@@ -38,7 +38,7 @@ export default defineCommand({
           { header: "Name", key: "name", format: (v) => truncate(v, 28) },
           { header: "Enabled", key: "enabled", format: (v) => (v === true ? "yes" : "no") },
           { header: "Trigger", key: "triggerType", format: (v) => truncate(v, 20) },
-          { header: "Outcome", key: "outcomeType", format: (v) => truncate(v, 20) },
+          { header: "Agent", key: "agentId", format: (v) => truncate(v, 22) },
           { header: "Signals", key: "activeSignalCount", format: formatCount },
           { header: "Destinations", key: "activeDestinationCount", format: formatCount },
           { header: "Updated", key: "updatedAt", format: relativeDate },

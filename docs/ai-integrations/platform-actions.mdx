@@ -23,20 +23,25 @@ The current platform action set focuses on the Agents and Automations areas of t
 
 | Area | Read actions | Write actions |
 |------|--------------|---------------|
-| Agents | List templates, list available actions, list agents, get one agent | Create a supported agent template draft, enable, disable, rename |
-| Automations | List automations, get one automation | Enable, disable, archive |
-| Signals | List configured automation signals, get one signal | Archive |
-| Destinations | List configured destinations, get one destination with masked configuration | Enable, disable, archive |
+| Agents | List templates, list available actions, list agents, get one agent | Create a supported agent template draft, create a custom agent, update profile, update instructions, update actions, enable, disable, rename |
+| Automations | List automations, get one automation | Create, update, enable, disable, archive |
+| Signals | List configured automation signals, get one signal | Create, update, archive |
+| Destinations | List configured destinations, get one destination with masked configuration | Create webhook, update, enable, disable, archive |
 
 For example, a CLI user or agent can create a draft template and then explicitly enable or disable lifecycle resources:
 
 ```bash
 outlit agents create-from-template churn --json
-outlit agents enable agent_123 --json
+outlit agents create-custom --display-name "Renewal risk" --instructions "Find risk" --surface-criteria "Surface risky customers" --json
+outlit signals create --file ./signal.json --json
+outlit automations create --file ./automation.json --json
+outlit agents enable 10000000-0000-4000-8000-000000000004 --json
 outlit automations disable 10000000-0000-4000-8000-000000000001 --json
 ```
 
 Template creation creates supported template resources in `draft` mode. Draft creation does not enable an automation, add schedules, add external destinations, or send notifications by itself. Lifecycle write actions mutate only the named resource state.
+
+Automation create and update actions are agent-centered. Callers provide `agentId`; update bodies also provide `enabled` explicitly. Outlit maps the agent ID to the hosted-agent processor internally and does not require callers to construct raw processor JSON.
 
 ## Safety Model
 
@@ -70,7 +75,10 @@ A coding agent or MCP client can use platform actions to inspect what exists, ch
 outlit agents templates --json
 outlit agents actions --json
 outlit agents create-from-template churn --json
-outlit agents enable agent_123 --json
+outlit agents update-instructions 10000000-0000-4000-8000-000000000004 --instructions "Prioritize recent support escalations" --json
+outlit destinations create-webhook --name "Customer ops" --url https://hooks.example.com/outlit --json
+outlit destinations update 10000000-0000-4000-8000-000000000003 --type WEBHOOK_ENDPOINT --name "Customer ops" --enabled --json
+outlit agents enable 10000000-0000-4000-8000-000000000004 --json
 outlit agents list --json
 outlit automations list --json
 outlit automations enable 10000000-0000-4000-8000-000000000001 --json
@@ -89,19 +97,29 @@ This workflow lets the agent discover available templates, understand supported 
 | `GET /api/agents` | List configured agents |
 | `GET /api/agents/{id}` | Get one configured agent |
 | `POST /api/agents` | Create an agent from a supported template |
+| `POST /api/agents/custom` | Create a custom hosted agent |
 | `POST /api/agents/{id}/enable` | Enable one configured agent |
 | `POST /api/agents/{id}/disable` | Disable one configured agent |
 | `POST /api/agents/{id}/rename` | Rename one configured agent |
+| `POST /api/agents/{id}/profile` | Update one configured agent profile |
+| `POST /api/agents/{id}/instructions` | Update one custom agent's instructions |
+| `POST /api/agents/{id}/actions` | Update one custom agent's action keys |
 | `GET /api/automations` | List configured automations |
+| `POST /api/automations` | Create an agent automation |
 | `GET /api/automations/{id}` | Get one configured automation |
+| `POST /api/automations/{id}` | Update one agent automation |
 | `POST /api/automations/{id}/enable` | Enable one configured automation |
 | `POST /api/automations/{id}/disable` | Disable one configured automation |
 | `POST /api/automations/{id}/archive` | Archive one configured automation |
 | `GET /api/signals` | List configured automation signals |
+| `POST /api/signals` | Create one automation signal |
 | `GET /api/signals/{id}` | Get one configured automation signal |
+| `POST /api/signals/{id}` | Update one automation signal |
 | `POST /api/signals/{id}/archive` | Archive one configured automation signal |
 | `GET /api/destinations` | List configured automation destinations with masked configuration |
 | `GET /api/destinations/{id}` | Get one configured automation destination with masked configuration |
+| `POST /api/destinations/webhook` | Create one webhook automation destination |
+| `POST /api/destinations/{id}` | Update one automation destination |
 | `POST /api/destinations/{id}/enable` | Enable one configured automation destination |
 | `POST /api/destinations/{id}/disable` | Disable one configured automation destination |
 | `POST /api/destinations/{id}/archive` | Archive one configured automation destination |

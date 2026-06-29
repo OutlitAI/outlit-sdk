@@ -10,7 +10,7 @@ export default defineCommand({
       "Rename a configured Outlit agent display name.",
       "",
       "Examples:",
-      "  outlit agents rename agent_123 'Churn prevention' --json",
+      "  outlit agents rename 10000000-0000-4000-8000-000000000004 'Churn prevention' --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),

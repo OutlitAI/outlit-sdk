@@ -66,6 +66,22 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
     method: "POST",
     path: "/api/agents",
   },
+  outlit_agent_create_custom: {
+    method: "POST",
+    path: "/api/agents/custom",
+  },
+  outlit_agent_update_profile: {
+    method: "POST",
+    path: "/api/agents/{id}/profile",
+  },
+  outlit_agent_update_instructions: {
+    method: "POST",
+    path: "/api/agents/{id}/instructions",
+  },
+  outlit_agent_update_actions: {
+    method: "POST",
+    path: "/api/agents/{id}/actions",
+  },
   outlit_agent_enable: {
     method: "POST",
     path: "/api/agents/{id}/enable",
@@ -84,6 +100,14 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
   },
   outlit_automation_get: {
     method: "GET",
+    path: "/api/automations/{id}",
+  },
+  outlit_automation_create: {
+    method: "POST",
+    path: "/api/automations",
+  },
+  outlit_automation_update: {
+    method: "POST",
     path: "/api/automations/{id}",
   },
   outlit_automation_enable: {
@@ -106,6 +130,14 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
     method: "GET",
     path: "/api/signals/{id}",
   },
+  outlit_signal_create: {
+    method: "POST",
+    path: "/api/signals",
+  },
+  outlit_signal_update: {
+    method: "POST",
+    path: "/api/signals/{id}",
+  },
   outlit_signal_archive: {
     method: "POST",
     path: "/api/signals/{id}/archive",
@@ -116,6 +148,14 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
   },
   outlit_destination_get: {
     method: "GET",
+    path: "/api/destinations/{id}",
+  },
+  outlit_destination_create_webhook: {
+    method: "POST",
+    path: "/api/destinations/webhook",
+  },
+  outlit_destination_update: {
+    method: "POST",
     path: "/api/destinations/{id}",
   },
   outlit_destination_enable: {

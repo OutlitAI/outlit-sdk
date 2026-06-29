@@ -563,6 +563,10 @@ outlit agents get <id> [flags]
 outlit agents templates [flags]
 outlit agents actions [flags]
 outlit agents create-from-template churn [flags]
+outlit agents create-custom [flags]
+outlit agents update-profile <id> [flags]
+outlit agents update-instructions <id> [flags]
+outlit agents update-actions <id> [flags]
 outlit agents enable <id> [flags]
 outlit agents disable <id> [flags]
 outlit agents rename <id> <display-name> [flags]
@@ -572,17 +576,22 @@ outlit agents rename <id> <display-name> [flags]
 
 ```bash
 outlit agents list --json
-outlit agents get agent_123 --json
+outlit agents get 10000000-0000-4000-8000-000000000004 --json
 outlit agents templates --json
 outlit agents actions --json
 outlit agents create-from-template churn --json
-outlit agents enable agent_123 --json
-outlit agents disable agent_123 --json
-outlit agents rename agent_123 "Churn prevention" --json
+outlit agents create-custom --display-name "Renewal risk" --instructions "Find risk" --surface-criteria "Surface risky customers" --json
+outlit agents update-profile 10000000-0000-4000-8000-000000000004 --display-name "Renewal risk" --json
+outlit agents update-instructions 10000000-0000-4000-8000-000000000004 --instructions "Prioritize recent escalations" --json
+outlit agents update-actions 10000000-0000-4000-8000-000000000004 --action-keys send_slack_notification --json
+outlit agents update-actions 10000000-0000-4000-8000-000000000004 --clear --json
+outlit agents enable 10000000-0000-4000-8000-000000000004 --json
+outlit agents disable 10000000-0000-4000-8000-000000000004 --json
+outlit agents rename 10000000-0000-4000-8000-000000000004 "Churn prevention" --json
 ```
 
 <Note>
-  `create-from-template` creates supported template resources in draft mode. `enable`, `disable`, and `rename` require an API key with `agents:write`.
+  `create-from-template` creates supported template resources in draft mode. `update-actions` requires either `--action-keys` or explicit `--clear`. Custom agent write commands, lifecycle commands, and rename commands require an API key with `agents:write`.
 </Note>
 
 ## Automations
@@ -592,6 +601,10 @@ Inspect configured platform automations.
 ```bash
 outlit automations list [flags]
 outlit automations get <id> [flags]
+outlit automations create --data <json> [flags]
+outlit automations create --file <path> [flags]
+outlit automations update <id> --data <json> [flags]
+outlit automations update <id> --file <path> [flags]
 outlit automations enable <id> [flags]
 outlit automations disable <id> [flags]
 outlit automations archive <id> [flags]
@@ -602,22 +615,30 @@ outlit automations archive <id> [flags]
 ```bash
 outlit automations list --json
 outlit automations get 10000000-0000-4000-8000-000000000001 --json
+outlit automations create --file ./automation.json --json
+outlit automations update 10000000-0000-4000-8000-000000000001 --file ./automation.json --json
 outlit automations enable 10000000-0000-4000-8000-000000000001 --json
 outlit automations disable 10000000-0000-4000-8000-000000000001 --json
 outlit automations archive 10000000-0000-4000-8000-000000000001 --json
 ```
 
+Automation create bodies must include `agentId`; update bodies must include `agentId` and `enabled`. The API maps that agent ID to the internal hosted-agent processor; callers do not provide raw processor JSON.
+
 ### JSON Response
 
-Automation commands return command envelopes. List results are under `result.data.automations`; get, enable, and disable results are under `result.data.automation`. Archive results return `result.data.automation.id` and `result.data.automation.archivedAt`.
+Automation commands return command envelopes. List results are under `result.data.automations`; get, create, update, enable, and disable results are under `result.data.automation`. Archive results return `result.data.automation.id` and `result.data.automation.archivedAt`.
 
 ## Signals
 
-Inspect and archive configured automation signals.
+Inspect and configure automation signals.
 
 ```bash
 outlit signals list [flags]
 outlit signals get <id> [flags]
+outlit signals create --data <json> [flags]
+outlit signals create --file <path> [flags]
+outlit signals update <id> --data <json> [flags]
+outlit signals update <id> --file <path> [flags]
 outlit signals archive <id> [flags]
 ```
 
@@ -626,10 +647,12 @@ outlit signals archive <id> [flags]
 ```bash
 outlit signals list --json
 outlit signals get 10000000-0000-4000-8000-000000000002 --json
+outlit signals create --file ./signal.json --json
+outlit signals update 10000000-0000-4000-8000-000000000002 --file ./signal.json --json
 outlit signals archive 10000000-0000-4000-8000-000000000002 --json
 ```
 
-Signal list results are under `result.data.signals`; get results are under `result.data.signal`. Archive results return `result.data.signal.id` and `result.data.signal.archivedAt`.
+Signal list results are under `result.data.signals`; get, create, and update results are under `result.data.signal`. Archive results return `result.data.signal.id` and `result.data.signal.archivedAt`.
 
 ## Destinations
 
@@ -638,6 +661,8 @@ Inspect and manage configured automation destinations with masked configuration 
 ```bash
 outlit destinations list [flags]
 outlit destinations get <id> [flags]
+outlit destinations create-webhook [flags]
+outlit destinations update <id> [flags]
 outlit destinations enable <id> [flags]
 outlit destinations disable <id> [flags]
 outlit destinations archive <id> [flags]
@@ -648,12 +673,14 @@ outlit destinations archive <id> [flags]
 ```bash
 outlit destinations list --json
 outlit destinations get 10000000-0000-4000-8000-000000000003 --json
+outlit destinations create-webhook --name "Customer ops" --url https://hooks.example.com/outlit --json
+outlit destinations update 10000000-0000-4000-8000-000000000003 --type WEBHOOK_ENDPOINT --name "Customer ops" --enabled --json
 outlit destinations enable 10000000-0000-4000-8000-000000000003 --json
 outlit destinations disable 10000000-0000-4000-8000-000000000003 --json
 outlit destinations archive 10000000-0000-4000-8000-000000000003 --json
 ```
 
-Destination list results are under `result.data.destinations`; get, enable, and disable results are under `result.data.destination`. Archive results return `result.data.destination.id` and `result.data.destination.archivedAt`. Raw destination secrets and unmasked provider configuration are not returned.
+Destination list results are under `result.data.destinations`; get, create, update, enable, and disable results are under `result.data.destination`. `destinations update` requires either `--enabled` or `--disabled` so URL/name edits do not silently change lifecycle state. Archive results return `result.data.destination.id` and `result.data.destination.archivedAt`. Raw destination secrets and unmasked provider configuration are not returned.
 
 ## SQL
 
