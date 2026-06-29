@@ -314,6 +314,9 @@
               }
             }
           },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
           "503": {
             "description": "The platform could not verify the created resources and rolled back the request.",
             "content": {
@@ -323,9 +326,6 @@
                 }
               }
             }
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }
@@ -825,6 +825,212 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/IngestEventsError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/automations": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "List automations",
+        "description": "List configured Outlit automations for the authenticated organization. Read-only.",
+        "operationId": "listAutomations",
+        "responses": {
+          "200": {
+            "description": "Configured automations were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAutomationsCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not list automations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/automations/{id}": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get automation",
+        "description": "Get one configured Outlit automation by id. Read-only and does not include run history.",
+        "operationId": "getAutomation",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Automation ID to fetch.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The configured automation was returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAutomationCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No automation was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not get the automation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/signals": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "List signals",
+        "description": "List configured Outlit automation signals for the authenticated organization. Read-only.",
+        "operationId": "listSignals",
+        "responses": {
+          "200": {
+            "description": "Configured signals were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListSignalsCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not list signals.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/destinations": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "List destinations",
+        "description": "List configured Outlit automation destinations with masked configuration only. Read-only.",
+        "operationId": "listDestinations",
+        "responses": {
+          "200": {
+            "description": "Configured destinations were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListDestinationsCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not list destinations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
                 }
               }
             }
@@ -2342,6 +2548,526 @@
           }
         },
         "additionalProperties": true
+      },
+      "PlatformActionManagedBy": {
+        "type": "string",
+        "enum": ["UI", "CODE"]
+      },
+      "SignalKind": {
+        "type": "string",
+        "enum": ["EVENT_MATCH", "EVENT_PATTERN"]
+      },
+      "AutomationTriggerType": {
+        "type": "string",
+        "enum": ["SIGNAL_OCCURRENCE", "SCHEDULE"]
+      },
+      "AutomationOutcomeType": {
+        "type": "string",
+        "enum": ["DIRECT_DELIVERY", "AGENT_PROCESSOR"]
+      },
+      "AutomationMatchMode": {
+        "type": "string",
+        "enum": ["ANY", "ALL", "AT_LEAST"]
+      },
+      "AutomationRunStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "SKIPPED",
+          "RUNNING_PROCESSOR",
+          "READY_FOR_DELIVERY",
+          "PENDING_DELIVERY",
+          "DELIVERED",
+          "PARTIAL_FAILURE",
+          "FAILED"
+        ]
+      },
+      "DestinationProvider": {
+        "type": "string",
+        "enum": ["SLACK", "OUTPOST", "WEBHOOK"]
+      },
+      "DestinationKind": {
+        "type": "string",
+        "enum": ["SLACK_CHANNEL", "WEBHOOK_ENDPOINT"]
+      },
+      "DestinationSyncStatus": {
+        "type": "string",
+        "enum": ["PENDING_PROVIDER_SYNC", "SYNCED", "PROVIDER_ERROR", "DISABLED_BY_PROVIDER"]
+      },
+      "SignalRead": {
+        "type": "object",
+        "required": [
+          "id",
+          "key",
+          "managedBy",
+          "name",
+          "description",
+          "kind",
+          "definition",
+          "schemaVersion",
+          "configHash",
+          "archivedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string"
+          },
+          "managedBy": {
+            "$ref": "#/components/schemas/PlatformActionManagedBy"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "kind": {
+            "$ref": "#/components/schemas/SignalKind"
+          },
+          "definition": {},
+          "schemaVersion": {
+            "type": "string"
+          },
+          "configHash": {
+            "type": ["string", "null"]
+          },
+          "archivedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DestinationRead": {
+        "type": "object",
+        "required": [
+          "id",
+          "key",
+          "name",
+          "description",
+          "provider",
+          "kind",
+          "enabled",
+          "maskedConfig",
+          "syncStatus",
+          "lastSyncedAt",
+          "providerErrorCode",
+          "providerErrorMessage",
+          "isDefault",
+          "schemaVersion",
+          "configHash",
+          "archivedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "provider": {
+            "$ref": "#/components/schemas/DestinationProvider"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DestinationKind"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "maskedConfig": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncStatus": {
+            "$ref": "#/components/schemas/DestinationSyncStatus"
+          },
+          "lastSyncedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "providerErrorCode": {
+            "type": ["string", "null"]
+          },
+          "providerErrorMessage": {
+            "type": ["string", "null"]
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "schemaVersion": {
+            "type": "string"
+          },
+          "configHash": {
+            "type": ["string", "null"]
+          },
+          "archivedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationRead": {
+        "type": "object",
+        "required": [
+          "id",
+          "key",
+          "managedBy",
+          "name",
+          "description",
+          "enabled",
+          "triggerType",
+          "triggerJson",
+          "audienceFilterJson",
+          "outcomeType",
+          "processorJson",
+          "processorPolicyJson",
+          "deliveryPolicyJson",
+          "matchMode",
+          "schemaVersion",
+          "configHash",
+          "archivedAt",
+          "lastRunAt",
+          "lastRunStatus",
+          "nextRunAt",
+          "createdAt",
+          "updatedAt",
+          "signals",
+          "destinations",
+          "activeSignalCount",
+          "activeDestinationCount"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string"
+          },
+          "managedBy": {
+            "$ref": "#/components/schemas/PlatformActionManagedBy"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "triggerType": {
+            "$ref": "#/components/schemas/AutomationTriggerType"
+          },
+          "triggerJson": {},
+          "audienceFilterJson": {},
+          "outcomeType": {
+            "$ref": "#/components/schemas/AutomationOutcomeType"
+          },
+          "processorJson": {},
+          "processorPolicyJson": {},
+          "deliveryPolicyJson": {},
+          "matchMode": {
+            "$ref": "#/components/schemas/AutomationMatchMode"
+          },
+          "schemaVersion": {
+            "type": "string"
+          },
+          "configHash": {
+            "type": ["string", "null"]
+          },
+          "archivedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "lastRunAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "lastRunStatus": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AutomationRunStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "nextRunAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "signals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignalRead"
+            }
+          },
+          "destinations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DestinationRead"
+            }
+          },
+          "activeSignalCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "activeDestinationCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "ListAutomationsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "automation.list"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "automation.list"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["automations"],
+                    "properties": {
+                      "automations": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/AutomationRead"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetAutomationCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "automation.get"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "automation.get"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["automation"],
+                    "properties": {
+                      "automation": {
+                        "$ref": "#/components/schemas/AutomationRead"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "ListSignalsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "signal.list"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "signal.list"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["signals"],
+                    "properties": {
+                      "signals": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/SignalRead"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "ListDestinationsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "destination.list"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "destination.list"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["destinations"],
+                    "properties": {
+                      "destinations": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/DestinationRead"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
       }
     }
   }

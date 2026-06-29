@@ -241,6 +241,24 @@ const COMMANDS: readonly CmdDef[] = [
     ],
   },
   {
+    name: "automations",
+    desc: "Inspect automation configuration",
+    subs: [
+      { name: "list", desc: "List configured automations", flags: [...COMMON] },
+      { name: "get", desc: "Get one configured automation", flags: [...COMMON] },
+    ],
+  },
+  {
+    name: "signals",
+    desc: "Inspect automation signals",
+    subs: [{ name: "list", desc: "List configured signals", flags: [...COMMON] }],
+  },
+  {
+    name: "destinations",
+    desc: "Inspect automation destinations",
+    subs: [{ name: "list", desc: "List configured destinations", flags: [...COMMON] }],
+  },
+  {
     name: "onboard",
     desc: "Prepare a coding agent for Outlit",
     flags: [...COMMON, { name: "--agent", desc: "Agent id" }],

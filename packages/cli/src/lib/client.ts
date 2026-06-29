@@ -66,6 +66,22 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
     method: "POST",
     path: "/api/agents",
   },
+  outlit_automation_list: {
+    method: "GET",
+    path: "/api/automations",
+  },
+  outlit_automation_get: {
+    method: "GET",
+    path: "/api/automations/{id}",
+  },
+  outlit_signal_list: {
+    method: "GET",
+    path: "/api/signals",
+  },
+  outlit_destination_list: {
+    method: "GET",
+    path: "/api/destinations",
+  },
 }
 
 /**

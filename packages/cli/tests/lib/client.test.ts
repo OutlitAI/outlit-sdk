@@ -268,6 +268,78 @@ describe("client.callTool()", () => {
           { status: 200 },
         ),
       )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            commandId: "automation.list",
+            commandVersion: 1,
+            correlationId: "corr_automation_list_123",
+            result: {
+              operationId: "automation.list",
+              status: "completed",
+              resources: [],
+              data: { automations: [] },
+              warnings: [],
+            },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            commandId: "automation.get",
+            commandVersion: 1,
+            correlationId: "corr_automation_get_123",
+            result: {
+              operationId: "automation.get",
+              status: "completed",
+              resources: [{ type: "automation", id: "automation_123" }],
+              data: { automation: { id: "automation_123" } },
+              warnings: [],
+            },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            commandId: "signal.list",
+            commandVersion: 1,
+            correlationId: "corr_signal_list_123",
+            result: {
+              operationId: "signal.list",
+              status: "completed",
+              resources: [],
+              data: { signals: [] },
+              warnings: [],
+            },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            commandId: "destination.list",
+            commandVersion: 1,
+            correlationId: "corr_destination_list_123",
+            result: {
+              operationId: "destination.list",
+              status: "completed",
+              resources: [],
+              data: { destinations: [] },
+              warnings: [],
+            },
+          }),
+          { status: 200 },
+        ),
+      )
 
     const client = await createClient()
     await client.callTool("outlit_agent_list_templates", {})
@@ -275,12 +347,20 @@ describe("client.callTool()", () => {
     await client.callTool("outlit_agent_create_from_template", createParams)
     await client.callTool("outlit_agent_list", {})
     await client.callTool("outlit_agent_get", { id: "agent_123" })
+    await client.callTool("outlit_automation_list", {})
+    await client.callTool("outlit_automation_get", { id: "automation_123" })
+    await client.callTool("outlit_signal_list", {})
+    await client.callTool("outlit_destination_list", {})
 
     expect(fetchSpy.mock.calls[0]?.[0] as string).toContain("/api/agent-templates")
     expect(fetchSpy.mock.calls[1]?.[0] as string).toContain("/api/agent-actions")
     expect(fetchSpy.mock.calls[2]?.[0] as string).toContain("/api/agents")
     expect(fetchSpy.mock.calls[3]?.[0] as string).toContain("/api/agents")
     expect(fetchSpy.mock.calls[4]?.[0] as string).toContain("/api/agents/agent_123")
+    expect(fetchSpy.mock.calls[5]?.[0] as string).toContain("/api/automations")
+    expect(fetchSpy.mock.calls[6]?.[0] as string).toContain("/api/automations/automation_123")
+    expect(fetchSpy.mock.calls[7]?.[0] as string).toContain("/api/signals")
+    expect(fetchSpy.mock.calls[8]?.[0] as string).toContain("/api/destinations")
     for (const call of fetchSpy.mock.calls) {
       expect(call[0] as string).not.toContain("/api/tools/call")
     }
@@ -295,6 +375,14 @@ describe("client.callTool()", () => {
     expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).body).toBeUndefined()
     expect((fetchSpy.mock.calls[4]?.[1] as RequestInit).method).toBe("GET")
     expect((fetchSpy.mock.calls[4]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[5]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[5]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[6]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[6]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[7]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[7]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[8]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[8]?.[1] as RequestInit).body).toBeUndefined()
 
     fetchSpy.mockRestore()
   })

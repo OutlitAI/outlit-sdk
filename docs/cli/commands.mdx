@@ -551,6 +551,84 @@ outlit notify --title "Escalation" --severity high --message "Check this account
   Provide `--markdown`, `--markdown-file`, a positional payload, or `--payload-file`. When both payload forms are provided, `--payload-file` takes precedence. When both markdown forms are provided, `--markdown-file` takes precedence.
 </Note>
 
+## Agents
+
+Inspect and configure Outlit hosted agents.
+
+```bash
+outlit agents list [flags]
+outlit agents get <id> [flags]
+outlit agents templates [flags]
+outlit agents actions [flags]
+outlit agents create-from-template churn [flags]
+```
+
+### Examples
+
+```bash
+outlit agents list --json
+outlit agents get agent_123 --json
+outlit agents templates --json
+outlit agents actions --json
+outlit agents create-from-template churn --json
+```
+
+<Note>
+  `create-from-template` creates supported template resources in draft mode. Listing agents, templates, and actions is read-only.
+</Note>
+
+## Automations
+
+Inspect configured platform automations.
+
+```bash
+outlit automations list [flags]
+outlit automations get <id> [flags]
+```
+
+### Examples
+
+```bash
+outlit automations list --json
+outlit automations get 10000000-0000-4000-8000-000000000001 --json
+```
+
+### JSON Response
+
+Automation commands return command envelopes. List results are under `result.data.automations`; get results are under `result.data.automation`.
+
+## Signals
+
+List configured automation signals.
+
+```bash
+outlit signals list [flags]
+```
+
+### Examples
+
+```bash
+outlit signals list --json
+```
+
+Signal list results are under `result.data.signals`.
+
+## Destinations
+
+List configured automation destinations with masked configuration only.
+
+```bash
+outlit destinations list [flags]
+```
+
+### Examples
+
+```bash
+outlit destinations list --json
+```
+
+Destination list results are under `result.data.destinations`. Raw destination secrets and unmasked provider configuration are not returned.
+
 ## SQL
 
 Execute read-only SQL queries against Outlit analytics views.
