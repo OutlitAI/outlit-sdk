@@ -54,6 +54,14 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
     method: "GET",
     path: "/api/agent-actions",
   },
+  outlit_agent_list: {
+    method: "GET",
+    path: "/api/agents",
+  },
+  outlit_agent_get: {
+    method: "GET",
+    path: "/api/agents/{id}",
+  },
   outlit_agent_create_from_template: {
     method: "POST",
     path: "/api/agents",
@@ -65,8 +73,17 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
  * Skips null/undefined values. Arrays are joined with commas.
  */
 function buildUrl(base: string, path: string, params: Record<string, unknown>): string {
-  const url = new URL(path, base)
-  for (const [key, value] of Object.entries(params)) {
+  const pathParams = { ...params }
+  const resolvedPath = path.replace(/\{([A-Za-z0-9_]+)\}/g, (match, key: string) => {
+    const value = pathParams[key]
+    if (value == null) {
+      return match
+    }
+    delete pathParams[key]
+    return encodeURIComponent(String(value))
+  })
+  const url = new URL(resolvedPath, base)
+  for (const [key, value] of Object.entries(pathParams)) {
     if (value == null) continue
     if (Array.isArray(value)) {
       url.searchParams.set(key, value.join(","))

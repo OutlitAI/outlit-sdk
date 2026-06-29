@@ -66,6 +66,7 @@ describe("docs OpenAPI spec", () => {
       "/api/agent-actions",
       "/api/agent-templates",
       "/api/agents",
+      "/api/agents/{id}",
       "/api/i/v1/{publicKey}/events",
       "/api/integrations",
       "/api/integrations/capabilities",
@@ -109,6 +110,8 @@ describe("docs OpenAPI spec", () => {
     ).toEqual([
       "GET /api/agent-actions",
       "GET /api/agent-templates",
+      "GET /api/agents",
+      "GET /api/agents/{id}",
       "GET /api/integrations",
       "GET /api/integrations/capabilities",
       "GET /api/integrations/connect/status",

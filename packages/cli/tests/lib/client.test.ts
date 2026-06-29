@@ -232,15 +232,55 @@ describe("client.callTool()", () => {
           { status: 200 },
         ),
       )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            commandId: "agent.list",
+            commandVersion: 1,
+            correlationId: "corr_list_123",
+            result: {
+              operationId: "agent.list",
+              status: "completed",
+              resources: [],
+              data: { agents: [] },
+              warnings: [],
+            },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            commandId: "agent.get",
+            commandVersion: 1,
+            correlationId: "corr_get_123",
+            result: {
+              operationId: "agent.get",
+              status: "completed",
+              resources: [{ type: "agent", id: "agent_123" }],
+              data: { agent: { id: "agent_123" } },
+              warnings: [],
+            },
+          }),
+          { status: 200 },
+        ),
+      )
 
     const client = await createClient()
     await client.callTool("outlit_agent_list_templates", {})
     await client.callTool("outlit_agent_list_available_actions", {})
     await client.callTool("outlit_agent_create_from_template", createParams)
+    await client.callTool("outlit_agent_list", {})
+    await client.callTool("outlit_agent_get", { id: "agent_123" })
 
     expect(fetchSpy.mock.calls[0]?.[0] as string).toContain("/api/agent-templates")
     expect(fetchSpy.mock.calls[1]?.[0] as string).toContain("/api/agent-actions")
     expect(fetchSpy.mock.calls[2]?.[0] as string).toContain("/api/agents")
+    expect(fetchSpy.mock.calls[3]?.[0] as string).toContain("/api/agents")
+    expect(fetchSpy.mock.calls[4]?.[0] as string).toContain("/api/agents/agent_123")
     for (const call of fetchSpy.mock.calls) {
       expect(call[0] as string).not.toContain("/api/tools/call")
     }
@@ -251,6 +291,10 @@ describe("client.callTool()", () => {
     expect((fetchSpy.mock.calls[1]?.[1] as RequestInit).body).toBeUndefined()
     expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).method).toBe("POST")
     expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).body).toBe(JSON.stringify(createParams))
+    expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[4]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[4]?.[1] as RequestInit).body).toBeUndefined()
 
     fetchSpy.mockRestore()
   })

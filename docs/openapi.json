@@ -204,6 +204,50 @@
       }
     },
     "/api/agents": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "List agents",
+        "description": "List configured Outlit agents for the authenticated organization. Read-only.",
+        "operationId": "listAgents",
+        "responses": {
+          "200": {
+            "description": "Configured agents were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAgentsCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not list agents.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": ["Platform API"],
         "summary": "Create agent from template",
@@ -282,6 +326,74 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/agents/{id}": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get agent",
+        "description": "Get one configured Outlit agent by id. Read-only.",
+        "operationId": "getAgent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Agent ID to fetch.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The configured agent was returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAgentCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No agent was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not get the agent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
           }
         }
       }
@@ -1036,6 +1148,81 @@
         },
         "additionalProperties": false
       },
+      "AgentStatus": {
+        "type": "string",
+        "enum": ["ENABLED", "DISABLED"]
+      },
+      "AgentScheduleSummary": {
+        "type": "object",
+        "required": ["enabled", "nextRunAt", "lastRunAt", "lastSuccessfulRunAt"],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "nextRunAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "lastRunAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "lastSuccessfulRunAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "agentKey",
+          "displayName",
+          "status",
+          "templateVersion",
+          "actionKeys",
+          "schedule",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "agentKey": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentStatus"
+          },
+          "templateVersion": {
+            "type": "string"
+          },
+          "actionKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/AgentScheduleSummary"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
       "ListAgentTemplatesCommandSuccess": {
         "type": "object",
         "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
@@ -1127,6 +1314,105 @@
                         "items": {
                           "$ref": "#/components/schemas/AgentActionSummary"
                         }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "ListAgentsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "agent.list"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "agent.list"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["agents"],
+                    "properties": {
+                      "agents": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/AgentSummary"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetAgentCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "agent.get"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "agent.get"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["agent"],
+                    "properties": {
+                      "agent": {
+                        "$ref": "#/components/schemas/AgentSummary"
                       }
                     },
                     "additionalProperties": false
