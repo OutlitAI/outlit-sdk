@@ -226,6 +226,21 @@ const COMMANDS: readonly CmdDef[] = [
     ],
   },
   {
+    name: "agents",
+    desc: "Configure Outlit agents",
+    subs: [
+      { name: "list", desc: "List configured agents", flags: [...COMMON] },
+      { name: "get", desc: "Get one configured agent", flags: [...COMMON] },
+      { name: "templates", desc: "List available agent templates", flags: [...COMMON] },
+      { name: "actions", desc: "List available agent configuration actions", flags: [...COMMON] },
+      {
+        name: "create-from-template",
+        desc: "Create a draft agent from a platform template",
+        flags: [...COMMON],
+      },
+    ],
+  },
+  {
     name: "onboard",
     desc: "Prepare a coding agent for Outlit",
     flags: [...COMMON, { name: "--agent", desc: "Agent id" }],

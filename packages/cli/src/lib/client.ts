@@ -1,5 +1,15 @@
 import { createOutlitClient, isCustomerToolName } from "@outlit/tools"
 import { DEFAULT_API_URL, OUTLIT_DASHBOARD_URL, resolveApiKey } from "./config"
+import {
+  createPlatformCommandError,
+  isCommandErrorEnvelope,
+  isPlatformCommandError,
+  type PlatformCommandError,
+  type PlatformCommandErrorEnvelope,
+} from "./platform-command-error"
+
+export { isPlatformCommandError }
+export type { PlatformCommandError, PlatformCommandErrorEnvelope }
 
 export interface OutlitClient {
   /** The validated API key in use for this client instance */
@@ -19,7 +29,7 @@ export interface OutlitClient {
 // Widened from {32} to {32,} since real API keys may be longer than 32 suffix chars.
 const API_KEY_REGEX = /^ok_[A-Za-z0-9_-]{32,}$/
 
-/** Maps CLI integration-management tools to Platform REST endpoints. */
+/** Maps CLI-owned direct API commands to Platform REST endpoints outside `/api/tools/call`. */
 const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string }> = {
   outlit_list_integrations: { method: "GET", path: "/api/integrations" },
   outlit_connect_integration: { method: "POST", path: "/api/integrations/connect" },
@@ -36,6 +46,26 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
     method: "POST",
     path: "/api/integrations/setup-step",
   },
+  outlit_agent_list_templates: {
+    method: "GET",
+    path: "/api/agent-templates",
+  },
+  outlit_agent_list_available_actions: {
+    method: "GET",
+    path: "/api/agent-actions",
+  },
+  outlit_agent_list: {
+    method: "GET",
+    path: "/api/agents",
+  },
+  outlit_agent_get: {
+    method: "GET",
+    path: "/api/agents/{id}",
+  },
+  outlit_agent_create_from_template: {
+    method: "POST",
+    path: "/api/agents",
+  },
 }
 
 /**
@@ -43,8 +73,17 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST"; path: string 
  * Skips null/undefined values. Arrays are joined with commas.
  */
 function buildUrl(base: string, path: string, params: Record<string, unknown>): string {
-  const url = new URL(path, base)
-  for (const [key, value] of Object.entries(params)) {
+  const pathParams = { ...params }
+  const resolvedPath = path.replace(/\{([A-Za-z0-9_]+)\}/g, (match, key: string) => {
+    const value = pathParams[key]
+    if (value == null) {
+      return match
+    }
+    delete pathParams[key]
+    return encodeURIComponent(String(value))
+  })
+  const url = new URL(resolvedPath, base)
+  for (const [key, value] of Object.entries(pathParams)) {
     if (value == null) continue
     if (Array.isArray(value)) {
       url.searchParams.set(key, value.join(","))
@@ -124,10 +163,23 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
 
       if (!response.ok) {
         const text = await response.text()
+        const payload = parseJson(text)
+        if (isCommandErrorEnvelope(payload)) {
+          throw createPlatformCommandError(response.status, payload)
+        }
         throw new Error(`API error (${response.status}): ${text}`)
       }
 
       return response.json()
     },
+  }
+}
+
+function parseJson(text: string): unknown {
+  if (text.length === 0) return undefined
+  try {
+    return JSON.parse(text) as unknown
+  } catch {
+    return undefined
   }
 }

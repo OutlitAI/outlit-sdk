@@ -63,6 +63,10 @@ describe("docs OpenAPI spec", () => {
 
     expect(spec.servers).toContainEqual({ url: "https://app.outlit.ai" })
     expect(Object.keys(paths).sort()).toEqual([
+      "/api/agent-actions",
+      "/api/agent-templates",
+      "/api/agents",
+      "/api/agents/{id}",
       "/api/i/v1/{publicKey}/events",
       "/api/integrations",
       "/api/integrations/capabilities",
@@ -104,10 +108,15 @@ describe("docs OpenAPI spec", () => {
     expect(
       platformOperations.map(({ method, path }) => `${method.toUpperCase()} ${path}`).sort(),
     ).toEqual([
+      "GET /api/agent-actions",
+      "GET /api/agent-templates",
+      "GET /api/agents",
+      "GET /api/agents/{id}",
       "GET /api/integrations",
       "GET /api/integrations/capabilities",
       "GET /api/integrations/connect/status",
       "GET /api/integrations/sync-status",
+      "POST /api/agents",
       "POST /api/integrations/connect",
       "POST /api/integrations/disconnect",
       "POST /api/integrations/setup-step",
