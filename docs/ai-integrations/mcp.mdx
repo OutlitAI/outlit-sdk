@@ -65,7 +65,7 @@ Platform configuration tools use API-key authentication today. Use an API key wi
 
 ## Platform Configuration Over MCP
 
-Platform configuration tools inspect and mutate agents, automations, signals, and destinations. These tools require API-key authentication because they execute scoped platform actions.
+Platform configuration tools inspect and mutate agents, automations, signals, destinations, and selected workspace settings. These tools require API-key authentication because they execute scoped platform actions.
 
 <Steps>
   <Step title="Create a scoped API key">
@@ -143,6 +143,8 @@ API-key authenticated MCP clients can also inspect and manage selected agent and
 | `outlit_automation_options` | Show automation schemas, constants, and constraints |
 | `outlit_automation_list` | List configured automations |
 | `outlit_automation_get` | Get one configured automation |
+| `outlit_automation_run_list` | List safe run summaries for one configured automation |
+| `outlit_automation_run_get` | Get safe run details for one configured automation run |
 | `outlit_automation_create` | Create an agent automation from an `agentId` |
 | `outlit_automation_update` | Update an agent automation from an `agentId` |
 | `outlit_automation_enable` | Enable one configured automation |
@@ -162,7 +164,15 @@ API-key authenticated MCP clients can also inspect and manage selected agent and
 | `outlit_destination_enable` | Enable one configured automation destination |
 | `outlit_destination_disable` | Disable one configured automation destination |
 | `outlit_destination_archive` | Archive one configured automation destination |
+| `outlit_settings_get` | Get workspace settings |
+| `outlit_settings_update` | Update workspace settings such as default timezone |
+| `outlit_settings_report_get` | Get report settings |
+| `outlit_settings_report_update` | Update report Slack channel settings |
+| `outlit_settings_report_options` | Search Slack channel options for report settings |
+| `outlit_settings_notifications_get` | Get notification settings and Slack-backed destinations |
+| `outlit_settings_notifications_options` | Search Slack channel options for notification settings |
+| `outlit_settings_notifications_default_set` | Set the default notification destination |
 
-Read tools require `agents:read`. Write tools require `agents:write`. `outlit_destination_options` is non-mutating but requires `agents:write` because it lists Slack channel choices for destination creation. Destination tools return masked configuration only.
+Read tools require `agents:read`. Write tools require `agents:write`. `outlit_destination_options` is non-mutating but requires `agents:write` because it lists Slack channel choices for destination creation. The settings option tools are read-scoped and accept optional `search` and `limit` inputs for Slack channel discovery. Destination tools return masked configuration only. Settings tools return projected settings DTOs, not raw workspace or destination database rows.
 
 See [Platform Actions](/ai-integrations/platform-actions) for the shared API, CLI, and MCP model behind these tools.

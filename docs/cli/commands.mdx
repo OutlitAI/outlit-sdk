@@ -606,6 +606,8 @@ Inspect configured platform automations.
 ```bash
 outlit automations list [flags]
 outlit automations get <id> [flags]
+outlit automations runs list <automation-id> [--limit <count>] [--cursor <cursor>] [flags]
+outlit automations runs get <automation-id> <run-id> [flags]
 outlit automations options [flags]
 outlit automations create --data <json> [flags]
 outlit automations create --file <path> [flags]
@@ -621,6 +623,8 @@ outlit automations archive <id> [flags]
 ```bash
 outlit automations list --json
 outlit automations get 10000000-0000-4000-8000-000000000001 --json
+outlit automations runs list 10000000-0000-4000-8000-000000000001 --limit 10 --json
+outlit automations runs get 10000000-0000-4000-8000-000000000001 10000000-0000-4000-8000-000000000006 --json
 outlit automations options --json
 outlit automations create --file ./automation.json --json
 outlit automations update 10000000-0000-4000-8000-000000000001 --file ./automation.json --json
@@ -633,7 +637,7 @@ Automation create bodies must include `agentId`, `name`, and `triggerType`. Upda
 
 ### JSON Response
 
-Automation commands return command envelopes. List results are under `result.data.automations`; get, create, update, enable, and disable results are under `result.data.automation`. Archive results return `result.data.automation.id` and `result.data.automation.archivedAt`.
+Automation commands return command envelopes. List results are under `result.data.automations`; get, create, update, enable, and disable results are under `result.data.automation`. Automation run list results are under `result.data.runs`, with pagination under `result.data.pagination`; automation run details are under `result.data.run`. Archive results return `result.data.automation.id` and `result.data.automation.archivedAt`. Automation run responses include safe delivery and occurrence summaries, not raw trigger snapshots, payloads, or destination secrets.
 
 ## Signals
 
@@ -685,13 +689,43 @@ outlit destinations list --json
 outlit destinations get 10000000-0000-4000-8000-000000000003 --json
 outlit destinations options --search ops --json
 outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --json
-outlit destinations update 10000000-0000-4000-8000-000000000003 --type webhook --name "Customer ops" --json
+outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --label "#customer-ops" --json
 outlit destinations enable 10000000-0000-4000-8000-000000000003 --json
 outlit destinations disable 10000000-0000-4000-8000-000000000003 --json
 outlit destinations archive 10000000-0000-4000-8000-000000000003 --json
 ```
 
-Destination list results are under `result.data.destinations`; get, create, update, enable, and disable results are under `result.data.destination`. New destination creation is Slack-channel backed; use `destinations options` to inspect Slack connection status and available channel IDs. `destinations options` is non-mutating but requires `agents:write` because it lists Slack channel choices used to create destinations. `destinations update` patches only the fields you pass. Archive results return `result.data.destination.id` and `result.data.destination.archivedAt`. Raw destination secrets and unmasked provider configuration are not returned.
+Destination list results are under `result.data.destinations`; get, create, update, enable, and disable results are under `result.data.destination`. New destination creation is Slack-channel backed; use `destinations options` to inspect Slack connection status and available channel IDs. `destinations options` is non-mutating but requires `agents:write` because it lists Slack channel choices used to create destinations. `destinations update` patches only the fields you pass; use `--type slack` for Slack-backed destinations. Archive results return `result.data.destination.id` and `result.data.destination.archivedAt`. Raw destination secrets and unmasked provider configuration are not returned.
+
+## Settings
+
+Inspect and configure selected workspace, report, and notification settings.
+
+```bash
+outlit settings get [flags]
+outlit settings update --default-timezone <iana-timezone> [flags]
+outlit settings report get [flags]
+outlit settings report update --slack-channel-id <channel-id> --slack-channel-name <name> [flags]
+outlit settings report options [--search <text>] [--limit <count>] [flags]
+outlit settings notifications get [flags]
+outlit settings notifications options [--search <text>] [--limit <count>] [flags]
+outlit settings notifications default set --destination-id <id> [flags]
+```
+
+### Examples
+
+```bash
+outlit settings get --json
+outlit settings update --default-timezone America/Los_Angeles --json
+outlit settings report get --json
+outlit settings report options --search sales --limit 20 --json
+outlit settings report update --slack-channel-id C0123456789 --slack-channel-name sales-alerts --json
+outlit settings notifications get --json
+outlit settings notifications options --search ops --limit 20 --json
+outlit settings notifications default set --destination-id 10000000-0000-4000-8000-000000000003 --json
+```
+
+Workspace settings are under `result.data.settings`. Report settings are under `result.data.report`. Notification settings are under `result.data.notifications`. The report and notification options commands return Slack connection status and bounded channel choices so agents can choose valid IDs before updating settings; use `--search` to filter channels by name or ID and `--limit` to bound results from 1 to 100. Read commands require `agents:read`; update and default-selection commands require `agents:write`.
 
 ## SQL
 

@@ -78,6 +78,8 @@ describe("docs OpenAPI spec", () => {
       "/api/automations/{id}/archive",
       "/api/automations/{id}/disable",
       "/api/automations/{id}/enable",
+      "/api/automations/{id}/runs",
+      "/api/automations/{id}/runs/{runId}",
       "/api/destinations",
       "/api/destinations/options",
       "/api/destinations/{id}",
@@ -92,6 +94,12 @@ describe("docs OpenAPI spec", () => {
       "/api/integrations/disconnect",
       "/api/integrations/setup-step",
       "/api/integrations/sync-status",
+      "/api/settings",
+      "/api/settings/notifications",
+      "/api/settings/notifications/default",
+      "/api/settings/notifications/options",
+      "/api/settings/report",
+      "/api/settings/report/options",
       "/api/signals",
       "/api/signals/options",
       "/api/signals/{id}",
@@ -138,6 +146,8 @@ describe("docs OpenAPI spec", () => {
       "GET /api/automations",
       "GET /api/automations/options",
       "GET /api/automations/{id}",
+      "GET /api/automations/{id}/runs",
+      "GET /api/automations/{id}/runs/{runId}",
       "GET /api/destinations",
       "GET /api/destinations/options",
       "GET /api/destinations/{id}",
@@ -145,12 +155,19 @@ describe("docs OpenAPI spec", () => {
       "GET /api/integrations/capabilities",
       "GET /api/integrations/connect/status",
       "GET /api/integrations/sync-status",
+      "GET /api/settings",
+      "GET /api/settings/notifications",
+      "GET /api/settings/notifications/options",
+      "GET /api/settings/report",
+      "GET /api/settings/report/options",
       "GET /api/signals",
       "GET /api/signals/options",
       "GET /api/signals/{id}",
       "PATCH /api/agents/{id}",
       "PATCH /api/automations/{id}",
       "PATCH /api/destinations/{id}",
+      "PATCH /api/settings",
+      "PATCH /api/settings/report",
       "PATCH /api/signals/{id}",
       "POST /api/agents",
       "POST /api/agents/{id}/disable",
@@ -168,6 +185,7 @@ describe("docs OpenAPI spec", () => {
       "POST /api/integrations/connect",
       "POST /api/integrations/disconnect",
       "POST /api/integrations/setup-step",
+      "POST /api/settings/notifications/default",
       "POST /api/signals",
       "POST /api/signals/{id}/archive",
       "POST /api/tools/call",
@@ -233,6 +251,39 @@ describe("docs OpenAPI spec", () => {
         },
       },
     })
+  })
+
+  test("documents searchable settings option routes", () => {
+    const spec = readJson<{
+      paths?: Record<string, any>
+    }>("docs/openapi.json")
+
+    for (const path of ["/api/settings/report/options", "/api/settings/notifications/options"]) {
+      const params = spec.paths?.[path]?.get?.parameters
+
+      expect(params).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "search",
+            in: "query",
+            schema: expect.objectContaining({
+              type: "string",
+              maxLength: 120,
+            }),
+          }),
+          expect.objectContaining({
+            name: "limit",
+            in: "query",
+            schema: expect.objectContaining({
+              type: "integer",
+              minimum: 1,
+              maximum: 100,
+              default: 50,
+            }),
+          }),
+        ]),
+      )
+    }
   })
 
   test("aligns automation write request bounds with public contracts", () => {
@@ -502,6 +553,89 @@ describe("docs OpenAPI spec", () => {
       "DELIVERY_FAILED",
     ])
     expect(schemas.AgentToolCallStatus?.enum).toEqual(["PENDING", "SUCCESS", "FAILED"])
+  })
+
+  test("documents richer platform action detail projections", () => {
+    const spec = readJson<{
+      components?: {
+        schemas?: Record<string, any>
+      }
+    }>("docs/openapi.json")
+    const schemas = spec.components?.schemas ?? {}
+
+    expect(
+      schemas.GetAgentCommandSuccess?.properties?.result?.allOf?.[1]?.properties?.data?.properties
+        ?.agent,
+    ).toEqual({ $ref: "#/components/schemas/AgentDetail" })
+    expect(schemas.AgentDetail?.allOf).toBeUndefined()
+    expect(schemas.AgentDetail).toMatchObject({
+      type: "object",
+      required: expect.arrayContaining([
+        "id",
+        "agentKey",
+        "displayName",
+        "status",
+        "templateVersion",
+        "actionKeys",
+        "schedule",
+        "destinationSummary",
+        "automationSummary",
+        "automations",
+        "lastRun",
+        "recentRuns",
+        "settings",
+      ]),
+      properties: {
+        schedule: { $ref: "#/components/schemas/AgentScheduleDetail" },
+        destinationSummary: { $ref: "#/components/schemas/AgentDetailDestinationSummary" },
+        automationSummary: { $ref: "#/components/schemas/AgentDetailAutomationRollup" },
+        automations: {
+          type: "array",
+          items: { $ref: "#/components/schemas/AgentDetailAutomationSummary" },
+        },
+        recentRuns: {
+          type: "array",
+          items: { $ref: "#/components/schemas/AgentRunSummary" },
+        },
+      },
+      additionalProperties: false,
+    })
+
+    expect(
+      schemas.GetDestinationCommandSuccess?.properties?.result?.allOf?.[1]?.properties?.data
+        ?.properties?.destination,
+    ).toEqual({ $ref: "#/components/schemas/DestinationDetailRead" })
+    expect(schemas.DestinationDetailRead?.allOf).toBeUndefined()
+    expect(schemas.DestinationDetailRead).toMatchObject({
+      type: "object",
+      required: expect.arrayContaining([
+        "id",
+        "key",
+        "name",
+        "provider",
+        "kind",
+        "routes",
+        "automations",
+        "recentDeliveries",
+        "deliverySummary",
+      ]),
+      properties: {
+        routes: {
+          type: "array",
+          items: { $ref: "#/components/schemas/DestinationRouteSummary" },
+        },
+        automations: {
+          type: "array",
+          items: { $ref: "#/components/schemas/DestinationRouteSummary" },
+        },
+        recentDeliveries: {
+          type: "array",
+          items: { $ref: "#/components/schemas/DestinationDeliverySummary" },
+        },
+        deliverySummary: { $ref: "#/components/schemas/DestinationDeliveryRollup" },
+      },
+      additionalProperties: false,
+    })
   })
 
   test("documents strict option discovery response contracts", () => {

@@ -102,6 +102,14 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST" | "PATCH"; pat
     method: "GET",
     path: "/api/automations/{id}",
   },
+  outlit_automation_run_list: {
+    method: "GET",
+    path: "/api/automations/{automationId}/runs",
+  },
+  outlit_automation_run_get: {
+    method: "GET",
+    path: "/api/automations/{automationId}/runs/{runId}",
+  },
   outlit_automation_create: {
     method: "POST",
     path: "/api/automations",
@@ -181,6 +189,38 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST" | "PATCH"; pat
   outlit_destination_options: {
     method: "GET",
     path: "/api/destinations/options",
+  },
+  outlit_settings_get: {
+    method: "GET",
+    path: "/api/settings",
+  },
+  outlit_settings_update: {
+    method: "PATCH",
+    path: "/api/settings",
+  },
+  outlit_settings_report_get: {
+    method: "GET",
+    path: "/api/settings/report",
+  },
+  outlit_settings_report_update: {
+    method: "PATCH",
+    path: "/api/settings/report",
+  },
+  outlit_settings_report_options: {
+    method: "GET",
+    path: "/api/settings/report/options",
+  },
+  outlit_settings_notifications_get: {
+    method: "GET",
+    path: "/api/settings/notifications",
+  },
+  outlit_settings_notifications_options: {
+    method: "GET",
+    path: "/api/settings/notifications/options",
+  },
+  outlit_settings_notifications_default_set: {
+    method: "POST",
+    path: "/api/settings/notifications/default",
   },
 }
 

@@ -291,6 +291,22 @@ const COMMANDS: readonly CmdDef[] = [
     subs: [
       { name: "list", desc: "List configured automations", flags: [...COMMON] },
       { name: "get", desc: "Get one configured automation", flags: [...COMMON] },
+      {
+        name: "runs",
+        desc: "Inspect automation runs",
+        subs: [
+          {
+            name: "list",
+            desc: "List automation runs",
+            flags: [
+              ...COMMON,
+              { name: "--limit", desc: "Max rows" },
+              { name: "--cursor", desc: "Pagination cursor" },
+            ],
+          },
+          { name: "get", desc: "Get one automation run", flags: [...COMMON] },
+        ],
+      },
       { name: "options", desc: "Show automation schemas and constants", flags: [...COMMON] },
       { name: "create", desc: "Create an agent automation", flags: [...JSON_BODY] },
       { name: "update", desc: "Update an agent automation", flags: [...JSON_BODY] },
@@ -354,6 +370,73 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "enable", desc: "Enable a configured destination", flags: [...COMMON] },
       { name: "disable", desc: "Disable a configured destination", flags: [...COMMON] },
       { name: "archive", desc: "Archive a configured destination", flags: [...COMMON] },
+    ],
+  },
+  {
+    name: "settings",
+    desc: "Configure workspace settings",
+    subs: [
+      { name: "get", desc: "Get workspace settings", flags: [...COMMON] },
+      {
+        name: "update",
+        desc: "Update workspace settings",
+        flags: [...COMMON, { name: "--default-timezone", desc: "Default IANA timezone" }],
+      },
+      {
+        name: "report",
+        desc: "Configure report settings",
+        subs: [
+          { name: "get", desc: "Get report settings", flags: [...COMMON] },
+          {
+            name: "update",
+            desc: "Update report settings",
+            flags: [
+              ...COMMON,
+              { name: "--slack-channel-id", desc: "Slack channel ID" },
+              { name: "--slack-channel-name", desc: "Slack channel name" },
+            ],
+          },
+          {
+            name: "options",
+            desc: "Show report settings options",
+            flags: [
+              ...COMMON,
+              { name: "--search", desc: "Search Slack channels" },
+              { name: "--limit", desc: "Max Slack channels (1-100)" },
+            ],
+          },
+        ],
+      },
+      {
+        name: "notifications",
+        desc: "Configure notification settings",
+        subs: [
+          { name: "get", desc: "Get notification settings", flags: [...COMMON] },
+          {
+            name: "options",
+            desc: "Show notification settings options",
+            flags: [
+              ...COMMON,
+              { name: "--search", desc: "Search Slack channels" },
+              { name: "--limit", desc: "Max Slack channels (1-100)" },
+            ],
+          },
+          {
+            name: "default",
+            desc: "Configure the default notification destination",
+            subs: [
+              {
+                name: "set",
+                desc: "Set the default notification destination",
+                flags: [
+                  ...COMMON,
+                  { name: "--destination-id", desc: "Notification destination ID" },
+                ],
+              },
+            ],
+          },
+        ],
+      },
     ],
   },
   {

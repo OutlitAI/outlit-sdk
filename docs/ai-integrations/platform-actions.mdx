@@ -5,7 +5,7 @@ description: "Inspect and configure Outlit agents and automations through API, C
 
 Platform actions expose selected Outlit platform configuration through the same API, CLI, and MCP surfaces that agents already use for customer context. They are meant for workflows where an agent needs to inspect or safely prepare configuration without clicking through the Outlit UI.
 
-Use platform actions for Outlit-hosted agents, automations, signals, and destinations. Use [Integration Routes](/api-reference/integrations) for connecting external data sources such as Slack, Stripe, HubSpot, PostHog, or support tools.
+Use platform actions for Outlit-hosted agents, automations, signals, destinations, and selected workspace settings. Use [Integration Routes](/api-reference/integrations) for connecting external data sources such as Slack, Stripe, HubSpot, PostHog, or support tools.
 
 ## How the Surfaces Fit Together
 
@@ -33,14 +33,15 @@ Agent and destination updates patch only the fields provided. Automation and sig
 
 ## Current Scope
 
-The current platform action set focuses on the Agents and Automations areas of the Outlit platform.
+The current platform action set focuses on the Agents, Automations, and Settings areas of the Outlit platform.
 
 | Area | Read actions | Write actions |
 |------|--------------|---------------|
 | Agents | List templates, list available actions, list agents, get one agent, list/get runs | Create, update, enable, disable, rename, start legacy churn run |
-| Automations | List automations, get one automation, show options | Create, update, enable, disable, archive |
+| Automations | List automations, get one automation, list/get automation runs, show options | Create, update, enable, disable, archive |
 | Signals | List configured automation signals, get one signal, show options and default catalog keys | Create, update, archive |
 | Destinations | List configured destinations, get one destination with masked configuration | Show Slack channel options, create Slack channel destination, update, enable, disable, archive |
+| Settings | Get workspace, report, and notification settings; search Slack-backed setting options | Update default timezone, update report Slack channel, set default notification destination |
 
 For example, a CLI user or agent can create a draft template and then explicitly enable or disable lifecycle resources:
 
@@ -51,6 +52,9 @@ outlit signals options --json
 outlit signals create --file ./signal.json --json
 outlit destinations options --json
 outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --json
+outlit settings report options --search sales --limit 20 --json
+outlit settings notifications get --json
+outlit automations runs list 10000000-0000-4000-8000-000000000001 --limit 10 --json
 outlit automations create --file ./automation.json --json
 outlit agents enable 10000000-0000-4000-8000-000000000004 --json
 outlit automations disable 10000000-0000-4000-8000-000000000001 --json
@@ -97,7 +101,10 @@ outlit destinations options --json
 outlit agents create --template churn --json
 outlit agents update 10000000-0000-4000-8000-000000000004 --instructions "Prioritize recent support escalations" --json
 outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --json
-outlit destinations update 10000000-0000-4000-8000-000000000003 --type webhook --name "Customer ops" --json
+outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --label "#customer-ops" --json
+outlit settings update --default-timezone America/Los_Angeles --json
+outlit settings report update --slack-channel-id C0123456789 --slack-channel-name sales-alerts --json
+outlit settings notifications default set --destination-id 10000000-0000-4000-8000-000000000003 --json
 outlit agents enable 10000000-0000-4000-8000-000000000004 --json
 outlit agents runs start 10000000-0000-4000-8000-000000000004 --client-request-id smoke-123 --json
 outlit agents runs list 10000000-0000-4000-8000-000000000004 --json
@@ -131,6 +138,8 @@ This workflow lets the agent discover available templates, understand supported 
 | `POST /api/automations` | Create an agent automation |
 | `GET /api/automations/{id}` | Get one configured automation |
 | `PATCH /api/automations/{id}` | Update one agent automation |
+| `GET /api/automations/{id}/runs` | List safe automation run summaries |
+| `GET /api/automations/{id}/runs/{runId}` | Get one safe automation run detail |
 | `POST /api/automations/{id}/enable` | Enable one configured automation |
 | `POST /api/automations/{id}/disable` | Disable one configured automation |
 | `POST /api/automations/{id}/archive` | Archive one configured automation |
@@ -148,5 +157,13 @@ This workflow lets the agent discover available templates, understand supported 
 | `POST /api/destinations/{id}/enable` | Enable one configured automation destination |
 | `POST /api/destinations/{id}/disable` | Disable one configured automation destination |
 | `POST /api/destinations/{id}/archive` | Archive one configured automation destination |
+| `GET /api/settings` | Get workspace settings |
+| `PATCH /api/settings` | Update workspace settings such as default timezone |
+| `GET /api/settings/report` | Get report settings |
+| `PATCH /api/settings/report` | Update report Slack channel settings |
+| `GET /api/settings/report/options` | Show Slack channel options for report settings |
+| `GET /api/settings/notifications` | Get notification settings and Slack-backed destinations |
+| `GET /api/settings/notifications/options` | Show Slack channel options for notification settings |
+| `POST /api/settings/notifications/default` | Set the default notification destination |
 
 The [OpenAPI spec](/openapi.json) is the canonical reference for request and response schemas.
