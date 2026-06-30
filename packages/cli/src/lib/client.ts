@@ -210,6 +210,22 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST" | "PATCH"; pat
     method: "GET",
     path: "/api/settings/report/options",
   },
+  outlit_identity_merge_suggestion_list: {
+    method: "GET",
+    path: "/api/identity/merge-suggestions",
+  },
+  outlit_identity_merge_suggestion_get: {
+    method: "GET",
+    path: "/api/identity/merge-suggestions/{id}",
+  },
+  outlit_identity_merge_suggestion_queue: {
+    method: "POST",
+    path: "/api/identity/merge-suggestions/{id}/queue",
+  },
+  outlit_identity_merge_suggestion_reject: {
+    method: "POST",
+    path: "/api/identity/merge-suggestions/{id}/reject",
+  },
 }
 
 function resolvePathParams(

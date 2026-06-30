@@ -723,6 +723,28 @@ outlit destinations options --search ops --limit 20 --json
 
 Workspace settings are under `result.data.settings`. Report settings are under `result.data.report`. The report options command returns Slack connection status and bounded channel choices so agents can choose valid IDs before updating report settings; use `--search` to filter channels by name or ID and `--limit` to bound results from 1 to 100. Read commands require `agents:read`; update commands require `agents:write`. Default delivery destination selection is handled by `outlit destinations create --default` or `outlit destinations update --default`.
 
+## Identity
+
+Inspect and manage customer identity merge suggestions from the Identity page.
+
+```bash
+outlit identity suggestions list [--status <status>] [--confidence <confidence>] [--limit <count>] [flags]
+outlit identity suggestions get <id> [flags]
+outlit identity suggestions queue <id> [--review-notes <notes>] [flags]
+outlit identity suggestions reject <id> [--review-notes <notes>] [flags]
+```
+
+### Examples
+
+```bash
+outlit identity suggestions list --status suggested --confidence HIGH --limit 10 --json
+outlit identity suggestions get 10000000-0000-4000-8000-000000000001 --json
+outlit identity suggestions queue 10000000-0000-4000-8000-000000000001 --review-notes "Verified duplicate" --json
+outlit identity suggestions reject 10000000-0000-4000-8000-000000000001 --review-notes "Not a duplicate" --json
+```
+
+Suggestion list results are under `result.data.suggestions`; get results are under `result.data.suggestion`. Queue and reject return `result.data.proposalId`, the resulting proposal status, and `jobId`/`jobStatus` when a merge job is queued. Read commands require `identity:read`; queue and reject require `identity:write`. The identity resolution feature must be enabled for the workspace.
+
 ## SQL
 
 Execute read-only SQL queries against Outlit analytics views.

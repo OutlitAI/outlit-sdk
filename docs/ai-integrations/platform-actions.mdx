@@ -5,7 +5,7 @@ description: "Inspect and configure Outlit agents and automations through API, C
 
 Platform actions expose selected Outlit platform configuration through the same API, CLI, and MCP surfaces that agents already use for customer context. They are meant for workflows where an agent needs to inspect or safely prepare configuration without clicking through the Outlit UI.
 
-Use platform actions for Outlit-hosted agents, automations, signals, destinations, and selected workspace settings. Use [Integration Routes](/api-reference/integrations) for connecting external data sources such as Slack, Stripe, HubSpot, PostHog, or support tools.
+Use platform actions for Outlit-hosted agents, automations, signals, destinations, selected workspace settings, and identity merge suggestions. Use [Integration Routes](/api-reference/integrations) for connecting external data sources such as Slack, Stripe, HubSpot, PostHog, or support tools.
 
 ## How the Surfaces Fit Together
 
@@ -33,7 +33,7 @@ Agent and destination updates patch only the fields provided. Automation and sig
 
 ## Current Scope
 
-The current platform action set focuses on the Agents, Automations, and Settings areas of the Outlit platform.
+The current platform action set focuses on the Agents, Automations, Settings, and Identity areas of the Outlit platform.
 
 | Area | Read actions | Write actions |
 |------|--------------|---------------|
@@ -42,6 +42,7 @@ The current platform action set focuses on the Agents, Automations, and Settings
 | Signals | List configured automation signals, get one signal, show options and default catalog keys | Create, update, archive |
 | Destinations | List configured destinations, get one destination with masked configuration, show Slack channel options | Create Slack channel destination, update, enable, disable, archive, set default destination |
 | Settings | Get workspace and report settings; search Slack-backed report setting options | Update default timezone, update report Slack channel |
+| Identity | List identity merge suggestions, get one suggestion | Queue one suggested merge, reject one suggestion |
 
 For example, a CLI user or agent can create a draft template and then explicitly enable or disable lifecycle resources:
 
@@ -53,6 +54,7 @@ outlit signals create --file ./signal.json --json
 outlit destinations options --json
 outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --default --json
 outlit settings report options --search sales --limit 20 --json
+outlit identity suggestions list --status suggested --json
 outlit destinations list --json
 outlit automations runs list 10000000-0000-4000-8000-000000000001 --limit 10 --json
 outlit automations create --file ./automation.json --json
@@ -68,9 +70,10 @@ Automation create and update actions are agent-centered. Callers provide `agentI
 
 Platform actions are designed to make configuration inspectable before they make it broadly mutable.
 
-- Read actions require an API key with the `agents:read` scope.
-- Write actions require an API key with the `agents:write` scope.
+- Most non-identity read actions require an API key with the `agents:read` scope.
+- Most non-identity write actions require an API key with the `agents:write` scope.
 - `destinations options` is non-mutating, but it requires `agents:write` because it lists Slack channel choices used to create destinations.
+- Identity merge suggestion read actions require `identity:read`; queue and reject require `identity:write`. The identity resolution feature must be enabled for the workspace.
 - Template creation returns explicit safety metadata describing what was created and what was not enabled.
 - Enable actions validate the current platform state before enabling. For example, an automation cannot be enabled if required destinations or processor agents are unavailable.
 - Destination responses only include masked configuration through fields such as `maskedConfig`; raw secrets and unmasked provider configuration are not returned.
@@ -112,6 +115,7 @@ outlit automations list --json
 outlit automations enable 10000000-0000-4000-8000-000000000001 --json
 outlit signals list --json
 outlit destinations list --json
+outlit identity suggestions list --status suggested --json
 ```
 
 This workflow lets the agent discover available templates, understand supported action capabilities, create a draft churn agent template, inspect the resulting agent and automation configuration, and then make explicit lifecycle changes.
@@ -161,5 +165,9 @@ This workflow lets the agent discover available templates, understand supported 
 | `GET /api/settings/report` | Get report settings |
 | `PATCH /api/settings/report` | Update report Slack channel settings |
 | `GET /api/settings/report/options` | Show Slack channel options for report settings |
+| `GET /api/identity/merge-suggestions` | List identity merge suggestions |
+| `GET /api/identity/merge-suggestions/{id}` | Get one identity merge suggestion |
+| `POST /api/identity/merge-suggestions/{id}/queue` | Queue one suggested identity merge |
+| `POST /api/identity/merge-suggestions/{id}/reject` | Reject one suggested identity merge |
 
 The [OpenAPI spec](/openapi.json) is the canonical reference for request and response schemas.

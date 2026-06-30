@@ -3614,6 +3614,343 @@
           }
         }
       }
+    },
+    "/api/identity/merge-suggestions": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "List identity merge suggestions",
+        "description": "List customer identity merge suggestions from the Identity page. Requires identity:read and the identity resolution feature flag.",
+        "operationId": "listIdentityMergeSuggestions",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/IdentityMergeSuggestionStatus"
+            }
+          },
+          {
+            "name": "confidence",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/IdentityMergeConfidence"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identity merge suggestions were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListIdentityMergeSuggestionsCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required identity read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Identity merge suggestions are not enabled for the workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The platform could not list identity merge suggestions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/identity/merge-suggestions/{id}": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get identity merge suggestion",
+        "description": "Get one customer identity merge suggestion by id. Requires identity:read and the identity resolution feature flag.",
+        "operationId": "getIdentityMergeSuggestion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get identity merge suggestion completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetIdentityMergeSuggestionCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required identity read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No identity merge suggestion was found or identity resolution is not enabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The platform could not get identity merge suggestion.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/identity/merge-suggestions/{id}/queue": {
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Queue identity merge suggestion",
+        "description": "Queue one suggested customer identity merge for asynchronous processing. Requires identity:write and the identity resolution feature flag.",
+        "operationId": "queueIdentityMergeSuggestion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentityMergeSuggestionActionRequest"
+              },
+              "example": {
+                "reviewNotes": "Verified duplicate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Identity merge suggestion was queued.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityMergeSuggestionActionCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required identity write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No identity merge suggestion was found or identity resolution is not enabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The merge suggestion cannot be queued in its current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The platform could not queue identity merge suggestion.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/identity/merge-suggestions/{id}/reject": {
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Reject identity merge suggestion",
+        "description": "Reject one suggested customer identity merge. Requires identity:write and the identity resolution feature flag.",
+        "operationId": "rejectIdentityMergeSuggestion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentityMergeSuggestionActionRequest"
+              },
+              "example": {
+                "reviewNotes": "Not a duplicate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Identity merge suggestion was rejected.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityMergeSuggestionActionCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required identity write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No identity merge suggestion was found or identity resolution is not enabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The merge suggestion cannot be rejected in its current state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The platform could not reject identity merge suggestion.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8459,6 +8796,400 @@
                     "properties": {
                       "destination": {
                         "$ref": "#/components/schemas/DestinationRead"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "IdentityMergeSuggestionStatus": {
+        "type": "string",
+        "enum": ["suggested", "processing", "merged", "rejected"]
+      },
+      "IdentityMergeProposalStatus": {
+        "type": "string",
+        "enum": ["PROPOSED", "STAGED", "STALE", "REJECTED", "APPLIED"]
+      },
+      "IdentityMergeConfidence": {
+        "type": "string",
+        "enum": ["HIGH", "MEDIUM", "LOW"]
+      },
+      "IdentityMergeJobStatus": {
+        "type": "string",
+        "enum": ["QUEUED", "RUNNING", "COMPLETED", "FAILED"]
+      },
+      "IdentityMergeSuggestionCustomer": {
+        "type": "object",
+        "required": ["id", "name", "domain", "type", "status", "identifierCount", "contactCount"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "domain": {
+            "type": ["string", "null"]
+          },
+          "type": {
+            "type": "string",
+            "enum": ["COMPANY", "INDIVIDUAL"]
+          },
+          "status": {
+            "type": ["string", "null"],
+            "enum": ["PROVISIONAL", "ACTIVE", "CHURNED", "MERGED", null]
+          },
+          "identifierCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "contactCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "IdentityMergeImpactSummary": {
+        "type": "object",
+        "required": [
+          "identifiers",
+          "users",
+          "activities",
+          "visitors",
+          "billingEvents",
+          "facts",
+          "supportTickets",
+          "calls",
+          "accessEntries",
+          "analyticsEvents",
+          "analyticsDimensions"
+        ],
+        "properties": {
+          "identifiers": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "users": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "activities": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "visitors": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "billingEvents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "facts": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "supportTickets": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "calls": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "accessEntries": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "analyticsEvents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "analyticsDimensions": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "IdentityMergeSuggestionJob": {
+        "type": "object",
+        "required": ["id", "status", "createdAt", "updatedAt"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/IdentityMergeJobStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IdentityMergeSuggestion": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "proposalStatus",
+          "confidence",
+          "survivor",
+          "duplicate",
+          "reviewNotes",
+          "reviewedAt",
+          "reviewedByName",
+          "appliedAt",
+          "appliedByName",
+          "createdAt",
+          "explanation",
+          "impact",
+          "latestJob",
+          "canMerge",
+          "canReject"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/IdentityMergeSuggestionStatus"
+          },
+          "proposalStatus": {
+            "$ref": "#/components/schemas/IdentityMergeProposalStatus"
+          },
+          "confidence": {
+            "$ref": "#/components/schemas/IdentityMergeConfidence"
+          },
+          "survivor": {
+            "$ref": "#/components/schemas/IdentityMergeSuggestionCustomer"
+          },
+          "duplicate": {
+            "$ref": "#/components/schemas/IdentityMergeSuggestionCustomer"
+          },
+          "reviewNotes": {
+            "type": ["string", "null"]
+          },
+          "reviewedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "reviewedByName": {
+            "type": ["string", "null"]
+          },
+          "appliedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "appliedByName": {
+            "type": ["string", "null"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "explanation": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "impact": {
+            "$ref": "#/components/schemas/IdentityMergeImpactSummary"
+          },
+          "latestJob": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/IdentityMergeSuggestionJob"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "canMerge": {
+            "type": "boolean"
+          },
+          "canReject": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "IdentityMergeSuggestionActionRequest": {
+        "type": "object",
+        "properties": {
+          "reviewNotes": {
+            "type": "string",
+            "maxLength": 10000
+          }
+        },
+        "additionalProperties": false
+      },
+      "ListIdentityMergeSuggestionsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "identity.mergeSuggestion.list"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "identity.mergeSuggestion.list"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["suggestions", "canManageIdentityMerges"],
+                    "properties": {
+                      "suggestions": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/IdentityMergeSuggestion"
+                        }
+                      },
+                      "canManageIdentityMerges": {
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetIdentityMergeSuggestionCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "identity.mergeSuggestion.get"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "identity.mergeSuggestion.get"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["suggestion", "canManageIdentityMerges"],
+                    "properties": {
+                      "suggestion": {
+                        "$ref": "#/components/schemas/IdentityMergeSuggestion"
+                      },
+                      "canManageIdentityMerges": {
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "IdentityMergeSuggestionActionCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "enum": ["identity.mergeSuggestion.queue", "identity.mergeSuggestion.reject"]
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "enum": ["identity.mergeSuggestion.queue", "identity.mergeSuggestion.reject"]
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["proposalId", "status"],
+                    "properties": {
+                      "proposalId": {
+                        "type": "string"
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": ["STAGED", "REJECTED"]
+                      },
+                      "jobId": {
+                        "type": "string"
+                      },
+                      "jobStatus": {
+                        "$ref": "#/components/schemas/IdentityMergeJobStatus"
                       }
                     },
                     "additionalProperties": false
