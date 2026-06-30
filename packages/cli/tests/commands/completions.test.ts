@@ -91,7 +91,7 @@ describe("completions command", () => {
       'COMPREPLY=($(compgen -W "--api-key --json --type --channel-id --label --default --disabled"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --type --name --url --label --description --default --enabled --disabled"',
+      'COMPREPLY=($(compgen -W "--api-key --json --type --label --default --enabled --disabled"',
     )
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --status --confidence --limit"',

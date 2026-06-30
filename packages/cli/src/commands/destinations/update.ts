@@ -5,17 +5,13 @@ import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
 import { optionalTrimmedString, requiredTrimmedString } from "../../lib/platform-input"
 
-function parseDestinationType(type: string, json: boolean): "WEBHOOK_ENDPOINT" | "SLACK_CHANNEL" {
+function parseDestinationType(type: string, json: boolean): "SLACK_CHANNEL" {
   const normalized = type.trim().toLowerCase()
-  if (normalized === "webhook" || normalized === "webhook_endpoint") {
-    return "WEBHOOK_ENDPOINT"
-  }
-
   if (normalized === "slack" || normalized === "slack_channel") {
     return "SLACK_CHANNEL"
   }
 
-  return outputError({ message: "--type must be webhook or slack", code: "invalid_input" }, json)
+  return outputError({ message: "--type must be slack", code: "invalid_input" }, json)
 }
 
 function parseEnabledFlag(args: { enabled?: boolean; disabled?: boolean }, json: boolean) {
@@ -36,9 +32,9 @@ export default defineCommand({
   meta: {
     name: "update",
     description: [
-      "Update an Outlit automation destination.",
+      "Update an Outlit Slack channel automation destination.",
       "",
-      "Provide --type slack plus one or more fields to patch. Existing webhook destinations can still be patched with --type webhook.",
+      "Provide --type slack plus one or more fields to patch.",
       "",
       "Examples:",
       "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --label '#customer-ops' --json",
@@ -58,12 +54,9 @@ export default defineCommand({
     },
     type: {
       type: "string",
-      description: "Required destination type: webhook or slack",
+      description: "Required destination type: slack",
     },
-    name: { type: "string", description: "Webhook destination name" },
-    url: { type: "string", description: "Optional webhook URL" },
     label: { type: "string", description: "Slack channel label" },
-    description: { type: "string", description: "Optional destination description" },
     default: { type: "boolean", description: "Make this the default destination" },
     enabled: { type: "boolean", description: "Enable the destination after update" },
     disabled: { type: "boolean", description: "Disable the destination" },
@@ -85,42 +78,16 @@ export default defineCommand({
         json,
       )
     }
-    if (args.default === true && type !== "SLACK_CHANNEL") {
-      return outputError(
-        { message: "--default is only supported for Slack destinations", code: "invalid_input" },
-        json,
-      )
+    const label = optionalTrimmedString(args.label)
+    const input = {
+      id: args.id,
+      type,
+      ...(label ? { label } : {}),
+      ...(enabled !== undefined ? { enabled } : {}),
+      ...(args.default === true ? { isDefault: true } : {}),
     }
-    const input =
-      type === "SLACK_CHANNEL"
-        ? {
-            id: args.id,
-            type,
-            ...(optionalTrimmedString(args.label ?? args.name)
-              ? { label: optionalTrimmedString(args.label ?? args.name) }
-              : {}),
-            ...(enabled !== undefined ? { enabled } : {}),
-            ...(args.default === true ? { isDefault: true } : {}),
-          }
-        : {
-            id: args.id,
-            type: "WEBHOOK_ENDPOINT",
-            ...(optionalTrimmedString(args.name) ? { name: optionalTrimmedString(args.name) } : {}),
-            ...(args.description !== undefined
-              ? { description: optionalTrimmedString(args.description) }
-              : {}),
-            ...(enabled !== undefined ? { enabled } : {}),
-            ...(optionalTrimmedString(args.url) ? { url: optionalTrimmedString(args.url) } : {}),
-          }
 
-    if (
-      !("name" in input) &&
-      !("description" in input) &&
-      !("url" in input) &&
-      !("label" in input) &&
-      !("enabled" in input) &&
-      !("isDefault" in input)
-    ) {
+    if (!("label" in input) && !("enabled" in input) && !("isDefault" in input)) {
       return outputError(
         {
           message: "Provide at least one destination field to update",

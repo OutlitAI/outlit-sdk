@@ -717,9 +717,8 @@ describe("client.callTool()", () => {
     })
     await client.callTool("outlit_destination_update", {
       id: "10000000-0000-4000-8000-000000000003",
-      type: "WEBHOOK_ENDPOINT",
-      name: "Customer ops",
-      description: null,
+      type: "SLACK_CHANNEL",
+      label: "#customer-ops",
       enabled: true,
     })
 

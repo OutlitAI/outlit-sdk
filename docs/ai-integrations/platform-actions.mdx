@@ -133,16 +133,16 @@ This workflow lets the agent discover available templates, understand supported 
 | `POST /api/agents/{id}/enable` | Enable one configured agent |
 | `POST /api/agents/{id}/disable` | Disable one configured agent |
 | `POST /api/agents/{id}/rename` | Rename one configured agent |
-| `GET /api/agents/{id}/runs` | List safe run summaries for one agent |
-| `POST /api/agents/{id}/runs` | Start a manual run for one legacy churn agent |
-| `GET /api/agents/{id}/runs/{runId}` | Get one safe run detail |
+| `GET /api/agents/{agentId}/runs` | List safe run summaries for one agent |
+| `POST /api/agents/{agentId}/runs` | Start a manual run for one legacy churn agent |
+| `GET /api/agents/{agentId}/runs/{runId}` | Get one safe run detail |
 | `GET /api/automations/options` | Show automation schemas, constants, and constraints |
 | `GET /api/automations` | List configured automations |
 | `POST /api/automations` | Create an agent automation |
 | `GET /api/automations/{id}` | Get one configured automation |
 | `PATCH /api/automations/{id}` | Update one agent automation |
-| `GET /api/automations/{id}/runs` | List safe automation run summaries |
-| `GET /api/automations/{id}/runs/{runId}` | Get one safe automation run detail |
+| `GET /api/automations/{automationId}/runs` | List safe automation run summaries |
+| `GET /api/automations/{automationId}/runs/{runId}` | Get one safe automation run detail |
 | `POST /api/automations/{id}/enable` | Enable one configured automation |
 | `POST /api/automations/{id}/disable` | Disable one configured automation |
 | `POST /api/automations/{id}/archive` | Archive one configured automation |
@@ -156,7 +156,7 @@ This workflow lets the agent discover available templates, understand supported 
 | `GET /api/destinations` | List configured automation destinations with masked configuration |
 | `GET /api/destinations/{id}` | Get one configured automation destination with masked configuration |
 | `POST /api/destinations` | Create one Slack channel destination; can set it as default |
-| `PATCH /api/destinations/{id}` | Update one automation destination; can set a Slack destination as default |
+| `PATCH /api/destinations/{id}` | Update one Slack channel automation destination; can set it as default |
 | `POST /api/destinations/{id}/enable` | Enable one configured automation destination |
 | `POST /api/destinations/{id}/disable` | Disable one configured automation destination |
 | `POST /api/destinations/{id}/archive` | Archive one configured automation destination |
