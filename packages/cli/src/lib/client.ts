@@ -82,6 +82,18 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST" | "PATCH"; pat
     method: "POST",
     path: "/api/agents/{id}/rename",
   },
+  outlit_agent_run_start: {
+    method: "POST",
+    path: "/api/agents/{agentId}/runs",
+  },
+  outlit_agent_run_list: {
+    method: "GET",
+    path: "/api/agents/{agentId}/runs",
+  },
+  outlit_agent_run_get: {
+    method: "GET",
+    path: "/api/agents/{agentId}/runs/{runId}",
+  },
   outlit_automation_list: {
     method: "GET",
     path: "/api/automations",
@@ -110,6 +122,10 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST" | "PATCH"; pat
     method: "POST",
     path: "/api/automations/{id}/archive",
   },
+  outlit_automation_options: {
+    method: "GET",
+    path: "/api/automations/options",
+  },
   outlit_signal_list: {
     method: "GET",
     path: "/api/signals",
@@ -129,6 +145,10 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST" | "PATCH"; pat
   outlit_signal_archive: {
     method: "POST",
     path: "/api/signals/{id}/archive",
+  },
+  outlit_signal_options: {
+    method: "GET",
+    path: "/api/signals/options",
   },
   outlit_destination_list: {
     method: "GET",
@@ -157,6 +177,10 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST" | "PATCH"; pat
   outlit_destination_archive: {
     method: "POST",
     path: "/api/destinations/{id}/archive",
+  },
+  outlit_destination_options: {
+    method: "GET",
+    path: "/api/destinations/options",
   },
 }
 

@@ -946,6 +946,52 @@
         }
       }
     },
+    "/api/automations/options": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get automation options",
+        "description": "Show automation schemas, constants, and constraints for configuring agent automations. Read-only.",
+        "operationId": "getAutomationOptions",
+        "responses": {
+          "200": {
+            "description": "Automation options were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationOptionsCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not get automation options.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/automations": {
       "get": {
         "tags": ["Platform API"],
@@ -1258,6 +1304,52 @@
         }
       }
     },
+    "/api/signals/options": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get signal options",
+        "description": "Show signal schemas, condition types, and default signal catalog keys. Read-only.",
+        "operationId": "getSignalOptions",
+        "responses": {
+          "200": {
+            "description": "Signal options were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignalOptionsCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not get signal options.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/signals": {
       "get": {
         "tags": ["Platform API"],
@@ -1400,6 +1492,85 @@
         }
       }
     },
+    "/api/destinations/options": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get destination options",
+        "description": "Show destination schemas, Slack connection status, and available Slack channel options.",
+        "operationId": "getDestinationOptions",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Filter Slack channels by channel name or ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum Slack channels to return.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Destination options were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DestinationOptionsCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request query failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not get destination options.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/destinations": {
       "get": {
         "tags": ["Platform API"],
@@ -1448,7 +1619,7 @@
       "post": {
         "tags": ["Platform API"],
         "summary": "Create destination",
-        "description": "Create one automation destination. Responses include masked configuration only.",
+        "description": "Create one Slack channel automation destination. Responses include masked configuration only.",
         "operationId": "createDestination",
         "requestBody": {
           "required": true,
@@ -1458,11 +1629,10 @@
                 "$ref": "#/components/schemas/CreateDestinationRequest"
               },
               "example": {
-                "type": "WEBHOOK_ENDPOINT",
-                "name": "Customer ops",
-                "description": null,
-                "enabled": true,
-                "url": "https://hooks.example.com/outlit"
+                "type": "SLACK_CHANNEL",
+                "channelId": "C0123456789",
+                "label": "#customer-ops",
+                "enabled": true
               }
             }
           }
@@ -1785,6 +1955,272 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RenameAgentRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agents/{id}/runs": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "List agent runs",
+        "description": "List safe run summaries for one configured Outlit agent. Read-only.",
+        "operationId": "listAgentRuns",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Agent ID.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum runs to return.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "Pagination cursor from the previous response.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent run summaries were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAgentRunsCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No agent was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not list agent runs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Start churn agent run",
+        "description": "Start a manual run for one configured legacy Outlit churn agent. Template and custom hosted agents run through automations.",
+        "operationId": "startAgentRun",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Agent ID.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartAgentRunRequest"
+              },
+              "example": {
+                "clientRequestId": "smoke-123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agent run was started or an idempotent prior run was returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartAgentRunCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No agent was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Another run is already in progress for the agent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not start the agent run.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agents/{id}/runs/{runId}": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get agent run",
+        "description": "Get safe run details for one configured Outlit agent run. Read-only.",
+        "operationId": "getAgentRun",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Agent ID.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "description": "Agent run database ID or public run ID.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent run details were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAgentRunCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No agent run was found for the authenticated organization, agent, and requested run id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not get the agent run.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
               }
             }
           }
@@ -3070,6 +3506,702 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StartAgentRunRequest": {
+        "type": "object",
+        "properties": {
+          "clientRequestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunStatus": {
+        "type": "string",
+        "enum": ["RUNNING", "COMPLETED", "FAILED", "PARTIAL"]
+      },
+      "AgentRunCounts": {
+        "type": "object",
+        "required": ["candidates", "tools", "artifacts", "outputs"],
+        "properties": {
+          "candidates": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "tools": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "artifacts": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "outputs": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunOutputSummary": {
+        "type": "object",
+        "required": ["id", "status", "deliveryStatus", "deliveredAt", "createdAt"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentOutputStatus"
+          },
+          "deliveryStatus": {
+            "$ref": "#/components/schemas/AgentOutputDeliveryStatus"
+          },
+          "deliveredAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "runId",
+          "agentId",
+          "status",
+          "trigger",
+          "summary",
+          "errorSummary",
+          "sandboxStatus",
+          "startedAt",
+          "endedAt",
+          "durationMs",
+          "counts",
+          "outputs"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "agentId": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentRunStatus"
+          },
+          "trigger": {
+            "type": ["string", "null"],
+            "enum": ["manual", "scheduled", "event", "signal", null]
+          },
+          "summary": {
+            "type": ["string", "null"]
+          },
+          "errorSummary": {
+            "type": ["string", "null"]
+          },
+          "sandboxStatus": {
+            "type": ["string", "null"]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "durationMs": {
+            "type": ["integer", "null"],
+            "minimum": 0
+          },
+          "counts": {
+            "$ref": "#/components/schemas/AgentRunCounts"
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentRunOutputSummary"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunDetail": {
+        "type": "object",
+        "required": [
+          "id",
+          "runId",
+          "agentId",
+          "status",
+          "trigger",
+          "summary",
+          "errorSummary",
+          "sandboxStatus",
+          "startedAt",
+          "endedAt",
+          "durationMs",
+          "counts",
+          "agentKey",
+          "executionStrategy",
+          "model",
+          "thinkingLevel",
+          "visibility",
+          "triggerEvidence",
+          "candidates",
+          "outputs",
+          "toolCalls",
+          "artifacts"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string"
+          },
+          "agentId": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentRunStatus"
+          },
+          "trigger": {
+            "type": ["string", "null"],
+            "enum": ["manual", "scheduled", "event", "signal", null]
+          },
+          "summary": {
+            "type": ["string", "null"]
+          },
+          "errorSummary": {
+            "type": ["string", "null"]
+          },
+          "sandboxStatus": {
+            "type": ["string", "null"]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "durationMs": {
+            "type": ["integer", "null"],
+            "minimum": 0
+          },
+          "counts": {
+            "$ref": "#/components/schemas/AgentRunCounts"
+          },
+          "agentKey": {
+            "type": "string"
+          },
+          "executionStrategy": {
+            "type": "string"
+          },
+          "model": {
+            "type": ["string", "null"]
+          },
+          "thinkingLevel": {
+            "type": ["string", "null"]
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/AgentRunVisibility"
+          },
+          "triggerEvidence": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AgentRunTriggerEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentRunCandidate"
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentRunOutputDetail"
+            }
+          },
+          "toolCalls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentRunToolCallSummary"
+            }
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentRunArtifactSummary"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ListAgentRunsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "agent.run.list"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "agent.run.list"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["runs", "pagination"],
+                    "properties": {
+                      "runs": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/AgentRunSummary"
+                        }
+                      },
+                      "pagination": {
+                        "type": "object",
+                        "required": ["hasMore", "nextCursor"],
+                        "properties": {
+                          "hasMore": {
+                            "type": "boolean"
+                          },
+                          "nextCursor": {
+                            "type": ["string", "null"]
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "StartAgentRunCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "agent.run.start"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "agent.run.start"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["run", "agentRunId", "runId", "startedSandbox", "status"],
+                    "properties": {
+                      "run": {
+                        "$ref": "#/components/schemas/AgentRunSummary"
+                      },
+                      "agentRunId": {
+                        "type": "string"
+                      },
+                      "runId": {
+                        "type": "string"
+                      },
+                      "startedSandbox": {
+                        "type": "boolean"
+                      },
+                      "status": {
+                        "$ref": "#/components/schemas/AgentRunStatus"
+                      },
+                      "startupError": {
+                        "type": "object",
+                        "required": ["message"],
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "retryable": {
+                            "type": "boolean"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetAgentRunCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "agent.run.get"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "agent.run.get"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["run"],
+                    "properties": {
+                      "run": {
+                        "$ref": "#/components/schemas/AgentRunDetail"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "JsonSchemaObject": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "SignalKindOption": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["kind", "description", "schemaFormat", "createSchema"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "EVENT_MATCH"
+              },
+              "description": {
+                "type": "string"
+              },
+              "schemaFormat": {
+                "type": "string",
+                "const": "json-schema-2020-12"
+              },
+              "createSchema": {
+                "$ref": "#/components/schemas/JsonSchemaObject"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["kind", "description", "schemaFormat", "createSchema", "detectionTypes"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "EVENT_PATTERN"
+              },
+              "description": {
+                "type": "string"
+              },
+              "schemaFormat": {
+                "type": "string",
+                "const": "json-schema-2020-12"
+              },
+              "createSchema": {
+                "$ref": "#/components/schemas/JsonSchemaObject"
+              },
+              "detectionTypes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SignalDetectionTypeOption"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "SignalCatalogOption": {
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "conditionId",
+          "eventName",
+          "eventChannel",
+          "state",
+          "selectable",
+          "statusLabel",
+          "materializedSignalId"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "conditionId": {
+            "$ref": "#/components/schemas/SignalConditionId"
+          },
+          "eventName": {
+            "type": ["string", "null"]
+          },
+          "eventChannel": {
+            "type": ["string", "null"]
+          },
+          "state": {
+            "type": "string"
+          },
+          "selectable": {
+            "type": "boolean"
+          },
+          "statusLabel": {
+            "type": ["string", "null"]
+          },
+          "materializedSignalId": {
+            "type": ["string", "null"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "DestinationTypeOption": {
+        "type": "object",
+        "required": ["type", "label", "schemaFormat", "createSchema"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "SLACK_CHANNEL"
+          },
+          "label": {
+            "type": "string"
+          },
+          "schemaFormat": {
+            "type": "string",
+            "const": "json-schema-2020-12"
+          },
+          "createSchema": {
+            "$ref": "#/components/schemas/JsonSchemaObject"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SlackChannelOption": {
+        "type": "object",
+        "required": ["id", "name", "isPrivate"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isPrivate": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationOptionsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "automation.options"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "automation.options"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/AutomationOptionsData"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalOptionsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "signal.options"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "signal.options"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/SignalOptionsData"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "DestinationOptionsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "destination.options"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "destination.options"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/DestinationOptionsData"
+                  }
+                }
+              }
+            ]
           }
         },
         "additionalProperties": false
@@ -5762,31 +6894,25 @@
       },
       "CreateDestinationRequest": {
         "type": "object",
-        "required": ["name", "url"],
+        "required": ["type", "channelId", "label"],
         "properties": {
           "type": {
             "type": "string",
-            "const": "WEBHOOK_ENDPOINT",
-            "default": "WEBHOOK_ENDPOINT"
+            "const": "SLACK_CHANNEL"
           },
-          "name": {
+          "channelId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "label": {
             "type": "string",
             "minLength": 1,
             "maxLength": 120
           },
-          "description": {
-            "type": ["string", "null"],
-            "maxLength": 1000,
-            "default": null
-          },
           "enabled": {
             "type": "boolean",
             "default": true
-          },
-          "url": {
-            "type": "string",
-            "format": "uri",
-            "pattern": "^(https://|http://(localhost|127\\.0\\.0\\.1|\\[::1\\]|::1)([:/]|$))"
           }
         },
         "additionalProperties": false
@@ -6717,6 +7843,636 @@
               }
             },
             "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunOutputAction": {
+        "type": "object",
+        "required": ["id", "label", "status", "url"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["OPEN", "ENGAGED", "EXECUTED", "UNAVAILABLE"]
+          },
+          "url": {
+            "type": ["string", "null"],
+            "format": "uri"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunOutputDetail": {
+        "type": "object",
+        "required": [
+          "id",
+          "contractType",
+          "contractVersion",
+          "status",
+          "deliveryStatus",
+          "error",
+          "processedAt",
+          "deliveredAt",
+          "createdAt",
+          "notificationCount",
+          "referencedCandidateCount",
+          "referencedCandidateIds",
+          "titles",
+          "markdownPreviews",
+          "deliverySummary",
+          "actions"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "contractType": {
+            "type": "string"
+          },
+          "contractVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentOutputStatus"
+          },
+          "deliveryStatus": {
+            "$ref": "#/components/schemas/AgentOutputDeliveryStatus"
+          },
+          "error": {
+            "type": ["string", "null"]
+          },
+          "processedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "deliveredAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notificationCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "referencedCandidateCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "referencedCandidateIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "titles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "markdownPreviews": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "deliverySummary": {
+            "type": ["string", "null"]
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentRunOutputAction"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunVisibility": {
+        "type": "object",
+        "required": ["hiddenCustomerCount", "hiddenOutputCount", "debugLedgerHidden"],
+        "properties": {
+          "hiddenCustomerCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "hiddenOutputCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "debugLedgerHidden": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunTriggerEvidenceSignal": {
+        "type": "object",
+        "required": ["id", "key", "name", "kind"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "key": {
+            "type": ["string", "null"]
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": ["string", "null"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunTriggerEvidencePolicy": {
+        "type": "object",
+        "required": ["mode", "requiredCount", "selectedCount", "matchedCount"],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": ["ALL", "ANY", "COUNT"]
+          },
+          "requiredCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "selectedCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "matchedCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunTriggerEvidenceWindow": {
+        "type": ["object", "null"],
+        "required": ["value", "unit", "startAt", "endAt"],
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "unit": {
+            "type": "string",
+            "enum": ["hour", "day"]
+          },
+          "startAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunTriggerEvidenceOccurrence": {
+        "type": ["object", "null"],
+        "required": ["id"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "eventName": {
+            "type": "string"
+          },
+          "eventChannel": {
+            "type": "string"
+          },
+          "eventOccurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunTriggerEvidence": {
+        "type": "object",
+        "required": [
+          "automationRunId",
+          "policy",
+          "selectedSignals",
+          "matchedSignals",
+          "window",
+          "primaryOccurrence"
+        ],
+        "properties": {
+          "automationRunId": {
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/AgentRunTriggerEvidencePolicy"
+          },
+          "selectedSignals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentRunTriggerEvidenceSignal"
+            }
+          },
+          "matchedSignals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentRunTriggerEvidenceSignal"
+            }
+          },
+          "window": {
+            "$ref": "#/components/schemas/AgentRunTriggerEvidenceWindow"
+          },
+          "primaryOccurrence": {
+            "$ref": "#/components/schemas/AgentRunTriggerEvidenceOccurrence"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunCandidate": {
+        "type": "object",
+        "required": [
+          "id",
+          "customerId",
+          "customerName",
+          "customerDomain",
+          "billingStatus",
+          "lastActivityAt",
+          "candidateKey",
+          "fingerprint",
+          "status",
+          "outputId",
+          "disposition",
+          "surfaceReason",
+          "reasons",
+          "metrics"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string"
+          },
+          "customerName": {
+            "type": "string"
+          },
+          "customerDomain": {
+            "type": ["string", "null"]
+          },
+          "billingStatus": {
+            "type": ["string", "null"]
+          },
+          "lastActivityAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "candidateKey": {
+            "type": "string"
+          },
+          "fingerprint": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentRunCustomerStatus"
+          },
+          "outputId": {
+            "type": ["string", "null"]
+          },
+          "disposition": {
+            "type": ["string", "null"]
+          },
+          "surfaceReason": {
+            "type": ["string", "null"]
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunToolCallSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "toolName",
+          "status",
+          "error",
+          "startedAt",
+          "endedAt",
+          "latencyMs",
+          "inputSummary",
+          "outputSummary"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "toolName": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentToolCallStatus"
+          },
+          "error": {
+            "type": ["string", "null"]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "latencyMs": {
+            "type": ["integer", "null"],
+            "minimum": 0
+          },
+          "inputSummary": {
+            "type": "string"
+          },
+          "outputSummary": {
+            "type": ["string", "null"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentRunArtifactSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "mimeType",
+          "bodySizeBytes",
+          "redactionStatus",
+          "createdAt",
+          "metadataSummary"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "bodySizeBytes": {
+            "type": ["integer", "null"],
+            "minimum": 0
+          },
+          "redactionStatus": {
+            "type": ["string", "null"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "metadataSummary": {
+            "type": ["string", "null"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentOutputStatus": {
+        "type": "string",
+        "enum": ["PENDING", "VALID", "INVALID", "PROCESSED"]
+      },
+      "AgentOutputDeliveryStatus": {
+        "type": "string",
+        "enum": ["NOT_REQUIRED", "PENDING", "SENT", "FAILED", "PARTIAL"]
+      },
+      "AgentRunCustomerStatus": {
+        "type": "string",
+        "enum": ["SELECTED", "SENT_TO_AGENT", "SURFACED", "NOT_SURFACED", "DELIVERY_FAILED"]
+      },
+      "AgentToolCallStatus": {
+        "type": "string",
+        "enum": ["PENDING", "SUCCESS", "FAILED"]
+      },
+      "AutomationScheduleCadence": {
+        "type": "string",
+        "enum": ["hourly", "daily", "weekly"]
+      },
+      "AutomationOptionsConstraints": {
+        "type": "object",
+        "required": [
+          "requiresAgentId",
+          "enabledAutomationRequiresDestination",
+          "signalTriggerRequiresSignalIdsOrCatalogSignalKeys",
+          "scheduledAutomationRejectsSignals",
+          "scheduledAutomationRejectsCatalogSignalKeys",
+          "scheduledAutomationRequiresCustomerOrBillingStatusAudience"
+        ],
+        "properties": {
+          "requiresAgentId": {
+            "type": "boolean"
+          },
+          "enabledAutomationRequiresDestination": {
+            "type": "boolean"
+          },
+          "signalTriggerRequiresSignalIdsOrCatalogSignalKeys": {
+            "type": "boolean"
+          },
+          "scheduledAutomationRejectsSignals": {
+            "type": "boolean"
+          },
+          "scheduledAutomationRejectsCatalogSignalKeys": {
+            "type": "boolean"
+          },
+          "scheduledAutomationRequiresCustomerOrBillingStatusAudience": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationOptionsData": {
+        "type": "object",
+        "required": [
+          "schemaFormat",
+          "triggerTypes",
+          "matchModes",
+          "scheduleCadences",
+          "audienceFilterSchema",
+          "processorPolicySchema",
+          "deliveryPolicySchema",
+          "constraints"
+        ],
+        "properties": {
+          "schemaFormat": {
+            "type": "string",
+            "const": "json-schema-2020-12"
+          },
+          "triggerTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationTriggerType"
+            }
+          },
+          "matchModes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationMatchMode"
+            }
+          },
+          "scheduleCadences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationScheduleCadence"
+            }
+          },
+          "audienceFilterSchema": {
+            "$ref": "#/components/schemas/JsonSchemaObject"
+          },
+          "processorPolicySchema": {
+            "$ref": "#/components/schemas/JsonSchemaObject"
+          },
+          "deliveryPolicySchema": {
+            "$ref": "#/components/schemas/JsonSchemaObject"
+          },
+          "constraints": {
+            "$ref": "#/components/schemas/AutomationOptionsConstraints"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalConditionId": {
+        "type": "string",
+        "enum": [
+          "schedule",
+          "event_happens",
+          "activity_spikes",
+          "activity_stops",
+          "customer_activity_threshold",
+          "customer_activity_drop",
+          "related_user_inactivity"
+        ]
+      },
+      "SignalDetectionType": {
+        "type": "string",
+        "enum": [
+          "event_occurred",
+          "event_count_threshold",
+          "event_absence",
+          "customer_activity_threshold",
+          "customer_activity_drop",
+          "related_user_inactivity"
+        ]
+      },
+      "SignalConditionTypeOption": {
+        "type": "object",
+        "required": ["id", "label", "triggerType"],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/SignalConditionId"
+          },
+          "label": {
+            "type": "string"
+          },
+          "triggerType": {
+            "$ref": "#/components/schemas/AutomationTriggerType"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalDetectionTypeOption": {
+        "type": "object",
+        "required": ["type", "schemaFormat", "definitionSchema"],
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/SignalDetectionType"
+          },
+          "schemaFormat": {
+            "type": "string",
+            "const": "json-schema-2020-12"
+          },
+          "definitionSchema": {
+            "$ref": "#/components/schemas/JsonSchemaObject"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SignalOptionsData": {
+        "type": "object",
+        "required": ["conditionTypes", "signalKinds", "catalog"],
+        "properties": {
+          "conditionTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignalConditionTypeOption"
+            }
+          },
+          "signalKinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignalKindOption"
+            }
+          },
+          "catalog": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SignalCatalogOption"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "DestinationOptionsSlackData": {
+        "type": "object",
+        "required": ["connected", "channels", "hasMore", "nextCursor"],
+        "properties": {
+          "connected": {
+            "type": "boolean"
+          },
+          "channels": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/SlackChannelOption"
+            }
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "nextCursor": {
+            "type": ["string", "null"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "DestinationOptionsData": {
+        "type": "object",
+        "required": ["types", "slack"],
+        "properties": {
+          "types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DestinationTypeOption"
+            }
+          },
+          "slack": {
+            "$ref": "#/components/schemas/DestinationOptionsSlackData"
           }
         },
         "additionalProperties": false

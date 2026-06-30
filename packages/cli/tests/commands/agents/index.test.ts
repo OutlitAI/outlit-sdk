@@ -10,6 +10,7 @@ describe("agents command", () => {
 
     expect(subcommands).toContain("templates")
     expect(subcommands).toContain("actions")
+    expect(subcommands).toContain("runs")
     expect(subcommands).toContain("list")
     expect(subcommands).toContain("get")
     expect(subcommands).toContain("create")
@@ -24,6 +25,7 @@ describe("agents command", () => {
     expect(subcommands).not.toContain("delete")
     expect(subcommands).not.toContain("grants")
     expect(meta?.description).toContain("configuration actions")
+    expect(meta?.description).toContain("agent runs")
     expect(meta?.description).not.toContain("grants")
   })
 })

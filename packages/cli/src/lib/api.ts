@@ -18,6 +18,8 @@ export interface RunToolOptions {
     columns: TableColumn[]
     /** Dot-separated key path to the items array in the response (default: "items"). */
     itemsKey?: string
+    /** Dot-separated key path to pagination metadata in the response (default: "pagination"). */
+    paginationKey?: string
   }
   /** Spinner message shown during the API call (TTY only). */
   spinnerMessage?: string
@@ -146,7 +148,7 @@ function renderApiTable(data: unknown, table: NonNullable<RunToolOptions["table"
 
   console.log(renderTable(headers, rows))
 
-  const pagination = record.pagination as
+  const pagination = readPath(record, table.paginationKey ?? "pagination") as
     | { hasMore: boolean; nextCursor: string | null; total?: number }
     | undefined
   if (pagination) {

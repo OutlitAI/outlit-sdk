@@ -70,12 +70,16 @@ describe("docs OpenAPI spec", () => {
       "/api/agents/{id}/disable",
       "/api/agents/{id}/enable",
       "/api/agents/{id}/rename",
+      "/api/agents/{id}/runs",
+      "/api/agents/{id}/runs/{runId}",
       "/api/automations",
+      "/api/automations/options",
       "/api/automations/{id}",
       "/api/automations/{id}/archive",
       "/api/automations/{id}/disable",
       "/api/automations/{id}/enable",
       "/api/destinations",
+      "/api/destinations/options",
       "/api/destinations/{id}",
       "/api/destinations/{id}/archive",
       "/api/destinations/{id}/disable",
@@ -89,6 +93,7 @@ describe("docs OpenAPI spec", () => {
       "/api/integrations/setup-step",
       "/api/integrations/sync-status",
       "/api/signals",
+      "/api/signals/options",
       "/api/signals/{id}",
       "/api/signals/{id}/archive",
       "/api/tools/call",
@@ -128,15 +133,20 @@ describe("docs OpenAPI spec", () => {
       "GET /api/agent-templates",
       "GET /api/agents",
       "GET /api/agents/{id}",
+      "GET /api/agents/{id}/runs",
+      "GET /api/agents/{id}/runs/{runId}",
       "GET /api/automations",
+      "GET /api/automations/options",
       "GET /api/automations/{id}",
       "GET /api/destinations",
+      "GET /api/destinations/options",
       "GET /api/destinations/{id}",
       "GET /api/integrations",
       "GET /api/integrations/capabilities",
       "GET /api/integrations/connect/status",
       "GET /api/integrations/sync-status",
       "GET /api/signals",
+      "GET /api/signals/options",
       "GET /api/signals/{id}",
       "PATCH /api/agents/{id}",
       "PATCH /api/automations/{id}",
@@ -146,6 +156,7 @@ describe("docs OpenAPI spec", () => {
       "POST /api/agents/{id}/disable",
       "POST /api/agents/{id}/enable",
       "POST /api/agents/{id}/rename",
+      "POST /api/agents/{id}/runs",
       "POST /api/automations",
       "POST /api/automations/{id}/archive",
       "POST /api/automations/{id}/disable",
@@ -342,10 +353,30 @@ describe("docs OpenAPI spec", () => {
     expect(schemas.EventMatchSignalDefinition.properties.subjectResolver).not.toHaveProperty(
       "default",
     )
-    expect(schemas.CreateDestinationRequest?.properties?.url).toMatchObject({
-      type: "string",
-      format: "uri",
-      pattern: expect.stringContaining("https://"),
+    expect(schemas.CreateDestinationRequest).toMatchObject({
+      type: "object",
+      required: ["type", "channelId", "label"],
+      properties: {
+        type: {
+          type: "string",
+          const: "SLACK_CHANNEL",
+        },
+        channelId: {
+          type: "string",
+          minLength: 1,
+          maxLength: 191,
+        },
+        label: {
+          type: "string",
+          minLength: 1,
+          maxLength: 120,
+        },
+        enabled: {
+          type: "boolean",
+          default: true,
+        },
+      },
+      additionalProperties: false,
     })
     expect(schemas.UpdateDestinationRequest?.oneOf?.[0]?.properties?.url).toMatchObject({
       type: "string",
@@ -376,6 +407,187 @@ describe("docs OpenAPI spec", () => {
           },
           additionalProperties: false,
         },
+      },
+      additionalProperties: false,
+    })
+  })
+
+  test("documents strict public agent run detail projections", () => {
+    const spec = readJson<{
+      components?: {
+        schemas?: Record<string, any>
+      }
+    }>("docs/openapi.json")
+    const schemas = spec.components?.schemas ?? {}
+
+    expect(schemas.AgentRunDetail?.allOf).toBeUndefined()
+    expect(schemas.AgentRunDetail).toMatchObject({
+      type: "object",
+      required: expect.arrayContaining([
+        "id",
+        "runId",
+        "agentId",
+        "agentKey",
+        "visibility",
+        "triggerEvidence",
+        "candidates",
+        "outputs",
+        "toolCalls",
+        "artifacts",
+      ]),
+      properties: {
+        outputs: {
+          type: "array",
+          items: { $ref: "#/components/schemas/AgentRunOutputDetail" },
+        },
+        candidates: {
+          type: "array",
+          items: { $ref: "#/components/schemas/AgentRunCandidate" },
+        },
+        toolCalls: {
+          type: "array",
+          items: { $ref: "#/components/schemas/AgentRunToolCallSummary" },
+        },
+        artifacts: {
+          type: "array",
+          items: { $ref: "#/components/schemas/AgentRunArtifactSummary" },
+        },
+        visibility: { $ref: "#/components/schemas/AgentRunVisibility" },
+      },
+      additionalProperties: false,
+    })
+    expect(schemas.AgentRunOutputDetail).toMatchObject({
+      type: "object",
+      required: expect.arrayContaining([
+        "contractType",
+        "titles",
+        "markdownPreviews",
+        "deliverySummary",
+        "actions",
+      ]),
+      properties: {
+        status: { $ref: "#/components/schemas/AgentOutputStatus" },
+        deliveryStatus: { $ref: "#/components/schemas/AgentOutputDeliveryStatus" },
+        actions: {
+          type: "array",
+          items: { $ref: "#/components/schemas/AgentRunOutputAction" },
+        },
+      },
+      additionalProperties: false,
+    })
+    expect(schemas.AgentRunVisibility).toMatchObject({
+      type: "object",
+      required: ["hiddenCustomerCount", "hiddenOutputCount", "debugLedgerHidden"],
+      additionalProperties: false,
+    })
+    expect(schemas.AgentRunCandidate?.properties?.status).toEqual({
+      $ref: "#/components/schemas/AgentRunCustomerStatus",
+    })
+    expect(schemas.AgentRunToolCallSummary?.properties?.status).toEqual({
+      $ref: "#/components/schemas/AgentToolCallStatus",
+    })
+    expect(schemas.AgentOutputStatus?.enum).toEqual(["PENDING", "VALID", "INVALID", "PROCESSED"])
+    expect(schemas.AgentOutputDeliveryStatus?.enum).toEqual([
+      "NOT_REQUIRED",
+      "PENDING",
+      "SENT",
+      "FAILED",
+      "PARTIAL",
+    ])
+    expect(schemas.AgentRunCustomerStatus?.enum).toEqual([
+      "SELECTED",
+      "SENT_TO_AGENT",
+      "SURFACED",
+      "NOT_SURFACED",
+      "DELIVERY_FAILED",
+    ])
+    expect(schemas.AgentToolCallStatus?.enum).toEqual(["PENDING", "SUCCESS", "FAILED"])
+  })
+
+  test("documents strict option discovery response contracts", () => {
+    const spec = readJson<{
+      components?: {
+        schemas?: Record<string, any>
+      }
+    }>("docs/openapi.json")
+    const schemas = spec.components?.schemas ?? {}
+
+    expect(
+      schemas.AutomationOptionsCommandSuccess?.properties?.result?.allOf?.[1]?.properties?.data,
+    ).toEqual({ $ref: "#/components/schemas/AutomationOptionsData" })
+    expect(schemas.AutomationOptionsData).toMatchObject({
+      type: "object",
+      required: [
+        "schemaFormat",
+        "triggerTypes",
+        "matchModes",
+        "scheduleCadences",
+        "audienceFilterSchema",
+        "processorPolicySchema",
+        "deliveryPolicySchema",
+        "constraints",
+      ],
+      properties: {
+        triggerTypes: {
+          type: "array",
+          items: { $ref: "#/components/schemas/AutomationTriggerType" },
+        },
+        matchModes: {
+          type: "array",
+          items: { $ref: "#/components/schemas/AutomationMatchMode" },
+        },
+        constraints: { $ref: "#/components/schemas/AutomationOptionsConstraints" },
+      },
+      additionalProperties: false,
+    })
+    expect(schemas.AutomationOptionsConstraints).toMatchObject({
+      type: "object",
+      required: [
+        "requiresAgentId",
+        "enabledAutomationRequiresDestination",
+        "signalTriggerRequiresSignalIdsOrCatalogSignalKeys",
+        "scheduledAutomationRejectsSignals",
+        "scheduledAutomationRejectsCatalogSignalKeys",
+        "scheduledAutomationRequiresCustomerOrBillingStatusAudience",
+      ],
+      additionalProperties: false,
+    })
+
+    expect(
+      schemas.SignalOptionsCommandSuccess?.properties?.result?.allOf?.[1]?.properties?.data,
+    ).toEqual({ $ref: "#/components/schemas/SignalOptionsData" })
+    expect(schemas.SignalOptionsData).toMatchObject({
+      type: "object",
+      properties: {
+        conditionTypes: {
+          type: "array",
+          items: { $ref: "#/components/schemas/SignalConditionTypeOption" },
+        },
+        signalKinds: {
+          type: "array",
+          items: { $ref: "#/components/schemas/SignalKindOption" },
+        },
+      },
+      additionalProperties: false,
+    })
+    expect(schemas.SignalConditionId?.enum).toContain("event_happens")
+    expect(schemas.SignalDetectionType?.enum).toContain("event_count_threshold")
+    expect(schemas.SignalConditionTypeOption?.properties?.triggerType).toEqual({
+      $ref: "#/components/schemas/AutomationTriggerType",
+    })
+
+    expect(
+      schemas.DestinationOptionsCommandSuccess?.properties?.result?.allOf?.[1]?.properties?.data,
+    ).toEqual({ $ref: "#/components/schemas/DestinationOptionsData" })
+    expect(schemas.DestinationOptionsData).toMatchObject({
+      type: "object",
+      required: ["types", "slack"],
+      properties: {
+        types: {
+          type: "array",
+          items: { $ref: "#/components/schemas/DestinationTypeOption" },
+        },
+        slack: { $ref: "#/components/schemas/DestinationOptionsSlackData" },
       },
       additionalProperties: false,
     })

@@ -390,6 +390,68 @@ describe("client.callTool()", () => {
     ).rejects.toThrow("Unknown tool")
   })
 
+  test("keeps option and agent run platform actions on direct public API endpoints", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const okEnvelope = {
+      ok: true,
+      commandId: "options.runs.test",
+      commandVersion: 1,
+      correlationId: "corr_options_runs_123",
+      result: {
+        operationId: "options.runs.test",
+        status: "completed",
+        resources: [],
+        data: {},
+        warnings: [],
+      },
+    }
+    const fetchSpy = spyOn(globalThis, "fetch")
+    for (let i = 0; i < 6; i += 1) {
+      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(okEnvelope), { status: 200 }))
+    }
+
+    const client = await createClient()
+    await client.callTool("outlit_automation_options", {})
+    await client.callTool("outlit_signal_options", {})
+    await client.callTool("outlit_destination_options", { search: "ops", limit: 10 })
+    await client.callTool("outlit_agent_run_start", {
+      agentId: "agent_123",
+      clientRequestId: "request_123",
+    })
+    await client.callTool("outlit_agent_run_list", {
+      agentId: "agent_123",
+      limit: 5,
+      cursor: "cursor_123",
+    })
+    await client.callTool("outlit_agent_run_get", {
+      agentId: "agent_123",
+      runId: "run_123",
+    })
+
+    const urls = fetchSpy.mock.calls.map((call) => call[0] as string)
+    expect(urls[0]).toContain("/api/automations/options")
+    expect(urls[1]).toContain("/api/signals/options")
+    expect(urls[2]).toContain("/api/destinations/options?search=ops&limit=10")
+    expect(urls[3]).toContain("/api/agents/agent_123/runs")
+    expect(urls[4]).toContain("/api/agents/agent_123/runs?limit=5&cursor=cursor_123")
+    expect(urls[5]).toContain("/api/agents/agent_123/runs/run_123")
+
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({ clientRequestId: "request_123" }),
+    )
+    expect((fetchSpy.mock.calls[4]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[5]?.[1] as RequestInit).method).toBe("GET")
+    for (const url of urls) {
+      expect(url).not.toContain("/api/tools/call")
+    }
+
+    fetchSpy.mockRestore()
+  })
+
   test("keeps lifecycle platform actions on direct public API endpoints", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
@@ -507,11 +569,10 @@ describe("client.callTool()", () => {
       },
     })
     await client.callTool("outlit_destination_create", {
-      type: "WEBHOOK_ENDPOINT",
-      name: "Customer ops",
-      description: null,
+      type: "SLACK_CHANNEL",
+      channelId: "C0123456789",
+      label: "#customer-ops",
       enabled: true,
-      url: "https://hooks.example.com/outlit",
     })
     await client.callTool("outlit_destination_update", {
       id: "10000000-0000-4000-8000-000000000003",

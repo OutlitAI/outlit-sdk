@@ -45,6 +45,9 @@ describe("platform lifecycle commands", () => {
     const { default: enableCmd } = await import("../../src/commands/agents/enable")
     const { default: disableCmd } = await import("../../src/commands/agents/disable")
     const { default: renameCmd } = await import("../../src/commands/agents/rename")
+    const { default: startRunCmd } = await import("../../src/commands/agents/runs/start")
+    const { default: listRunsCmd } = await import("../../src/commands/agents/runs/list")
+    const { default: getRunCmd } = await import("../../src/commands/agents/runs/get")
 
     await captureStdout(() =>
       enableCmd.run!({
@@ -61,12 +64,71 @@ describe("platform lifecycle commands", () => {
         args: { id: "agent_123", displayName: "Renamed", json: true },
       } as Parameters<NonNullable<typeof renameCmd.run>>[0]),
     )
+    await captureStdout(() =>
+      startRunCmd.run!({
+        args: { agentId: "agent_123", "client-request-id": "request_123", json: true },
+      } as Parameters<NonNullable<typeof startRunCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      listRunsCmd.run!({
+        args: { agentId: "agent_123", limit: "5", cursor: "cursor_123", json: true },
+      } as Parameters<NonNullable<typeof listRunsCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      getRunCmd.run!({
+        args: { agentId: "agent_123", runId: "run_123", json: true },
+      } as Parameters<NonNullable<typeof getRunCmd.run>>[0]),
+    )
 
     expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_agent_enable", { id: "agent_123" })
     expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_agent_disable", { id: "agent_123" })
     expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_agent_rename", {
       id: "agent_123",
       displayName: "Renamed",
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(4, "outlit_agent_run_start", {
+      agentId: "agent_123",
+      clientRequestId: "request_123",
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(5, "outlit_agent_run_list", {
+      agentId: "agent_123",
+      limit: 5,
+      cursor: "cursor_123",
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(6, "outlit_agent_run_get", {
+      agentId: "agent_123",
+      runId: "run_123",
+    })
+  })
+
+  test("runs option discovery commands", async () => {
+    const { default: automationOptionsCmd } = await import("../../src/commands/automations/options")
+    const { default: signalOptionsCmd } = await import("../../src/commands/signals/options")
+    const { default: destinationOptionsCmd } = await import(
+      "../../src/commands/destinations/options"
+    )
+
+    await captureStdout(() =>
+      automationOptionsCmd.run!({
+        args: { json: true },
+      } as Parameters<NonNullable<typeof automationOptionsCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      signalOptionsCmd.run!({
+        args: { json: true },
+      } as Parameters<NonNullable<typeof signalOptionsCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      destinationOptionsCmd.run!({
+        args: { search: "ops", limit: "10", json: true },
+      } as Parameters<NonNullable<typeof destinationOptionsCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_automation_options", {})
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_signal_options", {})
+    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_destination_options", {
+      search: "ops",
+      limit: 10,
     })
   })
 
@@ -299,10 +361,9 @@ describe("platform lifecycle commands", () => {
     await captureStdout(() =>
       createDestinationCmd.run!({
         args: {
-          type: "webhook",
-          name: "Customer ops",
-          url: "https://hooks.example.com/outlit",
-          description: "Ops webhook",
+          type: "slack",
+          "channel-id": "C0123456789",
+          label: "#customer-ops",
           json: true,
         },
       } as Parameters<NonNullable<typeof createDestinationCmd.run>>[0]),
@@ -320,11 +381,10 @@ describe("platform lifecycle commands", () => {
     )
 
     expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_destination_create", {
-      type: "WEBHOOK_ENDPOINT",
-      name: "Customer ops",
-      description: "Ops webhook",
+      type: "SLACK_CHANNEL",
+      channelId: "C0123456789",
+      label: "#customer-ops",
       enabled: true,
-      url: "https://hooks.example.com/outlit",
     })
     expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_destination_update", {
       id: destinationId,
