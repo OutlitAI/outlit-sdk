@@ -16,7 +16,7 @@ Outlit's remote MCP endpoint uses OAuth-based authentication for customer-intell
 - you do not paste API keys or bearer headers into config files
 - the client opens an OAuth sign-in flow and stores the resulting session
 
-Platform configuration tools use API-key authentication today. Use an API key with `agents:read` for read-only configuration tools and `agents:write` for write tools.
+Platform configuration tools use API-key authentication today. Use an API key with the relevant read/write scopes for the tool family, such as `agents:read`/`agents:write` for agent configuration and `identity:read`/`identity:write` for identity merge suggestions.
 
 ## Connect Your MCP Client
 
@@ -69,7 +69,7 @@ Platform configuration tools inspect and mutate agents, automations, signals, de
 
 <Steps>
   <Step title="Create a scoped API key">
-    Open [Settings > CLI & MCP](https://app.outlit.ai/settings/workspace/mcp) and create an API key for agent configuration. The key must include `agents:read` for read tools and `agents:write` for write tools.
+    Open [Settings > CLI & MCP](https://app.outlit.ai/settings/workspace/mcp) and create an API key for platform configuration. Agent configuration tools require `agents:read` for read tools and `agents:write` for write tools. Identity merge suggestion tools require `identity:read` for read tools and `identity:write` for queue/reject.
   </Step>
   <Step title="Add the bearer header in supported clients">
     For MCP clients that support custom headers or headless bearer-token setup, configure the same workspace MCP URL with an `Authorization` header:
@@ -169,7 +169,11 @@ API-key authenticated MCP clients can also inspect and manage selected agent and
 | `outlit_settings_report_get` | Get report settings |
 | `outlit_settings_report_update` | Update report Slack channel settings |
 | `outlit_settings_report_options` | Search Slack channel options for report settings |
+| `outlit_identity_merge_suggestion_list` | List identity merge suggestions |
+| `outlit_identity_merge_suggestion_get` | Get one identity merge suggestion |
+| `outlit_identity_merge_suggestion_queue` | Queue one suggested identity merge |
+| `outlit_identity_merge_suggestion_reject` | Reject one suggested identity merge |
 
-Read tools require `agents:read`. Write tools require `agents:write`. `outlit_destination_options` is non-mutating but requires `agents:write` because it lists Slack channel choices for destination creation. `outlit_settings_report_options` is read-scoped and accepts optional `search` and `limit` inputs for Slack channel discovery. Destination tools return masked configuration only. Settings tools return projected settings DTOs, not raw workspace or destination database rows.
+Most platform read tools require `agents:read`; most platform write tools require `agents:write`. Identity merge suggestion reads require `identity:read`; queue and reject require `identity:write`. `outlit_destination_options` is non-mutating but requires `agents:write` because it lists Slack channel choices for destination creation. `outlit_settings_report_options` is read-scoped and accepts optional `search` and `limit` inputs for Slack channel discovery. Identity merge suggestion tools require the identity resolution feature to be enabled for the workspace. Destination tools return masked configuration only. Settings and identity tools return projected DTOs, not raw database rows.
 
 See [Platform Actions](/ai-integrations/platform-actions) for the shared API, CLI, and MCP model behind these tools.

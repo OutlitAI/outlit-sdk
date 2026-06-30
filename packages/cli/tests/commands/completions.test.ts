@@ -30,6 +30,7 @@ describe("completions command", () => {
     expect(out).toContain("sources")
     expect(out).toContain("ws-users")
     expect(out).toContain("settings")
+    expect(out).toContain("identity")
     expect(out).not.toContain("workspace-users")
   })
 
@@ -54,6 +55,12 @@ describe("completions command", () => {
     expect(out).toContain('COMPREPLY=($(compgen -W "list get start" -- "$cur"))')
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "settings" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "get update report" -- "$cur"))')
+    expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "identity" ]]`)
+    expect(out).toContain('COMPREPLY=($(compgen -W "suggestions" -- "$cur"))')
+    expect(out).toContain(
+      `[[ $COMP_CWORD -eq 3 && "${bashCompWord(1)}" == "identity" && "${bashCompWord(2)}" == "suggestions" ]]`,
+    )
+    expect(out).toContain('COMPREPLY=($(compgen -W "list get queue reject" -- "$cur"))')
     expect(out).not.toContain("settings notifications")
     expect(out).not.toContain("settings notifications default")
   })
@@ -86,6 +93,10 @@ describe("completions command", () => {
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --type --name --url --label --description --default --enabled --disabled"',
     )
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --status --confidence --limit"',
+    )
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --review-notes"')
     expect(out).not.toContain('COMPREPLY=($(compgen -W "--api-key --json --destination-id"')
   })
 
@@ -98,6 +109,7 @@ describe("completions command", () => {
     expect(out).toContain("'auth:Manage authentication'")
     expect(out).toContain("'ws-users:Workspace-user operations'")
     expect(out).toContain("'settings:Configure workspace settings'")
+    expect(out).toContain("'identity:Inspect and manage identity resolution'")
     expect(out).not.toContain("workspace-users")
   })
 
@@ -112,6 +124,8 @@ describe("completions command", () => {
     expect(out).not.toContain("'remove:Disconnect an integration'")
     expect(out).toContain("'codex:Install the Outlit skill for Codex'")
     expect(out).toContain("'opencode:Install the Outlit skill for OpenCode'")
+    expect(out).toContain("'suggestions:Inspect customer identity merge suggestions'")
+    expect(out).toContain("'queue:Queue one suggested identity merge'")
   })
   test("zsh — flag completions with descriptions", async () => {
     const out = await captureCompletions("zsh")
@@ -168,6 +182,12 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd settings report options' -l search")
     expect(out).toContain("-n '__outlit_using_cmd settings report options' -l limit")
     expect(out).not.toContain("settings notifications")
+    expect(out).toContain("-n '__outlit_using_cmd identity' -a suggestions")
+    expect(out).toContain("-n '__outlit_using_cmd identity suggestions' -a list")
+    expect(out).toContain("-n '__outlit_using_cmd identity suggestions list' -l status")
+    expect(out).toContain("-n '__outlit_using_cmd identity suggestions list' -l confidence")
+    expect(out).toContain("-n '__outlit_using_cmd identity suggestions queue' -l review-notes")
+    expect(out).toContain("-n '__outlit_using_cmd identity suggestions reject' -l review-notes")
     expect(out).toContain("-n '__outlit_using_cmd destinations options' -l search")
     expect(out).toContain("-n '__outlit_using_cmd destinations options' -l limit")
     expect(out).toContain("-n '__outlit_using_cmd setup' -l yes")

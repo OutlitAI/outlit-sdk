@@ -375,6 +375,39 @@ const COMMANDS: readonly CmdDef[] = [
     ],
   },
   {
+    name: "identity",
+    desc: "Inspect and manage identity resolution",
+    subs: [
+      {
+        name: "suggestions",
+        desc: "Inspect customer identity merge suggestions",
+        subs: [
+          {
+            name: "list",
+            desc: "List identity merge suggestions",
+            flags: [
+              ...COMMON,
+              { name: "--status", desc: "Filter by suggestion status" },
+              { name: "--confidence", desc: "Filter by confidence" },
+              { name: "--limit", desc: "Max results (1-100)" },
+            ],
+          },
+          { name: "get", desc: "Get one identity merge suggestion", flags: [...COMMON] },
+          {
+            name: "queue",
+            desc: "Queue one suggested identity merge",
+            flags: [...COMMON, { name: "--review-notes", desc: "Review notes" }],
+          },
+          {
+            name: "reject",
+            desc: "Reject one suggested identity merge",
+            flags: [...COMMON, { name: "--review-notes", desc: "Review notes" }],
+          },
+        ],
+      },
+    ],
+  },
+  {
     name: "settings",
     desc: "Configure workspace settings",
     subs: [

@@ -536,6 +536,63 @@ describe("client.callTool()", () => {
     fetchSpy.mockRestore()
   })
 
+  test("keeps identity merge suggestion platform actions on direct public API endpoints", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const okEnvelope = {
+      ok: true,
+      commandId: "identity.mergeSuggestion.test",
+      commandVersion: 1,
+      correlationId: "corr_identity_123",
+      result: {
+        operationId: "identity.mergeSuggestion.test",
+        status: "completed",
+        resources: [],
+        data: {},
+        warnings: [],
+      },
+    }
+    const fetchSpy = spyOn(globalThis, "fetch")
+    for (let i = 0; i < 4; i += 1) {
+      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(okEnvelope), { status: 200 }))
+    }
+
+    const client = await createClient()
+    await client.callTool("outlit_identity_merge_suggestion_list", {
+      status: "suggested",
+      confidence: "HIGH",
+      limit: 5,
+    })
+    await client.callTool("outlit_identity_merge_suggestion_get", { id: "proposal_123" })
+    await client.callTool("outlit_identity_merge_suggestion_queue", {
+      id: "proposal_123",
+      reviewNotes: "reviewed by agent",
+    })
+    await client.callTool("outlit_identity_merge_suggestion_reject", { id: "proposal_123" })
+
+    const urls = fetchSpy.mock.calls.map((call) => call[0] as string)
+    expect(urls[0]).toContain(
+      "/api/identity/merge-suggestions?status=suggested&confidence=HIGH&limit=5",
+    )
+    expect(urls[1]).toContain("/api/identity/merge-suggestions/proposal_123")
+    expect(urls[2]).toContain("/api/identity/merge-suggestions/proposal_123/queue")
+    expect(urls[3]).toContain("/api/identity/merge-suggestions/proposal_123/reject")
+
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({ reviewNotes: "reviewed by agent" }),
+    )
+    expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).body).toBe(JSON.stringify({}))
+    for (const url of urls) {
+      expect(url).not.toContain("/api/tools/call")
+    }
+
+    fetchSpy.mockRestore()
+  })
+
   test("keeps lifecycle platform actions on direct public API endpoints", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
