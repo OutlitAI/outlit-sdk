@@ -11,6 +11,7 @@ describe("automations command", () => {
     expect(subcommands).toEqual([
       "list",
       "get",
+      "runs",
       "options",
       "create",
       "update",
