@@ -4,13 +4,13 @@ import { outputError } from "../lib/output"
 // ── Data model ──────────────────────────────────────────────────────────────
 
 type Flag = { readonly name: string; readonly desc: string }
-type SubCmdDef = { readonly name: string; readonly desc: string; readonly flags?: readonly Flag[] }
 type CmdDef = {
   readonly name: string
   readonly desc: string
-  readonly subs?: readonly SubCmdDef[]
+  readonly subs?: readonly CmdDef[]
   readonly flags?: readonly Flag[]
 }
+type CommandPath = { readonly path: readonly string[]; readonly command: CmdDef }
 
 // Shared flag groups
 const JSON_F: Flag = { name: "--json", desc: "Force JSON output" }
@@ -239,6 +239,22 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "templates", desc: "List available agent templates", flags: [...COMMON] },
       { name: "actions", desc: "List available agent configuration actions", flags: [...COMMON] },
       {
+        name: "runs",
+        desc: "Inspect and start agent runs",
+        subs: [
+          { name: "list", desc: "List runs for one agent", flags: [...PAGINATED] },
+          { name: "get", desc: "Get one agent run", flags: [...COMMON] },
+          {
+            name: "start",
+            desc: "Start a manual churn template run",
+            flags: [
+              ...COMMON,
+              { name: "--client-request-id", desc: "Idempotency key for manual run start" },
+            ],
+          },
+        ],
+      },
+      {
         name: "create",
         desc: "Create an agent",
         flags: [
@@ -275,6 +291,7 @@ const COMMANDS: readonly CmdDef[] = [
     subs: [
       { name: "list", desc: "List configured automations", flags: [...COMMON] },
       { name: "get", desc: "Get one configured automation", flags: [...COMMON] },
+      { name: "options", desc: "Show automation schemas and constants", flags: [...COMMON] },
       { name: "create", desc: "Create an agent automation", flags: [...JSON_BODY] },
       { name: "update", desc: "Update an agent automation", flags: [...JSON_BODY] },
       { name: "enable", desc: "Enable a configured automation", flags: [...COMMON] },
@@ -288,6 +305,7 @@ const COMMANDS: readonly CmdDef[] = [
     subs: [
       { name: "list", desc: "List configured signals", flags: [...COMMON] },
       { name: "get", desc: "Get one configured signal", flags: [...COMMON] },
+      { name: "options", desc: "Show signal schemas and catalog options", flags: [...COMMON] },
       { name: "create", desc: "Create an automation signal", flags: [...JSON_BODY] },
       { name: "update", desc: "Update an automation signal", flags: [...JSON_BODY] },
       { name: "archive", desc: "Archive a configured signal", flags: [...COMMON] },
@@ -300,14 +318,22 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "list", desc: "List configured destinations", flags: [...COMMON] },
       { name: "get", desc: "Get one configured destination", flags: [...COMMON] },
       {
+        name: "options",
+        desc: "Show destination schemas and Slack channels",
+        flags: [
+          ...COMMON,
+          { name: "--search", desc: "Search Slack channels" },
+          { name: "--limit", desc: "Max Slack channels (1-100)" },
+        ],
+      },
+      {
         name: "create",
-        desc: "Create an automation destination",
+        desc: "Create a Slack channel destination",
         flags: [
           ...COMMON,
           { name: "--type", desc: "Destination type" },
-          { name: "--name", desc: "Destination name" },
-          { name: "--url", desc: "Webhook URL" },
-          { name: "--description", desc: "Destination description" },
+          { name: "--channel-id", desc: "Slack channel ID" },
+          { name: "--label", desc: "Slack channel label" },
           { name: "--disabled", desc: "Create the destination disabled" },
         ],
       },
@@ -357,8 +383,18 @@ const COMMANDS: readonly CmdDef[] = [
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-const cmdsWithSubs = COMMANDS.filter((c) => c.subs?.length)
-const leafCmds = COMMANDS.filter((c) => !c.subs?.length && c.flags?.length)
+function walkCommands(commands: readonly CmdDef[], prefix: readonly string[] = []): CommandPath[] {
+  return commands.flatMap((command) => {
+    const path = [...prefix, command.name]
+    return [{ path, command }, ...walkCommands(command.subs ?? [], path)]
+  })
+}
+
+const commandPaths = walkCommands(COMMANDS)
+const commandsWithSubs = commandPaths.filter(({ command }) => command.subs?.length)
+const flagCommandPaths = commandPaths
+  .filter(({ command }) => command.flags?.length)
+  .sort((left, right) => right.path.length - left.path.length)
 
 function escZsh(s: string): string {
   return s.replace(/'/g, "'\\''")
@@ -368,67 +404,57 @@ function flagNames(flags: readonly Flag[]): string {
   return flags.map((f) => f.name).join(" ")
 }
 
+function bashPathCondition(path: readonly string[]): string {
+  return path.map((part, index) => `"\${COMP_WORDS[${index + 1}]}" == "${part}"`).join(" && ")
+}
+
+function zshPathCondition(path: readonly string[]): string {
+  return path.map((part, index) => `"$words[${index + 2}]" == "${part}"`).join(" && ")
+}
+
+function fishPath(path: readonly string[]): string {
+  return path.join(" ")
+}
+
 // ── Bash ────────────────────────────────────────────────────────────────────
 
 function generateBash(): string {
   const cmdNames = COMMANDS.map((c) => c.name).join(" ")
 
-  // case entries for subcommand completions at position 2
-  // Merges parent flags (e.g. setup --yes) alongside subcommand names
-  const subCases = cmdsWithSubs
-    .map((c) => {
-      const names = c.subs!.map((s) => s.name).join(" ")
-      const parentFlags = c.flags?.length ? ` ${flagNames(c.flags)}` : ""
-      return `      ${c.name}) COMPREPLY=($(compgen -W "${names}${parentFlags}" -- "$cur")) ;;`
+  const subBlocks = commandsWithSubs
+    .map(({ path, command }) => {
+      const names = command.subs!.map((s) => s.name).join(" ")
+      const parentFlags = command.flags?.length ? ` ${flagNames(command.flags)}` : ""
+      return `  if [[ $COMP_CWORD -eq ${path.length + 1} && ${bashPathCondition(path)} ]]; then
+    COMPREPLY=($(compgen -W "${names}${parentFlags}" -- "$cur"))
+    return
+  fi`
     })
     .join("\n")
 
-  // case entries for flag completions (leaf commands keyed by cmd, subcommands by cmd.sub)
-  const flagEntries: string[] = []
-  for (const cmd of leafCmds) {
-    flagEntries.push(
-      `      ${cmd.name}) COMPREPLY=($(compgen -W "${flagNames(cmd.flags!)}" -- "$cur")) ;;`,
+  const flagBlocks = flagCommandPaths
+    .map(
+      ({
+        path,
+        command,
+      }) => `  if [[ $COMP_CWORD -gt ${path.length} && ${bashPathCondition(path)} ]]; then
+    COMPREPLY=($(compgen -W "${flagNames(command.flags!)}" -- "$cur"))
+    return
+  fi`,
     )
-  }
-  for (const cmd of cmdsWithSubs) {
-    for (const sub of cmd.subs!) {
-      if (sub.flags?.length) {
-        flagEntries.push(
-          `      ${cmd.name}.${sub.name}) COMPREPLY=($(compgen -W "${flagNames(sub.flags)}" -- "$cur")) ;;`,
-        )
-      }
-    }
-  }
-  const flagCases = flagEntries.join("\n")
+    .join("\n")
 
   return `_outlit_completions() {
   local cur="\${COMP_WORDS[COMP_CWORD]}"
-  local cmd="\${COMP_WORDS[1]}"
-  local key
 
   if [[ $COMP_CWORD -eq 1 ]]; then
     COMPREPLY=($(compgen -W "${cmdNames}" -- "$cur"))
     return
   fi
 
-  case $cmd in
-    ${cmdsWithSubs.map((c) => c.name).join("|")})
-      if [[ $COMP_CWORD -eq 2 ]]; then
-        case $cmd in
-${subCases}
-        esac
-        return
-      fi
-      key="\${cmd}.\${COMP_WORDS[2]}"
-      ;;
-    *)
-      key=$cmd
-      ;;
-  esac
+${subBlocks}
 
-  case $key in
-${flagCases}
-  esac
+${flagBlocks}
 }
 complete -F _outlit_completions outlit
 `
@@ -443,40 +469,36 @@ function zshDescribe(items: ReadonlyArray<{ name: string; desc: string }>): stri
 function generateZsh(): string {
   const topLevel = zshDescribe(COMMANDS)
 
-  // subcommand cases -- merges parent flags alongside subcommand names
-  const subCases = cmdsWithSubs
-    .map((c) => {
+  const subBlocks = commandsWithSubs
+    .map(({ path, command }) => {
       const items = [
-        ...c.subs!.map((s) => ({ name: s.name, desc: s.desc })),
-        ...(c.flags ?? []).map((f) => ({ name: f.name, desc: f.desc })),
+        ...command.subs!.map((s) => ({ name: s.name, desc: s.desc })),
+        ...(command.flags ?? []).map((f) => ({ name: f.name, desc: f.desc })),
       ]
-      return `    ${c.name})\n      completions=(${zshDescribe(items)})\n      _describe 'subcommand' completions\n      ;;`
+      return `  if (( CURRENT == ${path.length + 2} )) && [[ ${zshPathCondition(path)} ]]; then
+    completions=(${zshDescribe(items)})
+    _describe 'subcommand' completions
+    return
+  fi`
     })
     .join("\n")
 
-  // flag cases
-  const flagEntries: string[] = []
-  for (const cmd of leafCmds) {
-    flagEntries.push(
-      `    ${cmd.name})\n      completions=(${zshDescribe(cmd.flags!)})\n      _describe 'option' completions\n      ;;`,
+  const flagBlocks = flagCommandPaths
+    .map(
+      ({
+        path,
+        command,
+      }) => `  if (( CURRENT > ${path.length + 1} )) && [[ ${zshPathCondition(path)} ]]; then
+    completions=(${zshDescribe(command.flags!)})
+    _describe 'option' completions
+    return
+  fi`,
     )
-  }
-  for (const cmd of cmdsWithSubs) {
-    for (const sub of cmd.subs!) {
-      if (sub.flags?.length) {
-        flagEntries.push(
-          `    ${cmd.name}.${sub.name})\n      completions=(${zshDescribe(sub.flags)})\n      _describe 'option' completions\n      ;;`,
-        )
-      }
-    }
-  }
-  const flagCases = flagEntries.join("\n")
+    .join("\n")
 
   return `#compdef outlit
 _outlit() {
   local -a completions
-  local cmd=$words[2]
-  local key
 
   if (( CURRENT == 2 )); then
     completions=(${topLevel})
@@ -484,24 +506,9 @@ _outlit() {
     return
   fi
 
-  case $cmd in
-    ${cmdsWithSubs.map((c) => c.name).join("|")})
-      if (( CURRENT == 3 )); then
-        case $cmd in
-${subCases}
-        esac
-        return
-      fi
-      key="\${cmd}.$words[3]"
-      ;;
-    *)
-      key=$cmd
-      ;;
-  esac
+${subBlocks}
 
-  case $key in
-${flagCases}
-  esac
+${flagBlocks}
 }
 compdef _outlit outlit
 `
@@ -540,55 +547,25 @@ function generateFish(): string {
   }
 
   // Subcommands
-  for (const cmd of cmdsWithSubs) {
+  for (const { path, command } of commandsWithSubs) {
     lines.push("")
-    lines.push(`# ${cmd.name} subcommands`)
-    for (const sub of cmd.subs!) {
+    lines.push(`# ${fishPath(path)} subcommands`)
+    for (const sub of command.subs!) {
       lines.push(
-        `complete -c outlit -f -n '__outlit_using_cmd ${cmd.name}' -a ${sub.name} -d "${esc(sub.desc)}"`,
+        `complete -c outlit -f -n '__outlit_using_cmd ${fishPath(path)}' -a ${sub.name} -d "${esc(sub.desc)}"`,
       )
     }
   }
 
-  // Flags for leaf commands
-  for (const cmd of leafCmds) {
+  // Flags
+  for (const { path, command } of flagCommandPaths) {
     lines.push("")
-    lines.push(`# ${cmd.name} flags`)
-    for (const f of cmd.flags!) {
+    lines.push(`# ${fishPath(path)} flags`)
+    for (const f of command.flags!) {
       const long = f.name.replace(/^--/, "")
       lines.push(
-        `complete -c outlit -n '__outlit_using_cmd ${cmd.name}' -l ${long} -d "${esc(f.desc)}"`,
+        `complete -c outlit -n '__outlit_using_cmd ${fishPath(path)}' -l ${long} -d "${esc(f.desc)}"`,
       )
-    }
-  }
-
-  // Flags for parent commands with own flags (e.g. setup --yes)
-  for (const cmd of cmdsWithSubs) {
-    if (cmd.flags?.length) {
-      lines.push("")
-      lines.push(`# ${cmd.name} flags`)
-      for (const f of cmd.flags) {
-        const long = f.name.replace(/^--/, "")
-        lines.push(
-          `complete -c outlit -n '__outlit_using_cmd ${cmd.name}' -l ${long} -d "${esc(f.desc)}"`,
-        )
-      }
-    }
-  }
-
-  // Flags for subcommands
-  for (const cmd of cmdsWithSubs) {
-    for (const sub of cmd.subs!) {
-      if (sub.flags?.length) {
-        lines.push("")
-        lines.push(`# ${cmd.name} ${sub.name} flags`)
-        for (const f of sub.flags) {
-          const long = f.name.replace(/^--/, "")
-          lines.push(
-            `complete -c outlit -n '__outlit_using_cmd ${cmd.name} ${sub.name}' -l ${long} -d "${esc(f.desc)}"`,
-          )
-        }
-      }
     }
   }
 

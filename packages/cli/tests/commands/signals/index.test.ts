@@ -5,7 +5,7 @@ describe("signals command", () => {
     const { default: signalsCmd } = await import("../../../src/commands/signals")
     const subcommands = Object.keys(signalsCmd.subCommands ?? {})
 
-    expect(subcommands).toEqual(["list", "get", "create", "update", "archive"])
+    expect(subcommands).toEqual(["list", "get", "options", "create", "update", "archive"])
     expect(subcommands).not.toContain("delete")
   })
 })

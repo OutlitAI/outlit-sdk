@@ -27,7 +27,7 @@ Platform actions use resource-first names so humans and agents can predict what 
 | REST API | Standard resource routes | `PATCH /api/agents/{id}` |
 | MCP | `<resource>_<verb>` tool names | `outlit_agent_update` |
 
-Subtypes and templates are inputs, not command names. For example, use `outlit agents create --template churn` to create a template-backed agent, and use `outlit destinations create --type webhook` to create a webhook destination.
+Subtypes and templates are inputs, not command names. For example, use `outlit agents create --template churn` to create a template-backed agent, and use `outlit destinations create --type slack` to create a Slack channel destination.
 
 Agent and destination updates patch only the fields provided. Automation and signal updates currently take full configuration bodies, so agents should read the current resource first, preserve fields they do not intend to change, and then send the updated body.
 
@@ -37,17 +37,20 @@ The current platform action set focuses on the Agents and Automations areas of t
 
 | Area | Read actions | Write actions |
 |------|--------------|---------------|
-| Agents | List templates, list available actions, list agents, get one agent | Create, update, enable, disable, rename |
-| Automations | List automations, get one automation | Create, update, enable, disable, archive |
-| Signals | List configured automation signals, get one signal | Create, update, archive |
-| Destinations | List configured destinations, get one destination with masked configuration | Create, update, enable, disable, archive |
+| Agents | List templates, list available actions, list agents, get one agent, list/get runs | Create, update, enable, disable, rename, start legacy churn run |
+| Automations | List automations, get one automation, show options | Create, update, enable, disable, archive |
+| Signals | List configured automation signals, get one signal, show options and default catalog keys | Create, update, archive |
+| Destinations | List configured destinations, get one destination with masked configuration | Show Slack channel options, create Slack channel destination, update, enable, disable, archive |
 
 For example, a CLI user or agent can create a draft template and then explicitly enable or disable lifecycle resources:
 
 ```bash
 outlit agents create --template churn --json
 outlit agents create --type custom --display-name "Renewal risk" --instructions "Find risk" --surface-criteria "Surface risky customers" --json
+outlit signals options --json
 outlit signals create --file ./signal.json --json
+outlit destinations options --json
+outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --json
 outlit automations create --file ./automation.json --json
 outlit agents enable 10000000-0000-4000-8000-000000000004 --json
 outlit automations disable 10000000-0000-4000-8000-000000000001 --json
@@ -63,6 +66,7 @@ Platform actions are designed to make configuration inspectable before they make
 
 - Read actions require an API key with the `agents:read` scope.
 - Write actions require an API key with the `agents:write` scope.
+- `destinations options` is non-mutating, but it requires `agents:write` because it lists Slack channel choices used to create destinations.
 - Template creation returns explicit safety metadata describing what was created and what was not enabled.
 - Enable actions validate the current platform state before enabling. For example, an automation cannot be enabled if required destinations or processor agents are unavailable.
 - Destination responses only include masked configuration through fields such as `maskedConfig`; raw secrets and unmasked provider configuration are not returned.
@@ -88,11 +92,15 @@ A coding agent or MCP client can use platform actions to inspect what exists, ch
 ```bash
 outlit agents templates --json
 outlit agents actions --json
+outlit signals options --json
+outlit destinations options --json
 outlit agents create --template churn --json
 outlit agents update 10000000-0000-4000-8000-000000000004 --instructions "Prioritize recent support escalations" --json
-outlit destinations create --type webhook --name "Customer ops" --url https://hooks.example.com/outlit --json
+outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --json
 outlit destinations update 10000000-0000-4000-8000-000000000003 --type webhook --name "Customer ops" --json
 outlit agents enable 10000000-0000-4000-8000-000000000004 --json
+outlit agents runs start 10000000-0000-4000-8000-000000000004 --client-request-id smoke-123 --json
+outlit agents runs list 10000000-0000-4000-8000-000000000004 --json
 outlit agents list --json
 outlit automations list --json
 outlit automations enable 10000000-0000-4000-8000-000000000001 --json
@@ -115,6 +123,10 @@ This workflow lets the agent discover available templates, understand supported 
 | `POST /api/agents/{id}/enable` | Enable one configured agent |
 | `POST /api/agents/{id}/disable` | Disable one configured agent |
 | `POST /api/agents/{id}/rename` | Rename one configured agent |
+| `GET /api/agents/{id}/runs` | List safe run summaries for one agent |
+| `POST /api/agents/{id}/runs` | Start a manual run for one legacy churn agent |
+| `GET /api/agents/{id}/runs/{runId}` | Get one safe run detail |
+| `GET /api/automations/options` | Show automation schemas, constants, and constraints |
 | `GET /api/automations` | List configured automations |
 | `POST /api/automations` | Create an agent automation |
 | `GET /api/automations/{id}` | Get one configured automation |
@@ -122,14 +134,16 @@ This workflow lets the agent discover available templates, understand supported 
 | `POST /api/automations/{id}/enable` | Enable one configured automation |
 | `POST /api/automations/{id}/disable` | Disable one configured automation |
 | `POST /api/automations/{id}/archive` | Archive one configured automation |
+| `GET /api/signals/options` | Show signal schemas, condition types, and default catalog keys |
 | `GET /api/signals` | List configured automation signals |
 | `POST /api/signals` | Create one automation signal |
 | `GET /api/signals/{id}` | Get one configured automation signal |
 | `PATCH /api/signals/{id}` | Update one automation signal |
 | `POST /api/signals/{id}/archive` | Archive one configured automation signal |
+| `GET /api/destinations/options` | Show destination schemas and Slack channel options (`agents:write`) |
 | `GET /api/destinations` | List configured automation destinations with masked configuration |
 | `GET /api/destinations/{id}` | Get one configured automation destination with masked configuration |
-| `POST /api/destinations` | Create one automation destination |
+| `POST /api/destinations` | Create one Slack channel destination |
 | `PATCH /api/destinations/{id}` | Update one automation destination |
 | `POST /api/destinations/{id}/enable` | Enable one configured automation destination |
 | `POST /api/destinations/{id}/disable` | Disable one configured automation destination |

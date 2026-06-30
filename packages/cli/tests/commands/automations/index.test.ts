@@ -8,8 +8,18 @@ describe("automations command", () => {
     const meta =
       typeof metaSource === "function" ? await metaSource() : await Promise.resolve(metaSource)
 
-    expect(subcommands).toEqual(["list", "get", "create", "update", "enable", "disable", "archive"])
+    expect(subcommands).toEqual([
+      "list",
+      "get",
+      "options",
+      "create",
+      "update",
+      "enable",
+      "disable",
+      "archive",
+    ])
     expect(subcommands).not.toContain("delete")
     expect(meta?.description).toContain("List configured automations")
+    expect(meta?.description).toContain("options")
   })
 })

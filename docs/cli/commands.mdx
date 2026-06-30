@@ -562,6 +562,9 @@ outlit agents list [flags]
 outlit agents get <id> [flags]
 outlit agents templates [flags]
 outlit agents actions [flags]
+outlit agents runs list <agent-id> [flags]
+outlit agents runs get <agent-id> <run-id> [flags]
+outlit agents runs start <agent-id> [flags]
 outlit agents create [flags]
 outlit agents update <id> [flags]
 outlit agents enable <id> [flags]
@@ -576,6 +579,9 @@ outlit agents list --json
 outlit agents get 10000000-0000-4000-8000-000000000004 --json
 outlit agents templates --json
 outlit agents actions --json
+outlit agents runs list 10000000-0000-4000-8000-000000000004 --json
+outlit agents runs get 10000000-0000-4000-8000-000000000004 run_123 --json
+outlit agents runs start 10000000-0000-4000-8000-000000000004 --client-request-id smoke-123 --json
 outlit agents create --template churn --json
 outlit agents create --type custom --display-name "Renewal risk" --instructions "Find risk" --surface-criteria "Surface risky customers" --json
 outlit agents update 10000000-0000-4000-8000-000000000004 --display-name "Renewal risk" --json
@@ -591,6 +597,8 @@ outlit agents rename 10000000-0000-4000-8000-000000000004 "Churn prevention" --j
   `agents create --template` creates supported template resources in draft mode. `agents update` patches only the fields you pass. Use `--clear-action-keys` to remove all action keys. Agent write commands require an API key with `agents:write`.
 </Note>
 
+Agent run list results are under `result.data.runs`; detailed run data is under `result.data.run`. Manual run start currently supports legacy churn agents; template and custom hosted agents run through automations. Run responses are safe DTOs and do not include raw sandbox handles, prompts, credentials, or unmasked runtime snapshots.
+
 ## Automations
 
 Inspect configured platform automations.
@@ -598,6 +606,7 @@ Inspect configured platform automations.
 ```bash
 outlit automations list [flags]
 outlit automations get <id> [flags]
+outlit automations options [flags]
 outlit automations create --data <json> [flags]
 outlit automations create --file <path> [flags]
 outlit automations update <id> --data <json> [flags]
@@ -612,6 +621,7 @@ outlit automations archive <id> [flags]
 ```bash
 outlit automations list --json
 outlit automations get 10000000-0000-4000-8000-000000000001 --json
+outlit automations options --json
 outlit automations create --file ./automation.json --json
 outlit automations update 10000000-0000-4000-8000-000000000001 --file ./automation.json --json
 outlit automations enable 10000000-0000-4000-8000-000000000001 --json
@@ -619,7 +629,7 @@ outlit automations disable 10000000-0000-4000-8000-000000000001 --json
 outlit automations archive 10000000-0000-4000-8000-000000000001 --json
 ```
 
-Automation create bodies must include `agentId`, `name`, and `triggerType`. Update bodies must include `agentId`, `name`, `enabled`, and `triggerType`. The API maps that agent ID to the internal hosted-agent processor; callers do not provide raw processor JSON.
+Automation create bodies must include `agentId`, `name`, and `triggerType`. Update bodies must include `agentId`, `name`, `enabled`, and `triggerType`. The API maps that agent ID to the internal hosted-agent processor; callers do not provide raw processor JSON. Use `automations options` to inspect accepted trigger types, policy schema fragments, and constraints.
 
 ### JSON Response
 
@@ -632,6 +642,7 @@ Inspect and configure automation signals.
 ```bash
 outlit signals list [flags]
 outlit signals get <id> [flags]
+outlit signals options [flags]
 outlit signals create --data <json> [flags]
 outlit signals create --file <path> [flags]
 outlit signals update <id> --data <json> [flags]
@@ -644,12 +655,13 @@ outlit signals archive <id> [flags]
 ```bash
 outlit signals list --json
 outlit signals get 10000000-0000-4000-8000-000000000002 --json
+outlit signals options --json
 outlit signals create --file ./signal.json --json
 outlit signals update 10000000-0000-4000-8000-000000000002 --file ./signal.json --json
 outlit signals archive 10000000-0000-4000-8000-000000000002 --json
 ```
 
-Signal list results are under `result.data.signals`; get, create, and update results are under `result.data.signal`. Archive results return `result.data.signal.id` and `result.data.signal.archivedAt`.
+Signal list results are under `result.data.signals`; get, create, and update results are under `result.data.signal`. Archive results return `result.data.signal.id` and `result.data.signal.archivedAt`. Use `signals options` to inspect supported signal kinds, create schemas, detection schemas, condition types, and default signal catalog keys.
 
 ## Destinations
 
@@ -658,6 +670,7 @@ Inspect and manage configured automation destinations with masked configuration 
 ```bash
 outlit destinations list [flags]
 outlit destinations get <id> [flags]
+outlit destinations options [flags]
 outlit destinations create [flags]
 outlit destinations update <id> [flags]
 outlit destinations enable <id> [flags]
@@ -670,14 +683,15 @@ outlit destinations archive <id> [flags]
 ```bash
 outlit destinations list --json
 outlit destinations get 10000000-0000-4000-8000-000000000003 --json
-outlit destinations create --type webhook --name "Customer ops" --url https://hooks.example.com/outlit --json
+outlit destinations options --search ops --json
+outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --json
 outlit destinations update 10000000-0000-4000-8000-000000000003 --type webhook --name "Customer ops" --json
 outlit destinations enable 10000000-0000-4000-8000-000000000003 --json
 outlit destinations disable 10000000-0000-4000-8000-000000000003 --json
 outlit destinations archive 10000000-0000-4000-8000-000000000003 --json
 ```
 
-Destination list results are under `result.data.destinations`; get, create, update, enable, and disable results are under `result.data.destination`. `destinations update` patches only the fields you pass. Archive results return `result.data.destination.id` and `result.data.destination.archivedAt`. Raw destination secrets and unmasked provider configuration are not returned.
+Destination list results are under `result.data.destinations`; get, create, update, enable, and disable results are under `result.data.destination`. New destination creation is Slack-channel backed; use `destinations options` to inspect Slack connection status and available channel IDs. `destinations options` is non-mutating but requires `agents:write` because it lists Slack channel choices used to create destinations. `destinations update` patches only the fields you pass. Archive results return `result.data.destination.id` and `result.data.destination.archivedAt`. Raw destination secrets and unmasked provider configuration are not returned.
 
 ## SQL
 

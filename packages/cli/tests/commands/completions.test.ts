@@ -18,6 +18,10 @@ function captureCompletions(shell: string): Promise<string> {
   })()
 }
 
+function bashCompWord(index: number): string {
+  return `$${`{COMP_WORDS[${index}]}`}`
+}
+
 describe("completions command", () => {
   test("bash — top-level commands", async () => {
     const out = await captureCompletions("bash")
@@ -30,38 +34,43 @@ describe("completions command", () => {
 
   test("bash — subcommand dispatch", async () => {
     const out = await captureCompletions("bash")
-    expect(out).toContain('facts) COMPREPLY=($(compgen -W "list get')
-    expect(out).toContain('sources) COMPREPLY=($(compgen -W "list get')
-    expect(out).toContain('ws-users) COMPREPLY=($(compgen -W "list')
-    expect(out).toContain('customers) COMPREPLY=($(compgen -W "list get timeline')
-    expect(out).toContain('integrations) COMPREPLY=($(compgen -W "list capabilities setup status')
-    expect(out).not.toContain('integrations) COMPREPLY=($(compgen -W "list capabilities setup add')
+    expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "facts" ]]`)
+    expect(out).toContain('COMPREPLY=($(compgen -W "list get" -- "$cur"))')
+    expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "sources" ]]`)
+    expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "ws-users" ]]`)
+    expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "customers" ]]`)
+    expect(out).toContain('COMPREPLY=($(compgen -W "list get timeline" -- "$cur"))')
+    expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "integrations" ]]`)
+    expect(out).toContain('COMPREPLY=($(compgen -W "list capabilities setup status" -- "$cur"))')
+    expect(out).not.toContain('COMPREPLY=($(compgen -W "list capabilities setup add')
     expect(out).not.toContain(" add remove ")
     expect(out).toContain("COMP_CWORD -eq 2")
     expect(out).toContain("signup login logout status whoami")
     expect(out).toContain("claude-code codex gemini droid opencode pi openclaw skills --json --yes")
+    expect(out).toContain(
+      `[[ $COMP_CWORD -eq 3 && "${bashCompWord(1)}" == "agents" && "${bashCompWord(2)}" == "runs" ]]`,
+    )
+    expect(out).toContain('COMPREPLY=($(compgen -W "list get start" -- "$cur"))')
   })
 
   test("bash — flag completions for updated commands", async () => {
     const out = await captureCompletions("bash")
+    expect(out).toContain(`[[ $COMP_CWORD -gt 1 && "${bashCompWord(1)}" == "search" ]]`)
     expect(out).toContain(
-      'search) COMPREPLY=($(compgen -W "--api-key --json --customer --top-k --after --before --source-types"',
+      'COMPREPLY=($(compgen -W "--api-key --json --customer --top-k --after --before --source-types"',
     )
     expect(out).toContain(
-      'facts.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --source-types --fact-types --fact-categories --after --before"',
+      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --source-types --fact-types --fact-categories --after --before"',
     )
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --fact-id --include"')
     expect(out).toContain(
-      'facts.get) COMPREPLY=($(compgen -W "--api-key --json --fact-id --include"',
+      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --source-type --customer --participant --provider --has-transcript --after --before"',
     )
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --source-type --source-id"')
     expect(out).toContain(
-      'sources.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --source-type --customer --participant --provider --has-transcript --after --before"',
+      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --owner-id --owner-email --has-owner --search"',
     )
-    expect(out).toContain(
-      'sources.get) COMPREPLY=($(compgen -W "--api-key --json --source-type --source-id"',
-    )
-    expect(out).toContain(
-      'customers.list) COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --owner-id --owner-email --has-owner --search"',
-    )
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --client-request-id"')
   })
 
   // ── Zsh ─────────────────────────────────────────────────────────────────
@@ -97,9 +106,11 @@ describe("completions command", () => {
     expect(out).toContain("'--owner-id:Filter by owner user ID'")
     expect(out).toContain("'--owner-email:Filter by owner email'")
     expect(out).toContain("'--has-owner:Only customers with an owner'")
-    expect(out).toContain("facts.list)")
-    expect(out).toContain("sources.list)")
-    expect(out).toContain("sources.get)")
+    expect(out).toContain('[[ "$words[2]" == "facts" && "$words[3]" == "list" ]]')
+    expect(out).toContain('[[ "$words[2]" == "sources" && "$words[3]" == "list" ]]')
+    expect(out).toContain('[[ "$words[2]" == "sources" && "$words[3]" == "get" ]]')
+    expect(out).toContain("'start:Start a manual churn template run'")
+    expect(out).toContain("'--client-request-id:Idempotency key for manual run start'")
   })
 
   test("fish — flag completions with nested commands", async () => {
@@ -123,6 +134,9 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd integrations setup' -l force")
     expect(out).not.toContain("__outlit_using_cmd integrations add")
     expect(out).not.toContain("__outlit_using_cmd integrations remove")
+    expect(out).toContain("-n '__outlit_using_cmd agents runs' -a start")
+    expect(out).toContain("-n '__outlit_using_cmd agents runs list' -l limit")
+    expect(out).toContain("-n '__outlit_using_cmd agents runs start' -l client-request-id")
     expect(out).toContain("-n '__outlit_using_cmd setup' -l yes")
     expect(out).toContain("-n '__outlit_using_cmd setup claude-code' -l json")
     expect(out).toContain("-n '__outlit_using_cmd setup opencode' -l json")

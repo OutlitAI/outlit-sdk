@@ -10,6 +10,7 @@ export default defineCommand({
       "Commands:",
       "  list                          List configured signals",
       "  get <id>                      Get one configured signal",
+      "  options                       Show signal schemas and catalog options",
       "  create                        Create an automation signal",
       "  update <id>                   Update an automation signal",
       "  archive <id>                  Archive a configured signal",
@@ -17,6 +18,7 @@ export default defineCommand({
       "Examples:",
       "  outlit signals list --json",
       "  outlit signals get 10000000-0000-4000-8000-000000000002 --json",
+      "  outlit signals options --json",
       "  outlit signals create --file ./signal.json --json",
       "  outlit signals update 10000000-0000-4000-8000-000000000002 --file ./signal.json --json",
       "  outlit signals archive 10000000-0000-4000-8000-000000000002 --json",
@@ -27,6 +29,7 @@ export default defineCommand({
   subCommands: {
     list: () => import("./list").then((m) => m.default),
     get: () => import("./get").then((m) => m.default),
+    options: () => import("./options").then((m) => m.default),
     create: () => import("./create").then((m) => m.default),
     update: () => import("./update").then((m) => m.default),
     archive: () => import("./archive").then((m) => m.default),

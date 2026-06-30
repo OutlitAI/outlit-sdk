@@ -10,6 +10,7 @@ export default defineCommand({
       "Commands:",
       "  list                          List configured automations",
       "  get <id>                      Get one configured automation",
+      "  options                       Show automation schemas and constants",
       "  create                        Create an agent automation",
       "  update <id>                   Update an agent automation",
       "  enable <id>                   Enable a configured automation",
@@ -19,6 +20,7 @@ export default defineCommand({
       "Examples:",
       "  outlit automations list --json",
       "  outlit automations get 10000000-0000-4000-8000-000000000001 --json",
+      "  outlit automations options --json",
       "  outlit automations create --file ./automation.json --json",
       "  outlit automations update 10000000-0000-4000-8000-000000000001 --file ./automation.json --json",
       "  outlit automations enable 10000000-0000-4000-8000-000000000001 --json",
@@ -31,6 +33,7 @@ export default defineCommand({
   subCommands: {
     list: () => import("./list").then((m) => m.default),
     get: () => import("./get").then((m) => m.default),
+    options: () => import("./options").then((m) => m.default),
     create: () => import("./create").then((m) => m.default),
     update: () => import("./update").then((m) => m.default),
     enable: () => import("./enable").then((m) => m.default),

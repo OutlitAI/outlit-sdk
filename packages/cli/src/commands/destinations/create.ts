@@ -5,14 +5,14 @@ import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
 import { optionalTrimmedString, requiredTrimmedString } from "../../lib/platform-input"
 
-function parseDestinationType(type: string | undefined, json: boolean): "WEBHOOK_ENDPOINT" {
+function parseDestinationType(type: string | undefined, json: boolean): "SLACK_CHANNEL" {
   const normalized = optionalTrimmedString(type)?.toLowerCase()
-  if (normalized === "webhook" || normalized === "webhook_endpoint") {
-    return "WEBHOOK_ENDPOINT"
+  if (normalized === "slack" || normalized === "slack_channel") {
+    return "SLACK_CHANNEL"
   }
 
   return outputError(
-    { message: "--type must be webhook", code: normalized ? "invalid_input" : "missing_input" },
+    { message: "--type must be slack", code: normalized ? "invalid_input" : "missing_input" },
     json,
   )
 }
@@ -21,10 +21,10 @@ export default defineCommand({
   meta: {
     name: "create",
     description: [
-      "Create an Outlit automation destination.",
+      "Create an Outlit Slack channel destination.",
       "",
       "Examples:",
-      "  outlit destinations create --type webhook --name 'Customer ops' --url https://hooks.example.com/outlit --json",
+      "  outlit destinations create --type slack --channel-id C0123456789 --label '#customer-ops' --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -32,10 +32,9 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    type: { type: "string", description: "Destination type. Currently supports: webhook" },
-    name: { type: "string", description: "Destination name" },
-    url: { type: "string", description: "Webhook URL" },
-    description: { type: "string", description: "Optional destination description" },
+    type: { type: "string", description: "Destination type. Currently supports: slack" },
+    "channel-id": { type: "string", description: "Slack channel ID" },
+    label: { type: "string", description: "Slack channel label" },
     disabled: { type: "boolean", description: "Create the destination disabled" },
   },
   async run({ args }) {
@@ -47,10 +46,9 @@ export default defineCommand({
       "outlit_destination_create",
       {
         type: parseDestinationType(args.type, json),
-        name: requiredTrimmedString(args.name, "--name", json),
-        description: optionalTrimmedString(args.description),
+        channelId: requiredTrimmedString(args["channel-id"], "--channel-id", json),
+        label: requiredTrimmedString(args.label, "--label", json),
         enabled: !args.disabled,
-        url: requiredTrimmedString(args.url, "--url", json),
       },
       json,
       { spinnerMessage: "Creating destination..." },

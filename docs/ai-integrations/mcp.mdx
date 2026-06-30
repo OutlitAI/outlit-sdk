@@ -137,6 +137,10 @@ API-key authenticated MCP clients can also inspect and manage selected agent and
 | `outlit_agent_enable` | Enable one configured agent |
 | `outlit_agent_disable` | Disable one configured agent |
 | `outlit_agent_rename` | Rename one configured agent |
+| `outlit_agent_run_start` | Start a manual run for one configured legacy churn agent |
+| `outlit_agent_run_list` | List safe run summaries for one configured agent |
+| `outlit_agent_run_get` | Get safe run details for one configured agent run |
+| `outlit_automation_options` | Show automation schemas, constants, and constraints |
 | `outlit_automation_list` | List configured automations |
 | `outlit_automation_get` | Get one configured automation |
 | `outlit_automation_create` | Create an agent automation from an `agentId` |
@@ -144,19 +148,21 @@ API-key authenticated MCP clients can also inspect and manage selected agent and
 | `outlit_automation_enable` | Enable one configured automation |
 | `outlit_automation_disable` | Disable one configured automation |
 | `outlit_automation_archive` | Archive one configured automation |
+| `outlit_signal_options` | Show signal schemas, condition types, and default catalog keys |
 | `outlit_signal_list` | List configured automation signals |
 | `outlit_signal_get` | Get one configured automation signal |
 | `outlit_signal_create` | Create one automation signal |
 | `outlit_signal_update` | Update one automation signal |
 | `outlit_signal_archive` | Archive one configured automation signal |
+| `outlit_destination_options` | Show destination schemas and Slack channel options |
 | `outlit_destination_list` | List configured automation destinations with masked configuration |
 | `outlit_destination_get` | Get one configured automation destination with masked configuration |
-| `outlit_destination_create` | Create one automation destination |
+| `outlit_destination_create` | Create one Slack channel destination |
 | `outlit_destination_update` | Update one automation destination |
 | `outlit_destination_enable` | Enable one configured automation destination |
 | `outlit_destination_disable` | Disable one configured automation destination |
 | `outlit_destination_archive` | Archive one configured automation destination |
 
-Read tools require `agents:read`. Write tools require `agents:write`. Destination tools return masked configuration only.
+Read tools require `agents:read`. Write tools require `agents:write`. `outlit_destination_options` is non-mutating but requires `agents:write` because it lists Slack channel choices for destination creation. Destination tools return masked configuration only.
 
 See [Platform Actions](/ai-integrations/platform-actions) for the shared API, CLI, and MCP model behind these tools.
