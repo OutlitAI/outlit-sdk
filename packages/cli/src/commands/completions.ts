@@ -356,14 +356,11 @@ const COMMANDS: readonly CmdDef[] = [
       },
       {
         name: "update",
-        desc: "Update an automation destination",
+        desc: "Update a Slack channel destination",
         flags: [
           ...COMMON,
           { name: "--type", desc: "Destination type" },
-          { name: "--name", desc: "Webhook destination name" },
-          { name: "--url", desc: "Webhook URL" },
           { name: "--label", desc: "Slack channel label" },
-          { name: "--description", desc: "Destination description" },
           { name: "--default", desc: "Make this the default destination" },
           { name: "--enabled", desc: "Enable the destination after update" },
           { name: "--disabled", desc: "Disable the destination" },

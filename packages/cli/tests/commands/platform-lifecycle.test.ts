@@ -408,9 +408,9 @@ describe("platform lifecycle commands", () => {
       updateDestinationCmd.run!({
         args: {
           id: destinationId,
-          type: "webhook",
-          name: "Updated webhook",
-          description: "Updated",
+          type: "slack",
+          label: "#updated-ops",
+          disabled: true,
           json: true,
         },
       } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
@@ -435,9 +435,9 @@ describe("platform lifecycle commands", () => {
     })
     expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_destination_update", {
       id: destinationId,
-      type: "WEBHOOK_ENDPOINT",
-      name: "Updated webhook",
-      description: "Updated",
+      type: "SLACK_CHANNEL",
+      label: "#updated-ops",
+      enabled: false,
     })
     expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_destination_update", {
       id: destinationId,
@@ -454,7 +454,7 @@ describe("platform lifecycle commands", () => {
         updateDestinationCmd.run!({
           args: {
             id: "10000000-0000-4000-8000-000000000003",
-            type: "webhook",
+            type: "slack",
             json: true,
           },
         } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
@@ -471,7 +471,7 @@ describe("platform lifecycle commands", () => {
         updateDestinationCmd.run!({
           args: {
             id: "10000000-0000-4000-8000-000000000003",
-            name: "Updated webhook",
+            label: "#updated-ops",
             json: true,
           },
         } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
@@ -488,8 +488,8 @@ describe("platform lifecycle commands", () => {
         updateDestinationCmd.run!({
           args: {
             id: "10000000-0000-4000-8000-000000000003",
-            type: "email",
-            name: "Updated webhook",
+            type: "webhook",
+            label: "#updated-ops",
             enabled: true,
             json: true,
           },

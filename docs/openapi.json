@@ -1304,7 +1304,7 @@
         }
       }
     },
-    "/api/automations/{id}/runs": {
+    "/api/automations/{automationId}/runs": {
       "get": {
         "tags": ["Platform API"],
         "summary": "List automation runs",
@@ -1312,7 +1312,7 @@
         "operationId": "listAutomationRuns",
         "parameters": [
           {
-            "name": "id",
+            "name": "automationId",
             "in": "path",
             "required": true,
             "description": "Automation ID.",
@@ -1378,7 +1378,7 @@
             }
           },
           "404": {
-            "description": "No automation was found for the authenticated organization and requested id.",
+            "description": "No automation was found for the authenticated organization and requested automation ID.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1403,7 +1403,7 @@
         }
       }
     },
-    "/api/automations/{id}/runs/{runId}": {
+    "/api/automations/{automationId}/runs/{runId}": {
       "get": {
         "tags": ["Platform API"],
         "summary": "Get automation run",
@@ -1411,7 +1411,7 @@
         "operationId": "getAutomationRun",
         "parameters": [
           {
-            "name": "id",
+            "name": "automationId",
             "in": "path",
             "required": true,
             "description": "Automation ID.",
@@ -2459,7 +2459,7 @@
         }
       }
     },
-    "/api/agents/{id}/runs": {
+    "/api/agents/{agentId}/runs": {
       "get": {
         "tags": ["Platform API"],
         "summary": "List agent runs",
@@ -2467,7 +2467,7 @@
         "operationId": "listAgentRuns",
         "parameters": [
           {
-            "name": "id",
+            "name": "agentId",
             "in": "path",
             "required": true,
             "description": "Agent ID.",
@@ -2523,7 +2523,7 @@
             }
           },
           "404": {
-            "description": "No agent was found for the authenticated organization and requested id.",
+            "description": "No agent was found for the authenticated organization and requested agent ID.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2554,7 +2554,7 @@
         "operationId": "startAgentRun",
         "parameters": [
           {
-            "name": "id",
+            "name": "agentId",
             "in": "path",
             "required": true,
             "description": "Agent ID.",
@@ -2612,7 +2612,7 @@
             }
           },
           "404": {
-            "description": "No agent was found for the authenticated organization and requested id.",
+            "description": "No agent was found for the authenticated organization and requested agent ID.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2647,7 +2647,7 @@
         }
       }
     },
-    "/api/agents/{id}/runs/{runId}": {
+    "/api/agents/{agentId}/runs/{runId}": {
       "get": {
         "tags": ["Platform API"],
         "summary": "Get agent run",
@@ -2655,7 +2655,7 @@
         "operationId": "getAgentRun",
         "parameters": [
           {
-            "name": "id",
+            "name": "agentId",
             "in": "path",
             "required": true,
             "description": "Agent ID.",
@@ -3283,7 +3283,7 @@
       "patch": {
         "tags": ["Platform API"],
         "summary": "Update destination",
-        "description": "Update one automation destination. Responses include masked configuration only. Passing isDefault true on a Slack destination makes it the default fallback destination and enables it.",
+        "description": "Update one Slack channel automation destination. Responses include masked configuration only. Passing isDefault true makes it the default fallback destination and enables it.",
         "operationId": "updateDestination",
         "parameters": [
           {
@@ -8414,62 +8414,29 @@
         "additionalProperties": false
       },
       "UpdateDestinationRequest": {
-        "oneOf": [
-          {
-            "type": "object",
-            "required": ["type"],
-            "minProperties": 2,
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "WEBHOOK_ENDPOINT"
-              },
-              "name": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 120
-              },
-              "description": {
-                "type": ["string", "null"],
-                "maxLength": 1000
-              },
-              "enabled": {
-                "type": "boolean"
-              },
-              "url": {
-                "type": "string",
-                "format": "uri",
-                "pattern": "^(https://|http://(localhost|127\\.0\\.0\\.1|\\[::1\\]|::1)([:/]|$))"
-              }
-            },
-            "additionalProperties": false
+        "type": "object",
+        "required": ["type"],
+        "minProperties": 2,
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "SLACK_CHANNEL"
           },
-          {
-            "type": "object",
-            "required": ["type"],
-            "minProperties": 2,
-            "properties": {
-              "type": {
-                "type": "string",
-                "const": "SLACK_CHANNEL"
-              },
-              "label": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 120
-              },
-              "enabled": {
-                "type": "boolean"
-              },
-              "isDefault": {
-                "type": "boolean",
-                "const": true,
-                "description": "Set this Slack destination as the default fallback destination."
-              }
-            },
-            "additionalProperties": false
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "isDefault": {
+            "type": "boolean",
+            "const": true,
+            "description": "Set this Slack destination as the default fallback destination."
           }
-        ]
+        },
+        "additionalProperties": false
       },
       "UpdateAgentCommandSuccess": {
         "type": "object",
