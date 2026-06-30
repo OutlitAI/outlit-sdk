@@ -132,6 +132,41 @@ describe("platform lifecycle commands", () => {
     })
   })
 
+  test("runs automation run history commands", async () => {
+    const { default: listRunsCmd } = await import("../../src/commands/automations/runs/list")
+    const { default: getRunCmd } = await import("../../src/commands/automations/runs/get")
+
+    await captureStdout(() =>
+      listRunsCmd.run!({
+        args: {
+          automationId: "10000000-0000-4000-8000-000000000001",
+          limit: "5",
+          cursor: "cursor_123",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof listRunsCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      getRunCmd.run!({
+        args: {
+          automationId: "10000000-0000-4000-8000-000000000001",
+          runId: "10000000-0000-4000-8000-000000000006",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof getRunCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_automation_run_list", {
+      automationId: "10000000-0000-4000-8000-000000000001",
+      limit: 5,
+      cursor: "cursor_123",
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_automation_run_get", {
+      automationId: "10000000-0000-4000-8000-000000000001",
+      runId: "10000000-0000-4000-8000-000000000006",
+    })
+  })
+
   test("runs automation, signal, and destination lifecycle commands", async () => {
     const { default: automationArchiveCmd } = await import("../../src/commands/automations/archive")
     const { default: signalGetCmd } = await import("../../src/commands/signals/get")

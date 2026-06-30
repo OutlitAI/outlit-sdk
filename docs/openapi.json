@@ -1304,6 +1304,193 @@
         }
       }
     },
+    "/api/automations/{id}/runs": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "List automation runs",
+        "description": "List safe run summaries for one configured Outlit automation. Read-only.",
+        "operationId": "listAutomationRuns",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Automation ID.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum runs to return.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "Pagination cursor from the previous response.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Automation run summaries were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAutomationRunsCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The query parameters failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No automation was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not list automation runs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/automations/{id}/runs/{runId}": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get automation run",
+        "description": "Get safe run details for one configured Outlit automation run. Read-only.",
+        "operationId": "getAutomationRun",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Automation ID.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "description": "Automation run ID.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Automation run details were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAutomationRunCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The path parameters failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No automation run was found for the authenticated organization, automation, and requested run id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not get the automation run.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/signals/options": {
       "get": {
         "tags": ["Platform API"],
@@ -1696,6 +1883,530 @@
           },
           "503": {
             "description": "The platform could not complete the command.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get workspace settings",
+        "description": "Get workspace-level settings used by Outlit agents and automations.",
+        "operationId": "getWorkspaceSettings",
+        "responses": {
+          "200": {
+            "description": "Workspace settings were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSettingsCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not get workspace settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Platform API"],
+        "summary": "Update workspace settings",
+        "description": "Update workspace-level settings used by Outlit agents and automations.",
+        "operationId": "updateWorkspaceSettings",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkspaceSettingsRequest"
+              },
+              "example": {
+                "defaultTimezone": "America/Los_Angeles"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workspace settings were updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateSettingsCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not update workspace settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings/report": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get report settings",
+        "description": "Get the Slack report channel settings for the workspace.",
+        "operationId": "getReportSettings",
+        "responses": {
+          "200": {
+            "description": "Report settings were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetReportSettingsCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not get report settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Platform API"],
+        "summary": "Update report settings",
+        "description": "Update the Slack channel used for workspace reports.",
+        "operationId": "updateReportSettings",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateReportSettingsRequest"
+              },
+              "example": {
+                "slackChannelId": "C0123456789",
+                "slackChannelName": "sales-alerts"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Report settings were updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateReportSettingsCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not update report settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings/report/options": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get report settings options",
+        "description": "Search available Slack channels for report settings.",
+        "operationId": "getReportSettingsOptions",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Filter Slack channels by channel name or ID.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum Slack channels to return.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Report settings options were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportSettingsOptionsCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request query failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not get report settings options.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings/notifications": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get notification settings",
+        "description": "Get notification destination settings used by agents and automations.",
+        "operationId": "getNotificationSettings",
+        "responses": {
+          "200": {
+            "description": "Notification settings were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetNotificationSettingsCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not get notification settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings/notifications/options": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get notification settings options",
+        "description": "Search available Slack channels for notification settings.",
+        "operationId": "getNotificationSettingsOptions",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Filter Slack channels by channel name or ID.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum Slack channels to return.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification settings options were returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettingsOptionsCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request query failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not get notification settings options.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings/notifications/default": {
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Set default notification destination",
+        "description": "Set the default Slack-backed notification destination for the workspace.",
+        "operationId": "setDefaultNotificationDestination",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDefaultNotificationDestinationRequest"
+              },
+              "example": {
+                "destinationId": "10000000-0000-4000-8000-000000000003"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default notification destination was set.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetDefaultNotificationDestinationCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed command validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have the required agent write scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No notification destination was found for the authenticated organization and requested id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The requested change conflicts with the current platform state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not set the default notification destination.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3946,6 +4657,379 @@
         },
         "additionalProperties": false
       },
+      "AutomationRunDeliverySummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "sourceType",
+          "sourceId",
+          "automationRunId",
+          "agentOutputId",
+          "destinationId",
+          "provider",
+          "providerEventId",
+          "status",
+          "queuedAt",
+          "enqueueAttemptCount",
+          "lastEnqueueAttemptAt",
+          "publishedAt",
+          "errorCode",
+          "errorMessage",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": ["AUTOMATION_RUN", "AGENT_OUTPUT"]
+          },
+          "sourceId": {
+            "type": ["string", "null"]
+          },
+          "automationRunId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "agentOutputId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "destinationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/DestinationProvider"
+          },
+          "providerEventId": {
+            "type": ["string", "null"]
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING_ENQUEUE", "ENQUEUED", "ACCEPTED_BY_PROVIDER", "FAILED", "SKIPPED"]
+          },
+          "queuedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "enqueueAttemptCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lastEnqueueAttemptAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "publishedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "errorCode": {
+            "type": ["string", "null"]
+          },
+          "errorMessage": {
+            "type": ["string", "null"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationRunOccurrenceSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "signalId",
+          "grain",
+          "subjectType",
+          "subjectId",
+          "customerId",
+          "occurredAt",
+          "detectedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "signalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "grain": {
+            "type": "string",
+            "enum": ["ORGANIZATION", "CUSTOMER", "SEGMENT"]
+          },
+          "subjectType": {
+            "type": "string",
+            "enum": ["ORGANIZATION", "CUSTOMER", "SEGMENT"]
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": ["string", "null"]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "detectedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationRunSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "automationId",
+          "triggerType",
+          "status",
+          "dedupeKey",
+          "eventProcessedId",
+          "eventName",
+          "eventChannel",
+          "eventOccurredAt",
+          "matchedAt",
+          "destinationCount",
+          "acceptedDestinationCount",
+          "failedDestinationCount",
+          "agentRunId",
+          "skipReason",
+          "errorCode",
+          "errorMessage",
+          "createdAt",
+          "updatedAt",
+          "deliveries",
+          "occurrences"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "automationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "triggerType": {
+            "$ref": "#/components/schemas/AutomationTriggerType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AutomationRunStatus"
+          },
+          "dedupeKey": {
+            "type": ["string", "null"]
+          },
+          "eventProcessedId": {
+            "type": ["string", "null"]
+          },
+          "eventName": {
+            "type": ["string", "null"]
+          },
+          "eventChannel": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EventChannel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "eventOccurredAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "matchedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "destinationCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "acceptedDestinationCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "failedDestinationCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "agentRunId": {
+            "type": ["string", "null"]
+          },
+          "skipReason": {
+            "type": ["string", "null"]
+          },
+          "errorCode": {
+            "type": ["string", "null"]
+          },
+          "errorMessage": {
+            "type": ["string", "null"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationRunDeliverySummary"
+            }
+          },
+          "occurrences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationRunOccurrenceSummary"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutomationRunDetail": {
+        "$ref": "#/components/schemas/AutomationRunSummary"
+      },
+      "ListAutomationRunsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "automation.run.list"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "automation.run.list"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["runs", "pagination"],
+                    "properties": {
+                      "runs": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/AutomationRunSummary"
+                        }
+                      },
+                      "pagination": {
+                        "type": "object",
+                        "required": ["hasMore", "nextCursor"],
+                        "properties": {
+                          "hasMore": {
+                            "type": "boolean"
+                          },
+                          "nextCursor": {
+                            "type": ["string", "null"]
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetAutomationRunCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "automation.run.get"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "automation.run.get"
+                  },
+                  "data": {
+                    "type": "object",
+                    "required": ["run"],
+                    "properties": {
+                      "run": {
+                        "$ref": "#/components/schemas/AutomationRunDetail"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "JsonSchemaObject": {
         "type": "object",
         "additionalProperties": true
@@ -4079,6 +5163,486 @@
           },
           "isPrivate": {
             "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateWorkspaceSettingsRequest": {
+        "type": "object",
+        "required": ["defaultTimezone"],
+        "properties": {
+          "defaultTimezone": {
+            "type": "string",
+            "description": "IANA timezone used as the workspace default."
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkspaceSettingsData": {
+        "type": "object",
+        "required": ["settings"],
+        "properties": {
+          "settings": {
+            "type": "object",
+            "required": ["defaultTimezone"],
+            "properties": {
+              "defaultTimezone": {
+                "type": "string",
+                "description": "IANA timezone used as the workspace default."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateReportSettingsRequest": {
+        "type": "object",
+        "required": ["slackChannelId", "slackChannelName"],
+        "properties": {
+          "slackChannelId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "slackChannelName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReportSettingsData": {
+        "type": "object",
+        "required": ["report"],
+        "properties": {
+          "report": {
+            "type": "object",
+            "required": ["slackChannelId", "slackChannelName"],
+            "properties": {
+              "slackChannelId": {
+                "type": ["string", "null"],
+                "minLength": 1,
+                "maxLength": 191
+              },
+              "slackChannelName": {
+                "type": ["string", "null"],
+                "minLength": 1,
+                "maxLength": 120
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "SettingsSlackOptionsData": {
+        "type": "object",
+        "required": ["slack"],
+        "properties": {
+          "slack": {
+            "$ref": "#/components/schemas/DestinationOptionsSlackData"
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotificationDestinationSettings": {
+        "type": "object",
+        "required": ["id", "provider", "channelId", "label", "isDefault", "isEnabled"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string",
+            "const": "slack"
+          },
+          "channelId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotificationSettingsData": {
+        "type": "object",
+        "required": ["notifications"],
+        "properties": {
+          "notifications": {
+            "type": "object",
+            "required": ["defaultDestinationId", "defaultDestinations", "slackDestinations"],
+            "properties": {
+              "defaultDestinationId": {
+                "type": ["string", "null"],
+                "format": "uuid"
+              },
+              "defaultDestinations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NotificationDestinationSettings"
+                }
+              },
+              "slackDestinations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/NotificationDestinationSettings"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "SetDefaultNotificationDestinationRequest": {
+        "type": "object",
+        "required": ["destinationId"],
+        "properties": {
+          "destinationId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetSettingsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "settings.get"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "settings.get"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/WorkspaceSettingsData"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateSettingsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "settings.update"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "settings.update"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/WorkspaceSettingsData"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetReportSettingsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "settings.report.get"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "settings.report.get"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/ReportSettingsData"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateReportSettingsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "settings.report.update"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "settings.report.update"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/ReportSettingsData"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReportSettingsOptionsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "settings.report.options"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "settings.report.options"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/SettingsSlackOptionsData"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetNotificationSettingsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "settings.notifications.get"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "settings.notifications.get"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/NotificationSettingsData"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotificationSettingsOptionsCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "settings.notifications.options"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "settings.notifications.options"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/SettingsSlackOptionsData"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "SetDefaultNotificationDestinationCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "settings.notifications.default.set"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "settings.notifications.default.set"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/NotificationSettingsData"
+                  }
+                }
+              }
+            ]
           }
         },
         "additionalProperties": false
@@ -4395,7 +5959,7 @@
                     "required": ["agent"],
                     "properties": {
                       "agent": {
-                        "$ref": "#/components/schemas/AgentSummary"
+                        "$ref": "#/components/schemas/AgentDetail"
                       }
                     },
                     "additionalProperties": false
@@ -6232,7 +7796,7 @@
                     "required": ["destination"],
                     "properties": {
                       "destination": {
-                        "$ref": "#/components/schemas/DestinationRead"
+                        "$ref": "#/components/schemas/DestinationDetailRead"
                       }
                     },
                     "additionalProperties": false
@@ -8473,6 +10037,611 @@
           },
           "slack": {
             "$ref": "#/components/schemas/DestinationOptionsSlackData"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentScheduleDetail": {
+        "type": "object",
+        "required": ["enabled", "nextRunAt", "lastRunAt", "lastSuccessfulRunAt", "cadence"],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "nextRunAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "lastRunAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "lastSuccessfulRunAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "cadence": {
+            "type": ["string", "null"],
+            "enum": ["daily", "weekly", null]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentDetailDestinationSummary": {
+        "type": "object",
+        "required": ["destinations", "label", "count", "missing"],
+        "properties": {
+          "destinations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "provider", "channelId", "label", "isDefault"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "provider": {
+                  "type": "string",
+                  "const": "slack"
+                },
+                "channelId": {
+                  "type": ["string", "null"]
+                },
+                "label": {
+                  "type": ["string", "null"]
+                },
+                "isDefault": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "label": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "missing": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentDetailAutomationSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "enabled",
+          "conditionKind",
+          "conditionLabel",
+          "audienceLabel",
+          "destinationLabel",
+          "destinationCount",
+          "lastRunStatus",
+          "lastRunAt",
+          "nextRunAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "conditionKind": {
+            "type": "string",
+            "enum": [
+              "schedule",
+              "event_happens",
+              "activity_spikes",
+              "activity_stops",
+              "customer_activity_threshold",
+              "customer_activity_drop",
+              "related_user_inactivity",
+              "unknown"
+            ]
+          },
+          "conditionLabel": {
+            "type": "string"
+          },
+          "audienceLabel": {
+            "type": "string"
+          },
+          "destinationLabel": {
+            "type": "string"
+          },
+          "destinationCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lastRunStatus": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AutomationRunStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastRunAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "nextRunAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentDetailAutomationRollup": {
+        "type": "object",
+        "required": ["activeCount", "totalCount", "nextRunAt", "primaryDestinationLabel"],
+        "properties": {
+          "activeCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nextRunAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "primaryDestinationLabel": {
+            "type": ["string", "null"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomAgentSettingsSummary": {
+        "type": "object",
+        "required": [
+          "instructions",
+          "surfaceCriteria",
+          "skipCriteria",
+          "maxItemsToSurface",
+          "outputMode"
+        ],
+        "properties": {
+          "instructions": {
+            "type": "string"
+          },
+          "surfaceCriteria": {
+            "type": "string"
+          },
+          "skipCriteria": {
+            "type": ["string", "null"]
+          },
+          "maxItemsToSurface": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "outputMode": {
+            "type": ["string", "null"],
+            "enum": ["alert", "digest", "action_list", null]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentDetailSettings": {
+        "type": "object",
+        "required": ["configSchemaKey", "configSchemaVersion", "custom"],
+        "properties": {
+          "configSchemaKey": {
+            "type": "string"
+          },
+          "configSchemaVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "custom": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CustomAgentSettingsSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentDetail": {
+        "type": "object",
+        "required": [
+          "id",
+          "agentKey",
+          "displayName",
+          "status",
+          "templateVersion",
+          "actionKeys",
+          "createdAt",
+          "updatedAt",
+          "schedule",
+          "destinationSummary",
+          "automationSummary",
+          "automations",
+          "lastRun",
+          "recentRuns",
+          "settings"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "agentKey": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentStatus"
+          },
+          "templateVersion": {
+            "type": "string"
+          },
+          "actionKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "schedule": {
+            "$ref": "#/components/schemas/AgentScheduleDetail"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "destinationSummary": {
+            "$ref": "#/components/schemas/AgentDetailDestinationSummary"
+          },
+          "automationSummary": {
+            "$ref": "#/components/schemas/AgentDetailAutomationRollup"
+          },
+          "automations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentDetailAutomationSummary"
+            }
+          },
+          "lastRun": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentRunSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recentRuns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentRunSummary"
+            }
+          },
+          "settings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentDetailSettings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "DestinationRouteSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "enabled",
+          "triggerType",
+          "agentId",
+          "lastRunStatus",
+          "lastRunAt",
+          "nextRunAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "triggerType": {
+            "$ref": "#/components/schemas/AutomationTriggerType"
+          },
+          "agentId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "lastRunStatus": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AutomationRunStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastRunAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "nextRunAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DestinationDeliverySummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "sourceType",
+          "sourceId",
+          "automationRunId",
+          "agentOutputId",
+          "destinationId",
+          "provider",
+          "providerEventId",
+          "status",
+          "queuedAt",
+          "publishedAt",
+          "errorCode",
+          "errorMessage",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": ["string", "null"]
+          },
+          "automationRunId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "agentOutputId": {
+            "type": ["string", "null"]
+          },
+          "destinationId": {
+            "type": ["string", "null"],
+            "format": "uuid"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/DestinationProvider"
+          },
+          "providerEventId": {
+            "type": ["string", "null"]
+          },
+          "status": {
+            "$ref": "#/components/schemas/DeliveryStatus"
+          },
+          "queuedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "publishedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "errorCode": {
+            "type": ["string", "null"]
+          },
+          "errorMessage": {
+            "type": ["string", "null"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DestinationDeliveryRollup": {
+        "type": "object",
+        "required": [
+          "recentCount",
+          "pendingCount",
+          "acceptedCount",
+          "failedCount",
+          "skippedCount",
+          "lastDeliveryAt"
+        ],
+        "properties": {
+          "recentCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "pendingCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "acceptedCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "failedCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "skippedCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "lastDeliveryAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DestinationDetailRead": {
+        "type": "object",
+        "required": [
+          "id",
+          "key",
+          "name",
+          "description",
+          "provider",
+          "kind",
+          "enabled",
+          "maskedConfig",
+          "syncStatus",
+          "lastSyncedAt",
+          "providerErrorCode",
+          "providerErrorMessage",
+          "isDefault",
+          "schemaVersion",
+          "configHash",
+          "archivedAt",
+          "createdAt",
+          "updatedAt",
+          "routes",
+          "automations",
+          "recentDeliveries",
+          "deliverySummary"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": ["string", "null"]
+          },
+          "provider": {
+            "$ref": "#/components/schemas/DestinationProvider"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/DestinationKind"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "maskedConfig": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": true
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "syncStatus": {
+            "$ref": "#/components/schemas/DestinationSyncStatus"
+          },
+          "lastSyncedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "providerErrorCode": {
+            "type": ["string", "null"]
+          },
+          "providerErrorMessage": {
+            "type": ["string", "null"]
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "schemaVersion": {
+            "type": "string"
+          },
+          "configHash": {
+            "type": ["string", "null"]
+          },
+          "archivedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "routes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DestinationRouteSummary"
+            }
+          },
+          "automations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DestinationRouteSummary"
+            }
+          },
+          "recentDeliveries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DestinationDeliverySummary"
+            }
+          },
+          "deliverySummary": {
+            "$ref": "#/components/schemas/DestinationDeliveryRollup"
           }
         },
         "additionalProperties": false

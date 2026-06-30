@@ -22,7 +22,7 @@ export default defineCommand({
       "  outlit destinations get 10000000-0000-4000-8000-000000000003 --json",
       "  outlit destinations options --json",
       "  outlit destinations create --type slack --channel-id C0123456789 --label '#customer-ops' --json",
-      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type webhook --name 'Customer ops' --json",
+      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --label '#customer-ops' --json",
       "  outlit destinations enable 10000000-0000-4000-8000-000000000003 --json",
       "  outlit destinations disable 10000000-0000-4000-8000-000000000003 --json",
       "  outlit destinations archive 10000000-0000-4000-8000-000000000003 --json",

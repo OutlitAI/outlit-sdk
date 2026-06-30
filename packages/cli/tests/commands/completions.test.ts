@@ -29,6 +29,7 @@ describe("completions command", () => {
     expect(out).toContain("facts")
     expect(out).toContain("sources")
     expect(out).toContain("ws-users")
+    expect(out).toContain("settings")
     expect(out).not.toContain("workspace-users")
   })
 
@@ -51,6 +52,12 @@ describe("completions command", () => {
       `[[ $COMP_CWORD -eq 3 && "${bashCompWord(1)}" == "agents" && "${bashCompWord(2)}" == "runs" ]]`,
     )
     expect(out).toContain('COMPREPLY=($(compgen -W "list get start" -- "$cur"))')
+    expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "settings" ]]`)
+    expect(out).toContain('COMPREPLY=($(compgen -W "get update report notifications" -- "$cur"))')
+    expect(out).toContain(
+      `[[ $COMP_CWORD -eq 4 && "${bashCompWord(1)}" == "settings" && "${bashCompWord(2)}" == "notifications" && "${bashCompWord(3)}" == "default" ]]`,
+    )
+    expect(out).toContain('COMPREPLY=($(compgen -W "set" -- "$cur"))')
   })
 
   test("bash — flag completions for updated commands", async () => {
@@ -71,6 +78,11 @@ describe("completions command", () => {
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --owner-id --owner-email --has-owner --search"',
     )
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --client-request-id"')
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --default-timezone"')
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --slack-channel-id --slack-channel-name"',
+    )
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --destination-id"')
   })
 
   // ── Zsh ─────────────────────────────────────────────────────────────────
@@ -81,6 +93,7 @@ describe("completions command", () => {
     expect(out).toContain("CURRENT == 2")
     expect(out).toContain("'auth:Manage authentication'")
     expect(out).toContain("'ws-users:Workspace-user operations'")
+    expect(out).toContain("'settings:Configure workspace settings'")
     expect(out).not.toContain("workspace-users")
   })
 
@@ -137,6 +150,22 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd agents runs' -a start")
     expect(out).toContain("-n '__outlit_using_cmd agents runs list' -l limit")
     expect(out).toContain("-n '__outlit_using_cmd agents runs start' -l client-request-id")
+    expect(out).toContain("-n '__outlit_using_cmd automations' -a runs")
+    expect(out).toContain("-n '__outlit_using_cmd automations runs' -a list")
+    expect(out).toContain("-n '__outlit_using_cmd automations runs list' -l limit")
+    expect(out).toContain("-n '__outlit_using_cmd automations runs list' -l cursor")
+    expect(out).toContain("-n '__outlit_using_cmd settings' -a get")
+    expect(out).toContain("-n '__outlit_using_cmd settings report' -a options")
+    expect(out).toContain("-n '__outlit_using_cmd settings notifications default' -a set")
+    expect(out).toContain("-n '__outlit_using_cmd settings update' -l default-timezone")
+    expect(out).toContain("-n '__outlit_using_cmd settings report update' -l slack-channel-id")
+    expect(out).toContain("-n '__outlit_using_cmd settings report options' -l search")
+    expect(out).toContain("-n '__outlit_using_cmd settings report options' -l limit")
+    expect(out).toContain("-n '__outlit_using_cmd settings notifications options' -l search")
+    expect(out).toContain("-n '__outlit_using_cmd settings notifications options' -l limit")
+    expect(out).toContain(
+      "-n '__outlit_using_cmd settings notifications default set' -l destination-id",
+    )
     expect(out).toContain("-n '__outlit_using_cmd setup' -l yes")
     expect(out).toContain("-n '__outlit_using_cmd setup claude-code' -l json")
     expect(out).toContain("-n '__outlit_using_cmd setup opencode' -l json")

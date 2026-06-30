@@ -407,7 +407,7 @@ describe("client.callTool()", () => {
       },
     }
     const fetchSpy = spyOn(globalThis, "fetch")
-    for (let i = 0; i < 6; i += 1) {
+    for (let i = 0; i < 8; i += 1) {
       fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(okEnvelope), { status: 200 }))
     }
 
@@ -428,6 +428,15 @@ describe("client.callTool()", () => {
       agentId: "agent_123",
       runId: "run_123",
     })
+    await client.callTool("outlit_automation_run_list", {
+      automationId: "10000000-0000-4000-8000-000000000001",
+      limit: 5,
+      cursor: "cursor_123",
+    })
+    await client.callTool("outlit_automation_run_get", {
+      automationId: "10000000-0000-4000-8000-000000000001",
+      runId: "10000000-0000-4000-8000-000000000006",
+    })
 
     const urls = fetchSpy.mock.calls.map((call) => call[0] as string)
     expect(urls[0]).toContain("/api/automations/options")
@@ -436,6 +445,12 @@ describe("client.callTool()", () => {
     expect(urls[3]).toContain("/api/agents/agent_123/runs")
     expect(urls[4]).toContain("/api/agents/agent_123/runs?limit=5&cursor=cursor_123")
     expect(urls[5]).toContain("/api/agents/agent_123/runs/run_123")
+    expect(urls[6]).toContain(
+      "/api/automations/10000000-0000-4000-8000-000000000001/runs?limit=5&cursor=cursor_123",
+    )
+    expect(urls[7]).toContain(
+      "/api/automations/10000000-0000-4000-8000-000000000001/runs/10000000-0000-4000-8000-000000000006",
+    )
 
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("GET")
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).body).toBeUndefined()
@@ -445,6 +460,85 @@ describe("client.callTool()", () => {
     )
     expect((fetchSpy.mock.calls[4]?.[1] as RequestInit).method).toBe("GET")
     expect((fetchSpy.mock.calls[5]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[6]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[7]?.[1] as RequestInit).method).toBe("GET")
+    for (const url of urls) {
+      expect(url).not.toContain("/api/tools/call")
+    }
+
+    fetchSpy.mockRestore()
+  })
+
+  test("keeps settings platform actions on direct public API endpoints", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const okEnvelope = {
+      ok: true,
+      commandId: "settings.test",
+      commandVersion: 1,
+      correlationId: "corr_settings_123",
+      result: {
+        operationId: "settings.test",
+        status: "completed",
+        resources: [],
+        data: {},
+        warnings: [],
+      },
+    }
+    const fetchSpy = spyOn(globalThis, "fetch")
+    for (let i = 0; i < 8; i += 1) {
+      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(okEnvelope), { status: 200 }))
+    }
+
+    const client = await createClient()
+    await client.callTool("outlit_settings_get", {})
+    await client.callTool("outlit_settings_update", {
+      defaultTimezone: "America/Los_Angeles",
+    })
+    await client.callTool("outlit_settings_report_get", {})
+    await client.callTool("outlit_settings_report_update", {
+      slackChannelId: "C123",
+      slackChannelName: "sales-alerts",
+    })
+    await client.callTool("outlit_settings_report_options", { search: "sales", limit: 10 })
+    await client.callTool("outlit_settings_notifications_get", {})
+    await client.callTool("outlit_settings_notifications_options", { search: "ops", limit: 12 })
+    await client.callTool("outlit_settings_notifications_default_set", {
+      destinationId: "10000000-0000-4000-8000-000000000003",
+    })
+
+    const urls = fetchSpy.mock.calls.map((call) => call[0] as string)
+    expect(urls[0]).toContain("/api/settings")
+    expect(urls[1]).toContain("/api/settings")
+    expect(urls[2]).toContain("/api/settings/report")
+    expect(urls[3]).toContain("/api/settings/report")
+    expect(urls[4]).toContain("/api/settings/report/options?search=sales&limit=10")
+    expect(urls[5]).toContain("/api/settings/notifications")
+    expect(urls[6]).toContain("/api/settings/notifications/options?search=ops&limit=12")
+    expect(urls[7]).toContain("/api/settings/notifications/default")
+
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[1]?.[1] as RequestInit).method).toBe("PATCH")
+    expect((fetchSpy.mock.calls[1]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({ defaultTimezone: "America/Los_Angeles" }),
+    )
+    expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).method).toBe("PATCH")
+    expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({
+        slackChannelId: "C123",
+        slackChannelName: "sales-alerts",
+      }),
+    )
+    expect((fetchSpy.mock.calls[4]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[5]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[6]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[7]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[7]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({ destinationId: "10000000-0000-4000-8000-000000000003" }),
+    )
     for (const url of urls) {
       expect(url).not.toContain("/api/tools/call")
     }
