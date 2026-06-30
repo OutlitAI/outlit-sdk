@@ -688,18 +688,18 @@ outlit destinations archive <id> [flags]
 outlit destinations list --json
 outlit destinations get 10000000-0000-4000-8000-000000000003 --json
 outlit destinations options --search ops --json
-outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --json
-outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --label "#customer-ops" --json
+outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --default --json
+outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --default --json
 outlit destinations enable 10000000-0000-4000-8000-000000000003 --json
 outlit destinations disable 10000000-0000-4000-8000-000000000003 --json
 outlit destinations archive 10000000-0000-4000-8000-000000000003 --json
 ```
 
-Destination list results are under `result.data.destinations`; get, create, update, enable, and disable results are under `result.data.destination`. New destination creation is Slack-channel backed; use `destinations options` to inspect Slack connection status and available channel IDs. `destinations options` is non-mutating but requires `agents:write` because it lists Slack channel choices used to create destinations. `destinations update` patches only the fields you pass; use `--type slack` for Slack-backed destinations. Archive results return `result.data.destination.id` and `result.data.destination.archivedAt`. Raw destination secrets and unmasked provider configuration are not returned.
+Destination list results are under `result.data.destinations`; get, create, update, enable, and disable results are under `result.data.destination`. New destination creation is Slack-channel backed; use `destinations options` to inspect Slack connection status and available channel IDs. `destinations options` is non-mutating but requires `agents:write` because it lists Slack channel choices used to create destinations. Use `--default` on `destinations create` or `destinations update` to make a Slack destination the default fallback. `destinations update` patches only the fields you pass; use `--type slack` for Slack-backed destinations. Archive results return `result.data.destination.id` and `result.data.destination.archivedAt`. Raw destination secrets and unmasked provider configuration are not returned.
 
 ## Settings
 
-Inspect and configure selected workspace, report, and notification settings.
+Inspect and configure selected workspace and report settings. Slack-backed delivery destinations are managed with the top-level `destinations` commands.
 
 ```bash
 outlit settings get [flags]
@@ -707,9 +707,6 @@ outlit settings update --default-timezone <iana-timezone> [flags]
 outlit settings report get [flags]
 outlit settings report update --slack-channel-id <channel-id> --slack-channel-name <name> [flags]
 outlit settings report options [--search <text>] [--limit <count>] [flags]
-outlit settings notifications get [flags]
-outlit settings notifications options [--search <text>] [--limit <count>] [flags]
-outlit settings notifications default set --destination-id <id> [flags]
 ```
 
 ### Examples
@@ -720,12 +717,11 @@ outlit settings update --default-timezone America/Los_Angeles --json
 outlit settings report get --json
 outlit settings report options --search sales --limit 20 --json
 outlit settings report update --slack-channel-id C0123456789 --slack-channel-name sales-alerts --json
-outlit settings notifications get --json
-outlit settings notifications options --search ops --limit 20 --json
-outlit settings notifications default set --destination-id 10000000-0000-4000-8000-000000000003 --json
+outlit destinations list --json
+outlit destinations options --search ops --limit 20 --json
 ```
 
-Workspace settings are under `result.data.settings`. Report settings are under `result.data.report`. Notification settings are under `result.data.notifications`. The report and notification options commands return Slack connection status and bounded channel choices so agents can choose valid IDs before updating settings; use `--search` to filter channels by name or ID and `--limit` to bound results from 1 to 100. Read commands require `agents:read`; update and default-selection commands require `agents:write`.
+Workspace settings are under `result.data.settings`. Report settings are under `result.data.report`. The report options command returns Slack connection status and bounded channel choices so agents can choose valid IDs before updating report settings; use `--search` to filter channels by name or ID and `--limit` to bound results from 1 to 100. Read commands require `agents:read`; update commands require `agents:write`. Default delivery destination selection is handled by `outlit destinations create --default` or `outlit destinations update --default`.
 
 ## SQL
 

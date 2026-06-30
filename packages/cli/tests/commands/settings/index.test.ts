@@ -42,10 +42,11 @@ describe("settings command", () => {
     const meta =
       typeof metaSource === "function" ? await metaSource() : await Promise.resolve(metaSource)
 
-    expect(subcommands).toEqual(["get", "update", "report", "notifications"])
+    expect(subcommands).toEqual(["get", "update", "report"])
     expect(subcommands).not.toContain("default-timezone")
     expect(meta?.description).toContain("settings report get")
-    expect(meta?.description).toContain("settings notifications default set")
+    expect(meta?.description).toContain("destinations options")
+    expect(meta?.description).not.toContain("settings notifications")
   })
 
   test("gets and updates workspace settings through settings tools", async () => {

@@ -350,6 +350,7 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--type", desc: "Destination type" },
           { name: "--channel-id", desc: "Slack channel ID" },
           { name: "--label", desc: "Slack channel label" },
+          { name: "--default", desc: "Make this the default destination" },
           { name: "--disabled", desc: "Create the destination disabled" },
         ],
       },
@@ -363,6 +364,7 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--url", desc: "Webhook URL" },
           { name: "--label", desc: "Slack channel label" },
           { name: "--description", desc: "Destination description" },
+          { name: "--default", desc: "Make this the default destination" },
           { name: "--enabled", desc: "Enable the destination after update" },
           { name: "--disabled", desc: "Disable the destination" },
         ],
@@ -403,36 +405,6 @@ const COMMANDS: readonly CmdDef[] = [
               ...COMMON,
               { name: "--search", desc: "Search Slack channels" },
               { name: "--limit", desc: "Max Slack channels (1-100)" },
-            ],
-          },
-        ],
-      },
-      {
-        name: "notifications",
-        desc: "Configure notification settings",
-        subs: [
-          { name: "get", desc: "Get notification settings", flags: [...COMMON] },
-          {
-            name: "options",
-            desc: "Show notification settings options",
-            flags: [
-              ...COMMON,
-              { name: "--search", desc: "Search Slack channels" },
-              { name: "--limit", desc: "Max Slack channels (1-100)" },
-            ],
-          },
-          {
-            name: "default",
-            desc: "Configure the default notification destination",
-            subs: [
-              {
-                name: "set",
-                desc: "Set the default notification destination",
-                flags: [
-                  ...COMMON,
-                  { name: "--destination-id", desc: "Notification destination ID" },
-                ],
-              },
             ],
           },
         ],

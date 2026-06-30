@@ -210,18 +210,6 @@ const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST" | "PATCH"; pat
     method: "GET",
     path: "/api/settings/report/options",
   },
-  outlit_settings_notifications_get: {
-    method: "GET",
-    path: "/api/settings/notifications",
-  },
-  outlit_settings_notifications_options: {
-    method: "GET",
-    path: "/api/settings/notifications/options",
-  },
-  outlit_settings_notifications_default_set: {
-    method: "POST",
-    path: "/api/settings/notifications/default",
-  },
 }
 
 function resolvePathParams(

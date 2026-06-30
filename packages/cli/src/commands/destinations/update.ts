@@ -42,6 +42,7 @@ export default defineCommand({
       "",
       "Examples:",
       "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --label '#customer-ops' --json",
+      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --default --json",
       "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --disabled --json",
       "",
       AGENT_JSON_HINT,
@@ -63,6 +64,7 @@ export default defineCommand({
     url: { type: "string", description: "Optional webhook URL" },
     label: { type: "string", description: "Slack channel label" },
     description: { type: "string", description: "Optional destination description" },
+    default: { type: "boolean", description: "Make this the default destination" },
     enabled: { type: "boolean", description: "Enable the destination after update" },
     disabled: { type: "boolean", description: "Disable the destination" },
   },
@@ -77,6 +79,18 @@ export default defineCommand({
       },
       json,
     )
+    if (args.default === true && args.disabled === true) {
+      return outputError(
+        { message: "Use either --default or --disabled, not both", code: "invalid_input" },
+        json,
+      )
+    }
+    if (args.default === true && type !== "SLACK_CHANNEL") {
+      return outputError(
+        { message: "--default is only supported for Slack destinations", code: "invalid_input" },
+        json,
+      )
+    }
     const input =
       type === "SLACK_CHANNEL"
         ? {
@@ -86,6 +100,7 @@ export default defineCommand({
               ? { label: optionalTrimmedString(args.label ?? args.name) }
               : {}),
             ...(enabled !== undefined ? { enabled } : {}),
+            ...(args.default === true ? { isDefault: true } : {}),
           }
         : {
             id: args.id,
@@ -103,7 +118,8 @@ export default defineCommand({
       !("description" in input) &&
       !("url" in input) &&
       !("label" in input) &&
-      !("enabled" in input)
+      !("enabled" in input) &&
+      !("isDefault" in input)
     ) {
       return outputError(
         {
