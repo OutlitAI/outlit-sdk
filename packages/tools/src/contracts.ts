@@ -41,6 +41,7 @@ export const customerSourceTypeInputs = [
 export const customerToolContracts = {
   outlit_list_customers: {
     toolName: "outlit_list_customers",
+    title: "List Customers",
     description:
       "Browse and filter customers. Use this to find customers by billing status, activity recency, revenue, or name. Returns a paginated list with summary info (MRR, last activity, status).",
     inputSchema: {
@@ -142,6 +143,7 @@ export const customerToolContracts = {
   },
   outlit_list_users: {
     toolName: "outlit_list_users",
+    title: "List Users",
     description:
       "Browse and filter users. Use this to find users by journey stage, activity recency, customer, or email/name. Returns a paginated list with activity info.",
     inputSchema: {
@@ -226,6 +228,7 @@ export const customerToolContracts = {
   },
   outlit_list_workspace_users: {
     toolName: "outlit_list_workspace_users",
+    title: "List Workspace Users",
     description:
       "Browse internal workspace users such as CSMs, managers, account owners, and admins. Use this to discover who owns customers before composing dynamic reports across account books.",
     inputSchema: {
@@ -280,6 +283,7 @@ export const customerToolContracts = {
   },
   outlit_get_customer: {
     toolName: "outlit_get_customer",
+    title: "Get Customer",
     description:
       "Get full details for a single customer. Use this when you already know which customer you want to inspect. Optionally include related data (users, revenue, recent activity, engagement metrics).",
     inputSchema: {
@@ -311,6 +315,7 @@ export const customerToolContracts = {
   },
   outlit_get_timeline: {
     toolName: "outlit_get_timeline",
+    title: "Get Customer Timeline",
     description:
       "Get the chronological activity timeline for a customer. Use this to see what happened and when — emails, calls, Slack messages, billing events, etc. Supports channel and date filtering.",
     inputSchema: {
@@ -387,6 +392,7 @@ export const customerToolContracts = {
   },
   outlit_list_facts: {
     toolName: "outlit_list_facts",
+    title: "List Customer Facts",
     description:
       "List structured facts known about a customer. Use filters like status, sourceTypes, factTypes, factCategories, and date bounds to narrow the result set. For topic-specific retrieval, use outlit_search_customer_context instead.",
     inputSchema: {
@@ -480,6 +486,7 @@ export const customerToolContracts = {
   },
   outlit_get_fact: {
     toolName: "outlit_get_fact",
+    title: "Get Customer Fact",
     description:
       "Get one exact fact by ID. Returns the canonical fact shape and optionally expands requested related data such as evidence.",
     inputSchema: {
@@ -509,6 +516,7 @@ export const customerToolContracts = {
   },
   outlit_get_source: {
     toolName: "outlit_get_source",
+    title: "Get Source",
     description:
       "Get one exact source record by generic sourceType and sourceId. Use this when you already know the concrete underlying source you want to inspect.",
     inputSchema: {
@@ -531,6 +539,7 @@ export const customerToolContracts = {
   },
   outlit_list_sources: {
     toolName: "outlit_list_sources",
+    title: "List Sources",
     description:
       "List concrete source records deterministically. Use this instead of semantic search when you need enumerated calls, emails, calendar events, support tickets, or opportunities.",
     inputSchema: {
@@ -597,6 +606,7 @@ export const customerToolContracts = {
   },
   outlit_search_customer_context: {
     toolName: "outlit_search_customer_context",
+    title: "Search Customer Context",
     description:
       "Search across all known customer context using a natural-language query. Returns grouped artifact-level results for matching sources and facts. Omit customer to search across all customers in the organization.",
     inputSchema: {
@@ -657,6 +667,7 @@ export const customerToolContracts = {
   },
   outlit_query: {
     toolName: "outlit_query",
+    title: "Run SQL Query",
     description:
       "Execute read-only SQL queries against your analytics views.\n\nAvailable views:\n- activity: Customer activity events (event_name, event_type, event_channel, customer_id, occurred_at, properties, ...)\n- customers: Customer attributes (customer_id, domain, name, billing_status, plan, mrr_cents, traits, ...)\n- users: User attributes (user_id, email, name, customer_id, traits, ...)\n- revenue: Revenue snapshots over time (customer_id, snapshot_date, mrr_cents, ...)\n\nAll queries are automatically filtered to your organization's data.\nOnly SELECT queries are allowed.\nProperties and traits are JSON strings; inspect schemas and examples before filtering nested values.\n\nExample queries:\n- SELECT event_name, count(*) FROM activity GROUP BY 1 ORDER BY 2 DESC LIMIT 10\n- SELECT billing_status, sum(mrr_cents)/100 as mrr FROM customers GROUP BY 1\n- SELECT * FROM activity WHERE customer_id = 'cust_123' ORDER BY occurred_at DESC LIMIT 50",
     inputSchema: {
@@ -681,6 +692,7 @@ export const customerToolContracts = {
   },
   outlit_schema: {
     toolName: "outlit_schema",
+    title: "Get SQL Schema",
     description:
       "Get schemas for available analytics views.\n\nUse this to discover column names, types, and descriptions before writing SQL queries.\nReturns column definitions and example queries for each view.",
     inputSchema: {
@@ -698,6 +710,7 @@ export const customerToolContracts = {
   },
   outlit_send_notification: {
     toolName: "outlit_send_notification",
+    title: "Send Notification",
     description:
       "Send or post a notification. Use only when the user explicitly asks you to send, post, or notify. Slack is the default notifier when destinations are omitted.",
     inputSchema: {
@@ -900,7 +913,7 @@ export const workspaceUserListOrderFields = ["name", "email", "owned_customer_co
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "c483d23afc5530cdfae07e5e806b092ce0fb73baec919ef7f2b68afd03252844" as const
+  "d704edcb21910caaceef9ce2046e7e27c395ba3c0e286206368c82c716bd1e5a" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]
@@ -908,6 +921,7 @@ export type CustomerSourceTypeInput = (typeof customerSourceTypeInputs)[number]
 
 export type CustomerToolContract = {
   toolName: CustomerToolName
+  title: string
   description: string
   inputSchema: JsonSchema
 }
