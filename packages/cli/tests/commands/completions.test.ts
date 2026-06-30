@@ -53,11 +53,9 @@ describe("completions command", () => {
     )
     expect(out).toContain('COMPREPLY=($(compgen -W "list get start" -- "$cur"))')
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "settings" ]]`)
-    expect(out).toContain('COMPREPLY=($(compgen -W "get update report notifications" -- "$cur"))')
-    expect(out).toContain(
-      `[[ $COMP_CWORD -eq 4 && "${bashCompWord(1)}" == "settings" && "${bashCompWord(2)}" == "notifications" && "${bashCompWord(3)}" == "default" ]]`,
-    )
-    expect(out).toContain('COMPREPLY=($(compgen -W "set" -- "$cur"))')
+    expect(out).toContain('COMPREPLY=($(compgen -W "get update report" -- "$cur"))')
+    expect(out).not.toContain("settings notifications")
+    expect(out).not.toContain("settings notifications default")
   })
 
   test("bash — flag completions for updated commands", async () => {
@@ -82,7 +80,13 @@ describe("completions command", () => {
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --slack-channel-id --slack-channel-name"',
     )
-    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --destination-id"')
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --type --channel-id --label --default --disabled"',
+    )
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --type --name --url --label --description --default --enabled --disabled"',
+    )
+    expect(out).not.toContain('COMPREPLY=($(compgen -W "--api-key --json --destination-id"')
   })
 
   // ── Zsh ─────────────────────────────────────────────────────────────────
@@ -154,18 +158,18 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd automations runs' -a list")
     expect(out).toContain("-n '__outlit_using_cmd automations runs list' -l limit")
     expect(out).toContain("-n '__outlit_using_cmd automations runs list' -l cursor")
+    expect(out).toContain("-n '__outlit_using_cmd destinations create' -l default")
+    expect(out).toContain("-n '__outlit_using_cmd destinations update' -l default")
     expect(out).toContain("-n '__outlit_using_cmd settings' -a get")
     expect(out).toContain("-n '__outlit_using_cmd settings report' -a options")
-    expect(out).toContain("-n '__outlit_using_cmd settings notifications default' -a set")
+    expect(out).not.toContain("settings notifications default")
     expect(out).toContain("-n '__outlit_using_cmd settings update' -l default-timezone")
     expect(out).toContain("-n '__outlit_using_cmd settings report update' -l slack-channel-id")
     expect(out).toContain("-n '__outlit_using_cmd settings report options' -l search")
     expect(out).toContain("-n '__outlit_using_cmd settings report options' -l limit")
-    expect(out).toContain("-n '__outlit_using_cmd settings notifications options' -l search")
-    expect(out).toContain("-n '__outlit_using_cmd settings notifications options' -l limit")
-    expect(out).toContain(
-      "-n '__outlit_using_cmd settings notifications default set' -l destination-id",
-    )
+    expect(out).not.toContain("settings notifications")
+    expect(out).toContain("-n '__outlit_using_cmd destinations options' -l search")
+    expect(out).toContain("-n '__outlit_using_cmd destinations options' -l limit")
     expect(out).toContain("-n '__outlit_using_cmd setup' -l yes")
     expect(out).toContain("-n '__outlit_using_cmd setup claude-code' -l json")
     expect(out).toContain("-n '__outlit_using_cmd setup opencode' -l json")

@@ -1692,7 +1692,9 @@
             "required": false,
             "description": "Filter Slack channels by channel name or ID.",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
             }
           },
           {
@@ -1806,7 +1808,7 @@
       "post": {
         "tags": ["Platform API"],
         "summary": "Create destination",
-        "description": "Create one Slack channel automation destination. Responses include masked configuration only.",
+        "description": "Create one Slack channel automation destination. Responses include masked configuration only. Passing isDefault true makes it the default fallback destination.",
         "operationId": "createDestination",
         "requestBody": {
           "required": true,
@@ -1819,7 +1821,8 @@
                 "type": "SLACK_CHANNEL",
                 "channelId": "C0123456789",
                 "label": "#customer-ops",
-                "enabled": true
+                "enabled": true,
+                "isDefault": true
               }
             }
           }
@@ -2191,222 +2194,6 @@
           },
           "503": {
             "description": "The platform could not get report settings options.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/settings/notifications": {
-      "get": {
-        "tags": ["Platform API"],
-        "summary": "Get notification settings",
-        "description": "Get notification destination settings used by agents and automations.",
-        "operationId": "getNotificationSettings",
-        "responses": {
-          "200": {
-            "description": "Notification settings were returned.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetNotificationSettingsCommandSuccess"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "description": "The API key is valid but does not have the required agent read scope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not get notification settings.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/settings/notifications/options": {
-      "get": {
-        "tags": ["Platform API"],
-        "summary": "Get notification settings options",
-        "description": "Search available Slack channels for notification settings.",
-        "operationId": "getNotificationSettingsOptions",
-        "parameters": [
-          {
-            "name": "search",
-            "in": "query",
-            "required": false,
-            "description": "Filter Slack channels by channel name or ID.",
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 120
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "description": "Maximum Slack channels to return.",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 50
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Notification settings options were returned.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotificationSettingsOptionsCommandSuccess"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request query failed command validation.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "description": "The API key is valid but does not have the required agent read scope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not get notification settings options.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/settings/notifications/default": {
-      "post": {
-        "tags": ["Platform API"],
-        "summary": "Set default notification destination",
-        "description": "Set the default Slack-backed notification destination for the workspace.",
-        "operationId": "setDefaultNotificationDestination",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetDefaultNotificationDestinationRequest"
-              },
-              "example": {
-                "destinationId": "10000000-0000-4000-8000-000000000003"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Default notification destination was set.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SetDefaultNotificationDestinationCommandSuccess"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The request body failed command validation.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "403": {
-            "description": "The API key is valid but does not have the required agent write scope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No notification destination was found for the authenticated organization and requested id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The requested change conflicts with the current platform state.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          },
-          "503": {
-            "description": "The platform could not set the default notification destination.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3496,7 +3283,7 @@
       "patch": {
         "tags": ["Platform API"],
         "summary": "Update destination",
-        "description": "Update one automation destination. Responses include masked configuration only.",
+        "description": "Update one automation destination. Responses include masked configuration only. Passing isDefault true on a Slack destination makes it the default fallback destination and enables it.",
         "operationId": "updateDestination",
         "parameters": [
           {
@@ -3518,10 +3305,8 @@
                 "$ref": "#/components/schemas/UpdateDestinationRequest"
               },
               "example": {
-                "type": "WEBHOOK_ENDPOINT",
-                "name": "Customer ops",
-                "description": null,
-                "enabled": true
+                "type": "SLACK_CHANNEL",
+                "isDefault": true
               }
             }
           }
@@ -5247,78 +5032,6 @@
         },
         "additionalProperties": false
       },
-      "NotificationDestinationSettings": {
-        "type": "object",
-        "required": ["id", "provider", "channelId", "label", "isDefault", "isEnabled"],
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "provider": {
-            "type": "string",
-            "const": "slack"
-          },
-          "channelId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 191
-          },
-          "label": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 120
-          },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "isEnabled": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "NotificationSettingsData": {
-        "type": "object",
-        "required": ["notifications"],
-        "properties": {
-          "notifications": {
-            "type": "object",
-            "required": ["defaultDestinationId", "defaultDestinations", "slackDestinations"],
-            "properties": {
-              "defaultDestinationId": {
-                "type": ["string", "null"],
-                "format": "uuid"
-              },
-              "defaultDestinations": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/NotificationDestinationSettings"
-                }
-              },
-              "slackDestinations": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/NotificationDestinationSettings"
-                }
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      "SetDefaultNotificationDestinationRequest": {
-        "type": "object",
-        "required": ["destinationId"],
-        "properties": {
-          "destinationId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "additionalProperties": false
-      },
       "GetSettingsCommandSuccess": {
         "type": "object",
         "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
@@ -5516,129 +5229,6 @@
                   },
                   "data": {
                     "$ref": "#/components/schemas/SettingsSlackOptionsData"
-                  }
-                }
-              }
-            ]
-          }
-        },
-        "additionalProperties": false
-      },
-      "GetNotificationSettingsCommandSuccess": {
-        "type": "object",
-        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
-        "properties": {
-          "ok": {
-            "type": "boolean",
-            "const": true
-          },
-          "commandId": {
-            "type": "string",
-            "const": "settings.notifications.get"
-          },
-          "commandVersion": {
-            "type": "integer",
-            "const": 1
-          },
-          "correlationId": {
-            "type": "string"
-          },
-          "result": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/CommandResultBase"
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "operationId": {
-                    "type": "string",
-                    "const": "settings.notifications.get"
-                  },
-                  "data": {
-                    "$ref": "#/components/schemas/NotificationSettingsData"
-                  }
-                }
-              }
-            ]
-          }
-        },
-        "additionalProperties": false
-      },
-      "NotificationSettingsOptionsCommandSuccess": {
-        "type": "object",
-        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
-        "properties": {
-          "ok": {
-            "type": "boolean",
-            "const": true
-          },
-          "commandId": {
-            "type": "string",
-            "const": "settings.notifications.options"
-          },
-          "commandVersion": {
-            "type": "integer",
-            "const": 1
-          },
-          "correlationId": {
-            "type": "string"
-          },
-          "result": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/CommandResultBase"
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "operationId": {
-                    "type": "string",
-                    "const": "settings.notifications.options"
-                  },
-                  "data": {
-                    "$ref": "#/components/schemas/SettingsSlackOptionsData"
-                  }
-                }
-              }
-            ]
-          }
-        },
-        "additionalProperties": false
-      },
-      "SetDefaultNotificationDestinationCommandSuccess": {
-        "type": "object",
-        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
-        "properties": {
-          "ok": {
-            "type": "boolean",
-            "const": true
-          },
-          "commandId": {
-            "type": "string",
-            "const": "settings.notifications.default.set"
-          },
-          "commandVersion": {
-            "type": "integer",
-            "const": 1
-          },
-          "correlationId": {
-            "type": "string"
-          },
-          "result": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/CommandResultBase"
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "operationId": {
-                    "type": "string",
-                    "const": "settings.notifications.default.set"
-                  },
-                  "data": {
-                    "$ref": "#/components/schemas/NotificationSettingsData"
                   }
                 }
               }
@@ -8477,6 +8067,11 @@
           "enabled": {
             "type": "boolean",
             "default": true
+          },
+          "isDefault": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to make this Slack destination the default fallback destination."
           }
         },
         "additionalProperties": false
@@ -8528,6 +8123,11 @@
               },
               "enabled": {
                 "type": "boolean"
+              },
+              "isDefault": {
+                "type": "boolean",
+                "const": true,
+                "description": "Set this Slack destination as the default fallback destination."
               }
             },
             "additionalProperties": false

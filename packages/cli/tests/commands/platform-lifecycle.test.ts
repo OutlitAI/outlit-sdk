@@ -399,6 +399,7 @@ describe("platform lifecycle commands", () => {
           type: "slack",
           "channel-id": "C0123456789",
           label: "#customer-ops",
+          default: true,
           json: true,
         },
       } as Parameters<NonNullable<typeof createDestinationCmd.run>>[0]),
@@ -414,18 +415,34 @@ describe("platform lifecycle commands", () => {
         },
       } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
     )
+    await captureStdout(() =>
+      updateDestinationCmd.run!({
+        args: {
+          id: destinationId,
+          type: "slack",
+          default: true,
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
+    )
 
     expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_destination_create", {
       type: "SLACK_CHANNEL",
       channelId: "C0123456789",
       label: "#customer-ops",
       enabled: true,
+      isDefault: true,
     })
     expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_destination_update", {
       id: destinationId,
       type: "WEBHOOK_ENDPOINT",
       name: "Updated webhook",
       description: "Updated",
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_destination_update", {
+      id: destinationId,
+      type: "SLACK_CHANNEL",
+      isDefault: true,
     })
   })
 

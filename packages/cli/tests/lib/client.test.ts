@@ -486,7 +486,7 @@ describe("client.callTool()", () => {
       },
     }
     const fetchSpy = spyOn(globalThis, "fetch")
-    for (let i = 0; i < 8; i += 1) {
+    for (let i = 0; i < 5; i += 1) {
       fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(okEnvelope), { status: 200 }))
     }
 
@@ -501,11 +501,6 @@ describe("client.callTool()", () => {
       slackChannelName: "sales-alerts",
     })
     await client.callTool("outlit_settings_report_options", { search: "sales", limit: 10 })
-    await client.callTool("outlit_settings_notifications_get", {})
-    await client.callTool("outlit_settings_notifications_options", { search: "ops", limit: 12 })
-    await client.callTool("outlit_settings_notifications_default_set", {
-      destinationId: "10000000-0000-4000-8000-000000000003",
-    })
 
     const urls = fetchSpy.mock.calls.map((call) => call[0] as string)
     expect(urls[0]).toContain("/api/settings")
@@ -513,9 +508,10 @@ describe("client.callTool()", () => {
     expect(urls[2]).toContain("/api/settings/report")
     expect(urls[3]).toContain("/api/settings/report")
     expect(urls[4]).toContain("/api/settings/report/options?search=sales&limit=10")
-    expect(urls[5]).toContain("/api/settings/notifications")
-    expect(urls[6]).toContain("/api/settings/notifications/options?search=ops&limit=12")
-    expect(urls[7]).toContain("/api/settings/notifications/default")
+    expect(urls).not.toEqual(
+      expect.arrayContaining([expect.stringContaining("/api/settings/notifications")]),
+    )
+    expect(urls).not.toEqual(expect.arrayContaining([expect.stringContaining("default")]))
 
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("GET")
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).body).toBeUndefined()
@@ -533,12 +529,6 @@ describe("client.callTool()", () => {
       }),
     )
     expect((fetchSpy.mock.calls[4]?.[1] as RequestInit).method).toBe("GET")
-    expect((fetchSpy.mock.calls[5]?.[1] as RequestInit).method).toBe("GET")
-    expect((fetchSpy.mock.calls[6]?.[1] as RequestInit).method).toBe("GET")
-    expect((fetchSpy.mock.calls[7]?.[1] as RequestInit).method).toBe("POST")
-    expect((fetchSpy.mock.calls[7]?.[1] as RequestInit).body).toBe(
-      JSON.stringify({ destinationId: "10000000-0000-4000-8000-000000000003" }),
-    )
     for (const url of urls) {
       expect(url).not.toContain("/api/tools/call")
     }

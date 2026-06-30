@@ -95,9 +95,6 @@ describe("docs OpenAPI spec", () => {
       "/api/integrations/setup-step",
       "/api/integrations/sync-status",
       "/api/settings",
-      "/api/settings/notifications",
-      "/api/settings/notifications/default",
-      "/api/settings/notifications/options",
       "/api/settings/report",
       "/api/settings/report/options",
       "/api/signals",
@@ -156,8 +153,6 @@ describe("docs OpenAPI spec", () => {
       "GET /api/integrations/connect/status",
       "GET /api/integrations/sync-status",
       "GET /api/settings",
-      "GET /api/settings/notifications",
-      "GET /api/settings/notifications/options",
       "GET /api/settings/report",
       "GET /api/settings/report/options",
       "GET /api/signals",
@@ -185,7 +180,6 @@ describe("docs OpenAPI spec", () => {
       "POST /api/integrations/connect",
       "POST /api/integrations/disconnect",
       "POST /api/integrations/setup-step",
-      "POST /api/settings/notifications/default",
       "POST /api/signals",
       "POST /api/signals/{id}/archive",
       "POST /api/tools/call",
@@ -258,7 +252,7 @@ describe("docs OpenAPI spec", () => {
       paths?: Record<string, any>
     }>("docs/openapi.json")
 
-    for (const path of ["/api/settings/report/options", "/api/settings/notifications/options"]) {
+    for (const path of ["/api/settings/report/options", "/api/destinations/options"]) {
       const params = spec.paths?.[path]?.get?.parameters
 
       expect(params).toEqual(
@@ -426,8 +420,16 @@ describe("docs OpenAPI spec", () => {
           type: "boolean",
           default: true,
         },
+        isDefault: {
+          type: "boolean",
+          default: false,
+        },
       },
       additionalProperties: false,
+    })
+    expect(schemas.UpdateDestinationRequest?.oneOf?.[1]?.properties?.isDefault).toMatchObject({
+      type: "boolean",
+      const: true,
     })
     expect(schemas.UpdateDestinationRequest?.oneOf?.[0]?.properties?.url).toMatchObject({
       type: "string",
