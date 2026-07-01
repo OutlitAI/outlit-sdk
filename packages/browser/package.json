@@ -1,6 +1,6 @@
 {
   "name": "@outlit/browser",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Browser tracking SDK for Outlit customer context with React and Vue bindings",
   "license": "Apache-2.0",
   "author": "Outlit AI",
@@ -81,7 +81,7 @@
     "deploy:version": "bun run build && tsx ./scripts/deploy.ts version"
   },
   "dependencies": {
-    "@outlit/core": "^1.5.2"
+    "@outlit/core": "^1.5.3"
   },
   "devDependencies": {
     "@outlit/typescript-config": "workspace:*",
