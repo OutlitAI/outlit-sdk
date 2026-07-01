@@ -1,5 +1,44 @@
 # @outlit/cli
 
+## 1.9.0
+
+### Minor Changes
+
+- [#136](https://github.com/OutlitAI/outlit-sdk/pull/136) [`332efcc`](https://github.com/OutlitAI/outlit-sdk/commit/332efccf97feede381825d9c7cd0f511ec099e25) Thanks [@leo-paz](https://github.com/leo-paz)! - Add agent onboarding and integration setup helpers for non-interactive CLI flows. `outlit integrations setup` is now the canonical provider setup command, and legacy `integrations add` plus destructive CLI disconnect/remove access are no longer exposed.
+
+- [#151](https://github.com/OutlitAI/outlit-sdk/pull/151) [`341f6f1`](https://github.com/OutlitAI/outlit-sdk/commit/341f6f1d791d14d09f9a6a133b9920118ffbecab) Thanks [@leo-paz](https://github.com/leo-paz)! - Add agent configuration commands for listing agents, getting an agent, listing templates, listing available actions, and creating draft agents from templates.
+
+- [#152](https://github.com/OutlitAI/outlit-sdk/pull/152) [`aa0445f`](https://github.com/OutlitAI/outlit-sdk/commit/aa0445f49e3f4d3d2309c1f513a45aeaad5243f5) Thanks [@leo-paz](https://github.com/leo-paz)! - Add read-only `automations`, `signals`, and `destinations` CLI commands backed by direct platform action API routes.
+
+- [#138](https://github.com/OutlitAI/outlit-sdk/pull/138) [`0ef8f2d`](https://github.com/OutlitAI/outlit-sdk/commit/0ef8f2da1e55aec852c1abf0638b640448a39205) Thanks [@leo-paz](https://github.com/leo-paz)! - Rename the public integration setup mode for browser-based provider setup to `browser_auth` and remove backend-specific wording from CLI help and docs.
+
+- [#142](https://github.com/OutlitAI/outlit-sdk/pull/142) [`8693011`](https://github.com/OutlitAI/outlit-sdk/commit/8693011d63919b3ae7c6fa5bc1a3ea3b692b508e) Thanks [@leo-paz](https://github.com/leo-paz)! - Expose the `ws-users` CLI command, workspace-user discovery tools, and customer owner filters for dynamic customer reports.
+
+### Patch Changes
+
+- [#139](https://github.com/OutlitAI/outlit-sdk/pull/139) [`664e93c`](https://github.com/OutlitAI/outlit-sdk/commit/664e93cd8e1851f0183602ca07643b72a500ba35) Thanks [@leo-paz](https://github.com/leo-paz)! - Update timeline tool contracts to use canonical event channel values.
+
+- [#159](https://github.com/OutlitAI/outlit-sdk/pull/159) [`ee68785`](https://github.com/OutlitAI/outlit-sdk/commit/ee68785ac9e28c2a7e1441aefffc6abd0449d705) Thanks [@leo-paz](https://github.com/leo-paz)! - Remove stale custom-agent criteria flags now that guidance belongs in unified instructions.
+
+- [#144](https://github.com/OutlitAI/outlit-sdk/pull/144) [`29ca464`](https://github.com/OutlitAI/outlit-sdk/commit/29ca4643c9c236a589eedfc348ca9fa031c2a966) Thanks [@leo-paz](https://github.com/leo-paz)! - Sync notification tool contracts with hosted churn agent destination IDs.
+
+- [#157](https://github.com/OutlitAI/outlit-sdk/pull/157) [`750f002`](https://github.com/OutlitAI/outlit-sdk/commit/750f00216a5e8da9cb0c929740a5644220150a08) Thanks [@leo-paz](https://github.com/leo-paz)! - Add identity merge suggestion commands for listing, inspecting, queueing, and rejecting suggested merges.
+
+- [#146](https://github.com/OutlitAI/outlit-sdk/pull/146) [`ed59717`](https://github.com/OutlitAI/outlit-sdk/commit/ed597176dc6001e2e75810e32e413f07ec02a2a6) Thanks [@leo-paz](https://github.com/leo-paz)! - Validate integration setup progress responses and expose Gong/Mixpanel setup capability names.
+
+- [#155](https://github.com/OutlitAI/outlit-sdk/pull/155) [`acdd743`](https://github.com/OutlitAI/outlit-sdk/commit/acdd7430b975f3f70b2274c8753f2721acc882a8) Thanks [@leo-paz](https://github.com/leo-paz)! - Add resource-first platform action CLI commands for agent create/update, automation create/update, signal create/update, and destination create/update.
+
+- [#153](https://github.com/OutlitAI/outlit-sdk/pull/153) [`20c487b`](https://github.com/OutlitAI/outlit-sdk/commit/20c487bcb17cf7bbbf4c2548693b11beda1695fa) Thanks [@leo-paz](https://github.com/leo-paz)! - Add agent, automation, signal, and destination lifecycle commands for platform configuration actions.
+
+- [#156](https://github.com/OutlitAI/outlit-sdk/pull/156) [`7021704`](https://github.com/OutlitAI/outlit-sdk/commit/7021704c3466784067d5b6934a4d5fe38b78d7eb) Thanks [@leo-paz](https://github.com/leo-paz)! - Add platform action CLI commands for workspace settings and automation run history.
+
+- [#150](https://github.com/OutlitAI/outlit-sdk/pull/150) [`51b862d`](https://github.com/OutlitAI/outlit-sdk/commit/51b862d32ca2142da980ecde74add7f0f575a82a) Thanks [@leo-paz](https://github.com/leo-paz)! - Improve published README and package metadata citation surfaces with canonical docs, OpenAPI, MCP, and agent discovery links.
+
+- [#158](https://github.com/OutlitAI/outlit-sdk/pull/158) [`aa07bfa`](https://github.com/OutlitAI/outlit-sdk/commit/aa07bfa1b89adcf569a5291db29cbb5cd76d6bda) Thanks [@leo-paz](https://github.com/leo-paz)! - Tighten destination update commands to the Slack-channel public contract.
+
+- Updated dependencies [[`664e93c`](https://github.com/OutlitAI/outlit-sdk/commit/664e93cd8e1851f0183602ca07643b72a500ba35), [`29ca464`](https://github.com/OutlitAI/outlit-sdk/commit/29ca4643c9c236a589eedfc348ca9fa031c2a966), [`51b862d`](https://github.com/OutlitAI/outlit-sdk/commit/51b862d32ca2142da980ecde74add7f0f575a82a), [`8693011`](https://github.com/OutlitAI/outlit-sdk/commit/8693011d63919b3ae7c6fa5bc1a3ea3b692b508e)]:
+  - @outlit/tools@0.3.0
+
 ## 1.8.0
 
 ### Minor Changes

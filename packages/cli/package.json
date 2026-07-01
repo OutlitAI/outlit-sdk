@@ -1,6 +1,6 @@
 {
   "name": "@outlit/cli",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "CLI for querying Outlit customer context and installing agent skills",
   "license": "Apache-2.0",
   "repository": {
@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.0.1",
-    "@outlit/tools": "^0.2.1",
+    "@outlit/tools": "^0.3.0",
     "citty": "^0.2.1"
   },
   "devDependencies": {

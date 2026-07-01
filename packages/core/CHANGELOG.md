@@ -1,5 +1,11 @@
 # @outlit/core
 
+## 1.5.3
+
+### Patch Changes
+
+- [#150](https://github.com/OutlitAI/outlit-sdk/pull/150) [`51b862d`](https://github.com/OutlitAI/outlit-sdk/commit/51b862d32ca2142da980ecde74add7f0f575a82a) Thanks [@leo-paz](https://github.com/leo-paz)! - Improve published README and package metadata citation surfaces with canonical docs, OpenAPI, MCP, and agent discovery links.
+
 ## 1.5.2
 
 ### Patch Changes
