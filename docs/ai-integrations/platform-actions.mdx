@@ -48,7 +48,7 @@ For example, a CLI user or agent can create a draft template and then explicitly
 
 ```bash
 outlit agents create --template churn --json
-outlit agents create --type custom --display-name "Renewal risk" --instructions "Find risk" --surface-criteria "Surface risky customers" --json
+outlit agents create --type custom --display-name "Renewal risk" --instructions "Find risky customers and skip already resolved issues." --json
 outlit signals options --json
 outlit signals create --file ./signal.json --json
 outlit destinations options --json
@@ -65,6 +65,8 @@ outlit automations disable 10000000-0000-4000-8000-000000000001 --json
 Template creation creates supported template resources in `draft` mode. Draft creation does not enable an automation, add schedules, add external destinations, or send notifications by itself. Lifecycle write actions mutate only the named resource state.
 
 Automation create and update actions are agent-centered. Callers provide `agentId`; update bodies also provide `name`, `enabled`, and `triggerType` explicitly. Outlit maps the agent ID to the hosted-agent processor internally and does not require callers to construct raw processor JSON.
+
+For custom agents, put all surfacing and skipping guidance in `instructions`. Older split fields such as `surfaceCriteria` and `skipCriteria` are no longer accepted by the platform action create/update contract.
 
 ## Safety Model
 

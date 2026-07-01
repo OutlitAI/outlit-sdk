@@ -226,8 +226,7 @@ describe("platform lifecycle commands", () => {
         args: {
           type: "custom",
           "display-name": "Renewal risk",
-          instructions: "Find renewal risk.",
-          "surface-criteria": "Surface risky renewals.",
+          instructions: "Find risky renewals and skip already resolved issues.",
           "action-keys": "send_slack_notification",
           json: true,
         },
@@ -262,8 +261,7 @@ describe("platform lifecycle commands", () => {
     expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_agent_create", {
       type: "custom",
       displayName: "Renewal risk",
-      instructions: "Find renewal risk.",
-      surfaceCriteria: "Surface risky renewals.",
+      instructions: "Find risky renewals and skip already resolved issues.",
       maxItemsToSurface: 10,
       actionKeys: ["send_slack_notification"],
     })
