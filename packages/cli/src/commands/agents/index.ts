@@ -27,7 +27,7 @@ export default defineCommand({
       "  outlit agents runs list 10000000-0000-4000-8000-000000000004 --json",
       "  outlit agents runs start 10000000-0000-4000-8000-000000000004 --json",
       "  outlit agents create --template churn --json",
-      "  outlit agents create --type custom --display-name 'Renewal risk' --instructions 'Find risk' --surface-criteria 'Surface risky customers' --json",
+      "  outlit agents create --type custom --display-name 'Renewal risk' --instructions 'Find risky renewals and skip already resolved issues.' --json",
       "  outlit agents update 10000000-0000-4000-8000-000000000004 --display-name 'Renewal risk' --json",
       "  outlit agents update 10000000-0000-4000-8000-000000000004 --instructions 'New instructions' --json",
       "  outlit agents update 10000000-0000-4000-8000-000000000004 --action-keys send_slack_notification --json",

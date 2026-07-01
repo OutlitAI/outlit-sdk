@@ -648,8 +648,7 @@ describe("client.callTool()", () => {
     await client.callTool("outlit_agent_create", {
       type: "custom",
       displayName: "Renewal risk",
-      instructions: "Find risk",
-      surfaceCriteria: "Surface risky customers",
+      instructions: "Find risky customers and skip already resolved issues.",
       maxItemsToSurface: 10,
       actionKeys: ["send_slack_notification"],
     })
@@ -758,8 +757,7 @@ describe("client.callTool()", () => {
       JSON.stringify({
         type: "custom",
         displayName: "Renewal risk",
-        instructions: "Find risk",
-        surfaceCriteria: "Surface risky customers",
+        instructions: "Find risky customers and skip already resolved issues.",
         maxItemsToSurface: 10,
         actionKeys: ["send_slack_notification"],
       }),

@@ -274,8 +274,7 @@
                   "value": {
                     "type": "custom",
                     "displayName": "Renewal risk",
-                    "instructions": "Find risk.",
-                    "surfaceCriteria": "Surface risky customers.",
+                    "instructions": "Find risky customers and skip already resolved issues.",
                     "actionKeys": ["send_slack_notification"]
                   }
                 }
@@ -7881,7 +7880,7 @@
       },
       "CreateAgentCustomRequest": {
         "type": "object",
-        "required": ["type", "displayName", "instructions", "surfaceCriteria"],
+        "required": ["type", "displayName", "instructions"],
         "properties": {
           "type": {
             "type": "string",
@@ -7895,17 +7894,7 @@
           "instructions": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 10000
-          },
-          "surfaceCriteria": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 10000
-          },
-          "skipCriteria": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 10000
+            "maxLength": 32000
           },
           "maxItemsToSurface": {
             "type": "integer",
@@ -10506,22 +10495,11 @@
       },
       "CustomAgentSettingsSummary": {
         "type": "object",
-        "required": [
-          "instructions",
-          "surfaceCriteria",
-          "skipCriteria",
-          "maxItemsToSurface",
-          "outputMode"
-        ],
+        "required": ["instructions", "maxItemsToSurface", "outputMode"],
         "properties": {
           "instructions": {
-            "type": "string"
-          },
-          "surfaceCriteria": {
-            "type": "string"
-          },
-          "skipCriteria": {
-            "type": ["string", "null"]
+            "type": "string",
+            "maxLength": 32000
           },
           "maxItemsToSurface": {
             "type": "integer",

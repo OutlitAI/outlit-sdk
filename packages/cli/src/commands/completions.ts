@@ -263,8 +263,6 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--type", desc: "Agent type to create" },
           { name: "--display-name", desc: "Agent display name" },
           { name: "--instructions", desc: "Agent instructions" },
-          { name: "--surface-criteria", desc: "Criteria for surfacing items" },
-          { name: "--skip-criteria", desc: "Optional criteria for skipping items" },
           { name: "--max-items-to-surface", desc: "Maximum items surfaced per run" },
           { name: "--action-keys", desc: "Comma-separated action keys" },
         ],

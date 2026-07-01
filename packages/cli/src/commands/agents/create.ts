@@ -11,14 +11,9 @@ import {
 } from "../../lib/platform-input"
 
 function hasCustomAgentFlags(args: Record<string, unknown>): boolean {
-  return [
-    "display-name",
-    "instructions",
-    "surface-criteria",
-    "skip-criteria",
-    "max-items-to-surface",
-    "action-keys",
-  ].some((key) => args[key] !== undefined)
+  return ["display-name", "instructions", "max-items-to-surface", "action-keys"].some(
+    (key) => args[key] !== undefined,
+  )
 }
 
 export default defineCommand({
@@ -31,7 +26,7 @@ export default defineCommand({
       "",
       "Examples:",
       "  outlit agents create --template churn --json",
-      "  outlit agents create --type custom --display-name 'Renewal risk' --instructions 'Find risk' --surface-criteria 'Surface risky customers' --json",
+      "  outlit agents create --type custom --display-name 'Renewal risk' --instructions 'Find risky renewals and skip already resolved issues.' --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -49,8 +44,6 @@ export default defineCommand({
     },
     "display-name": { type: "string", description: "Custom agent display name" },
     instructions: { type: "string", description: "Custom agent instructions" },
-    "surface-criteria": { type: "string", description: "Criteria for surfacing items" },
-    "skip-criteria": { type: "string", description: "Optional criteria for skipping items" },
     "max-items-to-surface": {
       type: "string",
       description: "Maximum items the custom agent should surface per run",
@@ -106,10 +99,6 @@ export default defineCommand({
       type: "custom",
       displayName: requiredTrimmedString(args["display-name"], "--display-name", json),
       instructions: requiredTrimmedString(args.instructions, "--instructions", json),
-      surfaceCriteria: requiredTrimmedString(args["surface-criteria"], "--surface-criteria", json),
-      ...(optionalTrimmedString(args["skip-criteria"])
-        ? { skipCriteria: optionalTrimmedString(args["skip-criteria"]) }
-        : {}),
       maxItemsToSurface: parseIntegerFlag(
         args["max-items-to-surface"],
         10,
