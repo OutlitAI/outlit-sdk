@@ -2,22 +2,7 @@
 // EVENT TYPES
 // ============================================
 
-export type EventType =
-  | "pageview"
-  | "form"
-  | "identify"
-  | "custom"
-  | "calendar"
-  | "engagement"
-  | "stage"
-  | "billing"
-
-// Explicit stage event values accepted by ingest for wire compatibility.
-// New SDK callers should only send "activated"; "engaged" and "inactive"
-// are derived by Outlit from tracked activity.
-export type ExplicitJourneyStage = "activated" | "engaged" | "inactive"
-
-export type BillingStatus = "trialing" | "paid" | "churned"
+export type EventType = "pageview" | "form" | "identify" | "custom" | "calendar" | "engagement"
 
 export type CalendarProvider = "cal.com" | "calendly" | "unknown"
 
@@ -125,18 +110,6 @@ export interface ServerIdentifyOptions extends ServerIdentity, CustomerAttributi
   customerTraits?: CustomerTraits
 }
 
-/**
- * Customer identity for SDK billing methods.
- * Public billing calls should use `customerId`.
- */
-export interface CustomerIdentifier extends CustomerAttribution {
-  /**
-   * @deprecated Stripe customer identifier.
-   * Billing attribution should use `customerId` publicly.
-   */
-  stripeCustomerId?: string
-}
-
 // ============================================
 // INTERNAL EVENT TYPES
 // These are the full event objects sent to the API
@@ -206,25 +179,6 @@ export interface EngagementEvent extends BaseEvent {
   sessionId: string
 }
 
-export interface StageEvent extends BaseEvent {
-  type: "stage"
-  /** Stage event value. New SDK callers should only send "activated". */
-  stage: ExplicitJourneyStage
-  /** Optional properties for context */
-  properties?: Record<string, string | number | boolean | null>
-}
-
-export interface BillingEvent extends BaseEvent {
-  type: "billing"
-  /** The billing status to set for a customer */
-  status: BillingStatus
-  /** Optional customer identifiers */
-  customerId?: string
-  stripeCustomerId?: string
-  /** Optional properties for context */
-  properties?: Record<string, string | number | boolean | null>
-}
-
 export type TrackerEvent =
   | PageviewEvent
   | FormEvent
@@ -232,8 +186,6 @@ export type TrackerEvent =
   | CustomEvent
   | CalendarEvent
   | EngagementEvent
-  | StageEvent
-  | BillingEvent
 
 // ============================================
 // INGEST PAYLOAD

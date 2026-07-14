@@ -126,7 +126,7 @@ Journey stages are properties maintained on graph entities:
 - Contacts carry a journey stage: Discovered → Signed Up → Activated → Engaged → Inactive
 - Accounts carry a billing status: None → Trialing → Paying → Churned
 
-The Outlit browser SDK auto-detects **Discovered** (email known, no userId) and **Signed Up** (both email and userId provided). **Engaged** and **Inactive** are derived from tracked product activity. **Activated** is the one stage you call manually — `user.activate()` — because the definition of activation is specific to your product. Billing statuses update automatically when Stripe is connected.
+The Outlit browser SDK auto-detects **Discovered** (email known, no userId) and **Signed Up** (both email and userId provided). **Engaged** and **Inactive** are derived from tracked product activity. For **Activated**, select the ordinary product event that represents your value milestone; Outlit Core derives activation when that event arrives through `track()` or a verified product integration. Billing statuses update from verified integrations such as Stripe.
 
 <Info>
   For the full breakdown of journey stages and billing statuses, see [Customer Journey](/concepts/customer-journey).
@@ -193,7 +193,7 @@ For custom integrations, the [Ingest API](/api-reference/ingest) accepts events 
 
 <AccordionGroup>
   <Accordion title="What does Outlit track automatically vs what do I need to instrument?">
-    The browser SDK automatically captures pageviews, form submissions, engagement time, UTM attribution, and company enrichment. Identity is auto-detected from forms with email fields. You only need to manually call `identify()` for JavaScript-based auth (OAuth, magic links), `user.activate()` for activation milestones, and `track()` for custom business events.
+    The browser SDK automatically captures pageviews, form submissions, engagement time, UTM attribution, and company enrichment. Identity is auto-detected from forms with email fields. You only need to manually call `identify()` for JavaScript-based auth (OAuth, magic links) and `track()` for meaningful product events, including the ordinary event selected as your activation signal.
   </Accordion>
 
   <Accordion title="How long before data appears in the graph?">

@@ -69,87 +69,6 @@ async fn test_identify_sends_correct_payload() {
     client.flush().await.unwrap();
 }
 
-#[tokio::test]
-#[allow(deprecated)]
-async fn test_stage_events() {
-    let mock_server = MockServer::start().await;
-
-    Mock::given(method("POST"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "success": true,
-            "processed": 1
-        })))
-        .expect(3)
-        .mount(&mock_server)
-        .await;
-
-    let client = Outlit::builder("pk_test")
-        .api_host(mock_server.uri())
-        .max_batch_size(1) // Flush after each event
-        .build()
-        .unwrap();
-
-    client
-        .user()
-        .activate(email("user@test.com"))
-        .send()
-        .await
-        .unwrap();
-
-    client
-        .user()
-        .engaged(email("user@test.com"))
-        .send()
-        .await
-        .unwrap();
-
-    client
-        .user()
-        .inactive(email("user@test.com"))
-        .send()
-        .await
-        .unwrap();
-}
-
-#[tokio::test]
-async fn test_billing_events() {
-    let mock_server = MockServer::start().await;
-
-    Mock::given(method("POST"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "success": true,
-            "processed": 1
-        })))
-        .expect(3)
-        .mount(&mock_server)
-        .await;
-
-    let client = Outlit::builder("pk_test")
-        .api_host(mock_server.uri())
-        .max_batch_size(1)
-        .build()
-        .unwrap();
-
-    client.customer().trialing("acme.com").send().await.unwrap();
-
-    client
-        .customer()
-        .paid("acme.com")
-        .customer_id("cust_123")
-        .stripe_customer_id("cus_xxx")
-        .send()
-        .await
-        .unwrap();
-
-    client
-        .customer()
-        .churned("acme.com")
-        .property("reason", "pricing")
-        .send()
-        .await
-        .unwrap();
-}
-
 /// Custom responder that counts calls
 struct CountingResponder {
     counter: Arc<AtomicUsize>,
@@ -576,36 +495,6 @@ async fn test_identify_with_fingerprint_links_device() {
         .fingerprint("device_abc123")
         .user_id("usr_123")
         .trait_("name", "John")
-        .send()
-        .await
-        .unwrap();
-
-    client.flush().await.unwrap();
-}
-
-#[tokio::test]
-async fn test_stage_with_fingerprint() {
-    let mock_server = MockServer::start().await;
-
-    Mock::given(method("POST"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "success": true,
-            "processed": 1
-        })))
-        .expect(1)
-        .mount(&mock_server)
-        .await;
-
-    let client = Outlit::builder("pk_test")
-        .api_host(mock_server.uri())
-        .flush_interval(Duration::from_secs(100))
-        .build()
-        .unwrap();
-
-    // Stage event with fingerprint identity
-    client
-        .user()
-        .activate_by_fingerprint(fingerprint("device_abc123"))
         .send()
         .await
         .unwrap();

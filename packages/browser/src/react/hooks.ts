@@ -1,6 +1,6 @@
 import type { BrowserIdentifyOptions, BrowserTrackOptions } from "@outlit/core"
 import { useCallback, useContext } from "react"
-import type { BillingOptions, UserIdentity } from "../tracker"
+import type { UserIdentity } from "../tracker"
 import { OutlitContext } from "./provider"
 
 // ============================================
@@ -37,30 +37,10 @@ export interface UseOutlitReturn {
   clearUser: () => void
 
   /**
-   * User namespace methods for identity and activation.
+   * User namespace method for identity.
    */
   user: {
     identify: (options: BrowserIdentifyOptions) => void
-    activate: (properties?: Record<string, string | number | boolean | null>) => void
-    /**
-     * @deprecated Outlit derives ENGAGED from tracked activity. Keep tracking product activity
-     * with track() and only send activation manually with user.activate().
-     */
-    engaged: (properties?: Record<string, string | number | boolean | null>) => void
-    /**
-     * @deprecated Outlit derives INACTIVE from tracked activity. Keep tracking product activity
-     * with track() and only send activation manually with user.activate().
-     */
-    inactive: (properties?: Record<string, string | number | boolean | null>) => void
-  }
-
-  /**
-   * Customer namespace methods for billing status.
-   */
-  customer: {
-    trialing: (options: BillingOptions) => void
-    paid: (options: BillingOptions) => void
-    churned: (options: BillingOptions) => void
   }
 
   /**
@@ -95,10 +75,10 @@ export interface UseOutlitReturn {
  * import { useOutlit } from '@outlit/browser/react'
  *
  * function MyComponent() {
- *   const { track, user } = useOutlit()
+ *   const { track } = useOutlit()
  *
  *   return (
- *     <button onClick={() => user.activate({ milestone: 'onboarding_complete' })}>
+ *     <button onClick={() => track('onboarding_completed')}>
  *       Click me
  *     </button>
  *   )
@@ -183,72 +163,6 @@ export function useOutlit(): UseOutlitReturn {
     outlit.clearUser()
   }, [outlit])
 
-  const activate = useCallback(
-    (properties?: Record<string, string | number | boolean | null>) => {
-      if (!outlit) {
-        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
-        return
-      }
-      outlit.user.activate(properties)
-    },
-    [outlit],
-  )
-
-  const engaged = useCallback(
-    (properties?: Record<string, string | number | boolean | null>) => {
-      if (!outlit) {
-        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
-        return
-      }
-      outlit.user.engaged(properties)
-    },
-    [outlit],
-  )
-
-  const inactive = useCallback(
-    (properties?: Record<string, string | number | boolean | null>) => {
-      if (!outlit) {
-        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
-        return
-      }
-      outlit.user.inactive(properties)
-    },
-    [outlit],
-  )
-
-  const trialing = useCallback(
-    (options: BillingOptions) => {
-      if (!outlit) {
-        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
-        return
-      }
-      outlit.customer.trialing(options)
-    },
-    [outlit],
-  )
-
-  const paid = useCallback(
-    (options: BillingOptions) => {
-      if (!outlit) {
-        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
-        return
-      }
-      outlit.customer.paid(options)
-    },
-    [outlit],
-  )
-
-  const churned = useCallback(
-    (options: BillingOptions) => {
-      if (!outlit) {
-        console.warn("[Outlit] Not initialized. Make sure OutlitProvider is mounted.")
-        return
-      }
-      outlit.customer.churned(options)
-    },
-    [outlit],
-  )
-
   return {
     track,
     identify,
@@ -257,14 +171,6 @@ export function useOutlit(): UseOutlitReturn {
     clearUser,
     user: {
       identify: userIdentify,
-      activate,
-      engaged,
-      inactive,
-    },
-    customer: {
-      trialing,
-      paid,
-      churned,
     },
     isInitialized,
     isTrackingEnabled,

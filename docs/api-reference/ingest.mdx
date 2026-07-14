@@ -38,7 +38,7 @@ POST https://app.outlit.ai/api/i/v1/{publicKey}/events
 ### Body Parameters
 
 <ParamField body="visitorId" type="string">
-  Unique identifier for the visitor (UUID format). Required for browser (`client`) tracking. For server-side tracking (`server` source), this can be omitted; identity or attribution is derived from `email`, `userId`, `fingerprint`, `customerId`, or billing identifiers in the events.
+  Unique identifier for the visitor (UUID format). Required for browser (`client`) tracking. For server-side tracking (`server` source), this can be omitted; identity or attribution is derived from `email`, `userId`, `fingerprint`, or `customerId` in the events.
 </ParamField>
 
 <ParamField body="source" type="string" default="client">
@@ -341,87 +341,6 @@ Track calendar booking from embedded widgets (Cal.com, Calendly).
 
 ---
 
-### Stage Event
-
-Track explicit activation milestones. Engaged and Inactive are derived automatically from tracked product activity, but the ingest API continues to accept those values for older SDKs and direct API callers.
-
-```json
-{
-  "type": "stage",
-  "url": "https://example.com/onboarding",
-  "path": "/onboarding",
-  "stage": "activated",
-  "properties": {
-    "flow": "onboarding",
-    "step": "completed"
-  },
-  "timestamp": 1699999999999
-}
-```
-
-<ParamField body="type" type="string" required>
-  Must be `"stage"`.
-</ParamField>
-
-<ParamField body="stage" type="string" required>
-  The journey stage. Use `"activated"` for new integrations. `"engaged"` and `"inactive"` remain accepted for compatibility.
-</ParamField>
-
-<ParamField body="properties" type="object">
-  Additional context for the stage transition.
-</ParamField>
-
-<Info>
-  The `discovered` and `signed_up` stages are automatically inferred from identify events. Only use stage events for explicit activation milestone tracking.
-</Info>
-
----
-
-### Billing Event
-
-Track account billing status for custom billing systems. If Stripe is connected, billing status is handled automatically.
-
-```json
-{
-  "type": "billing",
-  "url": "server://cust_123",
-  "path": "/",
-  "status": "paid",
-  "customerId": "cust_123",
-  "properties": {
-    "plan": "pro",
-    "amount": 99
-  },
-  "timestamp": 1699999999999
-}
-```
-
-<ParamField body="type" type="string" required>
-  Must be `"billing"`.
-</ParamField>
-
-<ParamField body="status" type="string" required>
-  The billing status. One of: `"trialing"`, `"paid"`, `"churned"`.
-</ParamField>
-
-<ParamField body="customerId" type="string">
-  Your system-owned customer/account/workspace ID. Public billing calls should use this identifier.
-</ParamField>
-
-<ParamField body="stripeCustomerId" type="string">
-  Stripe customer identifier. Prefer `customerId` unless you are sending compatibility events that already use Stripe IDs.
-</ParamField>
-
-<ParamField body="properties" type="object">
-  Additional billing context such as plan, amount, or cancellation reason.
-</ParamField>
-
-<Info>
-  Billing events require `customerId` or `stripeCustomerId`. They target the account, not an individual contact.
-</Info>
-
----
-
 ## Response
 
 ### Success Response
@@ -601,7 +520,6 @@ For server-side tracking, the `visitorId` field can be omitted. Identity is reso
 
 - **Identify events**: Use `email` and/or `userId` fields, plus optional customer context
 - **Custom events**: Include top-level `email`, `userId`, `fingerprint`, and/or `customerId` fields
-- **Billing events**: Include `customerId` or `stripeCustomerId`
 
 ```json
 {
@@ -625,7 +543,7 @@ For server-side tracking, the `visitorId` field can be omitted. Identity is reso
 ```
 
 <Warning>
-  Server events require identity or account attribution. Custom events need at least one of `email`, `userId`, `fingerprint`, or `customerId`; identify events need `email` or `userId`; billing events need `customerId` or `stripeCustomerId`.
+  Server events require identity or account attribution. Custom events need at least one of `email`, `userId`, `fingerprint`, or `customerId`; identify events need `email` or `userId`.
 </Warning>
 
 ## Batching Best Practices

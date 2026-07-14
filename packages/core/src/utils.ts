@@ -195,21 +195,6 @@ export function validateServerIdentity(
   }
 }
 
-/**
- * Validate that at least one customer identifier is provided for billing calls.
- */
-export function validateCustomerIdentity(customerId?: string, stripeCustomerId?: string): void {
-  const hasCustomerId = customerId && customerId.trim().length > 0
-  const hasStripeCustomerId = stripeCustomerId && stripeCustomerId.trim().length > 0
-
-  if (!hasCustomerId && !hasStripeCustomerId) {
-    throw new Error(
-      "Billing methods require customerId or stripeCustomerId. " +
-        "Use customerId for your system-owned account ID.",
-    )
-  }
-}
-
 // ============================================
 // AUTO-IDENTIFY: EMAIL & NAME EXTRACTION
 // ============================================

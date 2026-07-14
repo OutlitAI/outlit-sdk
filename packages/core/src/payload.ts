@@ -1,13 +1,10 @@
 import { v7 as uuidv7 } from "uuid"
 import type {
-  BillingEvent,
-  BillingStatus,
   CalendarEvent,
   CalendarProvider,
   CustomEvent,
   CustomerTraits,
   EngagementEvent,
-  ExplicitJourneyStage,
   FormEvent,
   IdentifyEvent,
   IdentifyTraits,
@@ -16,7 +13,6 @@ import type {
   PayloadCustomerIdentity,
   PayloadUserIdentity,
   SourceType,
-  StageEvent,
   TrackerEvent,
 } from "./types"
 import { extractPathFromUrl, extractUtmParams } from "./utils"
@@ -223,61 +219,6 @@ export function buildEngagementEvent(
     activeTimeMs,
     totalTimeMs,
     sessionId,
-  }
-}
-
-/**
- * Build a stage event.
- * Used to explicitly send customer journey stage events.
- * New SDK callers should only send activated; engaged and inactive are derived
- * by Outlit from tracked activity but remain accepted for wire compatibility.
- * discovered/signed_up stages are inferred from identify calls.
- */
-export function buildStageEvent(
-  params: BaseEventParams & {
-    stage: ExplicitJourneyStage
-    properties?: Record<string, string | number | boolean | null>
-  },
-): StageEvent {
-  const { url, referrer, timestamp, stage, properties } = params
-  return {
-    uuid: uuidv7(),
-    type: "stage",
-    timestamp: timestamp ?? Date.now(),
-    url,
-    path: extractPathFromUrl(url),
-    referrer,
-    utm: extractUtmParams(url),
-    stage,
-    properties,
-  }
-}
-
-/**
- * Build a billing event.
- * Used to set customer billing status (trialing, paid, churned).
- */
-export function buildBillingEvent(
-  params: BaseEventParams & {
-    status: BillingStatus
-    customerId?: string
-    stripeCustomerId?: string
-    properties?: Record<string, string | number | boolean | null>
-  },
-): BillingEvent {
-  const { url, referrer, timestamp, status, customerId, stripeCustomerId, properties } = params
-  return {
-    uuid: uuidv7(),
-    type: "billing",
-    timestamp: timestamp ?? Date.now(),
-    url,
-    path: extractPathFromUrl(url),
-    referrer,
-    utm: extractUtmParams(url),
-    status,
-    customerId,
-    stripeCustomerId,
-    properties,
   }
 }
 

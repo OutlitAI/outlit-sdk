@@ -1,10 +1,10 @@
 //! Outlit client implementation.
 
-use crate::builders::{BillingBuilder, IdentifyBuilder, StageBuilder, TrackBuilder};
+use crate::builders::{IdentifyBuilder, TrackBuilder};
 use crate::config::{Config, OutlitBuilder};
 use crate::queue::EventQueue;
 use crate::transport::HttpTransport;
-use crate::types::{BillingStatus, IngestPayload, JourneyStage, SourceType};
+use crate::types::{IngestPayload, SourceType};
 use crate::{Email, Error, Fingerprint, UserId};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -204,24 +204,6 @@ impl Outlit {
     }
 
     // ============================================
-    // USER STAGES
-    // ============================================
-
-    /// User journey stage methods.
-    pub fn user(&self) -> UserMethods<'_> {
-        UserMethods { client: self }
-    }
-
-    // ============================================
-    // CUSTOMER BILLING
-    // ============================================
-
-    /// Customer billing methods.
-    pub fn customer(&self) -> CustomerMethods<'_> {
-        CustomerMethods { client: self }
-    }
-
-    // ============================================
     // LIFECYCLE
     // ============================================
 
@@ -370,18 +352,6 @@ impl BuildEvent for IdentifyBuilder {
     }
 }
 
-impl BuildEvent for StageBuilder {
-    fn build(self) -> crate::types::TrackerEvent {
-        self.build()
-    }
-}
-
-impl BuildEvent for BillingBuilder {
-    fn build(self) -> crate::types::TrackerEvent {
-        self.build()
-    }
-}
-
 /// Sendable track event builder.
 pub struct SendableTrack<'a> {
     builder: TrackBuilder,
@@ -459,205 +429,5 @@ impl<'a> SendableIdentify<'a> {
     /// Send the event.
     pub async fn send(self) -> Result<(), Error> {
         self.client.enqueue_and_maybe_flush(self.builder).await
-    }
-}
-
-/// Sendable stage event builder.
-pub struct SendableStage<'a> {
-    builder: StageBuilder,
-    client: &'a Outlit,
-}
-
-impl<'a> SendableStage<'a> {
-    /// Add email.
-    pub fn email(mut self, email: impl Into<String>) -> Self {
-        self.builder = self.builder.email(email);
-        self
-    }
-
-    /// Add user_id.
-    pub fn user_id(mut self, user_id: impl Into<String>) -> Self {
-        self.builder = self.builder.user_id(user_id);
-        self
-    }
-
-    /// Add fingerprint (device identifier).
-    pub fn fingerprint(mut self, fingerprint: impl Into<String>) -> Self {
-        self.builder = self.builder.fingerprint(fingerprint);
-        self
-    }
-
-    /// Add a property.
-    pub fn property(mut self, key: impl Into<String>, value: impl Into<serde_json::Value>) -> Self {
-        self.builder = self.builder.property(key, value);
-        self
-    }
-
-    /// Send the event.
-    pub async fn send(self) -> Result<(), Error> {
-        self.client.enqueue_and_maybe_flush(self.builder).await
-    }
-}
-
-/// Sendable billing event builder.
-pub struct SendableBilling<'a> {
-    builder: BillingBuilder,
-    client: &'a Outlit,
-}
-
-impl<'a> SendableBilling<'a> {
-    /// Set customer ID.
-    pub fn customer_id(mut self, id: impl Into<String>) -> Self {
-        self.builder = self.builder.customer_id(id);
-        self
-    }
-
-    /// Set Stripe customer ID.
-    pub fn stripe_customer_id(mut self, id: impl Into<String>) -> Self {
-        self.builder = self.builder.stripe_customer_id(id);
-        self
-    }
-
-    /// Add a property.
-    pub fn property(mut self, key: impl Into<String>, value: impl Into<serde_json::Value>) -> Self {
-        self.builder = self.builder.property(key, value);
-        self
-    }
-
-    /// Send the event.
-    pub async fn send(self) -> Result<(), Error> {
-        self.client.enqueue_and_maybe_flush(self.builder).await
-    }
-}
-
-// ============================================
-// NAMESPACE METHODS
-// ============================================
-
-/// User journey stage methods.
-pub struct UserMethods<'a> {
-    client: &'a Outlit,
-}
-
-impl<'a> UserMethods<'a> {
-    /// Mark user as activated.
-    pub fn activate(&self, identity: impl Into<Email>) -> SendableStage<'a> {
-        SendableStage {
-            builder: StageBuilder::new(JourneyStage::Activated, identity.into()),
-            client: self.client,
-        }
-    }
-
-    /// Mark user as activated by user_id.
-    pub fn activate_by_user_id(&self, identity: impl Into<UserId>) -> SendableStage<'a> {
-        SendableStage {
-            builder: StageBuilder::new(JourneyStage::Activated, identity.into()),
-            client: self.client,
-        }
-    }
-
-    /// Mark user as activated by fingerprint.
-    pub fn activate_by_fingerprint(&self, identity: impl Into<Fingerprint>) -> SendableStage<'a> {
-        SendableStage {
-            builder: StageBuilder::new(JourneyStage::Activated, identity.into()),
-            client: self.client,
-        }
-    }
-
-    /// Deprecated: Outlit derives engaged from tracked activity.
-    #[deprecated(
-        note = "Outlit derives ENGAGED from tracked activity. Keep tracking product activity and only send activation manually with user().activate()."
-    )]
-    pub fn engaged(&self, identity: impl Into<Email>) -> SendableStage<'a> {
-        SendableStage {
-            builder: StageBuilder::new(JourneyStage::Engaged, identity.into()),
-            client: self.client,
-        }
-    }
-
-    /// Deprecated: Outlit derives engaged from tracked activity.
-    #[deprecated(
-        note = "Outlit derives ENGAGED from tracked activity. Keep tracking product activity and only send activation manually with user().activate_by_user_id()."
-    )]
-    pub fn engaged_by_user_id(&self, identity: impl Into<UserId>) -> SendableStage<'a> {
-        SendableStage {
-            builder: StageBuilder::new(JourneyStage::Engaged, identity.into()),
-            client: self.client,
-        }
-    }
-
-    /// Deprecated: Outlit derives engaged from tracked activity.
-    #[deprecated(
-        note = "Outlit derives ENGAGED from tracked activity. Keep tracking product activity and only send activation manually with user().activate_by_fingerprint()."
-    )]
-    pub fn engaged_by_fingerprint(&self, identity: impl Into<Fingerprint>) -> SendableStage<'a> {
-        SendableStage {
-            builder: StageBuilder::new(JourneyStage::Engaged, identity.into()),
-            client: self.client,
-        }
-    }
-
-    /// Deprecated: Outlit derives inactive from tracked activity.
-    #[deprecated(
-        note = "Outlit derives INACTIVE from tracked activity. Keep tracking product activity and only send activation manually with user().activate()."
-    )]
-    pub fn inactive(&self, identity: impl Into<Email>) -> SendableStage<'a> {
-        SendableStage {
-            builder: StageBuilder::new(JourneyStage::Inactive, identity.into()),
-            client: self.client,
-        }
-    }
-
-    /// Deprecated: Outlit derives inactive from tracked activity.
-    #[deprecated(
-        note = "Outlit derives INACTIVE from tracked activity. Keep tracking product activity and only send activation manually with user().activate_by_user_id()."
-    )]
-    pub fn inactive_by_user_id(&self, identity: impl Into<UserId>) -> SendableStage<'a> {
-        SendableStage {
-            builder: StageBuilder::new(JourneyStage::Inactive, identity.into()),
-            client: self.client,
-        }
-    }
-
-    /// Deprecated: Outlit derives inactive from tracked activity.
-    #[deprecated(
-        note = "Outlit derives INACTIVE from tracked activity. Keep tracking product activity and only send activation manually with user().activate_by_fingerprint()."
-    )]
-    pub fn inactive_by_fingerprint(&self, identity: impl Into<Fingerprint>) -> SendableStage<'a> {
-        SendableStage {
-            builder: StageBuilder::new(JourneyStage::Inactive, identity.into()),
-            client: self.client,
-        }
-    }
-}
-
-/// Customer billing methods.
-pub struct CustomerMethods<'a> {
-    client: &'a Outlit,
-}
-
-impl<'a> CustomerMethods<'a> {
-    /// Mark customer as trialing.
-    pub fn trialing(&self, domain: impl Into<String>) -> SendableBilling<'a> {
-        SendableBilling {
-            builder: BillingBuilder::new(BillingStatus::Trialing, domain),
-            client: self.client,
-        }
-    }
-
-    /// Mark customer as paid.
-    pub fn paid(&self, domain: impl Into<String>) -> SendableBilling<'a> {
-        SendableBilling {
-            builder: BillingBuilder::new(BillingStatus::Paid, domain),
-            client: self.client,
-        }
-    }
-
-    /// Mark customer as churned.
-    pub fn churned(&self, domain: impl Into<String>) -> SendableBilling<'a> {
-        SendableBilling {
-            builder: BillingBuilder::new(BillingStatus::Churned, domain),
-            client: self.client,
-        }
     }
 }

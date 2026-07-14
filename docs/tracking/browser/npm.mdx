@@ -223,26 +223,16 @@ Clear the current user identity. Call this when the user logs out.
 outlit.clearUser()
 ```
 
-### Activation
+### Activation event
 
-Mark the current user as activated after they complete your product's activation milestone. For immediate delivery, identify first via `setUser()` or `identify()`.
-
-#### `outlit.user().activate(properties?)`
-
-Mark the current user as activated. Typically called after a user completes onboarding or a key activation milestone.
+Track the ordinary event selected as your activation signal after the milestone succeeds:
 
 ```typescript
-outlit.user().activate({ flow: 'onboarding', step: 'completed' })
+outlit.track('onboarding_completed', { flow: 'onboarding', step: 'completed' })
 ```
 
-Use `track()` for product activity. Outlit handles engagement and inactivity automatically; see [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity).
-
-<Warning>
-  `user.activate()` is associated to an identified user. If called before `setUser()` or `identify()`, it is queued and sent once identity is available.
-</Warning>
-
 <Info>
-  Account billing status (`paid`, `churned`, `trialing`) is tracked separately at the account level. If you've connected Stripe, this is handled automatically. For manual billing tracking from your server, see [Stages & Billing](/concepts/customer-journey).
+  Configure this event as your activation signal. Outlit Core derives activation, engagement, and inactivity from ordinary events. Billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
 </Info>
 
 ### `outlit.getInstance()`

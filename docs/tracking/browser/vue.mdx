@@ -271,8 +271,7 @@ const {
   identify,
   setUser,
   clearUser,
-  user,       // User identity and activation helpers
-  customer,   // Customer billing methods: trialing, paid, churned
+  user,       // User identity helper
   getVisitorId,
   isInitialized,
   isTrackingEnabled,
@@ -286,14 +285,8 @@ track('button_clicked', { buttonId: 'cta' })
 // Identify the user
 identify({ email: 'user@example.com', traits: { plan: 'pro' } })
 
-// User activation
-user.activate({ flow: 'onboarding' })
-
-// Customer billing methods (requires account identifier)
-customer.paid({
-  customerId: 'cust_123', // Your app's account/workspace/customer ID
-  properties: { plan: 'pro' }
-})
+// Track the ordinary event selected as your activation signal
+track('onboarding_completed', { flow: 'onboarding' })
 
 // Get visitor ID (null if tracking not enabled)
 const visitorId = getVisitorId()
@@ -319,16 +312,8 @@ const visitorId = getVisitorId()
 </ParamField>
 
 <ParamField path="user" type="object">
-  User identity and activation namespace:
+  User identity namespace:
   - `user.identify(options)` - Identify the user
-  - `user.activate(properties?)` - Mark user as activated
-</ParamField>
-
-<ParamField path="customer" type="object">
-  Customer billing methods namespace. Use `customerId` for public billing calls:
-  - `customer.trialing(options)` - Mark account as trialing
-  - `customer.paid(options)` - Mark account as paid
-  - `customer.churned(options)` - Mark account as churned
 </ParamField>
 
 <ParamField path="getVisitorId" type="() => string | null">
@@ -466,7 +451,7 @@ function acceptTracking() {
 </template>
 ```
 
-## Activation
+## Activation event
 
 Track user progression through your product lifecycle:
 
@@ -474,10 +459,10 @@ Track user progression through your product lifecycle:
 <script setup>
 import { useOutlit } from '@outlit/browser/vue'
 
-const { user } = useOutlit()
+const { track } = useOutlit()
 
 function handleOnboardingComplete() {
-  user.activate({ flow: 'onboarding', step: 'completed' })
+  track('onboarding_completed', { flow: 'onboarding', step: 'completed' })
 }
 </script>
 
@@ -488,14 +473,8 @@ function handleOnboardingComplete() {
 </template>
 ```
 
-<Warning>
-  `user.activate()` requires the user to be identified first. Use `useOutlitUser()`, `setUser()`, or `identify()` before calling it.
-</Warning>
-
-Use `track()` for product activity. Outlit handles engagement and inactivity automatically; see [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity).
-
 <Info>
-  Account billing status (`customer.paid`, `customer.churned`, `customer.trialing`) is tracked separately at the account level. If you've connected Stripe, this is handled automatically.
+  Configure this event as your activation signal. Outlit Core derives lifecycle stages from ordinary events, and billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
 </Info>
 
 ## Vue Router Integration

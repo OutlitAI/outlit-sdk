@@ -25,9 +25,8 @@ Add this snippet before the closing `</body>` tag. This creates a lightweight st
       }
     }
     stub(o,"",["init","track","identify","enableTracking","disableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
-    o.user=o.user||{};o.customer=o.customer||{};
-    stub(o.user,"user",["identify","activate","engaged","inactive"]);
-    stub(o.customer,"customer",["trialing","paid","churned"]);
+    o.user=o.user||{};
+    stub(o.user,"user",["identify"]);
     var s=d.createElement("script");s.async=1;s.src=src;
     s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
     (d.body||d.head).appendChild(s);
@@ -105,9 +104,8 @@ If you're using a consent management platform (CMP) or need to wait for user con
       }
     }
     stub(o,"",["init","track","identify","enableTracking","disableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
-    o.user=o.user||{};o.customer=o.customer||{};
-    stub(o.user,"user",["identify","activate","engaged","inactive"]);
-    stub(o.customer,"customer",["trialing","paid","churned"]);
+    o.user=o.user||{};
+    stub(o.user,"user",["identify"]);
     var s=d.createElement("script");s.async=1;s.src=src;
     s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
     (d.body||d.head).appendChild(s);
@@ -298,19 +296,17 @@ Call when the user logs out:
 window.outlit.clearUser()
 ```
 
-### Activation
+### Activation event
 
-Mark the current user as activated after they complete your product's activation milestone. The user must be identified first via `setUser()` or `identify()`.
+Track the ordinary event selected as your activation signal after the milestone succeeds:
 
 ```javascript
 // After user completes onboarding
-window.outlit.user.activate({ flow: 'onboarding' })
+window.outlit.track('onboarding_completed', { flow: 'onboarding' })
 ```
 
-Use `track()` for product activity. Outlit handles engagement and inactivity automatically; see [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity).
-
 <Info>
-  Account billing status (`paid`, `churned`, `trialing`) is tracked separately at the account level. If you've connected Stripe, this is handled automatically. For manual billing tracking, see [Stages & Billing](/concepts/customer-journey).
+  Configure this event as your activation signal. Outlit Core derives lifecycle stages from ordinary events, and billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
 </Info>
 
 ### Get Visitor ID
@@ -340,9 +336,8 @@ The IIFE snippet creates stub methods that queue all tracking calls until the SD
       }
     }
     stub(o,"",["init","track","identify","enableTracking","disableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
-    o.user=o.user||{};o.customer=o.customer||{};
-    stub(o.user,"user",["identify","activate","engaged","inactive"]);
-    stub(o.customer,"customer",["trialing","paid","churned"]);
+    o.user=o.user||{};
+    stub(o.user,"user",["identify"]);
     var s=d.createElement("script");s.async=1;s.src=src;
     s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
     (d.body||d.head).appendChild(s);
@@ -414,9 +409,8 @@ For performance, events are batched and sent:
         }
       }
       stub(o,"",["init","track","identify","enableTracking","disableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
-      o.user=o.user||{};o.customer=o.customer||{};
-      stub(o.user,"user",["identify","activate","engaged","inactive"]);
-      stub(o.customer,"customer",["trialing","paid","churned"]);
+      o.user=o.user||{};
+      stub(o.user,"user",["identify"]);
       var s=d.createElement("script");s.async=1;s.src=src;
       s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
       (d.body||d.head).appendChild(s);

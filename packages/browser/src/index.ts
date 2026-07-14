@@ -4,15 +4,12 @@
 export type {
   BrowserIdentifyOptions,
   BrowserTrackOptions,
-  CustomerIdentifier,
-  ExplicitJourneyStage,
   TrackerConfig,
   UtmParams,
 } from "@outlit/core"
-export type { BillingOptions, OutlitOptions, UserIdentity, UserMethods } from "./tracker"
+export type { OutlitOptions, UserIdentity, UserMethods } from "./tracker"
 export {
   clearUser,
-  customer,
   disableTracking,
   enableTracking,
   getInstance,
@@ -28,7 +25,6 @@ export {
 // Default export for simple import
 import {
   clearUser,
-  customer,
   disableTracking,
   enableTracking,
   getInstance,
@@ -53,5 +49,4 @@ export default {
   setUser,
   clearUser,
   user,
-  customer,
 }

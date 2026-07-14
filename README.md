@@ -89,17 +89,15 @@ outlit.track('button_clicked', {
   page: '/homepage',
 })
 
-// Mark billing status on a customer
-outlit.customer.trialing({
-  customerId: 'cust_123', // Your app's account/workspace/customer ID
-  properties: { plan: 'pro' },
-})
+// Track meaningful product activity. Core derives lifecycle stages from
+// ordinary events, including your selected activation event.
+outlit.track('onboarding_completed', { flow: 'self_serve' })
 ```
 
 #### Using the singleton API
 
 ```typescript
-import { init, track, user, customer } from '@outlit/browser'
+import { init, track, user } from '@outlit/browser'
 
 // Initialize once at app startup
 init({ publicKey: 'pk_xxx' })
@@ -110,10 +108,7 @@ user().identify({
   email: 'user@example.com',
   customerId: 'cust_123', // Your app's account/workspace/customer ID
 })
-customer().paid({
-  customerId: 'cust_123', // Your app's account/workspace/customer ID
-  properties: { plan: 'pro' },
-})
+track('subscription_upgraded', { plan: 'pro' })
 ```
 
 #### Using with React
@@ -132,10 +127,10 @@ function App() {
 
 // Use in components
 function MyComponent() {
-  const { track, user } = useOutlit()
+  const { track } = useOutlit()
   
   return (
-    <button onClick={() => user.activate({ milestone: 'onboarding' })}>
+    <button onClick={() => track('onboarding_completed')}>
       Click me
     </button>
   )
@@ -173,9 +168,11 @@ outlit.user.identify({
   customerTraits: { plan: 'pro' },
 })
 
-// Mark customer billing status
-outlit.customer.paid({
-  customerId: 'cust_123', // Your app's account/workspace/customer ID
+// Track ordinary product events. Billing status comes from verified
+// integrations such as Stripe, not authoritative SDK commands.
+outlit.track({
+  customerId: 'cust_123',
+  eventName: 'subscription_upgraded',
   properties: { plan: 'pro' },
 })
 

@@ -114,59 +114,11 @@ describe("Outlit", () => {
     await outlit.shutdown()
   })
 
-  it("preserves stage identity markers without customer event-name collisions", async () => {
+  it("exposes only ordinary identity and tracking APIs", async () => {
     const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
 
-    outlit.user.activate({
-      email: "user@example.com",
-      userId: "usr_123",
-      properties: { source: "signup" },
-    })
-
-    await outlit.flush()
-
-    const payload = getLastPayload()
-    const event = payload.events[0]!
-    expect(event.type).toBe("stage")
-    expect(event).not.toHaveProperty("eventName")
-    expect(event.properties?.__email).toBe("user@example.com")
-    expect(event.properties?.__userId).toBe("usr_123")
-    expect(event.properties?.__fingerprint).toBeNull()
-    expect(event.properties?.source).toBe("signup")
-
-    await outlit.shutdown()
-  })
-
-  it("warns when derived journey stages are sent manually", async () => {
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
-    const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
-
-    outlit.user.engaged({ email: "user@example.com" })
-    outlit.user.inactive({ email: "user@example.com" })
-
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("user.engaged() is deprecated"))
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("user.inactive() is deprecated"),
-    )
-
-    await outlit.shutdown()
-  })
-
-  it("publishes billing events using customerId", async () => {
-    const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
-
-    outlit.customer.paid({
-      customerId: "cust_123",
-      properties: { plan: "enterprise" },
-    })
-
-    await outlit.flush()
-
-    const payload = getLastPayload()
-    const event = payload.events[0]!
-    expect(event.type).toBe("billing")
-    expect(event.customerId).toBe("cust_123")
-    expect(event).not.toHaveProperty("customerDomain")
+    expect(Object.keys(outlit.user)).toEqual(["identify"])
+    expect("customer" in outlit).toBe(false)
 
     await outlit.shutdown()
   })

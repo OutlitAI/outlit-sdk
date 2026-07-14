@@ -16,12 +16,6 @@ interface ApiCall {
   }
 }
 
-interface StageEvent {
-  type: "stage"
-  stage: string
-  properties?: Record<string, unknown>
-}
-
 // Helper to intercept and collect API calls
 async function interceptApiCalls(page: import("@playwright/test").Page): Promise<ApiCall[]> {
   const apiCalls: ApiCall[] = []
@@ -586,13 +580,9 @@ test.describe("Stub Snippet (Recommended Approach)", () => {
     const earlyEvents = allEvents.filter(
       (e) => e.type === "custom" && e.properties?.queued === true,
     )
-    const queuedStageEvents = allEvents.filter(
-      (e): e is StageEvent => e.type === "stage" && e.properties?.queued === true,
-    )
-
-    // Both queued custom events should have been processed
+    // Both queued custom events should have been processed.
     expect(earlyEvents.length).toBe(2)
-    expect(queuedStageEvents.map((e) => e.stage).sort()).toEqual(["engaged", "inactive"])
+    expect(allEvents.some((event) => event.type === "identify")).toBe(true)
   })
 
   test("double-load protection prevents re-initialization", async ({ page }) => {

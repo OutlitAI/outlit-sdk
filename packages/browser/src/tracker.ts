@@ -1,26 +1,18 @@
 import {
-  type BillingStatus,
   type BrowserIdentifyOptions,
   type BrowserTrackOptions,
-  buildBillingEvent,
   buildCalendarEvent,
   buildCustomEvent,
   buildFormEvent,
   buildIdentifyEvent,
   buildIngestPayload,
   buildPageviewEvent,
-  buildStageEvent,
-  type CustomerIdentifier,
   DEFAULT_API_HOST,
-  type ExplicitJourneyStage,
   type PayloadCustomerIdentity,
   type PayloadUserIdentity,
   type TrackerConfig,
   type TrackerEvent,
-  validateCustomerIdentity,
 } from "@outlit/core"
-
-const MAX_PENDING_STAGE_EVENTS = 10
 
 import { initFormTracking, initPageviewTracking, stopAutocapture } from "./autocapture"
 import {
@@ -30,19 +22,6 @@ import {
 } from "./embed-integrations"
 import { initSessionTracking, type SessionTracker, stopSessionTracking } from "./session-tracker"
 import { getConsentState, getOrCreateVisitorId, setConsentState } from "./storage"
-
-function warnIfDerivedJourneyStage(
-  warnedStages: Set<ExplicitJourneyStage>,
-  stage: ExplicitJourneyStage,
-): void {
-  if (stage === "activated") return
-  if (warnedStages.has(stage)) return
-  warnedStages.add(stage)
-
-  console.warn(
-    `[Outlit] user.${stage}() is deprecated. Outlit now derives ENGAGED and INACTIVE from tracked activity. Keep using user.activate() for product-specific activation milestones.`,
-  )
-}
 
 // ============================================
 // OUTLIT CLIENT
@@ -96,23 +75,8 @@ export interface OutlitOptions extends TrackerConfig {
 
 export type UserIdentity = BrowserIdentifyOptions
 
-export interface BillingOptions extends CustomerIdentifier {
-  properties?: Record<string, string | number | boolean | null>
-}
-
 export interface UserMethods {
   identify: (options: BrowserIdentifyOptions) => void
-  activate: (properties?: Record<string, string | number | boolean | null>) => void
-  /**
-   * @deprecated Outlit derives ENGAGED from tracked activity. Keep tracking product activity
-   * with track() and only send activation manually with user.activate().
-   */
-  engaged: (properties?: Record<string, string | number | boolean | null>) => void
-  /**
-   * @deprecated Outlit derives INACTIVE from tracked activity. Keep tracking product activity
-   * with track() and only send activation manually with user.activate().
-   */
-  inactive: (properties?: Record<string, string | number | boolean | null>) => void
 }
 
 export class Outlit {
@@ -126,14 +90,8 @@ export class Outlit {
   private options: OutlitOptions
   private hasHandledExit = false
   private sessionTracker: SessionTracker | null = null
-  private warnedDerivedJourneyStages = new Set<ExplicitJourneyStage>()
-  // User identity state for stage events
   private currentUser: UserIdentity | null = null
   private pendingUser: UserIdentity | null = null
-  private pendingStageEvents: Array<{
-    stage: ExplicitJourneyStage
-    properties?: Record<string, string | number | boolean | null>
-  }> = []
   private exitCleanups: Array<() => void> = []
 
   constructor(options: OutlitOptions) {
@@ -316,9 +274,6 @@ export class Outlit {
   /**
    * Identify the current visitor.
    * Links the anonymous visitor to a known user.
-   *
-   * When email or userId is provided, also sets the current user identity
-   * for activation events.
    */
   identify(options: BrowserIdentifyOptions): void {
     if (!this.isTrackingEnabled) {
@@ -331,19 +286,13 @@ export class Outlit {
       return
     }
 
-    // Update currentUser if email or userId is provided
-    // This enables stage events after identify() is called
     if (options.email || options.userId) {
-      const hadNoUser = !this.currentUser
       this.currentUser = {
         email: options.email,
         userId: options.userId,
         customerId: options.customerId,
         customerTraits: options.customerTraits,
         traits: options.traits,
-      }
-      if (hadNoUser) {
-        this.flushPendingStageEvents()
       }
     }
 
@@ -367,9 +316,7 @@ export class Outlit {
    * If called before tracking is enabled, the identity is stored as pending
    * and applied automatically when enableTracking() is called.
    *
-   * Note: Both setUser() and identify() enable stage events. The difference is
-   * setUser() can be called before tracking is enabled (identity is queued),
-   * while identify() requires tracking to be enabled first.
+   * Unlike identify(), setUser() can be called before tracking is enabled.
    */
   setUser(identity: UserIdentity): void {
     if (!identity.email && !identity.userId) {
@@ -392,7 +339,6 @@ export class Outlit {
   clearUser(): void {
     this.currentUser = null
     this.pendingUser = null
-    this.pendingStageEvents = []
   }
 
   /**
@@ -407,107 +353,11 @@ export class Outlit {
       customerId: identity.customerId,
       customerTraits: identity.customerTraits,
     })
-    this.flushPendingStageEvents()
   }
 
-  /**
-   * Flush any pending stage events that were queued before user identity was set.
-   */
-  private flushPendingStageEvents(): void {
-    if (this.pendingStageEvents.length === 0) return
-
-    const events = [...this.pendingStageEvents]
-    this.pendingStageEvents = []
-
-    for (const { stage, properties } of events) {
-      const event = buildStageEvent({
-        url: window.location.href,
-        referrer: document.referrer,
-        stage,
-        properties,
-      })
-      this.enqueue(event)
-    }
-  }
-
-  /**
-   * User namespace methods for contact journey stages.
-   */
+  /** User namespace method for identity. */
   readonly user: UserMethods = {
     identify: (options: BrowserIdentifyOptions) => this.identify(options),
-    activate: (properties?: Record<string, string | number | boolean | null>) =>
-      this.sendStageEvent("activated", properties),
-    engaged: (properties?: Record<string, string | number | boolean | null>) =>
-      this.sendStageEvent("engaged", properties),
-    inactive: (properties?: Record<string, string | number | boolean | null>) =>
-      this.sendStageEvent("inactive", properties),
-  }
-
-  /**
-   * Customer namespace methods for billing status.
-   */
-  readonly customer = {
-    trialing: (options: BillingOptions) => this.sendBillingEvent("trialing", options),
-    paid: (options: BillingOptions) => this.sendBillingEvent("paid", options),
-    churned: (options: BillingOptions) => this.sendBillingEvent("churned", options),
-  }
-
-  /**
-   * Internal method to send a stage event.
-   */
-  private sendStageEvent(
-    stage: ExplicitJourneyStage,
-    properties?: Record<string, string | number | boolean | null>,
-  ): void {
-    warnIfDerivedJourneyStage(this.warnedDerivedJourneyStages, stage)
-
-    if (!this.isTrackingEnabled) {
-      console.warn("[Outlit] Tracking not enabled. Call enableTracking() first.")
-      return
-    }
-
-    if (!this.currentUser) {
-      if (this.pendingStageEvents.length >= MAX_PENDING_STAGE_EVENTS) {
-        console.warn(
-          `[Outlit] Pending stage event queue full (${MAX_PENDING_STAGE_EVENTS}). Call setUser() or identify() to flush queued events.`,
-        )
-        return
-      }
-      this.pendingStageEvents.push({ stage, properties })
-      return
-    }
-
-    const event = buildStageEvent({
-      url: window.location.href,
-      referrer: document.referrer,
-      stage,
-      properties,
-    })
-    this.enqueue(event)
-  }
-
-  private sendBillingEvent(status: BillingStatus, options: BillingOptions): void {
-    if (!this.isTrackingEnabled) {
-      console.warn("[Outlit] Tracking not enabled. Call enableTracking() first.")
-      return
-    }
-
-    try {
-      validateCustomerIdentity(options.customerId, options.stripeCustomerId)
-    } catch (error) {
-      console.warn("[Outlit]", error instanceof Error ? error.message : error)
-      return
-    }
-
-    const event = buildBillingEvent({
-      url: window.location.href,
-      referrer: document.referrer,
-      status,
-      customerId: options.customerId,
-      stripeCustomerId: options.stripeCustomerId,
-      properties: options.properties,
-    })
-    this.enqueue(event)
   }
 
   /**
@@ -831,13 +681,9 @@ export function clearUser(): void {
 }
 
 /**
- * Access user and customer namespaces.
+ * Access the user namespace.
  * Convenience method that uses the singleton instance.
  */
 export function user(): Outlit["user"] {
   return getInstance().user
-}
-
-export function customer(): Outlit["customer"] {
-  return getInstance().customer
 }
