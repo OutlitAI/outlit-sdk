@@ -88,7 +88,7 @@ Data flows in from multiple sources:
 Entities form relationships:
 - **Visitors → Contacts**: Via identity resolution (email, userId, device fingerprint)
 - **Contacts → Accounts**: Via organizational email domains, explicit `customerId` attribution, and connected source data
-- **Accounts → Billing**: Via Stripe integration or manual status updates
+- **Accounts → Billing**: Via verified billing integrations such as Stripe
 
 Each contact carries a [journey stage](/concepts/customer-journey) (Discovered → Signed Up → Activated → Engaged → Inactive) and each account carries a billing status (None → Trialing → Paying → Churned).
 
