@@ -286,15 +286,21 @@ export class Outlit {
       return
     }
 
-    if (options.email || options.userId) {
-      this.currentUser = {
-        email: options.email,
-        userId: options.userId,
-        customerId: options.customerId,
-        customerTraits: options.customerTraits,
-        traits: options.traits,
-      }
+    const nextUser = {
+      email: options.email,
+      userId: options.userId,
+      customerId: options.customerId,
+      customerTraits: options.customerTraits,
+      traits: options.traits,
     }
+
+    // sendEvents snapshots currentUser synchronously before its first await. Flush
+    // before changing attribution so queued events retain the identity they had
+    // when they were recorded.
+    if (this.hasAttributionChanged(nextUser)) {
+      void this.flush()
+    }
+    this.currentUser = nextUser
 
     const event = buildIdentifyEvent({
       url: window.location.href,
@@ -337,6 +343,9 @@ export class Outlit {
    * Call this when the user logs out.
    */
   clearUser(): void {
+    if (this.currentUser) {
+      void this.flush()
+    }
     this.currentUser = null
     this.pendingUser = null
   }
@@ -345,7 +354,6 @@ export class Outlit {
    * Apply user identity and send identify event.
    */
   private applyUser(identity: UserIdentity): void {
-    this.currentUser = identity
     this.identify({
       email: identity.email,
       userId: identity.userId,
@@ -353,6 +361,21 @@ export class Outlit {
       customerId: identity.customerId,
       customerTraits: identity.customerTraits,
     })
+  }
+
+  private hasAttributionChanged(nextUser: UserIdentity): boolean {
+    if (!this.currentUser) {
+      return false
+    }
+
+    const normalizeEmail = (email: string | undefined) => email?.trim().toLowerCase()
+    const normalizeId = (id: string | undefined) => id?.trim()
+
+    return (
+      normalizeEmail(this.currentUser.email) !== normalizeEmail(nextUser.email) ||
+      normalizeId(this.currentUser.userId) !== normalizeId(nextUser.userId) ||
+      normalizeId(this.currentUser.customerId) !== normalizeId(nextUser.customerId)
+    )
   }
 
   /** User namespace method for identity. */
