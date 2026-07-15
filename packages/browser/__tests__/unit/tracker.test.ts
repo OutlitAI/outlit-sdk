@@ -200,4 +200,76 @@ describe("payload identity", () => {
     expect(payload.userIdentity).not.toHaveProperty("customerId")
     expect(payload.customerIdentity).not.toHaveProperty("customerTraits")
   })
+
+  it("flushes queued events with the previous identity before an account switch", async () => {
+    const outlit = new Outlit({
+      publicKey: "pk_test",
+      autoTrack: false,
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+    })
+    outlit.enableTracking()
+    outlit.identify({ email: "user-a@example.com", customerId: "customer_a" })
+    await outlit.flush()
+
+    outlit.track("user_a_event")
+    outlit.identify({ email: "user-b@example.com", customerId: "customer_b" })
+    await outlit.flush()
+
+    const payloads = vi
+      .mocked(global.fetch)
+      .mock.calls.map(([, options]) => JSON.parse(String(options?.body))) as Array<{
+      userIdentity?: { email?: string }
+      customerIdentity?: { customerId?: string }
+      events: Array<{ eventName?: string; type: string }>
+    }>
+
+    expect(payloads).toHaveLength(3)
+    expect(payloads[1]).toMatchObject({
+      userIdentity: { email: "user-a@example.com" },
+      customerIdentity: { customerId: "customer_a" },
+      events: [{ eventName: "user_a_event", type: "custom" }],
+    })
+    expect(payloads[2]).toMatchObject({
+      userIdentity: { email: "user-b@example.com" },
+      customerIdentity: { customerId: "customer_b" },
+      events: [{ type: "identify" }],
+    })
+  })
+
+  it("flushes queued events with the known identity before clearUser", async () => {
+    const outlit = new Outlit({
+      publicKey: "pk_test",
+      autoTrack: false,
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+    })
+    outlit.enableTracking()
+    outlit.identify({ email: "user-a@example.com" })
+    await outlit.flush()
+
+    outlit.track("known_user_event")
+    outlit.clearUser()
+    outlit.track("anonymous_event")
+    await outlit.flush()
+
+    const payloads = vi
+      .mocked(global.fetch)
+      .mock.calls.map(([, options]) => JSON.parse(String(options?.body))) as Array<{
+      userIdentity?: { email?: string }
+      events: Array<{ eventName?: string; type: string }>
+    }>
+
+    expect(payloads).toHaveLength(3)
+    expect(payloads[1]).toMatchObject({
+      userIdentity: { email: "user-a@example.com" },
+      events: [{ eventName: "known_user_event", type: "custom" }],
+    })
+    expect(payloads[2]?.userIdentity).toBeUndefined()
+    expect(payloads[2]?.events).toEqual([
+      expect.objectContaining({ eventName: "anonymous_event", type: "custom" }),
+    ])
+  })
 })
