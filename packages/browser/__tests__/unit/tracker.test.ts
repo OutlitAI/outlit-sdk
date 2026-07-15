@@ -272,4 +272,33 @@ describe("payload identity", () => {
       expect.objectContaining({ eventName: "anonymous_event", type: "custom" }),
     ])
   })
+
+  it("does not split a batch when attribution differs only by normalization", async () => {
+    const outlit = new Outlit({
+      publicKey: "pk_test",
+      autoTrack: false,
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+    })
+    outlit.enableTracking()
+    outlit.identify({ email: "User-A@Example.com ", userId: " user_a " })
+    await outlit.flush()
+
+    outlit.track("same_identity_event")
+    outlit.identify({ email: " user-a@example.com", userId: "user_a" })
+    await outlit.flush()
+
+    const payloads = vi
+      .mocked(global.fetch)
+      .mock.calls.map(([, options]) => JSON.parse(String(options?.body))) as Array<{
+      events: Array<{ eventName?: string; type: string }>
+    }>
+
+    expect(payloads).toHaveLength(2)
+    expect(payloads[1]?.events).toEqual([
+      expect.objectContaining({ eventName: "same_identity_event", type: "custom" }),
+      expect.objectContaining({ type: "identify" }),
+    ])
+  })
 })
