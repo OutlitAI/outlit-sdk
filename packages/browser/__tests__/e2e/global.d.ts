@@ -36,26 +36,6 @@ declare global {
           userId?: string
           traits?: Record<string, unknown>
         }) => void
-        activate: (properties?: Record<string, unknown>) => void
-        engaged: (properties?: Record<string, unknown>) => void
-        inactive: (properties?: Record<string, unknown>) => void
-      }
-      customer: {
-        trialing: (options: {
-          customerId?: string
-          stripeCustomerId?: string
-          properties?: Record<string, unknown>
-        }) => void
-        paid: (options: {
-          customerId?: string
-          stripeCustomerId?: string
-          properties?: Record<string, unknown>
-        }) => void
-        churned: (options: {
-          customerId?: string
-          stripeCustomerId?: string
-          properties?: Record<string, unknown>
-        }) => void
       }
 
       // Internal properties (for testing)

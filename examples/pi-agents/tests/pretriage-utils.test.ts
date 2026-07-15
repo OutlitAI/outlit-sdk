@@ -11,15 +11,15 @@ import {
 
 describe("pretriage utilities", () => {
   test("normalizes event names for deterministic SQL filters", () => {
-    expect(normalizeEventNames([" Stage:Activated ", "", "CUSTOM_EVENT"])).toEqual([
-      "stage:activated",
+    expect(normalizeEventNames([" Onboarding_Completed ", "", "CUSTOM_EVENT"])).toEqual([
+      "onboarding_completed",
       "custom_event",
     ])
   })
 
   test("escapes SQL string lists", () => {
-    expect(toSqlStringList(["stage:activated", "customer's_event"])).toBe(
-      "'stage:activated', 'customer''s_event'",
+    expect(toSqlStringList(["onboarding_completed", "customer's_event"])).toBe(
+      "'onboarding_completed', 'customer''s_event'",
     )
   })
 

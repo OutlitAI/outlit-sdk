@@ -158,54 +158,18 @@ client.identify(email("user@example.com"))
   Add a trait to the user profile.
 </ParamField>
 
-### Activation
+### Lifecycle and billing
 
-Mark activation after a contact completes your product's activation milestone.
+Track the ordinary event selected as your activation signal after the milestone succeeds:
 
 ```rust
-// Mark user as activated
-client.user()
-    .activate(email("user@example.com"))
+client.track("onboarding_completed", email("user@example.com"))
     .property("flow", "onboarding")
     .send()
     .await?;
-
-// With fingerprint
-client.user()
-    .activate_by_fingerprint(fingerprint("device_abc123"))
-    .send()
-    .await?;
 ```
 
-Use custom track events for product activity. Outlit handles engagement and inactivity automatically; see [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity).
-
-### Account Billing Methods
-
-Track account billing status by domain.
-
-```rust
-// Mark account as paid
-client.customer()
-    .paid("acme.com")
-    .property("plan", "pro")
-    .property("amount", 99)
-    .send()
-    .await?;
-
-// Mark account as trialing
-client.customer()
-    .trialing("acme.com")
-    .property("trial_ends", "2024-02-15")
-    .send()
-    .await?;
-
-// Mark account as churned
-client.customer()
-    .churned("acme.com")
-    .property("reason", "cancelled")
-    .send()
-    .await?;
-```
+Configure this event as your activation signal. Outlit Core derives activation, engagement, and inactivity from ordinary events. Billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
 
 ### `client.flush()`
 

@@ -1,72 +1,18 @@
 import {
-  type BillingStatus,
-  buildBillingEvent,
   buildCustomEvent,
   buildIdentifyEvent,
-  buildStageEvent,
-  type CustomerIdentifier,
   DEFAULT_API_HOST,
-  type ExplicitJourneyStage,
   type IngestPayload,
   type ServerIdentifyOptions,
-  type ServerIdentity,
   type ServerTrackOptions,
   type TrackerEvent,
-  validateCustomerIdentity,
   validateServerIdentity,
 } from "@outlit/core"
 import { EventQueue } from "./queue"
 import { HttpTransport, TransportError } from "./transport"
 
-function warnIfDerivedJourneyStage(
-  warnedStages: Set<ExplicitJourneyStage>,
-  stage: ExplicitJourneyStage,
-): void {
-  if (stage === "activated") return
-  if (warnedStages.has(stage)) return
-  warnedStages.add(stage)
-
-  console.warn(
-    `[Outlit] user.${stage}() is deprecated. Outlit now derives ENGAGED and INACTIVE from tracked activity. Keep using user.activate() for product-specific activation milestones.`,
-  )
-}
-
-// ============================================
-// STAGE OPTIONS
-// ============================================
-
-/**
- * Options for user activation events.
- * Server-side stage events require at least one identifier (fingerprint, email, or userId).
- */
-export interface StageOptions extends ServerIdentity {
-  /**
-   * Optional properties for context.
-   */
-  properties?: Record<string, string | number | boolean | null>
-}
-
 export interface UserMethods {
   identify: (options: ServerIdentifyOptions) => void
-  activate: (options: StageOptions) => void
-  /**
-   * @deprecated Outlit derives ENGAGED from tracked activity. Keep tracking product activity
-   * with track() and only send activation manually with user.activate().
-   */
-  engaged: (options: StageOptions) => void
-  /**
-   * @deprecated Outlit derives INACTIVE from tracked activity. Keep tracking product activity
-   * with track() and only send activation manually with user.activate().
-   */
-  inactive: (options: StageOptions) => void
-}
-
-/**
- * Options for billing status events.
- * Public billing calls should use customerId.
- */
-export interface BillingOptions extends CustomerIdentifier {
-  properties?: Record<string, string | number | boolean | null>
 }
 
 // ============================================
@@ -157,7 +103,6 @@ export class Outlit {
   private flushInterval: number
   private isShutdown = false
   private fatalTransportError: TransportError | null = null
-  private warnedDerivedJourneyStages = new Set<ExplicitJourneyStage>()
 
   constructor(options: OutlitOptions) {
     const apiHost = options.apiHost ?? DEFAULT_API_HOST
@@ -259,60 +204,9 @@ export class Outlit {
     this.queue.enqueue(event)
   }
 
-  /**
-   * User namespace methods for contact journey stages.
-   */
+  /** User namespace method for identity. */
   readonly user: UserMethods = {
     identify: (options: ServerIdentifyOptions) => this.identify(options),
-    activate: (options: StageOptions) => this.sendStageEvent("activated", options),
-    engaged: (options: StageOptions) => this.sendStageEvent("engaged", options),
-    inactive: (options: StageOptions) => this.sendStageEvent("inactive", options),
-  }
-
-  /**
-   * Customer namespace methods for billing status.
-   */
-  readonly customer = {
-    trialing: (options: BillingOptions) => this.sendBillingEvent("trialing", options),
-    paid: (options: BillingOptions) => this.sendBillingEvent("paid", options),
-    churned: (options: BillingOptions) => this.sendBillingEvent("churned", options),
-  }
-
-  /**
-   * Internal method to send a stage event.
-   */
-  private sendStageEvent(stage: ExplicitJourneyStage, options: StageOptions): void {
-    this.ensureNotShutdown()
-    validateServerIdentity(options.fingerprint, options.email, options.userId)
-    warnIfDerivedJourneyStage(this.warnedDerivedJourneyStages, stage)
-
-    const event = buildStageEvent({
-      url: `server://${options.email ?? options.userId ?? options.fingerprint}`,
-      stage,
-      properties: {
-        ...options.properties,
-        __fingerprint: options.fingerprint ?? null,
-        __email: options.email ?? null,
-        __userId: options.userId ?? null,
-      },
-    })
-
-    this.queue.enqueue(event)
-  }
-
-  private sendBillingEvent(status: BillingStatus, options: BillingOptions): void {
-    this.ensureNotShutdown()
-    validateCustomerIdentity(options.customerId, options.stripeCustomerId)
-
-    const event = buildBillingEvent({
-      url: `server://${options.customerId ?? options.stripeCustomerId}`,
-      status,
-      customerId: options.customerId,
-      stripeCustomerId: options.stripeCustomerId,
-      properties: options.properties,
-    })
-
-    this.queue.enqueue(event)
   }
 
   /**

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { buildCustomEvent, buildIdentifyEvent, buildIngestPayload } from "../payload"
-import { validateCustomerIdentity, validateServerIdentity } from "../utils"
+import { validateServerIdentity } from "../utils"
 
 describe("customer identity contract", () => {
   it("allows customer-only server tracking", () => {
@@ -91,11 +91,5 @@ describe("customer identity contract", () => {
       customerId: "cust_legacy",
       customerTraits: { plan: "legacy-pro" },
     })
-  })
-
-  it("requires a customer identifier for billing", () => {
-    expect(() => validateCustomerIdentity()).toThrow()
-    expect(() => validateCustomerIdentity("cust_123")).not.toThrow()
-    expect(() => validateCustomerIdentity(undefined, "cus_123")).not.toThrow()
   })
 })

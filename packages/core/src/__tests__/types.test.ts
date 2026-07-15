@@ -1,8 +1,8 @@
 import { describe, expect, expectTypeOf, it } from "vitest"
-import { buildStageEvent } from "../payload"
 import type {
   BrowserIdentifyOptions,
   CustomerTraits,
+  EventType,
   IdentifyTraits,
   ServerIdentifyOptions,
   ServerTrackOptions,
@@ -104,15 +104,14 @@ describe("BrowserIdentifyOptions", () => {
   })
 })
 
-describe("StageEvent", () => {
-  it("keeps lifecycle stages distinct from customer product event names", () => {
-    const event = buildStageEvent({
-      url: "https://example.com/onboarding",
-      stage: "activated",
-    })
+describe("EventType", () => {
+  it("does not accept authoritative lifecycle or billing events", () => {
+    // @ts-expect-error lifecycle is derived from ordinary events
+    const stage: EventType = "stage"
+    // @ts-expect-error billing is sourced from verified integrations
+    const billing: EventType = "billing"
 
-    expect(event.type).toBe("stage")
-    expect(event.stage).toBe("activated")
-    expect(event).not.toHaveProperty("eventName")
+    expect(stage).toBe("stage")
+    expect(billing).toBe("billing")
   })
 })

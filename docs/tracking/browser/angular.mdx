@@ -96,10 +96,6 @@ export class OutlitService {
     outlit.clearUser()
   }
 
-  activate(properties?: Record<string, any>): void {
-    outlit.user().activate(properties)
-  }
-
   getVisitorId(): string | null {
     return outlit.getInstance().getVisitorId()
   }
@@ -374,9 +370,9 @@ export const appConfig: ApplicationConfig = {
 }
 ```
 
-## Activation
+## Activation event
 
-Track contact lifecycle:
+Track the ordinary event selected as your activation signal after the milestone succeeds:
 
 ```typescript
 // src/app/components/onboarding/onboarding.component.ts
@@ -395,7 +391,7 @@ export class OnboardingComponent {
   ) {}
 
   handleComplete(): void {
-    this.outlit.activate({
+    this.outlit.track('onboarding_completed', {
       flow: 'onboarding',
       step: 'completed'
     })
@@ -405,14 +401,8 @@ export class OnboardingComponent {
 }
 ```
 
-<Warning>
-  `activate()` is associated to an identified user. If called before `setUser()` or `identify()`, it is queued and sent once identity is available.
-</Warning>
-
-Use `track()` for product activity. Outlit handles engagement and inactivity automatically; see [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity).
-
 <Info>
-  Account billing (`paid`, `churned`, `trialing`) is tracked separately. If you've connected Stripe, billing is automatic. For manual billing, see [Stages & Billing](/concepts/customer-journey).
+  Outlit Core derives activation from your selected ordinary event and derives engagement and inactivity from product activity. Billing comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
 </Info>
 
 ## Consent Management

@@ -322,28 +322,22 @@ export default defineEventHandler(async (event) => {
   For server-side tracking, see the [Node.js integration guide](/tracking/server/nodejs).
 </Info>
 
-## Activation
+## Activation event
 
 Mark activation after the user completes your product's activation milestone:
 
 ```vue
 <script setup>
-const { user } = useOutlit()
+const { track } = useOutlit()
 
 function handleOnboardingComplete() {
-  user.activate({ flow: 'onboarding', step: 'completed' })
+  track('onboarding_completed', { flow: 'onboarding', step: 'completed' })
 }
 </script>
 ```
 
-<Warning>
-  `user.activate()` requires the user to be identified first using `setUser()` or `identify()`.
-</Warning>
-
-Use `track()` for product activity. Outlit handles engagement and inactivity automatically; see [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity).
-
 <Info>
-  Account billing (`paid`, `churned`, `trialing`) is tracked separately. If you've connected Stripe, billing is automatic. For manual billing, see [Stages & Billing](/concepts/customer-journey).
+  Configure this ordinary event as your activation signal. Outlit Core derives activation, engagement, and inactivity; billing comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
 </Info>
 
 ## Consent Management

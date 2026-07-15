@@ -1,6 +1,6 @@
 import type { BrowserIdentifyOptions, BrowserTrackOptions } from "@outlit/core"
 import { inject, type Ref, watch } from "vue"
-import type { BillingOptions, UserIdentity } from "../tracker"
+import type { UserIdentity } from "../tracker"
 import { OutlitKey } from "./plugin"
 
 // ============================================
@@ -38,30 +38,10 @@ export interface UseOutlitReturn {
   clearUser: () => void
 
   /**
-   * User namespace methods for identity and activation.
+   * User namespace method for identity.
    */
   user: {
     identify: (options: BrowserIdentifyOptions) => void
-    activate: (properties?: Record<string, string | number | boolean | null>) => void
-    /**
-     * @deprecated Outlit derives ENGAGED from tracked activity. Keep tracking product activity
-     * with track() and only send activation manually with user.activate().
-     */
-    engaged: (properties?: Record<string, string | number | boolean | null>) => void
-    /**
-     * @deprecated Outlit derives INACTIVE from tracked activity. Keep tracking product activity
-     * with track() and only send activation manually with user.activate().
-     */
-    inactive: (properties?: Record<string, string | number | boolean | null>) => void
-  }
-
-  /**
-   * Customer namespace methods for billing status.
-   */
-  customer: {
-    trialing: (options: BillingOptions) => void
-    paid: (options: BillingOptions) => void
-    churned: (options: BillingOptions) => void
   }
 
   /**
@@ -94,10 +74,10 @@ export interface UseOutlitReturn {
  * <script setup>
  * import { useOutlit } from '@outlit/browser/vue'
  *
- * const { track, user } = useOutlit()
+ * const { track } = useOutlit()
  *
  * const handleClick = () => {
- *   user.activate({ milestone: 'onboarding_complete' })
+ *   track('onboarding_completed')
  * }
  * </script>
  * ```
@@ -156,14 +136,6 @@ export function useOutlit(): UseOutlitReturn {
     clearUser,
     user: {
       identify: (options: BrowserIdentifyOptions) => outlit.value?.user.identify(options),
-      activate: (properties) => outlit.value?.user.activate(properties),
-      engaged: (properties) => outlit.value?.user.engaged(properties),
-      inactive: (properties) => outlit.value?.user.inactive(properties),
-    },
-    customer: {
-      trialing: (options: BillingOptions) => outlit.value?.customer.trialing(options),
-      paid: (options: BillingOptions) => outlit.value?.customer.paid(options),
-      churned: (options: BillingOptions) => outlit.value?.customer.churned(options),
     },
     isInitialized,
     isTrackingEnabled,

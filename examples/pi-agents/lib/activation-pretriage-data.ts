@@ -5,7 +5,6 @@ import type {
 import {
   buildBillingScopeFilter,
   buildCustomerIdFilter,
-  normalizeEventNames,
   type QueryClient,
   queryRows,
   toSqlDateTime,
@@ -34,7 +33,6 @@ export type EventActivationRow = {
   lastProductEventAt: string | null
   recentEventCount: number
   recentActiveDays: number
-  activationEventCount: number
 }
 
 type SqlParts = {
@@ -151,8 +149,7 @@ function buildEventActivationSql(
       countDistinctIf(
         toDate(occurred_at),
         occurred_at >= ${sqlNow} - INTERVAL ${config.recentActivityWindowDays} DAY
-      ) AS recentActiveDays,
-      countIf(lower(trim(event_name)) IN (${toSqlStringList(normalizeEventNames(config.activationEventNames))})) AS activationEventCount
+      ) AS recentActiveDays
     FROM activity
     WHERE occurred_at <= ${sqlNow}
       AND customer_id != ''
@@ -183,6 +180,5 @@ function normalizeEventActivationRow(row: EventActivationRow): EventActivationRo
     ...row,
     recentEventCount: Number(row.recentEventCount),
     recentActiveDays: Number(row.recentActiveDays),
-    activationEventCount: Number(row.activationEventCount),
   }
 }

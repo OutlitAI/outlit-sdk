@@ -60,14 +60,13 @@ export type OutlitActivationPretriageConfig = {
     staleAfterDays: number
     recentActivityWindowDays: number
     activatedStages: Array<"ACTIVATED" | "ENGAGED">
-    activationEventNames: string[]
   }
 }
 
 export type ResolvedActivationPretriageConfig = OutlitActivationPretriageConfig["defaults"]
 
 export type OutlitActivationPretriageSignal = {
-  key: "noActivatedUsers" | "noActivationEvent" | "noRecentProductActivity" | "stalledAfterSignup"
+  key: "noActivatedUsers" | "noRecentProductActivity" | "stalledAfterSignup"
   summary: string
   value?: number
   previousValue?: number
@@ -83,7 +82,6 @@ export type OutlitActivationPretriageCustomer = {
   activationBaseline: {
     usersObserved: number
     activatedUsers: number
-    activationEventCount: number
     firstUserSeenAt: string | null
     lastUserActivityAt: string | null
     firstProductEventAt: string | null
@@ -157,7 +155,6 @@ export const defaultActivationPretriageConfig: OutlitActivationPretriageConfig =
     staleAfterDays: 7,
     recentActivityWindowDays: 14,
     activatedStages: ["ACTIVATED", "ENGAGED"],
-    activationEventNames: ["stage:activated"],
   },
 }
 
@@ -219,7 +216,7 @@ export function createOutlitActivationPretriageTool(
     name: "outlit_activation_pretriage",
     label: "Outlit Activation Pretriage",
     description:
-      "Run deterministic activation-risk pretriage with user journey stage and activation-event checks before deeper account review.",
+      "Run deterministic activation-risk pretriage with Core-derived journey stages and ordinary product activity before deeper account review.",
     promptSnippet:
       "Outlit Activation Pretriage: deterministically surfaces accounts that have not reached first value.",
     parameters: activationPretriageToolParameters as unknown as TSchema,
@@ -287,8 +284,6 @@ function validateActivationPretriageConfig(
       throw new Error("defaults.activatedStages contains an unsupported journey stage")
     }
   }
-  assertStringArray(config.defaults.activationEventNames, "activationEventNames")
-
   return config
 }
 
@@ -342,9 +337,7 @@ function finalizeActivationCustomers(params: {
     const eventRow = params.eventActivationRows.get(customer.customerId)
     const usersObserved = userRow?.usersObserved ?? 0
     const activatedUsers = userRow?.activatedUsers ?? 0
-    const activationEventCount = eventRow?.activationEventCount ?? 0
-
-    if (usersObserved <= 0 || activatedUsers > 0 || activationEventCount > 0) {
+    if (usersObserved <= 0 || activatedUsers > 0) {
       continue
     }
 
@@ -359,7 +352,6 @@ function finalizeActivationCustomers(params: {
       config: params.config,
       usersObserved,
       activatedUsers,
-      activationEventCount,
       recentEventCount,
       recentActiveDays: eventRow?.recentActiveDays ?? 0,
       lastUserActivityDays,
@@ -371,7 +363,6 @@ function finalizeActivationCustomers(params: {
       activationBaseline: {
         usersObserved,
         activatedUsers,
-        activationEventCount,
         firstUserSeenAt: userRow?.firstUserSeenAt ?? null,
         lastUserActivityAt: userRow?.lastUserActivityAt ?? null,
         firstProductEventAt: eventRow?.firstProductEventAt ?? null,
@@ -390,7 +381,6 @@ function buildSignals(params: {
   config: ResolvedActivationPretriageConfig
   usersObserved: number
   activatedUsers: number
-  activationEventCount: number
   recentEventCount: number
   recentActiveDays: number
   lastUserActivityDays: number | null
@@ -401,11 +391,6 @@ function buildSignals(params: {
       summary: `${params.usersObserved} observed users, but 0 are in ACTIVATED or ENGAGED journey stages.`,
       value: params.activatedUsers,
       previousValue: params.usersObserved,
-    },
-    {
-      key: "noActivationEvent",
-      summary: "No namespaced Outlit activation stage event was found for this customer.",
-      value: params.activationEventCount,
     },
   ]
 
@@ -482,7 +467,7 @@ Candidate accounting:
   }
 
   return `DETERMINISTIC ACTIVATION PRETRIAGE RESULTS:
-- These customers were surfaced by deterministic user-stage and activation-event checks before the model review.
+- These customers were surfaced by Core-derived user journey stages and ordinary product-activity checks before the model review.
 - The payload's activation metrics are hard behavior evidence from product event and user journey data.
 - Treat these customers as the investigation set for this activation run. Do not add unrelated customers unless the user explicitly asks for a broader scan.
 - You may drop a listed customer only if richer Outlit evidence clearly contradicts the activation risk.

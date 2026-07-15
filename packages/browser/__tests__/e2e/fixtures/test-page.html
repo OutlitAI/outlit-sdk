@@ -49,9 +49,8 @@
         }
       }
       stub(o,"",["init","track","identify","enableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
-      o.user=o.user||{};o.customer=o.customer||{};
-      stub(o.user,"user",["identify","activate","engaged","inactive"]);
-      stub(o.customer,"customer",["trialing","paid","churned"]);
+      o.user=o.user||{};
+      stub(o.user,"user",["identify"]);
       var s=d.createElement("script");s.async=1;s.src=src;
       s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
       (d.body||d.head).appendChild(s);

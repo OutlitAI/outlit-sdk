@@ -6367,12 +6367,6 @@
           },
           {
             "$ref": "#/components/schemas/CalendarEvent"
-          },
-          {
-            "$ref": "#/components/schemas/StageEvent"
-          },
-          {
-            "$ref": "#/components/schemas/BillingEvent"
           }
         ]
       },
@@ -6564,58 +6558,6 @@
               },
               "inviteeName": {
                 "type": "string"
-              }
-            }
-          }
-        ]
-      },
-      "StageEvent": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/BaseEventFields"
-          },
-          {
-            "type": "object",
-            "required": ["type", "stage"],
-            "properties": {
-              "type": {
-                "const": "stage"
-              },
-              "stage": {
-                "type": "string",
-                "enum": ["activated", "engaged", "inactive"]
-              },
-              "properties": {
-                "$ref": "#/components/schemas/JsonObject"
-              }
-            }
-          }
-        ]
-      },
-      "BillingEvent": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/BaseEventFields"
-          },
-          {
-            "type": "object",
-            "required": ["type", "status"],
-            "properties": {
-              "type": {
-                "const": "billing"
-              },
-              "status": {
-                "type": "string",
-                "enum": ["trialing", "paid", "churned"]
-              },
-              "customerId": {
-                "type": "string"
-              },
-              "stripeCustomerId": {
-                "type": "string"
-              },
-              "properties": {
-                "$ref": "#/components/schemas/JsonObject"
               }
             }
           }

@@ -42,16 +42,10 @@ async fn main() -> Result<(), outlit::Error> {
         .send()
         .await?;
 
-    // User journey stages
-    client.user().activate(email("user@example.com"))
-        .property("onboarding_completed", true)
-        .send()
-        .await?;
-
-    // Customer billing
-    client.customer().paid("acme.com")
-        .customer_id("cust_123")
-        .stripe_customer_id("cus_xxx")
+    // Track the ordinary event selected as your activation signal.
+    // Outlit Core derives activation from this event.
+    client.track("onboarding_completed", email("user@example.com"))
+        .property("flow", "self_serve")
         .send()
         .await?;
 
@@ -119,30 +113,13 @@ client.identify(email("user@example.com"))
     .await?;
 ```
 
-### Activation
+### Lifecycle and billing
 
-```rust
-client.user().activate(email("...")).send().await?;
-```
+Use `track()` for product activity. Outlit Core derives activation from the customer-selected
+ordinary activation event and derives engagement and inactivity from activity. Billing status
+comes from verified integrations such as Stripe.
 
-Outlit handles engagement and inactivity automatically from tracked product activity.
-
-### Customer Billing
-
-```rust
-client.customer().trialing("domain.com").send().await?;
-client.customer().paid("domain.com")
-    .customer_id("cust_123")
-    .stripe_customer_id("cus_xxx")
-    .send()
-    .await?;
-client.customer().churned("domain.com")
-    .property("reason", "pricing")
-    .send()
-    .await?;
-```
-
-### Lifecycle
+### Client lifecycle
 
 ```rust
 // Force flush pending events

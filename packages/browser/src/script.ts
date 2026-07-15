@@ -15,9 +15,8 @@
  *       }
  *     }
  *     stub(o,"",["init","track","identify","enableTracking","disableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
- *     o.user=o.user||{};o.customer=o.customer||{};
- *     stub(o.user,"user",["identify","activate","engaged","inactive"]);
- *     stub(o.customer,"customer",["trialing","paid","churned"]);
+ *     o.user=o.user||{};
+ *     stub(o.user,"user",["identify"]);
  *     var s=d.createElement("script");s.async=1;s.src=src;
  *     s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
  *     (d.body||d.head).appendChild(s);
@@ -32,7 +31,7 @@
  */
 
 import type { BrowserIdentifyOptions, BrowserTrackOptions } from "@outlit/core"
-import { type BillingOptions, Outlit, type OutlitOptions, type UserIdentity } from "./tracker"
+import { Outlit, type OutlitOptions, type UserIdentity } from "./tracker"
 
 // ============================================
 // TYPES
@@ -61,22 +60,6 @@ interface OutlitGlobal {
   clearUser: () => void
   user: {
     identify: (options: BrowserIdentifyOptions) => void
-    activate: (properties?: Record<string, string | number | boolean | null>) => void
-    /**
-     * @deprecated Outlit derives ENGAGED from tracked activity. Keep tracking product activity
-     * with track() and only send activation manually with user.activate().
-     */
-    engaged: (properties?: Record<string, string | number | boolean | null>) => void
-    /**
-     * @deprecated Outlit derives INACTIVE from tracked activity. Keep tracking product activity
-     * with track() and only send activation manually with user.activate().
-     */
-    inactive: (properties?: Record<string, string | number | boolean | null>) => void
-  }
-  customer: {
-    trialing: (options: BillingOptions) => void
-    paid: (options: BillingOptions) => void
-    churned: (options: BillingOptions) => void
   }
 }
 
@@ -110,7 +93,7 @@ const outlit: OutlitGlobal & { _loaded?: boolean } = {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const self = this as any
 
-      // Handle namespace methods like "user.activate" or "customer.paid"
+      // Handle namespace methods like "user.identify"
       if (method.includes(".")) {
         const [namespace, methodName] = method.split(".")
         if (
@@ -220,62 +203,6 @@ const outlit: OutlitGlobal & { _loaded?: boolean } = {
         return
       }
       outlit._instance.user.identify(options)
-    },
-    activate(properties?: Record<string, string | number | boolean | null>) {
-      if (!outlit._initialized || !outlit._instance) {
-        outlit._queue.push(() => outlit.user.activate(properties))
-        return
-      }
-      outlit._instance.user.activate(properties)
-    },
-    /**
-     * @deprecated Outlit derives ENGAGED from tracked activity. Keep tracking product activity
-     * with track() and only send activation manually with user.activate().
-     */
-    engaged(properties?: Record<string, string | number | boolean | null>) {
-      if (!outlit._initialized || !outlit._instance) {
-        outlit._queue.push(() => outlit.user.engaged(properties))
-        return
-      }
-      outlit._instance.user.engaged(properties)
-    },
-    /**
-     * @deprecated Outlit derives INACTIVE from tracked activity. Keep tracking product activity
-     * with track() and only send activation manually with user.activate().
-     */
-    inactive(properties?: Record<string, string | number | boolean | null>) {
-      if (!outlit._initialized || !outlit._instance) {
-        outlit._queue.push(() => outlit.user.inactive(properties))
-        return
-      }
-      outlit._instance.user.inactive(properties)
-    },
-  },
-
-  /**
-   * Customer namespace helpers.
-   */
-  customer: {
-    trialing(options: BillingOptions) {
-      if (!outlit._initialized || !outlit._instance) {
-        outlit._queue.push(() => outlit.customer.trialing(options))
-        return
-      }
-      outlit._instance.customer.trialing(options)
-    },
-    paid(options: BillingOptions) {
-      if (!outlit._initialized || !outlit._instance) {
-        outlit._queue.push(() => outlit.customer.paid(options))
-        return
-      }
-      outlit._instance.customer.paid(options)
-    },
-    churned(options: BillingOptions) {
-      if (!outlit._initialized || !outlit._instance) {
-        outlit._queue.push(() => outlit.customer.churned(options))
-        return
-      }
-      outlit._instance.customer.churned(options)
     },
   },
 }

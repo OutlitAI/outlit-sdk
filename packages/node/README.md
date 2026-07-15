@@ -2,7 +2,7 @@
 
 Node.js tracking SDK for Outlit customer context.
 
-Use this package to track backend events, identify users, attach customer account traits, mark lifecycle and billing status, and flush server-side event queues before shutdown.
+Use this package to track ordinary backend events, identify users, attach customer account traits, and flush server-side event queues before shutdown. Core derives lifecycle from identity and activity, including the customer-selected ordinary activation event; billing comes from verified integrations.
 
 Outlit is the real-time understanding of every customer, the infrastructure agents use to automate customer operations.
 

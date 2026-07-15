@@ -17,7 +17,7 @@ describe("runOutlitActivationPretriage", () => {
     ).toEqual(["NONE", "TRIALING", "PAYING"])
   })
 
-  test("surfaces accounts with users but no activated users or activation events", async () => {
+  test("surfaces accounts whose Core-derived journey stage has not reached activation", async () => {
     const queryMock = vi
       .fn()
       .mockResolvedValueOnce({
@@ -64,7 +64,6 @@ describe("runOutlitActivationPretriage", () => {
             lastProductEventAt: "2026-04-04T00:00:00Z",
             recentEventCount: 0,
             recentActiveDays: 0,
-            activationEventCount: 0,
           },
           {
             customerId: "cust_activated",
@@ -72,7 +71,6 @@ describe("runOutlitActivationPretriage", () => {
             lastProductEventAt: "2026-04-14T00:00:00Z",
             recentEventCount: 20,
             recentActiveDays: 5,
-            activationEventCount: 1,
           },
         ],
       })
@@ -92,8 +90,10 @@ describe("runOutlitActivationPretriage", () => {
       sql: expect.not.stringContaining("first_seen_at"),
     })
     const eventActivationSql = String(queryMock.mock.calls[2]?.[1]?.sql ?? "")
-    expect(eventActivationSql).toContain("'stage:activated'")
-    expect(eventActivationSql).not.toContain("'activated',")
+    expect(eventActivationSql).not.toContain("stage:activated")
+    expect(eventActivationSql).not.toContain("activationEventCount")
+    expect(eventActivationSql).toContain("AS recentEventCount")
+    expect(eventActivationSql).toContain("AS recentActiveDays")
     expect(eventActivationSql).toContain("parseDateTimeBestEffort('2026-04-15T12:00:00.000Z')")
     expect(result.kind).toBe("activation")
     expect(result.summary).toMatchObject({
@@ -107,7 +107,6 @@ describe("runOutlitActivationPretriage", () => {
         billingStatus: "TRIALING",
         signals: expect.arrayContaining([
           expect.objectContaining({ key: "noActivatedUsers" }),
-          expect.objectContaining({ key: "noActivationEvent" }),
           expect.objectContaining({ key: "noRecentProductActivity" }),
         ]),
       }),

@@ -3,7 +3,6 @@
 // Payload builders
 export {
   batchEvents,
-  buildBillingEvent,
   buildCalendarEvent,
   buildCustomEvent,
   buildEngagementEvent,
@@ -11,23 +10,18 @@ export {
   buildIdentifyEvent,
   buildIngestPayload,
   buildPageviewEvent,
-  buildStageEvent,
   MAX_BATCH_SIZE,
 } from "./payload"
 export type {
-  BillingEvent,
-  BillingStatus,
   BrowserIdentifyOptions,
   BrowserTrackOptions,
   CalendarEvent,
   CalendarProvider,
   CustomEvent,
   CustomerAttribution,
-  CustomerIdentifier,
   CustomerTraits,
   EngagementEvent,
   EventType,
-  ExplicitJourneyStage,
   FormEvent,
   IdentifyEvent,
   IdentifyTraits,
@@ -40,7 +34,6 @@ export type {
   ServerIdentity,
   ServerTrackOptions,
   SourceType,
-  StageEvent,
   TrackerConfig,
   TrackerEvent,
   UtmParams,
@@ -61,6 +54,5 @@ export {
   // Auto-identify utilities
   isValidEmail,
   sanitizeFormFields,
-  validateCustomerIdentity,
   validateServerIdentity,
 } from "./utils"

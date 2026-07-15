@@ -3,8 +3,7 @@
  *
  * Tests the React hooks (useOutlit) to ensure they:
  * - Warn when used outside OutlitProvider
- * - Expose user namespace and deprecated derived-stage aliases for compatibility
- * - Expose customer namespace (trialing, paid, churned)
+ * - Expose only ordinary identity and tracking APIs
  * - Handle consent flow correctly
  *
  * Run with: bun run test:unit
@@ -70,7 +69,7 @@ describe("useOutlit hook", () => {
     consoleSpy.mockRestore()
   })
 
-  it("exposes user namespace with activation and deprecated derived-stage aliases", () => {
+  it("exposes only identify in the user namespace", () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <OutlitProvider publicKey="pk_test" autoTrack={false}>
         {children}
@@ -79,14 +78,10 @@ describe("useOutlit hook", () => {
 
     const { result } = renderHook(() => useOutlit(), { wrapper })
 
-    // Verify user namespace methods exist and are functions
-    expect(typeof result.current.user.activate).toBe("function")
-    expect(typeof result.current.user.engaged).toBe("function")
-    expect(typeof result.current.user.inactive).toBe("function")
-    expect(typeof result.current.user.identify).toBe("function")
+    expect(Object.keys(result.current.user)).toEqual(["identify"])
   })
 
-  it("exposes customer namespace with billing methods", () => {
+  it("does not expose a customer billing namespace", () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <OutlitProvider publicKey="pk_test" autoTrack={false}>
         {children}
@@ -95,10 +90,7 @@ describe("useOutlit hook", () => {
 
     const { result } = renderHook(() => useOutlit(), { wrapper })
 
-    // Verify customer namespace methods exist and are functions
-    expect(typeof result.current.customer.trialing).toBe("function")
-    expect(typeof result.current.customer.paid).toBe("function")
-    expect(typeof result.current.customer.churned).toBe("function")
+    expect("customer" in result.current).toBe(false)
   })
 
   it("exposes track, identify, and user management methods", () => {
@@ -230,63 +222,6 @@ describe("OutlitProvider", () => {
     const { result } = renderHook(() => useOutlit(), { wrapper })
 
     expect(result.current.isTrackingEnabled).toBe(false)
-  })
-})
-
-describe("Stage methods behavior", () => {
-  it("deprecated inactive method can be called without properties", () => {
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <OutlitProvider publicKey="pk_test" autoTrack={false}>
-        {children}
-      </OutlitProvider>
-    )
-
-    const { result } = renderHook(() => useOutlit(), { wrapper })
-
-    // Should not throw when called without properties
-    act(() => {
-      result.current.enableTracking()
-      result.current.setUser({ userId: "test-user" })
-    })
-
-    // This should not throw
-    expect(() => {
-      act(() => {
-        result.current.user.inactive()
-      })
-    }).not.toThrow()
-
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("user.inactive() is deprecated"),
-    )
-  })
-
-  it("deprecated inactive method can be called with properties", () => {
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <OutlitProvider publicKey="pk_test" autoTrack={false}>
-        {children}
-      </OutlitProvider>
-    )
-
-    const { result } = renderHook(() => useOutlit(), { wrapper })
-
-    act(() => {
-      result.current.enableTracking()
-      result.current.setUser({ userId: "test-user" })
-    })
-
-    // This should not throw
-    expect(() => {
-      act(() => {
-        result.current.user.inactive({ reason: "cancelled", plan: "pro" })
-      })
-    }).not.toThrow()
-
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("user.inactive() is deprecated"),
-    )
   })
 })
 

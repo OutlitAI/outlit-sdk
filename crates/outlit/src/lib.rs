@@ -30,15 +30,10 @@ mod queue;
 mod transport;
 pub mod types;
 
-pub use client::{
-    CustomerMethods, Outlit, SendableBilling, SendableIdentify, SendableStage, SendableTrack,
-    UserMethods,
-};
+pub use client::{Outlit, SendableIdentify, SendableTrack};
 pub use config::{Config, OutlitBuilder};
 pub use error::Error;
-pub use types::{
-    BillingStatus, IngestPayload, IngestResponse, JourneyStage, SourceType, TrackerEvent,
-};
+pub use types::{IngestPayload, IngestResponse, SourceType, TrackerEvent};
 
 // Identity helpers
 

@@ -3,8 +3,7 @@
  *
  * Tests the Vue composables (useOutlit) to ensure they:
  * - Throw when used outside OutlitPlugin
- * - Expose user namespace and deprecated derived-stage aliases for compatibility
- * - Expose customer namespace (trialing, paid, churned)
+ * - Expose only ordinary identity and tracking APIs
  * - Handle consent flow correctly
  *
  * Run with: bun run test:unit
@@ -128,7 +127,7 @@ describe("useOutlit composable", () => {
     document.body.removeChild(root)
   })
 
-  it("exposes user namespace with activation and deprecated derived-stage aliases", () => {
+  it("exposes only identify in the user namespace", () => {
     let result: ReturnType<typeof useOutlit> | null = null
 
     const TestComponent = defineComponent({
@@ -141,15 +140,12 @@ describe("useOutlit composable", () => {
     const { unmount } = mountWithPlugin(TestComponent)
 
     expect(result).not.toBeNull()
-    expect(typeof result!.user.activate).toBe("function")
-    expect(typeof result!.user.engaged).toBe("function")
-    expect(typeof result!.user.inactive).toBe("function")
-    expect(typeof result!.user.identify).toBe("function")
+    expect(Object.keys(result!.user)).toEqual(["identify"])
 
     unmount()
   })
 
-  it("exposes customer namespace with billing methods", () => {
+  it("does not expose a customer billing namespace", () => {
     let result: ReturnType<typeof useOutlit> | null = null
 
     const TestComponent = defineComponent({
@@ -162,9 +158,7 @@ describe("useOutlit composable", () => {
     const { unmount } = mountWithPlugin(TestComponent)
 
     expect(result).not.toBeNull()
-    expect(typeof result!.customer.trialing).toBe("function")
-    expect(typeof result!.customer.paid).toBe("function")
-    expect(typeof result!.customer.churned).toBe("function")
+    expect("customer" in result!).toBe(false)
 
     unmount()
   })
@@ -414,70 +408,6 @@ describe("useOutlitUser composable", () => {
     await nextTick()
 
     expect(true).toBe(true)
-
-    unmount()
-  })
-})
-
-describe("Stage methods behavior", () => {
-  it("deprecated inactive method can be called without properties", async () => {
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
-    let result: ReturnType<typeof useOutlit> | null = null
-
-    const TestComponent = defineComponent({
-      setup() {
-        result = useOutlit()
-        return () => h("div")
-      },
-    })
-
-    const { unmount } = mountWithPlugin(TestComponent, { publicKey: "pk_test", autoTrack: false })
-
-    result!.enableTracking()
-    await nextTick()
-
-    result!.setUser({ userId: "test-user" })
-    await nextTick()
-
-    // This should not throw
-    expect(() => {
-      result!.user.inactive()
-    }).not.toThrow()
-
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("user.inactive() is deprecated"),
-    )
-
-    unmount()
-  })
-
-  it("deprecated inactive method can be called with properties", async () => {
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
-    let result: ReturnType<typeof useOutlit> | null = null
-
-    const TestComponent = defineComponent({
-      setup() {
-        result = useOutlit()
-        return () => h("div")
-      },
-    })
-
-    const { unmount } = mountWithPlugin(TestComponent, { publicKey: "pk_test", autoTrack: false })
-
-    result!.enableTracking()
-    await nextTick()
-
-    result!.setUser({ userId: "test-user" })
-    await nextTick()
-
-    // This should not throw
-    expect(() => {
-      result!.user.inactive({ reason: "cancelled", plan: "pro" })
-    }).not.toThrow()
-
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("user.inactive() is deprecated"),
-    )
 
     unmount()
   })

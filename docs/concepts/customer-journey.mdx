@@ -42,7 +42,7 @@ Each person (contact) progresses through stages based on their product engagemen
 |-------|---------|--------------|
 | **Discovered** | Email known, hasn't signed up yet | Auto-detected by browser SDK when email is provided without userId |
 | **Signed Up** | Created an account | Auto-detected by browser SDK when both email and userId are provided |
-| **Activated** | Completed onboarding or key milestone | Manual — call `user.activate()` |
+| **Activated** | Completed onboarding or key milestone | Derived by Core from your selected ordinary activation event |
 | **Engaged** | Actively using the product | Auto-inferred from product activity via PostHog or your SDK (browser/server) |
 | **Inactive** | No activity for extended period | Auto-inferred when no activity detected for 30+ days |
 
@@ -100,26 +100,24 @@ Outlit derives Engaged and Inactive from tracked product activity. Activity sign
 
 ---
 
-## How do I manually mark activation?
+## How is activation derived?
 
 <Info>
-  These examples show browser SDK usage where the user is already identified. For server-side usage, see [Node.js SDK → Activation](/tracking/server/nodejs#activation).
+  Identify the user and send the same ordinary activation event consistently from the browser SDK, server SDK, or a verified product integration.
 </Info>
 
-### user.activate()
+### Track the selected activation event
 
-Mark a contact as activated after they complete onboarding:
+Choose an ordinary event that represents the product's meaningful value moment, then track it after the action succeeds:
 
 ```typescript
-outlit.user.activate({
-  flow: 'onboarding',
-  completedSteps: ['profile', 'first_action', 'invite_team']
+outlit.track('onboarding_completed', {
+  flow: 'self_serve',
+  completedSteps: 3
 })
 ```
 
-Call this when users complete your onboarding flow, perform a key "aha moment" action, or reach your definition of activation.
-
-Do not call `user.engaged()` or `user.inactive()` for new integrations. Send product activity with `track()` and let Outlit derive those stages.
+Configure `onboarding_completed` (or your equivalent event) as the activation event in Outlit. Core derives Activated from that ordinary event. It also derives Engaged and Inactive from the broader stream of tracked product activity.
 
 ---
 
@@ -130,9 +128,9 @@ Each account (company) has a billing status that's separate from individual cont
 | Status | Meaning | How It's Set |
 |--------|---------|--------------|
 | **None** | Never had a subscription | Default |
-| **Trialing** | Active trial period | Automatic (Stripe) or manual |
-| **Paying** | Active paid subscription | Automatic (Stripe) or manual |
-| **Churned** | Had subscription, now cancelled | Automatic (Stripe) or manual |
+| **Trialing** | Active trial period | Verified billing integration |
+| **Paying** | Active paid subscription | Verified billing integration |
+| **Churned** | Had subscription, now cancelled | Verified billing integration |
 
 ---
 
@@ -155,43 +153,13 @@ When a subscription status changes in Stripe, Outlit automatically updates the m
 
 ---
 
-## How do I set billing status manually?
-
-For non-Stripe payment processors or custom billing logic:
-
-```typescript
-// When a trial starts
-outlit.customer.trialing({
-  customerId: 'cust_123', // Your app's account/workspace/customer ID
-  properties: { trialEndsAt: '2025-06-15' }
-})
-
-// When payment succeeds
-outlit.customer.paid({
-  customerId: 'cust_123', // Your app's account/workspace/customer ID
-  properties: { plan: 'pro', amount: 99 }
-})
-
-// When subscription is cancelled
-outlit.customer.churned({
-  customerId: 'cust_123', // Your app's account/workspace/customer ID
-  properties: { reason: 'too_expensive' }
-})
-```
-
-<Note>
-  Billing methods target the account by `customerId`, not individual contacts. Send the same `customerId` in identify calls to link people to that account/workspace.
-</Note>
-
----
-
 ## Best practices
 
-**Let integrations handle what they can.** Discovered and Signed Up are auto-detected by the browser SDK based on identifiers. Engaged and Inactive are derived from tracked product activity captured by the browser SDK, server SDK, and connected product integrations. Stripe handles billing status. The main stage you need to instrument manually is Activated — call `user.activate()` when users complete your definition of activation.
+**Send facts, not authoritative state.** Discovered and Signed Up are auto-detected from identity. Activated is derived by Core from the customer-selected ordinary activation event. Engaged and Inactive are derived from tracked product activity captured by the browser SDK, server SDK, and verified product integrations. Verified billing integrations provide billing status.
 
 **Understand the separation.** Contact journey and account billing are independent. Jane can be Engaged while her company is on None, or Inactive while her company is Paying. Jane's activity can change independently from her company's billing status.
 
-**Call activation at the right time.** `user.activate()` should be called when the action is confirmed complete, not when the user clicks a button. Wait for the backend to confirm success before tracking.
+**Track activation at the right time.** Send the selected ordinary activation event when the action is confirmed complete, not when the user clicks a button. Wait for the backend to confirm success before tracking.
 
 **Include useful properties.** Properties help you analyze stage transitions. Include context like which onboarding flow was completed, time-to-activate, and which steps were skipped.
 
@@ -205,7 +173,7 @@ outlit.customer.churned({
   </Accordion>
 
   <Accordion title="Which stages require manual instrumentation?">
-    Activated is the main stage you instrument manually by calling `user.activate()`. Discovered and Signed Up are auto-detected by the browser SDK. Engaged and Inactive are derived from tracked product activity. If Stripe is connected, billing statuses sync automatically; otherwise, set billing status manually with the customer billing methods.
+    No journey stage is set through an authoritative SDK command. Discovered and Signed Up are derived from identity, Activated is derived from your selected ordinary activation event, and Engaged and Inactive are derived from tracked product activity. Billing statuses sync from verified billing integrations.
   </Accordion>
 
   <Accordion title="Can contacts move backward in journey stages?">
@@ -222,12 +190,12 @@ outlit.customer.churned({
     How Outlit connects anonymous visitors to known contacts
   </Card>
   <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
-    Track stage events from your backend
+    Track ordinary product events from your backend
   </Card>
   <Card title="Browser Integration" icon="browser" href="/tracking/browser/script">
     Set up browser tracking
   </Card>
   <Card title="API Reference" icon="code" href="/api-reference/ingest">
-    Direct API for stage events
+    Direct API for identify and product events
   </Card>
 </CardGroup>

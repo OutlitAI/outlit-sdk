@@ -3,10 +3,7 @@
 //! These tests serialize events and verify the JSON structure matches
 //! what the server expects (based on TypeScript types).
 
-use outlit::types::{
-    BillingEventData, BillingStatus, CustomEventData, IdentifyEventData, JourneyStage,
-    StageEventData,
-};
+use outlit::types::{CustomEventData, IdentifyEventData};
 use outlit::{IngestPayload, SourceType, TrackerEvent};
 use serde_json::json;
 
@@ -73,45 +70,6 @@ fn test_identify_event_with_fingerprint_json_structure() {
     assert_eq!(json["fingerprint"], "device_abc123");
     assert_eq!(json["email"], "user@test.com");
     assert_eq!(json["userId"], "usr_123");
-}
-
-#[test]
-fn test_stage_event_json_structure() {
-    let event = TrackerEvent::Stage(StageEventData {
-        timestamp: 1706400000000,
-        url: "server://user@test.com".into(),
-        path: "/".into(),
-        stage: JourneyStage::Activated,
-        properties: None,
-    });
-
-    let json = serde_json::to_value(&event).unwrap();
-
-    assert_eq!(json["type"], "stage");
-    assert!(json.get("eventName").is_none());
-    assert_eq!(json["stage"], "activated"); // lowercase enum value
-}
-
-#[test]
-fn test_billing_event_json_structure() {
-    let event = TrackerEvent::Billing(BillingEventData {
-        timestamp: 1706400000000,
-        url: "server://acme.com".into(),
-        path: "/".into(),
-        status: BillingStatus::Paid,
-        customer_id: Some("cust_123".into()),
-        stripe_customer_id: Some("cus_xxx".into()),
-        domain: Some("acme.com".into()),
-        properties: None,
-    });
-
-    let json = serde_json::to_value(&event).unwrap();
-
-    assert_eq!(json["type"], "billing");
-    assert_eq!(json["status"], "paid"); // lowercase enum value
-    assert_eq!(json["customerId"], "cust_123"); // camelCase
-    assert_eq!(json["stripeCustomerId"], "cus_xxx"); // camelCase
-    assert!(json.get("customer_id").is_none()); // snake_case should NOT exist
 }
 
 #[test]

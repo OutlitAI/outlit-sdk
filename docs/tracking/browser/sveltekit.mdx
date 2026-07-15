@@ -273,22 +273,15 @@ export const POST: RequestHandler = async ({ request }) => {
 <slot />
 ```
 
-## Activation
+## Activation event
 
 Track activation after the user completes your product milestone:
 
 ```svelte
 <script>
   import outlit from '@outlit/browser'
-  import { onMount } from 'svelte'
-
-  onMount(() => {
-    // Track activation after onboarding
-    outlit.user().activate({ flow: 'onboarding', step: 'completed' })
-  })
-
   function handleEngagementMilestone() {
-    outlit.track('first_project_created')
+    outlit.track('first_project_created', { flow: 'onboarding' })
   }
 </script>
 
@@ -297,14 +290,8 @@ Track activation after the user completes your product milestone:
 </button>
 ```
 
-<Warning>
-  `user.activate()` requires the user to be identified first using `setUser()` or `identify()`.
-</Warning>
-
-Use `track()` for product activity. Outlit handles engagement and inactivity automatically; see [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity).
-
 <Info>
-  Account billing (`paid`, `churned`, `trialing`) is tracked separately. If you've connected Stripe, billing is automatic. For manual billing, see [Stages & Billing](/concepts/customer-journey).
+  Configure `first_project_created` as your ordinary activation event if it represents the value milestone. Outlit Core derives lifecycle stages; billing comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
 </Info>
 
 ## Consent Management

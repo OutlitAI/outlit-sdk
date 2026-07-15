@@ -427,7 +427,7 @@ const entry = await getEntry('blog', Astro.params.slug)
 </script>
 ```
 
-## Activation
+## Activation event
 
 Track activation after the user completes your product milestone:
 
@@ -442,19 +442,13 @@ Track activation after the user completes your product milestone:
   import outlit from '@outlit/browser'
 
   document.getElementById('complete-onboarding')?.addEventListener('click', () => {
-    outlit.user().activate({ flow: 'onboarding', step: 'completed' })
+    outlit.track('onboarding_completed', { flow: 'onboarding', step: 'completed' })
   })
 </script>
 ```
 
-<Warning>
-  `user.activate()` requires the user to be identified first using `setUser()` or `identify()`.
-</Warning>
-
-Use `track()` for product activity. Outlit handles engagement and inactivity automatically; see [Customer Journey](/concepts/customer-journey#automatic-engagement-and-inactivity).
-
 <Info>
-  Account billing (`paid`, `churned`, `trialing`) is tracked separately. If you've connected Stripe, billing is automatic. For manual billing, see [Stages & Billing](/concepts/customer-journey).
+  Configure this ordinary event as your activation signal. Outlit Core derives activation, engagement, and inactivity; billing comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
 </Info>
 
 ## Consent Management
