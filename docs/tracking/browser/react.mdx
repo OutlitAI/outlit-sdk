@@ -448,9 +448,6 @@ function MyComponent() {
   // Identify the user
   identify({ email: 'user@example.com', traits: { plan: 'pro' } })
 
-  // Track the ordinary event selected as your activation signal
-  track('onboarding_completed', { flow: 'onboarding' })
-
   // Get visitor ID (null if tracking not enabled)
   const visitorId = getVisitorId()
 

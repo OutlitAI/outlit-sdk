@@ -582,7 +582,11 @@ test.describe("Stub Snippet (Recommended Approach)", () => {
     )
     // Both queued custom events should have been processed.
     expect(earlyEvents.length).toBe(2)
-    expect(allEvents.some((event) => event.type === "identify")).toBe(true)
+    expect(
+      allEvents.some(
+        (event) => event.type === "identify" && event.userId === "queued-identify-user",
+      ),
+    ).toBe(true)
   })
 
   test("double-load protection prevents re-initialization", async ({ page }) => {

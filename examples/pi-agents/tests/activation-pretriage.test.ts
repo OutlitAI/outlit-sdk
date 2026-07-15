@@ -92,6 +92,8 @@ describe("runOutlitActivationPretriage", () => {
     const eventActivationSql = String(queryMock.mock.calls[2]?.[1]?.sql ?? "")
     expect(eventActivationSql).not.toContain("stage:activated")
     expect(eventActivationSql).not.toContain("activationEventCount")
+    expect(eventActivationSql).toContain("AS recentEventCount")
+    expect(eventActivationSql).toContain("AS recentActiveDays")
     expect(eventActivationSql).toContain("parseDateTimeBestEffort('2026-04-15T12:00:00.000Z')")
     expect(result.kind).toBe("activation")
     expect(result.summary).toMatchObject({
