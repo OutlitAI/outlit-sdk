@@ -112,13 +112,14 @@ describe("tool contracts", () => {
     expect(properties.factCategories?.items?.enum).not.toContain("JOURNEY")
   })
 
-  test("exposes opportunity as the canonical CRM source type with aliases for inputs", () => {
+  test("exposes canonical source types with CRM aliases for inputs", () => {
     expect(customerSourceTypes).toEqual([
       "EMAIL",
       "CALL",
       "CALENDAR_EVENT",
       "SUPPORT_TICKET",
       "OPPORTUNITY",
+      "SLACK",
     ])
     expect(customerSourceTypeInputs).toEqual([
       "EMAIL",
@@ -126,6 +127,7 @@ describe("tool contracts", () => {
       "CALENDAR_EVENT",
       "SUPPORT_TICKET",
       "OPPORTUNITY",
+      "SLACK",
       "CRM",
       "CRM_OPPORTUNITY",
     ])
@@ -374,7 +376,7 @@ describe("resolveCustomerContextSearchInput", () => {
     ).toEqual({
       ok: false,
       message:
-        "Unknown source types: ZENDESK_TICKET. Allowed: EMAIL, CALL, CALENDAR_EVENT, SUPPORT_TICKET, OPPORTUNITY, CRM, CRM_OPPORTUNITY",
+        "Unknown source types: ZENDESK_TICKET. Allowed: EMAIL, CALL, CALENDAR_EVENT, SUPPORT_TICKET, OPPORTUNITY, SLACK, CRM, CRM_OPPORTUNITY",
     })
   })
 })
