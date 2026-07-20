@@ -333,7 +333,24 @@ describe("resolveCustomerContextSearchInput", () => {
     })
   })
 
-  test("normalizes CRM source aliases in search input", () => {
+  test("normalizes source types and CRM aliases in search input", () => {
+    expect(
+      resolveCustomerContextSearchInput({
+        query: "renewal",
+        sourceTypes: ["slack"],
+      }),
+    ).toEqual({
+      ok: true,
+      request: {
+        query: "renewal",
+        customer: undefined,
+        topK: undefined,
+        after: undefined,
+        before: undefined,
+        sourceTypes: ["SLACK"],
+      },
+    })
+
     expect(
       resolveCustomerContextSearchInput({
         query: "renewal",
