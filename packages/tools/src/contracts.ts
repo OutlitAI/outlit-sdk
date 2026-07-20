@@ -24,6 +24,7 @@ export const customerSourceTypes = [
   "CALENDAR_EVENT",
   "SUPPORT_TICKET",
   "OPPORTUNITY",
+  "SLACK",
 ] as const
 
 export const customerSourceTypeAliases = ["CRM", "CRM_OPPORTUNITY"] as const
@@ -34,6 +35,7 @@ export const customerSourceTypeInputs = [
   "CALENDAR_EVENT",
   "SUPPORT_TICKET",
   "OPPORTUNITY",
+  "SLACK",
   "CRM",
   "CRM_OPPORTUNITY",
 ] as const
@@ -913,7 +915,7 @@ export const workspaceUserListOrderFields = ["name", "email", "owned_customer_co
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "d704edcb21910caaceef9ce2046e7e27c395ba3c0e286206368c82c716bd1e5a" as const
+  "fae5d47c73e2401362019f27f85925d36d3d87485611af0753f4a3bee2b002ae" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]
