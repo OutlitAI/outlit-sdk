@@ -610,7 +610,7 @@ export const customerToolContracts = {
     toolName: "outlit_search_customer_context",
     title: "Search Customer Context",
     description:
-      "Search across all known customer context using a natural-language query. Returns grouped artifact-level results for matching sources and facts. Omit customer to search across all customers in the organization.",
+      "Search across all known customer context using a natural-language query. Returns ranked artifact-level discovery previews with at most two matching excerpts per source or fact. Use outlit_get_source with a returned sourceType and sourceId when you need the canonical source contents. Omit customer to search across all customers in the organization.",
     inputSchema: {
       $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
@@ -915,7 +915,7 @@ export const workspaceUserListOrderFields = ["name", "email", "owned_customer_co
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "fae5d47c73e2401362019f27f85925d36d3d87485611af0753f4a3bee2b002ae" as const
+  "c199a02b390230741eff09d4f1463d10cad7ce44f82aab3632410fe0336ab61e" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]
