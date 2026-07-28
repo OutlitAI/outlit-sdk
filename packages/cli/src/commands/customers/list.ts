@@ -1,4 +1,4 @@
-import { customerBillingStatuses, customerToolContracts } from "@outlit/tools"
+import { customerBillingStatuses, customerToolContracts, isIso8601DateTime } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import {
@@ -60,6 +60,7 @@ export default defineCommand({
       "  outlit customers list --billing-status PAYING           # paying only",
       "  outlit customers list --no-activity-in 30d              # churning customers",
       "  outlit customers list --mrr-above 10000 --limit 50      # high-value at-risk",
+      "  outlit customers list --activated-since 2026-07-01T00:00:00Z",
       "  outlit customers list --json | jq '.items[].domain'     # pipe-friendly",
       "",
       `Billing statuses: ${customerBillingStatuses.join(", ")}`,
@@ -99,6 +100,11 @@ export default defineCommand({
       type: "boolean",
       description: "Filter to customers that have an internal owner",
     },
+    "activated-since": {
+      type: "string",
+      description:
+        "Filter by company activation at or after an ISO-8601 datetime (offsets allowed)",
+    },
     search: {
       type: "string",
       description: "Search by customer name or domain",
@@ -106,6 +112,20 @@ export default defineCommand({
   },
   async run({ args, rawArgs }) {
     const json = !!args.json
+    const activatedSinceInput = args["activated-since"]
+    const activatedSince = activatedSinceInput?.trim()
+    if (
+      activatedSinceInput !== undefined &&
+      (!activatedSince || !isIso8601DateTime(activatedSince))
+    ) {
+      return outputError(
+        {
+          message: "--activated-since must be a valid ISO 8601 datetime",
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
     const client = await getClientOrExit(args["api-key"], json)
 
     const params: Record<string, unknown> = {}
@@ -127,6 +147,7 @@ export default defineCommand({
     if (args["owner-id"]) params.ownerId = args["owner-id"]
     if (args["owner-email"]) params.ownerEmail = args["owner-email"]
     if (typeof args["has-owner"] === "boolean") params.hasOwner = args["has-owner"]
+    if (activatedSince) params.activatedSince = activatedSince
     if (args.trait) {
       try {
         const traitFilters = parseTraitFilters(args.trait)

@@ -1,4 +1,5 @@
 import { type CustomerToolName, isCustomerToolName } from "./contracts.js"
+import type { CustomerDetailResult, CustomerListResult } from "./results.js"
 
 export const DEFAULT_OUTLIT_API_URL = "https://app.outlit.ai"
 
@@ -13,10 +14,20 @@ export type OutlitToolsClientOptions = {
   fetch?: OutlitToolsFetch
 }
 
+export type CustomerToolResult<TToolName extends CustomerToolName> =
+  TToolName extends "outlit_list_customers"
+    ? CustomerListResult
+    : TToolName extends "outlit_get_customer"
+      ? CustomerDetailResult
+      : unknown
+
 export type OutlitToolsClient = {
   key: string
   baseUrl: string
-  callTool(toolName: CustomerToolName, input?: Record<string, unknown>): Promise<unknown>
+  callTool<TToolName extends CustomerToolName>(
+    toolName: TToolName,
+    input?: Record<string, unknown>,
+  ): Promise<CustomerToolResult<TToolName>>
 }
 
 export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToolsClient {
@@ -35,7 +46,10 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
   return {
     key,
     baseUrl,
-    async callTool(toolName, input = {}) {
+    async callTool<TToolName extends CustomerToolName>(
+      toolName: TToolName,
+      input: Record<string, unknown> = {},
+    ): Promise<CustomerToolResult<TToolName>> {
       if (!isCustomerToolName(toolName)) {
         throw new Error(`Unknown customer tool: ${toolName}`)
       }
@@ -57,7 +71,7 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
         throw new Error(`API error (${response.status}): ${text}`)
       }
 
-      return response.json()
+      return (await response.json()) as CustomerToolResult<TToolName>
     },
   }
 }

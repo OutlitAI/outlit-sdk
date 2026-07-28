@@ -50,6 +50,13 @@ export const customerToolContracts = {
       $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
       properties: {
+        activatedSince: {
+          description: "Filter customers activated at or after this ISO-8601 datetime",
+          type: "string",
+          format: "date-time",
+          pattern:
+            "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+        },
         billingStatus: {
           description: "Filter by billing status",
           type: "string",
@@ -915,7 +922,7 @@ export const workspaceUserListOrderFields = ["name", "email", "owned_customer_co
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "c199a02b390230741eff09d4f1463d10cad7ce44f82aab3632410fe0336ab61e" as const
+  "f1f06ac1d3fb5131095ac7047f5871f47942b0f5efcb1229151b52475bf93816" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]

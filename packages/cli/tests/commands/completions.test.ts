@@ -31,6 +31,7 @@ describe("completions command", () => {
     expect(out).toContain("ws-users")
     expect(out).toContain("settings")
     expect(out).toContain("identity")
+    expect(out).toContain("activation")
     expect(out).not.toContain("workspace-users")
   })
 
@@ -42,6 +43,8 @@ describe("completions command", () => {
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "ws-users" ]]`)
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "customers" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "list get timeline" -- "$cur"))')
+    expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "activation" ]]`)
+    expect(out).toContain('COMPREPLY=($(compgen -W "get preview set" -- "$cur"))')
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "integrations" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "list capabilities setup status" -- "$cur"))')
     expect(out).not.toContain('COMPREPLY=($(compgen -W "list capabilities setup add')
@@ -80,7 +83,13 @@ describe("completions command", () => {
     )
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --source-type --source-id"')
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --owner-id --owner-email --has-owner --search"',
+      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --owner-id --owner-email --has-owner --activated-since --search"',
+    )
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --signal --signals --match --threshold --window --lookback-days --example-limit"',
+    )
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --signal --signals --match --threshold --window --disable"',
     )
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --client-request-id"')
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --default-timezone"')
@@ -110,6 +119,7 @@ describe("completions command", () => {
     expect(out).toContain("'ws-users:Workspace-user operations'")
     expect(out).toContain("'settings:Configure workspace settings'")
     expect(out).toContain("'identity:Inspect and manage identity resolution'")
+    expect(out).toContain("'activation:Configure company activation'")
     expect(out).not.toContain("workspace-users")
   })
 
@@ -117,6 +127,7 @@ describe("completions command", () => {
     const out = await captureCompletions("zsh")
     expect(out).toContain("CURRENT == 3")
     expect(out).toContain("'list:List and filter customers'")
+    expect(out).toContain("'preview:Preview historical company activation matches'")
     expect(out).toContain("'list:List and filter internal workspace users'")
     expect(out).toContain("'signup:Create an Outlit account'")
     expect(out).toContain("'setup:Run provider auth or follow-up setup'")
@@ -152,6 +163,9 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd sources list' -l participant")
     expect(out).toContain("-n '__outlit_using_cmd sources get' -l source-type")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
+    expect(out).toContain("-n '__outlit_using_cmd customers list' -l activated-since")
+    expect(out).toContain("-n '__outlit_using_cmd activation preview' -l lookback-days")
+    expect(out).toContain("-n '__outlit_using_cmd activation set' -l disable")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-id")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-email")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l has-owner")

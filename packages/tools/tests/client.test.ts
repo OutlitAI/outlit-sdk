@@ -1,15 +1,22 @@
-import { describe, expect, test, vi } from "vitest"
+import { describe, expect, expectTypeOf, test, vi } from "vitest"
 
 import {
   actionToolNames,
   allCustomerToolNames,
   analyticalAgentToolNames,
+  type CustomerAnalyticsRow,
   type CustomerContextSearchInput,
+  type CustomerDetail,
+  type CustomerDetailResult,
+  type CustomerListItem,
+  type CustomerListResult,
   createOutlitClient,
   customerSourceTypeInputs,
   customerSourceTypes,
+  customerToolContractHash,
   defaultAgentToolNames,
   getCustomerToolContract,
+  isIso8601DateTime,
   normalizeCustomerSourceType,
   notificationSeverityValues,
   resolveCustomerContextSearchInput,
@@ -46,6 +53,70 @@ describe("toolsets", () => {
 })
 
 describe("tool contracts", () => {
+  test("types nullable company activation on customer and analytics results", () => {
+    const listItem: CustomerListItem = {
+      id: "customer_1",
+      name: "Acme",
+      domain: "acme.com",
+      activatedAt: null,
+    }
+    const detail: CustomerDetailResult = {
+      customer: {
+        id: "customer_1",
+        name: "Acme",
+        domain: "acme.com",
+        activatedAt: "2026-07-28T20:00:00.000Z",
+      },
+    }
+    const analyticsRow: CustomerAnalyticsRow = {
+      activated_at: null,
+    }
+
+    expect(listItem.activatedAt).toBeNull()
+    expect(detail.customer.activatedAt).toBe("2026-07-28T20:00:00.000Z")
+    expect(analyticsRow.activated_at).toBeNull()
+  })
+
+  test("infers activatedAt on typed customer list and get client results", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            items: [],
+            pagination: { hasMore: false, nextCursor: null },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            customer: {
+              id: "customer_1",
+              name: "Acme",
+              domain: "acme.com",
+              activatedAt: null,
+            },
+          }),
+          { status: 200 },
+        ),
+      )
+    const client = createOutlitClient({
+      apiKey: "ok_test",
+      fetch: fetchMock,
+    })
+
+    const listResult = await client.callTool("outlit_list_customers")
+    const detailResult = await client.callTool("outlit_get_customer", {
+      customer: "acme.com",
+    })
+
+    expectTypeOf(listResult).toEqualTypeOf<CustomerListResult>()
+    expectTypeOf(detailResult).toEqualTypeOf<CustomerDetailResult>()
+    expectTypeOf(detailResult.customer).toEqualTypeOf<CustomerDetail>()
+  })
+
   test("exposes workspace users and customer owner filters", () => {
     const workspaceUsersContract = getCustomerToolContract("outlit_list_workspace_users")
     const workspaceProperties = workspaceUsersContract.inputSchema.properties as Record<
@@ -68,12 +139,29 @@ describe("tool contracts", () => {
     const customerContract = getCustomerToolContract("outlit_list_customers")
     const customerProperties = customerContract.inputSchema.properties as Record<
       string,
-      { type?: string }
+      { type?: string; description?: string; format?: string; pattern?: string }
     >
 
     expect(customerProperties.ownerId).toEqual(expect.objectContaining({ type: "string" }))
     expect(customerProperties.ownerEmail).toEqual(expect.objectContaining({ type: "string" }))
     expect(customerProperties.hasOwner).toEqual(expect.objectContaining({ type: "boolean" }))
+    expect(customerProperties.activatedSince).toEqual(
+      expect.objectContaining({
+        type: "string",
+        format: "date-time",
+        description: "Filter customers activated at or after this ISO-8601 datetime",
+      }),
+    )
+    expect(customerToolContractHash).toBe(
+      "f1f06ac1d3fb5131095ac7047f5871f47942b0f5efcb1229151b52475bf93816",
+    )
+
+    const activatedSincePattern = customerProperties.activatedSince?.pattern
+    expect(activatedSincePattern).toBeDefined()
+    const activatedSinceRegex = new RegExp(activatedSincePattern ?? "")
+    expect(activatedSinceRegex.test("2026-07-01T00:00:00.000Z")).toBe(true)
+    expect(activatedSinceRegex.test("2026-07-01T00:00:00+05:30")).toBe(true)
+    expect(activatedSinceRegex.test("2026-07-01")).toBe(false)
   })
 
   test("exposes fact type and category filters on facts listing", () => {
@@ -290,6 +378,12 @@ describe("createOutlitClient", () => {
 })
 
 describe("resolveCustomerContextSearchInput", () => {
+  test("accepts ISO-8601 datetimes with UTC or explicit offsets", () => {
+    expect(isIso8601DateTime("2026-07-01T00:00:00.000Z")).toBe(true)
+    expect(isIso8601DateTime("2026-07-01T00:00:00-07:00")).toBe(true)
+    expect(isIso8601DateTime("2026-07-01")).toBe(false)
+  })
+
   test("allows a null customer filter to match the schema contract", () => {
     const input: CustomerContextSearchInput = {
       query: "churn risk",

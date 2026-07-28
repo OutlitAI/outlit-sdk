@@ -134,9 +134,12 @@ Facts are queryable through the same interfaces as the rest of the graph — CLI
 Journey stages are properties on graph nodes — structured labels that Outlit maintains as contacts and accounts progress:
 
 - **Contact journey stages** (Discovered, Signed Up, Activated, Engaged, Inactive) describe where each person is in their product engagement
+- **Company activation** (`activatedAt`) is a monotonic account milestone derived by Core from one to three existing customer-grain signals
 - **Account billing statuses** (None, Trialing, Paying, Churned) describe the commercial relationship
 
-Some stages are inferred automatically from integrations. The Outlit browser SDK auto-detects Discovered and Signed Up based on the identifiers provided. Engaged and Inactive are derived from tracked product activity. For Activated, choose the ordinary product event that represents your product's value milestone; Outlit Core derives activation when that event is received through `track()` or a verified product integration.
+Some contact stages are inferred automatically from integrations. The Outlit browser SDK auto-detects Discovered and Signed Up based on the identifiers provided. Engaged and Inactive are derived from tracked product activity. Contact Activated retains its existing contact-only behavior.
+
+Company activation is configured separately. Core composes existing customer-grain signals with `ANY`, `ALL`, or `AT_LEAST`, optionally within a bounded window, and writes the company's `activatedAt` once. SDKs and connected analytics sources continue emitting ordinary product events; they do not authoritatively mutate company activation.
 
 Billing statuses update automatically when Stripe is connected.
 

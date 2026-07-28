@@ -16,8 +16,7 @@ export default defineCommand({
       "  - Customer ID (UUID)",
       "  - Customer name (partial match)",
       "",
-      'Naming note: --include users returns data under the "contacts" key in',
-      "the response. This is a server-side naming inconsistency, not a CLI bug.",
+      'The primary record is returned under "customer". --include users adds "users".',
       "",
       `Available include sections: ${customerIncludeSections.join(", ")}`,
       `Timeframes: ${customerTimeframes.join(", ")}`,
@@ -43,7 +42,7 @@ export default defineCommand({
       description: [
         "Comma-separated sections to include in response.",
         `Available: ${customerIncludeSections.join(", ")}`,
-        'Note: "users" maps to "contacts" in the response (server naming).',
+        'Included sections use their contract keys, such as "users" and "revenue".',
       ].join("\n"),
     },
     timeframe: {

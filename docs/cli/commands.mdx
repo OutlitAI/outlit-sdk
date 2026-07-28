@@ -11,6 +11,93 @@ Most commands in this reference share these common flags:
 | `--json` | Force JSON output (auto-enabled when piped) |
 | `--help` | Show help for the command |
 
+## Activation
+
+Inspect, historically preview, and explicitly configure Core-derived company activation.
+Company activation is a monotonic account milestone stored as `activatedAt`; it is
+separate from each contact's journey stage.
+
+Outlit evaluates one to three existing, non-archived `CUSTOMER`-grain signals for the
+same company. SDKs and connected analytics sources continue sending ordinary product
+events. They do not send a synthetic activation event or authoritatively mutate company
+lifecycle state.
+
+### Get
+
+```bash
+outlit activation get --json
+```
+
+The command returns the saved definition and its signal metadata. The compatibility
+block reports the existing contact-only activation event separately; Outlit never
+silently migrates it into a company definition.
+
+### Preview
+
+Preview a candidate definition against historical signal occurrences:
+
+```bash
+# One signal: ANY is implied
+outlit activation preview \
+  --signal 10000000-0000-4000-8000-000000000001 \
+  --lookback-days 30 \
+  --json
+
+# All selected signals for the same company within 30 days
+outlit activation preview \
+  --signals 10000000-0000-4000-8000-000000000001,10000000-0000-4000-8000-000000000002 \
+  --match ALL \
+  --window 30d \
+  --lookback-days 60 \
+  --example-limit 10 \
+  --json
+```
+
+Preview is always read-only. It never saves the definition, changes `activatedAt`, or
+materializes activation milestones.
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--signal` | One of signal/signals | One customer-grain signal UUID; implies `ANY` |
+| `--signals` | One of signal/signals | Comma-separated one to three unique signal UUIDs |
+| `--match` | For multiple signals | `ANY`, `ALL`, or `AT_LEAST` |
+| `--threshold` | For `AT_LEAST` | Integer from 2 through the selected signal count |
+| `--window` | No | `ALL`/`AT_LEAST` window, at most `168h` or `90d` |
+| `--lookback-days` | No | Historical lookback from 1–90 (Core default: 30) |
+| `--example-limit` | No | Customer examples from 1–20 (Core default: 10) |
+
+`ANY` rejects threshold and window. A single-signal definition must use `ANY`. `ALL`
+requires two or three signals and rejects threshold. `AT_LEAST` requires two or three
+signals plus `--threshold`.
+
+### Set or disable
+
+After reviewing a preview, explicitly save the complete definition:
+
+```bash
+outlit activation set \
+  --signals 10000000-0000-4000-8000-000000000001,10000000-0000-4000-8000-000000000002,10000000-0000-4000-8000-000000000003 \
+  --match AT_LEAST \
+  --threshold 2 \
+  --window 168h \
+  --json
+```
+
+To stop future company activation evaluation:
+
+```bash
+outlit activation set --disable --json
+```
+
+`--disable` cannot be combined with definition flags. Disabling preserves every existing
+`activatedAt` value and canonical activation milestone because company activation is
+monotonic.
+
+All three commands preserve Core's standard structured command envelope in `--json` and
+piped output. Local validation errors use the CLI's existing `missing_input` or
+`invalid_input` error shape; authenticated API errors retain the standard Core error
+envelope.
+
 ## Customers List
 
 List and filter customers with pagination.
@@ -29,6 +116,7 @@ outlit customers list [flags]
 | `--no-activity-in` | string | — | Inactive for period: `7d`, `14d`, `30d`, `90d` |
 | `--has-activity-in` | string | — | Active within period: `7d`, `14d`, `30d`, `90d` |
 | `--trait` | string | — | Exact trait filters as comma-separated `key=value` pairs (for example `segment=enterprise,active=true`) |
+| `--activated-since` | string | — | Company activation at or after an ISO-8601 datetime; explicit offsets are accepted |
 | `--search` | string | — | Search by name or domain |
 | `--order-by` | string | `last_activity_at` | Sort field |
 | `--order-direction` | string | `desc` | Sort direction: `asc`, `desc` |
@@ -50,8 +138,11 @@ outlit customers list --search "acme"
 # Filter by exact customer traits
 outlit customers list --trait "segment=enterprise,active=true"
 
+# Companies activated since July 1
+outlit customers list --activated-since 2026-07-01T00:00:00Z
+
 # Pipe to jq
-outlit customers list --json | jq '.items[] | {domain, mrr: .currentMrr}'
+outlit customers list --json | jq '.items[] | {domain, activatedAt}'
 ```
 
 ### JSON Response
@@ -66,6 +157,7 @@ outlit customers list --json | jq '.items[] | {domain, mrr: .currentMrr}'
       "billingStatus": "PAYING",
       "currentMrr": 500000,
       "lastActivityAt": "2025-02-10T15:30:00Z",
+      "activatedAt": "2025-01-20T09:15:00Z",
       "status": "ACTIVE",
       "type": "COMPANY"
     }
@@ -135,12 +227,14 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
 
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "name": "Acme Corp",
-  "domain": "acme.com",
-  "billingStatus": "PAYING",
-  "currentMrr": 500000,
-  "contacts": [
+  "customer": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Acme Corp",
+    "domain": "acme.com",
+    "billingStatus": "PAYING",
+    "activatedAt": "2025-01-20T09:15:00Z"
+  },
+  "users": [
     {
       "id": "user-uuid",
       "name": "Jane Doe",
@@ -163,7 +257,9 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
 ```
 
 <Info>
-  The `--include users` flag maps to the `contacts` key in the response, which contains user/contact data for that customer.
+  `customer.activatedAt` is an ISO-8601 timestamp when Core has materialized company
+  activation, and `null` otherwise. Contact journey stages remain separate under
+  `users`.
 </Info>
 
 ## Customers Timeline
@@ -829,6 +925,9 @@ outlit schema activity
 # JSON output
 outlit schema customers --json
 ```
+
+The public `customers` analytics view exposes company activation as
+`activated_at Nullable(DateTime64(3))`. Contact journey stages remain separate on users.
 
 ### JSON Response
 
