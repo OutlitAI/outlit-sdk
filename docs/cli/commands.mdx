@@ -570,16 +570,23 @@ outlit sources get --source-type <type> --source-id <id>
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--source-id` | string | — | Exact source identifier |
+| `--limit` | integer | 50 | Slack replies per page (1–100). Ignored for other source types. |
+| `--cursor` | string | — | Opaque Slack reply cursor from `record.pageInfo.nextCursor` |
 
 ### Examples
 
 ```bash
 outlit sources get --source-type CALL --source-id call_123
 outlit sources get --source-type OPPORTUNITY --source-id opp_123
+outlit sources get --source-type SLACK --source-id root_123 --limit 25
+outlit sources get --source-type SLACK --source-id root_123 --cursor <next-cursor>
 outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
 ```
+
+Slack exact-source responses include a structured `record.root`, chronological
+`record.replies`, and `record.pageInfo` with `hasMore` and `nextCursor`.
 
 ## Notify
 

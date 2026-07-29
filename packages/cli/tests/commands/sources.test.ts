@@ -50,6 +50,96 @@ describe("sources get", () => {
     })
   })
 
+  test("forwards Slack reply pagination to outlit_get_source", async () => {
+    const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
+
+    await captureStdout(() =>
+      sourcesGetCmd.run!({
+        args: {
+          "source-type": "SLACK",
+          "source-id": "root_123",
+          limit: "25",
+          cursor: "opaque-page-cursor",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_source", {
+      sourceType: "SLACK",
+      sourceId: "root_123",
+      limit: 25,
+      cursor: "opaque-page-cursor",
+    })
+  })
+
+  test("rejects invalid Slack reply limits before calling the API", async () => {
+    const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
+
+    await runExpectingError(
+      () =>
+        sourcesGetCmd.run!({
+          args: {
+            "source-type": "SLACK",
+            "source-id": "root_123",
+            limit: "101",
+            json: true,
+          },
+        } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
+      "invalid_input",
+    )
+
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("preserves structured paginated Slack source responses", async () => {
+    const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
+    mockCallTool.mockImplementationOnce(async () => ({
+      sourceType: "SLACK",
+      sourceId: "root_123",
+      record: {
+        kind: "slack_conversation",
+        root: {
+          messageId: "root_123",
+          deleted: false,
+          text: "Can we move the renewal review?",
+        },
+        replies: [
+          {
+            messageId: "reply_456",
+            authorLabel: "CSM",
+            occurredAt: "2026-07-28T18:01:00.000Z",
+            text: "Tuesday works.",
+          },
+        ],
+        pageInfo: {
+          hasMore: true,
+          nextCursor: "page_2",
+          order: "chronological",
+        },
+      },
+    }))
+
+    const output = await captureStdout(() =>
+      sourcesGetCmd.run!({
+        args: {
+          "source-type": "SLACK",
+          "source-id": "root_123",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
+    )
+
+    expect(output).toMatchObject({
+      sourceType: "SLACK",
+      record: {
+        root: { messageId: "root_123" },
+        replies: [{ messageId: "reply_456" }],
+        pageInfo: { hasMore: true, nextCursor: "page_2" },
+      },
+    })
+  })
+
   test("normalizes CRM source aliases before lookup", async () => {
     const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
 

@@ -156,11 +156,17 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 {
   "tool": "outlit_get_source",
   "input": {
-    "sourceType": "OPPORTUNITY",
-    "sourceId": "opp_123"
+    "sourceType": "SLACK",
+    "sourceId": "root_123",
+    "limit": 25,
+    "cursor": "opaque-cursor-from-the-previous-page"
   }
 }
 ```
+
+For Slack sources, the response's `record` contains the root message, a chronological
+page of replies, and `pageInfo` with `hasMore` and `nextCursor`. Omit `cursor` for the
+first page.
 
 ### Send a Slack Notification
 
