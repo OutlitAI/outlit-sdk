@@ -26,7 +26,8 @@ existing auth, output, and error boundaries. Customer `activatedSince`, nullable
 - Keep customer `activatedSince`, nullable `activatedAt`, and analytics `activated_at`.
 - Bind only `GET /api/activation`, `POST /api/activation/preview`, and
   `PATCH /api/activation`.
-- Keep SDK #164 draft; do not merge or stably release it.
+- Keep SDK #164 draft and do not merge it as part of this implementation session. Do not
+  stably release it before Core is deployed.
 
 ---
 
@@ -260,7 +261,8 @@ and push `codex/company-activation-cli`.
 - [ ] **Step 5: Rewrite and monitor draft PR #164**
 
 Update the title and body to the shared exact-event contract and link Core #1663. State the
-verified order exactly: merge SDK #164 first so Core's drift workflow can validate SDK
-`main`, then merge Core #1663. Activation commands must not be used until Core is deployed,
-and stable Changesets publication remains on hold until that deployment. List fresh checks,
-keep the PR draft, and watch required CI and CodeRabbit; do not merge or publish.
+eventual order when separately approved: merge SDK #164 first so Core's drift workflow can
+validate SDK `main`, then merge Core #1663. Activation commands must not be used until Core
+is deployed, and stable Changesets publication remains on hold until that deployment. List
+fresh checks, keep the PR draft, and watch required CI and CodeRabbit; this implementation
+session does not merge or publish.

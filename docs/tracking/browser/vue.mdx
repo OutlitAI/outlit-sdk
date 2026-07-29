@@ -474,7 +474,7 @@ function handleOnboardingComplete() {
 ```
 
 <Info>
-  Configure this exact event as your activation event. Outlit Core applies its first match to eligible contacts and their resolved company, while billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
+  Configure this exact event as your activation event. For each eligible contact and resolved company independently, Outlit Core sets `activatedAt` on the first match only when that subject's timestamp is null. Billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
 </Info>
 
 ## Vue Router Integration
