@@ -36,7 +36,7 @@ export default defineCommand({
     description: [
       "Get one exact source by source type and source id.",
       "Returns the same normalized source envelope as `sources list`, with more detailed source-specific fields when available.",
-      "Slack records contain a structured root, replies, and pageInfo. Use --limit and --cursor to page replies.",
+      "For Slack, --source-id is Outlit's canonical root-message ID—not a Slack timestamp; replies are chronological per page, newest page first, and --cursor walks backward.",
       "",
       "Examples:",
       "  outlit sources get --source-type CALL --source-id call_123",
