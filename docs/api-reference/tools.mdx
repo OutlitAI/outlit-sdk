@@ -48,7 +48,7 @@ POST https://app.outlit.ai/api/tools/call
 | `outlit_list_facts` | Browse stored customer facts and evidence |
 | `outlit_get_fact` | Retrieve one exact customer fact |
 | `outlit_get_source` | Retrieve one exact source record behind a fact or search result |
-| `outlit_list_sources` | List concrete source records such as calls, emails, calendar events, support tickets, or opportunities |
+| `outlit_list_sources` | List concrete source records such as calls, emails, calendar events, support tickets, opportunities, or Slack conversations |
 | `outlit_search_customer_context` | Search customer context semantically |
 | `outlit_query` | Run SQL against customer intelligence views |
 | `outlit_schema` | Inspect available analytics views |
@@ -164,9 +164,11 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 }
 ```
 
-For Slack sources, the response's `record` contains the root message, a chronological
-page of replies, and `pageInfo` with `hasMore` and `nextCursor`. Omit `cursor` for the
-first page.
+For Slack sources, `sourceId` is Outlit's canonical root-message ID returned by source
+listings, search results, and fact source references—not a Slack timestamp. Omit
+`cursor` for the first page, which contains the newest replies. The response's
+`record.replies` is chronological within each page; following
+`record.pageInfo.nextCursor` walks backward to older replies.
 
 ### Send a Slack Notification
 
