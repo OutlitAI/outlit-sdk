@@ -404,7 +404,7 @@ outlit facts get --fact-id <id> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--status` | string | — | Comma-separated fact status filter: `ACTIVE`, `ACKNOWLEDGED`, `RESOLVED`, `SNOOZED`, `CANDIDATE` |
-| `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--fact-types` | string | — | Comma-separated customer-memory fact type filter: e.g. `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `PRODUCT_USAGE` |
 | `--fact-categories` | string | — | Comma-separated fact category filter: `MEMORY`, `CUSTOM` |
 | `--after` | string | — | Lower bound on fact occurrence time (ISO 8601 datetime) |
@@ -506,7 +506,7 @@ outlit search <query> [flags]
 | `--top-k` | number | `20` | Maximum results to return (1–50) |
 | `--after` | string | — | Filter to events after this ISO 8601 datetime |
 | `--before` | string | — | Filter to events before this ISO 8601 datetime |
-| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 
 ### Examples
 
@@ -560,26 +560,61 @@ outlit search "churn risk" --top-k 50 --json
 
 ## Sources
 
-Fetch one exact source by generic `sourceType` and `sourceId`.
+Use `sources list` for deterministic source enumeration and `sources get` for exact lookup.
+
+### List Sources
+
+```bash
+outlit sources list [flags]
+```
+
+#### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--customer` | string | — | Customer UUID, domain, or name |
+| `--participant` | string | — | Participant email or name |
+| `--provider` | string | — | Provider identifier such as `gmail`, `gong`, or `google-calendar` |
+| `--has-transcript` | boolean | `false` | Only list call sources with a finalized transcript |
+| `--after` | string | — | Filter to sources occurring after this ISO 8601 datetime |
+| `--before` | string | — | Filter to sources occurring before this ISO 8601 datetime |
+| `--limit` | integer | `50` | Results per page (1–100) |
+| `--cursor` | string | — | Pagination cursor from `pagination.nextCursor` |
+
+### Get a Source
 
 ```bash
 outlit sources get --source-type <type> --source-id <id>
 ```
 
-### Flags
+#### Flags
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--source-id` | string | — | Exact source identifier |
+| `--limit` | integer | 50 | Slack replies per page (1–100). Ignored for other source types. |
+| `--cursor` | string | — | Opaque Slack reply cursor from `record.pageInfo.nextCursor` |
 
-### Examples
+#### Slack list → get
 
 ```bash
-outlit sources get --source-type CALL --source-id call_123
-outlit sources get --source-type OPPORTUNITY --source-id opp_123
-outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
+# Find the canonical sourceId
+outlit sources list --customer acme.com --source-type SLACK --json
+
+# Open that Slack thread
+outlit sources get --source-type SLACK --source-id root_123 --limit 25 --json
+
+# Continue when record.pageInfo.hasMore is true
+NEXT_CURSOR="..."
+outlit sources get --source-type SLACK --source-id root_123 --cursor "$NEXT_CURSOR" --json
 ```
+
+For Slack, `sourceId` is Outlit's canonical root-message ID returned by source
+listings, search results, and fact source references—not a Slack timestamp. The first
+page contains the newest replies, while `record.replies` is chronological within each
+page. Following `record.pageInfo.nextCursor` walks backward to older replies.
 
 ## Notify
 

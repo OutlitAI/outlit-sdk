@@ -152,7 +152,7 @@ describe("tool contracts", () => {
       }),
     )
     expect(customerToolContractHash).toBe(
-      "f1f06ac1d3fb5131095ac7047f5871f47942b0f5efcb1229151b52475bf93816",
+      "ce2f91d56dfb0d42b8730b03431f2a7be5399739c365360bae8102e3000f091d",
     )
 
     const activatedSincePattern = customerProperties.activatedSince?.pattern
@@ -231,9 +231,31 @@ describe("tool contracts", () => {
     const exactSourceContract = getCustomerToolContract("outlit_get_source")
     const exactSourceProperties = exactSourceContract.inputSchema.properties as Record<
       string,
-      { enum?: string[] }
+      {
+        description?: string
+        enum?: string[]
+        maximum?: number
+        maxLength?: number
+        minimum?: number
+        minLength?: number
+        type?: string
+      }
     >
     expect(exactSourceProperties.sourceType?.enum).toEqual(customerSourceTypeInputs)
+    expect(exactSourceProperties.limit).toEqual(
+      expect.objectContaining({
+        type: "integer",
+        minimum: 1,
+        maximum: 100,
+      }),
+    )
+    expect(exactSourceProperties.cursor).toEqual(
+      expect.objectContaining({
+        type: "string",
+        minLength: 1,
+        maxLength: 2000,
+      }),
+    )
 
     const searchContract = getCustomerToolContract("outlit_search_customer_context")
     const searchProperties = searchContract.inputSchema.properties as Record<
