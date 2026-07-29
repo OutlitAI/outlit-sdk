@@ -211,7 +211,7 @@ const COMMANDS: readonly CmdDef[] = [
         name: "get",
         desc: "Get one exact source record",
         flags: [
-          ...PAGINATED,
+          ...COMMON,
           { name: "--source-type", desc: "Source type" },
           { name: "--source-id", desc: "Exact source ID" },
         ],
