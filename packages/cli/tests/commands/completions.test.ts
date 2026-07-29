@@ -90,9 +90,7 @@ describe("completions command", () => {
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --source-type --customer --participant --provider --has-transcript --after --before"',
     )
-    expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --source-type --source-id"',
-    )
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --source-type --source-id"')
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --owner-id --owner-email --has-owner --activated-since --search"',
     )
@@ -172,8 +170,6 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd facts get' -l fact-id")
     expect(out).toContain("-n '__outlit_using_cmd sources list' -l participant")
     expect(out).toContain("-n '__outlit_using_cmd sources get' -l source-type")
-    expect(out).toContain("-n '__outlit_using_cmd sources get' -l limit")
-    expect(out).toContain("-n '__outlit_using_cmd sources get' -l cursor")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l activated-since")
     expect(out).toContain("-n '__outlit_using_cmd activation preview' -l lookback-days")
