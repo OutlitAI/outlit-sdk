@@ -193,7 +193,7 @@ For custom integrations, the [Ingest API](/api-reference/ingest) accepts events 
 
 <AccordionGroup>
   <Accordion title="What does Outlit track automatically vs what do I need to instrument?">
-    The browser SDK automatically captures pageviews, form submissions, engagement time, UTM attribution, and company enrichment. Identity is auto-detected from forms with email fields. You only need to manually call `identify()` for JavaScript-based auth (OAuth, magic links) and `track()` for meaningful product events, including the ordinary event selected as your activation signal.
+    The browser SDK automatically captures pageviews, form submissions, engagement time, UTM attribution, and company enrichment. Identity is auto-detected from forms with email fields. You only need to manually call `identify()` for JavaScript-based auth (OAuth, magic links) and `track()` for meaningful product events, including the ordinary event selected as your activation event.
   </Accordion>
 
   <Accordion title="How long before data appears in the graph?">

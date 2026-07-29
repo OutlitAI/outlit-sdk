@@ -112,12 +112,8 @@ export default defineCommand({
   },
   async run({ args, rawArgs }) {
     const json = !!args.json
-    const activatedSinceInput = args["activated-since"]
-    const activatedSince = activatedSinceInput?.trim()
-    if (
-      activatedSinceInput !== undefined &&
-      (!activatedSince || !isIso8601DateTime(activatedSince))
-    ) {
+    const activatedSince = args["activated-since"]
+    if (activatedSince !== undefined && !isIso8601DateTime(activatedSince)) {
       return outputError(
         {
           message: "--activated-since must be a valid ISO 8601 datetime",

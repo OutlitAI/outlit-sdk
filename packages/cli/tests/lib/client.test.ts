@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test"
-import type { ActivationDefinitionInput } from "../../src/lib/activation"
+import type { ActivationPreviewInput } from "../../src/lib/activation"
 import { createClient, isPlatformCommandError } from "../../src/lib/client"
 import { TEST_API_KEY } from "../helpers"
 
@@ -558,19 +558,16 @@ describe("client.callTool()", () => {
       fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(okEnvelope), { status: 200 }))
     }
 
-    const definition: ActivationDefinitionInput = {
-      signalIds: ["10000000-0000-4000-8000-000000000001"],
-      matchMode: "ANY",
+    const previewInput: ActivationPreviewInput = {
+      eventName: "integration_connected",
+      lookbackDays: 30,
+      exampleLimit: 10,
     }
     const client = await createClient()
     await client.callTool("outlit_activation_get", {})
-    await client.callTool("outlit_activation_preview", {
-      definition,
-      lookbackDays: 30,
-      exampleLimit: 10,
-    })
-    await client.callTool("outlit_activation_update", { definition })
-    await client.callTool("outlit_activation_update", { definition: null })
+    await client.callTool("outlit_activation_preview", previewInput)
+    await client.callTool("outlit_activation_update", { eventName: "integration_connected" })
+    await client.callTool("outlit_activation_update", { eventName: null })
 
     const urls = fetchSpy.mock.calls.map((call) => call[0] as string)
     expect(urls[0]).toBe("https://app.outlit.ai/api/activation")
@@ -581,14 +578,14 @@ describe("client.callTool()", () => {
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("GET")
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).body).toBeUndefined()
     expect((fetchSpy.mock.calls[1]?.[1] as RequestInit).method).toBe("POST")
-    expect((fetchSpy.mock.calls[1]?.[1] as RequestInit).body).toBe(
-      JSON.stringify({ definition, lookbackDays: 30, exampleLimit: 10 }),
-    )
+    expect((fetchSpy.mock.calls[1]?.[1] as RequestInit).body).toBe(JSON.stringify(previewInput))
     expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).method).toBe("PATCH")
-    expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).body).toBe(JSON.stringify({ definition }))
+    expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({ eventName: "integration_connected" }),
+    )
     expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).method).toBe("PATCH")
     expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).body).toBe(
-      JSON.stringify({ definition: null }),
+      JSON.stringify({ eventName: null }),
     )
     for (const url of urls) {
       expect(url).not.toContain("/api/tools/call")

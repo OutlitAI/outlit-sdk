@@ -7,9 +7,9 @@ export default defineCommand({
   meta: {
     name: "disable",
     description: [
-      "Disable future company activation evaluation.",
+      "Disable future activation matching for contacts and companies.",
       "",
-      "Existing company activation timestamps and milestones are preserved.",
+      "Existing contact and company activation timestamps remain unchanged.",
       "",
       "Examples:",
       "  outlit activation disable --json",
@@ -25,8 +25,8 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, "outlit_activation_update", { definition: null }, json, {
-      spinnerMessage: "Disabling company activation...",
+    return runTool(client, "outlit_activation_update", { eventName: null }, json, {
+      spinnerMessage: "Disabling activation matching...",
     })
   },
 })

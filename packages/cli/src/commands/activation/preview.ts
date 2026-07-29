@@ -2,9 +2,9 @@ import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import {
-  activationDefinitionArgs,
+  activationEventArg,
   activationPreviewArgs,
-  parseActivationDefinition,
+  parseActivationEvent,
   parseActivationPreviewOptions,
 } from "../../lib/activation"
 import { getClientOrExit, runTool } from "../../lib/api"
@@ -13,13 +13,13 @@ export default defineCommand({
   meta: {
     name: "preview",
     description: [
-      "Historically preview a company activation definition without mutation.",
+      "Historically preview exact product-event matches for contacts and companies.",
       "",
-      "Preview is read-only: it never saves configuration or materializes activation.",
+      "Preview is read-only: it never saves the event setting or materializes activation.",
       "",
       "Examples:",
-      "  outlit activation preview --signal 10000000-0000-4000-8000-000000000001 --json",
-      "  outlit activation preview --signals 10000000-0000-4000-8000-000000000001,10000000-0000-4000-8000-000000000002 --match ALL --window 30d --lookback-days 60 --json",
+      "  outlit activation preview --event integration_connected --json",
+      "  outlit activation preview --event integration_connected --lookback-days 60 --example-limit 20 --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -27,17 +27,17 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    ...activationDefinitionArgs,
+    ...activationEventArg,
     ...activationPreviewArgs,
   },
   async run({ args }) {
     const json = !!args.json
-    const definition = parseActivationDefinition(args, json)
+    const eventName = parseActivationEvent(args, json)
     const options = parseActivationPreviewOptions(args, json)
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, "outlit_activation_preview", { definition, ...options }, json, {
-      spinnerMessage: "Previewing company activation...",
+    return runTool(client, "outlit_activation_preview", { eventName, ...options }, json, {
+      spinnerMessage: "Previewing activation matches...",
     })
   },
 })

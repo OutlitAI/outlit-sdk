@@ -22,6 +22,15 @@ function bashCompWord(index: number): string {
   return `$${`{COMP_WORDS[${index}]}`}`
 }
 
+function fishFlagsFor(out: string, commandPath: string): string[] {
+  const prefix = `complete -c outlit -n '__outlit_using_cmd ${commandPath}' -l `
+
+  return out
+    .split("\n")
+    .filter((line) => line.startsWith(prefix))
+    .map((line) => line.slice(prefix.length).split(" ", 1)[0] ?? "")
+}
+
 describe("completions command", () => {
   test("bash — top-level commands", async () => {
     const out = await captureCompletions("bash")
@@ -86,11 +95,10 @@ describe("completions command", () => {
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --owner-id --owner-email --has-owner --activated-since --search"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --signal --signals --match --threshold --window --lookback-days --example-limit"',
+      'COMPREPLY=($(compgen -W "--api-key --json --event --lookback-days --example-limit"',
     )
-    expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --signal --signals --match --threshold --window"',
-    )
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --event"')
+    expect(out).not.toContain("--signals --match --threshold --window")
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --client-request-id"')
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --default-timezone"')
     expect(out).toContain(
@@ -119,7 +127,7 @@ describe("completions command", () => {
     expect(out).toContain("'ws-users:Workspace-user operations'")
     expect(out).toContain("'settings:Configure workspace settings'")
     expect(out).toContain("'identity:Inspect and manage identity resolution'")
-    expect(out).toContain("'activation:Configure company activation'")
+    expect(out).toContain("'activation:Configure contact and company activation'")
     expect(out).not.toContain("workspace-users")
   })
 
@@ -127,7 +135,7 @@ describe("completions command", () => {
     const out = await captureCompletions("zsh")
     expect(out).toContain("CURRENT == 3")
     expect(out).toContain("'list:List and filter customers'")
-    expect(out).toContain("'preview:Preview historical company activation matches'")
+    expect(out).toContain("'preview:Preview historical exact-event activation matches'")
     expect(out).toContain("'list:List and filter internal workspace users'")
     expect(out).toContain("'signup:Create an Outlit account'")
     expect(out).toContain("'setup:Run provider auth or follow-up setup'")
@@ -165,7 +173,8 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l activated-since")
     expect(out).toContain("-n '__outlit_using_cmd activation preview' -l lookback-days")
-    expect(out).toContain("-n '__outlit_using_cmd activation update' -l signal")
+    expect(out).toContain("-n '__outlit_using_cmd activation preview' -l event")
+    expect(out).toContain("-n '__outlit_using_cmd activation update' -l event")
     expect(out).toContain("-n '__outlit_using_cmd activation disable' -l json")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-id")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-email")
@@ -210,6 +219,21 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd setup opencode' -l json")
     expect(out).toContain("-n '__outlit_using_cmd setup openclaw' -l json")
     expect(out).not.toContain("-n '__outlit_using_cmd setup claude-code' -l api-key")
+  })
+
+  test("fish — activation subcommands expose exact setting flags", async () => {
+    const out = await captureCompletions("fish")
+
+    expect(fishFlagsFor(out, "activation get")).toEqual(["api-key", "json"])
+    expect(fishFlagsFor(out, "activation preview")).toEqual([
+      "api-key",
+      "json",
+      "event",
+      "lookback-days",
+      "example-limit",
+    ])
+    expect(fishFlagsFor(out, "activation update")).toEqual(["api-key", "json", "event"])
+    expect(fishFlagsFor(out, "activation disable")).toEqual(["api-key", "json"])
   })
 
   test("unknown shell — exits 1", async () => {

@@ -13,14 +13,13 @@ Most commands in this reference share these common flags:
 
 ## Activation
 
-Inspect, historically preview, and explicitly configure Core-derived company activation.
-Company activation is a monotonic account milestone stored as `activatedAt`; it is
-separate from each contact's journey stage.
+Inspect, historically preview, and explicitly configure the exact ordinary product event
+Outlit uses for activation. The first matching event activates eligible contacts and their
+resolved company. Core sets each subject's activation timestamp only when it is null, so
+activation is monotonic.
 
-Outlit evaluates one to three existing, non-archived `CUSTOMER`-grain signals for the
-same company. SDKs and connected analytics sources continue sending ordinary product
-events. They do not send a synthetic activation event or authoritatively mutate company
-lifecycle state.
+Applications and connected analytics sources keep sending ordinary product events. They do
+not send a synthetic activation event or authoritatively mutate lifecycle state.
 
 ### Get
 
@@ -28,72 +27,52 @@ lifecycle state.
 outlit activation get --json
 ```
 
-The command returns the saved definition and its signal metadata. The compatibility
-block reports the existing contact-only activation event separately; Outlit never
-silently migrates it into a company definition.
+The command returns the configured `eventName`, the
+`first_matching_product_event` behavior, and `appliesTo: ["contact", "company"]`.
 
 ### Preview
 
-Preview a candidate definition against historical signal occurrences:
+Preview one exact event name against historical product events:
 
 ```bash
-# One signal: ANY is implied
 outlit activation preview \
-  --signal 10000000-0000-4000-8000-000000000001 \
+  --event integration_connected \
   --lookback-days 30 \
-  --json
-
-# All selected signals for the same company within 30 days
-outlit activation preview \
-  --signals 10000000-0000-4000-8000-000000000001,10000000-0000-4000-8000-000000000002 \
-  --match ALL \
-  --window 30d \
-  --lookback-days 60 \
   --example-limit 10 \
   --json
 ```
 
-Preview is always read-only. It never saves the definition, changes `activatedAt`, or
-materializes activation milestones.
+Preview is always read-only. It never saves the event setting, changes `activatedAt`, or
+materializes activation.
 
 | Flag | Required | Description |
 |------|----------|-------------|
-| `--signal` | One of signal/signals | One customer-grain signal UUID; implies `ANY` |
-| `--signals` | One of signal/signals | Comma-separated one to three unique signal UUIDs |
-| `--match` | For multiple signals | `ANY`, `ALL`, or `AT_LEAST` |
-| `--threshold` | For `AT_LEAST` | Integer from 2 through the selected signal count |
-| `--window` | No | `ALL`/`AT_LEAST` window, at most `168h` or `90d` |
+| `--event` | Yes | Exact ordinary product event name, from 1–191 characters |
 | `--lookback-days` | No | Historical lookback from 1–90 (Core default: 30) |
 | `--example-limit` | No | Customer examples from 1–20 (Core default: 10) |
 
-`ANY` rejects threshold and window. A single-signal definition must use `ANY`. `ALL`
-requires two or three signals and rejects threshold. `AT_LEAST` requires two or three
-signals plus `--threshold`.
+### Update
 
-### Update or disable
-
-After reviewing a preview, explicitly replace the complete definition:
+After reviewing a preview, explicitly replace the configured event name:
 
 ```bash
 outlit activation update \
-  --signals 10000000-0000-4000-8000-000000000001,10000000-0000-4000-8000-000000000002,10000000-0000-4000-8000-000000000003 \
-  --match AT_LEAST \
-  --threshold 2 \
-  --window 168h \
+  --event integration_connected \
   --json
 ```
 
-The referenced customer-grain signals must already exist. Activation commands do not
-create signals; create them with `outlit signals create` or select existing signals.
+Saving the event name changes future matching only. It does not scan historical events or
+backfill activation.
 
-To stop future company activation evaluation:
+### Disable
+
+To stop future activation matching:
 
 ```bash
 outlit activation disable --json
 ```
 
-Disabling preserves every existing `activatedAt` value and canonical activation
-milestone because company activation is monotonic.
+Disabling preserves existing contact and company activation timestamps.
 
 All four commands preserve Core's standard structured command envelope in `--json` and
 piped output. Local validation errors use the CLI's existing `missing_input` or

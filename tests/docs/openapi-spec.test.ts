@@ -63,6 +63,8 @@ describe("docs OpenAPI spec", () => {
 
     expect(spec.servers).toContainEqual({ url: "https://app.outlit.ai" })
     expect(Object.keys(paths).sort()).toEqual([
+      "/api/activation",
+      "/api/activation/preview",
       "/api/agent-actions",
       "/api/agent-templates",
       "/api/agents",
@@ -138,6 +140,7 @@ describe("docs OpenAPI spec", () => {
     expect(
       platformOperations.map(({ method, path }) => `${method.toUpperCase()} ${path}`).sort(),
     ).toEqual([
+      "GET /api/activation",
       "GET /api/agent-actions",
       "GET /api/agent-templates",
       "GET /api/agents",
@@ -164,12 +167,14 @@ describe("docs OpenAPI spec", () => {
       "GET /api/signals",
       "GET /api/signals/options",
       "GET /api/signals/{id}",
+      "PATCH /api/activation",
       "PATCH /api/agents/{id}",
       "PATCH /api/automations/{id}",
       "PATCH /api/destinations/{id}",
       "PATCH /api/settings",
       "PATCH /api/settings/report",
       "PATCH /api/signals/{id}",
+      "POST /api/activation/preview",
       "POST /api/agents",
       "POST /api/agents/{agentId}/runs",
       "POST /api/agents/{id}/disable",
@@ -237,6 +242,131 @@ describe("docs OpenAPI spec", () => {
     expect(spec.components?.schemas?.ToolCallRequest?.properties?.tool?.enum).toEqual([
       ...allCustomerToolNames,
     ])
+  })
+
+  test("documents strict shared-event activation contracts", () => {
+    const spec = readJson<{
+      paths?: Record<string, any>
+      components?: {
+        schemas?: Record<string, any>
+      }
+    }>("docs/openapi.json")
+    const schemas = spec.components?.schemas ?? {}
+
+    expect(
+      spec.paths?.["/api/activation"]?.get?.responses?.["200"]?.content?.["application/json"]
+        ?.schema,
+    ).toEqual({
+      $ref: "#/components/schemas/GetCustomerActivationCommandSuccess",
+    })
+    expect(
+      spec.paths?.["/api/activation"]?.patch?.requestBody?.content?.["application/json"]?.schema,
+    ).toEqual({
+      $ref: "#/components/schemas/CustomerActivationUpdateRequest",
+    })
+    expect(
+      spec.paths?.["/api/activation/preview"]?.post?.requestBody?.content?.["application/json"]
+        ?.schema,
+    ).toEqual({
+      $ref: "#/components/schemas/CustomerActivationPreviewRequest",
+    })
+
+    expect(schemas.CustomerActivationState).toEqual({
+      type: "object",
+      required: ["eventName", "behavior", "appliesTo"],
+      properties: {
+        eventName: {
+          type: ["string", "null"],
+          maxLength: 191,
+        },
+        behavior: {
+          type: "string",
+          const: "first_matching_product_event",
+        },
+        appliesTo: {
+          type: "array",
+          prefixItems: [
+            { type: "string", const: "contact" },
+            { type: "string", const: "company" },
+          ],
+          items: false,
+          minItems: 2,
+          maxItems: 2,
+        },
+      },
+      additionalProperties: false,
+    })
+    expect(schemas.CustomerActivationPreviewRequest).toEqual({
+      type: "object",
+      required: ["eventName"],
+      properties: {
+        eventName: {
+          type: "string",
+          minLength: 1,
+          maxLength: 191,
+        },
+        lookbackDays: {
+          type: "integer",
+          minimum: 1,
+          maximum: 90,
+          default: 30,
+        },
+        exampleLimit: {
+          type: "integer",
+          minimum: 1,
+          maximum: 20,
+          default: 10,
+        },
+      },
+      additionalProperties: false,
+    })
+    expect(schemas.CustomerActivationUpdateRequest).toEqual({
+      type: "object",
+      required: ["eventName"],
+      properties: {
+        eventName: {
+          description:
+            "The exact ordinary product event name, or null to disable future matching without clearing activation history.",
+          anyOf: [{ type: "string", minLength: 1, maxLength: 191 }, { type: "null" }],
+        },
+      },
+      additionalProperties: false,
+    })
+    expect(schemas.CustomerActivationPreviewResult?.required).toEqual([
+      "eventName",
+      "evaluatedFrom",
+      "evaluatedTo",
+      "evaluatedEventCount",
+      "matchedCustomerCount",
+      "alreadyActivatedCustomerCount",
+      "wouldActivateCustomerCount",
+      "truncated",
+      "examples",
+    ])
+    expect(schemas.CustomerActivationPreviewResult?.properties?.eventName).toEqual({
+      type: "string",
+      minLength: 1,
+      maxLength: 191,
+    })
+    expect(schemas.CustomerActivationPreviewResult?.additionalProperties).toBe(false)
+    expect(schemas.CustomerActivationPreviewExample).toMatchObject({
+      type: "object",
+      required: ["customer", "activatedAt", "firstMatchedAt", "eventId"],
+      properties: {
+        activatedAt: { type: ["string", "null"], format: "date-time" },
+        firstMatchedAt: { type: "string", format: "date-time" },
+        eventId: { type: "string", format: "uuid" },
+      },
+      additionalProperties: false,
+    })
+    for (const removedSchema of [
+      "CustomerActivationDefinitionInput",
+      "CustomerActivationDefinitionRead",
+      "CustomerActivationMatchMode",
+      "CustomerActivationWindow",
+    ]) {
+      expect(schemas).not.toHaveProperty(removedSchema)
+    }
   })
 
   test("documents validation failures for agent rename", () => {

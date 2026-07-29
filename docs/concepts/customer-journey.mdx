@@ -34,19 +34,18 @@ flowchart LR
 
 ### Company Activation (per company)
 
-A company activates once when its configured definition first matches. The definition
-composes one to three existing customer-grain signals with `ANY`, `ALL`, or `AT_LEAST`
-and an optional bounded window. Core evaluates the signals for the same company and
-materializes `activatedAt` monotonically: it never automatically unactivates a company.
+A company activates once when the configured exact ordinary product event first occurs
+for that resolved company. The same event activates eligible contacts. Core writes each
+subject's activation timestamp only when it is null, so later matches are no-ops.
 
-Use `outlit activation preview` to evaluate a candidate against history without changing
-configuration or materializing activation. Use `outlit activation update` only after
-review. Activation commands reference existing customer-grain signals; they do not
-create signals. Disabling future evaluation preserves existing activation timestamps
-and milestones.
+Use `outlit activation preview --event <name>` to evaluate historical exact-event matches
+without changing configuration or materializing activation. Use
+`outlit activation update --event <name>` only after review. Disabling future matching
+preserves existing contact and company activation timestamps.
 
-Company activation is not a contact journey stage. A contact's `ACTIVATED` stage retains
-its existing contact-only meaning and compatibility behavior.
+Company activation remains an account milestone, while a contact's `ACTIVATED` value
+remains a per-person journey stage. They share one configured event but are materialized
+independently when the event resolves the corresponding identity.
 
 ---
 
@@ -175,10 +174,9 @@ When a subscription status changes in Stripe, Outlit automatically updates the m
 
 **Understand the separation.** Contact journey, company activation, and account billing are independent. Jane can be Engaged while her company has not activated, or Inactive after her company has activated and paid. Jane's journey can change independently from the company's monotonic activation timestamp and billing status.
 
-**Define company activation from existing signals.** Continue tracking ordinary product
-events or ingesting them through connected analytics sources. Configure one to three
-customer-grain signals with the activation CLI; do not add a synthetic activation event
-or client-side lifecycle state.
+**Configure one ordinary activation event.** Continue tracking ordinary product events or
+ingesting them through connected analytics sources. Select the exact event name with the
+activation CLI; do not add a synthetic activation event or client-side lifecycle state.
 
 **Track activation at the right time.** Send the selected ordinary activation event when the action is confirmed complete, not when the user clicks a button. Wait for the backend to confirm success before tracking.
 
@@ -194,7 +192,7 @@ or client-side lifecycle state.
   </Accordion>
 
   <Accordion title="What's the difference between contact and company activation?">
-    Contact activation is a per-person journey stage derived from the selected ordinary contact activation event. Company activation is a separate, monotonic account milestone derived by Core from one to three customer-grain signals. Company activation is exposed as `activatedAt` and does not rewrite contact journey stages.
+    Contact activation is a per-person journey stage, while company activation is a separate, monotonic account milestone exposed as `activatedAt`. Core derives both from the same configured exact ordinary product event and independently activates whichever contact or company identity the event resolves.
   </Accordion>
 
   <Accordion title="Which stages require manual instrumentation?">

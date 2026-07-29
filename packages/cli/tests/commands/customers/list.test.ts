@@ -154,6 +154,7 @@ describe("customers list", () => {
     ["malformed", "last-week"],
     ["date-only", "2026-07-01"],
     ["whitespace-only", "   "],
+    ["whitespace-padded", " 2026-07-01T00:00:00Z "],
   ] as const) {
     test(`rejects ${label} --activated-since before calling the customer tool`, async () => {
       const { default: listCmd } = await import("../../../src/commands/customers/list")

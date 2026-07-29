@@ -1,22 +1,20 @@
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { activationDefinitionArgs, parseActivationDefinition } from "../../lib/activation"
+import { activationEventArg, parseActivationEvent } from "../../lib/activation"
 import { getClientOrExit, runTool } from "../../lib/api"
 
 export default defineCommand({
   meta: {
     name: "update",
     description: [
-      "Update Core-derived, monotonic company activation.",
+      "Update the exact ordinary product event used for monotonic activation.",
       "",
-      "Company activation is separate from contact journey stages. Core evaluates ordinary",
-      "customer-grain signals; SDKs do not authoritatively activate a company.",
-      "The selected signals must already exist; this command does not create them.",
+      "Core applies the first matching product event to eligible contacts and their resolved",
+      "company. Applications keep sending ordinary events; the CLI does not activate subjects.",
       "",
       "Examples:",
-      "  outlit activation update --signal 10000000-0000-4000-8000-000000000001 --json",
-      "  outlit activation update --signals 10000000-0000-4000-8000-000000000001,10000000-0000-4000-8000-000000000002 --match AT_LEAST --threshold 2 --window 168h --json",
+      "  outlit activation update --event integration_connected --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -24,15 +22,15 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    ...activationDefinitionArgs,
+    ...activationEventArg,
   },
   async run({ args }) {
     const json = !!args.json
-    const definition = parseActivationDefinition(args, json)
+    const eventName = parseActivationEvent(args, json)
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, "outlit_activation_update", { definition }, json, {
-      spinnerMessage: "Updating company activation...",
+    return runTool(client, "outlit_activation_update", { eventName }, json, {
+      spinnerMessage: "Updating activation event...",
     })
   },
 })

@@ -30,12 +30,12 @@
     "/api/activation": {
       "get": {
         "tags": ["Platform API"],
-        "summary": "Get company activation definition",
-        "description": "Read the authenticated organization's prospective, Core-derived company activation definition and legacy contact-activation compatibility state.",
+        "summary": "Get the activation event setting",
+        "description": "Read the exact ordinary product event that activates eligible contacts and their resolved company.",
         "operationId": "getCustomerActivation",
         "responses": {
           "200": {
-            "description": "The company activation definition was returned.",
+            "description": "The activation event setting was returned.",
             "content": {
               "application/json": {
                 "schema": {
@@ -74,8 +74,8 @@
       },
       "patch": {
         "tags": ["Platform API"],
-        "summary": "Update company activation definition",
-        "description": "Explicitly replace or disable the prospective company activation definition. Disabling stops future evaluation without clearing existing activation timestamps or milestones.",
+        "summary": "Update the activation event setting",
+        "description": "Replace or disable the exact ordinary product event used for prospective contact and company activation. Existing activation timestamps are preserved.",
         "operationId": "updateCustomerActivation",
         "requestBody": {
           "required": true,
@@ -85,19 +85,16 @@
                 "$ref": "#/components/schemas/CustomerActivationUpdateRequest"
               },
               "examples": {
-                "singleSignal": {
-                  "summary": "Activate from one customer-grain signal",
+                "update": {
+                  "summary": "Use one exact ordinary product event",
                   "value": {
-                    "definition": {
-                      "signalIds": ["10000000-0000-4000-8000-000000000001"],
-                      "matchMode": "ANY"
-                    }
+                    "eventName": "integration_connected"
                   }
                 },
                 "disable": {
-                  "summary": "Disable future company activation evaluation",
+                  "summary": "Disable future activation matching",
                   "value": {
-                    "definition": null
+                    "eventName": null
                   }
                 }
               }
@@ -106,7 +103,7 @@
         },
         "responses": {
           "200": {
-            "description": "The company activation definition update completed.",
+            "description": "The activation event setting update completed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -138,26 +135,6 @@
               }
             }
           },
-          "404": {
-            "description": "A selected customer-grain signal was not found for the authenticated organization.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "The requested definition conflicts with the current platform state.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
           },
@@ -177,8 +154,8 @@
     "/api/activation/preview": {
       "post": {
         "tags": ["Platform API"],
-        "summary": "Preview company activation definition",
-        "description": "Historically evaluate a candidate company activation definition without saving configuration, materializing activation, or mutating customer state.",
+        "summary": "Preview the activation event",
+        "description": "Historically evaluate exact ordinary product-event matches without saving configuration, materializing activation, or mutating customer state.",
         "operationId": "previewCustomerActivation",
         "requestBody": {
           "required": true,
@@ -188,17 +165,7 @@
                 "$ref": "#/components/schemas/CustomerActivationPreviewRequest"
               },
               "example": {
-                "definition": {
-                  "signalIds": [
-                    "10000000-0000-4000-8000-000000000001",
-                    "10000000-0000-4000-8000-000000000002"
-                  ],
-                  "matchMode": "ALL",
-                  "window": {
-                    "value": 30,
-                    "unit": "day"
-                  }
-                },
+                "eventName": "integration_connected",
                 "lookbackDays": 60,
                 "exampleLimit": 10
               }
@@ -231,16 +198,6 @@
           },
           "403": {
             "description": "The API key is valid but does not have company activation read authorization.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommandErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "A selected customer-grain signal was not found for the authenticated organization.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4427,98 +4384,17 @@
         },
         "additionalProperties": false
       },
-      "CustomerActivationMatchMode": {
-        "type": "string",
-        "enum": ["ANY", "ALL", "AT_LEAST"]
-      },
-      "CustomerActivationWindow": {
-        "type": "object",
-        "description": "Optional bounded window for ALL or AT_LEAST definitions. Hours are limited to 168 and days are limited to 90.",
-        "required": ["value", "unit"],
-        "properties": {
-          "value": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "unit": {
-            "type": "string",
-            "enum": ["hour", "day"]
-          }
-        },
-        "allOf": [
-          {
-            "if": {
-              "properties": {
-                "unit": {
-                  "const": "hour"
-                }
-              }
-            },
-            "then": {
-              "properties": {
-                "value": {
-                  "maximum": 168
-                }
-              }
-            }
-          },
-          {
-            "if": {
-              "properties": {
-                "unit": {
-                  "const": "day"
-                }
-              }
-            },
-            "then": {
-              "properties": {
-                "value": {
-                  "maximum": 90
-                }
-              }
-            }
-          }
-        ],
-        "additionalProperties": false
-      },
-      "CustomerActivationDefinitionInput": {
-        "type": "object",
-        "description": "One to three unique existing customer-grain signal IDs. One signal requires ANY. ANY rejects thresholdCount and window. ALL requires two or three signals and rejects thresholdCount. AT_LEAST requires two or three signals and thresholdCount from 2 through the signal count.",
-        "required": ["signalIds", "matchMode"],
-        "properties": {
-          "signalIds": {
-            "type": "array",
-            "minItems": 1,
-            "maxItems": 3,
-            "uniqueItems": true,
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          "matchMode": {
-            "$ref": "#/components/schemas/CustomerActivationMatchMode"
-          },
-          "thresholdCount": {
-            "type": "integer",
-            "minimum": 2,
-            "maximum": 3
-          },
-          "window": {
-            "$ref": "#/components/schemas/CustomerActivationWindow"
-          }
-        },
-        "additionalProperties": false
-      },
       "CustomerActivationUpdateRequest": {
         "type": "object",
-        "required": ["definition"],
+        "required": ["eventName"],
         "properties": {
-          "definition": {
-            "description": "The prospective definition, or null to disable future evaluation while preserving existing activation history.",
+          "eventName": {
+            "description": "The exact ordinary product event name, or null to disable future matching without clearing activation history.",
             "anyOf": [
               {
-                "$ref": "#/components/schemas/CustomerActivationDefinitionInput"
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191
               },
               {
                 "type": "null"
@@ -4530,10 +4406,12 @@
       },
       "CustomerActivationPreviewRequest": {
         "type": "object",
-        "required": ["definition"],
+        "required": ["eventName"],
         "properties": {
-          "definition": {
-            "$ref": "#/components/schemas/CustomerActivationDefinitionInput"
+          "eventName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
           },
           "lookbackDays": {
             "type": "integer",
@@ -4550,140 +4428,33 @@
         },
         "additionalProperties": false
       },
-      "CustomerActivationSignalRead": {
-        "type": "object",
-        "required": ["id", "key", "name", "kind", "archivedAt"],
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "key": {
-            "type": "string",
-            "minLength": 1
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "kind": {
-            "type": "string",
-            "enum": ["EVENT_MATCH", "EVENT_PATTERN", "EXTERNAL_RECIPE"]
-          },
-          "archivedAt": {
-            "type": ["string", "null"],
-            "format": "date-time"
-          }
-        },
-        "additionalProperties": false
-      },
-      "CustomerActivationDefinitionRead": {
-        "type": "object",
-        "required": [
-          "id",
-          "signalIds",
-          "matchMode",
-          "thresholdCount",
-          "window",
-          "configHash",
-          "effectiveAt",
-          "createdAt",
-          "updatedAt",
-          "signals"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "signalIds": {
-            "type": "array",
-            "minItems": 1,
-            "maxItems": 3,
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          "matchMode": {
-            "$ref": "#/components/schemas/CustomerActivationMatchMode"
-          },
-          "thresholdCount": {
-            "type": ["integer", "null"],
-            "minimum": 2,
-            "maximum": 3
-          },
-          "window": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/CustomerActivationWindow"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "configHash": {
-            "type": "string",
-            "minLength": 1
-          },
-          "effectiveAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "signals": {
-            "type": "array",
-            "minItems": 1,
-            "maxItems": 3,
-            "items": {
-              "$ref": "#/components/schemas/CustomerActivationSignalRead"
-            }
-          }
-        },
-        "additionalProperties": false
-      },
-      "CustomerActivationCompatibility": {
-        "type": "object",
-        "required": ["legacyContactActivationEvent", "legacyBehavior", "migration"],
-        "properties": {
-          "legacyContactActivationEvent": {
-            "type": ["string", "null"]
-          },
-          "legacyBehavior": {
-            "type": "string",
-            "const": "contact_only"
-          },
-          "migration": {
-            "type": "string",
-            "const": "explicit_signal_definition_required"
-          }
-        },
-        "additionalProperties": false
-      },
       "CustomerActivationState": {
         "type": "object",
-        "required": ["definition", "compatibility"],
+        "required": ["eventName", "behavior", "appliesTo"],
         "properties": {
-          "definition": {
-            "anyOf": [
+          "eventName": {
+            "type": ["string", "null"],
+            "maxLength": 191
+          },
+          "behavior": {
+            "type": "string",
+            "const": "first_matching_product_event"
+          },
+          "appliesTo": {
+            "type": "array",
+            "prefixItems": [
               {
-                "$ref": "#/components/schemas/CustomerActivationDefinitionRead"
+                "type": "string",
+                "const": "contact"
               },
               {
-                "type": "null"
+                "type": "string",
+                "const": "company"
               }
-            ]
-          },
-          "compatibility": {
-            "$ref": "#/components/schemas/CustomerActivationCompatibility"
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
           }
         },
         "additionalProperties": false
@@ -4717,28 +4488,9 @@
         },
         "additionalProperties": false
       },
-      "CustomerActivationContributingOccurrence": {
-        "type": "object",
-        "required": ["id", "signalId", "occurredAt"],
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "signalId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "occurredAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "additionalProperties": false
-      },
       "CustomerActivationPreviewExample": {
         "type": "object",
-        "required": ["customer", "activatedAt", "matchedAt", "contributingOccurrences"],
+        "required": ["customer", "activatedAt", "firstMatchedAt", "eventId"],
         "properties": {
           "customer": {
             "$ref": "#/components/schemas/CustomerActivationPreviewCustomer"
@@ -4747,15 +4499,13 @@
             "type": ["string", "null"],
             "format": "date-time"
           },
-          "matchedAt": {
+          "firstMatchedAt": {
             "type": "string",
             "format": "date-time"
           },
-          "contributingOccurrences": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CustomerActivationContributingOccurrence"
-            }
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "additionalProperties": false
@@ -4763,9 +4513,10 @@
       "CustomerActivationPreviewResult": {
         "type": "object",
         "required": [
+          "eventName",
           "evaluatedFrom",
           "evaluatedTo",
-          "evaluatedOccurrenceCount",
+          "evaluatedEventCount",
           "matchedCustomerCount",
           "alreadyActivatedCustomerCount",
           "wouldActivateCustomerCount",
@@ -4773,6 +4524,11 @@
           "examples"
         ],
         "properties": {
+          "eventName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
           "evaluatedFrom": {
             "type": "string",
             "format": "date-time"
@@ -4781,7 +4537,7 @@
             "type": "string",
             "format": "date-time"
           },
-          "evaluatedOccurrenceCount": {
+          "evaluatedEventCount": {
             "type": "integer",
             "minimum": 0
           },

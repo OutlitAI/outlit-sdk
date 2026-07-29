@@ -42,8 +42,8 @@ async fn main() -> Result<(), outlit::Error> {
         .send()
         .await?;
 
-    // Track the ordinary event selected as your activation signal.
-    // Outlit Core derives activation from this event.
+    // Track the ordinary event selected as your activation event.
+    // Outlit Core applies its first match to eligible contacts and their resolved company.
     client.track("onboarding_completed", email("user@example.com"))
         .property("flow", "self_serve")
         .send()

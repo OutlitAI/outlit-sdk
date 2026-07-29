@@ -11,10 +11,15 @@ import {
   useTempEnv,
 } from "../helpers"
 
-const SIGNAL_1 = "10000000-0000-4000-8000-000000000001"
-const SIGNAL_2 = "10000000-0000-4000-8000-000000000002"
+const EVENT_NAME = "integration_connected"
 const activationCommandPath = (fileName: string) =>
   path.resolve(import.meta.dir, "../../src/commands/activation", fileName)
+
+const activation = {
+  eventName: EVENT_NAME,
+  behavior: "first_matching_product_event",
+  appliesTo: ["contact", "company"],
+} as const
 
 const getResponse = {
   ok: true,
@@ -25,16 +30,7 @@ const getResponse = {
     operationId: "customer_activation.get",
     status: "completed",
     resources: [],
-    data: {
-      activation: {
-        definition: null,
-        compatibility: {
-          legacyContactActivationEvent: "onboarding_completed",
-          legacyBehavior: "contact_only",
-          migration: "explicit_signal_definition_required",
-        },
-      },
-    },
+    data: { activation },
     warnings: [],
   },
 }
@@ -50,22 +46,42 @@ const previewResponse = {
     resources: [],
     data: {
       preview: {
+        eventName: EVENT_NAME,
         evaluatedFrom: "2026-06-28T00:00:00.000Z",
         evaluatedTo: "2026-07-28T00:00:00.000Z",
-        evaluatedOccurrenceCount: 40,
+        evaluatedEventCount: 40,
         matchedCustomerCount: 12,
         alreadyActivatedCustomerCount: 9,
         wouldActivateCustomerCount: 3,
         truncated: false,
-        examples: [],
+        examples: [
+          {
+            customer: { id: "customer_123", name: "Acme", domain: "acme.com" },
+            activatedAt: null,
+            firstMatchedAt: "2026-07-20T12:00:00.000Z",
+            eventId: "10000000-0000-4000-8000-000000000001",
+          },
+        ],
       },
     },
     warnings: [],
   },
 }
 
+const updateResponse = {
+  ...getResponse,
+  commandId: "customer_activation.update",
+  correlationId: "corr_update",
+  result: {
+    ...getResponse.result,
+    operationId: "customer_activation.update",
+    data: { activation, changed: true },
+  },
+}
+
 const mockCallTool = mock(async (toolName: string, _params: unknown) => {
   if (toolName === "outlit_activation_preview") return previewResponse
+  if (toolName === "outlit_activation_update") return updateResponse
   return getResponse
 })
 
@@ -85,6 +101,7 @@ describe("activation commands", () => {
     mockCallTool.mockClear()
     mockCallTool.mockImplementation(async (toolName: string) => {
       if (toolName === "outlit_activation_preview") return previewResponse
+      if (toolName === "outlit_activation_update") return updateResponse
       return getResponse
     })
   })
@@ -104,7 +121,7 @@ describe("activation commands", () => {
     }
   })
 
-  test("uses the standard get, update, and disable resource command vocabulary", async () => {
+  test("uses the conventional activation resource vocabulary", async () => {
     const { default: activationCommand } = await import("../../src/commands/activation")
 
     expect(Object.keys(activationCommand.subCommands ?? {})).toEqual([
@@ -145,15 +162,13 @@ describe("activation commands", () => {
     }
   })
 
-  test("preview uses the separately typed read-only operation", async () => {
+  test("preview sends one event name through the read-only operation", async () => {
     const { default: previewCommand } = await import("../../src/commands/activation/preview")
 
     const result = await captureStdout(async () => {
       await previewCommand.run!({
         args: {
-          signals: `${SIGNAL_1},${SIGNAL_2}`,
-          match: "ALL",
-          window: "30d",
+          event: ` ${EVENT_NAME} `,
           "lookback-days": "45",
           "example-limit": "12",
           json: true,
@@ -163,11 +178,7 @@ describe("activation commands", () => {
 
     expect(mockCallTool).toHaveBeenCalledTimes(1)
     expect(mockCallTool).toHaveBeenCalledWith("outlit_activation_preview", {
-      definition: {
-        signalIds: [SIGNAL_1, SIGNAL_2],
-        matchMode: "ALL",
-        window: { value: 30, unit: "day" },
-      },
+      eventName: EVENT_NAME,
       lookbackDays: 45,
       exampleLimit: 12,
     })
@@ -181,14 +192,8 @@ describe("activation commands", () => {
     await captureStdout(async () => {
       await runCommand(previewCommand, {
         rawArgs: [
-          "--signals",
-          `${SIGNAL_1},${SIGNAL_2}`,
-          "--match",
-          "AT_LEAST",
-          "--threshold",
-          "2",
-          "--window",
-          "168h",
+          "--event",
+          EVENT_NAME,
           "--lookback-days",
           "90",
           "--example-limit",
@@ -199,50 +204,40 @@ describe("activation commands", () => {
     })
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_activation_preview", {
-      definition: {
-        signalIds: [SIGNAL_1, SIGNAL_2],
-        matchMode: "AT_LEAST",
-        thresholdCount: 2,
-        window: { value: 168, unit: "hour" },
-      },
+      eventName: EVENT_NAME,
       lookbackDays: 90,
       exampleLimit: 20,
     })
   })
 
-  test("update explicitly wraps a complete single-signal definition", async () => {
+  test("update sends one exact event name", async () => {
     const { default: updateCommand } = await import("../../src/commands/activation/update")
 
     await captureStdout(async () => {
       await updateCommand.run!({
         args: {
-          signal: SIGNAL_1,
+          event: EVENT_NAME,
           json: true,
         },
       } as Parameters<NonNullable<typeof updateCommand.run>>[0])
     })
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_activation_update", {
-      definition: {
-        signalIds: [SIGNAL_1],
-        matchMode: "ANY",
-      },
+      eventName: EVENT_NAME,
     })
   })
 
-  test("disable explicitly sends a null definition", async () => {
+  test("disable explicitly sends a null event name", async () => {
     const { default: disableCommand } = await import("../../src/commands/activation/disable")
 
     await captureStdout(async () => {
       await disableCommand.run!({
-        args: {
-          json: true,
-        },
+        args: { json: true },
       } as Parameters<NonNullable<typeof disableCommand.run>>[0])
     })
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_activation_update", {
-      definition: null,
+      eventName: null,
     })
   })
 
@@ -251,12 +246,7 @@ describe("activation commands", () => {
 
     await runExpectingError(async () => {
       await updateCommand.run!({
-        args: {
-          signals: `${SIGNAL_1},${SIGNAL_2}`,
-          match: "AT_LEAST",
-          threshold: "3",
-          json: true,
-        },
+        args: { event: "e".repeat(192), json: true },
       } as Parameters<NonNullable<typeof updateCommand.run>>[0])
     }, "invalid_input")
 
@@ -276,17 +266,29 @@ describe("activation commands", () => {
     }, "api_error")
   })
 
-  test("update help distinguishes company activation from contact journeys", async () => {
-    const { default: updateCommand } = await import("../../src/commands/activation/update")
-    const metaSource = updateCommand.meta
-    const meta =
-      typeof metaSource === "function" ? await metaSource() : await Promise.resolve(metaSource)
-    const description = meta?.description ?? ""
+  test("all command help describes the shared contact and company setting", async () => {
+    const commands = await Promise.all([
+      import("../../src/commands/activation/get").then((module) => module.default),
+      import("../../src/commands/activation/preview").then((module) => module.default),
+      import("../../src/commands/activation/update").then((module) => module.default),
+      import("../../src/commands/activation/disable").then((module) => module.default),
+    ])
+    const descriptions: string[] = []
 
-    expect(description).toContain("company")
-    expect(description).toContain("Core")
-    expect(description).toContain("monotonic")
-    expect(description).toContain("contact")
-    expect(description).toContain("already exist")
+    for (const command of commands) {
+      const metaSource = command.meta
+      const meta =
+        typeof metaSource === "function" ? await metaSource() : await Promise.resolve(metaSource)
+      const description = meta?.description ?? ""
+      descriptions.push(description)
+
+      expect(description.toLowerCase()).toContain("contact")
+      expect(description.toLowerCase()).toContain("compan")
+    }
+
+    const updateDescription = descriptions[2]
+    expect(updateDescription).toContain("Core")
+    expect(updateDescription).toContain("monotonic")
+    expect(updateDescription).toContain("product event")
   })
 })

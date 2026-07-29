@@ -7,9 +7,9 @@ export default defineCommand({
   meta: {
     name: "get",
     description: [
-      "Read the configured Core-derived company activation definition.",
+      "Read the exact ordinary product event that activates contacts and companies.",
       "",
-      "The response also explains compatibility with the legacy contact activation event.",
+      "Core sets each subject's activation timestamp once; later matches are no-ops.",
       "",
       "Examples:",
       "  outlit activation get --json",
@@ -26,7 +26,7 @@ export default defineCommand({
     const client = await getClientOrExit(args["api-key"], json)
 
     return runTool(client, "outlit_activation_get", {}, json, {
-      spinnerMessage: "Fetching company activation...",
+      spinnerMessage: "Fetching activation event...",
     })
   },
 })
