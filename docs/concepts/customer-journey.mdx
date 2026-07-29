@@ -39,7 +39,9 @@ for that resolved company. The same event activates eligible contacts. Core writ
 subject's activation timestamp only when it is null, so later matches are no-ops.
 
 Use `outlit activation preview --event <name>` to evaluate historical exact-event matches
-without changing configuration or materializing activation. Use
+without changing configuration or materializing activation. Its separate contact and company
+counts show how many subjects already activated and how many would activate, without returning
+contact identities. Use
 `outlit activation update --event <name>` only after review. Disabling future matching
 preserves existing contact and company activation timestamps.
 

@@ -43,7 +43,16 @@ outlit activation preview \
 ```
 
 Preview is always read-only. It never saves the event setting, changes `activatedAt`, or
-materializes activation.
+materializes activation. The response reports separate contact and company totals:
+matching subjects, subjects already activated, and subjects that would activate if this
+event were configured. `evaluatedContactOccurrenceCount` counts matching contact-event
+occurrences, while `evaluatedEventCount` counts matching events attributed to resolved
+companies. Contact identities are not returned as preview examples.
+
+Both sides are bounded independently for query safety. If `contactTruncated` is `true`,
+treat contact totals as lower bounds. If `customerTruncated` is `true`, treat company totals
+as lower bounds. The legacy `truncated` flag can also mean that `exampleLimit` omitted company
+examples, so it does not by itself make aggregate totals a lower bound.
 
 | Flag | Required | Description |
 |------|----------|-------------|

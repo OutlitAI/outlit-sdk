@@ -58,8 +58,11 @@ interface ActivationUpdateInput {
 
 Preview returns `eventName`, `evaluatedFrom`, `evaluatedTo`, `evaluatedEventCount`,
 `matchedCustomerCount`, `alreadyActivatedCustomerCount`, `wouldActivateCustomerCount`,
-`truncated`, and `examples`. Responses remain opaque command output; OpenAPI and Core's
-runtime schemas are the authoritative response contract.
+`evaluatedContactOccurrenceCount`, `matchedContactCount`, `alreadyActivatedContactCount`,
+`wouldActivateContactCount`, `contactTruncated`, `customerTruncated`, `truncated`, and company
+`examples`. Contact identities are not returned. The grain-specific truncation flags identify
+lower-bound aggregate totals; legacy `truncated` also covers omitted examples. Responses remain
+opaque command output; OpenAPI and Core's runtime schemas are the authoritative response contract.
 
 The direct client binds the existing literal tool consumers to:
 
