@@ -4500,6 +4500,12 @@
           "matchedCustomerCount",
           "alreadyActivatedCustomerCount",
           "wouldActivateCustomerCount",
+          "evaluatedContactOccurrenceCount",
+          "matchedContactCount",
+          "alreadyActivatedContactCount",
+          "wouldActivateContactCount",
+          "contactTruncated",
+          "customerTruncated",
           "truncated",
           "examples"
         ],
@@ -4532,6 +4538,28 @@
           "wouldActivateCustomerCount": {
             "type": "integer",
             "minimum": 0
+          },
+          "evaluatedContactOccurrenceCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "matchedContactCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "alreadyActivatedContactCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "wouldActivateContactCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "contactTruncated": {
+            "type": "boolean"
+          },
+          "customerTruncated": {
+            "type": "boolean"
           },
           "truncated": {
             "type": "boolean"

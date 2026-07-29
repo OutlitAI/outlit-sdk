@@ -13,7 +13,7 @@ export default defineCommand({
   meta: {
     name: "preview",
     description: [
-      "Historically preview exact product-event matches for contacts and companies.",
+      "Preview separate impact counts for contacts and companies from one exact product event.",
       "",
       "Preview is read-only: it never saves the event setting or materializes activation.",
       "",

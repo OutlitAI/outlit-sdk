@@ -51,6 +51,12 @@ const previewResponse = {
         matchedCustomerCount: 12,
         alreadyActivatedCustomerCount: 9,
         wouldActivateCustomerCount: 3,
+        evaluatedContactOccurrenceCount: 44,
+        matchedContactCount: 18,
+        alreadyActivatedContactCount: 11,
+        wouldActivateContactCount: 7,
+        contactTruncated: false,
+        customerTruncated: false,
         truncated: false,
         examples: [
           {
@@ -288,5 +294,44 @@ describe("activation commands", () => {
     expect(updateDescription).toContain("Core")
     expect(updateDescription).toContain("monotonic")
     expect(updateDescription).toContain("product event")
+
+    const previewDescription = descriptions[1]
+    expect(previewDescription).toContain("separate impact counts")
+    expect(previewDescription).toContain("read-only")
+  })
+
+  test("documents bounded people and company preview totals in OpenAPI", async () => {
+    const openApi = JSON.parse(
+      await readFile(path.resolve(import.meta.dir, "../../../../docs/openapi.json"), "utf8"),
+    ) as {
+      components: {
+        schemas: {
+          CustomerActivationPreviewResult: {
+            required: string[]
+            properties: Record<string, unknown>
+          }
+        }
+      }
+    }
+    const schema = openApi.components.schemas.CustomerActivationPreviewResult
+
+    expect(schema.required).toEqual(
+      expect.arrayContaining([
+        "evaluatedContactOccurrenceCount",
+        "matchedContactCount",
+        "alreadyActivatedContactCount",
+        "wouldActivateContactCount",
+        "contactTruncated",
+        "customerTruncated",
+      ]),
+    )
+    expect(schema.properties).toMatchObject({
+      evaluatedContactOccurrenceCount: { type: "integer", minimum: 0 },
+      matchedContactCount: { type: "integer", minimum: 0 },
+      alreadyActivatedContactCount: { type: "integer", minimum: 0 },
+      wouldActivateContactCount: { type: "integer", minimum: 0 },
+      contactTruncated: { type: "boolean" },
+      customerTruncated: { type: "boolean" },
+    })
   })
 })

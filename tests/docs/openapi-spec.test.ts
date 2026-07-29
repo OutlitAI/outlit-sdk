@@ -326,6 +326,12 @@ describe("docs OpenAPI spec", () => {
       "matchedCustomerCount",
       "alreadyActivatedCustomerCount",
       "wouldActivateCustomerCount",
+      "evaluatedContactOccurrenceCount",
+      "matchedContactCount",
+      "alreadyActivatedContactCount",
+      "wouldActivateContactCount",
+      "contactTruncated",
+      "customerTruncated",
       "truncated",
       "examples",
     ])
@@ -333,6 +339,14 @@ describe("docs OpenAPI spec", () => {
       type: "string",
       minLength: 1,
       maxLength: 191,
+    })
+    expect(schemas.CustomerActivationPreviewResult?.properties).toMatchObject({
+      evaluatedContactOccurrenceCount: { type: "integer", minimum: 0 },
+      matchedContactCount: { type: "integer", minimum: 0 },
+      alreadyActivatedContactCount: { type: "integer", minimum: 0 },
+      wouldActivateContactCount: { type: "integer", minimum: 0 },
+      contactTruncated: { type: "boolean" },
+      customerTruncated: { type: "boolean" },
     })
     expect(schemas.CustomerActivationPreviewResult?.additionalProperties).toBe(false)
     expect(schemas.CustomerActivationPreviewExample).toMatchObject({
