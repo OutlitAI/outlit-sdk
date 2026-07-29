@@ -1,6 +1,6 @@
 {
   "name": "@outlit/pi",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Pi package for Outlit customer intelligence tools and skill guidance",
   "license": "Apache-2.0",
   "author": "Outlit AI",
@@ -66,7 +66,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@outlit/tools": "^0.2.1"
+    "@outlit/tools": "^0.3.0"
   },
   "peerDependencies": {
     "@mariozechner/pi-coding-agent": "*",

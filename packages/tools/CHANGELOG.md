@@ -1,5 +1,27 @@
 # @outlit/tools
 
+## 0.3.0
+
+### Minor Changes
+
+- [#164](https://github.com/OutlitAI/outlit-sdk/pull/164) [`fa7ba55`](https://github.com/OutlitAI/outlit-sdk/commit/fa7ba55868c73ed72b46ee7f320fab0423742d74) Thanks [@leo-paz](https://github.com/leo-paz)! - Add activation event get, historical preview, update, and disable commands for the shared
+  contact/company activation event; expose nullable company activation timestamps and the
+  additive activated-since customer filter.
+
+- [#142](https://github.com/OutlitAI/outlit-sdk/pull/142) [`8693011`](https://github.com/OutlitAI/outlit-sdk/commit/8693011d63919b3ae7c6fa5bc1a3ea3b692b508e) Thanks [@leo-paz](https://github.com/leo-paz)! - Expose the `ws-users` CLI command, workspace-user discovery tools, and customer owner filters for dynamic customer reports.
+
+### Patch Changes
+
+- [#139](https://github.com/OutlitAI/outlit-sdk/pull/139) [`664e93c`](https://github.com/OutlitAI/outlit-sdk/commit/664e93cd8e1851f0183602ca07643b72a500ba35) Thanks [@leo-paz](https://github.com/leo-paz)! - Update timeline tool contracts to use canonical event channel values.
+
+- [#163](https://github.com/OutlitAI/outlit-sdk/pull/163) [`fe80b2f`](https://github.com/OutlitAI/outlit-sdk/commit/fe80b2f3532fbe9a8bf973f076134d5fca70917d) Thanks [@leo-paz](https://github.com/leo-paz)! - Clarify that customer-context search returns discovery previews and that callers should fetch the canonical source for complete contents.
+
+- [#162](https://github.com/OutlitAI/outlit-sdk/pull/162) [`4ab015f`](https://github.com/OutlitAI/outlit-sdk/commit/4ab015f89e88aaf3dd2a618d86b5e4cc0cb0eafc) Thanks [@leo-paz](https://github.com/leo-paz)! - Add Slack as a supported customer-context search source type.
+
+- [#144](https://github.com/OutlitAI/outlit-sdk/pull/144) [`29ca464`](https://github.com/OutlitAI/outlit-sdk/commit/29ca4643c9c236a589eedfc348ca9fa031c2a966) Thanks [@leo-paz](https://github.com/leo-paz)! - Sync notification tool contracts with hosted churn agent destination IDs.
+
+- [#150](https://github.com/OutlitAI/outlit-sdk/pull/150) [`51b862d`](https://github.com/OutlitAI/outlit-sdk/commit/51b862d32ca2142da980ecde74add7f0f575a82a) Thanks [@leo-paz](https://github.com/leo-paz)! - Improve published README and package metadata citation surfaces with canonical docs, OpenAPI, MCP, and agent discovery links.
+
 ## 0.2.1
 
 ### Patch Changes

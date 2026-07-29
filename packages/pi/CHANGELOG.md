@@ -1,5 +1,18 @@
 # @outlit/pi
 
+## 0.1.5
+
+### Patch Changes
+
+- [#139](https://github.com/OutlitAI/outlit-sdk/pull/139) [`664e93c`](https://github.com/OutlitAI/outlit-sdk/commit/664e93cd8e1851f0183602ca07643b72a500ba35) Thanks [@leo-paz](https://github.com/leo-paz)! - Update timeline tool contracts to use canonical event channel values.
+
+- [#144](https://github.com/OutlitAI/outlit-sdk/pull/144) [`29ca464`](https://github.com/OutlitAI/outlit-sdk/commit/29ca4643c9c236a589eedfc348ca9fa031c2a966) Thanks [@leo-paz](https://github.com/leo-paz)! - Sync notification tool contracts with hosted churn agent destination IDs.
+
+- [#150](https://github.com/OutlitAI/outlit-sdk/pull/150) [`51b862d`](https://github.com/OutlitAI/outlit-sdk/commit/51b862d32ca2142da980ecde74add7f0f575a82a) Thanks [@leo-paz](https://github.com/leo-paz)! - Improve published README and package metadata citation surfaces with canonical docs, OpenAPI, MCP, and agent discovery links.
+
+- Updated dependencies [[`664e93c`](https://github.com/OutlitAI/outlit-sdk/commit/664e93cd8e1851f0183602ca07643b72a500ba35), [`fa7ba55`](https://github.com/OutlitAI/outlit-sdk/commit/fa7ba55868c73ed72b46ee7f320fab0423742d74), [`fe80b2f`](https://github.com/OutlitAI/outlit-sdk/commit/fe80b2f3532fbe9a8bf973f076134d5fca70917d), [`4ab015f`](https://github.com/OutlitAI/outlit-sdk/commit/4ab015f89e88aaf3dd2a618d86b5e4cc0cb0eafc), [`29ca464`](https://github.com/OutlitAI/outlit-sdk/commit/29ca4643c9c236a589eedfc348ca9fa031c2a966), [`51b862d`](https://github.com/OutlitAI/outlit-sdk/commit/51b862d32ca2142da980ecde74add7f0f575a82a), [`8693011`](https://github.com/OutlitAI/outlit-sdk/commit/8693011d63919b3ae7c6fa5bc1a3ea3b692b508e)]:
+  - @outlit/tools@0.3.0
+
 ## 0.1.4
 
 ### Patch Changes
