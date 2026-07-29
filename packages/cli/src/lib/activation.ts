@@ -1,11 +1,5 @@
 import { outputError } from "./output"
 
-export interface ActivationState {
-  eventName: string | null
-  behavior: "first_matching_product_event"
-  appliesTo: ["contact", "company"]
-}
-
 export interface ActivationPreviewInput {
   eventName: string
   lookbackDays?: number
@@ -15,60 +9,6 @@ export interface ActivationPreviewInput {
 export interface ActivationUpdateInput {
   eventName: string | null
 }
-
-export interface ActivationPreviewExample {
-  customer: {
-    id: string
-    name: string
-    domain: string
-  }
-  activatedAt: string | null
-  firstMatchedAt: string
-  eventId: string
-}
-
-export interface ActivationPreviewResult {
-  eventName: string
-  evaluatedFrom: string
-  evaluatedTo: string
-  evaluatedEventCount: number
-  matchedCustomerCount: number
-  alreadyActivatedCustomerCount: number
-  wouldActivateCustomerCount: number
-  truncated: boolean
-  examples: ActivationPreviewExample[]
-}
-
-export interface PlatformCommandSuccess<TCommandId extends string, TData> {
-  ok: true
-  commandId: TCommandId
-  commandVersion: 1
-  correlationId: string
-  result: {
-    operationId: TCommandId
-    status: "completed"
-    resources: Array<{ type: string; id: string }>
-    data: TData
-    warnings: string[]
-    auditId?: string
-  }
-}
-
-export type ActivationGetResponse = PlatformCommandSuccess<
-  "customer_activation.get",
-  { activation: ActivationState }
->
-export type ActivationPreviewResponse = PlatformCommandSuccess<
-  "customer_activation.preview",
-  { preview: ActivationPreviewResult }
->
-export type ActivationUpdateResponse = PlatformCommandSuccess<
-  "customer_activation.update",
-  {
-    activation: ActivationState
-    changed: boolean
-  }
->
 
 export interface ActivationEventArgs {
   event?: string

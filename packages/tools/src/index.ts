@@ -44,7 +44,6 @@ export {
   userListOrderFields,
   workspaceUserListOrderFields,
 } from "./contracts.js"
-export { isIso8601DateTime } from "./datetime.js"
 
 export type {
   CustomerAnalyticsRow,

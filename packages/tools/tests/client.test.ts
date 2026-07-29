@@ -16,7 +16,6 @@ import {
   customerToolContractHash,
   defaultAgentToolNames,
   getCustomerToolContract,
-  isIso8601DateTime,
   normalizeCustomerSourceType,
   notificationSeverityValues,
   resolveCustomerContextSearchInput,
@@ -378,12 +377,6 @@ describe("createOutlitClient", () => {
 })
 
 describe("resolveCustomerContextSearchInput", () => {
-  test("accepts ISO-8601 datetimes with UTC or explicit offsets", () => {
-    expect(isIso8601DateTime("2026-07-01T00:00:00.000Z")).toBe(true)
-    expect(isIso8601DateTime("2026-07-01T00:00:00-07:00")).toBe(true)
-    expect(isIso8601DateTime("2026-07-01")).toBe(false)
-  })
-
   test("allows a null customer filter to match the schema contract", () => {
     const input: CustomerContextSearchInput = {
       query: "churn risk",

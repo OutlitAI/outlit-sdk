@@ -1,26 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test"
-import {
-  type ActivationGetResponse,
-  type ActivationPreviewResponse,
-  type ActivationUpdateResponse,
-  parseActivationEvent,
-  parseActivationPreviewOptions,
-} from "../../src/lib/activation"
+import { parseActivationEvent, parseActivationPreviewOptions } from "../../src/lib/activation"
 import { runExpectingError, setNonInteractive } from "../helpers"
-
-function exactGetCommandId(value: ActivationGetResponse["commandId"]): "customer_activation.get" {
-  return value
-}
-
-function exactPreviewOperationId(
-  value: ActivationPreviewResponse["result"]["operationId"],
-): "customer_activation.preview" {
-  return value
-}
-
-function exactUpdateVersion(value: ActivationUpdateResponse["commandVersion"]): 1 {
-  return value
-}
 
 describe("activation input parsing", () => {
   beforeEach(() => {
@@ -37,14 +17,6 @@ describe("activation input parsing", () => {
     const eventName = "e".repeat(191)
 
     expect(parseActivationEvent({ event: eventName }, true)).toBe(eventName)
-  })
-
-  test("types exact activation command IDs and version", () => {
-    expect(exactGetCommandId("customer_activation.get")).toBe("customer_activation.get")
-    expect(exactPreviewOperationId("customer_activation.preview")).toBe(
-      "customer_activation.preview",
-    )
-    expect(exactUpdateVersion(1)).toBe(1)
   })
 
   test("requires a non-empty event name", async () => {

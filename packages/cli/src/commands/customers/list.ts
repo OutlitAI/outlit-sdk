@@ -1,4 +1,4 @@
-import { customerBillingStatuses, customerToolContracts, isIso8601DateTime } from "@outlit/tools"
+import { customerBillingStatuses, customerToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import {
@@ -13,6 +13,7 @@ import { applyPagination, paginationArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { formatCents, relativeDate, truncate } from "../../lib/format"
 import { outputError } from "../../lib/output"
+import { isIso8601DateTime } from "../../lib/platform-input"
 
 function normalizeCustomerListResult(data: unknown): unknown {
   if (typeof data !== "object" || data === null || Array.isArray(data)) {

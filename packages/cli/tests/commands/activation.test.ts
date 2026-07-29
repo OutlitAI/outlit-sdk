@@ -17,8 +17,6 @@ const activationCommandPath = (fileName: string) =>
 
 const activation = {
   eventName: EVENT_NAME,
-  behavior: "first_matching_product_event",
-  appliesTo: ["contact", "company"],
 } as const
 
 const getResponse = {

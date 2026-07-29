@@ -41,8 +41,8 @@ existing auth, output, and error boundaries. Customer `activatedSince`, nullable
 **Interfaces:**
 - Produces expected inputs `{ eventName, lookbackDays?, exampleLimit? }` and
   `{ eventName: string | null }`.
-- Produces expected activation output
-  `{ eventName, behavior: "first_matching_product_event", appliesTo: ["contact", "company"] }`.
+- Produces expected activation output `{ eventName }`; the fixed first-match contact/company
+  semantics remain documented rather than duplicated as constant response fields.
 - Preserves literal `runTool` consumers for static Core route-drift discovery.
 
 - [ ] **Step 1: Replace parser tests with exact event-name tests**
@@ -109,22 +109,15 @@ and emits definition-shaped request bodies.
 - Modify: `packages/cli/src/cli.ts`
 
 **Interfaces:**
-- Produces `ActivationState`, `ActivationPreviewInput`, `ActivationUpdateInput`,
-  `ActivationPreviewResult`, and their platform-envelope response aliases.
+- Produces `ActivationPreviewInput` and `ActivationUpdateInput`.
 - Produces `activationEventArg`, `parseActivationEvent(args, json)`, and
   `parseActivationPreviewOptions(args, json)`.
 
 - [ ] **Step 1: Replace the activation module**
 
-Define:
+Define only request input types:
 
 ```ts
-interface ActivationState {
-  eventName: string | null
-  behavior: "first_matching_product_event"
-  appliesTo: ["contact", "company"]
-}
-
 interface ActivationPreviewInput {
   eventName: string
   lookbackDays?: number
@@ -136,16 +129,7 @@ interface ActivationUpdateInput {
 }
 ```
 
-The preview example is:
-
-```ts
-{
-  customer: { id: string; name: string; domain: string }
-  activatedAt: string | null
-  firstMatchedAt: string
-  eventId: string
-}
-```
+Keep command responses opaque; Core runtime schemas and OpenAPI remain authoritative.
 
 - [ ] **Step 2: Implement local validation**
 
@@ -199,7 +183,7 @@ Document:
 
 ```json
 GET data.activation:
-{"eventName":null,"behavior":"first_matching_product_event","appliesTo":["contact","company"]}
+{"eventName":null}
 
 POST body:
 {"eventName":"integration_connected","lookbackDays":30,"exampleLimit":10}

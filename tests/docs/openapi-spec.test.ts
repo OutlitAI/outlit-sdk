@@ -273,25 +273,11 @@ describe("docs OpenAPI spec", () => {
 
     expect(schemas.CustomerActivationState).toEqual({
       type: "object",
-      required: ["eventName", "behavior", "appliesTo"],
+      required: ["eventName"],
       properties: {
         eventName: {
           type: ["string", "null"],
           maxLength: 191,
-        },
-        behavior: {
-          type: "string",
-          const: "first_matching_product_event",
-        },
-        appliesTo: {
-          type: "array",
-          prefixItems: [
-            { type: "string", const: "contact" },
-            { type: "string", const: "company" },
-          ],
-          items: false,
-          minItems: 2,
-          maxItems: 2,
         },
       },
       additionalProperties: false,

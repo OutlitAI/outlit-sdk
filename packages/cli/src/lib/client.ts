@@ -1,11 +1,5 @@
 import { createOutlitClient, isCustomerToolName } from "@outlit/tools"
-import type {
-  ActivationGetResponse,
-  ActivationPreviewInput,
-  ActivationPreviewResponse,
-  ActivationUpdateInput,
-  ActivationUpdateResponse,
-} from "./activation"
+import type { ActivationPreviewInput, ActivationUpdateInput } from "./activation"
 import { DEFAULT_API_URL, OUTLIT_DASHBOARD_URL, resolveApiKey } from "./config"
 import {
   createPlatformCommandError,
@@ -17,14 +11,6 @@ import {
 
 export { isPlatformCommandError }
 export type { PlatformCommandError, PlatformCommandErrorEnvelope }
-
-export type OutlitToolResponse<TToolName extends string> = TToolName extends "outlit_activation_get"
-  ? ActivationGetResponse
-  : TToolName extends "outlit_activation_preview"
-    ? ActivationPreviewResponse
-    : TToolName extends "outlit_activation_update"
-      ? ActivationUpdateResponse
-      : unknown
 
 export type OutlitToolParams<TToolName extends string> = TToolName extends "outlit_activation_get"
   ? Record<string, never>
@@ -48,7 +34,7 @@ export interface OutlitClient {
   callTool<TToolName extends string>(
     toolName: TToolName,
     params: OutlitToolParams<TToolName>,
-  ): Promise<OutlitToolResponse<TToolName>>
+  ): Promise<unknown>
 }
 
 // ok_ prefix + at least 32 alphanumeric/dash/underscore characters (minimum 35 chars total).
@@ -331,13 +317,10 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
     async callTool<TToolName extends string>(
       toolName: TToolName,
       params: OutlitToolParams<TToolName>,
-    ): Promise<OutlitToolResponse<TToolName>> {
+    ): Promise<unknown> {
       const requestParams = params as Record<string, unknown>
       if (isCustomerToolName(toolName)) {
-        return (await toolsClient.callTool(
-          toolName,
-          requestParams,
-        )) as OutlitToolResponse<TToolName>
+        return toolsClient.callTool(toolName, requestParams)
       }
 
       const endpoint = CLI_TOOL_ENDPOINTS[toolName]
@@ -376,7 +359,7 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
         throw new Error(`API error (${response.status}): ${text}`)
       }
 
-      return (await response.json()) as OutlitToolResponse<TToolName>
+      return response.json()
     },
   }
 }

@@ -42,15 +42,9 @@ continues exposing nullable `activated_at`.
 
 ## Typed boundary
 
-The CLI owns a small event-name contract module:
+The CLI owns only the input types it needs to construct requests:
 
 ```ts
-interface ActivationState {
-  eventName: string | null
-  behavior: "first_matching_product_event"
-  appliesTo: ["contact", "company"]
-}
-
 interface ActivationPreviewInput {
   eventName: string
   lookbackDays?: number
@@ -60,22 +54,12 @@ interface ActivationPreviewInput {
 interface ActivationUpdateInput {
   eventName: string | null
 }
-
-interface ActivationPreviewExample {
-  customer: {
-    id: string
-    name: string
-    domain: string
-  }
-  activatedAt: string | null
-  firstMatchedAt: string
-  eventId: string
-}
 ```
 
 Preview returns `eventName`, `evaluatedFrom`, `evaluatedTo`, `evaluatedEventCount`,
 `matchedCustomerCount`, `alreadyActivatedCustomerCount`, `wouldActivateCustomerCount`,
-`truncated`, and `examples`.
+`truncated`, and `examples`. Responses remain opaque command output; OpenAPI and Core's
+runtime schemas are the authoritative response contract.
 
 The direct client binds the existing literal tool consumers to:
 
