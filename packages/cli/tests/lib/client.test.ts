@@ -569,8 +569,8 @@ describe("client.callTool()", () => {
       lookbackDays: 30,
       exampleLimit: 10,
     })
-    await client.callTool("outlit_activation_set", { definition })
-    await client.callTool("outlit_activation_set", { definition: null })
+    await client.callTool("outlit_activation_update", { definition })
+    await client.callTool("outlit_activation_update", { definition: null })
 
     const urls = fetchSpy.mock.calls.map((call) => call[0] as string)
     expect(urls[0]).toBe("https://app.outlit.ai/api/activation")

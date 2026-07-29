@@ -40,8 +40,10 @@ and an optional bounded window. Core evaluates the signals for the same company 
 materializes `activatedAt` monotonically: it never automatically unactivates a company.
 
 Use `outlit activation preview` to evaluate a candidate against history without changing
-configuration or materializing activation. Use `outlit activation set` only after review.
-Disabling future evaluation preserves existing activation timestamps and milestones.
+configuration or materializing activation. Use `outlit activation update` only after
+review. Activation commands reference existing customer-grain signals; they do not
+create signals. Disabling future evaluation preserves existing activation timestamps
+and milestones.
 
 Company activation is not a contact journey stage. A contact's `ACTIVATED` stage retains
 its existing contact-only meaning and compatibility behavior.

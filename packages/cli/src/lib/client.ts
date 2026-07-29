@@ -3,8 +3,8 @@ import type {
   ActivationGetResponse,
   ActivationPreviewInput,
   ActivationPreviewResponse,
-  ActivationSetInput,
-  ActivationSetResponse,
+  ActivationUpdateInput,
+  ActivationUpdateResponse,
 } from "./activation"
 import { DEFAULT_API_URL, OUTLIT_DASHBOARD_URL, resolveApiKey } from "./config"
 import {
@@ -22,16 +22,16 @@ export type OutlitToolResponse<TToolName extends string> = TToolName extends "ou
   ? ActivationGetResponse
   : TToolName extends "outlit_activation_preview"
     ? ActivationPreviewResponse
-    : TToolName extends "outlit_activation_set"
-      ? ActivationSetResponse
+    : TToolName extends "outlit_activation_update"
+      ? ActivationUpdateResponse
       : unknown
 
 export type OutlitToolParams<TToolName extends string> = TToolName extends "outlit_activation_get"
   ? Record<string, never>
   : TToolName extends "outlit_activation_preview"
     ? ActivationPreviewInput
-    : TToolName extends "outlit_activation_set"
-      ? ActivationSetInput
+    : TToolName extends "outlit_activation_update"
+      ? ActivationUpdateInput
       : Record<string, unknown>
 
 export interface OutlitClient {
@@ -59,7 +59,7 @@ const API_KEY_REGEX = /^ok_[A-Za-z0-9_-]{32,}$/
 const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST" | "PATCH"; path: string }> = {
   outlit_activation_get: { method: "GET", path: "/api/activation" },
   outlit_activation_preview: { method: "POST", path: "/api/activation/preview" },
-  outlit_activation_set: { method: "PATCH", path: "/api/activation" },
+  outlit_activation_update: { method: "PATCH", path: "/api/activation" },
   outlit_list_integrations: { method: "GET", path: "/api/integrations" },
   outlit_connect_integration: { method: "POST", path: "/api/integrations/connect" },
   outlit_connect_status: { method: "GET", path: "/api/integrations/connect/status" },

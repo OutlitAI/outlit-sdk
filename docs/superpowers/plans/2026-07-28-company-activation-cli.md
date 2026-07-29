@@ -7,7 +7,7 @@ and explicitly configuring Core-derived company activation, plus customer activa
 filtering and documentation.
 
 **Architecture:** A focused activation contract/parser module validates CLI inputs and
-produces one typed definition object. Three commands call centralized direct-client
+produces one typed definition object. Four commands call centralized direct-client
 operations and reuse existing auth, output, and error handling. The public customer tool
 contract gains only the additive `activatedSince` filter.
 
@@ -39,14 +39,15 @@ contract gains only the additive `activatedSince` filter.
   `parseActivationDefinition(args, json)`, `parseActivationPreviewOptions(args, json)`,
   and activation operation-name constants.
 - Command tests mock `createClient().callTool()` and assert exact typed parameters,
-  pass-through JSON, preview routing, set routing, local validation, and API errors.
+  pass-through JSON, preview routing, update/disable routing, local validation, and API
+  errors.
 
 - [ ] **Step 1: Write parser and command tests first**
 
 Cover one `--signal`, comma-separated `--signals`, default single-signal `ANY`,
 explicit `ANY`/`ALL`, valid `AT_LEAST`, duplicate removal, one-to-three bounds,
-mutually exclusive signal flags, threshold rules, `168h`/`90d` window bounds, preview
-lookback/example bounds, and explicit disable input.
+mutually exclusive signal flags, threshold rules, `168h`/`90d` window bounds, and
+preview lookback/example bounds.
 
 - [ ] **Step 2: Run the focused tests and verify RED**
 
@@ -74,11 +75,11 @@ The parser returns:
 for `--signals signal_1,signal_2,signal_3 --match AT_LEAST --threshold 2 --window 30d`,
 and exits through `outputError` before client creation for every invalid definition.
 
-- [ ] **Step 4: Add `activation get`, `preview`, and `set` commands**
+- [ ] **Step 4: Add `activation get`, `preview`, `update`, and `disable` commands**
 
-Get sends `{}`; preview sends `{ definition, lookbackDays?, exampleLimit? }`; set sends
-`{ definition }`, including `{ definition: null }` only for explicit `--disable`. All
-three use `getClientOrExit` and `runTool`, preserving raw successful response JSON.
+Get sends `{}`; preview sends `{ definition, lookbackDays?, exampleLimit? }`; update
+sends `{ definition }`; disable sends `{ definition: null }`. All four use
+`getClientOrExit` and `runTool`, preserving raw successful response JSON.
 
 - [ ] **Step 5: Rerun focused tests and verify GREEN**
 
@@ -103,9 +104,9 @@ Run the same focused Bun test command and require zero failures.
 - [ ] **Step 1: Add failing route and filter tests**
 
 Assert get uses `GET /api/activation`, preview uses
-`POST /api/activation/preview`, set uses `PATCH /api/activation`, structured API errors
-survive unchanged, valid ISO timestamps map to `activatedSince`, and invalid values exit
-before `callTool`.
+`POST /api/activation/preview`, update and disable use `PATCH /api/activation`,
+structured API errors survive unchanged, valid ISO timestamps map to `activatedSince`,
+and invalid values exit before `callTool`.
 
 - [ ] **Step 2: Run focused tests and verify RED**
 
@@ -138,7 +139,8 @@ Run the first two commands from `packages/tools`; run the third from the reposit
 - Create: `packages/cli/src/commands/activation/index.ts`
 - Create: `packages/cli/src/commands/activation/get.ts`
 - Create: `packages/cli/src/commands/activation/preview.ts`
-- Create: `packages/cli/src/commands/activation/set.ts`
+- Create: `packages/cli/src/commands/activation/update.ts`
+- Create: `packages/cli/src/commands/activation/disable.ts`
 - Modify: `packages/cli/src/cli.ts`
 - Modify: `packages/cli/src/commands/completions.ts`
 - Modify: `packages/cli/tests/commands/completions.test.ts`
@@ -149,15 +151,16 @@ Run the first two commands from `packages/tools`; run the third from the reposit
 - Create: `.changeset/company-activation-cli.md`
 
 **Interfaces:**
-- Exposes the top-level `activation` command with `get`, `preview`, and `set`.
+- Exposes the top-level `activation` command with `get`, `preview`, `update`, and
+  `disable`.
 - Documents `activatedAt` in customer JSON and `activated_at` in analytics where
   confirmed by Core.
 
 - [ ] **Step 1: Add failing completion and routing assertions**
 
 Assert all three shells offer `activation`, its subcommands, every definition flag,
-preview lookback/example flags, set `--disable`, and
-`customers list --activated-since`.
+preview lookback/example flags, the separate disable command, and `customers list
+--activated-since`.
 
 - [ ] **Step 2: Run completion tests and verify RED**
 

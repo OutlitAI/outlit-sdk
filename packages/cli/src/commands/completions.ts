@@ -117,8 +117,8 @@ const COMMANDS: readonly CmdDef[] = [
         ],
       },
       {
-        name: "set",
-        desc: "Set or disable the company activation definition",
+        name: "update",
+        desc: "Update the company activation definition",
         flags: [
           ...COMMON,
           { name: "--signal", desc: "One customer-grain signal UUID" },
@@ -126,8 +126,12 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--match", desc: "Composition mode (ANY, ALL, AT_LEAST)" },
           { name: "--threshold", desc: "AT_LEAST match count" },
           { name: "--window", desc: "Bounded window such as 168h or 30d" },
-          { name: "--disable", desc: "Disable future activation evaluation" },
         ],
+      },
+      {
+        name: "disable",
+        desc: "Disable future company activation evaluation",
+        flags: [...COMMON],
       },
     ],
   },

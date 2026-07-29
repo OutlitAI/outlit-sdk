@@ -18,8 +18,8 @@ customer-grain signals and materialize it monotonically.
 ```text
 outlit activation get
 outlit activation preview <definition flags> [--lookback-days 30] [--example-limit 10]
-outlit activation set <definition flags>
-outlit activation set --disable
+outlit activation update <definition flags>
+outlit activation disable
 outlit customers list --activated-since <ISO-8601 timestamp>
 ```
 
@@ -42,10 +42,10 @@ threshold from two through the signal count. `ALL` and `AT_LEAST` accept at most
 hours or 90 days as a window. Preview validates `--lookback-days` from 1 through 90 and
 `--example-limit` from 1 through 20, then calls the read-only preview route.
 
-Set is the only activation mutation command: it sends a complete definition, or sends
-`null` only when the user explicitly supplies `--disable`. `--disable` is mutually
-exclusive with all candidate-definition flags. Disabling stops future evaluation and
-does not clear existing company activation timestamps or milestones.
+Update replaces the complete activation definition; no additive or partial update mode
+is exposed. Disable is a separate command that sends `{ definition: null }`. Disabling
+stops future evaluation and does not clear existing company activation timestamps or
+milestones.
 
 `--activated-since` accepts an ISO-8601 timestamp with `Z` or an explicit offset. The CLI
 passes the validated value as `activatedSince` to the existing
@@ -84,7 +84,7 @@ The Core routes are:
 |---|---|---|
 | Get | `GET /api/activation` | none |
 | Preview | `POST /api/activation/preview` | `{ definition, lookbackDays?, exampleLimit? }` |
-| Set | `PATCH /api/activation` | `{ definition: ActivationDefinitionInput \| null }` |
+| Update / disable | `PATCH /api/activation` | `{ definition: ActivationDefinitionInput \| null }` |
 
 The SDK PR will name the Core PR dependency and exact contract in its draft PR. It will
 not call a live activation endpoint during development or tests.

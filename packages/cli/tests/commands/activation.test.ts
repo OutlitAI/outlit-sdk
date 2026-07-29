@@ -13,6 +13,8 @@ import {
 
 const SIGNAL_1 = "10000000-0000-4000-8000-000000000001"
 const SIGNAL_2 = "10000000-0000-4000-8000-000000000002"
+const activationCommandPath = (fileName: string) =>
+  path.resolve(import.meta.dir, "../../src/commands/activation", fileName)
 
 const getResponse = {
   ok: true,
@@ -91,17 +93,26 @@ describe("activation commands", () => {
     const commands = [
       ["get.ts", "outlit_activation_get"],
       ["preview.ts", "outlit_activation_preview"],
-      ["set.ts", "outlit_activation_set"],
+      ["update.ts", "outlit_activation_update"],
+      ["disable.ts", "outlit_activation_update"],
     ] as const
 
     for (const [fileName, toolName] of commands) {
-      const source = await readFile(
-        path.resolve(import.meta.dir, "../../src/commands/activation", fileName),
-        "utf8",
-      )
+      const source = await readFile(activationCommandPath(fileName), "utf8")
 
       expect(source).toContain(`runTool(client, "${toolName}"`)
     }
+  })
+
+  test("uses the standard get, update, and disable resource command vocabulary", async () => {
+    const { default: activationCommand } = await import("../../src/commands/activation")
+
+    expect(Object.keys(activationCommand.subCommands ?? {})).toEqual([
+      "get",
+      "preview",
+      "update",
+      "disable",
+    ])
   })
 
   test("get preserves Core's stable command envelope", async () => {
@@ -160,7 +171,7 @@ describe("activation commands", () => {
       lookbackDays: 45,
       exampleLimit: 12,
     })
-    expect(mockCallTool).not.toHaveBeenCalledWith("outlit_activation_set", expect.anything())
+    expect(mockCallTool).not.toHaveBeenCalledWith("outlit_activation_update", expect.anything())
     expect(result).toEqual(previewResponse)
   })
 
@@ -199,19 +210,19 @@ describe("activation commands", () => {
     })
   })
 
-  test("set explicitly wraps a complete single-signal definition", async () => {
-    const { default: setCommand } = await import("../../src/commands/activation/set")
+  test("update explicitly wraps a complete single-signal definition", async () => {
+    const { default: updateCommand } = await import("../../src/commands/activation/update")
 
     await captureStdout(async () => {
-      await setCommand.run!({
+      await updateCommand.run!({
         args: {
           signal: SIGNAL_1,
           json: true,
         },
-      } as Parameters<NonNullable<typeof setCommand.run>>[0])
+      } as Parameters<NonNullable<typeof updateCommand.run>>[0])
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_activation_set", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_activation_update", {
       definition: {
         signalIds: [SIGNAL_1],
         matchMode: "ANY",
@@ -219,59 +230,34 @@ describe("activation commands", () => {
     })
   })
 
-  test("set --disable explicitly sends a null definition", async () => {
-    const { default: setCommand } = await import("../../src/commands/activation/set")
+  test("disable explicitly sends a null definition", async () => {
+    const { default: disableCommand } = await import("../../src/commands/activation/disable")
 
     await captureStdout(async () => {
-      await setCommand.run!({
+      await disableCommand.run!({
         args: {
-          disable: true,
           json: true,
         },
-      } as Parameters<NonNullable<typeof setCommand.run>>[0])
+      } as Parameters<NonNullable<typeof disableCommand.run>>[0])
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_activation_set", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_activation_update", {
       definition: null,
     })
   })
 
-  for (const [flag, definitionArgs] of [
-    ["signal", { signal: SIGNAL_1 }],
-    ["signals", { signals: `${SIGNAL_1},${SIGNAL_2}` }],
-    ["match", { match: "ANY" }],
-    ["threshold", { threshold: "2" }],
-    ["window", { window: "24h" }],
-  ] as const) {
-    test(`--disable rejects --${flag} before mutation`, async () => {
-      const { default: setCommand } = await import("../../src/commands/activation/set")
-
-      await runExpectingError(async () => {
-        await setCommand.run!({
-          args: {
-            disable: true,
-            ...definitionArgs,
-            json: true,
-          },
-        } as Parameters<NonNullable<typeof setCommand.run>>[0])
-      }, "invalid_input")
-
-      expect(mockCallTool).not.toHaveBeenCalled()
-    })
-  }
-
-  test("invalid set input exits before any API mutation", async () => {
-    const { default: setCommand } = await import("../../src/commands/activation/set")
+  test("invalid update input exits before any API mutation", async () => {
+    const { default: updateCommand } = await import("../../src/commands/activation/update")
 
     await runExpectingError(async () => {
-      await setCommand.run!({
+      await updateCommand.run!({
         args: {
           signals: `${SIGNAL_1},${SIGNAL_2}`,
           match: "AT_LEAST",
           threshold: "3",
           json: true,
         },
-      } as Parameters<NonNullable<typeof setCommand.run>>[0])
+      } as Parameters<NonNullable<typeof updateCommand.run>>[0])
     }, "invalid_input")
 
     expect(mockCallTool).not.toHaveBeenCalled()
@@ -290,9 +276,9 @@ describe("activation commands", () => {
     }, "api_error")
   })
 
-  test("set help distinguishes company activation from contact journeys", async () => {
-    const { default: setCommand } = await import("../../src/commands/activation/set")
-    const metaSource = setCommand.meta
+  test("update help distinguishes company activation from contact journeys", async () => {
+    const { default: updateCommand } = await import("../../src/commands/activation/update")
+    const metaSource = updateCommand.meta
     const meta =
       typeof metaSource === "function" ? await metaSource() : await Promise.resolve(metaSource)
     const description = meta?.description ?? ""
@@ -301,5 +287,6 @@ describe("activation commands", () => {
     expect(description).toContain("Core")
     expect(description).toContain("monotonic")
     expect(description).toContain("contact")
+    expect(description).toContain("already exist")
   })
 })

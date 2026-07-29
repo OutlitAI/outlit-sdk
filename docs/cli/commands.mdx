@@ -70,12 +70,12 @@ materializes activation milestones.
 requires two or three signals and rejects threshold. `AT_LEAST` requires two or three
 signals plus `--threshold`.
 
-### Set or disable
+### Update or disable
 
-After reviewing a preview, explicitly save the complete definition:
+After reviewing a preview, explicitly replace the complete definition:
 
 ```bash
-outlit activation set \
+outlit activation update \
   --signals 10000000-0000-4000-8000-000000000001,10000000-0000-4000-8000-000000000002,10000000-0000-4000-8000-000000000003 \
   --match AT_LEAST \
   --threshold 2 \
@@ -83,17 +83,19 @@ outlit activation set \
   --json
 ```
 
+The referenced customer-grain signals must already exist. Activation commands do not
+create signals; create them with `outlit signals create` or select existing signals.
+
 To stop future company activation evaluation:
 
 ```bash
-outlit activation set --disable --json
+outlit activation disable --json
 ```
 
-`--disable` cannot be combined with definition flags. Disabling preserves every existing
-`activatedAt` value and canonical activation milestone because company activation is
-monotonic.
+Disabling preserves every existing `activatedAt` value and canonical activation
+milestone because company activation is monotonic.
 
-All three commands preserve Core's standard structured command envelope in `--json` and
+All four commands preserve Core's standard structured command envelope in `--json` and
 piped output. Local validation errors use the CLI's existing `missing_input` or
 `invalid_input` error shape; authenticated API errors retain the standard Core error
 envelope.

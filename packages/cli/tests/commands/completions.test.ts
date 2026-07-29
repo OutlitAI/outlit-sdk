@@ -44,7 +44,7 @@ describe("completions command", () => {
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "customers" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "list get timeline" -- "$cur"))')
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "activation" ]]`)
-    expect(out).toContain('COMPREPLY=($(compgen -W "get preview set" -- "$cur"))')
+    expect(out).toContain('COMPREPLY=($(compgen -W "get preview update disable" -- "$cur"))')
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "integrations" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "list capabilities setup status" -- "$cur"))')
     expect(out).not.toContain('COMPREPLY=($(compgen -W "list capabilities setup add')
@@ -89,7 +89,7 @@ describe("completions command", () => {
       'COMPREPLY=($(compgen -W "--api-key --json --signal --signals --match --threshold --window --lookback-days --example-limit"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --signal --signals --match --threshold --window --disable"',
+      'COMPREPLY=($(compgen -W "--api-key --json --signal --signals --match --threshold --window"',
     )
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --client-request-id"')
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --default-timezone"')
@@ -165,7 +165,8 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l activated-since")
     expect(out).toContain("-n '__outlit_using_cmd activation preview' -l lookback-days")
-    expect(out).toContain("-n '__outlit_using_cmd activation set' -l disable")
+    expect(out).toContain("-n '__outlit_using_cmd activation update' -l signal")
+    expect(out).toContain("-n '__outlit_using_cmd activation disable' -l json")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-id")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-email")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l has-owner")

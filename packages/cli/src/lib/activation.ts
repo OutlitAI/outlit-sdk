@@ -49,7 +49,7 @@ export interface ActivationPreviewInput {
   exampleLimit?: number
 }
 
-export interface ActivationSetInput {
+export interface ActivationUpdateInput {
   definition: ActivationDefinitionInput | null
 }
 
@@ -98,7 +98,7 @@ export type ActivationGetResponse = PlatformCommandSuccess<{ activation: Activat
 export type ActivationPreviewResponse = PlatformCommandSuccess<{
   preview: ActivationPreviewResult
 }>
-export type ActivationSetResponse = PlatformCommandSuccess<{
+export type ActivationUpdateResponse = PlatformCommandSuccess<{
   activation: ActivationState
   changed: boolean
 }>
@@ -149,8 +149,6 @@ export const activationPreviewArgs = {
     description: "Maximum historical customer examples (1-20; Core default: 10)",
   },
 } as const
-
-const activationDefinitionFlagNames = ["signal", "signals", "match", "threshold", "window"] as const
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -297,24 +295,4 @@ export function parseActivationPreviewOptions(
     ...(lookbackDays === undefined ? {} : { lookbackDays }),
     ...(exampleLimit === undefined ? {} : { exampleLimit }),
   }
-}
-
-export function parseActivationSetDefinition(
-  args: ActivationDefinitionArgs & { disable?: boolean },
-  json: boolean,
-): ActivationDefinitionInput | null {
-  if (args.disable) {
-    const conflictingFlags = activationDefinitionFlagNames.filter(
-      (flag) => args[flag] !== undefined,
-    )
-    if (conflictingFlags.length > 0) {
-      return invalid(
-        `--disable cannot be combined with ${conflictingFlags.map((flag) => `--${flag}`).join(", ")}`,
-        json,
-      )
-    }
-    return null
-  }
-
-  return parseActivationDefinition(args, json)
 }
