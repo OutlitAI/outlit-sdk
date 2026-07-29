@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test"
+import { readFile } from "node:fs/promises"
+import path from "node:path"
 import { runCommand } from "citty"
 import {
   captureStdout,
@@ -83,6 +85,23 @@ describe("activation commands", () => {
       if (toolName === "outlit_activation_preview") return previewResponse
       return getResponse
     })
+  })
+
+  test("keeps direct activation routes statically discoverable by Core drift checks", async () => {
+    const commands = [
+      ["get.ts", "outlit_activation_get"],
+      ["preview.ts", "outlit_activation_preview"],
+      ["set.ts", "outlit_activation_set"],
+    ] as const
+
+    for (const [fileName, toolName] of commands) {
+      const source = await readFile(
+        path.resolve(import.meta.dir, "../../src/commands/activation", fileName),
+        "utf8",
+      )
+
+      expect(source).toContain(`runTool(client, "${toolName}"`)
+    }
   })
 
   test("get preserves Core's stable command envelope", async () => {

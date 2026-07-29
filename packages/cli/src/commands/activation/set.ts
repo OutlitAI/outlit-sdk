@@ -1,11 +1,7 @@
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import {
-  activationDefinitionArgs,
-  activationToolNames,
-  parseActivationSetDefinition,
-} from "../../lib/activation"
+import { activationDefinitionArgs, parseActivationSetDefinition } from "../../lib/activation"
 import { getClientOrExit, runTool } from "../../lib/api"
 
 export default defineCommand({
@@ -42,7 +38,7 @@ export default defineCommand({
     const definition = parseActivationSetDefinition(args, json)
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, activationToolNames.set, { definition }, json, {
+    return runTool(client, "outlit_activation_set", { definition }, json, {
       spinnerMessage:
         definition === null ? "Disabling company activation..." : "Saving company activation...",
     })

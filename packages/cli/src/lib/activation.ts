@@ -1,11 +1,5 @@
 import { outputError } from "./output"
 
-export const activationToolNames = {
-  get: "outlit_activation_get",
-  preview: "outlit_activation_preview",
-  set: "outlit_activation_set",
-} as const
-
 export type ActivationMatchMode = "ANY" | "ALL" | "AT_LEAST"
 export type ActivationWindowUnit = "hour" | "day"
 

@@ -27,6 +27,244 @@
     }
   ],
   "paths": {
+    "/api/activation": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get company activation definition",
+        "description": "Read the authenticated organization's prospective, Core-derived company activation definition and legacy contact-activation compatibility state.",
+        "operationId": "getCustomerActivation",
+        "responses": {
+          "200": {
+            "description": "The company activation definition was returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCustomerActivationCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have company activation read authorization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not read company activation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Platform API"],
+        "summary": "Update company activation definition",
+        "description": "Explicitly replace or disable the prospective company activation definition. Disabling stops future evaluation without clearing existing activation timestamps or milestones.",
+        "operationId": "updateCustomerActivation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerActivationUpdateRequest"
+              },
+              "examples": {
+                "singleSignal": {
+                  "summary": "Activate from one customer-grain signal",
+                  "value": {
+                    "definition": {
+                      "signalIds": ["10000000-0000-4000-8000-000000000001"],
+                      "matchMode": "ANY"
+                    }
+                  }
+                },
+                "disable": {
+                  "summary": "Disable future company activation evaluation",
+                  "value": {
+                    "definition": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The company activation definition update completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateCustomerActivationCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed company activation validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have company activation write authorization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A selected customer-grain signal was not found for the authenticated organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The requested definition conflicts with the current platform state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not update company activation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activation/preview": {
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Preview company activation definition",
+        "description": "Historically evaluate a candidate company activation definition without saving configuration, materializing activation, or mutating customer state.",
+        "operationId": "previewCustomerActivation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerActivationPreviewRequest"
+              },
+              "example": {
+                "definition": {
+                  "signalIds": [
+                    "10000000-0000-4000-8000-000000000001",
+                    "10000000-0000-4000-8000-000000000002"
+                  ],
+                  "matchMode": "ALL",
+                  "window": {
+                    "value": 30,
+                    "unit": "day"
+                  }
+                },
+                "lookbackDays": 60,
+                "exampleLimit": 10
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The read-only historical preview completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewCustomerActivationCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed company activation preview validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have company activation read authorization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A selected customer-grain signal was not found for the authenticated organization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not preview company activation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/validate-api-key": {
       "post": {
         "tags": ["Platform API"],
@@ -4185,6 +4423,534 @@
               }
             },
             "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationMatchMode": {
+        "type": "string",
+        "enum": ["ANY", "ALL", "AT_LEAST"]
+      },
+      "CustomerActivationWindow": {
+        "type": "object",
+        "description": "Optional bounded window for ALL or AT_LEAST definitions. Hours are limited to 168 and days are limited to 90.",
+        "required": ["value", "unit"],
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "unit": {
+            "type": "string",
+            "enum": ["hour", "day"]
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "unit": {
+                  "const": "hour"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "value": {
+                  "maximum": 168
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "unit": {
+                  "const": "day"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "value": {
+                  "maximum": 90
+                }
+              }
+            }
+          }
+        ],
+        "additionalProperties": false
+      },
+      "CustomerActivationDefinitionInput": {
+        "type": "object",
+        "description": "One to three unique existing customer-grain signal IDs. One signal requires ANY. ANY rejects thresholdCount and window. ALL requires two or three signals and rejects thresholdCount. AT_LEAST requires two or three signals and thresholdCount from 2 through the signal count.",
+        "required": ["signalIds", "matchMode"],
+        "properties": {
+          "signalIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "matchMode": {
+            "$ref": "#/components/schemas/CustomerActivationMatchMode"
+          },
+          "thresholdCount": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 3
+          },
+          "window": {
+            "$ref": "#/components/schemas/CustomerActivationWindow"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationUpdateRequest": {
+        "type": "object",
+        "required": ["definition"],
+        "properties": {
+          "definition": {
+            "description": "The prospective definition, or null to disable future evaluation while preserving existing activation history.",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CustomerActivationDefinitionInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationPreviewRequest": {
+        "type": "object",
+        "required": ["definition"],
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/CustomerActivationDefinitionInput"
+          },
+          "lookbackDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 90,
+            "default": 30
+          },
+          "exampleLimit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "default": 10
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationSignalRead": {
+        "type": "object",
+        "required": ["id", "key", "name", "kind", "archivedAt"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["EVENT_MATCH", "EVENT_PATTERN", "EXTERNAL_RECIPE"]
+          },
+          "archivedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationDefinitionRead": {
+        "type": "object",
+        "required": [
+          "id",
+          "signalIds",
+          "matchMode",
+          "thresholdCount",
+          "window",
+          "configHash",
+          "effectiveAt",
+          "createdAt",
+          "updatedAt",
+          "signals"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "signalIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "matchMode": {
+            "$ref": "#/components/schemas/CustomerActivationMatchMode"
+          },
+          "thresholdCount": {
+            "type": ["integer", "null"],
+            "minimum": 2,
+            "maximum": 3
+          },
+          "window": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CustomerActivationWindow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "configHash": {
+            "type": "string",
+            "minLength": 1
+          },
+          "effectiveAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "signals": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": {
+              "$ref": "#/components/schemas/CustomerActivationSignalRead"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationCompatibility": {
+        "type": "object",
+        "required": ["legacyContactActivationEvent", "legacyBehavior", "migration"],
+        "properties": {
+          "legacyContactActivationEvent": {
+            "type": ["string", "null"]
+          },
+          "legacyBehavior": {
+            "type": "string",
+            "const": "contact_only"
+          },
+          "migration": {
+            "type": "string",
+            "const": "explicit_signal_definition_required"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationState": {
+        "type": "object",
+        "required": ["definition", "compatibility"],
+        "properties": {
+          "definition": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CustomerActivationDefinitionRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "compatibility": {
+            "$ref": "#/components/schemas/CustomerActivationCompatibility"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationReadData": {
+        "type": "object",
+        "required": ["activation"],
+        "properties": {
+          "activation": {
+            "$ref": "#/components/schemas/CustomerActivationState"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationPreviewCustomer": {
+        "type": "object",
+        "required": ["id", "name", "domain"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "domain": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationContributingOccurrence": {
+        "type": "object",
+        "required": ["id", "signalId", "occurredAt"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "signalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationPreviewExample": {
+        "type": "object",
+        "required": ["customer", "activatedAt", "matchedAt", "contributingOccurrences"],
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/CustomerActivationPreviewCustomer"
+          },
+          "activatedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "matchedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "contributingOccurrences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerActivationContributingOccurrence"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationPreviewResult": {
+        "type": "object",
+        "required": [
+          "evaluatedFrom",
+          "evaluatedTo",
+          "evaluatedOccurrenceCount",
+          "matchedCustomerCount",
+          "alreadyActivatedCustomerCount",
+          "wouldActivateCustomerCount",
+          "truncated",
+          "examples"
+        ],
+        "properties": {
+          "evaluatedFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "evaluatedTo": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "evaluatedOccurrenceCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "matchedCustomerCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "alreadyActivatedCustomerCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "wouldActivateCustomerCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "examples": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerActivationPreviewExample"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationPreviewData": {
+        "type": "object",
+        "required": ["preview"],
+        "properties": {
+          "preview": {
+            "$ref": "#/components/schemas/CustomerActivationPreviewResult"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationUpdateData": {
+        "type": "object",
+        "required": ["activation", "changed"],
+        "properties": {
+          "activation": {
+            "$ref": "#/components/schemas/CustomerActivationState"
+          },
+          "changed": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetCustomerActivationCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "customer_activation.get"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "customer_activation.get"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/CustomerActivationReadData"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "PreviewCustomerActivationCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "customer_activation.preview"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "customer_activation.preview"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/CustomerActivationPreviewData"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateCustomerActivationCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "customer_activation.update"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "customer_activation.update"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/CustomerActivationUpdateData"
+                  }
+                }
+              }
+            ]
           }
         },
         "additionalProperties": false

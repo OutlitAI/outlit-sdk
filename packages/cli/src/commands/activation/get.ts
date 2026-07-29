@@ -1,7 +1,6 @@
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { activationToolNames } from "../../lib/activation"
 import { getClientOrExit, runTool } from "../../lib/api"
 
 export default defineCommand({
@@ -26,7 +25,7 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, activationToolNames.get, {}, json, {
+    return runTool(client, "outlit_activation_get", {}, json, {
       spinnerMessage: "Fetching company activation...",
     })
   },

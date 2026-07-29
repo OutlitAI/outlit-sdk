@@ -4,7 +4,6 @@ import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import {
   activationDefinitionArgs,
   activationPreviewArgs,
-  activationToolNames,
   parseActivationDefinition,
   parseActivationPreviewOptions,
 } from "../../lib/activation"
@@ -37,7 +36,7 @@ export default defineCommand({
     const options = parseActivationPreviewOptions(args, json)
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, activationToolNames.preview, { definition, ...options }, json, {
+    return runTool(client, "outlit_activation_preview", { definition, ...options }, json, {
       spinnerMessage: "Previewing company activation...",
     })
   },
