@@ -1,9 +1,9 @@
 ---
 title: "Customer Journey"
-description: "How Outlit tracks contact journey stages and account billing status as dimensions of the customer context graph"
+description: "How Outlit separates contact journeys, company activation, and account billing in the customer context graph"
 ---
 
-Outlit tracks two independent dimensions of your customer relationships as part of the [customer context graph](/concepts/customer-context-graph): **contact journey** (how engaged each person is) and **account billing** (the commercial relationship). These are separate because a contact can be highly engaged while their company hasn't paid yet, or a company can be paying while a specific team member is inactive.
+Outlit tracks separate dimensions of your customer relationships as part of the [customer context graph](/concepts/customer-context-graph): **contact journey** (how engaged each person is), **company activation** (whether an account reached its configured value milestone), and **account billing** (the commercial relationship). A contact can be highly engaged while their company has not activated or paid, and a company can remain activated while a specific contact becomes inactive.
 
 ## How does Outlit model the customer journey?
 
@@ -31,6 +31,21 @@ flowchart LR
     H -.-> I([Churned])
     I -.->|re-subscribes| H
 ```
+
+### Company Activation (per company)
+
+A company activates once when the configured exact ordinary product event first occurs
+for that resolved company. The same event activates eligible contacts. Core writes each
+subject's activation timestamp only when it is null, so later matches are no-ops.
+
+Use `outlit activation preview --event <name>` to evaluate historical exact-event matches
+without changing configuration or materializing activation. Use
+`outlit activation update --event <name>` only after review. Disabling future matching
+preserves existing contact and company activation timestamps.
+
+Company activation remains an account milestone, while a contact's `ACTIVATED` value
+remains a per-person journey stage. They share one configured event but are materialized
+independently when the event resolves the corresponding identity.
 
 ---
 
@@ -100,7 +115,7 @@ Outlit derives Engaged and Inactive from tracked product activity. Activity sign
 
 ---
 
-## How is activation derived?
+## How is contact activation derived?
 
 <Info>
   Identify the user and send the same ordinary activation event consistently from the browser SDK, server SDK, or a verified product integration.
@@ -157,7 +172,11 @@ When a subscription status changes in Stripe, Outlit automatically updates the m
 
 **Send facts, not authoritative state.** Discovered and Signed Up are auto-detected from identity. Activated is derived by Core from the customer-selected ordinary activation event. Engaged and Inactive are derived from tracked product activity captured by the browser SDK, server SDK, and verified product integrations. Verified billing integrations provide billing status.
 
-**Understand the separation.** Contact journey and account billing are independent. Jane can be Engaged while her company is on None, or Inactive while her company is Paying. Jane's activity can change independently from her company's billing status.
+**Understand the separation.** Contact journey, company activation, and account billing are independent. Jane can be Engaged while her company has not activated, or Inactive after her company has activated and paid. Jane's journey can change independently from the company's monotonic activation timestamp and billing status.
+
+**Configure one ordinary activation event.** Continue tracking ordinary product events or
+ingesting them through connected analytics sources. Select the exact event name with the
+activation CLI; do not add a synthetic activation event or client-side lifecycle state.
 
 **Track activation at the right time.** Send the selected ordinary activation event when the action is confirmed complete, not when the user clicks a button. Wait for the backend to confirm success before tracking.
 
@@ -170,6 +189,10 @@ When a subscription status changes in Stripe, Outlit automatically updates the m
 <AccordionGroup>
   <Accordion title="What's the difference between contact journey and account billing?">
     Contact journey tracks individual people's product engagement (Discovered through Inactive). Account billing tracks the commercial relationship (None through Churned). They're independent — Jane can be Engaged while her company is on a free plan, or Inactive while her company is actively paying.
+  </Accordion>
+
+  <Accordion title="What's the difference between contact and company activation?">
+    Contact activation is a per-person journey stage, while company activation is a separate, monotonic account milestone exposed as `activatedAt`. Core derives both from the same configured exact ordinary product event and independently activates whichever contact or company identity the event resolves.
   </Accordion>
 
   <Accordion title="Which stages require manual instrumentation?">

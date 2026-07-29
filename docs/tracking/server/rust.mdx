@@ -160,7 +160,7 @@ client.identify(email("user@example.com"))
 
 ### Lifecycle and billing
 
-Track the ordinary event selected as your activation signal after the milestone succeeds:
+Track the ordinary event selected as your activation event after the milestone succeeds:
 
 ```rust
 client.track("onboarding_completed", email("user@example.com"))
@@ -169,7 +169,7 @@ client.track("onboarding_completed", email("user@example.com"))
     .await?;
 ```
 
-Configure this event as your activation signal. Outlit Core derives activation, engagement, and inactivity from ordinary events. Billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
+Configure this exact event as your activation event. For each eligible contact and resolved company independently, Outlit Core sets `activatedAt` on the first match only when that subject's timestamp is null. Billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
 
 ### `client.flush()`
 

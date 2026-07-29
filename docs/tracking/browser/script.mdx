@@ -298,7 +298,7 @@ window.outlit.clearUser()
 
 ### Activation event
 
-Track the ordinary event selected as your activation signal after the milestone succeeds:
+Track the ordinary event selected as your activation event after the milestone succeeds:
 
 ```javascript
 // After user completes onboarding
@@ -306,7 +306,7 @@ window.outlit.track('onboarding_completed', { flow: 'onboarding' })
 ```
 
 <Info>
-  Configure this event as your activation signal. Outlit Core derives lifecycle stages from ordinary events, and billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
+  Configure this exact event as your activation event. For each eligible contact and resolved company independently, Outlit Core sets `activatedAt` on the first match only when that subject's timestamp is null. Billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
 </Info>
 
 ### Get Visitor ID

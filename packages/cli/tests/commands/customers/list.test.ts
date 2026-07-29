@@ -3,6 +3,7 @@ import { runCommand } from "citty"
 import {
   expectErrorExit,
   mockExitThrow,
+  runExpectingError,
   setInteractive,
   setNonInteractive,
   TEST_API_KEY,
@@ -10,7 +11,15 @@ import {
 } from "../../helpers"
 
 const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
-  items: [{ id: "1", name: "Acme", domain: "acme.com", billingStatus: "PAYING" }],
+  items: [
+    {
+      id: "1",
+      name: "Acme",
+      domain: "acme.com",
+      billingStatus: "PAYING",
+      activatedAt: null,
+    },
+  ],
   pagination: { hasMore: false, nextCursor: null, total: 1 },
 }))
 
@@ -107,6 +116,59 @@ describe("customers list", () => {
     }
   })
 
+  test("passes an ISO-8601 --activated-since timestamp to the customer tool", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await runCommand(listCmd, {
+        rawArgs: ["--activated-since", "2026-07-01T00:00:00.000Z", "--json"],
+      })
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({ activatedSince: "2026-07-01T00:00:00.000Z" }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("accepts an ISO-8601 --activated-since timestamp with an offset", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await runCommand(listCmd, {
+        rawArgs: ["--activated-since", "2026-07-01T00:00:00+05:30", "--json"],
+      })
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({ activatedSince: "2026-07-01T00:00:00+05:30" }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  for (const [label, activatedSince] of [
+    ["malformed", "last-week"],
+    ["date-only", "2026-07-01"],
+    ["whitespace-only", "   "],
+    ["whitespace-padded", " 2026-07-01T00:00:00Z "],
+  ] as const) {
+    test(`rejects ${label} --activated-since before calling the customer tool`, async () => {
+      const { default: listCmd } = await import("../../../src/commands/customers/list")
+
+      await runExpectingError(async () => {
+        await listCmd.run!({
+          args: { "activated-since": activatedSince, json: true },
+        } as Parameters<NonNullable<typeof listCmd.run>>[0])
+      }, "invalid_input")
+
+      expect(mockCallTool).not.toHaveBeenCalled()
+    })
+  }
+
   test("parses --no-activity-in through citty without treating it as a negated boolean", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
@@ -149,6 +211,7 @@ describe("customers list", () => {
           name: "Future Activity",
           domain: "future.example",
           billingStatus: "NONE",
+          activatedAt: null,
           lastActivityAt: "2026-05-05 19:00:00.000",
           daysSinceActivity: -9,
         },
@@ -226,6 +289,7 @@ describe("customers list", () => {
       const written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
       const parsed = JSON.parse(written) as Record<string, unknown>
       expect(Array.isArray(parsed.items)).toBe(true)
+      expect((parsed.items as Array<Record<string, unknown>>)[0]?.activatedAt).toBeNull()
     } finally {
       writeSpy.mockRestore()
     }

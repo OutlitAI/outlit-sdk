@@ -1,4 +1,4 @@
-import type { OutlitClient } from "./client"
+import type { OutlitClient, OutlitToolParams } from "./client"
 import { createClient } from "./client"
 import { DEFAULT_API_URL } from "./config"
 import { errorMessage, isJsonMode, outputError, outputResult } from "./output"
@@ -177,10 +177,10 @@ function readPath(record: Record<string, unknown>, path: string): unknown {
  * When `opts.table` is provided and output is interactive, renders a table.
  * Otherwise, falls through to `outputResult` (JSON).
  */
-export async function runTool(
+export async function runTool<TToolName extends string>(
   client: OutlitClient,
-  toolName: string,
-  params: Record<string, unknown>,
+  toolName: TToolName,
+  params: OutlitToolParams<TToolName>,
   json: boolean,
   opts?: RunToolOptions,
 ): Promise<void> {

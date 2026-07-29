@@ -1,4 +1,5 @@
 import { createOutlitClient, isCustomerToolName } from "@outlit/tools"
+import type { ActivationPreviewInput, ActivationUpdateInput } from "./activation"
 import { DEFAULT_API_URL, OUTLIT_DASHBOARD_URL, resolveApiKey } from "./config"
 import {
   createPlatformCommandError,
@@ -11,6 +12,14 @@ import {
 export { isPlatformCommandError }
 export type { PlatformCommandError, PlatformCommandErrorEnvelope }
 
+export type OutlitToolParams<TToolName extends string> = TToolName extends "outlit_activation_get"
+  ? Record<string, never>
+  : TToolName extends "outlit_activation_preview"
+    ? ActivationPreviewInput
+    : TToolName extends "outlit_activation_update"
+      ? ActivationUpdateInput
+      : Record<string, unknown>
+
 export interface OutlitClient {
   /** The validated API key in use for this client instance */
   key: string
@@ -22,7 +31,10 @@ export interface OutlitClient {
    * Maps the tool name to a Platform REST endpoint and sends the request
    * with the appropriate HTTP method (GET with query params, or JSON body for mutations).
    */
-  callTool(toolName: string, params: Record<string, unknown>): Promise<unknown>
+  callTool<TToolName extends string>(
+    toolName: TToolName,
+    params: OutlitToolParams<TToolName>,
+  ): Promise<unknown>
 }
 
 // ok_ prefix + at least 32 alphanumeric/dash/underscore characters (minimum 35 chars total).
@@ -31,6 +43,9 @@ const API_KEY_REGEX = /^ok_[A-Za-z0-9_-]{32,}$/
 
 /** Maps CLI-owned direct API commands to Platform REST endpoints outside `/api/tools/call`. */
 const CLI_TOOL_ENDPOINTS: Record<string, { method: "GET" | "POST" | "PATCH"; path: string }> = {
+  outlit_activation_get: { method: "GET", path: "/api/activation" },
+  outlit_activation_preview: { method: "POST", path: "/api/activation/preview" },
+  outlit_activation_update: { method: "PATCH", path: "/api/activation" },
   outlit_list_integrations: { method: "GET", path: "/api/integrations" },
   outlit_connect_integration: { method: "POST", path: "/api/integrations/connect" },
   outlit_connect_status: { method: "GET", path: "/api/integrations/connect/status" },
@@ -299,9 +314,13 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
   return {
     key: credential.key,
     baseUrl,
-    async callTool(toolName: string, params: Record<string, unknown>) {
+    async callTool<TToolName extends string>(
+      toolName: TToolName,
+      params: OutlitToolParams<TToolName>,
+    ): Promise<unknown> {
+      const requestParams = params as Record<string, unknown>
       if (isCustomerToolName(toolName)) {
-        return toolsClient.callTool(toolName, params)
+        return toolsClient.callTool(toolName, requestParams)
       }
 
       const endpoint = CLI_TOOL_ENDPOINTS[toolName]
@@ -317,9 +336,9 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
       let body: string | undefined
 
       if (endpoint.method === "GET") {
-        url = buildUrl(baseUrl, endpoint.path, params)
+        url = buildUrl(baseUrl, endpoint.path, requestParams)
       } else {
-        const resolved = resolvePathParams(endpoint.path, params)
+        const resolved = resolvePathParams(endpoint.path, requestParams)
         url = new URL(resolved.path, baseUrl).toString()
         headers["Content-Type"] = "application/json"
         body = JSON.stringify(resolved.rest)

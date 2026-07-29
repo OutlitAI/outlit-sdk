@@ -1,4 +1,9 @@
-export type { OutlitToolsClient, OutlitToolsClientOptions, OutlitToolsFetch } from "./client.js"
+export type {
+  CustomerToolResult,
+  OutlitToolsClient,
+  OutlitToolsClientOptions,
+  OutlitToolsFetch,
+} from "./client.js"
 export { createOutlitClient, DEFAULT_OUTLIT_API_URL } from "./client.js"
 export type {
   CustomerContextSearchInput,
@@ -39,6 +44,14 @@ export {
   userListOrderFields,
   workspaceUserListOrderFields,
 } from "./contracts.js"
+
+export type {
+  CustomerAnalyticsRow,
+  CustomerDetail,
+  CustomerDetailResult,
+  CustomerListItem,
+  CustomerListResult,
+} from "./results.js"
 
 export {
   actionToolNames,

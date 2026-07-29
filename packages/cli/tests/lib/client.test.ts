@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test"
+import type { ActivationPreviewInput } from "../../src/lib/activation"
 import { createClient, isPlatformCommandError } from "../../src/lib/client"
 import { TEST_API_KEY } from "../helpers"
 
@@ -529,6 +530,63 @@ describe("client.callTool()", () => {
       }),
     )
     expect((fetchSpy.mock.calls[4]?.[1] as RequestInit).method).toBe("GET")
+    for (const url of urls) {
+      expect(url).not.toContain("/api/tools/call")
+    }
+
+    fetchSpy.mockRestore()
+  })
+
+  test("binds activation read, read-only preview, and update to Core's exact routes", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const okEnvelope = {
+      ok: true,
+      commandId: "activation.test",
+      commandVersion: 1,
+      correlationId: "corr_activation_123",
+      result: {
+        operationId: "activation.test",
+        status: "completed",
+        resources: [],
+        data: {},
+        warnings: [],
+      },
+    }
+    const fetchSpy = spyOn(globalThis, "fetch")
+    for (let i = 0; i < 4; i += 1) {
+      fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify(okEnvelope), { status: 200 }))
+    }
+
+    const previewInput: ActivationPreviewInput = {
+      eventName: "integration_connected",
+      lookbackDays: 30,
+      exampleLimit: 10,
+    }
+    const client = await createClient()
+    await client.callTool("outlit_activation_get", {})
+    await client.callTool("outlit_activation_preview", previewInput)
+    await client.callTool("outlit_activation_update", { eventName: "integration_connected" })
+    await client.callTool("outlit_activation_update", { eventName: null })
+
+    const urls = fetchSpy.mock.calls.map((call) => call[0] as string)
+    expect(urls[0]).toBe("https://app.outlit.ai/api/activation")
+    expect(urls[1]).toBe("https://app.outlit.ai/api/activation/preview")
+    expect(urls[2]).toBe("https://app.outlit.ai/api/activation")
+    expect(urls[3]).toBe("https://app.outlit.ai/api/activation")
+
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("GET")
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).body).toBeUndefined()
+    expect((fetchSpy.mock.calls[1]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[1]?.[1] as RequestInit).body).toBe(JSON.stringify(previewInput))
+    expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).method).toBe("PATCH")
+    expect((fetchSpy.mock.calls[2]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({ eventName: "integration_connected" }),
+    )
+    expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).method).toBe("PATCH")
+    expect((fetchSpy.mock.calls[3]?.[1] as RequestInit).body).toBe(
+      JSON.stringify({ eventName: null }),
+    )
     for (const url of urls) {
       expect(url).not.toContain("/api/tools/call")
     }

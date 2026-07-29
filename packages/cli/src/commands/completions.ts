@@ -66,6 +66,7 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--owner-id", desc: "Filter by owner user ID" },
           { name: "--owner-email", desc: "Filter by owner email" },
           { name: "--has-owner", desc: "Only customers with an owner" },
+          { name: "--activated-since", desc: "Activated at or after ISO-8601 datetime" },
           { name: "--search", desc: "Search name or domain" },
         ],
       },
@@ -89,6 +90,37 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--start-date", desc: "Start date (ISO 8601)" },
           { name: "--end-date", desc: "End date (ISO 8601)" },
         ],
+      },
+    ],
+  },
+  {
+    name: "activation",
+    desc: "Configure contact and company activation",
+    subs: [
+      {
+        name: "get",
+        desc: "Read the configured activation event",
+        flags: [...COMMON],
+      },
+      {
+        name: "preview",
+        desc: "Preview historical exact-event activation matches",
+        flags: [
+          ...COMMON,
+          { name: "--event", desc: "Exact ordinary product event name" },
+          { name: "--lookback-days", desc: "Historical lookback (1-90 days)" },
+          { name: "--example-limit", desc: "Historical example count (1-20)" },
+        ],
+      },
+      {
+        name: "update",
+        desc: "Update the configured activation event",
+        flags: [...COMMON, { name: "--event", desc: "Exact ordinary product event name" }],
+      },
+      {
+        name: "disable",
+        desc: "Disable future contact and company activation matching",
+        flags: [...COMMON],
       },
     ],
   },

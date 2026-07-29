@@ -1,17 +1,20 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
-  TEST_API_KEY,
   expectErrorExit,
   mockExitThrow,
   setNonInteractive,
+  TEST_API_KEY,
   useTempEnv,
 } from "../../helpers"
 
 const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
-  id: "1",
-  name: "Acme Corp",
-  domain: "acme.com",
-  billingStatus: "PAYING",
+  customer: {
+    id: "1",
+    name: "Acme Corp",
+    domain: "acme.com",
+    billingStatus: "PAYING",
+    activatedAt: "2026-07-28T20:00:00.000Z",
+  },
 }))
 
 mock.module("../../../src/lib/client", () => ({
@@ -78,6 +81,18 @@ describe("customers get", () => {
     }
   })
 
+  test("help describes the nested customer and users response keys", async () => {
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const metaSource = getCmd.meta
+    const meta =
+      typeof metaSource === "function" ? await metaSource() : await Promise.resolve(metaSource)
+    const description = meta?.description ?? ""
+
+    expect(description).toContain('"customer"')
+    expect(description).toContain('"users"')
+    expect(description).not.toContain('"contacts"')
+  })
+
   test("outputs JSON result to stdout", async () => {
     const { default: getCmd } = await import("../../../src/commands/customers/get")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
@@ -87,7 +102,9 @@ describe("customers get", () => {
       } as Parameters<NonNullable<typeof getCmd.run>>[0])
       const written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
       const parsed = JSON.parse(written) as Record<string, unknown>
-      expect(parsed.domain).toBe("acme.com")
+      const customer = parsed.customer as Record<string, unknown>
+      expect(customer.domain).toBe("acme.com")
+      expect(customer.activatedAt).toBe("2026-07-28T20:00:00.000Z")
     } finally {
       writeSpy.mockRestore()
     }

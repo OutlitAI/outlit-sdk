@@ -27,6 +27,201 @@
     }
   ],
   "paths": {
+    "/api/activation": {
+      "get": {
+        "tags": ["Platform API"],
+        "summary": "Get the activation event setting",
+        "description": "Read the exact ordinary product event that activates eligible contacts and their resolved company.",
+        "operationId": "getCustomerActivation",
+        "responses": {
+          "200": {
+            "description": "The activation event setting was returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCustomerActivationCommandSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have company activation read authorization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not read company activation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Platform API"],
+        "summary": "Update the activation event setting",
+        "description": "Replace or disable the exact ordinary product event used for prospective contact and company activation. Existing activation timestamps are preserved.",
+        "operationId": "updateCustomerActivation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerActivationUpdateRequest"
+              },
+              "examples": {
+                "update": {
+                  "summary": "Use one exact ordinary product event",
+                  "value": {
+                    "eventName": "integration_connected"
+                  }
+                },
+                "disable": {
+                  "summary": "Disable future activation matching",
+                  "value": {
+                    "eventName": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The activation event setting update completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateCustomerActivationCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed company activation validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have company activation write authorization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not update company activation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activation/preview": {
+      "post": {
+        "tags": ["Platform API"],
+        "summary": "Preview the activation event",
+        "description": "Historically evaluate exact ordinary product-event matches without saving configuration, materializing activation, or mutating customer state.",
+        "operationId": "previewCustomerActivation",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerActivationPreviewRequest"
+              },
+              "example": {
+                "eventName": "integration_connected",
+                "lookbackDays": 60,
+                "exampleLimit": 10
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The read-only historical preview completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewCustomerActivationCommandSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request body failed company activation preview validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "The API key is valid but does not have company activation read authorization.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "The platform could not preview company activation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/validate-api-key": {
       "post": {
         "tags": ["Platform API"],
@@ -4185,6 +4380,313 @@
               }
             },
             "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationUpdateRequest": {
+        "type": "object",
+        "required": ["eventName"],
+        "properties": {
+          "eventName": {
+            "description": "The exact ordinary product event name, or null to disable future matching without clearing activation history.",
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationPreviewRequest": {
+        "type": "object",
+        "required": ["eventName"],
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "lookbackDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 90,
+            "default": 30
+          },
+          "exampleLimit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "default": 10
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationState": {
+        "type": "object",
+        "required": ["eventName"],
+        "properties": {
+          "eventName": {
+            "type": ["string", "null"],
+            "maxLength": 191
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationReadData": {
+        "type": "object",
+        "required": ["activation"],
+        "properties": {
+          "activation": {
+            "$ref": "#/components/schemas/CustomerActivationState"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationPreviewCustomer": {
+        "type": "object",
+        "required": ["id", "name", "domain"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "domain": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationPreviewExample": {
+        "type": "object",
+        "required": ["customer", "activatedAt", "firstMatchedAt", "eventId"],
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/CustomerActivationPreviewCustomer"
+          },
+          "activatedAt": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "firstMatchedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationPreviewResult": {
+        "type": "object",
+        "required": [
+          "eventName",
+          "evaluatedFrom",
+          "evaluatedTo",
+          "evaluatedEventCount",
+          "matchedCustomerCount",
+          "alreadyActivatedCustomerCount",
+          "wouldActivateCustomerCount",
+          "truncated",
+          "examples"
+        ],
+        "properties": {
+          "eventName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "evaluatedFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "evaluatedTo": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "evaluatedEventCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "matchedCustomerCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "alreadyActivatedCustomerCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "wouldActivateCustomerCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "examples": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerActivationPreviewExample"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationPreviewData": {
+        "type": "object",
+        "required": ["preview"],
+        "properties": {
+          "preview": {
+            "$ref": "#/components/schemas/CustomerActivationPreviewResult"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CustomerActivationUpdateData": {
+        "type": "object",
+        "required": ["activation", "changed"],
+        "properties": {
+          "activation": {
+            "$ref": "#/components/schemas/CustomerActivationState"
+          },
+          "changed": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GetCustomerActivationCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "customer_activation.get"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "customer_activation.get"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/CustomerActivationReadData"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "PreviewCustomerActivationCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "customer_activation.preview"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "customer_activation.preview"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/CustomerActivationPreviewData"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateCustomerActivationCommandSuccess": {
+        "type": "object",
+        "required": ["ok", "commandId", "commandVersion", "correlationId", "result"],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "commandId": {
+            "type": "string",
+            "const": "customer_activation.update"
+          },
+          "commandVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "result": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CommandResultBase"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operationId": {
+                    "type": "string",
+                    "const": "customer_activation.update"
+                  },
+                  "data": {
+                    "$ref": "#/components/schemas/CustomerActivationUpdateData"
+                  }
+                }
+              }
+            ]
           }
         },
         "additionalProperties": false
