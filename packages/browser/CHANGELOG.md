@@ -1,5 +1,20 @@
 # @outlit/browser
 
+## 2.0.0
+
+### Major Changes
+
+- [#160](https://github.com/OutlitAI/outlit-sdk/pull/160) [`7f5ee85`](https://github.com/OutlitAI/outlit-sdk/commit/7f5ee85cfd2908822e82e3389764e0e0d3a3fc1a) Thanks [@leo-paz](https://github.com/leo-paz)! - Remove the manual `user.activate()`, `user.engaged()`, `user.inactive()`, `customer.trialing()`, `customer.paid()`, and `customer.churned()` APIs together with the `StageEvent`, `BillingEvent`, `ExplicitJourneyStage`, `BillingStatus`, and `CustomerIdentifier` ingest types. Send ordinary identity and product events with `identify()` and `track()`; Outlit Core derives activation from the customer-selected ordinary activation event, derives engagement and inactivity from activity, and receives billing status from verified integrations.
+
+### Patch Changes
+
+- [#161](https://github.com/OutlitAI/outlit-sdk/pull/161) [`e499038`](https://github.com/OutlitAI/outlit-sdk/commit/e49903858be8431d746b42bebe20429a8e98ae63) Thanks [@leo-paz](https://github.com/leo-paz)! - Flush queued browser events before changing or clearing attribution identity so account switches cannot reattribute earlier events.
+
+- [#150](https://github.com/OutlitAI/outlit-sdk/pull/150) [`51b862d`](https://github.com/OutlitAI/outlit-sdk/commit/51b862d32ca2142da980ecde74add7f0f575a82a) Thanks [@leo-paz](https://github.com/leo-paz)! - Improve published README and package metadata citation surfaces with canonical docs, OpenAPI, MCP, and agent discovery links.
+
+- Updated dependencies [[`51b862d`](https://github.com/OutlitAI/outlit-sdk/commit/51b862d32ca2142da980ecde74add7f0f575a82a), [`7f5ee85`](https://github.com/OutlitAI/outlit-sdk/commit/7f5ee85cfd2908822e82e3389764e0e0d3a3fc1a)]:
+  - @outlit/core@2.0.0
+
 ## 1.5.2
 
 ### Patch Changes
