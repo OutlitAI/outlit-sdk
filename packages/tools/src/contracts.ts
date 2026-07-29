@@ -541,19 +541,6 @@ export const customerToolContracts = {
           minLength: 1,
           maxLength: 500,
         },
-        limit: {
-          description:
-            "Slack replies per page (default 50, maximum 100). Ignored for other source types.",
-          type: "integer",
-          minimum: 1,
-          maximum: 100,
-        },
-        cursor: {
-          description: "Opaque Slack reply cursor returned by a previous exact lookup.",
-          type: "string",
-          minLength: 1,
-          maxLength: 2000,
-        },
       },
       required: ["sourceType", "sourceId"],
       additionalProperties: false,
@@ -935,7 +922,7 @@ export const workspaceUserListOrderFields = ["name", "email", "owned_customer_co
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "ce2f91d56dfb0d42b8730b03431f2a7be5399739c365360bae8102e3000f091d" as const
+  "f1f06ac1d3fb5131095ac7047f5871f47942b0f5efcb1229151b52475bf93816" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]
