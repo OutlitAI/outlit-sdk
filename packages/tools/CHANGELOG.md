@@ -1,5 +1,11 @@
 # @outlit/tools
 
+## 0.3.1
+
+### Patch Changes
+
+- [#170](https://github.com/OutlitAI/outlit-sdk/pull/170) [`c1bef1d`](https://github.com/OutlitAI/outlit-sdk/commit/c1bef1dbd918b32e0ca5f7076070c24c5c848be3) Thanks [@leo-paz](https://github.com/leo-paz)! - Expose pagination fields for exact Slack source lookups.
+
 ## 0.3.0
 
 ### Minor Changes
