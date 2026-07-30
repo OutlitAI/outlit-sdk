@@ -22,6 +22,7 @@ export default defineCommand({
       "",
       "Examples:",
       "  outlit sources get --source-type CALL --source-id call_123",
+      "  outlit sources get --source-type SLACK --source-id thread_123 --limit 50",
       "  outlit sources get --source-type OPPORTUNITY --source-id opp_123",
       "  outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json",
       "",
@@ -44,6 +45,14 @@ export default defineCommand({
       description: "Exact source id",
       required: true,
     },
+    limit: {
+      type: "string",
+      description: "Slack replies per page (1-100). Default: 50. Ignored for other source types.",
+    },
+    cursor: {
+      type: "string",
+      description: "Opaque Slack reply cursor returned by a previous exact lookup.",
+    },
   },
   async run({ args }) {
     const json = !!args.json
@@ -59,6 +68,17 @@ export default defineCommand({
       )
     }
 
+    const limit = args.limit ? Number(args.limit) : undefined
+    if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 100)) {
+      return outputError(
+        {
+          message: `--limit must be an integer between 1 and 100 (got: ${args.limit})`,
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+
     const client = await getClientOrExit(args["api-key"], json)
 
     return runTool(
@@ -67,6 +87,8 @@ export default defineCommand({
       {
         sourceType,
         sourceId: args["source-id"],
+        ...(limit !== undefined ? { limit } : {}),
+        ...(args.cursor ? { cursor: args.cursor } : {}),
       },
       json,
     )

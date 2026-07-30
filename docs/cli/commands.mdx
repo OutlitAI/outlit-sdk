@@ -563,20 +563,24 @@ outlit search "churn risk" --top-k 50 --json
 Fetch one exact source by generic `sourceType` and `sourceId`.
 
 ```bash
-outlit sources get --source-type <type> --source-id <id>
+outlit sources get --source-type <type> --source-id <id> [--limit <count>] [--cursor <cursor>]
 ```
 
 ### Flags
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--source-id` | string | — | Exact source identifier |
+| `--limit` | number | `50` | Slack replies per page (1–100). Ignored for other source types. |
+| `--cursor` | string | — | Opaque Slack reply cursor returned by the previous exact lookup. |
 
 ### Examples
 
 ```bash
 outlit sources get --source-type CALL --source-id call_123
+outlit sources get --source-type SLACK --source-id thread_123 --limit 50
+outlit sources get --source-type SLACK --source-id thread_123 --cursor "$CURSOR"
 outlit sources get --source-type OPPORTUNITY --source-id opp_123
 outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
 ```
