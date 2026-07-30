@@ -1,5 +1,11 @@
 # @outlit/cli
 
+## 1.9.2
+
+### Patch Changes
+
+- [#172](https://github.com/OutlitAI/outlit-sdk/pull/172) [`4598a69`](https://github.com/OutlitAI/outlit-sdk/commit/4598a692e73df8bdce91dcae6d9aeb04f565aecd) Thanks [@leo-paz](https://github.com/leo-paz)! - Expose Slack reply pagination flags on `outlit sources get`.
+
 ## 1.9.1
 
 ### Patch Changes
