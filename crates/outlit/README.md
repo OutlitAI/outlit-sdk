@@ -10,7 +10,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-outlit = "0.2"
+outlit = "0.3"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 ```
 
