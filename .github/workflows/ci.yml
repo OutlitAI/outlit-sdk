@@ -81,6 +81,9 @@ jobs:
       - name: Build
         run: bun run build
 
+      - name: Docs contract tests
+        run: bunx vitest run tests/docs
+
       - name: Detect changed packages
         id: changes
         env:
