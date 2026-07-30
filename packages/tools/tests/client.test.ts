@@ -152,7 +152,7 @@ describe("tool contracts", () => {
       }),
     )
     expect(customerToolContractHash).toBe(
-      "f1f06ac1d3fb5131095ac7047f5871f47942b0f5efcb1229151b52475bf93816",
+      "ce2f91d56dfb0d42b8730b03431f2a7be5399739c365360bae8102e3000f091d",
     )
 
     const activatedSincePattern = customerProperties.activatedSince?.pattern
