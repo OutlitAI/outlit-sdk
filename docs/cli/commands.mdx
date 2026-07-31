@@ -92,7 +92,7 @@ envelope.
 
 List and filter customers with pagination.
 
-```bash
+```text
 outlit customers list [flags]
 ```
 
@@ -183,7 +183,7 @@ Showing 20 of 150 total. Next page: --cursor cursor_abc123
 
 Get a detailed customer profile with optional sections.
 
-```bash
+```text
 outlit customers get <customer> [flags]
 ```
 
@@ -256,7 +256,7 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
 
 View the activity timeline for a customer, filtered by channel and event type.
 
-```bash
+```text
 outlit customers timeline <customer> [flags]
 ```
 
@@ -327,7 +327,7 @@ outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50
 
 List and filter users across your customer base.
 
-```bash
+```text
 outlit users list [flags]
 ```
 
@@ -388,7 +388,7 @@ outlit users list --search "alice" --order-by last_activity_at
 
 Retrieve AI-generated facts, signals, and insights for a customer.
 
-```bash
+```text
 outlit facts list <customer> [flags]
 outlit facts get --fact-id <id> [flags]
 ```
@@ -488,7 +488,7 @@ outlit facts get --fact-id fact_123 --include evidence
 
 Semantic search across customer context. Results are grouped at the artifact level, so matching sources and facts are returned directly instead of raw chunks.
 
-```bash
+```text
 outlit search <query> [flags]
 ```
 
@@ -562,7 +562,7 @@ outlit search "churn risk" --top-k 50 --json
 
 Fetch one exact source by generic `sourceType` and `sourceId`.
 
-```bash
+```text
 outlit sources get --source-type <type> --source-id <id> [--limit <count>] [--cursor <cursor>]
 ```
 
@@ -589,7 +589,7 @@ outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
 
 Send a notification to the organization's configured default notifier. Slack is the default notifier when no destination is supplied.
 
-```bash
+```text
 outlit notify --title <title> <payload> [flags]
 outlit notify --title <title> --payload-file <path> [flags]
 outlit notify --title <title> --markdown <markdown> [flags]
@@ -647,7 +647,7 @@ Inspect and configure Outlit hosted agents.
 
 These commands are part of [Platform Actions](/ai-integrations/platform-actions), the shared API, CLI, and MCP surface for selected Outlit platform configuration.
 
-```bash
+```text
 outlit agents list [flags]
 outlit agents get <id> [flags]
 outlit agents templates [flags]
@@ -693,7 +693,7 @@ Agent run list results are under `result.data.runs`; detailed run data is under 
 
 Inspect configured platform automations.
 
-```bash
+```text
 outlit automations list [flags]
 outlit automations get <id> [flags]
 outlit automations runs list <automation-id> [--limit <count>] [--cursor <cursor>] [flags]
@@ -733,7 +733,7 @@ Automation commands return command envelopes. List results are under `result.dat
 
 Inspect and configure automation signals.
 
-```bash
+```text
 outlit signals list [flags]
 outlit signals get <id> [flags]
 outlit signals options [flags]
@@ -761,7 +761,7 @@ Signal list results are under `result.data.signals`; get, create, and update res
 
 Inspect and manage configured automation destinations with masked configuration only.
 
-```bash
+```text
 outlit destinations list [flags]
 outlit destinations get <id> [flags]
 outlit destinations options [flags]
@@ -791,7 +791,7 @@ Destination list results are under `result.data.destinations`; get, create, upda
 
 Inspect and configure selected workspace and report settings. Slack-backed delivery destinations are managed with the top-level `destinations` commands.
 
-```bash
+```text
 outlit settings get [flags]
 outlit settings update --default-timezone <iana-timezone> [flags]
 outlit settings report get [flags]
@@ -817,7 +817,7 @@ Workspace settings are under `result.data.settings`. Report settings are under `
 
 Inspect and manage customer identity merge suggestions from the Identity page.
 
-```bash
+```text
 outlit identity suggestions list [--status <status>] [--confidence <confidence>] [--limit <count>] [flags]
 outlit identity suggestions get <id> [flags]
 outlit identity suggestions queue <id> [--review-notes <notes>] [flags]
@@ -839,7 +839,7 @@ Suggestion list results are under `result.data.suggestions`; get results are und
 
 Execute read-only SQL queries against Outlit analytics views.
 
-```bash
+```text
 outlit sql <query> [flags]
 outlit sql --query-file <path> [flags]
 ```
