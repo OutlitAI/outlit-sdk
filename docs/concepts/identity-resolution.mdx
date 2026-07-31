@@ -297,7 +297,7 @@ Call `identify()` as soon as you have user information:
 
 ```typescript
 // After login
-onLogin(user) {
+function onLogin(user: { email: string; id: string; plan: string }) {
   outlit.identify({
     email: user.email,
     userId: user.id,
@@ -306,7 +306,7 @@ onLogin(user) {
 }
 
 // After form submission
-onFormSubmit(data) {
+function onFormSubmit(data: { email: string }) {
   outlit.identify({
     email: data.email,
     traits: { source: 'contact_form' }
@@ -323,13 +323,13 @@ When you have both email and userId, send both:
 outlit.identify({
   email: user.email,
   userId: user.id,
-  traits: { ... }
+  traits: { plan: user.plan }
 })
 
 // Less good - single identifier
 outlit.identify({
   email: user.email,
-  traits: { ... }
+  traits: { plan: user.plan }
 })
 ```
 

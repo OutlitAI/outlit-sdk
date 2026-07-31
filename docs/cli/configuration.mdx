@@ -101,7 +101,13 @@ When JSON mode is active, all output is pretty-printed JSON on stdout:
 
 ```json
 {
-  "items": [...],
+  "items": [
+    {
+      "id": "cus_123",
+      "name": "Acme Corp",
+      "domain": "acme.com"
+    }
+  ],
   "pagination": {
     "hasMore": true,
     "nextCursor": "cursor_abc123",

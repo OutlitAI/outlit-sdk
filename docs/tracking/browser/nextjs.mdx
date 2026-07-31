@@ -50,7 +50,7 @@ export function OutlitProvider() {
 
 Add to your root layout:
 
-```typescript
+```tsx
 // app/layout.tsx
 import { OutlitProvider } from './providers'
 
@@ -70,7 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   <Tab title="Pages Router">
 Initialize in `_app.tsx`:
 
-```typescript
+```tsx
 // pages/_app.tsx
 import { useEffect } from 'react'
 import type { AppProps } from 'next/app'
@@ -101,7 +101,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
 For a better experience with React hooks, use the React provider:
 
-```typescript
+```tsx
 // app/providers.tsx
 'use client'
 
@@ -119,7 +119,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
-```typescript
+```tsx
 // app/layout.tsx
 import { Providers } from './providers'
 
@@ -140,7 +140,7 @@ See the [React integration guide](/tracking/browser/react) for full React provid
 
 Track custom events in client components:
 
-```typescript
+```tsx
 // app/dashboard/page.tsx
 'use client'
 
@@ -170,7 +170,7 @@ export default function Dashboard() {
 
 ### With React Provider
 
-```typescript
+```tsx
 'use client'
 
 import { useOutlit } from '@outlit/browser/react'
@@ -190,7 +190,7 @@ export default function PricingButton() {
 
 Identify users after authentication:
 
-```typescript
+```tsx
 // app/login/page.tsx
 'use client'
 
@@ -244,7 +244,7 @@ export default function LoginPage() {
 
 ### With NextAuth
 
-```typescript
+```tsx
 // app/providers.tsx
 'use client'
 
@@ -276,7 +276,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 ### With Clerk
 
-```typescript
+```tsx
 // app/providers.tsx
 'use client'
 
@@ -308,7 +308,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 ### With Supabase
 
-```typescript
+```tsx
 // app/providers.tsx
 'use client'
 
