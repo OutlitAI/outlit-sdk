@@ -1,7 +1,8 @@
 import { execFileSync, spawnSync } from "node:child_process"
-import { readFileSync } from "node:fs"
-import { createRequire } from "node:module"
-import { resolve } from "node:path"
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+import * as vueSfcCompiler from "@vue/compiler-sfc"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
 
@@ -28,9 +29,7 @@ type VueSfcCompiler = {
   ) => { descriptor: VueSfcDescriptor; errors: Array<Error | string> }
 }
 
-const browserRequire = createRequire(resolve("packages/browser/package.json"))
-const vueRequire = createRequire(browserRequire.resolve("vue/package.json"))
-const vueCompiler = vueRequire("@vue/compiler-sfc") as VueSfcCompiler
+const vueCompiler = vueSfcCompiler as unknown as VueSfcCompiler
 
 function listPublicDocumentationFiles(): string[] {
   return execFileSync("git", ["ls-files", "-z", "*.md", "*.mdx"], {
@@ -54,18 +53,23 @@ function extractFencedBlocks(file: string): FencedBlock[] {
   const blocks: FencedBlock[] = []
 
   for (let index = 0; index < lines.length; index += 1) {
-    const opening = lines[index]?.match(/^\s*```([^\s`]*)/)
+    const opening = lines[index]?.match(/^\s*(`{3,}|~{3,})([^\s`~]*)/)
     if (!opening) continue
 
+    const delimiter = opening[1] ?? ""
+    const delimiterCharacter = delimiter[0]
+    if (!delimiterCharacter) continue
+
+    const closing = new RegExp(`^\\s*${delimiterCharacter}{${delimiter.length},}\\s*$`)
     const body: string[] = []
     const line = index + 1
-    while (++index < lines.length && !/^\s*```\s*$/.test(lines[index] ?? "")) {
+    while (++index < lines.length && !closing.test(lines[index] ?? "")) {
       body.push(lines[index] ?? "")
     }
 
     blocks.push({
       code: body.join("\n"),
-      language: opening[1] ?? "",
+      language: opening[2] ?? "",
       line,
     })
   }
@@ -74,6 +78,32 @@ function extractFencedBlocks(file: string): FencedBlock[] {
 }
 
 describe("public documentation examples", () => {
+  test("extracts tilde and longer backtick fences", () => {
+    const fixtureDirectory = mkdtempSync(join(tmpdir(), "outlit-docs-doctest-"))
+    const fixture = join(fixtureDirectory, "fences.md")
+
+    try {
+      writeFileSync(
+        fixture,
+        [
+          "~~~~json",
+          '{"valid":true}',
+          "~~~~",
+          "````typescript",
+          'const embeddedFence = "```"',
+          "````",
+        ].join("\n"),
+      )
+
+      expect(extractFencedBlocks(fixture)).toEqual([
+        { code: '{"valid":true}', language: "json", line: 1 },
+        { code: 'const embeddedFence = "```"', language: "typescript", line: 4 },
+      ])
+    } finally {
+      rmSync(fixtureDirectory, { force: true, recursive: true })
+    }
+  })
+
   test("keeps JSON fences parseable as JSON", () => {
     const failures: string[] = []
 
