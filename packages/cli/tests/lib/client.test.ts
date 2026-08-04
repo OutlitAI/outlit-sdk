@@ -91,7 +91,7 @@ describe("createClient", () => {
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
-          code: "AUTHORIZATION_DENIED",
+          code: "TOOL_CALL_FORBIDDEN",
           message: "API key is missing a required grant.",
           retryable: false,
           requestId: "request_123",

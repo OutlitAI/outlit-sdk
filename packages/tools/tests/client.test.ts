@@ -5,6 +5,7 @@ import { describe, expect, expectTypeOf, test, vi } from "vitest"
 import {
   allPublicToolNames,
   analyticalToolNames,
+  apiKeyValidationTransport,
   type CustomerAnalyticsRow,
   type CustomerContextSearchInput,
   type CustomerDetail,
@@ -22,6 +23,8 @@ import {
   resolveCustomerContextSearchInput,
   sdkConsumerContractHash,
   sqlToolNames,
+  toolGatewayErrorCodes,
+  toolGatewayErrorSchema,
 } from "../src/index.js"
 
 describe("toolsets", () => {
@@ -93,6 +96,16 @@ describe("tool contracts", () => {
 
     expect(generated).toContain("This file contains contract data only")
     expect(generated).not.toMatch(/\bfunction\b|\bclass\b|new Set|new Map/)
+  })
+
+  test("exports Core-owned gateway validation and error contracts", () => {
+    expect(apiKeyValidationTransport).toEqual({
+      method: "POST",
+      path: "/api/validate-api-key",
+    })
+    expect(toolGatewayErrorSchema.properties.code.enum).toEqual(toolGatewayErrorCodes)
+    expect(toolGatewayErrorSchema.required).toEqual(["code", "message", "retryable", "requestId"])
+    expect(toolGatewayErrorSchema.additionalProperties).toBe(false)
   })
 
   test("types nullable company activation on customer and analytics results", () => {
@@ -195,7 +208,7 @@ describe("tool contracts", () => {
       }),
     )
     expect(sdkConsumerContractHash).toBe(
-      "3d5e674e1f63140d5bbc3fb4443344c836bd9dffa38d6d8894069fcb65b8f91c",
+      "0b78de357e8579be001230516cea3d6c5efa859b0003919021441794bf0dca1b",
     )
 
     const activatedSincePattern = customerProperties.activatedSince?.pattern
@@ -348,10 +361,13 @@ describe("createOutlitClient", () => {
 
   test("preserves the stable gateway error envelope", async () => {
     const envelope = {
-      code: "AUTHORIZATION_DENIED",
+      code: "TOOL_CALL_FORBIDDEN",
       message: "Capability not authorized",
       retryable: false,
       requestId: "request_123",
+      plan: "growth",
+      feature: "public_tools",
+      resetAt: null,
     }
     const client = createOutlitClient({
       apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
@@ -363,6 +379,38 @@ describe("createOutlitClient", () => {
     if (!isOutlitToolsApiError(error)) throw new Error("expected OutlitToolsApiError")
     expect(error.status).toBe(403)
     expect(error.envelope).toEqual(envelope)
+  })
+
+  test("rejects responses outside the generated gateway error schema", async () => {
+    const invalidEnvelopes = [
+      {
+        code: "AUTHORIZATION_DENIED",
+        message: "Legacy code",
+        retryable: false,
+        requestId: "request_legacy",
+      },
+      {
+        code: "TOOL_CALL_FORBIDDEN",
+        message: "Capability not authorized",
+        retryable: false,
+        requestId: "request_extra",
+        internalDetail: "must not cross the gateway boundary",
+      },
+    ]
+    const client = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi
+        .fn()
+        .mockResolvedValueOnce(new Response(JSON.stringify(invalidEnvelopes[0]), { status: 403 }))
+        .mockResolvedValueOnce(new Response(JSON.stringify(invalidEnvelopes[1]), { status: 403 })),
+    })
+
+    for (const _invalidEnvelope of invalidEnvelopes) {
+      const error = await client.callTool("outlit_list_customers").catch((value: unknown) => value)
+      expect(isOutlitToolsApiError(error)).toBe(true)
+      if (!isOutlitToolsApiError(error)) throw new Error("expected OutlitToolsApiError")
+      expect(error.envelope).toBeUndefined()
+    }
   })
 })
 

@@ -1,5 +1,9 @@
 import { isPublicToolName, type PublicToolName } from "./contracts.js"
-import { toolGatewayTransport } from "./generated/contracts.js"
+import {
+  toolGatewayErrorCodes,
+  toolGatewayErrorSchema,
+  toolGatewayTransport,
+} from "./generated/contracts.js"
 import type { CustomerDetailResult, CustomerListResult } from "./results.js"
 
 export const DEFAULT_OUTLIT_API_URL = "https://app.outlit.ai"
@@ -15,11 +19,32 @@ export type OutlitToolsClientOptions = {
   fetch?: OutlitToolsFetch
 }
 
+type ToolGatewayErrorProperties = typeof toolGatewayErrorSchema.properties
+type ToolGatewayErrorRequiredProperty = (typeof toolGatewayErrorSchema.required)[number]
+type ToolGatewayErrorOptionalProperty = Exclude<
+  keyof ToolGatewayErrorProperties,
+  ToolGatewayErrorRequiredProperty
+>
+
+type JsonSchemaValue<TSchema> = TSchema extends { readonly anyOf: readonly (infer TOption)[] }
+  ? JsonSchemaValue<TOption>
+  : TSchema extends { readonly enum: readonly (infer TValue)[] }
+    ? TValue
+    : TSchema extends { readonly type: "string" }
+      ? string
+      : TSchema extends { readonly type: "boolean" }
+        ? boolean
+        : TSchema extends { readonly type: "number" }
+          ? number
+          : TSchema extends { readonly type: "null" }
+            ? null
+            : unknown
+
+export type ToolGatewayErrorCode = (typeof toolGatewayErrorCodes)[number]
 export type ToolGatewayErrorEnvelope = {
-  code: string
-  message: string
-  retryable: boolean
-  requestId: string
+  [TKey in ToolGatewayErrorRequiredProperty]: JsonSchemaValue<ToolGatewayErrorProperties[TKey]>
+} & {
+  [TKey in ToolGatewayErrorOptionalProperty]?: JsonSchemaValue<ToolGatewayErrorProperties[TKey]>
 }
 
 export class OutlitToolsApiError extends Error {
@@ -102,17 +127,62 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
 
 function parseGatewayError(text: string): ToolGatewayErrorEnvelope | undefined {
   try {
-    const value = JSON.parse(text) as Partial<ToolGatewayErrorEnvelope>
-    if (
-      typeof value.code === "string" &&
-      typeof value.message === "string" &&
-      typeof value.retryable === "boolean" &&
-      typeof value.requestId === "string"
-    ) {
+    const value = JSON.parse(text) as unknown
+    if (matchesJsonSchema(value, toolGatewayErrorSchema)) {
       return value as ToolGatewayErrorEnvelope
     }
   } catch {
     // Non-JSON failures retain the status and raw response text.
   }
   return undefined
+}
+
+type RuntimeJsonSchema = {
+  readonly type?: string
+  readonly enum?: readonly unknown[]
+  readonly anyOf?: readonly RuntimeJsonSchema[]
+  readonly properties?: Readonly<Record<string, RuntimeJsonSchema>>
+  readonly required?: readonly string[]
+  readonly additionalProperties?: boolean
+}
+
+function matchesJsonSchema(value: unknown, schema: RuntimeJsonSchema): boolean {
+  if (schema.anyOf && !schema.anyOf.some((option) => matchesJsonSchema(value, option))) {
+    return false
+  }
+  if (schema.enum && !schema.enum.some((candidate) => Object.is(candidate, value))) {
+    return false
+  }
+
+  switch (schema.type) {
+    case "object": {
+      if (typeof value !== "object" || value === null || Array.isArray(value)) return false
+
+      const record = value as Record<string, unknown>
+      const properties = schema.properties ?? {}
+      if (schema.required?.some((property) => !Object.hasOwn(record, property))) return false
+      if (
+        schema.additionalProperties === false &&
+        Object.keys(record).some((property) => !Object.hasOwn(properties, property))
+      ) {
+        return false
+      }
+      return Object.entries(record).every(([property, propertyValue]) => {
+        const propertySchema = properties[property]
+        return propertySchema ? matchesJsonSchema(propertyValue, propertySchema) : true
+      })
+    }
+    case "string":
+      return typeof value === "string"
+    case "boolean":
+      return typeof value === "boolean"
+    case "number":
+      return typeof value === "number" && Number.isFinite(value)
+    case "null":
+      return value === null
+    case undefined:
+      return true
+    default:
+      return false
+  }
 }

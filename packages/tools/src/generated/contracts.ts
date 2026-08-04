@@ -7437,6 +7437,80 @@ export const toolGatewayTransport = {
   "path": "/api/tools/call",
 } as const
 
+export const apiKeyValidationTransport = {
+  "method": "POST",
+  "path": "/api/validate-api-key",
+} as const
+
+export const toolGatewayErrorCodes = [
+  "INVALID_JSON",
+  "INVALID_TOOL_CALL",
+  "INVALID_TOOL_INPUT",
+  "INVALID_CREDENTIALS",
+  "TOOL_CALL_FORBIDDEN",
+  "TOOL_BINDING_MISSING",
+  "TOOL_IMPLEMENTATION_ERROR",
+  "TOOL_OUTPUT_INVALID",
+  "TOOL_GATEWAY_ERROR",
+  "plan_api_limit_exceeded",
+  "plan_billing_action_required",
+] as const
+
+export const toolGatewayErrorSchema = {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "enum": [
+        "INVALID_JSON",
+        "INVALID_TOOL_CALL",
+        "INVALID_TOOL_INPUT",
+        "INVALID_CREDENTIALS",
+        "TOOL_CALL_FORBIDDEN",
+        "TOOL_BINDING_MISSING",
+        "TOOL_IMPLEMENTATION_ERROR",
+        "TOOL_OUTPUT_INVALID",
+        "TOOL_GATEWAY_ERROR",
+        "plan_api_limit_exceeded",
+        "plan_billing_action_required",
+      ],
+    },
+    "message": {
+      "type": "string",
+    },
+    "retryable": {
+      "type": "boolean",
+    },
+    "requestId": {
+      "type": "string",
+    },
+    "plan": {
+      "type": "string",
+    },
+    "feature": {
+      "type": "string",
+    },
+    "resetAt": {
+      "anyOf": [
+        {
+          "type": "number",
+        },
+        {
+          "type": "null",
+        },
+      ],
+    },
+  },
+  "required": [
+    "code",
+    "message",
+    "retryable",
+    "requestId",
+  ],
+  "additionalProperties": false,
+} as const
+
 export const ingestTransport = {
   "method": "POST",
   "pathTemplate": "/api/i/v1/{publicKey}/events",
@@ -8380,4 +8454,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "3d5e674e1f63140d5bbc3fb4443344c836bd9dffa38d6d8894069fcb65b8f91c" as const
+export const sdkConsumerContractHash = "0b78de357e8579be001230516cea3d6c5efa859b0003919021441794bf0dca1b" as const

@@ -1,4 +1,5 @@
 import { describe, expect, mock, spyOn, test } from "bun:test"
+import { readFileSync } from "node:fs"
 import { OutlitToolsApiError } from "@outlit/tools"
 import {
   ExitError,
@@ -19,6 +20,14 @@ mock.module("../../src/lib/client", () => ({
 }))
 
 describe("getClientOrExit()", () => {
+  test("uses the Core-owned API-key validation transport", () => {
+    const source = readFileSync(new URL("../../src/lib/api.ts", import.meta.url), "utf8")
+
+    expect(source).toContain("apiKeyValidationTransport")
+    expect(source).not.toContain('new URL("/api/validate-api-key"')
+    expect(source).not.toContain('method: "POST"')
+  })
+
   test("returns client when auth succeeds", async () => {
     const { getClientOrExit } = await import("../../src/lib/api")
     const exitSpy = mockExitThrow()
@@ -95,7 +104,7 @@ describe("runTool()", () => {
 
   test("preserves gateway error envelopes in JSON mode", async () => {
     const gatewayEnvelope = {
-      code: "AUTHORIZATION_DENIED",
+      code: "TOOL_CALL_FORBIDDEN" as const,
       message: "API key is missing the required grant.",
       requestId: "request_denied_123",
       retryable: false,

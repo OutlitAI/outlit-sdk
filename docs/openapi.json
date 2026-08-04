@@ -834,7 +834,20 @@
         "type": "object",
         "properties": {
           "code": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "INVALID_JSON",
+              "INVALID_TOOL_CALL",
+              "INVALID_TOOL_INPUT",
+              "INVALID_CREDENTIALS",
+              "TOOL_CALL_FORBIDDEN",
+              "TOOL_BINDING_MISSING",
+              "TOOL_IMPLEMENTATION_ERROR",
+              "TOOL_OUTPUT_INVALID",
+              "TOOL_GATEWAY_ERROR",
+              "plan_api_limit_exceeded",
+              "plan_billing_action_required"
+            ]
           },
           "message": {
             "type": "string"
@@ -844,6 +857,22 @@
           },
           "requestId": {
             "type": "string"
+          },
+          "plan": {
+            "type": "string"
+          },
+          "feature": {
+            "type": "string"
+          },
+          "resetAt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -852,7 +881,7 @@
           "retryable",
           "requestId"
         ],
-        "additionalProperties": true
+        "additionalProperties": false
       },
       "ApiKeyValidationResponse": {
         "type": "object",
@@ -8691,5 +8720,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "3d5e674e1f63140d5bbc3fb4443344c836bd9dffa38d6d8894069fcb65b8f91c"
+  "x-outlit-contract-hash": "0b78de357e8579be001230516cea3d6c5efa859b0003919021441794bf0dca1b"
 }

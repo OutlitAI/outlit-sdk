@@ -1,4 +1,4 @@
-import { type CliToolName, isOutlitToolsApiError } from "@outlit/tools"
+import { apiKeyValidationTransport, type CliToolName, isOutlitToolsApiError } from "@outlit/tools"
 import type { OutlitClient, OutlitToolParams } from "./client"
 import { createClient } from "./client"
 import { DEFAULT_API_URL } from "./config"
@@ -73,10 +73,10 @@ export async function getClientOrExit(
  */
 export async function pingApiKey(apiKey: string): Promise<ApiKeyValidationPayload> {
   const baseUrl = process.env.OUTLIT_API_URL ?? DEFAULT_API_URL
-  const url = new URL("/api/validate-api-key", baseUrl).toString()
+  const url = new URL(apiKeyValidationTransport.path, baseUrl).toString()
 
   const response = await globalThis.fetch(url, {
-    method: "POST",
+    method: apiKeyValidationTransport.method,
     headers: {
       Authorization: `Bearer ${apiKey}`,
     },

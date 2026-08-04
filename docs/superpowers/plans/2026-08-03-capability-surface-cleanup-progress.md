@@ -7,14 +7,14 @@ Last updated: 2026-08-04
 - SDK branch: `codex/capability-surface-cleanup`
 - SDK base: fresh `origin/main` at `4009499`
 - Core worktree: `/Users/leopaz/.codex/worktrees/1662/Core`
-- Core generator revision: `2683004635bcc6db5b26e363c50da3a96a52e90a`
+- Core generator revision: `2cd80f96024af1f44a24c501170469c939216e53`
 - Original Core cleanup checkpoint: `44f946200db58ee7a0c4aac7b91dfc4f4ccd29d4`
 
 ## Implemented companion surface
 
 - Core generates `packages/tools/src/generated/contracts.ts` as data only and `docs/openapi.json` as the canonical public OpenAPI document.
 - Generated public OpenAPI gateway security documents direct API-key bearer authentication only; delegated OAuth remains an MCP-to-Platform transport detail rather than a public SDK authentication mode.
-- The generated payload contains 29 exact public tool contracts, `default`/`analytical`/`cli` memberships, `POST /api/tools/call`, the ingest method/path/event set plus request/response schemas, shared customer enums, and contract hash `3d5e674e1f63140d5bbc3fb4443344c836bd9dffa38d6d8894069fcb65b8f91c`.
+- The generated payload contains 29 exact public tool contracts, `default`/`analytical`/`cli` memberships, tool-gateway and API-key-validation transports, the exact gateway error codes/schema, the ingest method/path/event set plus request/response schemas, shared customer enums, and contract hash `0b78de357e8579be001230516cea3d6c5efa859b0003919021441794bf0dca1b`.
 - `@outlit/tools` keeps runtime guards, source-type normalization, search-input normalization, result typing, and URL/request execution hand-authored. It no longer owns capability names, descriptions, schemas, memberships, or gateway paths.
 - Pi consumes Core's default membership and exposes the generated default, analytical, and complete public sets.
 - Every retained authored CLI capability calls the tool gateway. The direct endpoint map is deleted.
@@ -35,6 +35,6 @@ Last updated: 2026-08-04
 
 ## Completion status
 
-- Core contract and OpenAPI drift checks pass against `2683004635bcc6db5b26e363c50da3a96a52e90a`.
+- Core contract and OpenAPI drift checks pass against `2cd80f96024af1f44a24c501170469c939216e53`.
 - Changed-file Biome, the focused capability/docs suite, full workspace typecheck/build/test, generated Rust drift, `cargo fmt`, `cargo clippy -D warnings`, and the full Rust test/doc-test suite pass.
 - No missing Core fixture or generator artifact remains. The companion is ready as committed SDK slices; it has not been pushed or opened as a pull request.

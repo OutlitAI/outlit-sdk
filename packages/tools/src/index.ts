@@ -3,6 +3,7 @@ export type {
   OutlitToolsClientOptions,
   OutlitToolsFetch,
   PublicToolResult,
+  ToolGatewayErrorCode,
   ToolGatewayErrorEnvelope,
 } from "./client.js"
 export {
@@ -27,6 +28,7 @@ export {
   resolveCustomerContextSearchInput,
 } from "./contracts.js"
 export {
+  apiKeyValidationTransport,
   consumerToolPolicies,
   contractVersion,
   customerActivityWindows,
@@ -48,6 +50,8 @@ export {
   sdkConsumerContractHash,
   timelineChannels,
   timelineTimeframes,
+  toolGatewayErrorCodes,
+  toolGatewayErrorSchema,
   toolGatewayTransport,
   unsupportedCustomerFactTypes,
   userJourneyStages,

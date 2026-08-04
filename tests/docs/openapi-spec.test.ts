@@ -1,9 +1,11 @@
 import { existsSync, readFileSync } from "node:fs"
 import { describe, expect, test } from "vitest"
 import {
+  apiKeyValidationTransport,
   ingestTransport,
   publicToolNames,
   sdkConsumerContractHash,
+  toolGatewayErrorSchema,
   toolGatewayTransport,
 } from "../../packages/tools/src/generated/contracts"
 
@@ -52,7 +54,11 @@ describe("Core-generated OpenAPI spec", () => {
     const spec = readSpec()
     expect(spec.servers).toContainEqual({ url: "https://app.outlit.ai" })
     expect(Object.keys(spec.paths ?? {}).sort()).toEqual(
-      [toolGatewayTransport.path, "/api/validate-api-key", ingestTransport.pathTemplate].sort(),
+      [
+        toolGatewayTransport.path,
+        apiKeyValidationTransport.path,
+        ingestTransport.pathTemplate,
+      ].sort(),
     )
     expect(
       spec.paths?.[toolGatewayTransport.path]?.[toolGatewayTransport.method.toLowerCase()],
@@ -74,15 +80,9 @@ describe("Core-generated OpenAPI spec", () => {
   })
 
   test("documents the stable gateway error envelope", () => {
-    expect(readSpec().components?.schemas?.GatewayError).toMatchObject({
-      required: ["code", "message", "retryable", "requestId"],
-      properties: {
-        code: { type: "string" },
-        message: { type: "string" },
-        retryable: { type: "boolean" },
-        requestId: { type: "string" },
-      },
-    })
+    const { $schema: _jsonSchemaDialect, ...openApiErrorSchema } = toolGatewayErrorSchema
+
+    expect(readSpec().components?.schemas?.GatewayError).toEqual(openApiErrorSchema)
   })
 
   test("keeps ingest unauthenticated and excludes rejected stage and billing events", () => {
