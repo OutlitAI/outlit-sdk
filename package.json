@@ -27,6 +27,8 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "check": "biome check --write .",
+    "contracts:generate": "bun scripts/generate-ingest-contract-consumers.ts",
+    "contracts:check": "bun scripts/generate-ingest-contract-consumers.ts --check",
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean && rm -rf node_modules",
     "changeset": "changeset",

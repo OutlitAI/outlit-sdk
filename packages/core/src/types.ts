@@ -2,7 +2,9 @@
 // EVENT TYPES
 // ============================================
 
-export type EventType = "pageview" | "form" | "identify" | "custom" | "calendar" | "engagement"
+import { ingestTransport } from "../../tools/src/generated/contracts"
+
+export type EventType = (typeof ingestTransport.eventTypes)[number]
 
 export type CalendarProvider = "cal.com" | "calendly" | "unknown"
 

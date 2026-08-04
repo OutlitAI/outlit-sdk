@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { describe, expect, test } from "vitest"
+import { ingestTransport } from "../../packages/tools/src/generated/contracts"
 
 const repositoryRoot = resolve(import.meta.dirname, "../..")
 const retiredTrackingIdentifiers = [
@@ -44,5 +45,19 @@ describe("public tracking surface", () => {
       "Identify(",
     ])
     expect(eventEnum).not.toMatch(/Stage|Billing/)
+  })
+
+  test("the generated Rust transport stays aligned with Core-owned ingest data", () => {
+    const rustContract = readFileSync(
+      resolve(repositoryRoot, "crates/outlit/src/generated_ingest_contract.rs"),
+      "utf8",
+    )
+
+    expect(rustContract).toContain(`INGEST_METHOD: &str = "${ingestTransport.method}"`)
+    expect(rustContract).toContain(`INGEST_PATH_TEMPLATE: &str = "${ingestTransport.pathTemplate}"`)
+    for (const eventType of ingestTransport.eventTypes) {
+      expect(rustContract).toContain(`"${eventType}"`)
+    }
+    expect(rustContract).not.toMatch(/"stage"|"billing"/)
   })
 })

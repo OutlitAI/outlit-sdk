@@ -26,6 +26,7 @@ mod builders;
 mod client;
 mod config;
 mod error;
+mod generated_ingest_contract;
 mod queue;
 mod transport;
 pub mod types;
