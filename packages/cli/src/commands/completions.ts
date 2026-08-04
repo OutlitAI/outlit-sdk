@@ -20,11 +20,6 @@ const CURSOR_F: Flag = { name: "--cursor", desc: "Pagination cursor" }
 
 const COMMON = [API_KEY_F, JSON_F] as const
 const PAGINATED = [...COMMON, LIMIT_F, CURSOR_F] as const
-const JSON_BODY = [
-  ...COMMON,
-  { name: "--data", desc: "Inline JSON request body" },
-  { name: "--file", desc: "Path to JSON request body" },
-] as const
 const ACTIVITY_ORDER = [
   { name: "--no-activity-in", desc: "No activity in period" },
   { name: "--has-activity-in", desc: "Activity in period" },
@@ -263,101 +258,6 @@ const COMMANDS: readonly CmdDef[] = [
     ],
   },
   {
-    name: "agents",
-    desc: "Configure Outlit agents",
-    subs: [
-      { name: "list", desc: "List configured agents", flags: [...COMMON] },
-      { name: "get", desc: "Get one configured agent", flags: [...COMMON] },
-      { name: "templates", desc: "List available agent templates", flags: [...COMMON] },
-      { name: "actions", desc: "List available agent configuration actions", flags: [...COMMON] },
-      {
-        name: "runs",
-        desc: "Inspect and start agent runs",
-        subs: [
-          { name: "list", desc: "List runs for one agent", flags: [...PAGINATED] },
-          { name: "get", desc: "Get one agent run", flags: [...COMMON] },
-          {
-            name: "start",
-            desc: "Start a manual churn template run",
-            flags: [
-              ...COMMON,
-              { name: "--client-request-id", desc: "Idempotency key for manual run start" },
-            ],
-          },
-        ],
-      },
-      {
-        name: "create",
-        desc: "Create an agent",
-        flags: [
-          ...COMMON,
-          { name: "--template", desc: "Agent template key to create" },
-          { name: "--type", desc: "Agent type to create" },
-          { name: "--display-name", desc: "Agent display name" },
-          { name: "--instructions", desc: "Agent instructions" },
-          { name: "--max-items-to-surface", desc: "Maximum items surfaced per run" },
-          { name: "--action-keys", desc: "Comma-separated action keys" },
-        ],
-      },
-      {
-        name: "update",
-        desc: "Update an agent",
-        flags: [
-          ...COMMON,
-          { name: "--display-name", desc: "Agent display name" },
-          { name: "--instructions", desc: "Agent instructions" },
-          { name: "--action-keys", desc: "Comma-separated action keys" },
-          { name: "--clear-action-keys", desc: "Clear all action keys" },
-        ],
-      },
-      { name: "enable", desc: "Enable a configured agent", flags: [...COMMON] },
-      { name: "disable", desc: "Disable a configured agent", flags: [...COMMON] },
-      { name: "rename", desc: "Rename a configured agent", flags: [...COMMON] },
-    ],
-  },
-  {
-    name: "automations",
-    desc: "Inspect automation configuration",
-    subs: [
-      { name: "list", desc: "List configured automations", flags: [...COMMON] },
-      { name: "get", desc: "Get one configured automation", flags: [...COMMON] },
-      {
-        name: "runs",
-        desc: "Inspect automation runs",
-        subs: [
-          {
-            name: "list",
-            desc: "List automation runs",
-            flags: [
-              ...COMMON,
-              { name: "--limit", desc: "Max rows" },
-              { name: "--cursor", desc: "Pagination cursor" },
-            ],
-          },
-          { name: "get", desc: "Get one automation run", flags: [...COMMON] },
-        ],
-      },
-      { name: "options", desc: "Show automation schemas and constants", flags: [...COMMON] },
-      { name: "create", desc: "Create an agent automation", flags: [...JSON_BODY] },
-      { name: "update", desc: "Update an agent automation", flags: [...JSON_BODY] },
-      { name: "enable", desc: "Enable a configured automation", flags: [...COMMON] },
-      { name: "disable", desc: "Disable a configured automation", flags: [...COMMON] },
-      { name: "archive", desc: "Archive a configured automation", flags: [...COMMON] },
-    ],
-  },
-  {
-    name: "signals",
-    desc: "Inspect automation signals",
-    subs: [
-      { name: "list", desc: "List configured signals", flags: [...COMMON] },
-      { name: "get", desc: "Get one configured signal", flags: [...COMMON] },
-      { name: "options", desc: "Show signal schemas and catalog options", flags: [...COMMON] },
-      { name: "create", desc: "Create an automation signal", flags: [...JSON_BODY] },
-      { name: "update", desc: "Update an automation signal", flags: [...JSON_BODY] },
-      { name: "archive", desc: "Archive a configured signal", flags: [...COMMON] },
-    ],
-  },
-  {
     name: "destinations",
     desc: "Inspect automation destinations",
     subs: [
@@ -399,39 +299,6 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "enable", desc: "Enable a configured destination", flags: [...COMMON] },
       { name: "disable", desc: "Disable a configured destination", flags: [...COMMON] },
       { name: "archive", desc: "Archive a configured destination", flags: [...COMMON] },
-    ],
-  },
-  {
-    name: "identity",
-    desc: "Inspect and manage identity resolution",
-    subs: [
-      {
-        name: "suggestions",
-        desc: "Inspect customer identity merge suggestions",
-        subs: [
-          {
-            name: "list",
-            desc: "List identity merge suggestions",
-            flags: [
-              ...COMMON,
-              { name: "--status", desc: "Filter by suggestion status" },
-              { name: "--confidence", desc: "Filter by confidence" },
-              { name: "--limit", desc: "Max results (1-100)" },
-            ],
-          },
-          { name: "get", desc: "Get one identity merge suggestion", flags: [...COMMON] },
-          {
-            name: "queue",
-            desc: "Queue one suggested identity merge",
-            flags: [...COMMON, { name: "--review-notes", desc: "Review notes" }],
-          },
-          {
-            name: "reject",
-            desc: "Reject one suggested identity merge",
-            flags: [...COMMON, { name: "--review-notes", desc: "Review notes" }],
-          },
-        ],
-      },
     ],
   },
   {
