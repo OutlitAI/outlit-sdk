@@ -86,9 +86,9 @@ Output discipline:
 - Start with `Candidate review summary:` and state reviewed, ranked, and excluded counts.
 - For each ranked customer, include a hard signal, supporting context, confidence, recommended action, and missing data.
 - Include excluded candidates with a short reason when candidates were reviewed but not ranked.
-- If a usage-decay review inspects an already-churned account, include it in `excludedCandidates` with an exclusion reason instead of `rankedCustomers`; keep `candidateReviewSummary` counts aligned with the reviewed, ranked, and excluded totals in the notification payload.
-- Call `outlit_send_notification` once after evidence review. Use severity `low` and `rankedCustomers: []` when no live account survives the evidence gate.
-- For usage-decay, the notification `payload` must include `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, and `openQuestions`.
+- If a usage-decay review inspects an already-churned account, include it in `excludedCandidates` with an exclusion reason instead of `rankedCustomers`; keep `candidateReviewSummary` counts aligned with the reviewed, ranked, and excluded totals in the structured report.
+- Return the structured report in the final answer. Use severity `low` and `rankedCustomers: []` when no live account survives the evidence gate.
+- For usage-decay, include `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, and `openQuestions`.
 - Do not rename JSON keys. Use `mrrCents` and confidence values `high`/`medium`/`low`.
 - Treat pretriage activity metrics as hard behavior evidence. If timeline/search/fact context is sparse, lower confidence instead of excluding solely for sparse context.
 
@@ -143,7 +143,7 @@ Output discipline:
 
 - Start with `Candidate review summary:` and state reviewed, ranked, and excluded counts.
 - Treat activation pretriage metrics as hard behavior evidence. Use richer Outlit evidence to explain why the activation gap matters, not to re-discover the gap from scratch.
-- Call `outlit_send_notification` once after evidence review. Use severity `low` and `rankedCustomers: []` when no account survives the evidence gate.
+- Return the structured report after evidence review. Use severity `low` and `rankedCustomers: []` when no account survives the evidence gate.
 - Do not expose internal event names or SQL details in customer-facing recommendations.
 
 ### Expansion Readiness
@@ -179,16 +179,14 @@ Then include short evidence notes for each ranked customer:
 - why the category applies
 - what would change the assessment
 
-For these growth-agent commands, call `outlit_send_notification` by default after evidence review and before the final answer.
-For this command family, that `outlit_send_notification` call is a required structured-output step, not an unsolicited external action, as long as it follows the payload and severity rules below.
+For these growth-agent commands, include a structured JSON-compatible report after the human-readable final answer.
 
-When using `outlit_send_notification`:
+When returning the structured report:
 
 - keep `title` short and specific
-- use `message` for a brief summary
+- use `summary` for a brief summary
 - set `severity` only to `low`, `medium`, or `high`
-- put a JSON-compatible object in `payload`; do not pass a JSON string, markdown table, code fence, or prose blob
-- include `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, and `openQuestions` in the payload when returning portfolio or scoped growth-agent results
-- use stable payload keys so Slack receivers and downstream automation can parse the result
+- include `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, and `openQuestions` when returning portfolio or scoped growth-agent results
+- use stable keys so callers can parse the result
 
-Do not send messages, create tasks, update CRM records, or take external actions unless the user explicitly asks and the necessary tools are available.
+Do not send messages, create tasks, update CRM records, or take external actions.
