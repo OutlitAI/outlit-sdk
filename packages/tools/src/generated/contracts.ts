@@ -7338,6 +7338,24 @@ export const publicToolContracts = {
   },
 } as const
 
+export const publicOpenApiTransports = [
+  {
+    "openApiPath": "/api/tools/call",
+    "method": "POST",
+    "openApiOperation": "call_tool",
+  },
+  {
+    "openApiPath": "/api/validate-api-key",
+    "method": "POST",
+    "openApiOperation": "validate_api_key",
+  },
+  {
+    "openApiPath": "/api/i/v1/{publicKey}/events",
+    "method": "POST",
+    "openApiOperation": "ingest_events",
+  },
+] as const
+
 export const consumerToolPolicies = {
   "default": [
     "outlit_list_customers",
@@ -8454,4 +8472,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "0b78de357e8579be001230516cea3d6c5efa859b0003919021441794bf0dca1b" as const
+export const sdkConsumerContractHash = "378f57ef3007c6f0da4038591991bacc90bb9ddf855129ad782de31155075861" as const

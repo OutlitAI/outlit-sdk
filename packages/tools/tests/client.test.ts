@@ -20,6 +20,7 @@ import {
   getPublicToolContract,
   isOutlitToolsApiError,
   normalizeCustomerSourceType,
+  publicOpenApiTransports,
   resolveCustomerContextSearchInput,
   sdkConsumerContractHash,
   sqlToolNames,
@@ -98,7 +99,9 @@ describe("tool contracts", () => {
     expect(generated).not.toMatch(/\bfunction\b|\bclass\b|new Set|new Map/)
   })
 
-  test("exports Core-owned gateway validation and error contracts", () => {
+  test("exports Core-owned transport and error contracts", () => {
+    expect(publicOpenApiTransports).toHaveLength(3)
+    expect(new Set(publicOpenApiTransports.map((transport) => transport.openApiPath)).size).toBe(3)
     expect(apiKeyValidationTransport).toEqual({
       method: "POST",
       path: "/api/validate-api-key",
@@ -208,7 +211,7 @@ describe("tool contracts", () => {
       }),
     )
     expect(sdkConsumerContractHash).toBe(
-      "0b78de357e8579be001230516cea3d6c5efa859b0003919021441794bf0dca1b",
+      "378f57ef3007c6f0da4038591991bacc90bb9ddf855129ad782de31155075861",
     )
 
     const activatedSincePattern = customerProperties.activatedSince?.pattern

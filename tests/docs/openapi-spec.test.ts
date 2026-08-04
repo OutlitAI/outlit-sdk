@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from "node:fs"
 import { describe, expect, test } from "vitest"
 import {
-  apiKeyValidationTransport,
   ingestTransport,
+  publicOpenApiTransports,
   publicToolNames,
   sdkConsumerContractHash,
   toolGatewayErrorSchema,
@@ -54,12 +54,11 @@ describe("Core-generated OpenAPI spec", () => {
     const spec = readSpec()
     expect(spec.servers).toContainEqual({ url: "https://app.outlit.ai" })
     expect(Object.keys(spec.paths ?? {}).sort()).toEqual(
-      [
-        toolGatewayTransport.path,
-        apiKeyValidationTransport.path,
-        ingestTransport.pathTemplate,
-      ].sort(),
+      publicOpenApiTransports.map((transport) => transport.openApiPath).sort(),
     )
+    for (const transport of publicOpenApiTransports) {
+      expect(spec.paths?.[transport.openApiPath]?.[transport.method.toLowerCase()]).toBeDefined()
+    }
     expect(
       spec.paths?.[toolGatewayTransport.path]?.[toolGatewayTransport.method.toLowerCase()],
     ).toBeDefined()

@@ -44,6 +44,7 @@ export {
   customerSourceTypes,
   customerTimeframes,
   ingestTransport,
+  publicOpenApiTransports,
   publicToolContracts,
   publicToolNames,
   schemaTables,
