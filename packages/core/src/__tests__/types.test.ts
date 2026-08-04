@@ -6,6 +6,7 @@ import type {
   IdentifyTraits,
   ServerIdentifyOptions,
   ServerTrackOptions,
+  TrackerEvent,
 } from "../types"
 
 describe("CustomerTraits", () => {
@@ -113,5 +114,10 @@ describe("EventType", () => {
 
     expect(stage).toBe("stage")
     expect(billing).toBe("billing")
+  })
+
+  it("has no lifecycle or billing event variants in the tracker union", () => {
+    expectTypeOf<Extract<TrackerEvent, { type: "stage" }>>().toEqualTypeOf<never>()
+    expectTypeOf<Extract<TrackerEvent, { type: "billing" }>>().toEqualTypeOf<never>()
   })
 })

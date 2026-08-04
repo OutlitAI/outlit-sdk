@@ -95,7 +95,7 @@ describe("runTool()", () => {
   test("preserves platform command error envelopes in JSON mode", async () => {
     const commandEnvelope = {
       ok: false,
-      commandId: "agent.create",
+      commandId: "settings.update",
       commandVersion: 1,
       error: {
         code: "authorization_denied",
@@ -122,8 +122,8 @@ describe("runTool()", () => {
     try {
       await runTool(
         client,
-        "outlit_agent_create",
-        { type: "template", templateKey: "churn", mode: "draft" },
+        "outlit_settings_update",
+        { defaultTimezone: "America/Los_Angeles" },
         true,
       )
     } catch (e) {
@@ -144,7 +144,7 @@ describe("runTool()", () => {
       ok: true,
       result: {
         data: {
-          templates: [{ key: "churn", name: "Churn prevention" }],
+          destinations: [{ id: "dest_123", label: "#customer-ops" }],
         },
       },
     })
@@ -154,19 +154,19 @@ describe("runTool()", () => {
 
     setInteractive()
     try {
-      await runTool(client, "outlit_agent_list_templates", {}, false, {
+      await runTool(client, "outlit_destination_list", {}, false, {
         table: {
-          itemsKey: "result.data.templates",
+          itemsKey: "result.data.destinations",
           columns: [
-            { header: "Key", key: "key" },
-            { header: "Name", key: "name" },
+            { header: "ID", key: "id" },
+            { header: "Label", key: "label" },
           ],
         },
       })
 
       const output = logSpy.mock.calls.map((call) => call[0] as string).join("\n")
-      expect(output).toContain("churn")
-      expect(output).toContain("Churn prevention")
+      expect(output).toContain("dest_123")
+      expect(output).toContain("#customer-ops")
     } finally {
       setNonInteractive()
       logSpy.mockRestore()
