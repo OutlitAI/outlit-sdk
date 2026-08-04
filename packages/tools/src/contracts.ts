@@ -294,13 +294,15 @@ export const customerToolContracts = {
     toolName: "outlit_get_customer",
     title: "Get Customer",
     description:
-      "Get full details for a single customer. Use this when you already know which customer you want to inspect. Optionally include related data (users, revenue, recent activity, engagement metrics).",
+      "Get full details for a single customer. Use this when you already know which customer you want to inspect. Optionally include related data (users, revenue, recent activity, engagement metrics, company enrichment).",
     inputSchema: {
       $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
       properties: {
         customer: {
           type: "string",
+          minLength: 1,
+          maxLength: 500,
           description: "Customer ID, domain, or name to look up",
         },
         include: {
@@ -308,7 +310,7 @@ export const customerToolContracts = {
           type: "array",
           items: {
             type: "string",
-            enum: ["users", "revenue", "recentTimeline", "behaviorMetrics"],
+            enum: ["users", "revenue", "recentTimeline", "behaviorMetrics", "enrichment"],
           },
         },
         timeframe: {
@@ -333,6 +335,8 @@ export const customerToolContracts = {
       properties: {
         customer: {
           type: "string",
+          minLength: 1,
+          maxLength: 200,
           description: "Customer ID or domain",
         },
         channels: {
@@ -410,6 +414,8 @@ export const customerToolContracts = {
       properties: {
         customer: {
           type: "string",
+          minLength: 1,
+          maxLength: 500,
           description: "Customer ID or domain",
         },
         status: {
@@ -563,7 +569,7 @@ export const customerToolContracts = {
     toolName: "outlit_list_sources",
     title: "List Sources",
     description:
-      "List concrete source records deterministically. Use this instead of semantic search when you need enumerated calls, emails, calendar events, support tickets, or opportunities.",
+      "List concrete source records deterministically. Use this instead of semantic search when you need enumerated calls, emails, calendar events, support tickets, Slack conversations, or opportunities.",
     inputSchema: {
       $schema: "https://json-schema.org/draft/2020-12/schema",
       type: "object",
@@ -698,6 +704,8 @@ export const customerToolContracts = {
       properties: {
         sql: {
           type: "string",
+          minLength: 1,
+          maxLength: 10000,
           description: "SQL SELECT query to execute",
         },
         limit: {
@@ -898,6 +906,7 @@ export const customerIncludeSections = [
   "revenue",
   "recentTimeline",
   "behaviorMetrics",
+  "enrichment",
 ] as const
 
 export const customerTimeframes = ["7d", "14d", "30d", "90d"] as const
@@ -935,7 +944,7 @@ export const workspaceUserListOrderFields = ["name", "email", "owned_customer_co
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "ce2f91d56dfb0d42b8730b03431f2a7be5399739c365360bae8102e3000f091d" as const
+  "d824d8ddea0f2240c50e934f825f40374ab6559ca06d2fb3270051681a4d74c8" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]
