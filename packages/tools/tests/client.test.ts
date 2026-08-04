@@ -1,7 +1,6 @@
 import { describe, expect, expectTypeOf, test, vi } from "vitest"
 
 import {
-  actionToolNames,
   allCustomerToolNames,
   analyticalAgentToolNames,
   type CustomerAnalyticsRow,
@@ -17,35 +16,49 @@ import {
   defaultAgentToolNames,
   getCustomerToolContract,
   normalizeCustomerSourceType,
-  notificationSeverityValues,
   resolveCustomerContextSearchInput,
   sqlToolNames,
 } from "../src/index.js"
 
 describe("toolsets", () => {
-  test("exposes the notification action toolset", () => {
-    expect(actionToolNames).toEqual(["outlit_send_notification"])
+  test("matches the Core-owned public tool set and excludes retired notification sending", () => {
+    expect(allCustomerToolNames).toEqual([
+      "outlit_list_customers",
+      "outlit_list_users",
+      "outlit_list_workspace_users",
+      "outlit_get_customer",
+      "outlit_get_timeline",
+      "outlit_list_facts",
+      "outlit_get_fact",
+      "outlit_get_source",
+      "outlit_list_sources",
+      "outlit_search_customer_context",
+      "outlit_query",
+      "outlit_schema",
+    ])
+    expect(allCustomerToolNames).not.toContain("outlit_send_notification")
   })
 
   test("keeps SQL out of the default agent toolset", () => {
     expect(defaultAgentToolNames).toContain("outlit_search_customer_context")
     expect(defaultAgentToolNames).toContain("outlit_get_customer")
     expect(defaultAgentToolNames).toContain("outlit_list_workspace_users")
-    expect(defaultAgentToolNames).toContain("outlit_send_notification")
+    expect(defaultAgentToolNames).toContain("outlit_list_sources")
+    expect(defaultAgentToolNames).not.toContain("outlit_send_notification")
     expect(defaultAgentToolNames).not.toContain("outlit_query")
     expect(defaultAgentToolNames).not.toContain("outlit_schema")
     expect(sqlToolNames).toEqual(["outlit_schema", "outlit_query"])
     expect(allCustomerToolNames).toContain("outlit_query")
     expect(allCustomerToolNames).toContain("outlit_list_workspace_users")
-    expect(allCustomerToolNames).toContain("outlit_send_notification")
+    expect(allCustomerToolNames).not.toContain("outlit_send_notification")
   })
 
   test("exposes an analytical agent toolset with only default tools plus SQL", () => {
-    expect(analyticalAgentToolNames).toEqual([...defaultAgentToolNames, ...sqlToolNames])
-    expect(analyticalAgentToolNames).toContain("outlit_send_notification")
+    expect(analyticalAgentToolNames).toEqual(allCustomerToolNames)
+    expect(analyticalAgentToolNames).not.toContain("outlit_send_notification")
     expect(analyticalAgentToolNames).toContain("outlit_schema")
     expect(analyticalAgentToolNames).toContain("outlit_query")
-    expect(allCustomerToolNames).toContain("outlit_send_notification")
+    expect(allCustomerToolNames).not.toContain("outlit_send_notification")
     expect(allCustomerToolNames).toContain("outlit_schema")
     expect(allCustomerToolNames).toContain("outlit_query")
   })
@@ -152,7 +165,7 @@ describe("tool contracts", () => {
       }),
     )
     expect(customerToolContractHash).toBe(
-      "d824d8ddea0f2240c50e934f825f40374ab6559ca06d2fb3270051681a4d74c8",
+      "b9ca81d1ec676dfbfa2ac72f8ef69946355504298b283050d7c161d06b9923cb",
     )
 
     const activatedSincePattern = customerProperties.activatedSince?.pattern
@@ -242,42 +255,6 @@ describe("tool contracts", () => {
     >
     expect(searchProperties.sourceTypes?.items?.enum).toEqual(customerSourceTypeInputs)
   })
-
-  test("exposes the notification contract and severity values", () => {
-    const contract = getCustomerToolContract("outlit_send_notification")
-    const properties = contract.inputSchema.properties as Record<
-      string,
-      {
-        enum?: string[]
-        type?: string
-        items?: { format?: string; type?: string }
-      }
-    >
-
-    expect(contract.inputSchema.required).toEqual(["title"])
-    expect(contract.inputSchema.additionalProperties).toBe(false)
-    expect(properties.markdown).toEqual(
-      expect.objectContaining({
-        type: "string",
-      }),
-    )
-    expect(properties.destinationIds).toEqual(
-      expect.objectContaining({
-        type: "array",
-        items: expect.objectContaining({
-          type: "string",
-          format: "uuid",
-        }),
-      }),
-    )
-    expect(properties.severity).toEqual(
-      expect.objectContaining({
-        enum: ["low", "medium", "high"],
-        type: "string",
-      }),
-    )
-    expect(notificationSeverityValues).toEqual(["low", "medium", "high"])
-  })
 })
 
 describe("createOutlitClient", () => {
@@ -323,42 +300,6 @@ describe("createOutlitClient", () => {
       body: JSON.stringify({
         tool: "outlit_list_customers",
         input: { limit: 10 },
-      }),
-    })
-  })
-
-  test("calls the notification tool endpoint with notification input", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }))
-
-    const client = createOutlitClient({
-      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
-      baseUrl: "https://example.outlit.test",
-      fetch: fetchMock,
-    })
-
-    await client.callTool("outlit_send_notification", {
-      title: "Reminder",
-      markdown: "**Reminder**\n\n- Customer: Acme",
-      severity: "low",
-      destinationIds: ["00000000-0000-4000-8000-000000000001"],
-    })
-
-    expect(fetchMock).toHaveBeenCalledWith("https://example.outlit.test/api/tools/call", {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer ok_abcdefghijklmnopqrstuvwxyz123456",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        tool: "outlit_send_notification",
-        input: {
-          title: "Reminder",
-          markdown: "**Reminder**\n\n- Customer: Acme",
-          severity: "low",
-          destinationIds: ["00000000-0000-4000-8000-000000000001"],
-        },
       }),
     })
   })

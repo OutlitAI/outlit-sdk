@@ -2,7 +2,6 @@ import { defaultAgentToolNames, getCustomerToolContract } from "@outlit/tools"
 import { describe, expect, test, vi } from "vitest"
 
 import {
-  actionToolNames,
   createOutlitPiExtension,
   createOutlitPiTool,
   type OutlitPiToolDefinition,
@@ -69,13 +68,19 @@ describe("createOutlitPiExtension", () => {
 
     const registeredNames = pi.registeredTools.map((tool) => tool.name)
     expect(registeredNames).toEqual([...defaultAgentToolNames])
-    expect(registeredNames).toContain("outlit_send_notification")
+    expect(registeredNames).not.toContain("outlit_send_notification")
     expect(registeredNames).not.toContain("outlit_query")
     expect(registeredNames).not.toContain("outlit_schema")
   })
 
-  test("exports the action tool names from Pi", () => {
-    expect(actionToolNames).toEqual(["outlit_send_notification"])
+  test("rejects retired notification sending", () => {
+    expect(() =>
+      // @ts-expect-error Notification sending is intentionally absent from the public tool type.
+      createOutlitPiTool("outlit_send_notification", {
+        apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+        fetch: vi.fn(),
+      }),
+    ).toThrow("Unknown Outlit customer tool")
   })
 
   test("deduplicates custom tool names before registration", () => {
@@ -154,33 +159,6 @@ describe("createOutlitPiExtension", () => {
     })
 
     expect(tool.parameters).not.toHaveProperty("$schema")
-  })
-
-  test("exposes the notification tool contract through Pi", () => {
-    const tool = createOutlitPiTool("outlit_send_notification", {
-      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
-      fetch: vi.fn(),
-    })
-    const contract = getCustomerToolContract("outlit_send_notification")
-
-    expect(tool.name).toBe("outlit_send_notification")
-    expect(tool.label).toBe("Outlit Send Notification")
-    expect(tool.description).toBe(contract.description)
-    expect(tool.parameters).toEqual(withoutRootSchema(contract.inputSchema))
-
-    if (
-      tool.parameters &&
-      typeof tool.parameters === "object" &&
-      "required" in tool.parameters &&
-      Array.isArray(tool.parameters.required)
-    ) {
-      expect(tool.parameters.required).toEqual(["title"])
-      expect(Object.keys(tool.parameters.properties ?? {})).toEqual(
-        expect.arrayContaining(["title", "markdown", "payload", "destinationIds"]),
-      )
-    } else {
-      throw new Error("Expected notification tool parameters to expose required fields")
-    }
   })
 
   test("requires an Outlit API key when a tool is executed", async () => {

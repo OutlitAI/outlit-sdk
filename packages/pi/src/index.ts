@@ -49,6 +49,10 @@ export function createOutlitPiTool(
   toolName: CustomerToolName,
   options: OutlitPiExtensionOptions = {},
 ): OutlitPiToolDefinition {
+  if (!isCustomerToolName(toolName)) {
+    throw new Error(`Unknown Outlit customer tool: ${toolName}`)
+  }
+
   const contract = getCustomerToolContract(toolName)
   const label = formatOutlitToolLabel(toolName)
 
@@ -153,7 +157,6 @@ function firstLine(value: string): string {
 
 export type { CustomerToolName } from "@outlit/tools"
 export {
-  actionToolNames,
   allCustomerToolNames,
   analyticalAgentToolNames,
   defaultAgentToolNames,

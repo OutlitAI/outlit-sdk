@@ -15,7 +15,6 @@ export const customerToolNames = [
   "outlit_search_customer_context",
   "outlit_query",
   "outlit_schema",
-  "outlit_send_notification",
 ] as const
 
 export const customerSourceTypes = [
@@ -738,105 +737,6 @@ export const customerToolContracts = {
       additionalProperties: false,
     },
   },
-  outlit_send_notification: {
-    toolName: "outlit_send_notification",
-    title: "Send Notification",
-    description:
-      "Send or post a notification. Use only when the user explicitly asks you to send, post, or notify. Slack is the default notifier when destinations are omitted.",
-    inputSchema: {
-      $schema: "https://json-schema.org/draft/2020-12/schema",
-      type: "object",
-      properties: {
-        title: {
-          type: "string",
-          minLength: 1,
-          maxLength: 160,
-          description: "Notification title",
-        },
-        markdown: {
-          description: "Markdown notification body rendered for the target provider",
-          type: "string",
-          minLength: 1,
-          maxLength: 100000,
-        },
-        payload: {
-          description:
-            "Optional JSON-compatible payload. Serialized size must be 100,000 characters or fewer.",
-          $ref: "#/$defs/__schema0",
-        },
-        message: {
-          description: "Optional summary message",
-          type: "string",
-          minLength: 1,
-          maxLength: 1200,
-        },
-        severity: {
-          description: "Optional notification severity",
-          type: "string",
-          enum: ["low", "medium", "high"],
-        },
-        source: {
-          description: "Optional source label",
-          type: "string",
-          minLength: 1,
-          maxLength: 120,
-        },
-        subject: {
-          description: "Optional subject line",
-          type: "string",
-          minLength: 1,
-          maxLength: 240,
-        },
-        destinationIds: {
-          description: "Optional NotificationDestination ids. Omit to use the default notifier.",
-          minItems: 1,
-          maxItems: 10,
-          type: "array",
-          items: {
-            type: "string",
-            format: "uuid",
-            pattern:
-              "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-          },
-        },
-      },
-      required: ["title"],
-      additionalProperties: false,
-      $defs: {
-        __schema0: {
-          anyOf: [
-            {
-              type: "string",
-            },
-            {
-              type: "number",
-            },
-            {
-              type: "boolean",
-            },
-            {
-              type: "null",
-            },
-            {
-              type: "array",
-              items: {
-                $ref: "#/$defs/__schema0",
-              },
-            },
-            {
-              type: "object",
-              propertyNames: {
-                type: "string",
-              },
-              additionalProperties: {
-                $ref: "#/$defs/__schema0",
-              },
-            },
-          ],
-        },
-      },
-    },
-  },
 } as const
 
 export const customerBillingStatuses = [
@@ -911,10 +811,6 @@ export const customerIncludeSections = [
 
 export const customerTimeframes = ["7d", "14d", "30d", "90d"] as const
 
-export const notificationProviderValues = ["slack"] as const
-
-export const notificationSeverityValues = ["low", "medium", "high"] as const
-
 export const timelineChannels = [
   "PRODUCT",
   "COMMUNICATION",
@@ -944,7 +840,7 @@ export const workspaceUserListOrderFields = ["name", "email", "owned_customer_co
 export const schemaTables = ["activity", "customers", "users", "revenue"] as const
 
 export const customerToolContractHash =
-  "d824d8ddea0f2240c50e934f825f40374ab6559ca06d2fb3270051681a4d74c8" as const
+  "b9ca81d1ec676dfbfa2ac72f8ef69946355504298b283050d7c161d06b9923cb" as const
 
 export type CustomerToolName = (typeof customerToolNames)[number]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]

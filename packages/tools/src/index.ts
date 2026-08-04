@@ -33,8 +33,6 @@ export {
   getCustomerToolContract,
   isCustomerToolName,
   normalizeCustomerSourceType,
-  notificationProviderValues,
-  notificationSeverityValues,
   resolveCustomerContextSearchInput,
   schemaTables,
   timelineChannels,
@@ -54,7 +52,6 @@ export type {
 } from "./results.js"
 
 export {
-  actionToolNames,
   allCustomerToolNames,
   analyticalAgentToolNames,
   defaultAgentToolNames,
