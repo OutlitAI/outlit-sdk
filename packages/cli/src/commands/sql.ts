@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs"
-import { customerToolContracts } from "@outlit/tools"
+import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
@@ -80,6 +80,6 @@ export default defineCommand({
       )
     }
 
-    return runTool(client, customerToolContracts.outlit_query.toolName, { sql, limit }, json)
+    return runTool(client, publicToolContracts.outlit_query.toolName, { sql, limit }, json)
   },
 })

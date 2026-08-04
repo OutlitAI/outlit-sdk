@@ -28,7 +28,7 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, "outlit_destination_archive", { id: args.id }, json, {
+    return runTool(client, "outlit_archive_destination", { id: args.id }, json, {
       spinnerMessage: "Archiving destination...",
     })
   },

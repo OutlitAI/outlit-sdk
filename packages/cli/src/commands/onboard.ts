@@ -20,7 +20,6 @@ interface OnboardCheck {
 
 interface IntegrationProviderCapability {
   setupMode?: string
-  postConnectSteps?: Array<{ required?: boolean }>
 }
 
 interface IntegrationListItem {
@@ -33,7 +32,6 @@ interface OnboardIntegrationSummary {
   connectedCount: number
   errorCount: number
   setupModes: Record<string, number>
-  requiredFollowUpCount: number
 }
 
 const AGENT_IDS = [
@@ -205,12 +203,11 @@ async function checkIntegrationReadiness(
     connectedCount: 0,
     errorCount: 0,
     setupModes: {},
-    requiredFollowUpCount: 0,
   }
 
   try {
     const client = await createClient(apiKey)
-    const capabilities = (await client.callTool("outlit_integration_capabilities", {})) as {
+    const capabilities = (await client.callTool("outlit_get_integration_capabilities", {})) as {
       providers?: IntegrationProviderCapability[]
     }
     const providers = Array.isArray(capabilities.providers) ? capabilities.providers : []
@@ -222,12 +219,6 @@ async function checkIntegrationReadiness(
       acc[setupMode] = (acc[setupMode] ?? 0) + 1
       return acc
     }, {})
-    summary.requiredFollowUpCount = providers.reduce((count, provider) => {
-      return (
-        count + (provider.postConnectSteps ?? []).filter((step) => step.required === true).length
-      )
-    }, 0)
-
     checks.push({
       name: "Integration capabilities",
       status: "pass",
@@ -235,9 +226,9 @@ async function checkIntegrationReadiness(
     })
 
     const integrations = (await client.callTool("outlit_list_integrations", {})) as {
-      items?: IntegrationListItem[]
+      integrations?: IntegrationListItem[]
     }
-    const items = Array.isArray(integrations.items) ? integrations.items : []
+    const items = Array.isArray(integrations.integrations) ? integrations.integrations : []
     summary.connectedCount = items.filter((item) => item.status === "connected").length
     summary.errorCount = items.filter((item) => item.status === "error").length
 

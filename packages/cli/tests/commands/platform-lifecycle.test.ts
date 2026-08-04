@@ -7,23 +7,9 @@ import {
   useTempEnv,
 } from "../helpers"
 
-const mockEnvelope = {
-  ok: true,
-  commandId: "platform.lifecycle",
-  commandVersion: 1,
-  correlationId: "corr_lifecycle_123",
-  result: {
-    operationId: "platform.lifecycle",
-    status: "completed",
-    resources: [],
-    data: {},
-    warnings: [],
-  },
-}
+const mockResult = { destination: { id: "destination_123" } }
 
-const mockCallTool = mock(
-  async (_toolName: string, _params: Record<string, unknown>) => mockEnvelope,
-)
+const mockCallTool = mock(async (_toolName: string, _params: Record<string, unknown>) => mockResult)
 
 mock.module("../../src/lib/client", () => ({
   createClient: async () => ({
@@ -79,20 +65,20 @@ describe("platform lifecycle commands", () => {
       } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_destination_create", {
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_create_destination", {
       type: "SLACK_CHANNEL",
       channelId: "C0123456789",
       label: "#customer-ops",
       enabled: true,
       isDefault: true,
     })
-    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_destination_update", {
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_update_destination", {
       id: destinationId,
       type: "SLACK_CHANNEL",
       label: "#updated-ops",
       enabled: false,
     })
-    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_destination_update", {
+    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_update_destination", {
       id: destinationId,
       type: "SLACK_CHANNEL",
       isDefault: true,

@@ -2,8 +2,8 @@ import {
   customerSourceTypeAliases,
   customerSourceTypeInputs,
   customerSourceTypes,
-  customerToolContracts,
   normalizeCustomerSourceType,
+  publicToolContracts,
 } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
@@ -177,7 +177,7 @@ export default defineCommand({
     if (limit) params.limit = limit
     if (args.cursor) params.cursor = args.cursor
 
-    return runTool(client, customerToolContracts.outlit_list_sources.toolName, params, json, {
+    return runTool(client, publicToolContracts.outlit_list_sources.toolName, params, json, {
       table: {
         columns: [
           { header: "TYPE", key: "sourceType" },

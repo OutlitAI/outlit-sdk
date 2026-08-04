@@ -1,4 +1,4 @@
-import { customerToolContracts, timelineChannels, timelineTimeframes } from "@outlit/tools"
+import { publicToolContracts, timelineChannels, timelineTimeframes } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
@@ -113,6 +113,6 @@ export default defineCommand({
     }
     applyPagination(params, args, json)
 
-    return runTool(client, customerToolContracts.outlit_get_timeline.toolName, params, json)
+    return runTool(client, publicToolContracts.outlit_get_timeline.toolName, params, json)
   },
 })

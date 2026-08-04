@@ -243,12 +243,8 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "capabilities", desc: "Show setup capabilities", flags: [JSON_F] },
       {
         name: "setup",
-        desc: "Run provider auth or follow-up setup",
-        flags: [
-          ...COMMON,
-          { name: "--config", desc: "JSON config for credentials or follow-up setup" },
-          { name: "--force", desc: "Reconnect if already connected" },
-        ],
+        desc: "Start a safe browser setup handoff",
+        flags: [...COMMON],
       },
       {
         name: "status",
@@ -263,15 +259,6 @@ const COMMANDS: readonly CmdDef[] = [
     subs: [
       { name: "list", desc: "List configured destinations", flags: [...COMMON] },
       { name: "get", desc: "Get one configured destination", flags: [...COMMON] },
-      {
-        name: "options",
-        desc: "Show destination schemas and Slack channels",
-        flags: [
-          ...COMMON,
-          { name: "--search", desc: "Search Slack channels" },
-          { name: "--limit", desc: "Max Slack channels (1-100)" },
-        ],
-      },
       {
         name: "create",
         desc: "Create a Slack channel destination",
@@ -310,31 +297,6 @@ const COMMANDS: readonly CmdDef[] = [
         name: "update",
         desc: "Update workspace settings",
         flags: [...COMMON, { name: "--default-timezone", desc: "Default IANA timezone" }],
-      },
-      {
-        name: "report",
-        desc: "Configure report settings",
-        subs: [
-          { name: "get", desc: "Get report settings", flags: [...COMMON] },
-          {
-            name: "update",
-            desc: "Update report settings",
-            flags: [
-              ...COMMON,
-              { name: "--slack-channel-id", desc: "Slack channel ID" },
-              { name: "--slack-channel-name", desc: "Slack channel name" },
-            ],
-          },
-          {
-            name: "options",
-            desc: "Show report settings options",
-            flags: [
-              ...COMMON,
-              { name: "--search", desc: "Search Slack channels" },
-              { name: "--limit", desc: "Max Slack channels (1-100)" },
-            ],
-          },
-        ],
       },
     ],
   },

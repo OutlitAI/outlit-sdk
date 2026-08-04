@@ -1,62 +1,27 @@
 ---
-title: "Platform Configuration"
-description: "Configure Outlit destinations and report settings through REST and CLI"
+title: "Platform Capabilities"
+description: "Manage safe destinations, activation, and workspace settings through the tool gateway"
 ---
 
-Outlit's public platform-configuration surface is intentionally narrow. Use it to manage masked Slack destinations and selected workspace/report settings. Hosted agents, automations, generic signals, identity merge suggestions, and notification actions are not public configuration APIs.
+Outlit exposes model-safe platform configuration through `POST /api/tools/call`. The Core capability catalog owns the tool names, descriptions, schemas, and consumer memberships used by `@outlit/tools`, the CLI, and Pi.
 
-Use [Integration Routes](/api-reference/integrations) to connect external data sources such as Slack, Stripe, HubSpot, PostHog, or support tools.
+## Current capability families
 
-## How the Surfaces Fit Together
+| Area | Tools |
+|------|-------|
+| Destinations | List, get, create, update, enable, disable, and archive |
+| Activation | Get, preview, and update the ordinary customer activation event |
+| Workspace settings | Get and update the workspace timezone |
+| Integrations | List, inspect capabilities, begin browser setup, and inspect setup/sync status |
 
-| Surface | Use it when | Entry point |
-|---------|-------------|-------------|
-| REST API | You are building a schema-driven integration | [OpenAPI spec](/openapi.json) |
-| CLI | You want a human or coding agent to configure Outlit from a terminal | [CLI commands](/cli/commands#destinations) |
+Destination results expose masked configuration. The public surface does not include destination option discovery, report settings, provider credentials, setup steps, integration disconnect, secret reveal/rotation, arbitrary notification sending, or generic agent/automation/signal administration.
 
-The CLI preserves a resource-first interface over the public REST routes:
+Authored CLI commands preserve a resource-oriented experience while all retained commands call the same gateway:
 
 ```bash
-outlit destinations options --search ops --json
 outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --default --json
+outlit activation preview --event-name activated --json
 outlit settings update --default-timezone America/Los_Angeles --json
-outlit settings report options --search sales --limit 20 --json
-outlit settings report update --slack-channel-id C0123456789 --slack-channel-name sales-alerts --json
 ```
 
-## Current Scope
-
-| Area | Read actions | Write actions |
-|------|--------------|---------------|
-| Destinations | List destinations, get one destination with masked configuration, show Slack channel options | Create, update, enable, disable, archive, set default destination |
-| Settings | Get workspace and report settings; search Slack-backed report setting options | Update default timezone and report Slack channel |
-
-Destination updates patch only the fields provided. Destination responses expose masked configuration and never return raw secrets or unmasked provider settings.
-
-## Safety Model
-
-- Read actions require an API key with the `agents:read` scope.
-- Write actions require an API key with the `agents:write` scope.
-- `destinations options` is non-mutating, but requires `agents:write` because it lists Slack channel choices used to create destinations.
-- Responses are projected public DTOs rather than raw database rows.
-- The OpenAPI specification is the canonical source for request and response schemas.
-
-## Available REST Routes
-
-| Route | Purpose |
-|-------|---------|
-| `GET /api/destinations/options` | Show destination schemas and Slack channel options |
-| `GET /api/destinations` | List destinations with masked configuration |
-| `GET /api/destinations/{id}` | Get one destination with masked configuration |
-| `POST /api/destinations` | Create a Slack channel destination |
-| `PATCH /api/destinations/{id}` | Update a Slack channel destination |
-| `POST /api/destinations/{id}/enable` | Enable a destination |
-| `POST /api/destinations/{id}/disable` | Disable a destination |
-| `POST /api/destinations/{id}/archive` | Archive a destination |
-| `GET /api/settings` | Get workspace settings |
-| `PATCH /api/settings` | Update workspace settings such as default timezone |
-| `GET /api/settings/report` | Get report settings |
-| `PATCH /api/settings/report` | Update report Slack channel settings |
-| `GET /api/settings/report/options` | Search Slack channel options for report settings |
-
-The [OpenAPI spec](/openapi.json) is the canonical reference for the complete public contract.
+Use the generated [OpenAPI specification](/openapi.json) for the exact request, output, and stable gateway error schemas.

@@ -31,7 +31,7 @@ export async function waitForIntegrationConnection({
   const result = await pollUntil<ConnectStatusResponse>(
     () =>
       client
-        .callTool("outlit_connect_status", { sessionId })
+        .callTool("outlit_get_integration_setup_status", { sessionId })
         .then((r) => r as ConnectStatusResponse),
     (r) => terminalConnectStatuses.has(r.status ?? ""),
     {

@@ -1,4 +1,4 @@
-import { customerToolContracts, workspaceUserListOrderFields } from "@outlit/tools"
+import { publicToolContracts, workspaceUserListOrderFields } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
@@ -103,24 +103,18 @@ export default defineCommand({
     if (args["order-direction"]) params.orderDirection = args["order-direction"]
     applyPagination(params, args, json)
 
-    return runTool(
-      client,
-      customerToolContracts.outlit_list_workspace_users.toolName,
-      params,
-      json,
-      {
-        spinnerMessage: "Fetching workspace users...",
-        table: {
-          columns: [
-            { header: "Email", key: "email", format: (v) => truncate(v, 30) },
-            { header: "Name", key: "name", format: (v) => truncate(v, 24) },
-            { header: "Role", key: "role" },
-            { header: "Title", key: "title", format: (v) => truncate(v, 24) },
-            { header: "Manager", key: "managerEmail", format: (v) => truncate(v, 24) },
-            { header: "Owned", key: "ownedCustomerCount" },
-          ],
-        },
+    return runTool(client, publicToolContracts.outlit_list_workspace_users.toolName, params, json, {
+      spinnerMessage: "Fetching workspace users...",
+      table: {
+        columns: [
+          { header: "Email", key: "email", format: (v) => truncate(v, 30) },
+          { header: "Name", key: "name", format: (v) => truncate(v, 24) },
+          { header: "Role", key: "role" },
+          { header: "Title", key: "title", format: (v) => truncate(v, 24) },
+          { header: "Manager", key: "managerEmail", format: (v) => truncate(v, 24) },
+          { header: "Owned", key: "ownedCustomerCount" },
+        ],
       },
-    )
+    })
   },
 })

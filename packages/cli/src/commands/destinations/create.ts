@@ -51,7 +51,7 @@ export default defineCommand({
 
     return runTool(
       client,
-      "outlit_destination_create",
+      "outlit_create_destination",
       {
         type: parseDestinationType(args.type, json),
         channelId: requiredTrimmedString(args["channel-id"], "--channel-id", json),

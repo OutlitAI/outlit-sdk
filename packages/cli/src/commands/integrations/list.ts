@@ -31,6 +31,7 @@ export default defineCommand({
     return runTool(client, "outlit_list_integrations", {}, json, {
       spinnerMessage: "Fetching integrations...",
       table: {
+        itemsKey: "integrations",
         columns: [
           { header: "Name", key: "name", format: (v) => truncate(v, 24) },
           { header: "Category", key: "category", format: capitalize },

@@ -1,8 +1,8 @@
+import { type CliToolName, isOutlitToolsApiError } from "@outlit/tools"
 import type { OutlitClient, OutlitToolParams } from "./client"
 import { createClient } from "./client"
 import { DEFAULT_API_URL } from "./config"
 import { errorMessage, isJsonMode, outputError, outputResult } from "./output"
-import { isPlatformCommandError } from "./platform-command-error"
 import { createSpinner } from "./spinner"
 import { renderPaginationHint, renderTable } from "./table"
 
@@ -177,7 +177,7 @@ function readPath(record: Record<string, unknown>, path: string): unknown {
  * When `opts.table` is provided and output is interactive, renders a table.
  * Otherwise, falls through to `outputResult` (JSON).
  */
-export async function runTool<TToolName extends string>(
+export async function runTool<TToolName extends CliToolName>(
   client: OutlitClient,
   toolName: TToolName,
   params: OutlitToolParams<TToolName>,
@@ -199,16 +199,13 @@ export async function runTool<TToolName extends string>(
     renderApiTable(data, table)
   } catch (err) {
     spinner?.fail("Failed")
-    if (isPlatformCommandError(err)) {
+    if (isOutlitToolsApiError(err) && err.envelope) {
       if (isJsonMode(json)) {
-        process.stderr.write(`${JSON.stringify(err.commandEnvelope, null, 2)}\n`)
+        process.stderr.write(`${JSON.stringify(err.envelope, null, 2)}\n`)
         process.exit(1)
       }
 
-      return outputError(
-        { message: err.commandEnvelope.error.message, code: err.commandEnvelope.error.code },
-        json,
-      )
+      return outputError({ message: err.envelope.message, code: err.envelope.code }, json)
     }
     return outputError({ message: errorMessage(err, "Request failed"), code: "api_error" }, json)
   }

@@ -1,4 +1,4 @@
-import { customerBillingStatuses, customerToolContracts } from "@outlit/tools"
+import { customerBillingStatuses, publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import {
@@ -164,7 +164,7 @@ export default defineCommand({
     applyListFilters(params, args, rawArgs)
     applyPagination(params, args, json)
 
-    return runTool(client, customerToolContracts.outlit_list_customers.toolName, params, json, {
+    return runTool(client, publicToolContracts.outlit_list_customers.toolName, params, json, {
       spinnerMessage: "Fetching customers...",
       transform: normalizeCustomerListResult,
       table: {

@@ -12,7 +12,7 @@ const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({}))
 
 const setupMockCallTool = () => {
   mockCallTool.mockImplementation(async (toolName: string, _params: unknown) => {
-    if (toolName === "outlit_integration_sync_status") {
+    if (toolName === "outlit_get_integration_sync_status") {
       return {
         syncs: [
           { model: "Opportunity", status: "syncing", recordCount: 150, lastSyncedAt: null },
@@ -25,14 +25,14 @@ const setupMockCallTool = () => {
         ],
       }
     }
-    if (toolName === "outlit_connect_status") {
+    if (toolName === "outlit_get_integration_setup_status") {
       return {
         status: "connected",
         provider: "hubspot",
       }
     }
     return {
-      items: [
+      integrations: [
         {
           name: "Slack",
           category: "communication",
@@ -77,7 +77,7 @@ describe("integrations status", () => {
     })
   })
 
-  test("calls outlit_integration_sync_status when provider is given", async () => {
+  test("calls outlit_get_integration_sync_status when provider is given", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
     await captureStdout(() =>
       statusCmd.run!({
@@ -85,7 +85,7 @@ describe("integrations status", () => {
       } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_sync_status", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_sync_status", {
       provider: "slack",
     })
   })
@@ -98,7 +98,7 @@ describe("integrations status", () => {
       } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_connect_status", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_setup_status", {
       sessionId: "sess_123",
     })
     expect(parsed).toEqual({ status: "connected", provider: "hubspot" })
@@ -123,7 +123,7 @@ describe("integrations status", () => {
       } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_sync_status", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_sync_status", {
       provider: "gmail",
     })
   })
@@ -139,7 +139,7 @@ describe("integrations status", () => {
         } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
       )
 
-      expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_sync_status", {
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_sync_status", {
         provider,
       })
     }
@@ -207,7 +207,7 @@ describe("integrations status", () => {
       } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_integration_sync_status", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_sync_status", {
       provider: "nonexistent",
     })
   })
@@ -220,7 +220,7 @@ describe("integrations status", () => {
       } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
     )
 
-    expect(Array.isArray(parsed.items)).toBe(true)
+    expect(Array.isArray(parsed.integrations)).toBe(true)
   })
 
   test("outputs JSON for per-provider detail view", async () => {

@@ -20,72 +20,44 @@ const activation = {
 } as const
 
 const getResponse = {
-  ok: true,
-  commandId: "customer_activation.get",
-  commandVersion: 1,
-  correlationId: "corr_get",
-  result: {
-    operationId: "customer_activation.get",
-    status: "completed",
-    resources: [],
-    data: { activation },
-    warnings: [],
-  },
+  activation,
 }
 
 const previewResponse = {
-  ok: true,
-  commandId: "customer_activation.preview",
-  commandVersion: 1,
-  correlationId: "corr_preview",
-  result: {
-    operationId: "customer_activation.preview",
-    status: "completed",
-    resources: [],
-    data: {
-      preview: {
-        eventName: EVENT_NAME,
-        evaluatedFrom: "2026-06-28T00:00:00.000Z",
-        evaluatedTo: "2026-07-28T00:00:00.000Z",
-        evaluatedEventCount: 40,
-        matchedCustomerCount: 12,
-        alreadyActivatedCustomerCount: 9,
-        wouldActivateCustomerCount: 3,
-        evaluatedContactOccurrenceCount: 44,
-        matchedContactCount: 18,
-        alreadyActivatedContactCount: 11,
-        wouldActivateContactCount: 7,
-        contactTruncated: false,
-        customerTruncated: false,
-        truncated: false,
-        examples: [
-          {
-            customer: { id: "customer_123", name: "Acme", domain: "acme.com" },
-            activatedAt: null,
-            firstMatchedAt: "2026-07-20T12:00:00.000Z",
-            eventId: "10000000-0000-4000-8000-000000000001",
-          },
-        ],
+  preview: {
+    eventName: EVENT_NAME,
+    evaluatedFrom: "2026-06-28T00:00:00.000Z",
+    evaluatedTo: "2026-07-28T00:00:00.000Z",
+    evaluatedEventCount: 40,
+    matchedCustomerCount: 12,
+    alreadyActivatedCustomerCount: 9,
+    wouldActivateCustomerCount: 3,
+    evaluatedContactOccurrenceCount: 44,
+    matchedContactCount: 18,
+    alreadyActivatedContactCount: 11,
+    wouldActivateContactCount: 7,
+    contactTruncated: false,
+    customerTruncated: false,
+    truncated: false,
+    examples: [
+      {
+        customer: { id: "customer_123", name: "Acme", domain: "acme.com" },
+        activatedAt: null,
+        firstMatchedAt: "2026-07-20T12:00:00.000Z",
+        eventId: "10000000-0000-4000-8000-000000000001",
       },
-    },
-    warnings: [],
+    ],
   },
 }
 
 const updateResponse = {
-  ...getResponse,
-  commandId: "customer_activation.update",
-  correlationId: "corr_update",
-  result: {
-    ...getResponse.result,
-    operationId: "customer_activation.update",
-    data: { activation, changed: true },
-  },
+  activation,
+  changed: true,
 }
 
 const mockCallTool = mock(async (toolName: string, _params: unknown) => {
-  if (toolName === "outlit_activation_preview") return previewResponse
-  if (toolName === "outlit_activation_update") return updateResponse
+  if (toolName === "outlit_preview_customer_activation") return previewResponse
+  if (toolName === "outlit_update_customer_activation") return updateResponse
   return getResponse
 })
 
@@ -104,18 +76,18 @@ describe("activation commands", () => {
     setNonInteractive()
     mockCallTool.mockClear()
     mockCallTool.mockImplementation(async (toolName: string) => {
-      if (toolName === "outlit_activation_preview") return previewResponse
-      if (toolName === "outlit_activation_update") return updateResponse
+      if (toolName === "outlit_preview_customer_activation") return previewResponse
+      if (toolName === "outlit_update_customer_activation") return updateResponse
       return getResponse
     })
   })
 
-  test("keeps direct activation routes statically discoverable by Core drift checks", async () => {
+  test("keeps authored activation commands bound to catalog tool names", async () => {
     const commands = [
-      ["get.ts", "outlit_activation_get"],
-      ["preview.ts", "outlit_activation_preview"],
-      ["update.ts", "outlit_activation_update"],
-      ["disable.ts", "outlit_activation_update"],
+      ["get.ts", "outlit_get_customer_activation"],
+      ["preview.ts", "outlit_preview_customer_activation"],
+      ["update.ts", "outlit_update_customer_activation"],
+      ["disable.ts", "outlit_update_customer_activation"],
     ] as const
 
     for (const [fileName, toolName] of commands) {
@@ -136,7 +108,7 @@ describe("activation commands", () => {
     ])
   })
 
-  test("get preserves Core's stable command envelope", async () => {
+  test("get returns the catalog-projected activation result", async () => {
     const { default: getCommand } = await import("../../src/commands/activation/get")
 
     const result = await captureStdout(async () => {
@@ -145,11 +117,11 @@ describe("activation commands", () => {
       } as Parameters<NonNullable<typeof getCommand.run>>[0])
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_activation_get", {})
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer_activation", {})
     expect(result).toEqual(getResponse)
   })
 
-  test("interactive output preserves the same stable command envelope", async () => {
+  test("interactive output preserves the same activation result", async () => {
     const { default: getCommand } = await import("../../src/commands/activation/get")
     setInteractive()
 
@@ -181,12 +153,15 @@ describe("activation commands", () => {
     })
 
     expect(mockCallTool).toHaveBeenCalledTimes(1)
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_activation_preview", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_preview_customer_activation", {
       eventName: EVENT_NAME,
       lookbackDays: 45,
       exampleLimit: 12,
     })
-    expect(mockCallTool).not.toHaveBeenCalledWith("outlit_activation_update", expect.anything())
+    expect(mockCallTool).not.toHaveBeenCalledWith(
+      "outlit_update_customer_activation",
+      expect.anything(),
+    )
     expect(result).toEqual(previewResponse)
   })
 
@@ -207,7 +182,7 @@ describe("activation commands", () => {
       })
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_activation_preview", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_preview_customer_activation", {
       eventName: EVENT_NAME,
       lookbackDays: 90,
       exampleLimit: 20,
@@ -226,7 +201,7 @@ describe("activation commands", () => {
       } as Parameters<NonNullable<typeof updateCommand.run>>[0])
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_activation_update", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_update_customer_activation", {
       eventName: EVENT_NAME,
     })
   })
@@ -240,7 +215,7 @@ describe("activation commands", () => {
       } as Parameters<NonNullable<typeof disableCommand.run>>[0])
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_activation_update", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_update_customer_activation", {
       eventName: null,
     })
   })
@@ -306,14 +281,19 @@ describe("activation commands", () => {
     ) as {
       components: {
         schemas: {
-          CustomerActivationPreviewResult: {
-            required: string[]
-            properties: Record<string, unknown>
+          ToolOutput_outlit_preview_customer_activation: {
+            properties: {
+              preview: {
+                required: string[]
+                properties: Record<string, unknown>
+              }
+            }
           }
         }
       }
     }
-    const schema = openApi.components.schemas.CustomerActivationPreviewResult
+    const schema =
+      openApi.components.schemas.ToolOutput_outlit_preview_customer_activation.properties.preview
 
     expect(schema.required).toEqual(
       expect.arrayContaining([

@@ -4,40 +4,6 @@ import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { relativeDate, truncate } from "../../lib/format"
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-}
-
-function stripRawDestinationConfig(data: unknown): unknown {
-  if (!isRecord(data) || !isRecord(data.result) || !isRecord(data.result.data)) {
-    return data
-  }
-
-  const destinations = data.result.data.destinations
-  if (!Array.isArray(destinations)) {
-    return data
-  }
-
-  return {
-    ...data,
-    result: {
-      ...data.result,
-      data: {
-        ...data.result.data,
-        destinations: destinations.map((destination) => {
-          if (!isRecord(destination)) {
-            return destination
-          }
-
-          const safeDestination = { ...destination }
-          delete safeDestination.configJson
-          return safeDestination
-        }),
-      },
-    },
-  }
-}
-
 export default defineCommand({
   meta: {
     name: "list",
@@ -59,11 +25,10 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, "outlit_destination_list", {}, json, {
+    return runTool(client, "outlit_list_destinations", {}, json, {
       spinnerMessage: "Fetching destinations...",
-      transform: stripRawDestinationConfig,
       table: {
-        itemsKey: "result.data.destinations",
+        itemsKey: "destinations",
         columns: [
           { header: "ID", key: "id", format: (v) => truncate(v, 22) },
           { header: "Name", key: "name", format: (v) => truncate(v, 32) },

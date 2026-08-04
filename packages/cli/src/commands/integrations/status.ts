@@ -73,15 +73,21 @@ export default defineCommand({
     }
 
     if (args.session) {
-      return runTool(client, "outlit_connect_status", { sessionId: args.session }, json, {
-        spinnerMessage: "Checking setup session...",
-      })
+      return runTool(
+        client,
+        "outlit_get_integration_setup_status",
+        { sessionId: args.session },
+        json,
+        {
+          spinnerMessage: "Checking setup session...",
+        },
+      )
     }
 
     if (args.provider) {
       return runTool(
         client,
-        "outlit_integration_sync_status",
+        "outlit_get_integration_sync_status",
         { provider: normalizeProviderInput(args.provider) },
         json,
         {
@@ -103,6 +109,7 @@ export default defineCommand({
     return runTool(client, "outlit_list_integrations", { connectedOnly: true }, json, {
       spinnerMessage: "Fetching integration status...",
       table: {
+        itemsKey: "integrations",
         columns: [
           { header: "Name", key: "name", format: (v) => truncate(v, 24) },
           { header: "Category", key: "category", format: capitalize },

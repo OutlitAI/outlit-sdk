@@ -1,5 +1,4 @@
 import { defineCommand } from "citty"
-import { PROVIDER_NAMES } from "../../lib/providers"
 
 export default defineCommand({
   meta: {
@@ -7,22 +6,18 @@ export default defineCommand({
     description: [
       "Manage platform integrations (communication, analytics, billing, etc.).",
       "",
-      "Connect third-party services like Slack, Stripe, and PostHog",
-      "to sync data into your Outlit workspace.",
+      "Inspect integrations, start safe browser handoffs, and check sync status.",
       "",
       "Commands:",
       "  list                List available integrations and connection status",
       "  capabilities [provider]",
-      "                      Show auth mode, setup support, required fields, and follow-up steps",
-      "  setup <provider> [step]",
-      "                      Run provider auth setup or inspect follow-up steps",
+      "                      Show safe setup mode and browser-handoff availability",
+      "  setup <provider>    Start a browser handoff when supported",
       "  status --session <id>",
       "                      Poll browser-auth setup status returned by setup JSON output",
       "  status [provider]   Show sync status for connected integrations",
       "",
-      "Disconnect integrations from the Outlit web app.",
-      "",
-      `Providers: ${PROVIDER_NAMES.join(", ")}`,
+      "Credential and provider-specific configuration remains in the Outlit web app.",
     ].join("\n"),
   },
   subCommands: {

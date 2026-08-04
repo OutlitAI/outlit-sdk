@@ -1,4 +1,5 @@
 import { describe, expect, mock, spyOn, test } from "bun:test"
+import { OutlitToolsApiError } from "@outlit/tools"
 import {
   ExitError,
   expectErrorExit,
@@ -92,25 +93,14 @@ describe("runTool()", () => {
     expectErrorExit(thrown, written, "api_error")
   })
 
-  test("preserves platform command error envelopes in JSON mode", async () => {
-    const commandEnvelope = {
-      ok: false,
-      commandId: "settings.update",
-      commandVersion: 1,
-      error: {
-        code: "authorization_denied",
-        message: "API key is missing the required agents:write scope.",
-        correlationId: "corr_denied_123",
-        retryable: false,
-        details: { requiredScope: "agents:write" },
-      },
+  test("preserves gateway error envelopes in JSON mode", async () => {
+    const gatewayEnvelope = {
+      code: "AUTHORIZATION_DENIED",
+      message: "API key is missing the required grant.",
+      requestId: "request_denied_123",
+      retryable: false,
     }
-    const error = new Error(commandEnvelope.error.message) as Error & {
-      status: number
-      commandEnvelope: typeof commandEnvelope
-    }
-    error.status = 403
-    error.commandEnvelope = commandEnvelope
+    const error = new OutlitToolsApiError(403, JSON.stringify(gatewayEnvelope), gatewayEnvelope)
     mockCallTool.mockRejectedValueOnce(error)
 
     const { getClientOrExit, runTool } = await import("../../src/lib/api")
@@ -122,7 +112,7 @@ describe("runTool()", () => {
     try {
       await runTool(
         client,
-        "outlit_settings_update",
+        "outlit_update_workspace_settings",
         { defaultTimezone: "America/Los_Angeles" },
         true,
       )
@@ -136,17 +126,12 @@ describe("runTool()", () => {
 
     expect(thrown).toBeInstanceOf(ExitError)
     expect((thrown as ExitError).code).toBe(1)
-    expect(JSON.parse(written)).toEqual(commandEnvelope)
+    expect(JSON.parse(written)).toEqual(gatewayEnvelope)
   })
 
   test("renders table rows from nested response paths", async () => {
     mockCallTool.mockResolvedValueOnce({
-      ok: true,
-      result: {
-        data: {
-          destinations: [{ id: "dest_123", label: "#customer-ops" }],
-        },
-      },
+      destinations: [{ id: "dest_123", label: "#customer-ops" }],
     })
     const { getClientOrExit, runTool } = await import("../../src/lib/api")
     const client = await getClientOrExit(TEST_API_KEY, false)
@@ -154,9 +139,9 @@ describe("runTool()", () => {
 
     setInteractive()
     try {
-      await runTool(client, "outlit_destination_list", {}, false, {
+      await runTool(client, "outlit_list_destinations", {}, false, {
         table: {
-          itemsKey: "result.data.destinations",
+          itemsKey: "destinations",
           columns: [
             { header: "ID", key: "id" },
             { header: "Label", key: "label" },

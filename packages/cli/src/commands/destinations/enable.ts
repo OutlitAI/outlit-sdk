@@ -28,7 +28,7 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, "outlit_destination_enable", { id: args.id }, json, {
+    return runTool(client, "outlit_enable_destination", { id: args.id }, json, {
       spinnerMessage: "Enabling destination...",
     })
   },
