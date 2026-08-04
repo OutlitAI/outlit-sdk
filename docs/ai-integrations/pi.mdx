@@ -60,7 +60,7 @@ export default createOutlitPiExtension({
 })
 ```
 
-`allPublicToolNames` includes SQL. The default membership comes directly from Core's `default` consumer policy and excludes SQL; import `analyticalToolNames` for the Core-owned analytical policy. Integration setup is limited to safe browser handoff and status tools—provider credentials and configuration stay in the authored web UI.
+`allPublicToolNames` includes SQL and the broader public management surface. The default membership comes directly from Core's `default` consumer policy and contains only the nine read-only customer intelligence tools above; import `analyticalToolNames` for that same policy plus `outlit_schema` and `outlit_query`. Both agent policies exclude integration setup and mutations. Provider credentials and configuration stay in the authored web UI.
 
 ## Growth Agent Examples
 

@@ -61,30 +61,29 @@ describe("toolsets", () => {
       "outlit_get_workspace_settings",
       "outlit_update_workspace_settings",
     ])
+    expect(allPublicToolNames).toHaveLength(29)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
+    expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
 
-  test("keeps SQL out of the default agent toolset", () => {
-    expect(defaultToolNames).toContain("outlit_search_customer_context")
-    expect(defaultToolNames).toContain("outlit_get_customer")
-    expect(defaultToolNames).toContain("outlit_list_workspace_users")
-    expect(defaultToolNames).toContain("outlit_list_sources")
-    expect(defaultToolNames).toContain("outlit_begin_integration_setup")
-    expect(defaultToolNames).not.toContain("outlit_send_notification")
-    expect(defaultToolNames).not.toContain("outlit_query")
-    expect(defaultToolNames).not.toContain("outlit_schema")
+  test("keeps the default agent toolset to the nine read-only intelligence tools", () => {
+    expect(defaultToolNames).toEqual([
+      "outlit_list_customers",
+      "outlit_list_users",
+      "outlit_get_customer",
+      "outlit_get_timeline",
+      "outlit_list_facts",
+      "outlit_get_fact",
+      "outlit_get_source",
+      "outlit_list_sources",
+      "outlit_search_customer_context",
+    ])
     expect(sqlToolNames).toEqual(["outlit_query", "outlit_schema"])
-    expect(allPublicToolNames).toContain("outlit_query")
-    expect(allPublicToolNames).toContain("outlit_list_workspace_users")
-    expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(cliToolNames).toEqual(allPublicToolNames)
   })
 
   test("exposes an analytical agent toolset with only default tools plus SQL", () => {
-    expect(analyticalToolNames).toEqual(allPublicToolNames)
-    expect(analyticalToolNames).not.toContain("outlit_send_notification")
-    expect(analyticalToolNames).toContain("outlit_schema")
-    expect(analyticalToolNames).toContain("outlit_query")
+    expect(analyticalToolNames).toEqual([...defaultToolNames, "outlit_query", "outlit_schema"])
   })
 })
 
@@ -211,7 +210,7 @@ describe("tool contracts", () => {
       }),
     )
     expect(sdkConsumerContractHash).toBe(
-      "378f57ef3007c6f0da4038591991bacc90bb9ddf855129ad782de31155075861",
+      "734deec7fc9b275e2366edaa43384c13806616c6562f54332ff3fe22f692a59c",
     )
 
     const activatedSincePattern = customerProperties.activatedSince?.pattern

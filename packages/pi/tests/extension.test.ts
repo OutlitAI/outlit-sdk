@@ -67,11 +67,18 @@ describe("createOutlitPiExtension", () => {
     })(pi)
 
     const registeredNames = pi.registeredTools.map((tool) => tool.name)
+    expect(defaultToolNames).toEqual([
+      "outlit_list_customers",
+      "outlit_list_users",
+      "outlit_get_customer",
+      "outlit_get_timeline",
+      "outlit_list_facts",
+      "outlit_get_fact",
+      "outlit_get_source",
+      "outlit_list_sources",
+      "outlit_search_customer_context",
+    ])
     expect(registeredNames).toEqual([...defaultToolNames])
-    expect(registeredNames).toContain("outlit_begin_integration_setup")
-    expect(registeredNames).not.toContain("outlit_send_notification")
-    expect(registeredNames).not.toContain("outlit_query")
-    expect(registeredNames).not.toContain("outlit_schema")
   })
 
   test("rejects retired notification sending", () => {

@@ -14,7 +14,7 @@ Last updated: 2026-08-04
 
 - Core generates `packages/tools/src/generated/contracts.ts` as data only and `docs/openapi.json` as the canonical public OpenAPI document.
 - Generated public OpenAPI gateway security documents direct API-key bearer authentication only; delegated OAuth remains an MCP-to-Platform transport detail rather than a public SDK authentication mode.
-- The generated payload contains 29 exact public tool contracts, `default`/`analytical`/`cli` memberships, the manifest-owned public OpenAPI transport projection, tool-gateway and API-key-validation transports, the exact gateway error codes/schema, the ingest method/path/event set plus request/response schemas, shared customer enums, and contract hash `378f57ef3007c6f0da4038591991bacc90bb9ddf855129ad782de31155075861`.
+- The generated payload contains 29 exact public tool contracts, `default`/`analytical`/`cli` memberships, the manifest-owned public OpenAPI transport projection, tool-gateway and API-key-validation transports, the exact gateway error codes/schema, the ingest method/path/event set plus request/response schemas, shared customer enums, and contract hash `734deec7fc9b275e2366edaa43384c13806616c6562f54332ff3fe22f692a59c`.
 - `@outlit/tools` keeps runtime guards, source-type normalization, search-input normalization, result typing, and URL/request execution hand-authored. It no longer owns capability names, descriptions, schemas, memberships, or gateway paths.
 - Pi consumes Core's default membership and exposes the generated default, analytical, and complete public sets.
 - Every retained authored CLI capability calls the tool gateway. The direct endpoint map is deleted.
