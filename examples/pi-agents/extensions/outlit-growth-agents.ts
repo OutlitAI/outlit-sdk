@@ -1,4 +1,4 @@
-import { analyticalAgentToolNames, createOutlitPiExtension } from "@outlit/pi"
+import { analyticalToolNames, createOutlitPiExtension } from "@outlit/pi"
 import {
   type ActivationScopeProfile,
   createOutlitActivationPretriageTool,
@@ -194,7 +194,7 @@ const COMMANDS: AgentCommand[] = [
 
 export default function outlitGrowthAgents(pi: GrowthAgentPiApi) {
   createOutlitPiExtension({
-    toolNames: analyticalAgentToolNames,
+    toolNames: analyticalToolNames,
   })(pi as OutlitPiRegistry)
   pi.registerTool(
     createOutlitChurnPretriageTool({

@@ -52,9 +52,13 @@ POST https://app.outlit.ai/api/tools/call
 | `outlit_search_customer_context` | Search customer context semantically |
 | `outlit_query` | Run SQL against customer intelligence views |
 | `outlit_schema` | Inspect available analytics views |
+| `outlit_list_destinations` through `outlit_archive_destination` | Manage the safe destination lifecycle with masked configuration |
+| `outlit_list_integrations` through `outlit_get_integration_sync_status` | Inspect integrations and start safe browser setup handoffs |
+| `outlit_get_customer_activation` through `outlit_update_customer_activation` | Inspect, preview, and configure the ordinary activation event |
+| `outlit_get_workspace_settings`, `outlit_update_workspace_settings` | Read and update safe workspace settings |
 
 <Info>
-  Tool input schemas are published by `@outlit/tools` as `customerToolContracts`. Use that package when building schema-driven clients or model tool definitions.
+  Tool input schemas are published by `@outlit/tools` as `publicToolContracts`. Use that package when building schema-driven clients or model tool definitions.
 </Info>
 
 ## TypeScript Client
@@ -66,14 +70,14 @@ npm install @outlit/tools
 ```
 
 ```typescript
-import { createOutlitClient, customerToolContracts } from "@outlit/tools"
+import { createOutlitClient, publicToolContracts } from "@outlit/tools"
 
 const outlit = createOutlitClient({
   apiKey: process.env.OUTLIT_API_KEY!,
 })
 
 const result = await outlit.callTool(
-  customerToolContracts.outlit_search_customer_context.toolName,
+  publicToolContracts.outlit_search_customer_context.toolName,
   {
     query: "What pricing concerns came up recently?",
     customer: "acme.com",
@@ -83,7 +87,7 @@ const result = await outlit.callTool(
 )
 ```
 
-The package also exports `customerToolContracts`, `defaultAgentToolNames`, `sqlToolNames`, `allCustomerToolNames`, and enum lists such as `customerSourceTypes` for schema-driven agent integrations. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases. SDK helpers and CLI commands trim and normalize source type filters before calling the tool gateway.
+The package also exports `publicToolContracts`, `publicToolNames`, Core-owned `consumerToolPolicies`, `defaultToolNames`, `analyticalToolNames`, `cliToolNames`, `allPublicToolNames`, `toolGatewayTransport`, `ingestTransport`, and enum lists such as `customerSourceTypes`. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases.
 
 ## Examples
 

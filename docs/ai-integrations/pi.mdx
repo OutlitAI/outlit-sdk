@@ -53,14 +53,14 @@ The extension reads `OUTLIT_API_KEY` from the environment and uses `https://app.
 Pass `toolNames` when you want a narrower or broader toolset:
 
 ```ts
-import { allCustomerToolNames, createOutlitPiExtension } from "@outlit/pi"
+import { allPublicToolNames, createOutlitPiExtension } from "@outlit/pi"
 
 export default createOutlitPiExtension({
-  toolNames: allCustomerToolNames,
+  toolNames: allPublicToolNames,
 })
 ```
 
-`allCustomerToolNames` includes the SQL tools. If you want to assemble a custom set yourself, import `defaultAgentToolNames` and `sqlToolNames` from `@outlit/pi` and combine them explicitly. Keep integration setup and integration-management actions outside customer-facing Pi agents unless you are building an internal admin package.
+`allPublicToolNames` includes SQL. The default membership comes directly from Core's `default` consumer policy and excludes SQL; import `analyticalToolNames` for the Core-owned analytical policy. Integration setup is limited to safe browser handoff and status tools—provider credentials and configuration stay in the authored web UI.
 
 ## Growth Agent Examples
 

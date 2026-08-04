@@ -117,7 +117,7 @@ Those prompts assume the `outlit` CLI is on `PATH` and authenticated through env
 
 ## How It Works
 
-`extensions/outlit-growth-agents.ts` imports `createOutlitPiExtension` and `analyticalAgentToolNames` from `@outlit/pi`, registers customer intelligence and SQL tools, and adds four slash commands.
+`extensions/outlit-growth-agents.ts` imports `createOutlitPiExtension` and `analyticalToolNames` from `@outlit/pi`, registers the Core-owned analytical policy, and adds four slash commands.
 
 The extension also registers local deterministic helpers from `lib/churn-pretriage.ts` and `lib/activation-pretriage.ts`. The `/outlit-usage-decay-watchtower` and `/outlit-activation-failure` commands call those helpers before sending the model prompt. Free-form Pi prompts can call the helpers too when the model decides deterministic candidate discovery is useful.
 
@@ -173,23 +173,23 @@ These launch examples use the default customer intelligence tools plus SQL/schem
 - schema discovery
 - SQL query
 
-The base `@outlit/pi` default toolset does not include SQL, but these harder examples use `analyticalAgentToolNames` to opt into schema and SQL because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks.
+The base `@outlit/pi` default toolset does not include SQL, but these harder examples use `analyticalToolNames` because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks.
 
 Facts can also be narrowed with `factTypes`. These examples use those filters for extracted customer-memory facts such as `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `BUDGET`, `REQUIREMENTS`, `PRODUCT_USAGE`, and `CHAMPION_RISK`.
 
 The usage-decay and activation agents do not depend on behavioral/anomaly fact types like `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF`. Those fact types are not supported as public filters because many customers will not have configured core actions, activation paths, or funnels. The examples use SQL and customer/user/event evidence as the primary signal for those jobs.
 
-`@outlit/pi` also exports narrower tool lists, such as `defaultAgentToolNames` and `sqlToolNames`, when you want to assemble a custom toolset.
+`@outlit/pi` also exports Core-owned tool policies such as `defaultToolNames`, `analyticalToolNames`, and `sqlToolNames`.
 
-The examples still avoid `allCustomerToolNames` because broad tool access can make agents over-weight high-revenue accounts with weak evidence. Use broader toolsets only when you intentionally want internal analysis or custom reporting.
+The examples use the analytical policy because they intentionally need SQL. Prefer `defaultToolNames` for ordinary customer-facing assistants.
 
 For example:
 
 ```ts
-import { allCustomerToolNames, createOutlitPiExtension } from "@outlit/pi"
+import { allPublicToolNames, createOutlitPiExtension } from "@outlit/pi"
 
 export default createOutlitPiExtension({
-  toolNames: allCustomerToolNames,
+  toolNames: allPublicToolNames,
 })
 ```
 

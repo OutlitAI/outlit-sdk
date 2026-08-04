@@ -1,20 +1,34 @@
 export type {
-  CustomerToolResult,
   OutlitToolsClient,
   OutlitToolsClientOptions,
   OutlitToolsFetch,
+  PublicToolResult,
+  ToolGatewayErrorEnvelope,
 } from "./client.js"
-export { createOutlitClient, DEFAULT_OUTLIT_API_URL } from "./client.js"
+export {
+  createOutlitClient,
+  DEFAULT_OUTLIT_API_URL,
+  isOutlitToolsApiError,
+  OutlitToolsApiError,
+} from "./client.js"
 export type {
   CustomerContextSearchInput,
   CustomerSourceType,
   CustomerSourceTypeInput,
-  CustomerToolContract,
-  CustomerToolName,
   JsonSchema,
+  PublicToolContract,
+  PublicToolName,
   SearchArgsLike,
 } from "./contracts.js"
 export {
+  getPublicToolContract,
+  isPublicToolName,
+  normalizeCustomerSourceType,
+  resolveCustomerContextSearchInput,
+} from "./contracts.js"
+export {
+  consumerToolPolicies,
+  contractVersion,
   customerActivityWindows,
   customerBillingStatuses,
   customerFactCategories,
@@ -27,22 +41,19 @@ export {
   customerSourceTypeInputs,
   customerSourceTypes,
   customerTimeframes,
-  customerToolContractHash,
-  customerToolContracts,
-  customerToolNames,
-  getCustomerToolContract,
-  isCustomerToolName,
-  normalizeCustomerSourceType,
-  resolveCustomerContextSearchInput,
+  ingestTransport,
+  publicToolContracts,
+  publicToolNames,
   schemaTables,
+  sdkConsumerContractHash,
   timelineChannels,
   timelineTimeframes,
+  toolGatewayTransport,
   unsupportedCustomerFactTypes,
   userJourneyStages,
   userListOrderFields,
   workspaceUserListOrderFields,
-} from "./contracts.js"
-
+} from "./generated/contracts.js"
 export type {
   CustomerAnalyticsRow,
   CustomerDetail,
@@ -50,10 +61,11 @@ export type {
   CustomerListItem,
   CustomerListResult,
 } from "./results.js"
-
+export type { CliToolName } from "./toolsets.js"
 export {
-  allCustomerToolNames,
-  analyticalAgentToolNames,
-  defaultAgentToolNames,
+  allPublicToolNames,
+  analyticalToolNames,
+  cliToolNames,
+  defaultToolNames,
   sqlToolNames,
 } from "./toolsets.js"

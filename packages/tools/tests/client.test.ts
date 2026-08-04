@@ -1,28 +1,32 @@
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 import { describe, expect, expectTypeOf, test, vi } from "vitest"
 
 import {
-  allCustomerToolNames,
-  analyticalAgentToolNames,
+  allPublicToolNames,
+  analyticalToolNames,
   type CustomerAnalyticsRow,
   type CustomerContextSearchInput,
   type CustomerDetail,
   type CustomerDetailResult,
   type CustomerListItem,
   type CustomerListResult,
+  cliToolNames,
   createOutlitClient,
   customerSourceTypeInputs,
   customerSourceTypes,
-  customerToolContractHash,
-  defaultAgentToolNames,
-  getCustomerToolContract,
+  defaultToolNames,
+  getPublicToolContract,
+  isOutlitToolsApiError,
   normalizeCustomerSourceType,
   resolveCustomerContextSearchInput,
+  sdkConsumerContractHash,
   sqlToolNames,
 } from "../src/index.js"
 
 describe("toolsets", () => {
   test("matches the Core-owned public tool set and excludes retired notification sending", () => {
-    expect(allCustomerToolNames).toEqual([
+    expect(allPublicToolNames).toEqual([
       "outlit_list_customers",
       "outlit_list_users",
       "outlit_list_workspace_users",
@@ -35,36 +39,62 @@ describe("toolsets", () => {
       "outlit_search_customer_context",
       "outlit_query",
       "outlit_schema",
+      "outlit_list_destinations",
+      "outlit_get_destination",
+      "outlit_create_destination",
+      "outlit_update_destination",
+      "outlit_enable_destination",
+      "outlit_disable_destination",
+      "outlit_archive_destination",
+      "outlit_list_integrations",
+      "outlit_get_integration_capabilities",
+      "outlit_begin_integration_setup",
+      "outlit_get_integration_setup_status",
+      "outlit_get_integration_sync_status",
+      "outlit_get_customer_activation",
+      "outlit_preview_customer_activation",
+      "outlit_update_customer_activation",
+      "outlit_get_workspace_settings",
+      "outlit_update_workspace_settings",
     ])
-    expect(allCustomerToolNames).not.toContain("outlit_send_notification")
+    expect(allPublicToolNames).not.toContain("outlit_send_notification")
   })
 
   test("keeps SQL out of the default agent toolset", () => {
-    expect(defaultAgentToolNames).toContain("outlit_search_customer_context")
-    expect(defaultAgentToolNames).toContain("outlit_get_customer")
-    expect(defaultAgentToolNames).toContain("outlit_list_workspace_users")
-    expect(defaultAgentToolNames).toContain("outlit_list_sources")
-    expect(defaultAgentToolNames).not.toContain("outlit_send_notification")
-    expect(defaultAgentToolNames).not.toContain("outlit_query")
-    expect(defaultAgentToolNames).not.toContain("outlit_schema")
-    expect(sqlToolNames).toEqual(["outlit_schema", "outlit_query"])
-    expect(allCustomerToolNames).toContain("outlit_query")
-    expect(allCustomerToolNames).toContain("outlit_list_workspace_users")
-    expect(allCustomerToolNames).not.toContain("outlit_send_notification")
+    expect(defaultToolNames).toContain("outlit_search_customer_context")
+    expect(defaultToolNames).toContain("outlit_get_customer")
+    expect(defaultToolNames).toContain("outlit_list_workspace_users")
+    expect(defaultToolNames).toContain("outlit_list_sources")
+    expect(defaultToolNames).toContain("outlit_begin_integration_setup")
+    expect(defaultToolNames).not.toContain("outlit_send_notification")
+    expect(defaultToolNames).not.toContain("outlit_query")
+    expect(defaultToolNames).not.toContain("outlit_schema")
+    expect(sqlToolNames).toEqual(["outlit_query", "outlit_schema"])
+    expect(allPublicToolNames).toContain("outlit_query")
+    expect(allPublicToolNames).toContain("outlit_list_workspace_users")
+    expect(allPublicToolNames).not.toContain("outlit_send_notification")
+    expect(cliToolNames).toEqual(allPublicToolNames)
   })
 
   test("exposes an analytical agent toolset with only default tools plus SQL", () => {
-    expect(analyticalAgentToolNames).toEqual(allCustomerToolNames)
-    expect(analyticalAgentToolNames).not.toContain("outlit_send_notification")
-    expect(analyticalAgentToolNames).toContain("outlit_schema")
-    expect(analyticalAgentToolNames).toContain("outlit_query")
-    expect(allCustomerToolNames).not.toContain("outlit_send_notification")
-    expect(allCustomerToolNames).toContain("outlit_schema")
-    expect(allCustomerToolNames).toContain("outlit_query")
+    expect(analyticalToolNames).toEqual(allPublicToolNames)
+    expect(analyticalToolNames).not.toContain("outlit_send_notification")
+    expect(analyticalToolNames).toContain("outlit_schema")
+    expect(analyticalToolNames).toContain("outlit_query")
   })
 })
 
 describe("tool contracts", () => {
+  test("keeps the Core-generated module data-only", () => {
+    const generated = readFileSync(
+      resolve(import.meta.dirname, "../src/generated/contracts.ts"),
+      "utf8",
+    )
+
+    expect(generated).toContain("This file contains contract data only")
+    expect(generated).not.toMatch(/\bfunction\b|\bclass\b|new Set|new Map/)
+  })
+
   test("types nullable company activation on customer and analytics results", () => {
     const listItem: CustomerListItem = {
       id: "customer_1",
@@ -130,7 +160,7 @@ describe("tool contracts", () => {
   })
 
   test("exposes workspace users and customer owner filters", () => {
-    const workspaceUsersContract = getCustomerToolContract("outlit_list_workspace_users")
+    const workspaceUsersContract = getPublicToolContract("outlit_list_workspace_users")
     const workspaceProperties = workspaceUsersContract.inputSchema.properties as Record<
       string,
       { type?: string; enum?: string[] }
@@ -148,7 +178,7 @@ describe("tool contracts", () => {
     )
     expect(workspaceProperties.orderBy?.enum).toEqual(["name", "email", "owned_customer_count"])
 
-    const customerContract = getCustomerToolContract("outlit_list_customers")
+    const customerContract = getPublicToolContract("outlit_list_customers")
     const customerProperties = customerContract.inputSchema.properties as Record<
       string,
       { type?: string; description?: string; format?: string; pattern?: string }
@@ -164,8 +194,8 @@ describe("tool contracts", () => {
         description: "Filter customers activated at or after this ISO-8601 datetime",
       }),
     )
-    expect(customerToolContractHash).toBe(
-      "b9ca81d1ec676dfbfa2ac72f8ef69946355504298b283050d7c161d06b9923cb",
+    expect(sdkConsumerContractHash).toBe(
+      "3d5e674e1f63140d5bbc3fb4443344c836bd9dffa38d6d8894069fcb65b8f91c",
     )
 
     const activatedSincePattern = customerProperties.activatedSince?.pattern
@@ -177,7 +207,7 @@ describe("tool contracts", () => {
   })
 
   test("exposes fact type and category filters on facts listing", () => {
-    const contract = getCustomerToolContract("outlit_list_facts")
+    const contract = getPublicToolContract("outlit_list_facts")
     const properties = contract.inputSchema.properties as Record<string, unknown>
 
     expect(properties.factTypes).toEqual(
@@ -199,7 +229,7 @@ describe("tool contracts", () => {
   })
 
   test("keeps anomaly detector filters out of the facts listing schema", () => {
-    const contract = getCustomerToolContract("outlit_list_facts")
+    const contract = getPublicToolContract("outlit_list_facts")
     const properties = contract.inputSchema.properties as Record<
       string,
       { items?: { enum?: string[] } }
@@ -241,14 +271,14 @@ describe("tool contracts", () => {
     expect(normalizeCustomerSourceType("constructor")).toBeNull()
     expect(normalizeCustomerSourceType("__proto__")).toBeNull()
 
-    const exactSourceContract = getCustomerToolContract("outlit_get_source")
+    const exactSourceContract = getPublicToolContract("outlit_get_source")
     const exactSourceProperties = exactSourceContract.inputSchema.properties as Record<
       string,
       { enum?: string[] }
     >
     expect(exactSourceProperties.sourceType?.enum).toEqual(customerSourceTypeInputs)
 
-    const searchContract = getCustomerToolContract("outlit_search_customer_context")
+    const searchContract = getPublicToolContract("outlit_search_customer_context")
     const searchProperties = searchContract.inputSchema.properties as Record<
       string,
       { items?: { enum?: string[] } }
@@ -275,7 +305,7 @@ describe("createOutlitClient", () => {
     )
   })
 
-  test("calls the public tool endpoint with the selected customer tool", async () => {
+  test("calls the generated gateway transport for every public capability", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValue(
@@ -288,7 +318,7 @@ describe("createOutlitClient", () => {
       fetch: fetchMock,
     })
 
-    const result = await client.callTool("outlit_list_customers", { limit: 10 })
+    const result = await client.callTool("outlit_create_destination", { type: "WEBHOOK" })
 
     expect(result).toEqual({ items: [{ id: "cust_123" }] })
     expect(fetchMock).toHaveBeenCalledWith("https://example.outlit.test/api/tools/call", {
@@ -298,8 +328,8 @@ describe("createOutlitClient", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        tool: "outlit_list_customers",
-        input: { limit: 10 },
+        tool: "outlit_create_destination",
+        input: { type: "WEBHOOK" },
       }),
     })
   })
@@ -311,9 +341,28 @@ describe("createOutlitClient", () => {
     })
 
     // @ts-expect-error Runtime guard should still reject invalid external input.
-    await expect(client.callTool("outlit_connect_integration", {})).rejects.toThrow(
-      "Unknown customer tool",
+    await expect(client.callTool("outlit_integration_setup_step", {})).rejects.toThrow(
+      "Unknown public tool",
     )
+  })
+
+  test("preserves the stable gateway error envelope", async () => {
+    const envelope = {
+      code: "AUTHORIZATION_DENIED",
+      message: "Capability not authorized",
+      retryable: false,
+      requestId: "request_123",
+    }
+    const client = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockResolvedValue(new Response(JSON.stringify(envelope), { status: 403 })),
+    })
+
+    const error = await client.callTool("outlit_list_customers").catch((value: unknown) => value)
+    expect(isOutlitToolsApiError(error)).toBe(true)
+    if (!isOutlitToolsApiError(error)) throw new Error("expected OutlitToolsApiError")
+    expect(error.status).toBe(403)
+    expect(error.envelope).toEqual(envelope)
   })
 })
 

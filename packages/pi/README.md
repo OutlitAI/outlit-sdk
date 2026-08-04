@@ -33,13 +33,13 @@ The default extension registers the default customer intelligence tools from `@o
 
 SQL tools are available from `@outlit/tools`, but they are not enabled by default. Integration-management commands and mutation tools are intentionally not part of this package.
 
-For analytical agents that need cohorts, usage trends, revenue filters, activation gaps, or aggregate checks, import `analyticalAgentToolNames`. It combines the default customer intelligence tools with `outlit_schema` and `outlit_query` without exposing every customer tool:
+For analytical agents that need cohorts, usage trends, revenue filters, activation gaps, or aggregate checks, import `analyticalToolNames`. It combines the default customer intelligence tools with `outlit_schema` and `outlit_query` without exposing every customer tool:
 
 ```ts
-import { analyticalAgentToolNames, createOutlitPiExtension } from "@outlit/pi"
+import { analyticalToolNames, createOutlitPiExtension } from "@outlit/pi"
 
 export default createOutlitPiExtension({
-  toolNames: analyticalAgentToolNames,
+  toolNames: analyticalToolNames,
 })
 ```
 
@@ -60,10 +60,10 @@ The facts tool supports `factTypes` filters for narrowing structured customer-me
 Create a small Pi extension when you want a narrower or broader toolset:
 
 ```ts
-import { allCustomerToolNames, createOutlitPiExtension } from "@outlit/pi"
+import { allPublicToolNames, createOutlitPiExtension } from "@outlit/pi"
 
 export default createOutlitPiExtension({
-  toolNames: allCustomerToolNames,
+  toolNames: allPublicToolNames,
 })
 ```
 

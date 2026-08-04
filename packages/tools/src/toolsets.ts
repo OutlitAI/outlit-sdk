@@ -1,16 +1,12 @@
-import { type CustomerToolName, customerToolNames } from "./contracts.js"
+import { consumerToolPolicies, publicToolNames } from "./generated/contracts.js"
 
-export const sqlToolNames = [
-  "outlit_schema",
-  "outlit_query",
-] as const satisfies readonly CustomerToolName[]
+export const defaultToolNames = consumerToolPolicies.default
+export const analyticalToolNames = consumerToolPolicies.analytical
+export const cliToolNames = consumerToolPolicies.cli
+export const allPublicToolNames = publicToolNames
+export type CliToolName = (typeof cliToolNames)[number]
 
-const sqlToolNameSet = new Set<CustomerToolName>(sqlToolNames)
-
-export const defaultAgentToolNames = customerToolNames.filter(
-  (toolName) => !sqlToolNameSet.has(toolName),
+const defaultToolNameSet = new Set<string>(defaultToolNames)
+export const sqlToolNames = analyticalToolNames.filter(
+  (toolName) => !defaultToolNameSet.has(toolName),
 )
-
-export const analyticalAgentToolNames = customerToolNames
-
-export const allCustomerToolNames = customerToolNames

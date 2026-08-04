@@ -1,4 +1,4 @@
-import { defaultAgentToolNames, getCustomerToolContract } from "@outlit/tools"
+import { defaultToolNames, getPublicToolContract } from "@outlit/tools"
 import { describe, expect, test, vi } from "vitest"
 
 import {
@@ -67,7 +67,8 @@ describe("createOutlitPiExtension", () => {
     })(pi)
 
     const registeredNames = pi.registeredTools.map((tool) => tool.name)
-    expect(registeredNames).toEqual([...defaultAgentToolNames])
+    expect(registeredNames).toEqual([...defaultToolNames])
+    expect(registeredNames).toContain("outlit_begin_integration_setup")
     expect(registeredNames).not.toContain("outlit_send_notification")
     expect(registeredNames).not.toContain("outlit_query")
     expect(registeredNames).not.toContain("outlit_schema")
@@ -80,7 +81,7 @@ describe("createOutlitPiExtension", () => {
         apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
         fetch: vi.fn(),
       }),
-    ).toThrow("Unknown Outlit customer tool")
+    ).toThrow("Unknown Outlit public tool")
   })
 
   test("deduplicates custom tool names before registration", () => {
@@ -119,7 +120,7 @@ describe("createOutlitPiExtension", () => {
 
     expect(tool.name).toBe("outlit_list_customers")
     expect(tool.label).toBe("Outlit List Customers")
-    const contract = getCustomerToolContract("outlit_list_customers")
+    const contract = getPublicToolContract("outlit_list_customers")
 
     expect(tool.description).toBe(contract.description)
     expect(tool.parameters).toEqual(withoutRootSchema(contract.inputSchema))
