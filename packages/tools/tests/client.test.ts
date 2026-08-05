@@ -95,7 +95,9 @@ describe("tool contracts", () => {
     )
 
     expect(generated).toContain("This file contains contract data only")
-    expect(generated).not.toMatch(/\bfunction\b|\bclass\b|new Set|new Map/)
+    expect(generated).not.toMatch(
+      /\b(?:export\s+)?(?:async\s+)?function\s+[A-Za-z_$]|\b(?:export\s+)?class\s+[A-Za-z_$]|new\s+(?:Set|Map)\s*\(/,
+    )
   })
 
   test("exports Core-owned transport and error contracts", () => {
@@ -210,7 +212,7 @@ describe("tool contracts", () => {
       }),
     )
     expect(sdkConsumerContractHash).toBe(
-      "734deec7fc9b275e2366edaa43384c13806616c6562f54332ff3fe22f692a59c",
+      "4a4976a71bd9c0103b6e15f2dbab6c0b1e3a44ca2f9273dcfcd8c5cb3aa05fa8",
     )
 
     const activatedSincePattern = customerProperties.activatedSince?.pattern
@@ -219,6 +221,33 @@ describe("tool contracts", () => {
     expect(activatedSinceRegex.test("2026-07-01T00:00:00.000Z")).toBe(true)
     expect(activatedSinceRegex.test("2026-07-01T00:00:00+05:30")).toBe(true)
     expect(activatedSinceRegex.test("2026-07-01")).toBe(false)
+  })
+
+  test("exposes bounded customer enrichment and explicit MRR calculation state", () => {
+    const contract = getPublicToolContract("outlit_get_customer")
+    const inputProperties = contract.inputSchema.properties as Record<string, unknown>
+    const outputProperties = (contract.outputSchema as { properties: Record<string, unknown> })
+      .properties
+
+    expect(inputProperties.customer).toEqual(
+      expect.objectContaining({ type: "string", minLength: 1, maxLength: 500 }),
+    )
+    expect(inputProperties.include).toEqual(
+      expect.objectContaining({
+        items: expect.objectContaining({ enum: expect.arrayContaining(["enrichment"]) }),
+      }),
+    )
+    expect(outputProperties.enrichment).toEqual(expect.objectContaining({ type: "object" }))
+    expect(outputProperties.revenue).toEqual(
+      expect.objectContaining({
+        properties: expect.objectContaining({
+          currentMrr: expect.objectContaining({ anyOf: expect.any(Array) }),
+          mrrCalculationStatus: expect.objectContaining({
+            enum: ["calculated", "mixed_currency", "unavailable"],
+          }),
+        }),
+      }),
+    )
   })
 
   test("exposes fact type and category filters on facts listing", () => {

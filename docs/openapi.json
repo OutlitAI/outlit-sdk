@@ -1979,6 +1979,8 @@
         "properties": {
           "customer": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
             "description": "Customer ID, domain, or name to look up"
           },
           "include": {
@@ -1990,7 +1992,8 @@
                 "users",
                 "revenue",
                 "recentTimeline",
-                "behaviorMetrics"
+                "behaviorMetrics",
+                "enrichment"
               ]
             }
           },
@@ -2015,6 +2018,8 @@
         "properties": {
           "customer": {
             "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
             "description": "Customer ID or domain"
           },
           "channels": {
@@ -2746,7 +2751,22 @@
                   "maximum": 9007199254740991
                 },
                 "currentMrr": {
-                  "type": "number"
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "mrrCalculationStatus": {
+                  "type": "string",
+                  "enum": [
+                    "calculated",
+                    "mixed_currency",
+                    "unavailable"
+                  ]
                 },
                 "owner": {
                   "anyOf": [
@@ -2798,6 +2818,7 @@
                 "lastActivityAt",
                 "contactCount",
                 "currentMrr",
+                "mrrCalculationStatus",
                 "owner",
                 "daysSinceActivity"
               ],
@@ -3272,7 +3293,22 @@
             "type": "object",
             "properties": {
               "currentMrr": {
-                "type": "number"
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "mrrCalculationStatus": {
+                "type": "string",
+                "enum": [
+                  "calculated",
+                  "mixed_currency",
+                  "unavailable"
+                ]
               },
               "lifetimeRevenue": {
                 "type": "number"
@@ -3285,6 +3321,7 @@
             },
             "required": [
               "currentMrr",
+              "mrrCalculationStatus",
               "lifetimeRevenue",
               "activeSubscriptions"
             ],
@@ -3370,6 +3407,138 @@
               "activeUsers",
               "lastEmailAt",
               "lastMeetingAt"
+            ],
+            "additionalProperties": false
+          },
+          "enrichment": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "MISSING",
+                  "FRESH",
+                  "STALE",
+                  "FAILED",
+                  "NO_MATCH",
+                  "INPUT_CHANGED"
+                ]
+              },
+              "provider": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "providerEntityId": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "summary": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "match": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lastSuccessfulRefreshAt": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lastAttemptAt": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "expiresAt": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "class": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "retryable": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "class",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "provider",
+              "providerEntityId",
+              "summary",
+              "match",
+              "lastSuccessfulRefreshAt",
+              "lastAttemptAt",
+              "expiresAt",
+              "error"
             ],
             "additionalProperties": false
           }
@@ -8720,5 +8889,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "734deec7fc9b275e2366edaa43384c13806616c6562f54332ff3fe22f692a59c"
+  "x-outlit-contract-hash": "4a4976a71bd9c0103b6e15f2dbab6c0b1e3a44ca2f9273dcfcd8c5cb3aa05fa8"
 }

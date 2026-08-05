@@ -246,7 +246,22 @@ export const publicToolContracts = {
                 "maximum": 9007199254740991,
               },
               "currentMrr": {
-                "type": "number",
+                "anyOf": [
+                  {
+                    "type": "number",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "mrrCalculationStatus": {
+                "type": "string",
+                "enum": [
+                  "calculated",
+                  "mixed_currency",
+                  "unavailable",
+                ],
               },
               "owner": {
                 "anyOf": [
@@ -298,6 +313,7 @@ export const publicToolContracts = {
               "lastActivityAt",
               "contactCount",
               "currentMrr",
+              "mrrCalculationStatus",
               "owner",
               "daysSinceActivity",
             ],
@@ -769,13 +785,15 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Use this when you already know which customer you want to inspect. Optionally include related data (users, revenue, recent activity, engagement metrics).",
+    "description": "Get full details for a single customer. Use this when you already know which customer you want to inspect. Optionally include related data (users, revenue, recent activity, engagement metrics, company enrichment).",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
         "customer": {
           "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
           "description": "Customer ID, domain, or name to look up",
         },
         "include": {
@@ -788,6 +806,7 @@ export const publicToolContracts = {
               "revenue",
               "recentTimeline",
               "behaviorMetrics",
+              "enrichment",
             ],
           },
         },
@@ -980,7 +999,22 @@ export const publicToolContracts = {
           "type": "object",
           "properties": {
             "currentMrr": {
-              "type": "number",
+              "anyOf": [
+                {
+                  "type": "number",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "mrrCalculationStatus": {
+              "type": "string",
+              "enum": [
+                "calculated",
+                "mixed_currency",
+                "unavailable",
+              ],
             },
             "lifetimeRevenue": {
               "type": "number",
@@ -993,6 +1027,7 @@ export const publicToolContracts = {
           },
           "required": [
             "currentMrr",
+            "mrrCalculationStatus",
             "lifetimeRevenue",
             "activeSubscriptions",
           ],
@@ -1081,6 +1116,138 @@ export const publicToolContracts = {
           ],
           "additionalProperties": false,
         },
+        "enrichment": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "MISSING",
+                "FRESH",
+                "STALE",
+                "FAILED",
+                "NO_MATCH",
+                "INPUT_CHANGED",
+              ],
+            },
+            "provider": {
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "providerEntityId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "summary": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                  },
+                  "additionalProperties": {},
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "match": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                  },
+                  "additionalProperties": {},
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "lastSuccessfulRefreshAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "lastAttemptAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "expiresAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "error": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "class": {
+                      "type": "string",
+                    },
+                    "message": {
+                      "type": "string",
+                    },
+                    "retryable": {
+                      "type": "boolean",
+                    },
+                  },
+                  "required": [
+                    "class",
+                    "message",
+                  ],
+                  "additionalProperties": false,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+          },
+          "required": [
+            "status",
+            "provider",
+            "providerEntityId",
+            "summary",
+            "match",
+            "lastSuccessfulRefreshAt",
+            "lastAttemptAt",
+            "expiresAt",
+            "error",
+          ],
+          "additionalProperties": false,
+        },
       },
       "required": [
         "customer",
@@ -1101,6 +1268,8 @@ export const publicToolContracts = {
       "properties": {
         "customer": {
           "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
           "description": "Customer ID or domain",
         },
         "channels": {
@@ -2730,7 +2899,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customer-context",
     "title": "List Sources",
-    "description": "List concrete source records deterministically. Use this instead of semantic search when you need enumerated calls, emails, calendar events, support tickets, or opportunities.",
+    "description": "List concrete source records deterministically. Use this instead of semantic search when you need enumerated calls, emails, calendar events, support tickets, Slack conversations, or opportunities.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -8355,6 +8524,7 @@ export const customerIncludeSections = [
   "revenue",
   "recentTimeline",
   "behaviorMetrics",
+  "enrichment",
 ] as const
 
 export const customerSourceTypes = [
@@ -8436,4 +8606,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "734deec7fc9b275e2366edaa43384c13806616c6562f54332ff3fe22f692a59c" as const
+export const sdkConsumerContractHash = "4a4976a71bd9c0103b6e15f2dbab6c0b1e3a44ca2f9273dcfcd8c5cb3aa05fa8" as const
