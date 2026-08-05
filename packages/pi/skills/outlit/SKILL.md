@@ -20,6 +20,7 @@ Do not invent customer state when Outlit can answer it. Call out sparse or messy
 - Use `outlit_list_facts` to browse structured account facts, known signals, open issues, health indicators, relationship notes, activation, billing, or renewal context. Narrow with `status`, `sourceTypes`, and `factTypes` when you know what evidence class you need.
 - Use `outlit_get_fact` when you already have a fact id and need the canonical fact payload.
 - Use `outlit_search_customer_context` for fuzzy or thematic questions such as pricing concern, blocked integration, not using, renewal, champion left, negative sentiment, expansion, implementation, or support escalation.
+- Use `outlit_list_sources` to discover the source artifacts available for a customer before retrieving one in full.
 - Use `outlit_get_source` when a fact or search result needs stronger evidence from the underlying source artifact.
 
 Use customer lookups before SQL. SQL is for aggregates, joins, cohorts, time-series analysis, and custom reporting.
