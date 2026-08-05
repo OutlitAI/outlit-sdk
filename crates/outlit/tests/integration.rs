@@ -84,6 +84,35 @@ impl wiremock::Respond for CountingResponder {
     }
 }
 
+struct DelayedFailuresResponder {
+    counter: Arc<AtomicUsize>,
+    delays: Vec<Duration>,
+}
+
+impl wiremock::Respond for DelayedFailuresResponder {
+    fn respond(&self, _request: &wiremock::Request) -> ResponseTemplate {
+        let call = self.counter.fetch_add(1, Ordering::SeqCst);
+        if let Some(delay) = self.delays.get(call) {
+            return ResponseTemplate::new(500).set_delay(*delay);
+        }
+
+        ResponseTemplate::new(200).set_body_json(json!({
+            "success": true,
+            "processed": 1
+        }))
+    }
+}
+
+async fn wait_for_call_count(counter: &AtomicUsize, expected: usize) {
+    tokio::time::timeout(Duration::from_secs(1), async {
+        while counter.load(Ordering::SeqCst) < expected {
+            tokio::time::sleep(Duration::from_millis(1)).await;
+        }
+    })
+    .await
+    .expect("mock request was not received in time");
+}
+
 #[tokio::test]
 async fn test_flush_on_shutdown() {
     let mock_server = MockServer::start().await;
@@ -115,6 +144,96 @@ async fn test_flush_on_shutdown() {
     client.shutdown().await.unwrap();
 
     assert_eq!(received.load(Ordering::SeqCst), 1);
+}
+
+#[tokio::test]
+async fn test_shutdown_waits_for_a_drained_periodic_batch_before_final_flush() {
+    let mock_server = MockServer::start().await;
+    let received = Arc::new(AtomicUsize::new(0));
+
+    Mock::given(method("POST"))
+        .respond_with(DelayedFailuresResponder {
+            counter: received.clone(),
+            delays: vec![Duration::from_millis(100)],
+        })
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_test")
+        .api_host(mock_server.uri())
+        .flush_interval(Duration::from_millis(10))
+        .max_batch_size(100)
+        .build()
+        .unwrap();
+
+    client
+        .track("event", email("user@test.com"))
+        .send()
+        .await
+        .unwrap();
+
+    wait_for_call_count(&received, 1).await;
+    client.shutdown().await.unwrap();
+
+    assert_eq!(received.load(Ordering::SeqCst), 2);
+    assert_eq!(client.pending_event_count().await, 0);
+}
+
+#[tokio::test]
+async fn test_concurrent_failed_flushes_preserve_global_event_order() {
+    let mock_server = MockServer::start().await;
+    let received = Arc::new(AtomicUsize::new(0));
+
+    Mock::given(method("POST"))
+        .respond_with(DelayedFailuresResponder {
+            counter: received.clone(),
+            delays: vec![Duration::from_millis(100), Duration::from_millis(200)],
+        })
+        .mount(&mock_server)
+        .await;
+
+    let client = Arc::new(
+        Outlit::builder("pk_test")
+            .api_host(mock_server.uri())
+            .flush_interval(Duration::from_secs(100))
+            .max_batch_size(100)
+            .build()
+            .unwrap(),
+    );
+
+    client
+        .track("older", email("user@test.com"))
+        .send()
+        .await
+        .unwrap();
+    let first_client = client.clone();
+    let first_flush = tokio::spawn(async move { first_client.flush().await });
+    wait_for_call_count(&received, 1).await;
+
+    client
+        .track("newer", email("user@test.com"))
+        .send()
+        .await
+        .unwrap();
+    let second_client = client.clone();
+    let second_flush = tokio::spawn(async move { second_client.flush().await });
+
+    assert!(first_flush.await.unwrap().is_err());
+    assert!(second_flush.await.unwrap().is_err());
+    client.flush().await.unwrap();
+
+    let requests = mock_server.received_requests().await.unwrap();
+    let final_payload: serde_json::Value = serde_json::from_slice(&requests.last().unwrap().body)
+        .expect("final request must contain JSON");
+    let event_names = final_payload["events"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|event| event["eventName"].as_str().unwrap())
+        .collect::<Vec<_>>();
+
+    assert_eq!(received.load(Ordering::SeqCst), 3);
+    assert_eq!(event_names, vec!["older", "newer"]);
 }
 
 #[tokio::test]
