@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { describe, expect, test } from "vitest"
+import { ingestTransport as coreIngestTransport } from "../../packages/core/src/generated/ingest-contract"
 import { ingestTransport } from "../../packages/tools/src/generated/contracts"
 
 const repositoryRoot = resolve(import.meta.dirname, "../..")
@@ -59,5 +60,20 @@ describe("public tracking surface", () => {
       expect(rustContract).toContain(`"${eventType}"`)
     }
     expect(rustContract).not.toMatch(/"stage"|"billing"/)
+  })
+
+  test("@outlit/core consumes a small local ingest contract instead of the tool catalog", () => {
+    expect(coreIngestTransport).toEqual({
+      method: ingestTransport.method,
+      pathTemplate: ingestTransport.pathTemplate,
+      eventTypes: ingestTransport.eventTypes,
+    })
+
+    for (const sourceFile of ["types.ts", "transport.ts"]) {
+      const source = readFileSync(resolve(repositoryRoot, "packages/core/src", sourceFile), "utf8")
+      expect(source).toContain("./generated/ingest-contract")
+      expect(source).not.toContain("packages/tools")
+      expect(source).not.toContain("../../tools")
+    }
   })
 })

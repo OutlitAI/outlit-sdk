@@ -38,8 +38,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -55,8 +54,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -72,8 +70,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -89,8 +86,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -106,8 +102,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -123,8 +118,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -140,8 +134,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -157,8 +150,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -174,8 +166,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -191,8 +182,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -208,8 +198,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -225,8 +214,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -242,8 +230,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -259,8 +246,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -276,8 +262,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -293,8 +278,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -310,8 +294,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -327,8 +310,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -344,8 +326,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -361,8 +342,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -378,8 +358,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -395,8 +374,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -412,8 +390,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -429,8 +406,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -446,8 +422,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -463,8 +438,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -480,8 +454,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -497,8 +470,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   },
@@ -514,8 +486,7 @@
                       }
                     },
                     "required": [
-                      "tool",
-                      "input"
+                      "tool"
                     ],
                     "additionalProperties": false
                   }
@@ -533,7 +504,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
+                  "anyOf": [
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_list_customers"
                     },
@@ -646,8 +617,48 @@
               }
             }
           },
+          "402": {
+            "description": "Billing action required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            }
+          },
           "403": {
             "description": "Capability not authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Requested resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Capability request conflicts with current state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Capability request could not be processed",
             "content": {
               "application/json": {
                 "schema": {
@@ -709,7 +720,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiKeyValidationResponse"
+                  "$ref": "#/components/schemas/ApiKeyValidationSuccess"
                 }
               }
             }
@@ -719,7 +730,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GatewayError"
+                  "$ref": "#/components/schemas/ApiKeyValidationFailure"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "API-key validation unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyValidationFailure"
                 }
               }
             }
@@ -764,11 +785,35 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid event payload"
+          "207": {
+            "description": "Partial ingestion result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResponse"
+                }
+              }
+            }
           },
-          "401": {
-            "description": "Invalid public ingestion key or origin"
+          "400": {
+            "description": "Invalid ingestion request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Ingestion failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -783,53 +828,6 @@
       }
     },
     "schemas": {
-      "ToolCallRequest": {
-        "type": "object",
-        "properties": {
-          "tool": {
-            "type": "string",
-            "enum": [
-              "outlit_list_customers",
-              "outlit_list_users",
-              "outlit_list_workspace_users",
-              "outlit_get_customer",
-              "outlit_get_timeline",
-              "outlit_list_facts",
-              "outlit_get_fact",
-              "outlit_get_source",
-              "outlit_list_sources",
-              "outlit_search_customer_context",
-              "outlit_query",
-              "outlit_schema",
-              "outlit_list_destinations",
-              "outlit_get_destination",
-              "outlit_create_destination",
-              "outlit_update_destination",
-              "outlit_enable_destination",
-              "outlit_disable_destination",
-              "outlit_archive_destination",
-              "outlit_list_integrations",
-              "outlit_get_integration_capabilities",
-              "outlit_begin_integration_setup",
-              "outlit_get_integration_setup_status",
-              "outlit_get_integration_sync_status",
-              "outlit_get_customer_activation",
-              "outlit_preview_customer_activation",
-              "outlit_update_customer_activation",
-              "outlit_get_workspace_settings",
-              "outlit_update_workspace_settings"
-            ]
-          },
-          "input": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "tool",
-          "input"
-        ],
-        "additionalProperties": false
-      },
       "GatewayError": {
         "type": "object",
         "properties": {
@@ -883,10 +881,11 @@
         ],
         "additionalProperties": false
       },
-      "ApiKeyValidationResponse": {
+      "ApiKeyValidationSuccess": {
         "type": "object",
         "properties": {
           "valid": {
+            "type": "boolean",
             "const": true
           },
           "organizationId": {
@@ -901,6 +900,147 @@
                 "type": "null"
               }
             ]
+          },
+          "organization": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "slug": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "slug"
+            ],
+            "additionalProperties": false
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "email",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "apiKey": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "prefix": {
+                "type": "string"
+              },
+              "keyType": {
+                "type": "string",
+                "enum": [
+                  "api",
+                  "cli",
+                  "mcp",
+                  "ci"
+                ]
+              },
+              "grants": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "customer_intelligence:read",
+                    "workspace_members:read",
+                    "analytics:read",
+                    "destinations:manage",
+                    "integrations:manage",
+                    "activation:read",
+                    "activation:manage",
+                    "workspace_settings:read",
+                    "workspace_settings:manage"
+                  ]
+                }
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "lastUsedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "totalRequests": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "prefix",
+              "keyType",
+              "grants",
+              "createdAt",
+              "lastUsedAt",
+              "totalRequests"
+            ],
+            "additionalProperties": false
           },
           "authorization": {
             "type": "object",
@@ -920,8 +1060,7 @@
                     "workspace_settings:read",
                     "workspace_settings:manage"
                   ]
-                },
-                "uniqueItems": true
+                }
               }
             },
             "required": [
@@ -936,7 +1075,24 @@
           "createdById",
           "authorization"
         ],
-        "additionalProperties": true
+        "additionalProperties": false
+      },
+      "ApiKeyValidationFailure": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "const": false
+          },
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "valid",
+          "error"
+        ],
+        "additionalProperties": false
       },
       "IngestPayload": {
         "type": "object",
@@ -5812,41 +5968,6 @@
                         "sourceRef"
                       ],
                       "additionalProperties": false
-                    },
-                    "slackLocator": {
-                      "type": "object",
-                      "properties": {
-                        "kind": {
-                          "type": "string",
-                          "const": "slack_search_match"
-                        },
-                        "publicRootId": {
-                          "type": "string"
-                        },
-                        "targetMessageId": {
-                          "type": "string"
-                        },
-                        "targetMessageKind": {
-                          "type": "string",
-                          "enum": [
-                            "ROOT",
-                            "REPLY"
-                          ]
-                        },
-                        "predecessorRootId": {
-                          "type": "string"
-                        },
-                        "predecessorMessageId": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "kind",
-                        "publicRootId",
-                        "targetMessageId",
-                        "targetMessageKind"
-                      ],
-                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -8889,5 +9010,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "4a4976a71bd9c0103b6e15f2dbab6c0b1e3a44ca2f9273dcfcd8c5cb3aa05fa8"
+  "x-outlit-contract-hash": "3731d907fd305d5b70ac8105069f8e45f1840c599063f0b69d9a3195261b3a21"
 }

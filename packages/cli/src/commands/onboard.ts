@@ -1,7 +1,7 @@
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
-import { pingApiKey } from "../lib/api"
+import { isApiKeyValidationUnavailableError, pingApiKey } from "../lib/api"
 import { runBrowserAuthFlow } from "../lib/browser-auth"
 import { createClient } from "../lib/client"
 import { resolveApiKey, storeApiKey } from "../lib/config"
@@ -104,6 +104,16 @@ export default defineCommand({
         message: `Authenticated via ${credential.source}`,
       })
     } catch (err) {
+      if (isApiKeyValidationUnavailableError(err)) {
+        return outputError(
+          {
+            message: "Outlit cannot validate API keys right now. Please try again shortly.",
+            code: "api_unavailable",
+          },
+          json,
+        )
+      }
+
       return outputError(
         {
           message: `API key is invalid or expired: ${errorMessage(err, "unknown error")}`,

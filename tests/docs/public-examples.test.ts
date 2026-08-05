@@ -5,6 +5,8 @@ import { join } from "node:path"
 import * as vueSfcCompiler from "@vue/compiler-sfc"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
+import { matchesGeneratedJsonSchema } from "../../packages/tools/src/client"
+import { publicToolContracts } from "../../packages/tools/src/generated/contracts"
 
 type FencedBlock = {
   code: string
@@ -120,6 +122,25 @@ describe("public documentation examples", () => {
     }
 
     expect(failures).toEqual([])
+  })
+
+  test("keeps the documented customer-list response aligned with its generated schema", () => {
+    const file = "docs/api-reference/tools.mdx"
+    const source = readFileSync(file, "utf8")
+    const markerLine = source
+      .slice(0, source.indexOf("Example list response:"))
+      .split(/\r?\n/).length
+    const responseBlock = extractFencedBlocks(file).find(
+      (block) => block.language === "json" && block.line > markerLine,
+    )
+
+    expect(responseBlock).toBeDefined()
+    expect(
+      matchesGeneratedJsonSchema(
+        JSON.parse(responseBlock?.code ?? "null") as unknown,
+        publicToolContracts.outlit_list_customers.outputSchema,
+      ),
+    ).toBe(true)
   })
 
   test("keeps TypeScript and JavaScript fences syntactically valid", () => {

@@ -3949,41 +3949,6 @@ export const publicToolContracts = {
                     ],
                     "additionalProperties": false,
                   },
-                  "slackLocator": {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "const": "slack_search_match",
-                      },
-                      "publicRootId": {
-                        "type": "string",
-                      },
-                      "targetMessageId": {
-                        "type": "string",
-                      },
-                      "targetMessageKind": {
-                        "type": "string",
-                        "enum": [
-                          "ROOT",
-                          "REPLY",
-                        ],
-                      },
-                      "predecessorRootId": {
-                        "type": "string",
-                      },
-                      "predecessorMessageId": {
-                        "type": "string",
-                      },
-                    },
-                    "required": [
-                      "kind",
-                      "publicRootId",
-                      "targetMessageId",
-                      "targetMessageKind",
-                    ],
-                    "additionalProperties": false,
-                  },
                 },
                 "required": [
                   "kind",
@@ -7586,11 +7551,263 @@ export const consumerToolPolicies = {
 export const toolGatewayTransport = {
   "method": "POST",
   "path": "/api/tools/call",
+  "errorStatuses": [
+    400,
+    401,
+    402,
+    403,
+    404,
+    409,
+    422,
+    429,
+    500,
+    502,
+    503,
+  ],
 } as const
 
 export const apiKeyValidationTransport = {
   "method": "POST",
   "path": "/api/validate-api-key",
+  "responseStatuses": {
+    "success": 200,
+    "invalid": 401,
+    "unavailable": 503,
+  },
+  "publicResponseStatuses": [
+    200,
+    401,
+    503,
+  ],
+} as const
+
+export const apiKeyGrants = [
+  "customer_intelligence:read",
+  "workspace_members:read",
+  "analytics:read",
+  "destinations:manage",
+  "integrations:manage",
+  "activation:read",
+  "activation:manage",
+  "workspace_settings:read",
+  "workspace_settings:manage",
+] as const
+
+export const apiKeyValidationSuccessSchema = {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "valid": {
+      "type": "boolean",
+      "const": true,
+    },
+    "organizationId": {
+      "type": "string",
+    },
+    "createdById": {
+      "anyOf": [
+        {
+          "type": "string",
+        },
+        {
+          "type": "null",
+        },
+      ],
+    },
+    "organization": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "slug": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "id",
+        "name",
+        "slug",
+      ],
+      "additionalProperties": false,
+    },
+    "createdBy": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+            },
+            "email": {
+              "type": "string",
+            },
+            "name": {
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+          },
+          "required": [
+            "id",
+            "email",
+            "name",
+          ],
+          "additionalProperties": false,
+        },
+        {
+          "type": "null",
+        },
+      ],
+    },
+    "apiKey": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+        },
+        "name": {
+          "type": "string",
+        },
+        "prefix": {
+          "type": "string",
+        },
+        "keyType": {
+          "type": "string",
+          "enum": [
+            "api",
+            "cli",
+            "mcp",
+            "ci",
+          ],
+        },
+        "grants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "customer_intelligence:read",
+              "workspace_members:read",
+              "analytics:read",
+              "destinations:manage",
+              "integrations:manage",
+              "activation:read",
+              "activation:manage",
+              "workspace_settings:read",
+              "workspace_settings:manage",
+            ],
+          },
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+        },
+        "lastUsedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "totalRequests": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+        },
+      },
+      "required": [
+        "id",
+        "name",
+        "prefix",
+        "keyType",
+        "grants",
+        "createdAt",
+        "lastUsedAt",
+        "totalRequests",
+      ],
+      "additionalProperties": false,
+    },
+    "authorization": {
+      "type": "object",
+      "properties": {
+        "grants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "customer_intelligence:read",
+              "workspace_members:read",
+              "analytics:read",
+              "destinations:manage",
+              "integrations:manage",
+              "activation:read",
+              "activation:manage",
+              "workspace_settings:read",
+              "workspace_settings:manage",
+            ],
+          },
+        },
+      },
+      "required": [
+        "grants",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "required": [
+    "valid",
+    "organizationId",
+    "createdById",
+    "authorization",
+  ],
+  "additionalProperties": false,
+} as const
+
+export const apiKeyValidationFailureSchema = {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "valid": {
+      "type": "boolean",
+      "const": false,
+    },
+    "error": {
+      "type": "string",
+    },
+  },
+  "required": [
+    "valid",
+    "error",
+  ],
+  "additionalProperties": false,
 } as const
 
 export const toolGatewayErrorCodes = [
@@ -7665,6 +7882,12 @@ export const toolGatewayErrorSchema = {
 export const ingestTransport = {
   "method": "POST",
   "pathTemplate": "/api/i/v1/{publicKey}/events",
+  "responseStatuses": {
+    "success": 200,
+    "partialSuccess": 207,
+    "clientError": 400,
+    "serverError": 500,
+  },
   "eventTypes": [
     "pageview",
     "form",
@@ -8536,6 +8759,11 @@ export const customerSourceTypes = [
   "SLACK",
 ] as const
 
+export const customerSourceTypeAliasMap = {
+  "CRM": "OPPORTUNITY",
+  "CRM_OPPORTUNITY": "OPPORTUNITY",
+} as const
+
 export const customerSourceTypeAliases = [
   "CRM",
   "CRM_OPPORTUNITY",
@@ -8606,4 +8834,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "4a4976a71bd9c0103b6e15f2dbab6c0b1e3a44ca2f9273dcfcd8c5cb3aa05fa8" as const
+export const sdkConsumerContractHash = "3731d907fd305d5b70ac8105069f8e45f1840c599063f0b69d9a3195261b3a21" as const

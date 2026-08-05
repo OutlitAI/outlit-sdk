@@ -1,4 +1,4 @@
-import { ingestTransport } from "../../tools/src/generated/contracts"
+import { ingestTransport } from "./generated/ingest-contract"
 
 export const INGEST_METHOD = ingestTransport.method
 export const INGEST_EVENT_TYPES = ingestTransport.eventTypes

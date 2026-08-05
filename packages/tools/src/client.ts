@@ -4,7 +4,7 @@ import {
   toolGatewayErrorSchema,
   toolGatewayTransport,
 } from "./generated/contracts.js"
-import type { CustomerDetailResult, CustomerListResult } from "./results.js"
+import type { JsonSchemaValue, PublicToolResult } from "./results.js"
 
 export const DEFAULT_OUTLIT_API_URL = "https://app.outlit.ai"
 
@@ -25,20 +25,6 @@ type ToolGatewayErrorOptionalProperty = Exclude<
   keyof ToolGatewayErrorProperties,
   ToolGatewayErrorRequiredProperty
 >
-
-type JsonSchemaValue<TSchema> = TSchema extends { readonly anyOf: readonly (infer TOption)[] }
-  ? JsonSchemaValue<TOption>
-  : TSchema extends { readonly enum: readonly (infer TValue)[] }
-    ? TValue
-    : TSchema extends { readonly type: "string" }
-      ? string
-      : TSchema extends { readonly type: "boolean" }
-        ? boolean
-        : TSchema extends { readonly type: "number" }
-          ? number
-          : TSchema extends { readonly type: "null" }
-            ? null
-            : unknown
 
 export type ToolGatewayErrorCode = (typeof toolGatewayErrorCodes)[number]
 export type ToolGatewayErrorEnvelope = {
@@ -62,13 +48,6 @@ export class OutlitToolsApiError extends Error {
 export function isOutlitToolsApiError(error: unknown): error is OutlitToolsApiError {
   return error instanceof OutlitToolsApiError
 }
-
-export type PublicToolResult<TToolName extends PublicToolName> =
-  TToolName extends "outlit_list_customers"
-    ? CustomerListResult
-    : TToolName extends "outlit_get_customer"
-      ? CustomerDetailResult
-      : unknown
 
 export type OutlitToolsClient = {
   key: string
@@ -128,7 +107,7 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
 function parseGatewayError(text: string): ToolGatewayErrorEnvelope | undefined {
   try {
     const value = JSON.parse(text) as unknown
-    if (matchesJsonSchema(value, toolGatewayErrorSchema)) {
+    if (matchesGeneratedJsonSchema(value, toolGatewayErrorSchema)) {
       return value as ToolGatewayErrorEnvelope
     }
   } catch {
@@ -137,17 +116,32 @@ function parseGatewayError(text: string): ToolGatewayErrorEnvelope | undefined {
   return undefined
 }
 
-type RuntimeJsonSchema = {
+export type RuntimeJsonSchema = {
   readonly type?: string
+  readonly const?: unknown
   readonly enum?: readonly unknown[]
   readonly anyOf?: readonly RuntimeJsonSchema[]
+  readonly oneOf?: readonly RuntimeJsonSchema[]
+  readonly items?: RuntimeJsonSchema
   readonly properties?: Readonly<Record<string, RuntimeJsonSchema>>
   readonly required?: readonly string[]
-  readonly additionalProperties?: boolean
+  readonly additionalProperties?: boolean | RuntimeJsonSchema
 }
 
-function matchesJsonSchema(value: unknown, schema: RuntimeJsonSchema): boolean {
-  if (schema.anyOf && !schema.anyOf.some((option) => matchesJsonSchema(value, option))) {
+export function matchesGeneratedJsonSchema<TSchema extends RuntimeJsonSchema>(
+  value: unknown,
+  schema: TSchema,
+): value is JsonSchemaValue<TSchema> {
+  if (Object.hasOwn(schema, "const") && !Object.is(schema.const, value)) {
+    return false
+  }
+  if (schema.anyOf && !schema.anyOf.some((option) => matchesGeneratedJsonSchema(value, option))) {
+    return false
+  }
+  if (
+    schema.oneOf &&
+    schema.oneOf.filter((option) => matchesGeneratedJsonSchema(value, option)).length !== 1
+  ) {
     return false
   }
   if (schema.enum && !schema.enum.some((candidate) => Object.is(candidate, value))) {
@@ -169,8 +163,20 @@ function matchesJsonSchema(value: unknown, schema: RuntimeJsonSchema): boolean {
       }
       return Object.entries(record).every(([property, propertyValue]) => {
         const propertySchema = properties[property]
-        return propertySchema ? matchesJsonSchema(propertyValue, propertySchema) : true
+        if (propertySchema) return matchesGeneratedJsonSchema(propertyValue, propertySchema)
+        if (
+          typeof schema.additionalProperties === "object" &&
+          schema.additionalProperties !== null
+        ) {
+          return matchesGeneratedJsonSchema(propertyValue, schema.additionalProperties)
+        }
+        return true
       })
+    }
+    case "array": {
+      if (!Array.isArray(value)) return false
+      const itemSchema = schema.items
+      return !itemSchema || value.every((item) => matchesGeneratedJsonSchema(item, itemSchema))
     }
     case "string":
       return typeof value === "string"
@@ -178,6 +184,8 @@ function matchesJsonSchema(value: unknown, schema: RuntimeJsonSchema): boolean {
       return typeof value === "boolean"
     case "number":
       return typeof value === "number" && Number.isFinite(value)
+    case "integer":
+      return typeof value === "number" && Number.isSafeInteger(value)
     case "null":
       return value === null
     case undefined:

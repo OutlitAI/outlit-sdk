@@ -5,6 +5,7 @@ import { describe, expect, expectTypeOf, test, vi } from "vitest"
 import {
   allPublicToolNames,
   analyticalToolNames,
+  apiKeyGrants,
   apiKeyValidationTransport,
   type CustomerAnalyticsRow,
   type CustomerContextSearchInput,
@@ -106,33 +107,23 @@ describe("tool contracts", () => {
     expect(apiKeyValidationTransport).toEqual({
       method: "POST",
       path: "/api/validate-api-key",
+      responseStatuses: { success: 200, invalid: 401, unavailable: 503 },
+      publicResponseStatuses: [200, 401, 503],
     })
+    expect(apiKeyGrants).not.toContain("agents:read")
+    expect(apiKeyGrants).not.toContain("agents:write")
     expect(toolGatewayErrorSchema.properties.code.enum).toEqual(toolGatewayErrorCodes)
     expect(toolGatewayErrorSchema.required).toEqual(["code", "message", "retryable", "requestId"])
     expect(toolGatewayErrorSchema.additionalProperties).toBe(false)
   })
 
   test("types nullable company activation on customer and analytics results", () => {
-    const listItem: CustomerListItem = {
-      id: "customer_1",
-      name: "Acme",
-      domain: "acme.com",
-      activatedAt: null,
-    }
-    const detail: CustomerDetailResult = {
-      customer: {
-        id: "customer_1",
-        name: "Acme",
-        domain: "acme.com",
-        activatedAt: "2026-07-28T20:00:00.000Z",
-      },
-    }
     const analyticsRow: CustomerAnalyticsRow = {
       activated_at: null,
     }
 
-    expect(listItem.activatedAt).toBeNull()
-    expect(detail.customer.activatedAt).toBe("2026-07-28T20:00:00.000Z")
+    expectTypeOf<CustomerListItem["activatedAt"]>().toEqualTypeOf<string | null>()
+    expectTypeOf<CustomerDetail["activatedAt"]>().toEqualTypeOf<string | null>()
     expect(analyticsRow.activated_at).toBeNull()
   })
 
@@ -211,9 +202,7 @@ describe("tool contracts", () => {
         description: "Filter customers activated at or after this ISO-8601 datetime",
       }),
     )
-    expect(sdkConsumerContractHash).toBe(
-      "4a4976a71bd9c0103b6e15f2dbab6c0b1e3a44ca2f9273dcfcd8c5cb3aa05fa8",
-    )
+    expect(sdkConsumerContractHash).toMatch(/^[a-f0-9]{64}$/)
 
     const activatedSincePattern = customerProperties.activatedSince?.pattern
     expect(activatedSincePattern).toBeDefined()

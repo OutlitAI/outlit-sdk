@@ -1,32 +1,76 @@
-export interface CustomerListItem {
-  id: string
-  name: string | null
-  domain: string | null
-  activatedAt: string | null
-  [key: string]: unknown
-}
+import type { PublicToolName } from "./contracts.js"
+import {
+  apiKeyValidationFailureSchema,
+  apiKeyValidationSuccessSchema,
+  publicToolContracts,
+} from "./generated/contracts.js"
 
-export interface CustomerDetail {
-  id: string
-  name: string | null
-  domain: string | null
-  activatedAt: string | null
-  [key: string]: unknown
-}
+type Simplify<T> = { [TKey in keyof T]: T[TKey] } & {}
 
-export interface CustomerDetailResult {
-  customer: CustomerDetail
-  [key: string]: unknown
+type RequiredSchemaKeys<TSchema> = TSchema extends {
+  readonly required: readonly (infer TRequired)[]
 }
+  ? Extract<TRequired, string>
+  : never
 
-export interface CustomerListResult {
-  items: CustomerListItem[]
-  pagination: {
-    hasMore: boolean
-    nextCursor: string | null
-    total?: number
+type ObjectProperties<TProperties extends Readonly<Record<string, unknown>>, TSchema> = Simplify<
+  {
+    [TKey in keyof TProperties as TKey extends RequiredSchemaKeys<TSchema>
+      ? TKey
+      : never]-?: JsonSchemaValue<TProperties[TKey]>
+  } & {
+    [TKey in keyof TProperties as TKey extends RequiredSchemaKeys<TSchema>
+      ? never
+      : TKey]?: JsonSchemaValue<TProperties[TKey]>
   }
+>
+
+/** Converts the generated JSON Schema literals into their TypeScript result shapes. */
+export type JsonSchemaValue<TSchema> = TSchema extends {
+  readonly anyOf: readonly (infer TOption)[]
 }
+  ? JsonSchemaValue<TOption>
+  : TSchema extends { readonly oneOf: readonly (infer TOption)[] }
+    ? JsonSchemaValue<TOption>
+    : TSchema extends { readonly const: infer TValue }
+      ? TValue
+      : TSchema extends { readonly enum: readonly (infer TValue)[] }
+        ? TValue
+        : TSchema extends { readonly type: "array"; readonly items: infer TItem }
+          ? JsonSchemaValue<TItem>[]
+          : TSchema extends {
+                readonly type: "object"
+                readonly properties: infer TProperties extends Readonly<Record<string, unknown>>
+              }
+            ? ObjectProperties<TProperties, TSchema>
+            : TSchema extends {
+                  readonly type: "object"
+                  readonly additionalProperties: infer TAdditional
+                }
+              ? TAdditional extends Readonly<Record<string, unknown>>
+                ? Record<string, JsonSchemaValue<TAdditional>>
+                : Record<string, unknown>
+              : TSchema extends { readonly type: "string" }
+                ? string
+                : TSchema extends { readonly type: "number" | "integer" }
+                  ? number
+                  : TSchema extends { readonly type: "boolean" }
+                    ? boolean
+                    : TSchema extends { readonly type: "null" }
+                      ? null
+                      : unknown
+
+export type PublicToolResult<TToolName extends PublicToolName> = JsonSchemaValue<
+  (typeof publicToolContracts)[TToolName]["outputSchema"]
+>
+
+export type ApiKeyValidationSuccess = JsonSchemaValue<typeof apiKeyValidationSuccessSchema>
+export type ApiKeyValidationFailure = JsonSchemaValue<typeof apiKeyValidationFailureSchema>
+
+export type CustomerListResult = PublicToolResult<"outlit_list_customers">
+export type CustomerListItem = CustomerListResult["items"][number]
+export type CustomerDetailResult = PublicToolResult<"outlit_get_customer">
+export type CustomerDetail = CustomerDetailResult["customer"]
 
 export interface CustomerAnalyticsRow {
   activated_at: string | null

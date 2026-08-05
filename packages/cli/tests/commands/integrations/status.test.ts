@@ -92,14 +92,15 @@ describe("integrations status", () => {
 
   test("checks OAuth setup session status through the status command", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
+    const sessionId = "550e8400-e29b-41d4-a716-446655440000"
     const parsed = await captureStdout(() =>
       statusCmd.run!({
-        args: { session: "sess_123", json: true },
+        args: { session: sessionId, json: true },
       } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_setup_status", {
-      sessionId: "sess_123",
+      sessionId,
     })
     expect(parsed).toEqual({ status: "connected", provider: "hubspot" })
   })
@@ -109,7 +110,11 @@ describe("integrations status", () => {
     await runExpectingError(
       () =>
         statusCmd.run!({
-          args: { provider: "hubspot", session: "sess_123", json: true },
+          args: {
+            provider: "hubspot",
+            session: "550e8400-e29b-41d4-a716-446655440000",
+            json: true,
+          },
         } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
       "invalid_input",
     )

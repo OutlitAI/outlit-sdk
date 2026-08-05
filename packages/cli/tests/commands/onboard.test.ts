@@ -69,7 +69,17 @@ describe("onboard", () => {
   beforeEach(() => {
     resetChildProcessMocks()
     fetchSpy = spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(new Response(JSON.stringify({ valid: true }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: null,
+            authorization: { grants: [] },
+          }),
+          { status: 200 },
+        ),
+      )
       .mockResolvedValueOnce(new Response(JSON.stringify(capabilitiesPayload), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(integrationsPayload), { status: 200 }))
   })
@@ -176,7 +186,17 @@ describe("onboard", () => {
           { status: 200 },
         ),
       )
-      .mockResolvedValueOnce(new Response(JSON.stringify({ valid: true }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: null,
+            authorization: { grants: [] },
+          }),
+          { status: 200 },
+        ),
+      )
       .mockResolvedValueOnce(new Response(JSON.stringify(capabilitiesPayload), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(integrationsPayload), { status: 200 }))
 

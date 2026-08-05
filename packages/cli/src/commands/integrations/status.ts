@@ -42,7 +42,7 @@ export default defineCommand({
       "Examples:",
       "  outlit integrations status              # summary of all",
       "  outlit integrations status stripe       # detailed Stripe sync status",
-      "  outlit integrations status --session sess_123 --json",
+      "  outlit integrations status --session 550e8400-e29b-41d4-a716-446655440000 --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),

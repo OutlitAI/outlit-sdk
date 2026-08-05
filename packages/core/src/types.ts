@@ -2,7 +2,7 @@
 // EVENT TYPES
 // ============================================
 
-import { ingestTransport } from "../../tools/src/generated/contracts"
+import { ingestTransport } from "./generated/ingest-contract"
 
 export type EventType = (typeof ingestTransport.eventTypes)[number]
 

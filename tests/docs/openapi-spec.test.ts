@@ -1,6 +1,9 @@
 import { existsSync, readFileSync } from "node:fs"
 import { describe, expect, test } from "vitest"
 import {
+  apiKeyValidationFailureSchema,
+  apiKeyValidationSuccessSchema,
+  apiKeyValidationTransport,
   ingestTransport,
   publicOpenApiTransports,
   publicToolNames,
@@ -19,6 +22,30 @@ type OpenApiSpec = {
     schemas?: Record<string, any>
   }
   "x-outlit-contract-hash"?: string
+}
+
+type OpenApiJsonResponse = {
+  content: { "application/json": { schema: Record<string, unknown> } }
+}
+
+type GatewayOperation = {
+  requestBody: {
+    content: {
+      "application/json": {
+        schema: {
+          oneOf: Array<{
+            required?: string[]
+            properties?: { tool?: { const?: string } }
+          }>
+        }
+      }
+    }
+  }
+  responses: Record<string, OpenApiJsonResponse>
+}
+
+type ValidationOperation = {
+  responses: Record<string, OpenApiJsonResponse>
 }
 
 function readSpec(): OpenApiSpec {
@@ -69,8 +96,11 @@ describe("Core-generated OpenAPI spec", () => {
   })
 
   test("keeps gateway schemas aligned with all 29 public capabilities", () => {
-    const schemas = readSpec().components?.schemas ?? {}
-    expect(schemas.ToolCallRequest?.properties?.tool?.enum).toEqual(publicToolNames)
+    const spec = readSpec()
+    const schemas = spec.components?.schemas ?? {}
+    const gateway = spec.paths?.[toolGatewayTransport.path]?.post as GatewayOperation
+    const callVariants = gateway.requestBody.content["application/json"].schema.oneOf
+    expect(callVariants.map((variant) => variant.properties?.tool?.const)).toEqual(publicToolNames)
     for (const toolName of publicToolNames) {
       expect(schemas[`ToolInput_${toolName}`]).toBeDefined()
       expect(schemas[`ToolOutput_${toolName}`]).toBeDefined()
@@ -82,6 +112,32 @@ describe("Core-generated OpenAPI spec", () => {
     const { $schema: _jsonSchemaDialect, ...openApiErrorSchema } = toolGatewayErrorSchema
 
     expect(readSpec().components?.schemas?.GatewayError).toEqual(openApiErrorSchema)
+  })
+
+  test("preserves runtime request, output, status, and validation semantics", () => {
+    const spec = readSpec()
+    const gateway = spec.paths?.[toolGatewayTransport.path]?.post as GatewayOperation
+    const callVariants = gateway.requestBody.content["application/json"].schema.oneOf
+    expect(callVariants.every((variant) => variant.required?.join() === "tool")).toBe(true)
+    expect(gateway.responses["200"].content["application/json"].schema).toHaveProperty("anyOf")
+    expect(gateway.responses["200"].content["application/json"].schema).not.toHaveProperty("oneOf")
+    expect(Object.keys(gateway.responses).map(Number)).toEqual([
+      200,
+      ...toolGatewayTransport.errorStatuses,
+    ])
+
+    const validation = spec.paths?.[apiKeyValidationTransport.path]?.post as ValidationOperation
+    expect(Object.keys(validation.responses).map(Number)).toEqual(
+      apiKeyValidationTransport.publicResponseStatuses,
+    )
+    expect(validation.responses["401"].content["application/json"].schema).toEqual({
+      $ref: "#/components/schemas/ApiKeyValidationFailure",
+    })
+
+    const { $schema: _successDialect, ...openApiValidationSuccess } = apiKeyValidationSuccessSchema
+    const { $schema: _failureDialect, ...openApiValidationFailure } = apiKeyValidationFailureSchema
+    expect(spec.components?.schemas?.ApiKeyValidationSuccess).toEqual(openApiValidationSuccess)
+    expect(spec.components?.schemas?.ApiKeyValidationFailure).toEqual(openApiValidationFailure)
   })
 
   test("keeps ingest unauthenticated and excludes rejected stage and billing events", () => {

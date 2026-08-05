@@ -2,7 +2,7 @@ export type {
   OutlitToolsClient,
   OutlitToolsClientOptions,
   OutlitToolsFetch,
-  PublicToolResult,
+  RuntimeJsonSchema,
   ToolGatewayErrorCode,
   ToolGatewayErrorEnvelope,
 } from "./client.js"
@@ -10,6 +10,7 @@ export {
   createOutlitClient,
   DEFAULT_OUTLIT_API_URL,
   isOutlitToolsApiError,
+  matchesGeneratedJsonSchema,
   OutlitToolsApiError,
 } from "./client.js"
 export type {
@@ -28,6 +29,9 @@ export {
   resolveCustomerContextSearchInput,
 } from "./contracts.js"
 export {
+  apiKeyGrants,
+  apiKeyValidationFailureSchema,
+  apiKeyValidationSuccessSchema,
   apiKeyValidationTransport,
   consumerToolPolicies,
   contractVersion,
@@ -40,6 +44,7 @@ export {
   customerIncludeSections,
   customerListOrderFields,
   customerSourceTypeAliases,
+  customerSourceTypeAliasMap,
   customerSourceTypeInputs,
   customerSourceTypes,
   customerTimeframes,
@@ -60,11 +65,15 @@ export {
   workspaceUserListOrderFields,
 } from "./generated/contracts.js"
 export type {
+  ApiKeyValidationFailure,
+  ApiKeyValidationSuccess,
   CustomerAnalyticsRow,
   CustomerDetail,
   CustomerDetailResult,
   CustomerListItem,
   CustomerListResult,
+  JsonSchemaValue,
+  PublicToolResult,
 } from "./results.js"
 export type { CliToolName } from "./toolsets.js"
 export {

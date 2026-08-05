@@ -11,12 +11,17 @@ The Outlit CLI is not required for MCP setup. Use the workspace MCP URL directly
 
 ## Authentication Model
 
-Outlit's remote MCP endpoint uses OAuth-based authentication for customer-intelligence tools. In practice that means:
+Outlit's remote MCP endpoint supports both OAuth and scoped Outlit API keys. Both authentication methods expose the same public tool catalog; the difference is how Platform decides what the caller may do:
+
+- OAuth calls use the signed-in member's current workspace permissions and customer access.
+- API-key calls use the key's current workspace and explicit grants.
+
+For most interactive MCP clients, OAuth is the simplest setup. In practice that means:
 - you add the workspace MCP URL to your client
 - you do not paste API keys or bearer headers into config files
 - the client opens an OAuth sign-in flow and stores the resulting session
 
-Platform configuration tools use API-key authentication today. Use an API key with the relevant read/write scopes for the tool family, such as `agents:read`/`agents:write` for agent configuration and `identity:read`/`identity:write` for identity merge suggestions.
+Headless clients that cannot complete OAuth may send an Outlit API key as their bearer credential. A tool remains unavailable unless the member permissions or API-key grants authorize its underlying command.
 
 ## Connect Your MCP Client
 
@@ -81,4 +86,5 @@ Platform configuration tools use API-key authentication today. Use an API key wi
 | `outlit_schema` | Get view schemas to help write accurate SQL queries | "Show me the available analytics views" |
 
 <Note>
+  MCP registers the entire public catalog, including the safe destination, integration setup/status, activation, and workspace-settings capabilities described in [Platform Capabilities](/ai-integrations/platform-actions). Generic agent, automation, signal, identity-merge, notification-send, credential, and destructive integration operations are not public tools.
 </Note>

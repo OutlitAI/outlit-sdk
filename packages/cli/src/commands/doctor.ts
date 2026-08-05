@@ -4,7 +4,7 @@ import { join } from "node:path"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { outputArgs } from "../args/output"
-import { pingApiKey } from "../lib/api"
+import { isApiKeyValidationUnavailableError, pingApiKey } from "../lib/api"
 import { createClient } from "../lib/client"
 import type { CredentialResult } from "../lib/config"
 import { CLI_VERSION, maskKey, OUTLIT_DASHBOARD_URL, resolveApiKey, TICK } from "../lib/config"
@@ -143,6 +143,15 @@ async function validateApiKey(apiKey: string): Promise<CheckResult> {
     await pingApiKey(apiKey)
     return { name: "API validation", status: "pass", message: "Key is valid" }
   } catch (err) {
+    if (isApiKeyValidationUnavailableError(err)) {
+      return {
+        name: "API validation",
+        status: "warn",
+        message: "API validation is temporarily unavailable",
+        detail: "Try again shortly",
+      }
+    }
+
     return {
       name: "API validation",
       status: "fail",

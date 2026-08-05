@@ -175,8 +175,14 @@ Example list response:
       "name": "Acme",
       "domain": "acme.com",
       "billingStatus": "PAYING",
-      "mrrCents": 25000,
-      "lastActivityAt": "2026-04-10T18:22:11.000Z"
+      "activatedAt": "2026-01-15T09:30:00.000Z",
+      "firstSeenAt": "2025-12-02T17:05:00.000Z",
+      "lastActivityAt": "2026-04-10T18:22:11.000Z",
+      "contactCount": 42,
+      "currentMrr": 250,
+      "mrrCalculationStatus": "calculated",
+      "owner": null,
+      "daysSinceActivity": 3
     }
   ],
   "pagination": {
@@ -193,13 +199,10 @@ Invalid JSON, unknown tool names, or invalid tool inputs return `400`:
 
 ```json
 {
-  "error": "Invalid tool input",
-  "details": [
-    {
-      "path": ["limit"],
-      "message": "Too big: expected number to be <=1000"
-    }
-  ]
+  "code": "INVALID_TOOL_INPUT",
+  "message": "Invalid tool input",
+  "retryable": false,
+  "requestId": "req_123"
 }
 ```
 

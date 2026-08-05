@@ -57,7 +57,15 @@ describe("auth login", () => {
     const { default: loginCmd } = await import("../../../src/commands/auth/login")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+      new Response(
+        JSON.stringify({
+          valid: true,
+          organizationId: "org_123",
+          createdById: null,
+          authorization: { grants: [] },
+        }),
+        { status: 200 },
+      ),
     )
 
     try {
@@ -79,7 +87,15 @@ describe("auth login", () => {
     const { default: loginCmd } = await import("../../../src/commands/auth/login")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+      new Response(
+        JSON.stringify({
+          valid: true,
+          organizationId: "org_123",
+          createdById: null,
+          authorization: { grants: [] },
+        }),
+        { status: 200 },
+      ),
     )
     let fetchCalls: Array<unknown[]> = []
 
@@ -137,7 +153,15 @@ describe("auth login", () => {
         ),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+        new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: null,
+            authorization: { grants: [] },
+          }),
+          { status: 200 },
+        ),
       )
 
     let fetchCalls: Array<unknown[]> = []
@@ -222,7 +246,15 @@ describe("auth login", () => {
         ),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+        new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: null,
+            authorization: { grants: [] },
+          }),
+          { status: 200 },
+        ),
       )
 
     let fetchCalls: Array<unknown[]> = []

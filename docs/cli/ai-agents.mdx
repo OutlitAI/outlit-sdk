@@ -32,7 +32,7 @@ outlit onboard --agent codex --json
 
 If no API key is available, `onboard` starts the browser approval flow outside CI and stores the approved CLI key. It then validates the key, installs the Outlit skill, checks integration capabilities/status, and returns next commands such as `outlit integrations setup <provider> --json`.
 
-`onboard` does not connect third-party integrations by itself. Use `outlit integrations capabilities --json`, then `outlit integrations setup <provider> --json` for auth or credentials, and follow-up commands like `outlit integrations setup hubspot mappings --json` or `outlit integrations setup pylon webhooks --json` when capabilities list required post-connect steps.
+`onboard` does not connect third-party integrations by itself. Use `outlit integrations capabilities --json`, then `outlit integrations setup <provider> --json`. The CLI starts a browser handoff when one is available; credential entry and provider-specific configuration stay in the Outlit web app.
 
 ## Auto-Setup
 

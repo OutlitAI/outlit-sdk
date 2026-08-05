@@ -1,4 +1,12 @@
-import { apiKeyValidationTransport, type CliToolName, isOutlitToolsApiError } from "@outlit/tools"
+import {
+  type ApiKeyValidationSuccess,
+  apiKeyValidationFailureSchema,
+  apiKeyValidationSuccessSchema,
+  apiKeyValidationTransport,
+  type CliToolName,
+  isOutlitToolsApiError,
+  matchesGeneratedJsonSchema,
+} from "@outlit/tools"
 import type { OutlitClient, OutlitToolParams } from "./client"
 import { createClient } from "./client"
 import { DEFAULT_API_URL } from "./config"
@@ -27,29 +35,21 @@ export interface RunToolOptions {
   transform?: (data: unknown) => unknown
 }
 
-export interface ApiKeyValidationPayload {
-  valid: boolean
-  error?: string
-  organizationId?: string
-  createdById?: string | null
-  organization?: {
-    id: string
-    name: string | null
-    slug: string | null
+export type ApiKeyValidationPayload = ApiKeyValidationSuccess
+
+export class ApiKeyValidationUnavailableError extends Error {
+  readonly status = 503
+
+  constructor(message = "API key validation is temporarily unavailable") {
+    super(message)
+    this.name = "ApiKeyValidationUnavailableError"
   }
-  createdBy?: {
-    id: string
-    email: string
-    name: string | null
-  } | null
-  apiKey?: {
-    id: string
-    name: string
-    prefix: string
-    createdAt: string
-    lastUsedAt: string | null
-    totalRequests: number
-  }
+}
+
+export function isApiKeyValidationUnavailableError(
+  error: unknown,
+): error is ApiKeyValidationUnavailableError {
+  return error instanceof ApiKeyValidationUnavailableError
 }
 
 /**
@@ -83,23 +83,42 @@ export async function pingApiKey(apiKey: string): Promise<ApiKeyValidationPayloa
   })
 
   const text = await response.text()
-  const payload =
+  const payload: unknown =
     text.length > 0
       ? (() => {
           try {
-            return JSON.parse(text) as ApiKeyValidationPayload
+            return JSON.parse(text) as unknown
           } catch {
             return null
           }
         })()
       : null
 
-  if (!response.ok || !payload?.valid) {
-    const message = payload?.error ?? (text.length > 0 ? text : `API error (${response.status})`)
+  if (response.status === apiKeyValidationTransport.responseStatuses.unavailable) {
+    const message = matchesGeneratedJsonSchema(payload, apiKeyValidationFailureSchema)
+      ? payload.error
+      : undefined
+    throw new ApiKeyValidationUnavailableError(message)
+  }
+
+  if (
+    response.status === apiKeyValidationTransport.responseStatuses.success &&
+    matchesGeneratedJsonSchema(payload, apiKeyValidationSuccessSchema)
+  ) {
+    return payload
+  }
+
+  const message = matchesGeneratedJsonSchema(payload, apiKeyValidationFailureSchema)
+    ? payload.error
+    : text.length > 0
+      ? text
+      : `API error (${response.status})`
+
+  if (!response.ok || response.status === apiKeyValidationTransport.responseStatuses.invalid) {
     throw new Error(message)
   }
 
-  return payload
+  throw new Error(`Outlit returned an unexpected API key validation response (${response.status})`)
 }
 
 /**
@@ -113,6 +132,16 @@ export async function validateKeyOrExit(
   try {
     return await pingApiKey(apiKey)
   } catch (err) {
+    if (isApiKeyValidationUnavailableError(err)) {
+      return outputError(
+        {
+          message: "Outlit cannot validate API keys right now. Please try again shortly.",
+          code: "api_unavailable",
+        },
+        json,
+      )
+    }
+
     return outputError(
       {
         message: `API key is invalid or expired: ${errorMessage(err, "unknown error")}`,
