@@ -8,6 +8,10 @@ export const publicToolNames = [
   "outlit_list_users",
   "outlit_list_workspace_users",
   "outlit_get_customer",
+  "outlit_assign_customer_owner",
+  "outlit_grant_customer_access",
+  "outlit_update_customer_access",
+  "outlit_revoke_customer_access",
   "outlit_get_timeline",
   "outlit_list_facts",
   "outlit_get_fact",
@@ -1532,6 +1536,269 @@ export const publicToolContracts = {
       },
       "required": [
         "customer",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_assign_customer_owner": {
+    "toolName": "outlit_assign_customer_owner",
+    "commandId": "customer.owner.assign",
+    "commandVersion": 1,
+    "ownerDomain": "customers",
+    "title": "Assign Customer Owner",
+    "description": "Assign an active workspace member as this customer’s primary owner. The former owner keeps Editor access.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+        },
+        "targetUserId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+        },
+      },
+      "required": [
+        "customerId",
+        "targetUserId",
+      ],
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "type": "string",
+        },
+        "ownerId": {
+          "type": "string",
+        },
+        "previousOwnerId": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "customerId",
+        "ownerId",
+        "previousOwnerId",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_grant_customer_access": {
+    "toolName": "outlit_grant_customer_access",
+    "commandId": "customer.access.grant",
+    "commandVersion": 1,
+    "ownerDomain": "customers",
+    "title": "Grant Customer Access",
+    "description": "Share a customer with an active workspace member as a Viewer or Editor. The customer ID must be exact.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+        },
+        "targetUserId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "VIEWER",
+            "EDITOR",
+          ],
+        },
+      },
+      "required": [
+        "customerId",
+        "targetUserId",
+        "role",
+      ],
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "access": {
+          "type": "object",
+          "properties": {
+            "customerId": {
+              "type": "string",
+            },
+            "userId": {
+              "type": "string",
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "VIEWER",
+                "EDITOR",
+              ],
+            },
+            "grantedById": {
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+          },
+          "required": [
+            "customerId",
+            "userId",
+            "role",
+            "grantedById",
+          ],
+          "additionalProperties": false,
+        },
+      },
+      "required": [
+        "access",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_update_customer_access": {
+    "toolName": "outlit_update_customer_access",
+    "commandId": "customer.access.update",
+    "commandVersion": 1,
+    "ownerDomain": "customers",
+    "title": "Update Customer Access",
+    "description": "Change an existing customer collaborator between Viewer and Editor.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+        },
+        "targetUserId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "VIEWER",
+            "EDITOR",
+          ],
+        },
+      },
+      "required": [
+        "customerId",
+        "targetUserId",
+        "role",
+      ],
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "access": {
+          "type": "object",
+          "properties": {
+            "customerId": {
+              "type": "string",
+            },
+            "userId": {
+              "type": "string",
+            },
+            "role": {
+              "type": "string",
+              "enum": [
+                "VIEWER",
+                "EDITOR",
+              ],
+            },
+            "grantedById": {
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+          },
+          "required": [
+            "customerId",
+            "userId",
+            "role",
+            "grantedById",
+          ],
+          "additionalProperties": false,
+        },
+      },
+      "required": [
+        "access",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_revoke_customer_access": {
+    "toolName": "outlit_revoke_customer_access",
+    "commandId": "customer.access.revoke",
+    "commandVersion": 1,
+    "ownerDomain": "customers",
+    "title": "Revoke Customer Access",
+    "description": "Remove a collaborator’s explicit access to a customer.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+        },
+        "targetUserId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+        },
+      },
+      "required": [
+        "customerId",
+        "targetUserId",
+      ],
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "type": "string",
+        },
+        "userId": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "customerId",
+        "userId",
       ],
       "additionalProperties": false,
     },
@@ -7801,6 +8068,10 @@ export const consumerToolPolicies = {
     "outlit_list_users",
     "outlit_list_workspace_users",
     "outlit_get_customer",
+    "outlit_assign_customer_owner",
+    "outlit_grant_customer_access",
+    "outlit_update_customer_access",
+    "outlit_revoke_customer_access",
     "outlit_get_timeline",
     "outlit_list_facts",
     "outlit_get_fact",
@@ -7872,6 +8143,7 @@ export const apiKeyGrants = [
   "activation:manage",
   "workspace_settings:read",
   "workspace_settings:manage",
+  "customer_access:manage",
 ] as const
 
 export const apiKeyValidationSuccessSchema = {
@@ -7998,6 +8270,7 @@ export const apiKeyValidationSuccessSchema = {
               "activation:manage",
               "workspace_settings:read",
               "workspace_settings:manage",
+              "customer_access:manage",
             ],
           },
         },
@@ -8053,6 +8326,7 @@ export const apiKeyValidationSuccessSchema = {
               "activation:manage",
               "workspace_settings:read",
               "workspace_settings:manage",
+              "customer_access:manage",
             ],
           },
         },
@@ -9115,4 +9389,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "1f8804d6d2d3aa562d46872bc118a43b9a5d8531b834ce10c0f01b3659f5b6b2" as const
+export const sdkConsumerContractHash = "ccf3ee113ca293fb025d517604c14b0bb4417455e2359762a1637aabb15779e0" as const

@@ -36,6 +36,10 @@ describe("toolsets", () => {
       "outlit_list_users",
       "outlit_list_workspace_users",
       "outlit_get_customer",
+      "outlit_assign_customer_owner",
+      "outlit_grant_customer_access",
+      "outlit_update_customer_access",
+      "outlit_revoke_customer_access",
       "outlit_get_timeline",
       "outlit_list_facts",
       "outlit_get_fact",
@@ -62,7 +66,7 @@ describe("toolsets", () => {
       "outlit_get_workspace_settings",
       "outlit_update_workspace_settings",
     ])
-    expect(allPublicToolNames).toHaveLength(29)
+    expect(allPublicToolNames).toHaveLength(33)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
