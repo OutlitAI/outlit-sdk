@@ -3,5 +3,6 @@
 export const ingestTransport = {
   method: "POST",
   pathTemplate: "/api/i/v1/{publicKey}/events",
+  maxBatchSize: 100,
   eventTypes: ["pageview", "form", "identify", "custom", "calendar", "engagement"],
 } as const

@@ -4,6 +4,8 @@ import type {
   CustomerTraits,
   EventType,
   IdentifyTraits,
+  PayloadUserIdentity,
+  PayloadUserIdentityInput,
   ServerIdentifyOptions,
   ServerTrackOptions,
   TrackerEvent,
@@ -102,6 +104,26 @@ describe("BrowserIdentifyOptions", () => {
     }
 
     expectTypeOf(options).toMatchTypeOf<BrowserIdentifyOptions>()
+  })
+})
+
+describe("payload identity wire types", () => {
+  it("keeps legacy customer fields in builder input but out of the wire identity", () => {
+    const input: PayloadUserIdentityInput = {
+      email: "user@example.com",
+      fingerprint: "device_123",
+      customerId: "cust_123",
+      customerTraits: { plan: "pro" },
+    }
+    const wireIdentity: PayloadUserIdentity = {
+      email: "user@example.com",
+      // @ts-expect-error customer attribution belongs in payload.customerIdentity on the wire
+      customerId: "cust_123",
+    }
+
+    expect(input.customerId).toBe("cust_123")
+    expect(input.fingerprint).toBe("device_123")
+    expect(wireIdentity.email).toBe("user@example.com")
   })
 })
 

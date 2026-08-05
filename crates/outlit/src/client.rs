@@ -4,7 +4,7 @@ use crate::builders::{IdentifyBuilder, TrackBuilder};
 use crate::config::{Config, OutlitBuilder};
 use crate::queue::EventQueue;
 use crate::transport::HttpTransport;
-use crate::types::{IngestPayload, SourceType};
+use crate::types::{IngestPayload, SourceType, TrackerEvent};
 use crate::{Email, Error, Fingerprint, UserId};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -223,15 +223,12 @@ impl Outlit {
 
         info!(event_count = events.len(), "flushing events");
 
-        let payload = IngestPayload {
-            source: SourceType::Server,
-            events,
-        };
-
-        if let Err(e) = self.transport.send(&payload).await {
-            // Requeue events on failure to prevent data loss
+        if let Err((e, unsent_events)) =
+            send_events_in_batches(&self.transport, events, self.config.max_batch_size()).await
+        {
+            // Requeue the failed batch and every later batch to prevent data loss.
             error!(error = %e, "flush failed, requeuing events");
-            self.queue.requeue(payload.events).await;
+            self.queue.requeue(unsent_events).await;
             return Err(e);
         }
 
@@ -299,14 +296,11 @@ impl Outlit {
 
                 debug!(event_count = events.len(), "periodic flush");
 
-                let payload = IngestPayload {
-                    source: SourceType::Server,
-                    events,
-                };
-
-                if let Err(e) = transport.send(&payload).await {
+                if let Err((e, unsent_events)) =
+                    send_events_in_batches(&transport, events, queue.max_size()).await
+                {
                     error!(error = %e, "periodic flush failed, requeuing events");
-                    queue.requeue(payload.events).await;
+                    queue.requeue(unsent_events).await;
                 }
             }
         });
@@ -330,6 +324,34 @@ impl Outlit {
 
         Ok(())
     }
+}
+
+async fn send_events_in_batches(
+    transport: &HttpTransport,
+    mut events: Vec<TrackerEvent>,
+    max_batch_size: usize,
+) -> Result<(), (Error, Vec<TrackerEvent>)> {
+    while !events.is_empty() {
+        let remaining = if events.len() > max_batch_size {
+            events.split_off(max_batch_size)
+        } else {
+            Vec::new()
+        };
+        let payload = IngestPayload {
+            source: SourceType::Server,
+            events,
+        };
+
+        if let Err(error) = transport.send(&payload).await {
+            let mut unsent_events = payload.events;
+            unsent_events.extend(remaining);
+            return Err((error, unsent_events));
+        }
+
+        events = remaining;
+    }
+
+    Ok(())
 }
 
 // ============================================

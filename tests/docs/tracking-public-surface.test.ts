@@ -56,24 +56,38 @@ describe("public tracking surface", () => {
 
     expect(rustContract).toContain(`INGEST_METHOD: &str = "${ingestTransport.method}"`)
     expect(rustContract).toContain(`INGEST_PATH_TEMPLATE: &str = "${ingestTransport.pathTemplate}"`)
+    expect(rustContract).toContain(
+      `INGEST_MAX_BATCH_SIZE: usize = ${ingestTransport.requestSchema.properties.events.maxItems}`,
+    )
     for (const eventType of ingestTransport.eventTypes) {
       expect(rustContract).toContain(`"${eventType}"`)
     }
     expect(rustContract).not.toMatch(/"stage"|"billing"/)
   })
 
-  test("@outlit/core consumes a small local ingest contract instead of the tool catalog", () => {
+  test("@outlit/core consumes generated local ingest contracts instead of the tool catalog", () => {
     expect(coreIngestTransport).toEqual({
       method: ingestTransport.method,
       pathTemplate: ingestTransport.pathTemplate,
+      maxBatchSize: ingestTransport.requestSchema.properties.events.maxItems,
       eventTypes: ingestTransport.eventTypes,
     })
 
-    for (const sourceFile of ["types.ts", "transport.ts"]) {
-      const source = readFileSync(resolve(repositoryRoot, "packages/core/src", sourceFile), "utf8")
-      expect(source).toContain("./generated/ingest-contract")
-      expect(source).not.toContain("packages/tools")
-      expect(source).not.toContain("../../tools")
+    const typesSource = readFileSync(resolve(repositoryRoot, "packages/core/src/types.ts"), "utf8")
+    const transportSource = readFileSync(
+      resolve(repositoryRoot, "packages/core/src/transport.ts"),
+      "utf8",
+    )
+    const wireTypesSource = readFileSync(
+      resolve(repositoryRoot, "packages/core/src/generated/ingest-wire-types.ts"),
+      "utf8",
+    )
+
+    expect(typesSource).toContain("./generated/ingest-wire-types")
+    expect(transportSource).toContain("./generated/ingest-contract")
+    expect(wireTypesSource).toContain("export type GeneratedIngestPayload")
+    for (const source of [typesSource, transportSource, wireTypesSource]) {
+      expect(source).not.toMatch(/from\s+["'][^"']*(?:packages\/tools|\.\.\/\.\.\/tools)/)
     }
   })
 })

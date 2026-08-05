@@ -33,7 +33,10 @@ curl -X POST https://app.outlit.ai/api/validate-api-key \
 {
   "valid": true,
   "organizationId": "org_123",
-  "createdById": "user_123"
+  "createdById": "user_123",
+  "authorization": {
+    "grants": ["customer_intelligence:read"]
+  }
 }
 ```
 
@@ -47,6 +50,11 @@ curl -X POST https://app.outlit.ai/api/validate-api-key \
 
 <ResponseField name="createdById" type="string | null">
   User that created the API key, when available.
+</ResponseField>
+
+<ResponseField name="authorization.grants" type="string[]">
+  Current capabilities granted to this API key. A consumer must only offer commands whose
+  required authority appears in this list.
 </ResponseField>
 
 ## Error Responses

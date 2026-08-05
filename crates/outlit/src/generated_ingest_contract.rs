@@ -2,6 +2,7 @@
 
 pub const INGEST_METHOD: &str = "POST";
 pub const INGEST_PATH_TEMPLATE: &str = "/api/i/v1/{publicKey}/events";
+pub const INGEST_MAX_BATCH_SIZE: usize = 100;
 #[allow(dead_code)]
 pub const INGEST_EVENT_TYPES: &[&str] = &[
     "pageview",

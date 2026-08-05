@@ -1,14 +1,23 @@
+import type { GeneratedIngestPayload, GeneratedIngestResponse } from "./generated/ingest-wire-types"
+
 // ============================================
-// EVENT TYPES
+// CORE-OWNED INGEST WIRE TYPES
 // ============================================
 
-import { ingestTransport } from "./generated/ingest-contract"
-
-export type EventType = (typeof ingestTransport.eventTypes)[number]
-
-export type CalendarProvider = "cal.com" | "calendly" | "unknown"
-
-export type SourceType = "client" | "server" | "integration"
+export type IngestPayload = GeneratedIngestPayload
+export type IngestResponse = GeneratedIngestResponse
+export type TrackerEvent = IngestPayload["events"][number]
+export type EventType = TrackerEvent["type"]
+export type SourceType = NonNullable<IngestPayload["source"]>
+export type PageviewEvent = Extract<TrackerEvent, { type: "pageview" }>
+export type FormEvent = Extract<TrackerEvent, { type: "form" }>
+export type IdentifyEvent = Extract<TrackerEvent, { type: "identify" }>
+export type CustomEvent = Extract<TrackerEvent, { type: "custom" }>
+export type CalendarEvent = Extract<TrackerEvent, { type: "calendar" }>
+export type EngagementEvent = Extract<TrackerEvent, { type: "engagement" }>
+export type CalendarProvider = CalendarEvent["provider"]
+export type PayloadUserIdentity = NonNullable<IngestPayload["userIdentity"]>
+export type PayloadCustomerIdentity = NonNullable<IngestPayload["customerIdentity"]>
 
 // ============================================
 // UTM PARAMETERS
@@ -20,6 +29,7 @@ export interface UtmParams {
   campaign?: string
   term?: string
   content?: string
+  ref?: string
 }
 
 // ============================================
@@ -101,6 +111,24 @@ export interface IdentifyTraits {
   [key: string]: string | number | boolean | null | undefined
 }
 
+/**
+ * Input accepted by the payload builder. Deprecated customer fields are lifted
+ * into the wire-level `customerIdentity` object and are never sent in `userIdentity`.
+ */
+export type PayloadUserIdentityInput = Omit<PayloadUserIdentity, "traits"> & {
+  /** User/contact traits. */
+  traits?: IdentifyTraits
+  /** @deprecated Pass `customerIdentity.customerId` to the payload builder instead. */
+  customerId?: string
+  /** @deprecated Pass `customerIdentity.customerTraits` to the payload builder instead. */
+  customerTraits?: CustomerTraits
+}
+
+export interface PayloadCustomerIdentityInput extends CustomerAttribution {
+  /** Customer/account traits. */
+  customerTraits?: CustomerTraits
+}
+
 export interface ServerTrackOptions extends ServerIdentity, CustomerAttribution {
   eventName: string
   properties?: Record<string, string | number | boolean | null>
@@ -110,169 +138,6 @@ export interface ServerTrackOptions extends ServerIdentity, CustomerAttribution 
 export interface ServerIdentifyOptions extends ServerIdentity, CustomerAttribution {
   traits?: IdentifyTraits
   customerTraits?: CustomerTraits
-}
-
-// ============================================
-// INTERNAL EVENT TYPES
-// These are the full event objects sent to the API
-// ============================================
-
-interface BaseEvent {
-  uuid?: string
-  type: EventType
-  timestamp: number // Unix timestamp in milliseconds
-  url: string
-  path: string
-  referrer?: string
-  utm?: UtmParams
-}
-
-export interface PageviewEvent extends BaseEvent {
-  type: "pageview"
-  title?: string
-}
-
-export interface FormEvent extends BaseEvent {
-  type: "form"
-  formId?: string
-  formFields?: Record<string, string>
-}
-
-export interface IdentifyEvent extends BaseEvent {
-  type: "identify"
-  email?: string
-  userId?: string
-  fingerprint?: string
-  customerId?: string
-  customerTraits?: CustomerTraits
-  traits?: IdentifyTraits
-}
-
-export interface CustomEvent extends BaseEvent {
-  type: "custom"
-  eventName: string
-  email?: string
-  userId?: string
-  fingerprint?: string
-  customerId?: string
-  properties?: Record<string, string | number | boolean | null>
-}
-
-export interface CalendarEvent extends BaseEvent {
-  type: "calendar"
-  provider: CalendarProvider
-  eventType?: string // e.g., "30 Minute Meeting"
-  startTime?: string // ISO timestamp
-  endTime?: string // ISO timestamp
-  duration?: number // Duration in minutes
-  isRecurring?: boolean
-  /** Available when identity is passed via webhooks or manual integration */
-  inviteeEmail?: string
-  inviteeName?: string
-}
-
-export interface EngagementEvent extends BaseEvent {
-  type: "engagement"
-  /** Time in milliseconds the user was actively engaged (visible tab + user interactions) */
-  activeTimeMs: number
-  /** Total wall-clock time in milliseconds on the page */
-  totalTimeMs: number
-  /** Session ID for grouping engagement events. Resets after 30 min of inactivity or tab close. */
-  sessionId: string
-}
-
-export type TrackerEvent =
-  | PageviewEvent
-  | FormEvent
-  | IdentifyEvent
-  | CustomEvent
-  | CalendarEvent
-  | EngagementEvent
-
-// ============================================
-// INGEST PAYLOAD
-// This is what gets sent to the API
-// ============================================
-
-/**
- * User identity for payload-level resolution.
- * Used by browser SDK when user is logged in (via setUser).
- * Customer attribution is carried separately in `customerIdentity`.
- */
-export interface PayloadUserIdentity {
-  email?: string
-  /** Your system-owned user/contact ID. */
-  userId?: string
-  /** User/contact traits. */
-  traits?: IdentifyTraits
-  /**
-   * @deprecated Use payload-level `customerIdentity.customerId` instead.
-   * Kept for one compatibility window while callers migrate.
-   */
-  customerId?: string
-  /**
-   * @deprecated Use payload-level `customerIdentity.customerTraits` instead.
-   * Kept for one compatibility window while callers migrate.
-   */
-  customerTraits?: CustomerTraits
-}
-
-/**
- * Customer identity for payload-level attribution.
- * Used by browser SDK to attach account/workspace context to a batch.
- * `customerId`-only attribution is valid and remains provisional until a later
- * identify(email, customerId) call links that external account/workspace to a resolved customer.
- */
-export interface PayloadCustomerIdentity extends CustomerAttribution {
-  /** Customer/account traits. */
-  customerTraits?: CustomerTraits
-}
-
-export interface IngestPayload {
-  visitorId?: string // Required for pixel, optional for server
-  source: SourceType
-  events: TrackerEvent[]
-  /**
-   * Device identifier for anonymous tracking.
-   * Events with fingerprint can be linked to users later via identify.
-   * Only present for server-side events.
-   */
-  fingerprint?: string
-  /**
-   * Session ID for grouping all events in this batch.
-   * Only present for browser (client) source events.
-   * Used to correlate pageviews, forms, custom events, and engagement
-   * within the same browsing session.
-   */
-  sessionId?: string
-  /**
-   * User identity for this batch of events.
-   * When present, the server can resolve directly to CustomerContact
-   * instead of relying on anonymous visitor flow.
-   *
-   * This is set by the browser SDK when setUser() has been called,
-   * allowing immediate identity resolution for SPA/React apps.
-   */
-  userIdentity?: PayloadUserIdentity
-  /**
-   * Customer/account identity for this batch of events.
-   * Used to attribute browser batches to a customer/workspace even when
-   * the customer fields are not present on every event.
-   */
-  customerIdentity?: PayloadCustomerIdentity
-}
-
-// ============================================
-// API RESPONSE
-// ============================================
-
-export interface IngestResponse {
-  success: boolean
-  processed: number
-  errors?: Array<{
-    index: number
-    message: string
-  }>
 }
 
 // ============================================
