@@ -421,6 +421,48 @@ async fn test_shutdown_idempotent() {
 }
 
 #[tokio::test]
+async fn test_concurrent_shutdown_waits_and_retries_a_failed_flush() {
+    let mock_server = MockServer::start().await;
+    let received = Arc::new(AtomicUsize::new(0));
+
+    Mock::given(method("POST"))
+        .respond_with(DelayedFailuresResponder {
+            counter: received.clone(),
+            delays: vec![Duration::from_millis(100)],
+        })
+        .mount(&mock_server)
+        .await;
+
+    let client = Arc::new(
+        Outlit::builder("pk_test")
+            .api_host(mock_server.uri())
+            .flush_interval(Duration::from_secs(100))
+            .build()
+            .unwrap(),
+    );
+
+    client
+        .track("event", email("user@test.com"))
+        .send()
+        .await
+        .unwrap();
+
+    let first_client = client.clone();
+    let first_shutdown = tokio::spawn(async move { first_client.shutdown().await });
+    wait_for_call_count(&received, 1).await;
+
+    let second_client = client.clone();
+    let second_shutdown = tokio::spawn(async move { second_client.shutdown().await });
+    tokio::time::sleep(Duration::from_millis(20)).await;
+    assert!(!second_shutdown.is_finished());
+
+    assert!(first_shutdown.await.unwrap().is_err());
+    second_shutdown.await.unwrap().unwrap();
+    assert_eq!(received.load(Ordering::SeqCst), 2);
+    assert_eq!(client.pending_event_count().await, 0);
+}
+
+#[tokio::test]
 async fn test_flush_http_error_returns_error() {
     let mock_server = MockServer::start().await;
 

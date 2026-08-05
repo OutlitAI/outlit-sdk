@@ -57,6 +57,8 @@ pub struct Outlit {
     queue: Arc<EventQueue>,
     transport: Arc<HttpTransport>,
     is_shutdown: Arc<AtomicBool>,
+    lifecycle_lock: Mutex<()>,
+    shutdown_lock: Mutex<()>,
     flush_lock: Arc<Mutex<()>>,
     flush_handle: Mutex<Option<tokio::task::JoinHandle<()>>>,
 }
@@ -77,6 +79,8 @@ impl Outlit {
             queue,
             transport,
             is_shutdown: Arc::new(AtomicBool::new(false)),
+            lifecycle_lock: Mutex::new(()),
+            shutdown_lock: Mutex::new(()),
             flush_lock: Arc::new(Mutex::new(())),
             flush_handle: Mutex::new(None),
         };
@@ -229,11 +233,20 @@ impl Outlit {
     /// Flushes remaining events and stops the background flush timer.
     #[instrument(skip(self))]
     pub async fn shutdown(&self) -> Result<(), Error> {
-        if self.is_shutdown.swap(true, Ordering::SeqCst) {
-            return Ok(()); // Already shutdown
-        }
+        // Concurrent callers share shutdown completion. If an earlier flush
+        // failed and requeued events, the next caller retries them.
+        let _shutdown_guard = self.shutdown_lock.lock().await;
 
-        info!("shutting down client");
+        // Serialize shutdown admission with sends so every send accepted
+        // before shutdown is visible to the final flush.
+        let first_shutdown = {
+            let _lifecycle_guard = self.lifecycle_lock.lock().await;
+            !self.is_shutdown.swap(true, Ordering::SeqCst)
+        };
+
+        if first_shutdown {
+            info!("shutting down client");
+        }
 
         // Wait for an active flush to finish before stopping the timer. This
         // prevents cancellation from dropping events already drained from the queue.
@@ -300,12 +313,16 @@ impl Outlit {
     }
 
     async fn enqueue_and_maybe_flush(&self, builder: impl BuildEvent) -> Result<(), Error> {
-        self.ensure_not_shutdown()?;
+        let should_flush = {
+            let _lifecycle_guard = self.lifecycle_lock.lock().await;
+            self.ensure_not_shutdown()?;
 
-        let event = builder.build();
-        self.queue.enqueue(event).await;
+            let event = builder.build();
+            self.queue.enqueue(event).await;
+            self.queue.should_flush().await
+        };
 
-        if self.queue.should_flush().await {
+        if should_flush {
             self.flush().await?;
         }
 
@@ -474,5 +491,73 @@ impl<'a> SendableIdentify<'a> {
     /// Send the event.
     pub async fn send(self) -> Result<(), Error> {
         self.client.enqueue_and_maybe_flush(self.builder).await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::email;
+    use std::sync::mpsc;
+    use std::time::Duration;
+    use wiremock::matchers::method;
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    struct BlockingBuildEvent {
+        builder: TrackBuilder,
+        started: mpsc::Sender<()>,
+        resume: mpsc::Receiver<()>,
+    }
+
+    impl BuildEvent for BlockingBuildEvent {
+        fn build(self) -> TrackerEvent {
+            self.started.send(()).unwrap();
+            self.resume.recv().unwrap();
+            self.builder.build()
+        }
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn shutdown_flushes_a_send_that_started_before_shutdown() {
+        let mock_server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "success": true,
+                "processed": 1
+            })))
+            .expect(1)
+            .mount(&mock_server)
+            .await;
+
+        let client = Arc::new(
+            Outlit::builder("pk_test")
+                .api_host(mock_server.uri())
+                .flush_interval(Duration::from_secs(100))
+                .build()
+                .unwrap(),
+        );
+        let (started_tx, started_rx) = mpsc::channel();
+        let (resume_tx, resume_rx) = mpsc::channel();
+
+        let send_client = client.clone();
+        let send = tokio::spawn(async move {
+            send_client
+                .enqueue_and_maybe_flush(BlockingBuildEvent {
+                    builder: TrackBuilder::new("event", email("user@test.com")),
+                    started: started_tx,
+                    resume: resume_rx,
+                })
+                .await
+        });
+        started_rx.recv_timeout(Duration::from_secs(1)).unwrap();
+
+        let shutdown_client = client.clone();
+        let shutdown = tokio::spawn(async move { shutdown_client.shutdown().await });
+        tokio::time::sleep(Duration::from_millis(20)).await;
+        resume_tx.send(()).unwrap();
+
+        send.await.unwrap().unwrap();
+        shutdown.await.unwrap().unwrap();
+        assert_eq!(client.pending_event_count().await, 0);
     }
 }
