@@ -28,7 +28,14 @@
   },
   "files": {
     "maxSize": 5242880,
-    "includes": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.json"]
+    "includes": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.json",
+      "!!packages/tools/src/generated/contracts.ts",
+      "!!docs/openapi.json"
+    ]
   },
   "javascript": {
     "formatter": {

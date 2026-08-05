@@ -36,7 +36,7 @@ export default defineCommand({
     const options = parseActivationPreviewOptions(args, json)
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, "outlit_activation_preview", { eventName, ...options }, json, {
+    return runTool(client, "outlit_preview_customer_activation", { eventName, ...options }, json, {
       spinnerMessage: "Previewing activation matches...",
     })
   },

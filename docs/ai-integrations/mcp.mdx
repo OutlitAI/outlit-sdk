@@ -11,12 +11,17 @@ The Outlit CLI is not required for MCP setup. Use the workspace MCP URL directly
 
 ## Authentication Model
 
-Outlit's remote MCP endpoint uses OAuth-based authentication for customer-intelligence tools. In practice that means:
+Outlit's remote MCP endpoint supports both OAuth and scoped Outlit API keys. Both authentication methods expose the same public tool catalog; the difference is how Platform decides what the caller may do:
+
+- OAuth calls use the signed-in member's current workspace permissions and customer access.
+- API-key calls use the key's current workspace and explicit grants.
+
+For most interactive MCP clients, OAuth is the simplest setup. In practice that means:
 - you add the workspace MCP URL to your client
 - you do not paste API keys or bearer headers into config files
 - the client opens an OAuth sign-in flow and stores the resulting session
 
-Platform configuration tools use API-key authentication today. Use an API key with the relevant read/write scopes for the tool family, such as `agents:read`/`agents:write` for agent configuration and `identity:read`/`identity:write` for identity merge suggestions.
+Headless clients that cannot complete OAuth may send an Outlit API key as their bearer credential. A tool remains unavailable unless the member permissions or API-key grants authorize its underlying command.
 
 ## Connect Your MCP Client
 
@@ -63,43 +68,6 @@ Platform configuration tools use API-key authentication today. Use an API key wi
   Use [Agent Skills](/ai-integrations/skills) for coding agents like Claude Code, Codex, and Gemini CLI. Use MCP when your primary surface is an MCP client such as Cursor, VS Code, or another remote-MCP connector.
 </Tip>
 
-## Platform Configuration Over MCP
-
-Platform configuration tools inspect and mutate agents, automations, signals, destinations, and selected workspace settings. These tools require API-key authentication because they execute scoped platform actions.
-
-<Steps>
-  <Step title="Create a scoped API key">
-    Open [Settings > CLI & MCP](https://app.outlit.ai/settings/workspace/mcp) and create an API key for platform configuration. Agent configuration tools require `agents:read` for read tools and `agents:write` for write tools. Identity merge suggestion tools require `identity:read` for read tools and `identity:write` for queue/reject.
-  </Step>
-  <Step title="Add the bearer header in supported clients">
-    For MCP clients that support custom headers or headless bearer-token setup, configure the same workspace MCP URL with an `Authorization` header:
-
-    ```json
-    {
-      "mcpServers": {
-        "outlit": {
-          "url": "https://mcp.outlit.ai/w/<workspace-slug>/mcp",
-          "headers": {
-            "Authorization": "Bearer ok_your_api_key"
-          }
-        }
-      }
-    }
-    ```
-  </Step>
-  <Step title="Verify platform tools">
-    Ask your client:
-
-    ```text
-    List my Outlit agent templates.
-    ```
-  </Step>
-</Steps>
-
-<Note>
-  Do not add API keys to OAuth-only client configs. If your MCP client cannot send bearer headers, use the CLI or REST API for platform configuration actions.
-</Note>
-
 ## What Tools Are Available?
 
 | Tool | What it does | Example prompt |
@@ -116,64 +84,7 @@ Platform configuration tools inspect and mutate agents, automations, signals, de
 | `outlit_search_customer_context` | Search across customer facts, emails, calls, calendar events, support tickets, and CRM opportunities using natural language. Returns grouped artifact-level matches for `source` and `fact` results, with `sourceTypes` and time-range filters | "What pricing concerns does Acme have?" |
 | `outlit_query` | Run read-only SQL queries against your customer data | "Which channels lead to the most revenue?" |
 | `outlit_schema` | Get view schemas to help write accurate SQL queries | "Show me the available analytics views" |
-| `outlit_send_notification` | Send a notification through the organization's configured notifier; Slack is the default notifier | "Post the renewal-risk summary to the default Slack notifier" |
 
 <Note>
-  `outlit_send_notification` is an action tool for deliberate send, post, or notify workflows. It should not be used for passive analysis or previewing results.
+  MCP registers the entire public catalog, including the safe destination, integration setup/status, activation, and workspace-settings capabilities described in [Platform Capabilities](/ai-integrations/platform-actions). Generic agent, automation, signal, identity-merge, notification-send, credential, and destructive integration operations are not public tools.
 </Note>
-
-## Platform Configuration Tools
-
-API-key authenticated MCP clients can also inspect and manage selected agent and automation configuration through platform action tools:
-
-| Tool | What it does |
-|------|-------------|
-| `outlit_agent_list_templates` | List agent templates that can be created |
-| `outlit_agent_list_available_actions` | List available agent configuration actions |
-| `outlit_agent_list` | List configured agents |
-| `outlit_agent_get` | Get one configured agent |
-| `outlit_agent_create` | Create an agent |
-| `outlit_agent_update` | Update one configured agent |
-| `outlit_agent_enable` | Enable one configured agent |
-| `outlit_agent_disable` | Disable one configured agent |
-| `outlit_agent_rename` | Rename one configured agent |
-| `outlit_agent_run_start` | Start a manual run for one configured legacy churn agent |
-| `outlit_agent_run_list` | List safe run summaries for one configured agent |
-| `outlit_agent_run_get` | Get safe run details for one configured agent run |
-| `outlit_automation_options` | Show automation schemas, constants, and constraints |
-| `outlit_automation_list` | List configured automations |
-| `outlit_automation_get` | Get one configured automation |
-| `outlit_automation_run_list` | List safe run summaries for one configured automation |
-| `outlit_automation_run_get` | Get safe run details for one configured automation run |
-| `outlit_automation_create` | Create an agent automation from an `agentId` |
-| `outlit_automation_update` | Update an agent automation from an `agentId` |
-| `outlit_automation_enable` | Enable one configured automation |
-| `outlit_automation_disable` | Disable one configured automation |
-| `outlit_automation_archive` | Archive one configured automation |
-| `outlit_signal_options` | Show signal schemas, condition types, and default catalog keys |
-| `outlit_signal_list` | List configured automation signals |
-| `outlit_signal_get` | Get one configured automation signal |
-| `outlit_signal_create` | Create one automation signal |
-| `outlit_signal_update` | Update one automation signal |
-| `outlit_signal_archive` | Archive one configured automation signal |
-| `outlit_destination_options` | Show destination schemas and Slack channel options |
-| `outlit_destination_list` | List configured automation destinations with masked configuration |
-| `outlit_destination_get` | Get one configured automation destination with masked configuration |
-| `outlit_destination_create` | Create one Slack channel destination; can set it as default |
-| `outlit_destination_update` | Update one Slack channel automation destination; can set it as default |
-| `outlit_destination_enable` | Enable one configured automation destination |
-| `outlit_destination_disable` | Disable one configured automation destination |
-| `outlit_destination_archive` | Archive one configured automation destination |
-| `outlit_settings_get` | Get workspace settings |
-| `outlit_settings_update` | Update workspace settings such as default timezone |
-| `outlit_settings_report_get` | Get report settings |
-| `outlit_settings_report_update` | Update report Slack channel settings |
-| `outlit_settings_report_options` | Search Slack channel options for report settings |
-| `outlit_identity_merge_suggestion_list` | List identity merge suggestions |
-| `outlit_identity_merge_suggestion_get` | Get one identity merge suggestion |
-| `outlit_identity_merge_suggestion_queue` | Queue one suggested identity merge |
-| `outlit_identity_merge_suggestion_reject` | Reject one suggested identity merge |
-
-Most platform read tools require `agents:read`; most platform write tools require `agents:write`. Identity merge suggestion reads require `identity:read`; queue and reject require `identity:write`. `outlit_destination_options` is non-mutating but requires `agents:write` because it lists Slack channel choices for destination creation. `outlit_settings_report_options` is read-scoped and accepts optional `search` and `limit` inputs for Slack channel discovery. Identity merge suggestion tools require the identity resolution feature to be enabled for the workspace. Destination tools return masked configuration only. Settings and identity tools return projected DTOs, not raw database rows.
-
-See [Platform Actions](/ai-integrations/platform-actions) for the shared API, CLI, and MCP model behind these tools.

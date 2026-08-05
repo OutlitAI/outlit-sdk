@@ -1,0 +1,56 @@
+import { describe, expect, test } from "bun:test"
+import { existsSync, readdirSync, readFileSync } from "node:fs"
+import { join } from "node:path"
+
+const packageRoot = join(import.meta.dir, "..", "..")
+
+const retiredCommandFamilies = ["agents", "automations", "signals", "identity"] as const
+const retiredToolPrefixes = [
+  "outlit_agent_",
+  "outlit_automation_",
+  "outlit_signal_",
+  "outlit_identity_merge_suggestion_",
+] as const
+
+describe("public CLI surface", () => {
+  test("does not register retired command families or notification sending", () => {
+    const cliSource = readFileSync(join(packageRoot, "src", "cli.ts"), "utf8")
+
+    for (const command of [...retiredCommandFamilies, "notify"]) {
+      expect(cliSource).not.toContain(`${command}: () => import(`)
+    }
+  })
+
+  test("does not ship retired command modules", () => {
+    for (const command of retiredCommandFamilies) {
+      const commandDir = join(packageRoot, "src", "commands", command)
+      const files = existsSync(commandDir)
+        ? readdirSync(commandDir, { recursive: true, withFileTypes: true }).filter((entry) =>
+            entry.isFile(),
+          )
+        : []
+      expect(files).toEqual([])
+    }
+
+    expect(existsSync(join(packageRoot, "src", "commands", "notify.ts"))).toBe(false)
+  })
+
+  test("does not map retired tools to direct Platform endpoints", () => {
+    const clientSource = readFileSync(join(packageRoot, "src", "lib", "client.ts"), "utf8")
+
+    for (const prefix of retiredToolPrefixes) {
+      expect(clientSource).not.toContain(prefix)
+    }
+  })
+
+  test("does not advertise retired commands in shell completions", () => {
+    const completionsSource = readFileSync(
+      join(packageRoot, "src", "commands", "completions.ts"),
+      "utf8",
+    )
+
+    for (const command of [...retiredCommandFamilies, "notify"]) {
+      expect(completionsSource).not.toContain(`name: "${command}"`)
+    }
+  })
+})

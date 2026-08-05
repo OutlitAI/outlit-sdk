@@ -1,12 +1,12 @@
 import type { AgentToolResult, ExtensionAPI, ToolDefinition } from "@mariozechner/pi-coding-agent"
 import {
-  type CustomerToolName,
   createOutlitClient,
   DEFAULT_OUTLIT_API_URL,
-  defaultAgentToolNames,
-  getCustomerToolContract,
-  isCustomerToolName,
+  defaultToolNames,
+  getPublicToolContract,
+  isPublicToolName,
   type OutlitToolsFetch,
+  type PublicToolName,
 } from "@outlit/tools"
 import type { TSchema } from "@sinclair/typebox"
 
@@ -17,13 +17,13 @@ export type OutlitPiExtensionOptions = {
   apiKey?: string
   baseUrl?: string
   fetch?: OutlitToolsFetch
-  toolNames?: readonly CustomerToolName[]
+  toolNames?: readonly PublicToolName[]
 }
 
 export type OutlitPiRegistry = Pick<ExtensionAPI, "registerTool">
 
 export type OutlitPiToolDetails = {
-  toolName: CustomerToolName
+  toolName: PublicToolName
   result: unknown
 }
 
@@ -46,10 +46,14 @@ export function createOutlitPiTools(
 }
 
 export function createOutlitPiTool(
-  toolName: CustomerToolName,
+  toolName: PublicToolName,
   options: OutlitPiExtensionOptions = {},
 ): OutlitPiToolDefinition {
-  const contract = getCustomerToolContract(toolName)
+  if (!isPublicToolName(toolName)) {
+    throw new Error(`Unknown Outlit public tool: ${toolName}`)
+  }
+
+  const contract = getPublicToolContract(toolName)
   const label = formatOutlitToolLabel(toolName)
 
   return {
@@ -80,19 +84,19 @@ function toPiToolParameters(inputSchema: unknown): TSchema {
   return schema as unknown as TSchema
 }
 
-export function formatOutlitToolLabel(toolName: CustomerToolName): string {
+export function formatOutlitToolLabel(toolName: PublicToolName): string {
   return toolName
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ")
 }
 
-function resolveToolNames(toolNames: readonly CustomerToolName[] | undefined): CustomerToolName[] {
-  const names = toolNames ?? defaultAgentToolNames
+function resolveToolNames(toolNames: readonly PublicToolName[] | undefined): PublicToolName[] {
+  const names = toolNames ?? defaultToolNames
 
   return [...new Set(names)].map((name) => {
-    if (!isCustomerToolName(name)) {
-      throw new Error(`Unknown Outlit customer tool: ${name}`)
+    if (!isPublicToolName(name)) {
+      throw new Error(`Unknown Outlit public tool: ${name}`)
     }
 
     return name
@@ -135,7 +139,7 @@ function normalizeToolInput(params: unknown): Record<string, unknown> {
 }
 
 function formatToolResult(
-  toolName: CustomerToolName,
+  toolName: PublicToolName,
   result: unknown,
 ): AgentToolResult<OutlitPiToolDetails> {
   return {
@@ -151,12 +155,11 @@ function firstLine(value: string): string {
   return value.split("\n", 1)[0] ?? value
 }
 
-export type { CustomerToolName } from "@outlit/tools"
+export type { PublicToolName } from "@outlit/tools"
 export {
-  actionToolNames,
-  allCustomerToolNames,
-  analyticalAgentToolNames,
-  defaultAgentToolNames,
+  allPublicToolNames,
+  analyticalToolNames,
+  defaultToolNames,
   sqlToolNames,
 } from "@outlit/tools"
 

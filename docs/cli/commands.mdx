@@ -83,10 +83,9 @@ outlit activation disable --json
 
 Disabling preserves existing contact and company activation timestamps.
 
-All four commands preserve Core's standard structured command envelope in `--json` and
-piped output. Local validation errors use the CLI's existing `missing_input` or
-`invalid_input` error shape; authenticated API errors retain the standard Core error
-envelope.
+All four commands return the catalog-projected result in `--json` and piped output. Local
+validation errors use the CLI's `missing_input` or `invalid_input` shape; gateway failures
+retain Core's stable `code`, `message`, `retryable`, and `requestId` envelope.
 
 ## Customers List
 
@@ -585,178 +584,6 @@ outlit sources get --source-type OPPORTUNITY --source-id opp_123
 outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
 ```
 
-## Notify
-
-Send a notification to the organization's configured default notifier. Slack is the default notifier when no destination is supplied.
-
-```text
-outlit notify --title <title> <payload> [flags]
-outlit notify --title <title> --payload-file <path> [flags]
-outlit notify --title <title> --markdown <markdown> [flags]
-```
-
-### Arguments
-
-| Argument | Required | Description |
-|----------|----------|-------------|
-| `payload` | No* | Notification payload as JSON or a raw string. Any JSON-serializable object, array, scalar, or string is accepted. Provide a payload, `--payload-file`, `--markdown`, or `--markdown-file`. |
-
-### Flags
-
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `--title` | string | — | Notification title |
-| `--payload-file` | string | — | Path to a payload file. Takes precedence over the positional payload. |
-| `--markdown` | string | — | Markdown notification body |
-| `--markdown-file` | string | — | Path to a markdown file. Takes precedence over `--markdown`. |
-| `--message` | string | — | Optional summary message |
-| `--severity` | string | — | Optional severity: `low`, `medium`, `high` |
-| `--source` | string | — | Optional source label |
-| `--subject` | string | — | Optional subject line |
-| `--destination` | string | — | Optional comma-separated destinations in `provider[:channelId]` form. Supported provider: `slack`. |
-
-### Examples
-
-```bash
-# Markdown body
-outlit notify --title "Expansion signal" --markdown "**Expansion signal**\n\n- Customer: acme.com"
-
-# Inline JSON payload
-outlit notify --title "Expansion signal" '{"customer":"acme.com","score":0.91}'
-
-# Raw string payload
-outlit notify --title "Escalation" "Check this account before renewal"
-
-# Payload from a file
-outlit notify --title "Usage decay" --payload-file ./payload.json
-
-# Explicit Slack destination
-outlit notify --title "Escalation" --markdown "**Check this account**" --destination slack:C123
-
-# High-severity notification with a message
-outlit notify --title "Escalation" --severity high --message "Check this account" '{"customer":"acme.com"}'
-```
-
-<Note>
-  Provide `--markdown`, `--markdown-file`, a positional payload, or `--payload-file`. When both payload forms are provided, `--payload-file` takes precedence. When both markdown forms are provided, `--markdown-file` takes precedence.
-</Note>
-
-## Agents
-
-Inspect and configure Outlit hosted agents.
-
-These commands are part of [Platform Actions](/ai-integrations/platform-actions), the shared API, CLI, and MCP surface for selected Outlit platform configuration.
-
-```text
-outlit agents list [flags]
-outlit agents get <id> [flags]
-outlit agents templates [flags]
-outlit agents actions [flags]
-outlit agents runs list <agent-id> [flags]
-outlit agents runs get <agent-id> <run-id> [flags]
-outlit agents runs start <agent-id> [flags]
-outlit agents create [flags]
-outlit agents update <id> [flags]
-outlit agents enable <id> [flags]
-outlit agents disable <id> [flags]
-outlit agents rename <id> <display-name> [flags]
-```
-
-### Examples
-
-```bash
-outlit agents list --json
-outlit agents get 10000000-0000-4000-8000-000000000004 --json
-outlit agents templates --json
-outlit agents actions --json
-outlit agents runs list 10000000-0000-4000-8000-000000000004 --json
-outlit agents runs get 10000000-0000-4000-8000-000000000004 run_123 --json
-outlit agents runs start 10000000-0000-4000-8000-000000000004 --client-request-id smoke-123 --json
-outlit agents create --template churn --json
-outlit agents create --type custom --display-name "Renewal risk" --instructions "Find risky customers and skip already resolved issues." --json
-outlit agents update 10000000-0000-4000-8000-000000000004 --display-name "Renewal risk" --json
-outlit agents update 10000000-0000-4000-8000-000000000004 --instructions "Prioritize recent escalations" --json
-outlit agents update 10000000-0000-4000-8000-000000000004 --action-keys send_slack_notification --json
-outlit agents update 10000000-0000-4000-8000-000000000004 --clear-action-keys --json
-outlit agents enable 10000000-0000-4000-8000-000000000004 --json
-outlit agents disable 10000000-0000-4000-8000-000000000004 --json
-outlit agents rename 10000000-0000-4000-8000-000000000004 "Churn prevention" --json
-```
-
-<Note>
-  `agents create --template` creates supported template resources in draft mode. `agents update` patches only the fields you pass. Use `--clear-action-keys` to remove all action keys. Agent write commands require an API key with `agents:write`.
-</Note>
-
-Agent run list results are under `result.data.runs`; detailed run data is under `result.data.run`. Manual run start currently supports legacy churn agents; template and custom hosted agents run through automations. Run responses are safe DTOs and do not include raw sandbox handles, prompts, credentials, or unmasked runtime snapshots.
-
-## Automations
-
-Inspect configured platform automations.
-
-```text
-outlit automations list [flags]
-outlit automations get <id> [flags]
-outlit automations runs list <automation-id> [--limit <count>] [--cursor <cursor>] [flags]
-outlit automations runs get <automation-id> <run-id> [flags]
-outlit automations options [flags]
-outlit automations create --data <json> [flags]
-outlit automations create --file <path> [flags]
-outlit automations update <id> --data <json> [flags]
-outlit automations update <id> --file <path> [flags]
-outlit automations enable <id> [flags]
-outlit automations disable <id> [flags]
-outlit automations archive <id> [flags]
-```
-
-### Examples
-
-```bash
-outlit automations list --json
-outlit automations get 10000000-0000-4000-8000-000000000001 --json
-outlit automations runs list 10000000-0000-4000-8000-000000000001 --limit 10 --json
-outlit automations runs get 10000000-0000-4000-8000-000000000001 10000000-0000-4000-8000-000000000006 --json
-outlit automations options --json
-outlit automations create --file ./automation.json --json
-outlit automations update 10000000-0000-4000-8000-000000000001 --file ./automation.json --json
-outlit automations enable 10000000-0000-4000-8000-000000000001 --json
-outlit automations disable 10000000-0000-4000-8000-000000000001 --json
-outlit automations archive 10000000-0000-4000-8000-000000000001 --json
-```
-
-Automation create bodies must include `agentId`, `name`, and `triggerType`. Update bodies must include `agentId`, `name`, `enabled`, and `triggerType`. The API maps that agent ID to the internal hosted-agent processor; callers do not provide raw processor JSON. Use `automations options` to inspect accepted trigger types, policy schema fragments, and constraints.
-
-### JSON Response
-
-Automation commands return command envelopes. List results are under `result.data.automations`; get, create, update, enable, and disable results are under `result.data.automation`. Automation run list results are under `result.data.runs`, with pagination under `result.data.pagination`; automation run details are under `result.data.run`. Archive results return `result.data.automation.id` and `result.data.automation.archivedAt`. Automation run responses include safe delivery and occurrence summaries, not raw trigger snapshots, payloads, or destination secrets.
-
-## Signals
-
-Inspect and configure automation signals.
-
-```text
-outlit signals list [flags]
-outlit signals get <id> [flags]
-outlit signals options [flags]
-outlit signals create --data <json> [flags]
-outlit signals create --file <path> [flags]
-outlit signals update <id> --data <json> [flags]
-outlit signals update <id> --file <path> [flags]
-outlit signals archive <id> [flags]
-```
-
-### Examples
-
-```bash
-outlit signals list --json
-outlit signals get 10000000-0000-4000-8000-000000000002 --json
-outlit signals options --json
-outlit signals create --file ./signal.json --json
-outlit signals update 10000000-0000-4000-8000-000000000002 --file ./signal.json --json
-outlit signals archive 10000000-0000-4000-8000-000000000002 --json
-```
-
-Signal list results are under `result.data.signals`; get, create, and update results are under `result.data.signal`. Archive results return `result.data.signal.id` and `result.data.signal.archivedAt`. Use `signals options` to inspect supported signal kinds, create schemas, detection schemas, condition types, and default signal catalog keys.
-
 ## Destinations
 
 Inspect and manage configured automation destinations with masked configuration only.
@@ -764,7 +591,6 @@ Inspect and manage configured automation destinations with masked configuration 
 ```text
 outlit destinations list [flags]
 outlit destinations get <id> [flags]
-outlit destinations options [flags]
 outlit destinations create [flags]
 outlit destinations update <id> [flags]
 outlit destinations enable <id> [flags]
@@ -777,7 +603,6 @@ outlit destinations archive <id> [flags]
 ```bash
 outlit destinations list --json
 outlit destinations get 10000000-0000-4000-8000-000000000003 --json
-outlit destinations options --search ops --json
 outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --default --json
 outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --default --json
 outlit destinations enable 10000000-0000-4000-8000-000000000003 --json
@@ -785,18 +610,15 @@ outlit destinations disable 10000000-0000-4000-8000-000000000003 --json
 outlit destinations archive 10000000-0000-4000-8000-000000000003 --json
 ```
 
-Destination list results are under `result.data.destinations`; get, create, update, enable, and disable results are under `result.data.destination`. Destination creation and update are Slack-channel backed; use `destinations options` to inspect Slack connection status and available channel IDs. `destinations options` is non-mutating but requires `agents:write` because it lists Slack channel choices used to create destinations. Use `--default` on `destinations create` or `destinations update` to make a Slack destination the default fallback. `destinations update` patches only the fields you pass; use `--type slack` for Slack-backed destinations. Archive results return `result.data.destination.id` and `result.data.destination.archivedAt`. Raw destination secrets and unmasked provider configuration are not returned.
+Destination creation and update are Slack-channel backed. Use `--default` on `destinations create` or `destinations update` to make a destination the default fallback. `destinations update` patches only the fields you pass. Raw destination secrets and unmasked provider configuration are not returned.
 
 ## Settings
 
-Inspect and configure selected workspace and report settings. Slack-backed delivery destinations are managed with the top-level `destinations` commands.
+Inspect and configure the model-safe workspace timezone. Delivery and report configuration remains in the authored web UI.
 
 ```text
 outlit settings get [flags]
 outlit settings update --default-timezone <iana-timezone> [flags]
-outlit settings report get [flags]
-outlit settings report update --slack-channel-id <channel-id> --slack-channel-name <name> [flags]
-outlit settings report options [--search <text>] [--limit <count>] [flags]
 ```
 
 ### Examples
@@ -804,36 +626,10 @@ outlit settings report options [--search <text>] [--limit <count>] [flags]
 ```bash
 outlit settings get --json
 outlit settings update --default-timezone America/Los_Angeles --json
-outlit settings report get --json
-outlit settings report options --search sales --limit 20 --json
-outlit settings report update --slack-channel-id C0123456789 --slack-channel-name sales-alerts --json
 outlit destinations list --json
-outlit destinations options --search ops --limit 20 --json
 ```
 
-Workspace settings are under `result.data.settings`. Report settings are under `result.data.report`. The report options command returns Slack connection status and bounded channel choices so agents can choose valid IDs before updating report settings; use `--search` to filter channels by name or ID and `--limit` to bound results from 1 to 100. Read commands require `agents:read`; update commands require `agents:write`. Default delivery destination selection is handled by `outlit destinations create --default` or `outlit destinations update --default`.
-
-## Identity
-
-Inspect and manage customer identity merge suggestions from the Identity page.
-
-```text
-outlit identity suggestions list [--status <status>] [--confidence <confidence>] [--limit <count>] [flags]
-outlit identity suggestions get <id> [flags]
-outlit identity suggestions queue <id> [--review-notes <notes>] [flags]
-outlit identity suggestions reject <id> [--review-notes <notes>] [flags]
-```
-
-### Examples
-
-```bash
-outlit identity suggestions list --status suggested --confidence HIGH --limit 10 --json
-outlit identity suggestions get 10000000-0000-4000-8000-000000000001 --json
-outlit identity suggestions queue 10000000-0000-4000-8000-000000000001 --review-notes "Verified duplicate" --json
-outlit identity suggestions reject 10000000-0000-4000-8000-000000000001 --review-notes "Not a duplicate" --json
-```
-
-Suggestion list results are under `result.data.suggestions`; get results are under `result.data.suggestion`. Queue and reject return `result.data.proposalId`, the resulting proposal status, and `jobId`/`jobStatus` when a merge job is queued. Read commands require `identity:read`; queue and reject require `identity:write`. The identity resolution feature must be enabled for the workspace.
+The public workspace settings capability returns and updates the default IANA timezone. Default delivery destination selection is handled by `outlit destinations create --default` or `outlit destinations update --default`.
 
 ## SQL
 

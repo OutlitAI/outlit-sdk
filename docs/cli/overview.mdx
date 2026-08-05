@@ -153,13 +153,9 @@ ok_ab...1234 (config)
 | [`onboard`](/cli/ai-agents#onboarding) | Bootstrap auth, install an agent skill, and inspect integration readiness |
 | [`integrations list`](/cli/integrations#integrations-list) | List available integrations and connection status |
 | [`integrations capabilities`](/cli/integrations#integrations-capabilities) | Show setup modes, required fields, and follow-up steps |
-| [`integrations setup`](/cli/integrations#integrations-setup) | Run browser-auth or direct-credential provider setup |
+| [`integrations setup`](/cli/integrations#integrations-setup) | Start browser handoff or open the human-controlled setup page |
 | [`integrations status`](/cli/integrations#integrations-status) | Show sync status for connected integrations |
-| [`agents list`](/cli/commands#agents) | List configured hosted agents |
-| [`automations list`](/cli/commands#automations) | List configured automations |
-| [`signals list`](/cli/commands#signals) | List configured automation signals |
 | [`destinations list`](/cli/commands#destinations) | List configured automation destinations with masked configuration |
-| [`identity suggestions list`](/cli/commands#identity) | List customer identity merge suggestions |
 | [`setup`](/cli/ai-agents) | Install Outlit skills for coding agents |
 | [`doctor`](/cli/ai-agents#diagnostics) | Run environment diagnostics |
 | [`completions`](/cli/configuration#shell-completions) | Generate shell completion scripts |
@@ -209,8 +205,8 @@ outlit customers list | jq '.items[].domain'
   <Card title="AI Agents" icon="robot" href="/cli/ai-agents">
     Install Outlit skills for Claude Code, Codex, Gemini CLI, Droid, OpenCode, Pi, OpenClaw, and more
   </Card>
-  <Card title="Platform Actions" icon="sliders" href="/ai-integrations/platform-actions">
-    Inspect and safely prepare platform configuration through API, CLI, and MCP
+  <Card title="Platform Configuration" icon="sliders" href="/ai-integrations/platform-actions">
+    Manage destinations and selected workspace settings through API and CLI
   </Card>
   <Card title="Configuration" icon="gear" href="/cli/configuration">
     Environment variables and config paths

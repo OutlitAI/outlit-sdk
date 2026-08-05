@@ -9,7 +9,7 @@ import {
 } from "../../helpers"
 
 const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
-  items: [
+  integrations: [
     { name: "Stripe", category: "billing", status: "connected", lastDataReceivedAt: null },
     { name: "Slack", category: "communication", status: "not_connected", lastDataReceivedAt: null },
   ],
@@ -46,7 +46,7 @@ describe("integrations list", () => {
       listCmd.run!({ args: { json: true } } as Parameters<NonNullable<typeof listCmd.run>>[0]),
     )
 
-    expect(Array.isArray(parsed.items)).toBe(true)
+    expect(Array.isArray(parsed.integrations)).toBe(true)
   })
 
   test("auto-outputs JSON when non-interactive", async () => {
@@ -55,7 +55,7 @@ describe("integrations list", () => {
       listCmd.run!({ args: {} } as Parameters<NonNullable<typeof listCmd.run>>[0]),
     )
 
-    expect(parsed.items).toBeDefined()
+    expect(parsed.integrations).toBeDefined()
   })
 
   test("renders table in interactive mode", async () => {

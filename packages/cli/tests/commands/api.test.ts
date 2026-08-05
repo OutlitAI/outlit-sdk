@@ -1,4 +1,6 @@
 import { describe, expect, mock, spyOn, test } from "bun:test"
+import { readFileSync } from "node:fs"
+import { OutlitToolsApiError } from "@outlit/tools"
 import {
   ExitError,
   expectErrorExit,
@@ -18,6 +20,14 @@ mock.module("../../src/lib/client", () => ({
 }))
 
 describe("getClientOrExit()", () => {
+  test("uses the Core-owned API-key validation transport", () => {
+    const source = readFileSync(new URL("../../src/lib/api.ts", import.meta.url), "utf8")
+
+    expect(source).toContain("apiKeyValidationTransport")
+    expect(source).not.toContain('new URL("/api/validate-api-key"')
+    expect(source).not.toContain('method: "POST"')
+  })
+
   test("returns client when auth succeeds", async () => {
     const { getClientOrExit } = await import("../../src/lib/api")
     const exitSpy = mockExitThrow()
@@ -92,25 +102,14 @@ describe("runTool()", () => {
     expectErrorExit(thrown, written, "api_error")
   })
 
-  test("preserves platform command error envelopes in JSON mode", async () => {
-    const commandEnvelope = {
-      ok: false,
-      commandId: "agent.create",
-      commandVersion: 1,
-      error: {
-        code: "authorization_denied",
-        message: "API key is missing the required agents:write scope.",
-        correlationId: "corr_denied_123",
-        retryable: false,
-        details: { requiredScope: "agents:write" },
-      },
+  test("preserves gateway error envelopes in JSON mode", async () => {
+    const gatewayEnvelope = {
+      code: "TOOL_CALL_FORBIDDEN" as const,
+      message: "API key is missing the required grant.",
+      requestId: "request_denied_123",
+      retryable: false,
     }
-    const error = new Error(commandEnvelope.error.message) as Error & {
-      status: number
-      commandEnvelope: typeof commandEnvelope
-    }
-    error.status = 403
-    error.commandEnvelope = commandEnvelope
+    const error = new OutlitToolsApiError(403, JSON.stringify(gatewayEnvelope), gatewayEnvelope)
     mockCallTool.mockRejectedValueOnce(error)
 
     const { getClientOrExit, runTool } = await import("../../src/lib/api")
@@ -122,8 +121,8 @@ describe("runTool()", () => {
     try {
       await runTool(
         client,
-        "outlit_agent_create",
-        { type: "template", templateKey: "churn", mode: "draft" },
+        "outlit_update_workspace_settings",
+        { defaultTimezone: "America/Los_Angeles" },
         true,
       )
     } catch (e) {
@@ -136,17 +135,12 @@ describe("runTool()", () => {
 
     expect(thrown).toBeInstanceOf(ExitError)
     expect((thrown as ExitError).code).toBe(1)
-    expect(JSON.parse(written)).toEqual(commandEnvelope)
+    expect(JSON.parse(written)).toEqual(gatewayEnvelope)
   })
 
   test("renders table rows from nested response paths", async () => {
     mockCallTool.mockResolvedValueOnce({
-      ok: true,
-      result: {
-        data: {
-          templates: [{ key: "churn", name: "Churn prevention" }],
-        },
-      },
+      destinations: [{ id: "dest_123", label: "#customer-ops" }],
     })
     const { getClientOrExit, runTool } = await import("../../src/lib/api")
     const client = await getClientOrExit(TEST_API_KEY, false)
@@ -154,19 +148,19 @@ describe("runTool()", () => {
 
     setInteractive()
     try {
-      await runTool(client, "outlit_agent_list_templates", {}, false, {
+      await runTool(client, "outlit_list_destinations", {}, false, {
         table: {
-          itemsKey: "result.data.templates",
+          itemsKey: "destinations",
           columns: [
-            { header: "Key", key: "key" },
-            { header: "Name", key: "name" },
+            { header: "ID", key: "id" },
+            { header: "Label", key: "label" },
           ],
         },
       })
 
       const output = logSpy.mock.calls.map((call) => call[0] as string).join("\n")
-      expect(output).toContain("churn")
-      expect(output).toContain("Churn prevention")
+      expect(output).toContain("dest_123")
+      expect(output).toContain("#customer-ops")
     } finally {
       setNonInteractive()
       logSpy.mockRestore()

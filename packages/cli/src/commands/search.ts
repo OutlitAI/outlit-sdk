@@ -1,7 +1,7 @@
 import {
   customerSourceTypeAliases,
   customerSourceTypes,
-  customerToolContracts,
+  publicToolContracts,
   resolveCustomerContextSearchInput,
 } from "@outlit/tools"
 import { defineCommand } from "citty"
@@ -108,7 +108,7 @@ export default defineCommand({
 
     return runTool(
       client,
-      customerToolContracts.outlit_search_customer_context.toolName,
+      publicToolContracts.outlit_search_customer_context.toolName,
       resolved.request,
       json,
     )

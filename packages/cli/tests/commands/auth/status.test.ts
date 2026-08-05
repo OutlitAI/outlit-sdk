@@ -79,7 +79,15 @@ describe("auth status", () => {
       source: "config",
     })
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+      new Response(
+        JSON.stringify({
+          valid: true,
+          organizationId: "org_123",
+          createdById: null,
+          authorization: { grants: [] },
+        }),
+        { status: 200 },
+      ),
     )
     const stdoutSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
 
@@ -108,7 +116,15 @@ describe("auth status", () => {
       source: "config",
     })
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+      new Response(
+        JSON.stringify({
+          valid: true,
+          organizationId: "org_123",
+          createdById: null,
+          authorization: { grants: [] },
+        }),
+        { status: 200 },
+      ),
     )
     const consoleSpy = spyOn(console, "log").mockImplementation(() => {})
     setInteractive()

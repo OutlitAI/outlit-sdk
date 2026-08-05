@@ -1,175 +1,27 @@
 ---
-title: "Platform Actions"
-description: "Inspect and configure Outlit agents and automations through API, CLI, and MCP"
+title: "Platform Capabilities"
+description: "Manage safe destinations, activation, and workspace settings through the tool gateway"
 ---
 
-Platform actions expose selected Outlit platform configuration through the same API, CLI, and MCP surfaces that agents already use for customer context. They are meant for workflows where an agent needs to inspect or safely prepare configuration without clicking through the Outlit UI.
+Outlit exposes model-safe platform configuration through `POST /api/tools/call`. The Core capability catalog owns the tool names, descriptions, schemas, and consumer memberships used by `@outlit/tools`, the CLI, and Pi.
 
-Use platform actions for Outlit-hosted agents, automations, signals, destinations, selected workspace settings, and identity merge suggestions. Use [Integration Routes](/api-reference/integrations) for connecting external data sources such as Slack, Stripe, HubSpot, PostHog, or support tools.
+## Current capability families
 
-## How the Surfaces Fit Together
+| Area | Tools |
+|------|-------|
+| Destinations | List, get, create, update, enable, disable, and archive |
+| Activation | Get, preview, and update the ordinary customer activation event |
+| Workspace settings | Get and update the workspace timezone |
+| Integrations | List, inspect capabilities, begin browser setup, and inspect setup/sync status |
 
-| Surface | Use it when | Entry point |
-|---------|-------------|-------------|
-| REST API | You are building your own app, backend job, or schema-driven integration | [OpenAPI spec](/openapi.json) |
-| CLI | You want a human or coding agent to run commands from a terminal | [CLI commands](/cli/commands#agents) |
-| MCP | You want an MCP client to inspect or prepare platform configuration while assisting a user | [MCP Integration](/ai-integrations/mcp#platform-configuration-tools) |
+Destination results expose masked configuration. The public surface does not include destination option discovery, report settings, provider credentials, setup steps, integration disconnect, secret reveal/rotation, arbitrary notification sending, or generic agent/automation/signal administration.
 
-Each surface calls the same platform action contracts. The transport changes, but the intent does not: the API exposes the canonical route, the CLI wraps that route for terminal use, and MCP exposes the same operation as an agent tool.
-
-## Naming Model
-
-Platform actions use resource-first names so humans and agents can predict what to call next:
-
-| Surface | Pattern | Example |
-|---------|---------|---------|
-| CLI | `outlit <resource> <verb>` | `outlit agents update <id> --instructions "..."`
-| REST API | Standard resource routes | `PATCH /api/agents/{id}` |
-| MCP | `<resource>_<verb>` tool names | `outlit_agent_update` |
-
-Subtypes and templates are inputs, not command names. For example, use `outlit agents create --template churn` to create a template-backed agent, and use `outlit destinations create --type slack` to create a Slack channel destination.
-
-Agent and destination updates patch only the fields provided. Automation and signal updates currently take full configuration bodies, so agents should read the current resource first, preserve fields they do not intend to change, and then send the updated body.
-
-## Current Scope
-
-The current platform action set focuses on the Agents, Automations, Settings, and Identity areas of the Outlit platform.
-
-| Area | Read actions | Write actions |
-|------|--------------|---------------|
-| Agents | List templates, list available actions, list agents, get one agent, list/get runs | Create, update, enable, disable, rename, start legacy churn run |
-| Automations | List automations, get one automation, list/get automation runs, show options | Create, update, enable, disable, archive |
-| Signals | List configured automation signals, get one signal, show options and default catalog keys | Create, update, archive |
-| Destinations | List configured destinations, get one destination with masked configuration, show Slack channel options | Create Slack channel destination, update, enable, disable, archive, set default destination |
-| Settings | Get workspace and report settings; search Slack-backed report setting options | Update default timezone, update report Slack channel |
-| Identity | List identity merge suggestions, get one suggestion | Queue one suggested merge, reject one suggestion |
-
-For example, a CLI user or agent can create a draft template and then explicitly enable or disable lifecycle resources:
+Authored CLI commands preserve a resource-oriented experience while all retained commands call the same gateway:
 
 ```bash
-outlit agents create --template churn --json
-outlit agents create --type custom --display-name "Renewal risk" --instructions "Find risky customers and skip already resolved issues." --json
-outlit signals options --json
-outlit signals create --file ./signal.json --json
-outlit destinations options --json
 outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --default --json
-outlit settings report options --search sales --limit 20 --json
-outlit identity suggestions list --status suggested --json
-outlit destinations list --json
-outlit automations runs list 10000000-0000-4000-8000-000000000001 --limit 10 --json
-outlit automations create --file ./automation.json --json
-outlit agents enable 10000000-0000-4000-8000-000000000004 --json
-outlit automations disable 10000000-0000-4000-8000-000000000001 --json
-```
-
-Template creation creates supported template resources in `draft` mode. Draft creation does not enable an automation, add schedules, add external destinations, or send notifications by itself. Lifecycle write actions mutate only the named resource state.
-
-Automation create and update actions are agent-centered. Callers provide `agentId`; update bodies also provide `name`, `enabled`, and `triggerType` explicitly. Outlit maps the agent ID to the hosted-agent processor internally and does not require callers to construct raw processor JSON.
-
-For custom agents, put all surfacing and skipping guidance in `instructions`. Older split fields such as `surfaceCriteria` and `skipCriteria` are no longer accepted by the platform action create/update contract.
-
-## Safety Model
-
-Platform actions are designed to make configuration inspectable before they make it broadly mutable.
-
-- Most non-identity read actions require an API key with the `agents:read` scope.
-- Most non-identity write actions require an API key with the `agents:write` scope.
-- `destinations options` is non-mutating, but it requires `agents:write` because it lists Slack channel choices used to create destinations.
-- Identity merge suggestion read actions require `identity:read`; queue and reject require `identity:write`. The identity resolution feature must be enabled for the workspace.
-- Template creation returns explicit safety metadata describing what was created and what was not enabled.
-- Enable actions validate the current platform state before enabling. For example, an automation cannot be enabled if required destinations or processor agents are unavailable.
-- Destination responses only include masked configuration through fields such as `maskedConfig`; raw secrets and unmasked provider configuration are not returned.
-- Responses are projected platform-action DTOs, not raw database rows.
-- Error responses use command envelopes with stable error codes such as `authorization_denied`, `validation_failed`, `not_found`, and `conflict`.
-
-## Response Shape
-
-Platform actions return command envelopes. Successful responses include a `commandId`, `commandVersion`, `correlationId`, and `result`. The useful payload is under `result.data`.
-
-For example, `outlit automations list --json` returns automation data under:
-
-```text
-result.data.automations
-```
-
-Errors return `ok: false` with an `error` object and correlation ID so agents can report the failure precisely or retry only when the error is retryable.
-
-## Example Agent Workflow
-
-A coding agent or MCP client can use platform actions to inspect what exists, choose a safe action, and leave the user with reviewable platform state:
-
-```bash
-outlit agents templates --json
-outlit agents actions --json
-outlit signals options --json
-outlit destinations options --json
-outlit agents create --template churn --json
-outlit agents update 10000000-0000-4000-8000-000000000004 --instructions "Prioritize recent support escalations" --json
-outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --default --json
-outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --default --json
+outlit activation preview --event activated --json
 outlit settings update --default-timezone America/Los_Angeles --json
-outlit settings report update --slack-channel-id C0123456789 --slack-channel-name sales-alerts --json
-outlit agents enable 10000000-0000-4000-8000-000000000004 --json
-outlit agents runs start 10000000-0000-4000-8000-000000000004 --client-request-id smoke-123 --json
-outlit agents runs list 10000000-0000-4000-8000-000000000004 --json
-outlit agents list --json
-outlit automations list --json
-outlit automations enable 10000000-0000-4000-8000-000000000001 --json
-outlit signals list --json
-outlit destinations list --json
-outlit identity suggestions list --status suggested --json
 ```
 
-This workflow lets the agent discover available templates, understand supported action capabilities, create a draft churn agent template, inspect the resulting agent and automation configuration, and then make explicit lifecycle changes.
-
-## Available REST Routes
-
-| Route | Purpose |
-|-------|---------|
-| `GET /api/agent-templates` | List supported agent templates |
-| `GET /api/agent-actions` | List available agent configuration actions |
-| `GET /api/agents` | List configured agents |
-| `GET /api/agents/{id}` | Get one configured agent |
-| `POST /api/agents` | Create an agent |
-| `PATCH /api/agents/{id}` | Update one configured agent |
-| `POST /api/agents/{id}/enable` | Enable one configured agent |
-| `POST /api/agents/{id}/disable` | Disable one configured agent |
-| `POST /api/agents/{id}/rename` | Rename one configured agent |
-| `GET /api/agents/{agentId}/runs` | List safe run summaries for one agent |
-| `POST /api/agents/{agentId}/runs` | Start a manual run for one legacy churn agent |
-| `GET /api/agents/{agentId}/runs/{runId}` | Get one safe run detail |
-| `GET /api/automations/options` | Show automation schemas, constants, and constraints |
-| `GET /api/automations` | List configured automations |
-| `POST /api/automations` | Create an agent automation |
-| `GET /api/automations/{id}` | Get one configured automation |
-| `PATCH /api/automations/{id}` | Update one agent automation |
-| `GET /api/automations/{automationId}/runs` | List safe automation run summaries |
-| `GET /api/automations/{automationId}/runs/{runId}` | Get one safe automation run detail |
-| `POST /api/automations/{id}/enable` | Enable one configured automation |
-| `POST /api/automations/{id}/disable` | Disable one configured automation |
-| `POST /api/automations/{id}/archive` | Archive one configured automation |
-| `GET /api/signals/options` | Show signal schemas, condition types, and default catalog keys |
-| `GET /api/signals` | List configured automation signals |
-| `POST /api/signals` | Create one automation signal |
-| `GET /api/signals/{id}` | Get one configured automation signal |
-| `PATCH /api/signals/{id}` | Update one automation signal |
-| `POST /api/signals/{id}/archive` | Archive one configured automation signal |
-| `GET /api/destinations/options` | Show destination schemas and Slack channel options (`agents:write`) |
-| `GET /api/destinations` | List configured automation destinations with masked configuration |
-| `GET /api/destinations/{id}` | Get one configured automation destination with masked configuration |
-| `POST /api/destinations` | Create one Slack channel destination; can set it as default |
-| `PATCH /api/destinations/{id}` | Update one Slack channel automation destination; can set it as default |
-| `POST /api/destinations/{id}/enable` | Enable one configured automation destination |
-| `POST /api/destinations/{id}/disable` | Disable one configured automation destination |
-| `POST /api/destinations/{id}/archive` | Archive one configured automation destination |
-| `GET /api/settings` | Get workspace settings |
-| `PATCH /api/settings` | Update workspace settings such as default timezone |
-| `GET /api/settings/report` | Get report settings |
-| `PATCH /api/settings/report` | Update report Slack channel settings |
-| `GET /api/settings/report/options` | Show Slack channel options for report settings |
-| `GET /api/identity/merge-suggestions` | List identity merge suggestions |
-| `GET /api/identity/merge-suggestions/{id}` | Get one identity merge suggestion |
-| `POST /api/identity/merge-suggestions/{id}/queue` | Queue one suggested identity merge |
-| `POST /api/identity/merge-suggestions/{id}/reject` | Reject one suggested identity merge |
-
-The [OpenAPI spec](/openapi.json) is the canonical reference for request and response schemas.
+Use the generated [OpenAPI specification](/openapi.json) for the exact request, output, and stable gateway error schemas.

@@ -72,6 +72,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Check generated ingestion contracts
+        run: bun run contracts:check
+
       - name: Lint
         run: bun run lint
 
@@ -97,6 +100,21 @@ jobs:
             echo "browser=true" >> "$GITHUB_OUTPUT"
           else
             echo "browser=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "$ROOT_CHANGED" ] || echo "$CHANGED" | grep -q '^packages/core/'; then
+            echo "core=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "core=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "$ROOT_CHANGED" ] || echo "$CHANGED" | grep -qE '^packages/(core|node)/'; then
+            echo "node=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "node=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "$ROOT_CHANGED" ] || echo "$CHANGED" | grep -qE '^packages/(core|browser)/'; then
+            echo "browser_unit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "browser_unit=false" >> "$GITHUB_OUTPUT"
           fi
           if [ -n "$ROOT_CHANGED" ] || echo "$CHANGED" | grep -qE '^packages/(cli|tools)/'; then
             echo "cli=true" >> "$GITHUB_OUTPUT"
@@ -138,6 +156,21 @@ jobs:
       - name: Run browser tests
         if: steps.changes.outputs.browser == 'true'
         run: cd packages/browser && bun run test
+
+      - name: Run core unit tests
+        if: steps.changes.outputs.core == 'true'
+        working-directory: packages/core
+        run: bun run test
+
+      - name: Run Node unit tests
+        if: steps.changes.outputs.node == 'true'
+        working-directory: packages/node
+        run: bun run test
+
+      - name: Run browser unit tests
+        if: steps.changes.outputs.browser_unit == 'true'
+        working-directory: packages/browser
+        run: bun run test:unit
 
       - name: Run CLI tests
         if: steps.changes.outputs.cli == 'true'

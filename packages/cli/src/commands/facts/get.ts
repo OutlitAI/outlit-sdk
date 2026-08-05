@@ -1,4 +1,4 @@
-import { customerToolContracts } from "@outlit/tools"
+import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
@@ -54,6 +54,6 @@ export default defineCommand({
     const include = parseCsvArg(args.include)
     if (include) params.include = include
 
-    return runTool(client, customerToolContracts.outlit_get_fact.toolName, params, json)
+    return runTool(client, publicToolContracts.outlit_get_fact.toolName, params, json)
   },
 })

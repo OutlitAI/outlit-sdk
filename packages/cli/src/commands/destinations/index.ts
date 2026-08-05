@@ -10,7 +10,6 @@ export default defineCommand({
       "Commands:",
       "  list                          List configured destinations",
       "  get <id>                      Get one configured destination",
-      "  options                       Show destination schemas and Slack channels",
       "  create                        Create a Slack channel destination",
       "  update <id>                   Update an automation destination",
       "  enable <id>                   Enable a configured destination",
@@ -20,7 +19,6 @@ export default defineCommand({
       "Examples:",
       "  outlit destinations list --json",
       "  outlit destinations get 10000000-0000-4000-8000-000000000003 --json",
-      "  outlit destinations options --json",
       "  outlit destinations create --type slack --channel-id C0123456789 --label '#customer-ops' --default --json",
       "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --default --json",
       "  outlit destinations enable 10000000-0000-4000-8000-000000000003 --json",
@@ -33,7 +31,6 @@ export default defineCommand({
   subCommands: {
     list: () => import("./list").then((m) => m.default),
     get: () => import("./get").then((m) => m.default),
-    options: () => import("./options").then((m) => m.default),
     create: () => import("./create").then((m) => m.default),
     update: () => import("./update").then((m) => m.default),
     enable: () => import("./enable").then((m) => m.default),

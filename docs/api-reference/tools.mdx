@@ -52,15 +52,14 @@ POST https://app.outlit.ai/api/tools/call
 | `outlit_search_customer_context` | Search customer context semantically |
 | `outlit_query` | Run SQL against customer intelligence views |
 | `outlit_schema` | Inspect available analytics views |
-| `outlit_send_notification` | Send a notification through the organization's configured notifier; Slack is the default notifier |
+| `outlit_list_destinations` through `outlit_archive_destination` | Manage the safe destination lifecycle with masked configuration |
+| `outlit_list_integrations` through `outlit_get_integration_sync_status` | Inspect integrations and start safe browser setup handoffs |
+| `outlit_get_customer_activation` through `outlit_update_customer_activation` | Inspect, preview, and configure the ordinary activation event |
+| `outlit_get_workspace_settings`, `outlit_update_workspace_settings` | Read and update safe workspace settings |
 
 <Info>
-  Tool input schemas are published by `@outlit/tools` as `customerToolContracts`. Use that package when building schema-driven clients or model tool definitions.
+  Tool input schemas are published by `@outlit/tools` as `publicToolContracts`. Use that package when building schema-driven clients or model tool definitions.
 </Info>
-
-<Note>
-  `outlit_send_notification` is an action tool. Call it only when the user explicitly asks you to send, post, or notify a result. Prefer `markdown` for the human-readable body; `payload` can still carry JSON-serializable context. If `destinations` is omitted, Outlit uses the organization's default notifier, currently Slack.
-</Note>
 
 ## TypeScript Client
 
@@ -71,14 +70,14 @@ npm install @outlit/tools
 ```
 
 ```typescript
-import { createOutlitClient, customerToolContracts } from "@outlit/tools"
+import { createOutlitClient, publicToolContracts } from "@outlit/tools"
 
 const outlit = createOutlitClient({
   apiKey: process.env.OUTLIT_API_KEY!,
 })
 
 const result = await outlit.callTool(
-  customerToolContracts.outlit_search_customer_context.toolName,
+  publicToolContracts.outlit_search_customer_context.toolName,
   {
     query: "What pricing concerns came up recently?",
     customer: "acme.com",
@@ -88,7 +87,7 @@ const result = await outlit.callTool(
 )
 ```
 
-The package also exports `customerToolContracts`, `defaultAgentToolNames`, `actionToolNames`, `sqlToolNames`, `allCustomerToolNames`, and enum lists such as `customerSourceTypes` for schema-driven agent integrations. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases. SDK helpers and CLI commands trim and normalize source type filters before calling the tool gateway.
+The package also exports `publicToolContracts`, `publicToolNames`, Core-owned `consumerToolPolicies`, `defaultToolNames`, `analyticalToolNames`, `cliToolNames`, `allPublicToolNames`, `publicOpenApiTransports`, `toolGatewayTransport`, `apiKeyValidationTransport`, `toolGatewayErrorCodes`, `toolGatewayErrorSchema`, `ingestTransport`, and enum lists such as `customerSourceTypes`. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases.
 
 ## Examples
 
@@ -162,26 +161,6 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 }
 ```
 
-### Send a Slack Notification
-
-```json
-{
-  "tool": "outlit_send_notification",
-  "input": {
-    "title": "Expansion signal",
-    "severity": "high",
-    "message": "Notify the channel after review.",
-    "source": "pi-agent",
-    "subject": "Acme expansion watchlist",
-    "payload": {
-      "customer": "acme.com",
-      "reason": "High usage and plan-limit pressure",
-      "signals": ["usage", "billing", "seat_growth"]
-    }
-  }
-}
-```
-
 ## Response
 
 The response is the selected tool's JSON result. List tools return paginated collections; exact lookup tools return the matched record or an error when the record cannot be found. Search returns grouped artifact-level `source` and `fact` results, not raw vector chunks. Fact results include provenance fields such as `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink` when available.
@@ -196,8 +175,14 @@ Example list response:
       "name": "Acme",
       "domain": "acme.com",
       "billingStatus": "PAYING",
-      "mrrCents": 25000,
-      "lastActivityAt": "2026-04-10T18:22:11.000Z"
+      "activatedAt": "2026-01-15T09:30:00.000Z",
+      "firstSeenAt": "2025-12-02T17:05:00.000Z",
+      "lastActivityAt": "2026-04-10T18:22:11.000Z",
+      "contactCount": 42,
+      "currentMrr": 250,
+      "mrrCalculationStatus": "calculated",
+      "owner": null,
+      "daysSinceActivity": 3
     }
   ],
   "pagination": {
@@ -214,13 +199,10 @@ Invalid JSON, unknown tool names, or invalid tool inputs return `400`:
 
 ```json
 {
-  "error": "Invalid tool input",
-  "details": [
-    {
-      "path": ["limit"],
-      "message": "Too big: expected number to be <=1000"
-    }
-  ]
+  "code": "INVALID_TOOL_INPUT",
+  "message": "Invalid tool input",
+  "retryable": false,
+  "requestId": "req_123"
 }
 ```
 

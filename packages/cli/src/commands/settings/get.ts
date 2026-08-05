@@ -23,7 +23,7 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, "outlit_settings_get", {}, json, {
+    return runTool(client, "outlit_get_workspace_settings", {}, json, {
       spinnerMessage: "Fetching settings...",
     })
   },

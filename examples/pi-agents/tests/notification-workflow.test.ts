@@ -69,11 +69,11 @@ const commandScopes = [
 
 const promptTemplates = ["friction-to-churn.md", "activation-failure.md", "expansion-readiness.md"]
 
-describe("outlit growth agents notification workflow", () => {
-  test("registers notification action tools by default", () => {
+describe("outlit growth agents report workflow", () => {
+  test("does not register the retired notification action tool", () => {
     const { registeredTools } = createPiHarness()
 
-    expect(registeredTools.map((tool) => tool.name)).toContain("outlit_send_notification")
+    expect(registeredTools.map((tool) => tool.name)).not.toContain("outlit_send_notification")
   })
 
   test("registers deterministic pretriage tools for churn and activation", () => {
@@ -86,7 +86,7 @@ describe("outlit growth agents notification workflow", () => {
 
   test.each(
     commandScopes,
-  )("$commandName asks the agent to send one Slack notification with a JSON payload object", async ({
+  )("$commandName asks the agent to return one structured report in chat", async ({
     commandName,
     scope,
   }) => {
@@ -103,10 +103,8 @@ describe("outlit growth agents notification workflow", () => {
     })
 
     expect(sentMessages).toHaveLength(1)
-    expect(sentMessages[0]).toContain("outlit_send_notification")
-    expect(sentMessages[0]).toContain("call outlit_send_notification exactly once")
-    expect(sentMessages[0]).toContain("payload must be a JSON-compatible object")
-    expect(sentMessages[0]).toContain("Do not pass payload as a JSON string")
+    expect(sentMessages[0]).not.toContain("outlit_send_notification")
+    expect(sentMessages[0]).toContain("structured report")
     expect(sentMessages[0]).toContain("public activity, customers, users, and revenue views")
     expect(sentMessages[0]).toContain("Do not query a non-public events view")
     expect(sentMessages[0]).toContain("candidateReviewSummary")
@@ -145,7 +143,7 @@ describe("outlit growth agents notification workflow", () => {
     expect(sentMessages[0]).not.toContain("Return the strongest 5-8 accounts")
   })
 
-  test("usage-decay command notifies after deterministic evidence review", async () => {
+  test("usage-decay command reports after deterministic evidence review", async () => {
     const { registeredCommands, sentMessages, waitForIdle } = createPiHarness()
     const command = registeredCommands.get("outlit-usage-decay-watchtower")
 
@@ -160,7 +158,7 @@ describe("outlit growth agents notification workflow", () => {
 
     expect(sentMessages).toHaveLength(1)
     expect(sentMessages[0]).toContain("Deterministic pretriage note")
-    expect(sentMessages[0]).toContain("call outlit_send_notification exactly once")
+    expect(sentMessages[0]).toContain("return the structured report in the final answer")
     expect(sentMessages[0]).toContain("If no live customer survives the evidence gate")
   })
 
@@ -199,12 +197,12 @@ describe("outlit growth agents notification workflow", () => {
     expect(sentMessages[0]).not.toContain("BEGIN_CHURN_WATCHTOWER_JSON")
     expect(sentMessages[0]).not.toContain("END_CHURN_WATCHTOWER_JSON")
     expect(sentMessages[0]).not.toContain("slackNotificationDraft")
-    expect(sentMessages[0]).not.toContain("Do not call notification or action tools")
+    expect(sentMessages[0]).not.toContain("outlit_send_notification")
     expect(sentMessages[0]).toContain("candidateReviewSummary")
     expect(sentMessages[0]).toContain("rankedCustomers")
     expect(sentMessages[0]).toContain("excludedCandidates")
     expect(sentMessages[0]).toContain("Do not rename keys")
-    expect(sentMessages[0]).toContain("notification payload")
+    expect(sentMessages[0]).toContain("structured report")
     expect(sentMessages[0]).toContain('"mrrCents"')
     expect(sentMessages[0]).toContain("Already-churned accounts belong in excluded candidates")
     expect(sentMessages[0]).not.toContain("unless the user explicitly asks for postmortems")
@@ -260,21 +258,16 @@ describe("outlit growth agents notification workflow", () => {
     expect(sentMessages).toHaveLength(1)
     expect(sentMessages[0]).toContain("manual workarounds")
     expect(sentMessages[0]).toContain("customer proof requests")
-    expect(sentMessages[0]).toContain("outlit_send_notification")
+    expect(sentMessages[0]).not.toContain("outlit_send_notification")
     expect(sentMessages[0]).toContain("For a scoped account such as Atlas Assist")
-    expect(sentMessages[0]).not.toContain("only when the user explicitly asks")
-    expect(sentMessages[0]).not.toContain("Do not call notification or action tools")
+    expect(sentMessages[0]).toContain("structured report")
   })
 
-  test.each(
-    promptTemplates,
-  )("%s includes the default Slack notification payload contract", (fileName) => {
+  test.each(promptTemplates)("%s includes the structured final report contract", (fileName) => {
     const prompt = readFileSync(new URL(`../prompts/${fileName}`, import.meta.url), "utf8")
 
-    expect(prompt).toContain("outlit_send_notification")
-    expect(prompt).toContain("Call `outlit_send_notification` exactly once")
-    expect(prompt).toContain("payload must be a JSON-compatible object")
-    expect(prompt).toContain("Do not pass `payload` as a JSON string")
+    expect(prompt).not.toContain("outlit_send_notification")
+    expect(prompt).toContain("structured report")
     expect(prompt).toContain("candidateReviewSummary")
     expect(prompt).toContain("rankedCustomers")
     expect(prompt).toContain("excludedCandidates")

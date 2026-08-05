@@ -1,6 +1,7 @@
 //! HTTP transport for sending events.
 
 use crate::config::Config;
+use crate::generated_ingest_contract::{ingest_path, INGEST_METHOD};
 use crate::types::{IngestPayload, IngestResponse};
 use crate::Error;
 use tracing::{debug, warn};
@@ -19,11 +20,7 @@ impl HttpTransport {
             .timeout(config.timeout())
             .build()?;
 
-        let endpoint = format!(
-            "{}/api/i/v1/{}/events",
-            config.api_host(),
-            config.public_key()
-        );
+        let endpoint = format!("{}{}", config.api_host(), ingest_path(config.public_key()));
 
         Ok(Self { client, endpoint })
     }
@@ -38,7 +35,11 @@ impl HttpTransport {
 
         let response = self
             .client
-            .post(&self.endpoint)
+            .request(
+                reqwest::Method::from_bytes(INGEST_METHOD.as_bytes())
+                    .expect("generated ingest method must be valid"),
+                &self.endpoint,
+            )
             .header("Content-Type", "application/json")
             .json(payload)
             .send()

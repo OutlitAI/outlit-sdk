@@ -6,6 +6,7 @@ import {
   buildFormEvent,
   buildIdentifyEvent,
   buildIngestPayload,
+  buildIngestUrl,
   buildPageviewEvent,
   DEFAULT_API_HOST,
   type PayloadCustomerIdentity,
@@ -579,7 +580,7 @@ export class Outlit {
       undefined,
       customerIdentity,
     )
-    const url = `${this.apiHost}/api/i/v1/${this.publicKey}/events`
+    const url = buildIngestUrl(this.apiHost, this.publicKey)
 
     try {
       // Use sendBeacon for better reliability on page unload

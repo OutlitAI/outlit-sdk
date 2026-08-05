@@ -73,9 +73,15 @@ describe("doctor command", () => {
         return new Response(JSON.stringify({ version: "0.1.0" }), { status: 200 })
       }
       if (url === getValidateApiKeyUrl()) {
-        return new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), {
-          status: 200,
-        })
+        return new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: null,
+            authorization: { grants: [] },
+          }),
+          { status: 200 },
+        )
       }
       throw new Error(`Unexpected fetch URL: ${url}`)
     }) as typeof fetch)
@@ -188,9 +194,15 @@ describe("doctor command", () => {
         return new Response(JSON.stringify({ version: "9.9.9" }), { status: 200 })
       }
       if (url === getValidateApiKeyUrl()) {
-        return new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), {
-          status: 200,
-        })
+        return new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: null,
+            authorization: { grants: [] },
+          }),
+          { status: 200 },
+        )
       }
       throw new Error(`Unexpected fetch URL: ${url}`)
     }) as typeof fetch)
@@ -231,9 +243,15 @@ describe("doctor command", () => {
         throw new Error("network down")
       }
       if (url === getValidateApiKeyUrl()) {
-        return new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), {
-          status: 200,
-        })
+        return new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: null,
+            authorization: { grants: [] },
+          }),
+          { status: 200 },
+        )
       }
       throw new Error(`Unexpected fetch URL: ${url}`)
     }) as typeof fetch)

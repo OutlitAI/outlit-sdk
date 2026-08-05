@@ -97,7 +97,7 @@ export default defineCommand({
       )
     }
 
-    return runTool(client, "outlit_destination_update", input, json, {
+    return runTool(client, "outlit_update_destination", input, json, {
       spinnerMessage: "Updating destination...",
     })
   },

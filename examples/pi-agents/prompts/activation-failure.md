@@ -30,9 +30,8 @@ Return:
 - Evidence notes for each account, tied to product behavior, conversations, timeline events, facts, or billing context.
 - The one next action most likely to get each account to first value.
 
-Slack notification:
-- Call `outlit_send_notification` exactly once after evidence review and before the final answer.
-- The notification payload must be a JSON-compatible object.
-- Do not pass `payload` as a JSON string, markdown table, code fence, or prose blob.
-- Include `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, and `openQuestions` in the payload.
-- If no customer survives the evidence gate, send a low-severity notification with `rankedCustomers: []` and explain why no account was ranked.
+Structured report:
+- Include a JSON-compatible structured report after the human-readable result.
+- Include `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, and `openQuestions`.
+- If no customer survives the evidence gate, use `rankedCustomers: []` and explain why no account was ranked.
+- Do not call notification or other action tools.

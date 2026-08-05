@@ -25,7 +25,7 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, "outlit_activation_get", {}, json, {
+    return runTool(client, "outlit_get_customer_activation", {}, json, {
       spinnerMessage: "Fetching activation event...",
     })
   },

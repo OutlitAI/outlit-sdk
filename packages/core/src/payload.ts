@@ -1,4 +1,5 @@
 import { v7 as uuidv7 } from "uuid"
+import { ingestTransport } from "./generated/ingest-contract"
 import type {
   CalendarEvent,
   CalendarProvider,
@@ -10,12 +11,26 @@ import type {
   IdentifyTraits,
   IngestPayload,
   PageviewEvent,
-  PayloadCustomerIdentity,
-  PayloadUserIdentity,
+  PayloadCustomerIdentityInput,
+  PayloadUserIdentityInput,
   SourceType,
   TrackerEvent,
 } from "./types"
 import { extractPathFromUrl, extractUtmParams } from "./utils"
+
+type WireTraitValue = string | number | boolean | null
+
+function normalizeTraits(
+  traits: CustomerTraits | IdentifyTraits | undefined,
+): Record<string, WireTraitValue> | undefined {
+  if (!traits) return undefined
+
+  const normalized: Record<string, WireTraitValue> = {}
+  for (const [key, value] of Object.entries(traits)) {
+    if (value !== undefined) normalized[key] = value
+  }
+  return Object.keys(normalized).length > 0 ? normalized : undefined
+}
 
 // ============================================
 // EVENT BUILDERS
@@ -103,8 +118,8 @@ export function buildIdentifyEvent(
     userId,
     fingerprint,
     customerId,
-    customerTraits,
-    traits,
+    customerTraits: normalizeTraits(customerTraits),
+    traits: normalizeTraits(traits),
   }
 }
 
@@ -243,10 +258,10 @@ export function buildIngestPayload(
   visitorId: string,
   source: SourceType,
   events: TrackerEvent[],
-  userIdentity?: PayloadUserIdentity,
+  userIdentity?: PayloadUserIdentityInput,
   sessionId?: string,
   fingerprint?: string,
-  customerIdentity?: PayloadCustomerIdentity,
+  customerIdentity?: PayloadCustomerIdentityInput,
 ): IngestPayload {
   const payload: IngestPayload = {
     visitorId,
@@ -263,6 +278,8 @@ export function buildIngestPayload(
         }
       : undefined
   const resolvedCustomerIdentity = customerIdentity ?? legacyCustomerIdentity
+  const userTraits = normalizeTraits(userIdentity?.traits)
+  const customerTraits = normalizeTraits(resolvedCustomerIdentity?.customerTraits)
 
   // Only include fingerprint if provided (server SDK only)
   if (fingerprint) {
@@ -275,25 +292,24 @@ export function buildIngestPayload(
   }
 
   // Only include userIdentity if it has actual values
-  if (userIdentity && (userIdentity.email || userIdentity.userId || userIdentity.traits)) {
+  if (
+    userIdentity &&
+    (userIdentity.email || userIdentity.userId || userIdentity.fingerprint || userTraits)
+  ) {
     payload.userIdentity = {
       ...(userIdentity.email && { email: userIdentity.email }),
       ...(userIdentity.userId && { userId: userIdentity.userId }),
-      ...(userIdentity.traits && { traits: userIdentity.traits }),
+      ...(userIdentity.fingerprint && { fingerprint: userIdentity.fingerprint }),
+      ...(userTraits && { traits: userTraits }),
     }
   }
 
-  if (
-    resolvedCustomerIdentity &&
-    (resolvedCustomerIdentity.customerId || resolvedCustomerIdentity.customerTraits)
-  ) {
+  if (resolvedCustomerIdentity && (resolvedCustomerIdentity.customerId || customerTraits)) {
     payload.customerIdentity = {
       ...(resolvedCustomerIdentity.customerId && {
         customerId: resolvedCustomerIdentity.customerId,
       }),
-      ...(resolvedCustomerIdentity.customerTraits && {
-        customerTraits: resolvedCustomerIdentity.customerTraits,
-      }),
+      ...(customerTraits && { customerTraits }),
     }
   }
 
@@ -307,7 +323,7 @@ export function buildIngestPayload(
 /**
  * Maximum number of events in a single batch.
  */
-export const MAX_BATCH_SIZE = 100
+export const MAX_BATCH_SIZE = ingestTransport.maxBatchSize
 
 /**
  * Split events into batches of MAX_BATCH_SIZE.

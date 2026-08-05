@@ -24,17 +24,16 @@ Platform API routes use an Outlit API key in the `Authorization` header:
 Authorization: Bearer ok_...
 ```
 
-Use Platform API routes for customer intelligence tools, integration management, and API key validation:
+Use the public tool gateway for every model-safe capability and the validation route for API-key checks:
 
 ```http
 POST /api/tools/call
-GET /api/integrations
 POST /api/validate-api-key
 ```
 
-The public tool gateway exposes the same customer context tools used by the CLI and agent integrations: complete customer profiles, timelines, facts, exact source lookup, semantic search across sources and facts, and read-only SQL.
+The public tool gateway exposes the same exact catalog used by the CLI and agent integrations: customer intelligence, destinations, safe integration handoffs and status, activation configuration, workspace settings, and read-only SQL.
 
-[Platform Actions](/ai-integrations/platform-actions) expose selected agent, automation, signal, destination, workspace setting, and identity merge suggestion configuration through REST routes that are also available from the CLI and MCP.
+[Platform Configuration](/ai-integrations/platform-actions) exposes destination and selected workspace-setting routes that are also available through the CLI.
 
 ### Ingest API
 
@@ -68,7 +67,7 @@ X-RateLimit-Reset: 1699999999
 
 ### Platform API
 
-Customer intelligence tool calls are authenticated with your Outlit API key and may count toward your plan's API-call allowance. Integration management routes are authenticated the same way, but integration connections are governed by your plan's connection limit.
+Capability calls are authenticated with your Outlit API key and may count toward your plan's API-call allowance.
 
 ## Error Responses
 
@@ -87,23 +86,14 @@ Ingest API errors use the tracking response format:
 }
 ```
 
-Platform API errors use endpoint-specific JSON responses. Most Platform API failures include an `error` field:
+The tool gateway uses one stable redacted error envelope:
 
 ```json
 {
-  "error": "Invalid credentials"
-}
-```
-
-Plan and billing failures include a stable `code` plus plan metadata:
-
-```json
-{
-  "error": "Your plan has exhausted its included API calls for the current billing cycle.",
-  "code": "api_limit_exceeded",
-  "plan": "free",
-  "feature": "api_calls",
-  "resetAt": 1776124800000
+  "code": "TOOL_CALL_FORBIDDEN",
+  "message": "Capability not authorized",
+  "retryable": false,
+  "requestId": "request_123"
 }
 ```
 
@@ -138,12 +128,12 @@ Access-Control-Allow-Headers: Content-Type
   Call customer intelligence tools through the public tool gateway
 </Card>
 
-<Card title="/api/integrations/*" icon="plug" href="/api-reference/integrations">
-  List, connect, poll, and inspect integration sync status
+<Card title="Integration capabilities" icon="plug" href="/api-reference/integrations">
+  List integrations, start browser handoffs, and inspect setup or sync status through the gateway
 </Card>
 
-<Card title="/api/agents, /api/automations, /api/signals, /api/destinations, /api/settings, and /api/identity" icon="sliders" href="/ai-integrations/platform-actions">
-  Inspect and safely prepare platform configuration through shared platform actions
+<Card title="Platform capabilities" icon="sliders" href="/ai-integrations/platform-actions">
+  Manage masked destinations, activation, and selected workspace settings through the gateway
 </Card>
 
 <Card title="POST /events" icon="arrow-right" href="/api-reference/ingest">

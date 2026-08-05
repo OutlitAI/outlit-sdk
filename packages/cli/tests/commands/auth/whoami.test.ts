@@ -62,10 +62,13 @@ describe("auth whoami", () => {
             id: "key_123",
             name: "Local CLI",
             prefix: "ok_ABC123",
+            keyType: "cli",
+            grants: ["customer_intelligence:read"],
             createdAt: "2026-01-01T00:00:00.000Z",
             lastUsedAt: "2026-01-02T00:00:00.000Z",
             totalRequests: 42,
           },
+          authorization: { grants: ["customer_intelligence:read"] },
         }),
         { status: 200 },
       ),
@@ -109,6 +112,8 @@ describe("auth whoami", () => {
       id: "key_123",
       name: "Local CLI",
       prefix: "ok_ABC123",
+      keyType: "cli",
+      grants: ["customer_intelligence:read"],
       createdAt: "2026-01-01T00:00:00.000Z",
       lastUsedAt: "2026-01-02T00:00:00.000Z",
       totalRequests: 42,
@@ -122,7 +127,15 @@ describe("auth whoami", () => {
       source: "env",
     })
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ valid: true, organizationId: "org_123" }), { status: 200 }),
+      new Response(
+        JSON.stringify({
+          valid: true,
+          organizationId: "org_123",
+          createdById: null,
+          authorization: { grants: [] },
+        }),
+        { status: 200 },
+      ),
     )
     const stdoutSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
 
@@ -187,5 +200,37 @@ describe("auth whoami", () => {
     }
 
     expectErrorExit(thrown, stderrOutput, "invalid_key")
+  })
+
+  test("validation outage — exits with api_unavailable instead of invalid_key", async () => {
+    const resolveApiKeySpy = spyOn(configModule, "resolveApiKey").mockReturnValue({
+      key: "ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
+      source: "flag",
+    })
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ valid: false, error: "API key validation unavailable" }), {
+        status: 503,
+      }),
+    )
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    let stderrOutput = ""
+    try {
+      await whoamiCmd.run!({
+        args: { json: true, "api-key": undefined },
+      } as Parameters<NonNullable<typeof whoamiCmd.run>>[0])
+    } catch (error) {
+      thrown = error
+      stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
+    } finally {
+      resolveApiKeySpy.mockRestore()
+      fetchSpy.mockRestore()
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+    }
+
+    expectErrorExit(thrown, stderrOutput, "api_unavailable")
   })
 })

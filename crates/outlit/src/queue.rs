@@ -32,6 +32,11 @@ impl EventQueue {
         events.len() >= self.max_size
     }
 
+    /// Get the configured flush threshold.
+    pub fn max_size(&self) -> usize {
+        self.max_size
+    }
+
     /// Get the number of events in the queue.
     pub async fn len(&self) -> usize {
         let events = self.events.lock().await;

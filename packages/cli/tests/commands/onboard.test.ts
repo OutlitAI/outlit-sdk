@@ -12,13 +12,10 @@ mock.module("../../src/lib/client", () => ({
     baseUrl: process.env.OUTLIT_API_URL ?? "https://app.outlit.ai",
     async callTool(toolName: string) {
       const key = apiKey ?? process.env.OUTLIT_API_KEY ?? ""
-      const endpoint =
-        toolName === "outlit_integration_capabilities"
-          ? "/api/integrations/capabilities"
-          : "/api/integrations"
-      const response = await globalThis.fetch(`https://app.outlit.ai${endpoint}`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${key}` },
+      const response = await globalThis.fetch("https://app.outlit.ai/api/tools/call", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ tool: toolName, input: {} }),
       })
       return response.json()
     },
@@ -39,28 +36,26 @@ setNonInteractive()
 const capabilitiesPayload = {
   providers: [
     {
-      cliName: "hubspot",
-      providerId: "hubspot",
-      setupMode: "browser_auth",
-      credentialType: "oauth",
-      connectSupported: true,
-      requiredFields: [],
-      postConnectSteps: [{ id: "crm-mapping", required: true, supported: false }],
+      provider: "hubspot",
+      name: "HubSpot",
+      category: "crm",
+      authType: "oauth",
+      setupMode: "browser_handoff",
+      browserHandoffAvailable: true,
     },
     {
-      cliName: "pylon",
-      providerId: "pylon",
-      setupMode: "direct_api_key",
-      credentialType: "api_token",
-      connectSupported: true,
-      requiredFields: [{ key: "apiToken", label: "API Token", secret: true }],
-      postConnectSteps: [{ id: "webhook-setup", required: true, supported: false }],
+      provider: "pylon",
+      name: "Pylon",
+      category: "support",
+      authType: "api_key",
+      setupMode: "human_controlled",
+      browserHandoffAvailable: false,
     },
   ],
 }
 
 const integrationsPayload = {
-  items: [
+  integrations: [
     { id: "pylon", name: "Pylon", status: "connected" },
     { id: "hubspot", name: "HubSpot", status: "available" },
   ],
@@ -74,7 +69,17 @@ describe("onboard", () => {
   beforeEach(() => {
     resetChildProcessMocks()
     fetchSpy = spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(new Response(JSON.stringify({ valid: true }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: null,
+            authorization: { grants: [] },
+          }),
+          { status: 200 },
+        ),
+      )
       .mockResolvedValueOnce(new Response(JSON.stringify(capabilitiesPayload), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(integrationsPayload), { status: 200 }))
   })
@@ -106,8 +111,8 @@ describe("onboard", () => {
     expect(fetchInit?.headers).toEqual({ Authorization: `Bearer ${TEST_API_KEY}` })
     expect(fetchUrls(fetchSpy)).toEqual([
       "https://app.outlit.ai/api/validate-api-key",
-      "https://app.outlit.ai/api/integrations/capabilities",
-      "https://app.outlit.ai/api/integrations",
+      "https://app.outlit.ai/api/tools/call",
+      "https://app.outlit.ai/api/tools/call",
     ])
     expect(mockExecFileSync.mock.calls.length).toBe(2)
     const [runnerCmd, runnerArgs] = mockExecFileSync.mock.calls[1] as [string, string[]]
@@ -141,8 +146,8 @@ describe("onboard", () => {
       providerCount: 2,
       connectedCount: 1,
       setupModes: {
-        browser_auth: 1,
-        direct_api_key: 1,
+        browser_handoff: 1,
+        human_controlled: 1,
       },
     })
     expect(parsed.nextActions).toContain("outlit doctor --json")
@@ -181,7 +186,17 @@ describe("onboard", () => {
           { status: 200 },
         ),
       )
-      .mockResolvedValueOnce(new Response(JSON.stringify({ valid: true }), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: null,
+            authorization: { grants: [] },
+          }),
+          { status: 200 },
+        ),
+      )
       .mockResolvedValueOnce(new Response(JSON.stringify(capabilitiesPayload), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(integrationsPayload), { status: 200 }))
 
@@ -201,8 +216,8 @@ describe("onboard", () => {
         "https://app.outlit.ai/api/cli-auth/start",
         "https://app.outlit.ai/api/cli-auth/poll",
         "https://app.outlit.ai/api/validate-api-key",
-        "https://app.outlit.ai/api/integrations/capabilities",
-        "https://app.outlit.ai/api/integrations",
+        "https://app.outlit.ai/api/tools/call",
+        "https://app.outlit.ai/api/tools/call",
       ])
       expect(parsed.status).toBe("ready")
       expect(parsed.checks).toContainEqual(

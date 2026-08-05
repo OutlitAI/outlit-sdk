@@ -1,4 +1,4 @@
-import { analyticalAgentToolNames, createOutlitPiExtension } from "@outlit/pi"
+import { analyticalToolNames, createOutlitPiExtension } from "@outlit/pi"
 import {
   type ActivationScopeProfile,
   createOutlitActivationPretriageTool,
@@ -96,7 +96,7 @@ const COMMANDS: AgentCommand[] = [
         scope,
         pretriageContext,
         pretriageNote,
-        structuredOutputInstructions: buildUsageDecayNotificationPayloadInstructions(),
+        structuredOutputInstructions: buildUsageDecayReportInstructions(),
         objective:
           "Find paying customers whose product behavior suggests they may cancel soon, even when there is no renewal date or explicit renewal conversation.",
         signals: [
@@ -194,7 +194,7 @@ const COMMANDS: AgentCommand[] = [
 
 export default function outlitGrowthAgents(pi: GrowthAgentPiApi) {
   createOutlitPiExtension({
-    toolNames: analyticalAgentToolNames,
+    toolNames: analyticalToolNames,
   })(pi as OutlitPiRegistry)
   pi.registerTool(
     createOutlitChurnPretriageTool({
@@ -390,23 +390,23 @@ Final answer contract:
 - For each ranked customer, cite concrete Outlit evidence. Do not rely on vague phrasing like "low engagement" without a date, metric, source, or fact.
 - If no customer survives the evidence gate, say that directly and do not produce a ranked table.
 ${scopedFinalAnswerLine}
-${buildSlackNotificationInstructions(title)}
+${buildStructuredReportInstructions(title)}
 ${structuredOutputInstructions ? `\n${structuredOutputInstructions}` : ""}
 `.trim()
 }
 
-function buildSlackNotificationInstructions(title: string): string {
+function buildStructuredReportInstructions(title: string): string {
   return `
-Slack notification:
-- After evidence review and before the final answer, call outlit_send_notification exactly once.
+Structured report:
+- After evidence review, return the structured report in the final answer. Do not call notification or other action tools.
 - Use a short, specific title. Default to "${title}" unless an account-specific title is clearer.
-- Use message for a one-sentence Slack summary of the result.
+- Include a one-sentence summary of the result.
 - Use severity "high" only for immediate revenue, retention, activation, or expansion risk/opportunity with strong evidence; use "medium" for credible actionable findings; use "low" when no customer survives the evidence gate or the data is sparse.
-- The payload must be a JSON-compatible object. Do not pass payload as a JSON string, markdown table, code fence, or prose blob.
-- Do not rename keys, omit required keys, or replace required objects with null in the payload.
-- The notification payload must use this shape:
+- Use this exact JSON-compatible shape as a fenced JSON block after the human-readable summary:
   {
     "agent": "${title}",
+    "severity": "low",
+    "summary": "one-sentence summary",
     "candidateReviewSummary": {
       "reviewed": 0,
       "ranked": 0,
@@ -418,18 +418,19 @@ Slack notification:
     "dataQualityNotes": [],
     "openQuestions": []
   }
+- Do not rename keys, omit required keys, or replace required objects with null.
 - In rankedCustomers, include customer, domain, signal, hardEvidence, supportingContext, confidence, recommendedAction, and missingData. Include billingStatus and "mrrCents" when available.
 - In excludedCandidates, include customer, domain, and reason.
-- If no live customer survives the evidence gate, still call outlit_send_notification exactly once with severity "low", rankedCustomers: [], and a message that no actionable account survived review.
+- If no live customer survives the evidence gate, use severity "low", rankedCustomers: [], and explain that no actionable account survived review.
 `.trim()
 }
 
-function buildUsageDecayNotificationPayloadInstructions(): string {
+function buildUsageDecayReportInstructions(): string {
   return `
-Usage-decay notification payload details:
+Usage-decay structured report details:
 - Use confidence values exactly: "high", "medium", or "low".
 - Use mrrCents for revenue. Do not use mrr, mrrDollars, or other revenue keys.
-- Include candidateReviewSummary.liveSaveMotionOnly as true for the notification payload.
+- Include candidateReviewSummary.liveSaveMotionOnly as true in the structured report.
 - Use severity "high" only when at least one ranked customer has high confidence and meaningful current or future revenue at risk; otherwise use "medium" for credible live risks and "low" when no live save-motion account survives.
 - If candidate evidence is sparse but the pretriage activity metrics show paid non-use, keep the candidate ranked with lower confidence instead of excluding solely for sparse timeline/search/fact context. Exclude only when richer evidence clearly contradicts the activity signal.
 `.trim()

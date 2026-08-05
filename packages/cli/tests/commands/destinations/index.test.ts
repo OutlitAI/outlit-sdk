@@ -5,16 +5,7 @@ describe("destinations command", () => {
     const { default: destinationsCmd } = await import("../../../src/commands/destinations")
     const subcommands = Object.keys(destinationsCmd.subCommands ?? {})
 
-    expect(subcommands).toEqual([
-      "list",
-      "get",
-      "options",
-      "create",
-      "update",
-      "enable",
-      "disable",
-      "archive",
-    ])
+    expect(subcommands).toEqual(["list", "get", "create", "update", "enable", "disable", "archive"])
     expect(subcommands).not.toContain("create-webhook")
     expect(subcommands).not.toContain("delete")
     expect(subcommands).not.toContain("reveal-secret")

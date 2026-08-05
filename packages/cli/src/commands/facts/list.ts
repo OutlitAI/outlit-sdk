@@ -6,8 +6,8 @@ import {
   customerSourceTypeAliases,
   customerSourceTypeInputs,
   customerSourceTypes,
-  customerToolContracts,
   normalizeCustomerSourceType,
+  publicToolContracts,
   unsupportedCustomerFactTypes,
 } from "@outlit/tools"
 import { defineCommand } from "citty"
@@ -260,7 +260,7 @@ export default defineCommand({
     if (args.before) params.before = args.before
     applyPagination(params, args, json)
 
-    return runTool(client, customerToolContracts.outlit_list_facts.toolName, params, json, {
+    return runTool(client, publicToolContracts.outlit_list_facts.toolName, params, json, {
       transform: annotateFactFilterability,
     })
   },

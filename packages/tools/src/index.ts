@@ -1,20 +1,40 @@
 export type {
-  CustomerToolResult,
   OutlitToolsClient,
   OutlitToolsClientOptions,
   OutlitToolsFetch,
+  RuntimeJsonSchema,
+  ToolGatewayErrorCode,
+  ToolGatewayErrorEnvelope,
 } from "./client.js"
-export { createOutlitClient, DEFAULT_OUTLIT_API_URL } from "./client.js"
+export {
+  createOutlitClient,
+  DEFAULT_OUTLIT_API_URL,
+  isOutlitToolsApiError,
+  matchesGeneratedJsonSchema,
+  OutlitToolsApiError,
+} from "./client.js"
 export type {
   CustomerContextSearchInput,
   CustomerSourceType,
   CustomerSourceTypeInput,
-  CustomerToolContract,
-  CustomerToolName,
   JsonSchema,
+  PublicToolContract,
+  PublicToolName,
   SearchArgsLike,
 } from "./contracts.js"
 export {
+  getPublicToolContract,
+  isPublicToolName,
+  normalizeCustomerSourceType,
+  resolveCustomerContextSearchInput,
+} from "./contracts.js"
+export {
+  apiKeyGrants,
+  apiKeyValidationFailureSchema,
+  apiKeyValidationSuccessSchema,
+  apiKeyValidationTransport,
+  consumerToolPolicies,
+  contractVersion,
   customerActivityWindows,
   customerBillingStatuses,
   customerFactCategories,
@@ -24,39 +44,42 @@ export {
   customerIncludeSections,
   customerListOrderFields,
   customerSourceTypeAliases,
+  customerSourceTypeAliasMap,
   customerSourceTypeInputs,
   customerSourceTypes,
   customerTimeframes,
-  customerToolContractHash,
-  customerToolContracts,
-  customerToolNames,
-  getCustomerToolContract,
-  isCustomerToolName,
-  normalizeCustomerSourceType,
-  notificationProviderValues,
-  notificationSeverityValues,
-  resolveCustomerContextSearchInput,
+  ingestTransport,
+  publicOpenApiTransports,
+  publicToolContracts,
+  publicToolNames,
   schemaTables,
+  sdkConsumerContractHash,
   timelineChannels,
   timelineTimeframes,
+  toolGatewayErrorCodes,
+  toolGatewayErrorSchema,
+  toolGatewayTransport,
   unsupportedCustomerFactTypes,
   userJourneyStages,
   userListOrderFields,
   workspaceUserListOrderFields,
-} from "./contracts.js"
-
+} from "./generated/contracts.js"
 export type {
+  ApiKeyValidationFailure,
+  ApiKeyValidationSuccess,
   CustomerAnalyticsRow,
   CustomerDetail,
   CustomerDetailResult,
   CustomerListItem,
   CustomerListResult,
+  JsonSchemaValue,
+  PublicToolResult,
 } from "./results.js"
-
+export type { CliToolName } from "./toolsets.js"
 export {
-  actionToolNames,
-  allCustomerToolNames,
-  analyticalAgentToolNames,
-  defaultAgentToolNames,
+  allPublicToolNames,
+  analyticalToolNames,
+  cliToolNames,
+  defaultToolNames,
   sqlToolNames,
 } from "./toolsets.js"

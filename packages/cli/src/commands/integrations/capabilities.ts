@@ -2,7 +2,7 @@ import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
-import { normalizeProviderInput, PROVIDER_NAMES } from "../../lib/providers"
+import { normalizeProviderInput } from "../../lib/providers"
 
 export default defineCommand({
   meta: {
@@ -10,14 +10,12 @@ export default defineCommand({
     description: [
       "Show machine-readable integration setup capabilities.",
       "",
-      "Use this before setup so agents know whether a provider uses browser auth,",
-      "direct credential config, or has required follow-up steps such as CRM mappings.",
+      "Use this before setup to learn whether a safe browser handoff is available",
+      "or configuration must continue in the Outlit web app.",
       "",
       "Examples:",
       "  outlit integrations capabilities --json",
       "  outlit integrations capabilities hubspot --json",
-      "",
-      `Providers: ${PROVIDER_NAMES.join(", ")}`,
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -38,7 +36,7 @@ export default defineCommand({
     if (args.provider) {
       return runTool(
         client,
-        "outlit_integration_capabilities",
+        "outlit_get_integration_capabilities",
         { provider: normalizeProviderInput(args.provider) },
         json,
         {
@@ -47,7 +45,7 @@ export default defineCommand({
       )
     }
 
-    return runTool(client, "outlit_integration_capabilities", {}, json, {
+    return runTool(client, "outlit_get_integration_capabilities", {}, json, {
       spinnerMessage: "Fetching integration capabilities...",
     })
   },

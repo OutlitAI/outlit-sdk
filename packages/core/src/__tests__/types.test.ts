@@ -4,8 +4,11 @@ import type {
   CustomerTraits,
   EventType,
   IdentifyTraits,
+  PayloadUserIdentity,
+  PayloadUserIdentityInput,
   ServerIdentifyOptions,
   ServerTrackOptions,
+  TrackerEvent,
 } from "../types"
 
 describe("CustomerTraits", () => {
@@ -104,6 +107,26 @@ describe("BrowserIdentifyOptions", () => {
   })
 })
 
+describe("payload identity wire types", () => {
+  it("keeps legacy customer fields in builder input but out of the wire identity", () => {
+    const input: PayloadUserIdentityInput = {
+      email: "user@example.com",
+      fingerprint: "device_123",
+      customerId: "cust_123",
+      customerTraits: { plan: "pro" },
+    }
+    const wireIdentity: PayloadUserIdentity = {
+      email: "user@example.com",
+      // @ts-expect-error customer attribution belongs in payload.customerIdentity on the wire
+      customerId: "cust_123",
+    }
+
+    expect(input.customerId).toBe("cust_123")
+    expect(input.fingerprint).toBe("device_123")
+    expect(wireIdentity.email).toBe("user@example.com")
+  })
+})
+
 describe("EventType", () => {
   it("does not accept authoritative lifecycle or billing events", () => {
     // @ts-expect-error lifecycle is derived from ordinary events
@@ -113,5 +136,10 @@ describe("EventType", () => {
 
     expect(stage).toBe("stage")
     expect(billing).toBe("billing")
+  })
+
+  it("has no lifecycle or billing event variants in the tracker union", () => {
+    expectTypeOf<Extract<TrackerEvent, { type: "stage" }>>().toEqualTypeOf<never>()
+    expectTypeOf<Extract<TrackerEvent, { type: "billing" }>>().toEqualTypeOf<never>()
   })
 })

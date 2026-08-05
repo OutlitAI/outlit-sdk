@@ -12,6 +12,7 @@ export {
   buildPageviewEvent,
   MAX_BATCH_SIZE,
 } from "./payload"
+export { buildIngestUrl, INGEST_EVENT_TYPES, INGEST_METHOD } from "./transport"
 export type {
   BrowserIdentifyOptions,
   BrowserTrackOptions,
@@ -29,7 +30,9 @@ export type {
   IngestResponse,
   PageviewEvent,
   PayloadCustomerIdentity,
+  PayloadCustomerIdentityInput,
   PayloadUserIdentity,
+  PayloadUserIdentityInput,
   ServerIdentifyOptions,
   ServerIdentity,
   ServerTrackOptions,

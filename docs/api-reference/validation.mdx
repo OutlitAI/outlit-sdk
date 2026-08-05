@@ -33,7 +33,10 @@ curl -X POST https://app.outlit.ai/api/validate-api-key \
 {
   "valid": true,
   "organizationId": "org_123",
-  "createdById": "user_123"
+  "createdById": "user_123",
+  "authorization": {
+    "grants": ["customer_intelligence:read"]
+  }
 }
 ```
 
@@ -49,6 +52,11 @@ curl -X POST https://app.outlit.ai/api/validate-api-key \
   User that created the API key, when available.
 </ResponseField>
 
+<ResponseField name="authorization.grants" type="string[]">
+  Current capabilities granted to this API key. A consumer must only offer commands whose
+  required authority appears in this list.
+</ResponseField>
+
 ## Error Responses
 
 Invalid or disabled keys return `401`:
@@ -60,4 +68,5 @@ Invalid or disabled keys return `401`:
 }
 ```
 
-Malformed validation requests return `400`. Server-side validation failures return `500`.
+If the credential store is temporarily unavailable, the endpoint returns `503` with the same
+failure envelope. Retry that response; it does not mean the key is invalid or revoked.

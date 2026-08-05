@@ -1,4 +1,4 @@
-import { customerToolContracts } from "@outlit/tools"
+import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
@@ -42,6 +42,6 @@ export default defineCommand({
     const view = args.view ?? args.table
     if (view) params.table = view
 
-    return runTool(client, customerToolContracts.outlit_schema.toolName, params, json)
+    return runTool(client, publicToolContracts.outlit_schema.toolName, params, json)
   },
 })

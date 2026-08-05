@@ -1,23 +1,9 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test"
 import { captureStdout, setNonInteractive, TEST_API_KEY, useTempEnv } from "../../helpers"
 
-const mockEnvelope = {
-  ok: true,
-  commandId: "settings.test",
-  commandVersion: 1,
-  correlationId: "corr_settings_123",
-  result: {
-    operationId: "settings.test",
-    status: "completed",
-    resources: [],
-    data: {},
-    warnings: [],
-  },
-}
+const mockResult = { settings: { defaultTimezone: "America/Los_Angeles" } }
 
-const mockCallTool = mock(
-  async (_toolName: string, _params: Record<string, unknown>) => mockEnvelope,
-)
+const mockCallTool = mock(async (_toolName: string, _params: Record<string, unknown>) => mockResult)
 
 mock.module("../../../src/lib/client", () => ({
   createClient: async () => ({
@@ -42,10 +28,10 @@ describe("settings command", () => {
     const meta =
       typeof metaSource === "function" ? await metaSource() : await Promise.resolve(metaSource)
 
-    expect(subcommands).toEqual(["get", "update", "report"])
+    expect(subcommands).toEqual(["get", "update"])
     expect(subcommands).not.toContain("default-timezone")
-    expect(meta?.description).toContain("settings report get")
-    expect(meta?.description).toContain("destinations options")
+    expect(meta?.description).not.toContain("settings report")
+    expect(meta?.description).not.toContain("destinations options")
     expect(meta?.description).not.toContain("settings notifications")
   })
 
@@ -64,8 +50,8 @@ describe("settings command", () => {
       } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_settings_get", {})
-    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_settings_update", {
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_get_workspace_settings", {})
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_update_workspace_settings", {
       defaultTimezone: "America/Los_Angeles",
     })
   })

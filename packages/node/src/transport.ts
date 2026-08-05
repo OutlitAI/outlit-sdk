@@ -1,4 +1,9 @@
-import type { IngestPayload, IngestResponse } from "@outlit/core"
+import {
+  buildIngestUrl,
+  INGEST_METHOD,
+  type IngestPayload,
+  type IngestResponse,
+} from "@outlit/core"
 
 // ============================================
 // HTTP TRANSPORT
@@ -55,14 +60,14 @@ export class HttpTransport {
    * Send events to the ingest API.
    */
   async send(payload: IngestPayload): Promise<IngestResponse> {
-    const url = `${this.apiHost}/api/i/v1/${this.publicKey}/events`
+    const url = buildIngestUrl(this.apiHost, this.publicKey)
 
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), this.timeout)
 
     try {
       const response = await fetch(url, {
-        method: "POST",
+        method: INGEST_METHOD,
         headers: {
           "Content-Type": "application/json",
         },

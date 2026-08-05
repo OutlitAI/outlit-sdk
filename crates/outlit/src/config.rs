@@ -2,6 +2,8 @@
 
 use std::time::Duration;
 
+use crate::generated_ingest_contract::INGEST_MAX_BATCH_SIZE;
+
 /// Default API host.
 pub const DEFAULT_API_HOST: &str = "https://app.outlit.ai";
 
@@ -9,7 +11,7 @@ pub const DEFAULT_API_HOST: &str = "https://app.outlit.ai";
 pub const DEFAULT_FLUSH_INTERVAL: Duration = Duration::from_secs(10);
 
 /// Default max batch size.
-pub const DEFAULT_MAX_BATCH_SIZE: usize = 100;
+pub const DEFAULT_MAX_BATCH_SIZE: usize = INGEST_MAX_BATCH_SIZE;
 
 /// Default request timeout.
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -109,6 +111,14 @@ impl OutlitBuilder {
             }
         }
 
+        if let Some(size) = self.max_batch_size {
+            if size == 0 || size > INGEST_MAX_BATCH_SIZE {
+                return Err(crate::Error::Config(format!(
+                    "max_batch_size must be between 1 and {INGEST_MAX_BATCH_SIZE}"
+                )));
+            }
+        }
+
         Ok(Config {
             public_key: self.public_key,
             api_host: self.api_host.unwrap_or_else(|| DEFAULT_API_HOST.into()),
@@ -166,6 +176,18 @@ mod tests {
     fn test_builder_whitespace_api_host_fails() {
         let result = OutlitBuilder::new("pk_test").api_host("   ").build_config();
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_builder_rejects_batch_size_outside_wire_contract() {
+        assert!(OutlitBuilder::new("pk_test")
+            .max_batch_size(0)
+            .build_config()
+            .is_err());
+        assert!(OutlitBuilder::new("pk_test")
+            .max_batch_size(INGEST_MAX_BATCH_SIZE + 1)
+            .build_config()
+            .is_err());
     }
 
     #[test]

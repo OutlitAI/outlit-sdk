@@ -1,299 +1,38 @@
 ---
-title: "Integration Routes"
-description: "List, connect, disconnect, poll, and inspect integration sync status"
+title: "Integration Capabilities"
+description: "Call safe integration capabilities through the public tool gateway"
 ---
 
-Every integration request requires an Outlit API key:
+Integration automation uses `POST /api/tools/call`; there are no public integration credential, setup-step, or disconnect REST routes. Complete secret-bearing and provider-specific setup in the Outlit web app.
+
+All gateway requests use an Outlit bearer:
 
 ```http
 Authorization: Bearer ok_...
 ```
 
-## Provider IDs
+## Available tools
 
-Use the currently enabled public provider IDs below when calling integration routes.
+| Tool | Purpose |
+|------|---------|
+| `outlit_list_integrations` | List integrations and safe connection health |
+| `outlit_get_integration_capabilities` | Describe browser-handoff or human-controlled setup modes |
+| `outlit_begin_integration_setup` | Start a short-lived browser handoff |
+| `outlit_get_integration_setup_status` | Poll a handoff owned by the current actor |
+| `outlit_get_integration_sync_status` | Inspect safe model-level sync status |
 
-| Provider ID | Name | Category | Direct config support |
-|-------------|------|----------|-----------------------|
-| `hubspot` | HubSpot | CRM | Browser session |
-| `attio` | Attio | CRM | Browser session |
-| `slack` | Slack | Communication | Browser session |
-| `fireflies` | Fireflies.ai | Calls | `apiKey` |
-| `granola` | Granola | Calls | `apiKey` |
-| `google-calendar` | Google Calendar | Calendar | Browser session |
-| `google-mail` | Gmail | Communication | Browser session |
-| `posthog` | PostHog | Analytics | `apiKey`, `region`, `projectId` |
-| `stripe` | Stripe | Billing | `apiKey` |
-| `supabase` | Supabase Auth | Analytics | `projectUrl`, `serviceRoleKey` |
-| `clerk` | Clerk | Analytics | `secretKey` |
-| `pylon` | Pylon | Support | `apiToken` |
-
-<Info>
-  Use `google-mail` for direct API requests. The CLI also accepts `gmail` as a convenience alias.
-</Info>
-
-## List Integrations
-
-```http
-GET https://app.outlit.ai/api/integrations
-```
-
-<ParamField query="connectedOnly" type="boolean" default="false">
-  When `true`, only returns currently connected integrations.
-</ParamField>
-
-### Example
+## Example
 
 ```bash
-curl https://app.outlit.ai/api/integrations?connectedOnly=true \
-  -H "Authorization: Bearer ok_your_api_key"
+curl -X POST https://app.outlit.ai/api/tools/call \
+  -H "Authorization: Bearer ok_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "outlit_begin_integration_setup",
+    "input": { "provider": "hubspot" }
+  }'
 ```
 
-### Response
+A successful handoff returns `provider`, `state`, `sessionId`, `connectUrl`, and `expiresAt`. Providers whose credentials or configuration cannot safely cross a model boundary report `setupMode: "human_controlled"` from the capabilities tool.
 
-```json
-{
-  "items": [
-    {
-      "id": "stripe",
-      "name": "Stripe",
-      "category": "billing",
-      "status": "connected",
-      "connectionId": "stripe-org_123",
-      "lastDataReceivedAt": "2026-04-10T18:22:11.000Z",
-      "syncStatus": "SUCCESS",
-      "errorMessage": null
-    }
-  ]
-}
-```
-
-## Get Setup Capabilities
-
-```http
-GET https://app.outlit.ai/api/integrations/capabilities
-```
-
-<ParamField query="provider" type="string">
-  Optional public provider ID or CLI alias. When omitted, returns all provider capabilities.
-</ParamField>
-
-Capabilities tell agents which setup mode to use, which credential fields are required, and which post-connect steps still need follow-up.
-
-### Response
-
-```json
-{
-  "provider": {
-    "cliName": "pylon",
-    "providerId": "pylon",
-    "setupMode": "direct_api_key",
-    "credentialType": "api_token",
-    "requiredFields": [{ "key": "apiToken", "label": "API Token", "secret": true }],
-    "commands": ["outlit integrations setup pylon"],
-    "postConnectSteps": [
-      {
-        "id": "webhook-setup",
-        "required": true,
-        "supported": true,
-        "command": "outlit integrations setup pylon webhooks"
-      }
-    ]
-  }
-}
-```
-
-## Run Provider Setup Step
-
-```http
-POST https://app.outlit.ai/api/integrations/setup-step
-```
-
-Use this after a provider is connected when `postConnectSteps` reports a supported follow-up such as CRM mappings or webhooks.
-
-### Request Body
-
-```json
-{
-  "provider": "hubspot",
-  "step": "mappings",
-  "config": {
-    "mappings": []
-  }
-}
-```
-
-<ParamField body="provider" type="string" required>
-  Public provider ID from setup capabilities.
-</ParamField>
-
-<ParamField body="step" type="string" required>
-  Follow-up step token, such as `mappings` or `webhooks`.
-</ParamField>
-
-<ParamField body="config" type="object">
-  Optional step-specific config. CRM mappings use `{ "mappings": [...] }`; Stripe webhooks can use `{ "webhookSecret": "whsec_..." }`; Fireflies webhooks can use `{ "webhookSecret": "..." }`.
-</ParamField>
-
-When config is omitted, CRM mapping setup returns available pipelines and a `config_required` response. Webhook setup returns the URL, headers/secrets, required events, and status needed for manual provider setup without creating a browser session.
-
-## Connect Integration
-
-```http
-POST https://app.outlit.ai/api/integrations/connect
-```
-
-### Request Body
-
-```json
-{
-  "provider": "posthog",
-  "config": {
-    "apiKey": "phx_...",
-    "region": "us",
-    "projectId": "12345"
-  }
-}
-```
-
-<ParamField body="provider" type="string" required>
-  Public provider ID from the provider table.
-</ParamField>
-
-<ParamField body="config" type="object">
-  Required for direct credential connections. Omit this field to create a browser-auth connection session.
-</ParamField>
-
-### Direct Credential Response
-
-```json
-{
-  "connected": true,
-  "connectionId": "posthog-org_123",
-  "alreadyConnected": false
-}
-```
-
-### Browser Session Response
-
-```json
-{
-  "sessionId": "0f6d0f76-1dc7-4c5c-bba5-6685f74a5e3a",
-  "connectUrl": "https://app.outlit.ai/integrations",
-  "alreadyConnected": false
-}
-```
-
-Open `connectUrl` in a browser where the user can complete the provider connection, then poll the connect status route with `sessionId`. Direct credential setup, such as Pylon API-token setup, returns the direct credential response and does not create a session ID.
-
-### Errors
-
-Invalid providers or malformed JSON return `400`. Connection-limit failures return `403`:
-
-```json
-{
-  "error": "Your plan has reached its integration connection limit.",
-  "code": "plan_connection_limit_exceeded",
-  "feature": "integration_connections",
-  "plan": "free",
-  "currentConnections": 3,
-  "limit": 3
-}
-```
-
-## Poll Connection Status
-
-```http
-GET https://app.outlit.ai/api/integrations/connect/status
-```
-
-<ParamField query="sessionId" type="string" required>
-  Session ID returned by `POST /api/integrations/connect`.
-</ParamField>
-
-### Response
-
-```json
-{
-  "status": "pending",
-  "provider": "slack"
-}
-```
-
-`status` is one of `pending`, `connected`, `failed`, or `expired`. Failed responses may include `error`.
-
-## Disconnect Integration
-
-```http
-POST https://app.outlit.ai/api/integrations/disconnect
-```
-
-### Request Body
-
-```json
-{
-  "provider": "stripe"
-}
-```
-
-<ParamField body="provider" type="string" required>
-  Public provider ID from the provider table.
-</ParamField>
-
-### Response
-
-```json
-{
-  "success": true
-}
-```
-
-If the provider is valid but not currently connected, the route returns `404`:
-
-```json
-{
-  "success": false,
-  "message": "Integration is not connected"
-}
-```
-
-## Get Sync Status
-
-```http
-GET https://app.outlit.ai/api/integrations/sync-status
-```
-
-<ParamField query="provider" type="string" required>
-  Public provider ID from the provider table.
-</ParamField>
-
-### Response
-
-```json
-{
-  "provider": "stripe",
-  "name": "Stripe",
-  "category": "billing",
-  "status": "connected",
-  "syncs": [
-    {
-      "model": "StripeCustomer",
-      "status": "SUCCESS",
-      "lastSyncedAt": "2026-04-10T18:22:11.000Z",
-      "errorMessage": null
-    }
-  ]
-}
-```
-
-When the provider is valid but not connected, the route returns:
-
-```json
-{
-  "provider": "stripe",
-  "name": "Stripe",
-  "category": "billing",
-  "status": "not_connected",
-  "syncs": []
-}
-```
+The generated [OpenAPI specification](/openapi.json) contains the exact input and output schema for every public capability.

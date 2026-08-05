@@ -1,142 +1,52 @@
 ---
 title: "Integrations"
-description: "Connect and inspect third-party integrations from the CLI"
+description: "Inspect integrations and start safe browser setup handoffs from the CLI"
 ---
 
-Connect communication tools, analytics platforms, billing, and more from the terminal. Browser-auth providers open the browser for authentication; direct credential providers accept credentials through JSON config.
+Integration commands use the public tool gateway. They can list integrations, describe safe setup modes, start a browser handoff, and inspect setup or sync status.
 
 <Info>
-  Use the Outlit web app to disconnect integrations. The CLI intentionally does not expose a destructive disconnect command.
+  Provider credentials, provider-specific configuration, and disconnect remain in the Outlit web app. The CLI does not accept secret-bearing `--config`, provider setup steps, or destructive disconnect commands.
 </Info>
 
-## Supported Providers
-
-### Browser Auth
-
-| Provider | Category | CLI Name |
-|----------|----------|----------|
-| HubSpot | CRM | `hubspot` |
-| Attio | CRM | `attio` |
-| Slack | Communication | `slack` |
-| Gmail | Communication | `gmail` |
-| Google Calendar | Calendar | `google-calendar` |
-
-### Direct Credentials
-
-| Provider | Category | CLI Name | Required Fields |
-|----------|----------|----------|-----------------|
-| Stripe | Billing | `stripe` | `apiKey` |
-| Fireflies | Calls | `fireflies` | `apiKey` |
-| Pylon | Support | `pylon` | `apiToken` |
-| PostHog | Analytics | `posthog` | `apiKey`, `region`, `projectId` |
-| Supabase | Data | `supabase` | `projectUrl`, `serviceRoleKey` |
-| Clerk | Auth | `clerk` | `secretKey` |
-
-## integrations list
-
-List all available integrations and their connection status.
+## List and inspect capabilities
 
 ```bash
-outlit integrations list
-```
-
-### Examples
-
-```bash
-# Interactive table
-outlit integrations list
-
-# JSON for scripting
 outlit integrations list --json
-```
-
-## integrations capabilities
-
-Inspect setup mode, required credential fields, supported commands, and follow-up steps before connecting a provider.
-
-```bash
 outlit integrations capabilities --json
 outlit integrations capabilities hubspot --json
 ```
 
-Use this first in agent flows. Browser-auth providers return `setupMode: "browser_auth"` and direct credential providers return `setupMode: "direct_api_key"` plus `requiredFields`.
+Capabilities return `setupMode: "browser_handoff"` when setup can safely continue in a browser. `setupMode: "human_controlled"` directs the user to the authored web UI.
 
-## integrations setup
-
-Run the provider-owned setup flow.
+## Start setup
 
 ```bash
+outlit integrations setup hubspot
 outlit integrations setup hubspot --json
-outlit integrations setup pylon --config '{"apiToken": "pylon_xxx"}' --json
 ```
 
-Browser-auth providers open the browser and wait for authentication in interactive terminals. In JSON mode they return a `connectUrl` and `sessionId` instead. Show the URL to the user when browser approval is required, then poll with:
+Interactive terminals open the returned `connectUrl` and poll the short-lived session. JSON mode returns the handoff data for an agent or script:
+
+```json
+{
+  "status": "awaiting_auth",
+  "provider": "hubspot",
+  "state": "handoff_ready",
+  "sessionId": "00000000-0000-4000-8000-000000000001",
+  "connectUrl": "https://app.outlit.ai/integrations/connect",
+  "expiresAt": "2026-08-04T22:00:00.000Z"
+}
+```
+
+For a human-controlled provider, the command returns `status: "human_controlled"` and `controlPlaneUrl` without accepting or returning credentials.
+
+## Check status
 
 ```bash
 outlit integrations status --session <sessionId> --json
-```
-
-Direct credential providers do not create setup sessions. They validate and store the provider credentials through the platform API.
-
-When `--config` is omitted, direct credential providers return the required fields as JSON:
-
-```json
-{
-  "status": "config_required",
-  "provider": "posthog",
-  "requiredFields": [
-    { "key": "apiKey", "label": "API Key", "secret": true },
-    { "key": "region", "label": "Region", "secret": false },
-    { "key": "projectId", "label": "Project ID", "secret": false }
-  ]
-}
-```
-
-The setup command is agent-first: pass `--config` explicitly rather than relying on interactive credential prompts.
-
-Provider-specific follow-up commands come after the provider name, for example:
-
-```bash
-outlit integrations setup hubspot mappings --json
-outlit integrations setup hubspot mappings --config '{"mappings":[...]}' --json
-outlit integrations setup pylon webhooks --json
-outlit integrations setup stripe webhooks --config '{"webhookSecret":"whsec_..."}' --json
-```
-
-CRM mapping setup returns `config_required` with available pipelines when `--config` is omitted, then saves mappings and starts CRM syncs when mappings are supplied. Webhook setup returns manual provider configuration details such as webhook URL, required headers, signing secret, required events, provider docs, and current status. These follow-up commands do not create `sessionId`; `--session` is only for browser-auth setup polling.
-
-When capabilities mark a follow-up as unsupported, use Outlit platform settings for that step.
-
-## integrations status
-
-Show sync status for connected integrations.
-
-```bash
-outlit integrations status [provider]
-```
-
-### Examples
-
-```bash
-# Summary of all connected integrations
+outlit integrations status hubspot --json
 outlit integrations status
-
-# Detailed per-model sync status for a provider
-outlit integrations status stripe
 ```
 
-### JSON Response (detailed)
-
-```json
-{
-  "provider": "stripe",
-  "syncs": [
-    {
-      "model": "Customers",
-      "status": "syncing",
-      "recordCount": 1250,
-      "lastSyncedAt": "2026-03-10T12:00:00Z"
-    }
-  ]
-}
-```
+Session status is one of `pending`, `connected`, `failed`, or `expired`. Provider status returns safe model-level sync information; the summary lists connected integrations.

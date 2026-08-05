@@ -2,8 +2,8 @@ import {
   customerSourceTypeAliases,
   customerSourceTypeInputs,
   customerSourceTypes,
-  customerToolContracts,
   normalizeCustomerSourceType,
+  publicToolContracts,
 } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
@@ -83,7 +83,7 @@ export default defineCommand({
 
     return runTool(
       client,
-      customerToolContracts.outlit_get_source.toolName,
+      publicToolContracts.outlit_get_source.toolName,
       {
         sourceType,
         sourceId: args["source-id"],
