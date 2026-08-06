@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0](https://github.com/OutlitAI/outlit-sdk/compare/outlit-v0.3.0...outlit-v0.4.0) - 2026-08-05
+
+### Other
+
+- [**breaking**] consume the Core-owned capability surface ([#176](https://github.com/OutlitAI/outlit-sdk/pull/176))
+
 ## [0.3.0](https://github.com/OutlitAI/outlit-sdk/compare/outlit-v0.2.2...outlit-v0.3.0) - 2026-07-30
 
 ### Other
