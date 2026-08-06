@@ -41,6 +41,22 @@ Interactive terminals open the returned `connectUrl` and poll the short-lived se
 
 For a human-controlled provider, the command returns `status: "human_controlled"` and `controlPlaneUrl` without accepting or returning credentials.
 
+### Stripe
+
+Stripe uses the same OAuth browser handoff when the selected environment reports
+`setupMode: "browser_handoff"`:
+
+```bash
+outlit integrations setup stripe
+```
+
+Do not pass Stripe credentials, webhook signing secrets, or other provider-specific arguments to
+the CLI. Complete provider-specific configuration in the Outlit web app.
+After authorization, Stripe sends app events to Outlit's preconfigured event destination. No
+per-account webhook setup is required.
+If capabilities reports `setupMode: "human_controlled"`, complete setup in the
+Outlit web app instead.
+
 ## Check status
 
 ```bash
