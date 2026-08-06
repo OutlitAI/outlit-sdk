@@ -51,7 +51,8 @@ outlit integrations setup stripe
 ```
 
 Do not pass a Stripe restricted API key or webhook signing secret to the CLI.
-After authorization, Outlit automatically registers its Stripe App realtime webhook.
+After authorization, Stripe sends app events to Outlit's preconfigured event destination. No
+per-account webhook setup is required.
 If capabilities reports `setupMode: "human_controlled"`, complete setup in the
 Outlit web app instead.
 
