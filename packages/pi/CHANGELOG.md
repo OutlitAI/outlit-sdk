@@ -1,5 +1,14 @@
 # @outlit/pi
 
+## 1.0.1
+
+### Patch Changes
+
+- [#181](https://github.com/OutlitAI/outlit-sdk/pull/181) [`327eef1`](https://github.com/OutlitAI/outlit-sdk/commit/327eef1012d8fba8e76f22c0947fd484dc3d21fb) Thanks [@leo-paz](https://github.com/leo-paz)! - Expose Core's customer owner and sharing tool contracts to SDK tool consumers. Republish the
+  CLI and Pi wrappers with their compatible tool-runtime dependency.
+- Updated dependencies [[`327eef1`](https://github.com/OutlitAI/outlit-sdk/commit/327eef1012d8fba8e76f22c0947fd484dc3d21fb)]:
+  - @outlit/tools@1.1.0
+
 ## 1.0.0
 
 ### Major Changes
