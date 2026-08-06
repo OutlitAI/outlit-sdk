@@ -107,6 +107,7 @@ describe("integrations setup", () => {
   test.each([
     ["a legacy Stripe API key", ["stripe", "--stripe-api-key", "rk_test"]],
     ["a legacy Stripe webhook secret", ["stripe", "--webhook-secret", "whsec_test"]],
+    ["an empty inline Outlit API key", ["stripe", "--api-key="]],
     ["an extra positional value", ["stripe", "rk_test"]],
   ])("rejects %s before requesting an OAuth handoff", async (_label, rawArgs) => {
     const { default: setup } = await import("../../../src/commands/integrations/setup")

@@ -133,7 +133,10 @@ function getUnsupportedSetupArgument(rawArgs: string[]): string | null {
       continue
     }
 
-    if (argument.startsWith("--api-key=")) continue
+    if (argument.startsWith("--api-key=")) {
+      if (!argument.slice("--api-key=".length)) return argument
+      continue
+    }
     if (argument === "--json" || argument === "--no-json") continue
     if (argument.startsWith("-")) return argument
 

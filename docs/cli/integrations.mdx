@@ -50,7 +50,8 @@ Stripe uses the same OAuth browser handoff when the selected environment reports
 outlit integrations setup stripe
 ```
 
-Do not pass a Stripe restricted API key or webhook signing secret to the CLI.
+Do not pass Stripe credentials, webhook signing secrets, or other provider-specific arguments to
+the CLI. Complete provider-specific configuration in the Outlit web app.
 After authorization, Stripe sends app events to Outlit's preconfigured event destination. No
 per-account webhook setup is required.
 If capabilities reports `setupMode: "human_controlled"`, complete setup in the
