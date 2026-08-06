@@ -1,5 +1,18 @@
 # @outlit/cli
 
+## 2.0.0
+
+### Major Changes
+
+- [#176](https://github.com/OutlitAI/outlit-sdk/pull/176) [`65ae3ac`](https://github.com/OutlitAI/outlit-sdk/commit/65ae3aca590682d9de07ba0168cab49dbe06eb5c) Thanks [@leo-paz](https://github.com/leo-paz)! - Remove retired generic agent, automation, signal, identity, and notification surfaces from the public tools, CLI, and Pi packages. Public tool contracts, toolset memberships, gateway transport, OpenAPI, and ingest transport now derive from Core's capability catalog. Tracking packages expose only Platform-accepted event types; stage and billing lifecycle APIs remain removed across TypeScript and Rust.
+
+### Patch Changes
+
+- [#177](https://github.com/OutlitAI/outlit-sdk/pull/177) [`2dd6b8e`](https://github.com/OutlitAI/outlit-sdk/commit/2dd6b8e33aac2c3658b760f4c76a884cc6e3dde2) Thanks [@leo-paz](https://github.com/leo-paz)! - Sync customer tool contracts with Core, including customer enrichment, aligned input bounds, and updated customer and source descriptions.
+
+- Updated dependencies [[`2dd6b8e`](https://github.com/OutlitAI/outlit-sdk/commit/2dd6b8e33aac2c3658b760f4c76a884cc6e3dde2), [`65ae3ac`](https://github.com/OutlitAI/outlit-sdk/commit/65ae3aca590682d9de07ba0168cab49dbe06eb5c)]:
+  - @outlit/tools@1.0.0
+
 ## 1.9.2
 
 ### Patch Changes
