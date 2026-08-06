@@ -51,8 +51,20 @@ export default defineCommand({
       required: true,
     },
   },
-  async run({ args }) {
+  async run({ args, rawArgs }) {
     const json = !!args.json
+    const unsupportedArgument = getUnsupportedSetupArgument(rawArgs ?? [])
+    if (unsupportedArgument) {
+      return outputError(
+        {
+          message:
+            "Integration setup does not accept provider credentials or additional arguments. Complete provider-specific configuration in the Outlit web app.",
+          code: "invalid_input",
+        },
+        json,
+      )
+    }
+
     const provider = normalizeProviderInput(args.provider)
     const client = await getClientOrExit(args["api-key"], json)
     const capability = await fetchProviderCapability(client, provider, json)
@@ -106,6 +118,35 @@ export default defineCommand({
     return outputResult({ status: "awaiting_auth", ...setup, capabilities: capability })
   },
 })
+
+function getUnsupportedSetupArgument(rawArgs: string[]): string | null {
+  let foundProvider = false
+
+  for (let index = 0; index < rawArgs.length; index += 1) {
+    const argument = rawArgs[index]
+    if (argument === undefined) continue
+
+    if (argument === "--api-key") {
+      const value = rawArgs[index + 1]
+      if (!value || value.startsWith("-")) return argument
+      index += 1
+      continue
+    }
+
+    if (argument.startsWith("--api-key=")) continue
+    if (argument === "--json" || argument === "--no-json") continue
+    if (argument.startsWith("-")) return argument
+
+    if (!foundProvider) {
+      foundProvider = true
+      continue
+    }
+
+    return argument
+  }
+
+  return null
+}
 
 async function fetchProviderCapability(
   client: OutlitClient,
