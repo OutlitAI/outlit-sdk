@@ -1,5 +1,16 @@
 # @outlit/node
 
+## 3.0.0
+
+### Major Changes
+
+- [#176](https://github.com/OutlitAI/outlit-sdk/pull/176) [`65ae3ac`](https://github.com/OutlitAI/outlit-sdk/commit/65ae3aca590682d9de07ba0168cab49dbe06eb5c) Thanks [@leo-paz](https://github.com/leo-paz)! - Remove retired generic agent, automation, signal, identity, and notification surfaces from the public tools, CLI, and Pi packages. Public tool contracts, toolset memberships, gateway transport, OpenAPI, and ingest transport now derive from Core's capability catalog. Tracking packages expose only Platform-accepted event types; stage and billing lifecycle APIs remain removed across TypeScript and Rust.
+
+### Patch Changes
+
+- Updated dependencies [[`65ae3ac`](https://github.com/OutlitAI/outlit-sdk/commit/65ae3aca590682d9de07ba0168cab49dbe06eb5c)]:
+  - @outlit/core@3.0.0
+
 ## 2.0.0
 
 ### Major Changes
