@@ -56,7 +56,7 @@ export default defineCommand({
       "Examples:",
       "  outlit onboard --agent codex --json",
       "  outlit auth login --browser --json",
-      "  outlit integrations capabilities --json",
+      "  outlit integrations setup <provider> --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -264,7 +264,6 @@ async function checkIntegrationReadiness(
 function buildNextActions(): string[] {
   return [
     "outlit doctor --json",
-    "outlit integrations capabilities --json",
     "outlit integrations setup <provider> --json",
     "outlit integrations status --json",
   ]

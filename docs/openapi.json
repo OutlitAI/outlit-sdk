@@ -463,10 +463,10 @@
                     "properties": {
                       "tool": {
                         "type": "string",
-                        "const": "outlit_get_integration_sync_status"
+                        "const": "outlit_get_integration_status"
                       },
                       "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_get_integration_sync_status"
+                        "$ref": "#/components/schemas/ToolInput_outlit_get_integration_status"
                       }
                     },
                     "required": [
@@ -547,54 +547,6 @@
                       },
                       "input": {
                         "$ref": "#/components/schemas/ToolInput_outlit_update_workspace_settings"
-                      }
-                    },
-                    "required": [
-                      "tool"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "tool": {
-                        "type": "string",
-                        "const": "outlit_list_behavior_metric_sources"
-                      },
-                      "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_list_behavior_metric_sources"
-                      }
-                    },
-                    "required": [
-                      "tool"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "tool": {
-                        "type": "string",
-                        "const": "outlit_list_behavior_metric_events"
-                      },
-                      "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_list_behavior_metric_events"
-                      }
-                    },
-                    "required": [
-                      "tool"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "tool": {
-                        "type": "string",
-                        "const": "outlit_create_behavior_metric"
-                      },
-                      "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_create_behavior_metric"
                       }
                     },
                     "required": [
@@ -699,7 +651,7 @@
                       "$ref": "#/components/schemas/ToolOutput_outlit_get_integration_setup_status"
                     },
                     {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_get_integration_sync_status"
+                      "$ref": "#/components/schemas/ToolOutput_outlit_get_integration_status"
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_get_customer_activation"
@@ -715,15 +667,6 @@
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_update_workspace_settings"
-                    },
-                    {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_list_behavior_metric_sources"
-                    },
-                    {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_list_behavior_metric_events"
-                    },
-                    {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_create_behavior_metric"
                     }
                   ]
                 }
@@ -1132,7 +1075,6 @@
                     "workspace_members:read",
                     "analytics:read",
                     "destinations:manage",
-                    "behavior_metrics:manage",
                     "integrations:manage",
                     "activation:read",
                     "activation:manage",
@@ -1189,7 +1131,6 @@
                     "workspace_members:read",
                     "analytics:read",
                     "destinations:manage",
-                    "behavior_metrics:manage",
                     "integrations:manage",
                     "activation:read",
                     "activation:manage",
@@ -2975,7 +2916,7 @@
         ],
         "additionalProperties": false
       },
-      "ToolInput_outlit_get_integration_sync_status": {
+      "ToolInput_outlit_get_integration_status": {
         "type": "object",
         "properties": {
           "provider": {
@@ -2984,9 +2925,6 @@
             "maxLength": 80
           }
         },
-        "required": [
-          "provider"
-        ],
         "additionalProperties": false
       },
       "ToolInput_outlit_get_customer_activation": {
@@ -3056,173 +2994,6 @@
         },
         "required": [
           "defaultTimezone"
-        ],
-        "additionalProperties": false
-      },
-      "ToolInput_outlit_list_behavior_metric_sources": {
-        "type": "object",
-        "properties": {},
-        "additionalProperties": false
-      },
-      "ToolInput_outlit_list_behavior_metric_events": {
-        "type": "object",
-        "properties": {
-          "sourceKey": {
-            "type": "string",
-            "pattern": "^metric_source_v1_[a-f0-9]{32}$"
-          },
-          "weeks": {
-            "default": 12,
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 53
-          },
-          "limit": {
-            "default": 100,
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 100
-          }
-        },
-        "required": [
-          "sourceKey"
-        ],
-        "additionalProperties": false
-      },
-      "ToolInput_outlit_create_behavior_metric": {
-        "type": "object",
-        "properties": {
-          "sourceKey": {
-            "type": "string",
-            "pattern": "^metric_source_v1_[a-f0-9]{32}$"
-          },
-          "eventName": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 191
-          },
-          "behaviorKey": {
-            "type": "string",
-            "maxLength": 64,
-            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
-          },
-          "label": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 255
-          },
-          "propertyFilters": {
-            "default": [],
-            "maxItems": 5,
-            "type": "array",
-            "items": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "property": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 191
-                    },
-                    "operator": {
-                      "type": "string",
-                      "const": "equals"
-                    },
-                    "value": {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "type": "string",
-                              "const": "string"
-                            },
-                            "value": {
-                              "type": "string",
-                              "maxLength": 191
-                            }
-                          },
-                          "required": [
-                            "type",
-                            "value"
-                          ],
-                          "additionalProperties": false
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "type": "string",
-                              "const": "number"
-                            },
-                            "value": {
-                              "type": "number",
-                              "minimum": -9007199254740991,
-                              "maximum": 9007199254740991
-                            }
-                          },
-                          "required": [
-                            "type",
-                            "value"
-                          ],
-                          "additionalProperties": false
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "type": "string",
-                              "const": "boolean"
-                            },
-                            "value": {
-                              "type": "boolean"
-                            }
-                          },
-                          "required": [
-                            "type",
-                            "value"
-                          ],
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "property",
-                    "operator",
-                    "value"
-                  ],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "property": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 191
-                    },
-                    "operator": {
-                      "type": "string",
-                      "const": "exists"
-                    }
-                  },
-                  "required": [
-                    "property",
-                    "operator"
-                  ],
-                  "additionalProperties": false
-                }
-              ]
-            }
-          }
-        },
-        "required": [
-          "sourceKey",
-          "eventName",
-          "behaviorKey",
-          "label"
         ],
         "additionalProperties": false
       },
@@ -9469,55 +9240,49 @@
         ],
         "additionalProperties": false
       },
-      "ToolOutput_outlit_get_integration_sync_status": {
+      "ToolOutput_outlit_get_integration_status": {
         "type": "object",
         "properties": {
-          "provider": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 120
-          },
-          "category": {
-            "type": "string",
-            "enum": [
-              "crm",
-              "communication",
-              "storage",
-              "calls",
-              "calendar",
-              "analytics",
-              "billing",
-              "support"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "not_connected",
-              "connected"
-            ]
-          },
-          "syncs": {
+          "integrations": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "model": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 120
-                },
-                "status": {
+                "provider": {
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 80
                 },
-                "lastSyncedAt": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "crm",
+                    "communication",
+                    "storage",
+                    "calls",
+                    "calendar",
+                    "analytics",
+                    "billing",
+                    "support"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "not_connected",
+                    "awaiting_auth",
+                    "setup_incomplete",
+                    "synchronizing",
+                    "ready",
+                    "needs_attention"
+                  ]
+                },
+                "lastDataReceivedAt": {
                   "anyOf": [
                     {
                       "type": "string",
@@ -9528,27 +9293,21 @@
                       "type": "null"
                     }
                   ]
-                },
-                "hasError": {
-                  "type": "boolean"
                 }
               },
               "required": [
-                "model",
+                "provider",
+                "name",
+                "category",
                 "status",
-                "lastSyncedAt",
-                "hasError"
+                "lastDataReceivedAt"
               ],
               "additionalProperties": false
             }
           }
         },
         "required": [
-          "provider",
-          "name",
-          "category",
-          "status",
-          "syncs"
+          "integrations"
         ],
         "additionalProperties": false
       },
@@ -9815,352 +9574,8 @@
           "settings"
         ],
         "additionalProperties": false
-      },
-      "ToolOutput_outlit_list_behavior_metric_sources": {
-        "type": "object",
-        "properties": {
-          "sources": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "sourceKey": {
-                  "type": "string",
-                  "pattern": "^metric_source_v1_[a-f0-9]{32}$"
-                },
-                "provider": {
-                  "type": "string",
-                  "enum": [
-                    "outlit_sdk",
-                    "posthog",
-                    "mixpanel"
-                  ]
-                },
-                "label": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 255
-                },
-                "readiness": {
-                  "type": "string",
-                  "enum": [
-                    "READY",
-                    "WARMING",
-                    "BLOCKED"
-                  ]
-                }
-              },
-              "required": [
-                "sourceKey",
-                "provider",
-                "label",
-                "readiness"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "sources"
-        ],
-        "additionalProperties": false
-      },
-      "ToolOutput_outlit_list_behavior_metric_events": {
-        "type": "object",
-        "properties": {
-          "events": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "eventName": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 191
-                },
-                "eventCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 9007199254740991
-                },
-                "distinctCustomers": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 9007199254740991
-                },
-                "activeWeeks": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "maximum": 53
-                },
-                "propertyKeys": {
-                  "maxItems": 10,
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 191
-                  }
-                }
-              },
-              "required": [
-                "eventName",
-                "eventCount",
-                "distinctCustomers",
-                "activeWeeks",
-                "propertyKeys"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "truncated": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "events",
-          "truncated"
-        ],
-        "additionalProperties": false
-      },
-      "ToolOutput_outlit_create_behavior_metric": {
-        "type": "object",
-        "properties": {
-          "created": {
-            "type": "boolean"
-          },
-          "metric": {
-            "type": "object",
-            "properties": {
-              "sourceKey": {
-                "type": "string",
-                "pattern": "^metric_source_v1_[a-f0-9]{32}$"
-              },
-              "behaviorKey": {
-                "type": "string",
-                "maxLength": 64,
-                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
-              },
-              "label": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 255
-              },
-              "eventSelection": {
-                "oneOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "mode": {
-                        "type": "string",
-                        "const": "exact_event_names"
-                      },
-                      "eventNames": {
-                        "minItems": 1,
-                        "maxItems": 1,
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 191
-                        }
-                      }
-                    },
-                    "required": [
-                      "mode",
-                      "eventNames"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "mode": {
-                        "type": "string",
-                        "const": "configured_event"
-                      },
-                      "eventName": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 191
-                      },
-                      "propertyFilters": {
-                        "minItems": 1,
-                        "maxItems": 5,
-                        "type": "array",
-                        "items": {
-                          "oneOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "property": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 191
-                                },
-                                "operator": {
-                                  "type": "string",
-                                  "const": "equals"
-                                },
-                                "value": {
-                                  "oneOf": [
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "type": {
-                                          "type": "string",
-                                          "const": "string"
-                                        },
-                                        "value": {
-                                          "type": "string",
-                                          "maxLength": 191
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "type": {
-                                          "type": "string",
-                                          "const": "number"
-                                        },
-                                        "value": {
-                                          "type": "number",
-                                          "minimum": -9007199254740991,
-                                          "maximum": 9007199254740991
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "type": {
-                                          "type": "string",
-                                          "const": "boolean"
-                                        },
-                                        "value": {
-                                          "type": "boolean"
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value"
-                                      ],
-                                      "additionalProperties": false
-                                    }
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "property",
-                                "operator",
-                                "value"
-                              ],
-                              "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "property": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 191
-                                },
-                                "operator": {
-                                  "type": "string",
-                                  "const": "exists"
-                                }
-                              },
-                              "required": [
-                                "property",
-                                "operator"
-                              ],
-                              "additionalProperties": false
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "mode",
-                      "eventName",
-                      "propertyFilters"
-                    ],
-                    "additionalProperties": false
-                  }
-                ]
-              },
-              "status": {
-                "type": "string",
-                "const": "ENABLED"
-              },
-              "evaluationMode": {
-                "type": "string",
-                "const": "SHADOW"
-              },
-              "definitions": {
-                "minItems": 2,
-                "maxItems": 2,
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                    },
-                    "metricKey": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 191
-                    },
-                    "aggregation": {
-                      "type": "string",
-                      "enum": [
-                        "active_days",
-                        "event_count"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "metricKey",
-                    "aggregation"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            },
-            "required": [
-              "sourceKey",
-              "behaviorKey",
-              "label",
-              "eventSelection",
-              "status",
-              "evaluationMode",
-              "definitions"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "created",
-          "metric"
-        ],
-        "additionalProperties": false
       }
     }
   },
-  "x-outlit-contract-hash": "6787113c49f855b36a1b8e871ed06775172bbc29fec7fcb76ab2694b2515cdba"
+  "x-outlit-contract-hash": "460205ef9e794a9e937f01144a619bc107c92cb909fd574a5f1d6ab6a2b5d947"
 }

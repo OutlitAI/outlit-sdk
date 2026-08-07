@@ -151,7 +151,6 @@ describe("onboard", () => {
       },
     })
     expect(parsed.nextActions).toContain("outlit doctor --json")
-    expect(parsed.nextActions).toContain("outlit integrations capabilities --json")
     expect(parsed.nextActions).toContain("outlit integrations setup <provider> --json")
   })
 

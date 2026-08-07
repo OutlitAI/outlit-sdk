@@ -2,47 +2,22 @@ import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
-import { capitalize, formatNumber, relativeDate, truncate } from "../../lib/format"
-import { outputError } from "../../lib/output"
+import { capitalize, relativeDate, truncate } from "../../lib/format"
 import { normalizeProviderInput } from "../../lib/providers"
-
-function hideBlankModelSyncs(data: unknown): unknown {
-  if (typeof data !== "object" || data === null || Array.isArray(data)) {
-    return data
-  }
-
-  const record = data as Record<string, unknown>
-  if (!Array.isArray(record.syncs)) {
-    return data
-  }
-
-  return {
-    ...record,
-    syncs: record.syncs.filter((sync) => {
-      if (typeof sync !== "object" || sync === null || Array.isArray(sync)) {
-        return false
-      }
-
-      const model = (sync as Record<string, unknown>).model
-      return typeof model === "string" && model.trim().length > 0
-    }),
-  }
-}
 
 export default defineCommand({
   meta: {
     name: "status",
     description: [
-      "Show sync status for connected integrations.",
+      "Show canonical integration readiness for agents and operators.",
       "",
-      "Without a provider name, shows a summary of all connected integrations.",
-      "With a provider name, shows detailed per-model sync status.",
-      "With --session, checks a browser-auth setup session returned by `integrations setup`.",
+      "Without a provider name, shows the status of every available integration.",
+      "With a provider name, returns its single canonical readiness status.",
+      "Browser-auth session and raw provider-state details stay internal to Outlit.",
       "",
       "Examples:",
-      "  outlit integrations status              # summary of all",
-      "  outlit integrations status stripe       # detailed Stripe sync status",
-      "  outlit integrations status --session 550e8400-e29b-41d4-a716-446655440000 --json",
+      "  outlit integrations status",
+      "  outlit integrations status stripe --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -52,69 +27,24 @@ export default defineCommand({
     ...outputArgs,
     provider: {
       type: "positional",
-      description: "Provider name to show detailed status for (optional)",
+      description: "Provider name to inspect (optional)",
       required: false,
-    },
-    session: {
-      type: "string",
-      description:
-        "Browser-auth setup session ID returned by `outlit integrations setup <provider>`.",
     },
   },
   async run({ args }) {
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
+    const provider = args.provider ? normalizeProviderInput(args.provider) : undefined
 
-    if (args.session && args.provider) {
-      return outputError(
-        { message: "Use either a provider name or --session, not both.", code: "invalid_input" },
-        json,
-      )
-    }
-
-    if (args.session) {
-      return runTool(
-        client,
-        "outlit_get_integration_setup_status",
-        { sessionId: args.session },
-        json,
-        {
-          spinnerMessage: "Checking setup session...",
-        },
-      )
-    }
-
-    if (args.provider) {
-      return runTool(
-        client,
-        "outlit_get_integration_sync_status",
-        { provider: normalizeProviderInput(args.provider) },
-        json,
-        {
-          spinnerMessage: "Fetching sync status...",
-          transform: hideBlankModelSyncs,
-          table: {
-            columns: [
-              { header: "Model", key: "model" },
-              { header: "Status", key: "status" },
-              { header: "Records", key: "recordCount", format: formatNumber },
-              { header: "Last Synced", key: "lastSyncedAt", format: relativeDate },
-            ],
-            itemsKey: "syncs",
-          },
-        },
-      )
-    }
-
-    return runTool(client, "outlit_list_integrations", { connectedOnly: true }, json, {
+    return runTool(client, "outlit_get_integration_status", provider ? { provider } : {}, json, {
       spinnerMessage: "Fetching integration status...",
       table: {
         itemsKey: "integrations",
         columns: [
-          { header: "Name", key: "name", format: (v) => truncate(v, 24) },
+          { header: "Name", key: "name", format: (value) => truncate(value, 24) },
           { header: "Category", key: "category", format: capitalize },
-          { header: "Sync Status", key: "syncStatus" },
-          { header: "Last Synced", key: "lastDataReceivedAt", format: relativeDate },
+          { header: "Status", key: "status" },
+          { header: "First Data", key: "lastDataReceivedAt", format: relativeDate },
         ],
       },
     })

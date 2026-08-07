@@ -2,38 +2,38 @@ import type { OutlitClient } from "../../lib/client"
 import { pollUntil } from "../../lib/poll"
 import { createSpinner } from "../../lib/spinner"
 
-const terminalConnectStatuses = new Set(["connected", "failed", "expired"])
+const terminalIntegrationStatuses = new Set([
+  "not_connected",
+  "setup_incomplete",
+  "synchronizing",
+  "ready",
+  "needs_attention",
+])
 
-interface ConnectStatusResponse {
-  status?: string
-  provider?: string
-  error?: string
+interface IntegrationStatusResponse {
+  integrations?: Array<{ status?: string }>
 }
 
 interface WaitForConnectionOptions {
   client: OutlitClient
-  sessionId: string
+  provider: string
   displayName: string
-  cliName: string
-  retryCommand: string
 }
 
-/** Polls the connect status endpoint until the OAuth flow completes or times out. */
+/** Polls the preferred status projection until browser authentication advances or times out. */
 export async function waitForIntegrationConnection({
   client,
-  sessionId,
+  provider,
   displayName,
-  cliName,
-  retryCommand,
 }: WaitForConnectionOptions): Promise<void> {
   const spinner = createSpinner(`Waiting for ${displayName} authentication...`)
 
-  const result = await pollUntil<ConnectStatusResponse>(
+  const result = await pollUntil<IntegrationStatusResponse>(
     () =>
       client
-        .callTool("outlit_get_integration_setup_status", { sessionId })
-        .then((r) => r as ConnectStatusResponse),
-    (r) => terminalConnectStatuses.has(r.status ?? ""),
+        .callTool("outlit_get_integration_status", { provider })
+        .then((response) => response as IntegrationStatusResponse),
+    (response) => terminalIntegrationStatuses.has(response.integrations?.[0]?.status ?? ""),
     {
       intervalMs: 2_000,
       timeoutMs: 300_000,
@@ -42,26 +42,18 @@ export async function waitForIntegrationConnection({
     },
   )
 
-  if (!result || result.status === "expired") {
+  const status = result?.integrations?.[0]?.status
+  if (!result || !status || status === "not_connected") {
     spinner.fail("Connection timed out")
-    console.log(`\n  The authentication session expired.`)
-    console.log(`  Run \`${retryCommand}\` to try again.`)
+    console.log("\n  Authentication did not complete before the handoff expired.")
     process.exit(1)
   }
 
-  if (result.status === "failed") {
-    spinner.fail(`${displayName} connection failed`)
-    if (result.error) console.log(`\n  ${result.error}`)
+  if (status === "needs_attention") {
+    spinner.fail(`${displayName} needs attention`)
     process.exit(1)
   }
 
-  if (result.status !== "connected") {
-    spinner.fail(`${displayName} connection returned an invalid status`)
-    if (result.status) console.log(`\n  Unexpected status: ${result.status}`)
-    process.exit(1)
-  }
-
-  spinner.stop(`${displayName} connected successfully!`)
-  console.log(`    Sync will begin automatically.`)
-  console.log(`    Use \`outlit integrations status ${cliName}\` to check progress.`)
+  spinner.stop(`${displayName} authentication completed`)
+  console.log("    Outlit will continue setup and initial synchronization automatically.")
 }

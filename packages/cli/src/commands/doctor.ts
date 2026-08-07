@@ -190,7 +190,7 @@ async function checkIntegrations(apiKey: string): Promise<CheckResult> {
         name: "Integrations",
         status: "pass",
         message: "No integrations connected",
-        detail: "Run `outlit integrations list` to see available integrations",
+        detail: "Run `outlit integrations status` to inspect integrations",
       }
     }
     return {
