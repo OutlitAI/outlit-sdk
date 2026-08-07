@@ -1,6 +1,6 @@
 ---
 title: "Platform Capabilities"
-description: "Manage safe destinations, activation, and workspace settings through the tool gateway"
+description: "Manage safe destinations, activation, workspace settings, and usage metrics through the tool gateway"
 ---
 
 Outlit exposes model-safe platform configuration through `POST /api/tools/call`. The Core capability catalog owns the tool names, descriptions, schemas, and consumer memberships used by `@outlit/tools`, the CLI, and Pi.
@@ -12,6 +12,7 @@ Outlit exposes model-safe platform configuration through `POST /api/tools/call`.
 | Destinations | List, get, create, update, enable, disable, and archive |
 | Activation | Get, preview, and update the ordinary customer activation event |
 | Workspace settings | Get and update the workspace timezone |
+| Usage metrics | Create workspace usage metrics |
 | Integrations | List, inspect capabilities, begin browser setup, and inspect setup/sync status |
 
 Destination results expose masked configuration. The public surface does not include destination option discovery, report settings, provider credentials, setup steps, integration disconnect, secret reveal/rotation, arbitrary notification sending, or generic agent/automation/signal administration.
@@ -22,6 +23,7 @@ Authored CLI commands preserve a resource-oriented experience while all retained
 outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --default --json
 outlit activation preview --event activated --json
 outlit settings update --default-timezone America/Los_Angeles --json
+outlit usage-metrics create --name "Monthly Active Users" --description "Count of active users in the month" --json
 ```
 
 Use the generated [OpenAPI specification](/openapi.json) for the exact request, output, and stable gateway error schemas.

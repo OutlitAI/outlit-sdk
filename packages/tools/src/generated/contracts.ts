@@ -37,6 +37,7 @@ export const publicToolNames = [
   "outlit_update_customer_activation",
   "outlit_get_workspace_settings",
   "outlit_update_workspace_settings",
+  "outlit_create_usage_metric",
 ] as const
 
 export const publicToolContracts = {
@@ -8018,6 +8019,120 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
+  "outlit_create_usage_metric": {
+    "toolName": "outlit_create_usage_metric",
+    "commandId": "usage_metric.create",
+    "commandVersion": 1,
+    "ownerDomain": "usage_metrics",
+    "title": "Create Usage Metric",
+    "description": "Create a workspace usage metric with a name and optional description.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 191,
+        },
+      },
+      "required": [
+        "name",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "metric": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "description": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 191,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "aggregationType": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "COUNT",
+                    "UNIQUE",
+                    "SUM",
+                  ],
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "archived": {
+              "type": "boolean",
+            },
+            "archivedAt": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+          },
+          "required": [
+            "id",
+            "name",
+            "description",
+            "aggregationType",
+            "archived",
+            "archivedAt",
+            "createdAt",
+            "updatedAt",
+          ],
+          "additionalProperties": false,
+        },
+      },
+      "required": [
+        "metric",
+      ],
+      "additionalProperties": false,
+    },
+  },
 } as const
 
 export const publicOpenApiTransports = [
@@ -8049,6 +8164,7 @@ export const consumerToolPolicies = {
     "outlit_get_source",
     "outlit_list_sources",
     "outlit_search_customer_context",
+    "outlit_create_usage_metric",
   ],
   "analytical": [
     "outlit_list_customers",
@@ -8060,6 +8176,7 @@ export const consumerToolPolicies = {
     "outlit_get_source",
     "outlit_list_sources",
     "outlit_search_customer_context",
+    "outlit_create_usage_metric",
     "outlit_query",
     "outlit_schema",
   ],
@@ -8097,6 +8214,7 @@ export const consumerToolPolicies = {
     "outlit_update_customer_activation",
     "outlit_get_workspace_settings",
     "outlit_update_workspace_settings",
+    "outlit_create_usage_metric",
   ],
 } as const
 
@@ -8138,6 +8256,7 @@ export const apiKeyGrants = [
   "workspace_members:read",
   "analytics:read",
   "destinations:manage",
+  "usage_metrics:manage",
   "integrations:manage",
   "activation:read",
   "activation:manage",
@@ -8265,6 +8384,7 @@ export const apiKeyValidationSuccessSchema = {
               "workspace_members:read",
               "analytics:read",
               "destinations:manage",
+              "usage_metrics:manage",
               "integrations:manage",
               "activation:read",
               "activation:manage",
@@ -8321,6 +8441,7 @@ export const apiKeyValidationSuccessSchema = {
               "workspace_members:read",
               "analytics:read",
               "destinations:manage",
+              "usage_metrics:manage",
               "integrations:manage",
               "activation:read",
               "activation:manage",
@@ -9389,4 +9510,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "ccf3ee113ca293fb025d517604c14b0bb4417455e2359762a1637aabb15779e0" as const
+export const sdkConsumerContractHash = "29541bc40c9106794bf9a27d99ae5e7b1e40e94a35ae18ce2fb7a4317267ed6c" as const

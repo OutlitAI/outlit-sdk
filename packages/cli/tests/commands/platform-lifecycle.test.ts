@@ -85,6 +85,47 @@ describe("platform lifecycle commands", () => {
     })
   })
 
+  test("runs usage metric create with the canonical tool payload", async () => {
+    const { default: createUsageMetricCmd } = await import(
+      "../../src/commands/usage-metrics/create"
+    )
+
+    await captureStdout(() =>
+      createUsageMetricCmd.run!({
+        args: {
+          name: "Monthly Active Users",
+          description: "Count of active users in the month",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof createUsageMetricCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_usage_metric", {
+      name: "Monthly Active Users",
+      description: "Count of active users in the month",
+    })
+  })
+
+  test("omits an empty optional usage metric description", async () => {
+    const { default: createUsageMetricCmd } = await import(
+      "../../src/commands/usage-metrics/create"
+    )
+
+    await captureStdout(() =>
+      createUsageMetricCmd.run!({
+        args: {
+          name: "Monthly Active Users",
+          description: "  ",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof createUsageMetricCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_usage_metric", {
+      name: "Monthly Active Users",
+    })
+  })
+
   test("requires at least one destination update field", async () => {
     const { default: updateDestinationCmd } = await import("../../src/commands/destinations/update")
 
