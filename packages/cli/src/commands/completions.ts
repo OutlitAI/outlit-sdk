@@ -301,7 +301,7 @@ const COMMANDS: readonly CmdDef[] = [
     ],
   },
   {
-    name: "usage-metrics",
+    name: "metrics",
     desc: "Configure workspace usage metrics",
     subs: [
       {

@@ -4,4 +4,4 @@
 "@outlit/pi": patch
 ---
 
-Expose the Core-generated usage metric creation capability and add `outlit usage-metrics create`.
+Expose the Core-generated usage metric creation capability and add `outlit metrics create`.

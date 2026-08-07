@@ -617,14 +617,14 @@ Destination creation and update are Slack-channel backed. Use `--default` on `de
 Create workspace usage metrics for configuration that can be referenced by Outlit workflows.
 
 ```text
-outlit usage-metrics create --name <name> [--description <description>] [flags]
+outlit metrics create --name <name> [--description <description>] [flags]
 ```
 
 ### Examples
 
 ```bash
-outlit usage-metrics create --name "Monthly Active Users" --description "Count of active users in the month" --json
-outlit usage-metrics create --name "Weekly Active Teams" --json
+outlit metrics create --name "Monthly Active Users" --description "Count of active users in the month" --json
+outlit metrics create --name "Weekly Active Teams" --json
 ```
 
 `--name` is required. `--description` is optional and blank values are omitted from the request.

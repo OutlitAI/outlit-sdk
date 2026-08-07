@@ -3,7 +3,7 @@ import { AGENT_JSON_HINT } from "../../args/output"
 
 export default defineCommand({
   meta: {
-    name: "usage-metrics",
+    name: "metrics",
     description: [
       "Configure Outlit workspace usage metrics.",
       "",
@@ -11,7 +11,7 @@ export default defineCommand({
       "  create                        Create a workspace usage metric",
       "",
       "Examples:",
-      "  outlit usage-metrics create --name 'Monthly Active Users' --description 'Count of active users in the month' --json",
+      "  outlit metrics create --name 'Monthly Active Users' --description 'Count of active users in the month' --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
