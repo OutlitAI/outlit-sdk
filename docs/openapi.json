@@ -553,6 +553,22 @@
                       "tool"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
+                        "const": "outlit_create_usage_metric"
+                      },
+                      "input": {
+                        "$ref": "#/components/schemas/ToolInput_outlit_create_usage_metric"
+                      }
+                    },
+                    "required": [
+                      "tool"
+                    ],
+                    "additionalProperties": false
                   }
                 ],
                 "discriminator": {
@@ -667,6 +683,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_update_workspace_settings"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ToolOutput_outlit_create_usage_metric"
                     }
                   ]
                 }
@@ -1075,6 +1094,7 @@
                     "workspace_members:read",
                     "analytics:read",
                     "destinations:manage",
+                    "usage_metrics:manage",
                     "integrations:manage",
                     "activation:read",
                     "activation:manage",
@@ -1131,6 +1151,7 @@
                     "workspace_members:read",
                     "analytics:read",
                     "destinations:manage",
+                    "usage_metrics:manage",
                     "integrations:manage",
                     "activation:read",
                     "activation:manage",
@@ -2997,6 +3018,24 @@
         },
         "required": [
           "defaultTimezone"
+        ],
+        "additionalProperties": false
+      },
+      "ToolInput_outlit_create_usage_metric": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 191
+          }
+        },
+        "required": [
+          "name"
         ],
         "additionalProperties": false
       },
@@ -9589,8 +9628,94 @@
           "settings"
         ],
         "additionalProperties": false
+      },
+      "ToolOutput_outlit_create_usage_metric": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 191
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "aggregationType": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "COUNT",
+                      "UNIQUE",
+                      "SUM"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "archived": {
+                "type": "boolean"
+              },
+              "archivedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "description",
+              "aggregationType",
+              "archived",
+              "archivedAt",
+              "createdAt",
+              "updatedAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "metric"
+        ],
+        "additionalProperties": false
       }
     }
   },
-  "x-outlit-contract-hash": "ccf3ee113ca293fb025d517604c14b0bb4417455e2359762a1637aabb15779e0"
+  "x-outlit-contract-hash": "29541bc40c9106794bf9a27d99ae5e7b1e40e94a35ae18ce2fb7a4317267ed6c"
 }

@@ -301,6 +301,21 @@ const COMMANDS: readonly CmdDef[] = [
     ],
   },
   {
+    name: "metrics",
+    desc: "Configure workspace usage metrics",
+    subs: [
+      {
+        name: "create",
+        desc: "Create a workspace usage metric",
+        flags: [
+          ...COMMON,
+          { name: "--name", desc: "Usage metric name" },
+          { name: "--description", desc: "Optional usage metric description" },
+        ],
+      },
+    ],
+  },
+  {
     name: "onboard",
     desc: "Prepare a coding agent for Outlit",
     flags: [...COMMON, { name: "--agent", desc: "Agent id" }],
