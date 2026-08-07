@@ -612,6 +612,23 @@ outlit destinations archive 10000000-0000-4000-8000-000000000003 --json
 
 Destination creation and update are Slack-channel backed. Use `--default` on `destinations create` or `destinations update` to make a destination the default fallback. `destinations update` patches only the fields you pass. Raw destination secrets and unmasked provider configuration are not returned.
 
+## Usage metrics
+
+Create workspace usage metrics for configuration that can be referenced by Outlit workflows.
+
+```text
+outlit usage-metrics create --name <name> [--description <description>] [flags]
+```
+
+### Examples
+
+```bash
+outlit usage-metrics create --name "Monthly Active Users" --description "Count of active users in the month" --json
+outlit usage-metrics create --name "Weekly Active Teams" --json
+```
+
+`--name` is required. `--description` is optional and blank values are omitted from the request.
+
 ## Settings
 
 Inspect and configure the model-safe workspace timezone. Delivery and report configuration remains in the authored web UI.

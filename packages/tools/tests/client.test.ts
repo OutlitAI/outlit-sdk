@@ -65,13 +65,14 @@ describe("toolsets", () => {
       "outlit_update_customer_activation",
       "outlit_get_workspace_settings",
       "outlit_update_workspace_settings",
+      "outlit_create_usage_metric",
     ])
-    expect(allPublicToolNames).toHaveLength(33)
+    expect(allPublicToolNames).toHaveLength(34)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
 
-  test("keeps the default agent toolset to the nine read-only intelligence tools", () => {
+  test("keeps the default agent toolset aligned with the generated policy", () => {
     expect(defaultToolNames).toEqual([
       "outlit_list_customers",
       "outlit_list_users",
@@ -82,6 +83,7 @@ describe("toolsets", () => {
       "outlit_get_source",
       "outlit_list_sources",
       "outlit_search_customer_context",
+      "outlit_create_usage_metric",
     ])
     expect(sqlToolNames).toEqual(["outlit_query", "outlit_schema"])
     expect(cliToolNames).toEqual(allPublicToolNames)
@@ -116,6 +118,7 @@ describe("tool contracts", () => {
     })
     expect(apiKeyGrants).not.toContain("agents:read")
     expect(apiKeyGrants).not.toContain("agents:write")
+    expect(apiKeyGrants).toContain("usage_metrics:manage")
     expect(toolGatewayErrorSchema.properties.code.enum).toEqual(toolGatewayErrorCodes)
     expect(toolGatewayErrorSchema.required).toEqual(["code", "message", "retryable", "requestId"])
     expect(toolGatewayErrorSchema.additionalProperties).toBe(false)
@@ -129,6 +132,24 @@ describe("tool contracts", () => {
     expectTypeOf<CustomerListItem["activatedAt"]>().toEqualTypeOf<string | null>()
     expectTypeOf<CustomerDetail["activatedAt"]>().toEqualTypeOf<string | null>()
     expect(analyticsRow.activated_at).toBeNull()
+  })
+
+  test("projects the generated usage metric capability into public and consumer catalogues", () => {
+    const contract = getPublicToolContract("outlit_create_usage_metric")
+
+    expect(contract.commandId).toBe("usage_metric.create")
+    expect(contract.inputSchema).toEqual(
+      expect.objectContaining({
+        required: ["name"],
+        properties: expect.objectContaining({
+          name: expect.objectContaining({ minLength: 1, maxLength: 191 }),
+          description: expect.objectContaining({ maxLength: 191 }),
+        }),
+      }),
+    )
+    expect(defaultToolNames).toContain("outlit_create_usage_metric")
+    expect(analyticalToolNames).toContain("outlit_create_usage_metric")
+    expect(cliToolNames).toContain("outlit_create_usage_metric")
   })
 
   test("infers activatedAt on typed customer list and get client results", async () => {

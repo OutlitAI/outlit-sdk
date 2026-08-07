@@ -58,7 +58,7 @@ describe("createOutlitPiExtension", () => {
     }
   })
 
-  test("registers the default customer intelligence tools", () => {
+  test("registers the generated default tool policy", () => {
     const pi = createPiMock()
 
     createOutlitPiExtension({
@@ -77,6 +77,7 @@ describe("createOutlitPiExtension", () => {
       "outlit_get_source",
       "outlit_list_sources",
       "outlit_search_customer_context",
+      "outlit_create_usage_metric",
     ])
     expect(registeredNames).toEqual([...defaultToolNames])
   })
