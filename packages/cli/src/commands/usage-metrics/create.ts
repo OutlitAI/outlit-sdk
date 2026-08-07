@@ -11,7 +11,7 @@ export default defineCommand({
       "Create an Outlit workspace usage metric.",
       "",
       "Examples:",
-      "  outlit usage-metrics create --name 'Monthly Active Users' --description 'Count of active users in the month' --json",
+      "  outlit metrics create --name 'Monthly Active Users' --description 'Count of active users in the month' --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
