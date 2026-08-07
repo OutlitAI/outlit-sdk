@@ -6,7 +6,7 @@ import * as vueSfcCompiler from "@vue/compiler-sfc"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
 import { matchesGeneratedJsonSchema } from "../../packages/tools/src/client"
-import { publicToolContracts } from "../../packages/tools/src/generated/contracts"
+import { publicToolContracts, timelineChannels } from "../../packages/tools/src/generated/contracts"
 
 type FencedBlock = {
   code: string
@@ -124,6 +124,42 @@ describe("public documentation examples", () => {
     expect(failures).toEqual([])
   })
 
+  test("keeps tool-gateway request examples aligned with generated input schemas", () => {
+    const file = "docs/api-reference/tools.mdx"
+    const source = readFileSync(file, "utf8")
+    const blocks = extractFencedBlocks(file)
+    const cases = [
+      ["Get Customer Details", "Search Customer Context", "outlit_get_customer"],
+      ["Search Customer Context", "List Active Facts", "outlit_search_customer_context"],
+      ["List Active Facts", "Open One Source", "outlit_list_facts"],
+      ["Open One Source", "Response", "outlit_get_source"],
+    ] as const
+    const failures: string[] = []
+
+    for (const [heading, nextHeading, toolName] of cases) {
+      const startLine = source.slice(0, source.indexOf(`### ${heading}`)).split(/\r?\n/).length
+      const nextMarker = nextHeading === "Response" ? `## ${nextHeading}` : `### ${nextHeading}`
+      const endLine = source.slice(0, source.indexOf(nextMarker)).split(/\r?\n/).length
+      const requestBlock = blocks.find(
+        (block) => block.language === "json" && block.line > startLine && block.line < endLine,
+      )
+      const request = JSON.parse(requestBlock?.code ?? "null") as {
+        input?: unknown
+        tool?: string
+      } | null
+
+      if (
+        !requestBlock ||
+        request?.tool !== toolName ||
+        !matchesGeneratedJsonSchema(request?.input, publicToolContracts[toolName].inputSchema)
+      ) {
+        failures.push(`${heading}: ${toolName}`)
+      }
+    }
+
+    expect(failures).toEqual([])
+  })
+
   test("keeps the documented customer-list response aligned with its generated schema", () => {
     const file = "docs/api-reference/tools.mdx"
     const source = readFileSync(file, "utf8")
@@ -141,6 +177,71 @@ describe("public documentation examples", () => {
         publicToolContracts.outlit_list_customers.outputSchema,
       ),
     ).toBe(true)
+  })
+
+  test("keeps CLI JSON response examples aligned with generated tool schemas", () => {
+    const file = "docs/cli/commands.mdx"
+    const source = readFileSync(file, "utf8")
+    const blocks = extractFencedBlocks(file)
+    const cases = [
+      ["Customers List", "Customers Get", "outlit_list_customers"],
+      ["Customers Get", "Customers Timeline", "outlit_get_customer"],
+      ["Customers Timeline", "Users List", "outlit_get_timeline"],
+      ["Users List", "Facts", "outlit_list_users"],
+      ["Facts", "Search", "outlit_get_fact"],
+      ["Search", "Sources", "outlit_search_customer_context"],
+    ] as const
+    const failures: string[] = []
+
+    for (const [heading, nextHeading, toolName] of cases) {
+      const startLine = source.slice(0, source.indexOf(`## ${heading}`)).split(/\r?\n/).length
+      const endLine = source.slice(0, source.indexOf(`## ${nextHeading}`)).split(/\r?\n/).length
+      const responseBlock = blocks.find(
+        (block) => block.language === "json" && block.line > startLine && block.line < endLine,
+      )
+
+      if (
+        !responseBlock ||
+        !matchesGeneratedJsonSchema(
+          JSON.parse(responseBlock.code) as unknown,
+          publicToolContracts[toolName].outputSchema,
+        )
+      ) {
+        failures.push(`${heading}: ${toolName}`)
+      }
+    }
+
+    expect(failures).toEqual([])
+  })
+
+  test("keeps CLI timeline channel examples aligned with the generated contract", () => {
+    const failures: string[] = []
+    const allowedChannels = new Set<string>(timelineChannels)
+
+    for (const file of listPublicDocumentationFiles()) {
+      const source = readFileSync(file, "utf8")
+      for (const match of source.matchAll(/--channels(?:=|\s+)([A-Za-z_,]+)/g)) {
+        for (const channel of (match[1] ?? "").split(",").filter(Boolean)) {
+          if (!allowedChannels.has(channel)) {
+            failures.push(`${file}: --channels uses legacy value ${channel}`)
+          }
+        }
+      }
+    }
+
+    const commandReference = "docs/cli/commands.mdx"
+    for (const block of extractFencedBlocks(commandReference)) {
+      if (block.language !== "json") continue
+
+      for (const match of block.code.matchAll(/"channel":\s*"([A-Z_]+)"/g)) {
+        const channel = match[1]
+        if (channel && !allowedChannels.has(channel)) {
+          failures.push(`${commandReference}:${block.line}: response uses ${channel}`)
+        }
+      }
+    }
+
+    expect(failures).toEqual([])
   })
 
   test("keeps TypeScript and JavaScript fences syntactically valid", () => {

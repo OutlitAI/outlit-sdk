@@ -144,11 +144,14 @@ outlit customers list --json | jq '.items[] | {domain, activatedAt}'
       "name": "Acme Corp",
       "domain": "acme.com",
       "billingStatus": "PAYING",
-      "currentMrr": 500000,
-      "lastActivityAt": "2025-02-10T15:30:00Z",
       "activatedAt": "2025-01-20T09:15:00Z",
-      "status": "ACTIVE",
-      "type": "COMPANY"
+      "firstSeenAt": "2025-01-10T12:00:00Z",
+      "lastActivityAt": "2025-02-10T15:30:00Z",
+      "contactCount": 12,
+      "currentMrr": 500000,
+      "mrrCalculationStatus": "calculated",
+      "owner": null,
+      "daysSinceActivity": 3
     }
   ],
   "pagination": {
@@ -221,24 +224,31 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
     "name": "Acme Corp",
     "domain": "acme.com",
     "billingStatus": "PAYING",
-    "activatedAt": "2025-01-20T09:15:00Z"
+    "activatedAt": "2025-01-20T09:15:00Z",
+    "firstSeenAt": "2025-01-10T12:00:00Z",
+    "lastActivityAt": "2025-02-10T15:30:00Z",
+    "owner": null
   },
   "users": [
     {
       "id": "user-uuid",
       "name": "Jane Doe",
       "email": "jane@acme.com",
-      "journeyStage": "ENGAGED"
+      "journeyStage": "ENGAGED",
+      "lastActivityAt": "2025-02-10T15:30:00Z"
     }
   ],
   "revenue": {
     "currentMrr": 500000,
-    "historicalMrr": []
+    "mrrCalculationStatus": "calculated",
+    "lifetimeRevenue": 2500000,
+    "activeSubscriptions": 1
   },
   "recentTimeline": [
     {
       "type": "PAGE_VIEW",
-      "channel": "SDK",
+      "title": "Pricing Page",
+      "contact": "jane@acme.com",
       "occurredAt": "2025-02-10T15:30:00Z"
     }
   ]
@@ -272,7 +282,7 @@ outlit customers timeline <customer> [flags]
 | `--timeframe` | string | `30d` | Lookback window: `7d`, `14d`, `30d`, `90d`, `all` |
 | `--start-date` | string | — | Start datetime (ISO 8601, for example `2025-01-01T00:00:00Z`) — overrides `--timeframe` |
 | `--end-date` | string | — | End datetime (ISO 8601, for example `2025-03-01T23:59:59Z`) — overrides `--timeframe` |
-| `--channels` | string | — | Comma-separated channels: `SDK`, `EMAIL`, `SLACK`, `CALL`, `CRM`, `BILLING`, `SUPPORT`, `INTERNAL` |
+| `--channels` | string | — | Comma-separated channels: `PRODUCT`, `COMMUNICATION`, `MEETING`, `CRM`, `BILLING`, `SUPPORT`, `IDENTITY`, `DOCUMENT`, `SYSTEM` |
 | `--event-types` | string | — | Comma-separated types: `PAGE_VIEW`, `MEETING`, `SUPPORT_TICKET`, etc. |
 | `--limit` | number | `20` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor |
@@ -287,8 +297,8 @@ outlit customers timeline <customer> [flags]
 # Last 30 days (default)
 outlit customers timeline acme.com
 
-# Last 90 days, email and Slack only
-outlit customers timeline acme.com --timeframe 90d --channels EMAIL,SLACK
+# Last 90 days of communication and meetings
+outlit customers timeline acme.com --timeframe 90d --channels COMMUNICATION,MEETING
 
 # Custom date range
 outlit customers timeline acme.com --start-date 2025-01-01T00:00:00Z --end-date 2025-03-01T23:59:59Z
@@ -301,23 +311,26 @@ outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50
 
 ```json
 {
-  "items": [
+  "events": [
     {
       "id": "event-uuid",
-      "customerId": "customer-uuid",
-      "type": "PAGE_VIEW",
-      "channel": "SDK",
+      "eventType": "PAGE_VIEW",
+      "eventName": "page_viewed",
+      "channel": "PRODUCT",
+      "title": "Pricing Page",
+      "summary": "Jane viewed the pricing page",
       "occurredAt": "2025-02-10T15:30:00Z",
+      "contact": "jane@acme.com",
+      "sourceType": null,
+      "sourceId": null,
       "metadata": {
-        "url": "https://acme.com/pricing",
-        "title": "Pricing Page"
+        "url": "https://acme.com/pricing"
       }
     }
   ],
   "pagination": {
     "hasMore": false,
-    "nextCursor": null,
-    "total": 45
+    "nextCursor": null
   }
 }
 ```
@@ -371,8 +384,11 @@ outlit users list --search "alice" --order-by last_activity_at
       "email": "jane@acme.com",
       "name": "Jane Doe",
       "customerId": "customer-uuid",
+      "customerName": "Acme Corp",
+      "customerDomain": "acme.com",
       "journeyStage": "ENGAGED",
-      "lastActivityAt": "2025-02-10T15:30:00Z"
+      "lastActivityAt": "2025-02-10T15:30:00Z",
+      "daysSinceActivity": 3
     }
   ],
   "pagination": {
@@ -437,45 +453,47 @@ outlit facts list acme.com --json | jq '.facts[] | select(.severity == "HIGH")'
 outlit facts get --fact-id fact_123 --include evidence
 ```
 
-### JSON Response
+### JSON Response (`facts get`)
 
 ```json
 {
-  "customer": {
-    "id": "cust_123",
-    "name": "Acme",
-    "domain": "acme.com"
+  "id": "fact-uuid",
+  "assertion": "Budget concerns raised",
+  "reasoning": "The buyer said the purchase is blocked until next quarter.",
+  "factType": "BUDGET",
+  "factCategory": "MEMORY",
+  "status": "ACTIVE",
+  "confidence": 0.92,
+  "priority": "HIGH",
+  "severity": "HIGH",
+  "occurredAt": "2025-02-10T14:00:00Z",
+  "detectedAt": "2025-02-10T15:30:00Z",
+  "validFrom": "2025-02-10T14:00:00Z",
+  "validUntil": null,
+  "linkedSourceRef": {
+    "sourceType": "CALL",
+    "sourceId": "call_123",
+    "occurredAt": "2025-02-10T14:00:00Z",
+    "permalink": "https://granola.ai/notes/call_123"
   },
-  "facts": [
-    {
-      "id": "fact-uuid",
-      "assertion": "Budget concerns raised",
-      "factType": "BUDGET",
-      "factCategory": "MEMORY",
-      "status": "ACTIVE",
-      "confidence": 0.92,
-      "severity": "HIGH",
-      "occurredAt": "2025-02-10T14:00:00Z",
-      "detectedAt": "2025-02-10T15:30:00Z",
-      "linkedSourceRef": {
-        "sourceType": "CALL",
-        "sourceId": "call_123",
-        "occurredAt": "2025-02-10T14:00:00Z",
-        "permalink": "https://granola.ai/notes/call_123"
-      },
-      "sourceMetadata": {
-        "sourceType": "CALL",
-        "sourceId": "call_123",
-        "sourceOccurredAt": "2025-02-10T14:00:00Z",
-        "sourceQuote": "Budget is blocked until next quarter.",
-        "permalink": "https://granola.ai/notes/call_123"
-      }
-    }
-  ],
-  "pagination": {
-    "hasMore": false,
-    "nextCursor": null
-  }
+  "sourceMetadata": {
+    "sourceType": "CALL",
+    "sourceId": "call_123",
+    "sourceOccurredAt": "2025-02-10T14:00:00Z",
+    "sourceQuote": "Budget is blocked until next quarter.",
+    "permalink": "https://granola.ai/notes/call_123"
+  },
+  "evidenceCount": 1,
+  "metricName": null,
+  "metricValue": null,
+  "metricPreviousValue": null,
+  "metricDelta": null,
+  "metricUnit": null,
+  "periodStart": null,
+  "periodEnd": null,
+  "changePointDate": null,
+  "occurrenceCount": 1,
+  "lastDetectedAt": "2025-02-10T15:30:00Z"
 }
 ```
 
@@ -543,6 +561,8 @@ outlit search "churn risk" --top-k 50 --json
       "sourceType": "CALL",
       "sourceId": "call_456",
       "occurredAt": "2025-02-10T15:30:00Z",
+      "title": "Q1 planning meeting",
+      "permalink": "https://granola.ai/notes/call_456",
       "matches": [
         {
           "text": "Customer mentioned pricing concerns in Q1 planning meeting"
