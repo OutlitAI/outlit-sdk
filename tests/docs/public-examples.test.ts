@@ -220,7 +220,7 @@ describe("public documentation examples", () => {
 
     for (const file of listPublicDocumentationFiles()) {
       const source = readFileSync(file, "utf8")
-      for (const match of source.matchAll(/--channels(?:=|\s+)([A-Z_,]+)/g)) {
+      for (const match of source.matchAll(/--channels(?:=|\s+)([A-Za-z_,]+)/g)) {
         for (const channel of (match[1] ?? "").split(",").filter(Boolean)) {
           if (!allowedChannels.has(channel)) {
             failures.push(`${file}: --channels uses legacy value ${channel}`)
