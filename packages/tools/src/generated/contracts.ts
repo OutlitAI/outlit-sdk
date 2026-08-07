@@ -31,7 +31,7 @@ export const publicToolNames = [
   "outlit_get_integration_capabilities",
   "outlit_begin_integration_setup",
   "outlit_get_integration_setup_status",
-  "outlit_get_integration_sync_status",
+  "outlit_get_integration_status",
   "outlit_get_customer_activation",
   "outlit_preview_customer_activation",
   "outlit_update_customer_activation",
@@ -7527,13 +7527,13 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
-  "outlit_get_integration_sync_status": {
-    "toolName": "outlit_get_integration_sync_status",
-    "commandId": "integration.sync_status.get",
+  "outlit_get_integration_status": {
+    "toolName": "outlit_get_integration_status",
+    "commandId": "integration.status.get",
     "commandVersion": 1,
     "ownerDomain": "integrations",
-    "title": "Get Integration Sync Status",
-    "description": "Get safe model-level sync status for a connection visible to the current actor.",
+    "title": "Get Integration Status",
+    "description": "Get the recommended agent-oriented integration status. Use this instead of composing setup-session and sync-status responses.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -7544,61 +7544,52 @@ export const publicToolContracts = {
           "maxLength": 80,
         },
       },
-      "required": [
-        "provider",
-      ],
       "additionalProperties": false,
     },
     "outputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
-        "provider": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 80,
-        },
-        "name": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 120,
-        },
-        "category": {
-          "type": "string",
-          "enum": [
-            "crm",
-            "communication",
-            "storage",
-            "calls",
-            "calendar",
-            "analytics",
-            "billing",
-            "support",
-          ],
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "not_connected",
-            "connected",
-          ],
-        },
-        "syncs": {
+        "integrations": {
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "model": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 120,
-              },
-              "status": {
+              "provider": {
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 80,
               },
-              "lastSyncedAt": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120,
+              },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "crm",
+                  "communication",
+                  "storage",
+                  "calls",
+                  "calendar",
+                  "analytics",
+                  "billing",
+                  "support",
+                ],
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "not_connected",
+                  "awaiting_auth",
+                  "setup_incomplete",
+                  "synchronizing",
+                  "ready",
+                  "needs_attention",
+                ],
+              },
+              "lastDataReceivedAt": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -7610,26 +7601,20 @@ export const publicToolContracts = {
                   },
                 ],
               },
-              "hasError": {
-                "type": "boolean",
-              },
             },
             "required": [
-              "model",
+              "provider",
+              "name",
+              "category",
               "status",
-              "lastSyncedAt",
-              "hasError",
+              "lastDataReceivedAt",
             ],
             "additionalProperties": false,
           },
         },
       },
       "required": [
-        "provider",
-        "name",
-        "category",
-        "status",
-        "syncs",
+        "integrations",
       ],
       "additionalProperties": false,
     },
@@ -8091,7 +8076,7 @@ export const consumerToolPolicies = {
     "outlit_get_integration_capabilities",
     "outlit_begin_integration_setup",
     "outlit_get_integration_setup_status",
-    "outlit_get_integration_sync_status",
+    "outlit_get_integration_status",
     "outlit_get_customer_activation",
     "outlit_preview_customer_activation",
     "outlit_update_customer_activation",
@@ -9389,4 +9374,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "ccf3ee113ca293fb025d517604c14b0bb4417455e2359762a1637aabb15779e0" as const
+export const sdkConsumerContractHash = "460205ef9e794a9e937f01144a619bc107c92cb909fd574a5f1d6ab6a2b5d947" as const

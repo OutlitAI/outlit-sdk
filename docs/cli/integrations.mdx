@@ -3,21 +3,11 @@ title: "Integrations"
 description: "Inspect integrations and start safe browser setup handoffs from the CLI"
 ---
 
-Integration commands use the public tool gateway. They can list integrations, describe safe setup modes, start a browser handoff, and inspect setup or sync status.
+Integration commands use the public tool gateway. For readiness, agents and scripts should use the single preferred `outlit integrations status` command. It returns one canonical status projection instead of composing browser setup and provider sync reads.
 
 <Info>
   Provider credentials, provider-specific configuration, and disconnect remain in the Outlit web app. The CLI does not accept secret-bearing `--config`, provider setup steps, or destructive disconnect commands.
 </Info>
-
-## List and inspect capabilities
-
-```bash
-outlit integrations list --json
-outlit integrations capabilities --json
-outlit integrations capabilities hubspot --json
-```
-
-Capabilities return `setupMode: "browser_handoff"` when setup can safely continue in a browser. `setupMode: "human_controlled"` directs the user to the authored web UI.
 
 ## Start setup
 
@@ -26,7 +16,7 @@ outlit integrations setup hubspot
 outlit integrations setup hubspot --json
 ```
 
-Interactive terminals open the returned `connectUrl` and poll the short-lived session. JSON mode returns the handoff data for an agent or script:
+Interactive terminals open the returned `connectUrl` and use the canonical status projection during the bounded handoff wait. JSON mode returns the handoff data for an agent or script:
 
 ```json
 {
@@ -54,15 +44,28 @@ Do not pass Stripe credentials, webhook signing secrets, or other provider-speci
 the CLI. Complete provider-specific configuration in the Outlit web app.
 After authorization, Stripe sends app events to Outlit's preconfigured event destination. No
 per-account webhook setup is required.
-If capabilities reports `setupMode: "human_controlled"`, complete setup in the
-Outlit web app instead.
+If setup reports `status: "human_controlled"`, complete setup in the Outlit web app instead.
 
 ## Check status
 
 ```bash
-outlit integrations status --session <sessionId> --json
 outlit integrations status hubspot --json
 outlit integrations status
 ```
 
-Session status is one of `pending`, `connected`, `failed`, or `expired`. Provider status returns safe model-level sync information; the summary lists connected integrations.
+`status` returns `integrations`, each with one canonical state and the time Core last observed data.
+
+| State | Meaning |
+| --- | --- |
+| `not_connected` | Setup has not started. |
+| `awaiting_auth` | The current actor must complete the browser handoff. |
+| `setup_incomplete` | A required Outlit setup step remains. |
+| `synchronizing` | Outlit is waiting for first usable sync data. |
+| `ready` | Core has observed its established usable-data evidence. |
+| `needs_attention` | Setup or sync requires review in Outlit. |
+
+`ready` does not mean that OAuth completed or that a connection row exists. Browser-session IDs and raw provider state remain internal. New agent workflows use `setup` to begin the safe handoff and `status` to observe readiness.
+
+## Release dependency
+
+The CLI change depends on the matching Core public tool. Deploy Core before publishing an SDK release that uses this command.

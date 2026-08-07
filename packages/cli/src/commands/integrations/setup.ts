@@ -104,10 +104,8 @@ export default defineCommand({
       if (setup.sessionId) {
         await waitForIntegrationConnection({
           client,
-          sessionId: setup.sessionId,
+          provider: capability.provider,
           displayName: capability.name,
-          cliName: capability.provider,
-          retryCommand: `outlit integrations setup ${capability.provider}`,
         })
         return
       }

@@ -463,10 +463,10 @@
                     "properties": {
                       "tool": {
                         "type": "string",
-                        "const": "outlit_get_integration_sync_status"
+                        "const": "outlit_get_integration_status"
                       },
                       "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_get_integration_sync_status"
+                        "$ref": "#/components/schemas/ToolInput_outlit_get_integration_status"
                       }
                     },
                     "required": [
@@ -651,7 +651,7 @@
                       "$ref": "#/components/schemas/ToolOutput_outlit_get_integration_setup_status"
                     },
                     {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_get_integration_sync_status"
+                      "$ref": "#/components/schemas/ToolOutput_outlit_get_integration_status"
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_get_customer_activation"
@@ -2916,7 +2916,7 @@
         ],
         "additionalProperties": false
       },
-      "ToolInput_outlit_get_integration_sync_status": {
+      "ToolInput_outlit_get_integration_status": {
         "type": "object",
         "properties": {
           "provider": {
@@ -2925,9 +2925,6 @@
             "maxLength": 80
           }
         },
-        "required": [
-          "provider"
-        ],
         "additionalProperties": false
       },
       "ToolInput_outlit_get_customer_activation": {
@@ -9243,55 +9240,49 @@
         ],
         "additionalProperties": false
       },
-      "ToolOutput_outlit_get_integration_sync_status": {
+      "ToolOutput_outlit_get_integration_status": {
         "type": "object",
         "properties": {
-          "provider": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 120
-          },
-          "category": {
-            "type": "string",
-            "enum": [
-              "crm",
-              "communication",
-              "storage",
-              "calls",
-              "calendar",
-              "analytics",
-              "billing",
-              "support"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "not_connected",
-              "connected"
-            ]
-          },
-          "syncs": {
+          "integrations": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "model": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 120
-                },
-                "status": {
+                "provider": {
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 80
                 },
-                "lastSyncedAt": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "crm",
+                    "communication",
+                    "storage",
+                    "calls",
+                    "calendar",
+                    "analytics",
+                    "billing",
+                    "support"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "not_connected",
+                    "awaiting_auth",
+                    "setup_incomplete",
+                    "synchronizing",
+                    "ready",
+                    "needs_attention"
+                  ]
+                },
+                "lastDataReceivedAt": {
                   "anyOf": [
                     {
                       "type": "string",
@@ -9302,27 +9293,21 @@
                       "type": "null"
                     }
                   ]
-                },
-                "hasError": {
-                  "type": "boolean"
                 }
               },
               "required": [
-                "model",
+                "provider",
+                "name",
+                "category",
                 "status",
-                "lastSyncedAt",
-                "hasError"
+                "lastDataReceivedAt"
               ],
               "additionalProperties": false
             }
           }
         },
         "required": [
-          "provider",
-          "name",
-          "category",
-          "status",
-          "syncs"
+          "integrations"
         ],
         "additionalProperties": false
       },
@@ -9592,5 +9577,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "ccf3ee113ca293fb025d517604c14b0bb4417455e2359762a1637aabb15779e0"
+  "x-outlit-contract-hash": "460205ef9e794a9e937f01144a619bc107c92cb909fd574a5f1d6ab6a2b5d947"
 }

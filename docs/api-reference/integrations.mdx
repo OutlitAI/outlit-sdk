@@ -18,8 +18,8 @@ Authorization: Bearer ok_...
 | `outlit_list_integrations` | List integrations and safe connection health |
 | `outlit_get_integration_capabilities` | Describe browser-handoff or human-controlled setup modes |
 | `outlit_begin_integration_setup` | Start a short-lived browser handoff |
-| `outlit_get_integration_setup_status` | Poll a handoff owned by the current actor |
-| `outlit_get_integration_sync_status` | Inspect safe model-level sync status |
+| `outlit_get_integration_status` | **Preferred:** return one concise canonical agent-oriented readiness status |
+| `outlit_get_integration_setup_status` | Legacy compatibility: poll a handoff owned by the current actor |
 
 ## Example
 
@@ -36,3 +36,5 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 A successful handoff returns `provider`, `state`, `sessionId`, `connectUrl`, and `expiresAt`. Providers whose credentials or configuration cannot safely cross a model boundary report `setupMode: "human_controlled"` from the capabilities tool.
 
 The generated [OpenAPI specification](/openapi.json) contains the exact input and output schema for every public capability.
+
+New agent integrations should call `outlit_get_integration_status`; they must not compose the legacy browser-session and sync responses. Its canonical states are `not_connected`, `awaiting_auth`, `setup_incomplete`, `synchronizing`, `ready`, and `needs_attention`.

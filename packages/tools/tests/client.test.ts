@@ -59,7 +59,7 @@ describe("toolsets", () => {
       "outlit_get_integration_capabilities",
       "outlit_begin_integration_setup",
       "outlit_get_integration_setup_status",
-      "outlit_get_integration_sync_status",
+      "outlit_get_integration_status",
       "outlit_get_customer_activation",
       "outlit_preview_customer_activation",
       "outlit_update_customer_activation",
