@@ -1,68 +1,98 @@
 ---
 title: "Integrations"
-description: "Inspect integrations and start safe browser setup handoffs from the CLI"
+description: "Set up integrations and inspect their configuration readiness from the CLI"
 ---
 
-Integration commands use the public tool gateway. They can list integrations, describe safe setup modes, start a browser handoff, and inspect setup or sync status.
+The CLI exposes two integration commands: `outlit integrations setup` and
+`outlit integrations status`. Both use the public tool gateway. Setup requires an API key with
+`integrations:manage` authority.
 
-<Info>
-  Provider credentials, provider-specific configuration, and disconnect remain in the Outlit web app. The CLI does not accept secret-bearing `--config`, provider setup steps, or destructive disconnect commands.
-</Info>
-
-## List and inspect capabilities
-
-```bash
-outlit integrations list --json
-outlit integrations capabilities --json
-outlit integrations capabilities hubspot --json
-```
-
-Capabilities return `setupMode: "browser_handoff"` when setup can safely continue in a browser. `setupMode: "human_controlled"` directs the user to the authored web UI.
-
-## Start setup
+## Integration setup
 
 ```bash
 outlit integrations setup hubspot
 outlit integrations setup hubspot --json
 ```
 
-Interactive terminals open the returned `connectUrl` and poll the short-lived session. JSON mode returns the handoff data for an agent or script:
+Setup begins with a secretless capabilities request. When Core advertises
+`preferredSetupVersion: 1`, the CLI continues through `outlit_setup_integration`. Older Core
+deployments retain the browser-handoff compatibility flow; the CLI never sends credentials or
+provider configuration to that fallback.
+
+Interactive setup can:
+
+- Prompt for a provider credential only after Core returns `CREDENTIAL_REQUIRED`. Secret prompts
+  disable terminal echo.
+- Open a validated browser handoff on the configured Outlit origin. Authentication handoffs are
+  polled for at most five minutes; recovery and external-setup handoffs are terminal.
+- Display a CRM recommendation and submit that exact mapping after confirmation.
+- Display a Mixpanel preview and submit the exact mapping selected by the user.
+
+The state machine makes at most three setup calls. Repeated credential, authentication, or mapping
+transitions stop with `SETUP_STALLED` instead of prompting indefinitely. If a validated URL cannot
+be opened, the CLI prints it for the user without treating the setup response as a failure.
+
+<Warning>
+  Setup has no provider-secret flags. Never place provider credentials directly in command-line
+  arguments, where process listings and shell history can expose them.
+</Warning>
+
+### Automation and JSON mode
+
+Use `--config-stdin` to opt into reading exactly one strict JSON object from stdin:
 
 ```json
 {
-  "status": "awaiting_auth",
-  "provider": "hubspot",
-  "state": "handoff_ready",
-  "sessionId": "00000000-0000-4000-8000-000000000001",
-  "connectUrl": "https://app.outlit.ai/integrations/connect",
-  "expiresAt": "2026-08-04T22:00:00.000Z"
+  "connectionMode": "provider-specific-mode",
+  "credentials": {
+    "apiKey": "<provider credential>"
+  },
+  "configuration": {
+    "kind": "provider-specific configuration"
+  }
 }
 ```
 
-For a human-controlled provider, the command returns `status: "human_controlled"` and `controlPlaneUrl` without accepting or returning credentials.
+The provider remains the positional CLI argument and is rejected inside the stdin document. Unknown
+top-level fields are also rejected. `--config-stdin` is explicit; ordinary piped stdin is not read.
 
-### Stripe
+JSON mode never prompts, opens a browser, or polls. It returns the raw setup result for handoffs and
+configuration previews. If credentials are required but were not supplied through `--config-stdin`,
+the command exits nonzero with Core's stable `CREDENTIAL_REQUIRED` error.
 
-Stripe uses the same OAuth browser handoff when the selected environment reports
-`setupMode: "browser_handoff"`:
+For a CRM recommendation, `--accept-recommended` submits the exact recommendation from the current
+response. It conflicts with a custom CRM mapping supplied through stdin. A Mixpanel mapping must be
+supplied as an exact, confirmed configuration in headless mode.
 
-```bash
-outlit integrations setup stripe
-```
+Expected provider credentials are never returned in command output. Handoff URLs must match the
+configured Outlit origin, use HTTPS except for loopback development, and contain no URL credentials,
+fragments, or secret-bearing query parameters.
 
-Do not pass Stripe credentials, webhook signing secrets, or other provider-specific arguments to
-the CLI. Complete provider-specific configuration in the Outlit web app.
-After authorization, Stripe sends app events to Outlit's preconfigured event destination. No
-per-account webhook setup is required.
-If capabilities reports `setupMode: "human_controlled"`, complete setup in the
-Outlit web app instead.
-
-## Check status
+## Integration status
 
 ```bash
-outlit integrations status --session <sessionId> --json
-outlit integrations status hubspot --json
 outlit integrations status
+outlit integrations status hubspot --json
 ```
 
-Session status is one of `pending`, `connected`, `failed`, or `expired`. Provider status returns safe model-level sync information; the summary lists connected integrations.
+`status` calls `outlit_get_integration_status` and returns one of five configuration-readiness
+states:
+
+| State | Meaning |
+| --- | --- |
+| `not_connected` | No usable provider connection exists. |
+| `awaiting_auth` | Authentication must be completed. |
+| `setup_required` | Provider configuration or mapping remains. |
+| `ready` | Required authentication and configuration are complete. |
+| `requires_intervention` | Setup needs human attention or repair. |
+
+`ready` describes configuration readiness only. It does not promise that a sync or backfill has
+finished, that customer data is present, or that provider data is current. The status command does
+not expose browser-session, raw provider-state, sync, or action metadata. `gmail` is accepted as a
+CLI alias for `google-mail`.
+
+## Release dependency
+
+Deploy the matching Core public-tool contract before publishing this SDK release. Until then, keep
+the SDK release on hold; the browser compatibility path is for older Core deployments, not a reason
+to publish the new generated contract early.

@@ -8,42 +8,18 @@ import {
   useTempEnv,
 } from "../../helpers"
 
-const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({}))
-
-const setupMockCallTool = () => {
-  mockCallTool.mockImplementation(async (toolName: string, _params: unknown) => {
-    if (toolName === "outlit_get_integration_sync_status") {
-      return {
-        syncs: [
-          { model: "Opportunity", status: "syncing", recordCount: 150, lastSyncedAt: null },
-          {
-            model: "Contact",
-            status: "complete",
-            recordCount: 3200,
-            lastSyncedAt: new Date().toISOString(),
-          },
-        ],
-      }
-    }
-    if (toolName === "outlit_get_integration_setup_status") {
-      return {
-        status: "connected",
-        provider: "hubspot",
-      }
-    }
-    return {
-      integrations: [
-        {
-          name: "Slack",
-          category: "communication",
-          syncStatus: "active",
-          lastDataReceivedAt: new Date().toISOString(),
-        },
-        { name: "Slack", category: "communication", syncStatus: "idle", lastDataReceivedAt: null },
-      ],
-    }
-  })
-}
+const mockCallTool = mock(
+  async (_toolName: string, _params: unknown): Promise<unknown> => ({
+    integrations: [
+      {
+        provider: "slack",
+        name: "Slack",
+        category: "communication",
+        status: "ready",
+      },
+    ],
+  }),
+)
 
 mock.module("../../../src/lib/client", () => ({
   createClient: async () => ({
@@ -53,211 +29,112 @@ mock.module("../../../src/lib/client", () => ({
   }),
 }))
 
-setupMockCallTool()
-
 describe("integrations status", () => {
   useTempEnv("integrations-status-test")
 
   beforeEach(() => {
     setNonInteractive()
     mockCallTool.mockClear()
-    setupMockCallTool()
+    mockCallTool.mockImplementation(async () => ({
+      integrations: [
+        {
+          provider: "slack",
+          name: "Slack",
+          category: "communication",
+          status: "ready",
+        },
+      ],
+    }))
   })
 
-  test("calls outlit_list_integrations with connectedOnly when no provider given", async () => {
+  test("calls the preferred status tool for the summary", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
     await captureStdout(() =>
-      statusCmd.run!({
-        args: { json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+      statusCmd.run!({ args: { json: true } } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_integrations", {
-      connectedOnly: true,
-    })
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_status", {})
   })
 
-  test("calls outlit_get_integration_sync_status when provider is given", async () => {
+  test("calls the preferred status tool for one provider", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
     await captureStdout(() =>
-      statusCmd.run!({
-        args: { provider: "slack", json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+      statusCmd.run!({ args: { provider: "slack", json: true } } as Parameters<
+        NonNullable<typeof statusCmd.run>
+      >[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_sync_status", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_status", {
       provider: "slack",
     })
   })
 
-  test("checks OAuth setup session status through the status command", async () => {
+  test("does not expose a browser-auth session argument", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    const sessionId = "550e8400-e29b-41d4-a716-446655440000"
-    const parsed = await captureStdout(() =>
-      statusCmd.run!({
-        args: { session: sessionId, json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
-    )
-
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_setup_status", {
-      sessionId,
-    })
-    expect(parsed).toEqual({ status: "connected", provider: "hubspot" })
+    expect(Object.keys(statusCmd.args ?? {})).toEqual(["api-key", "json", "provider"])
   })
 
-  test("rejects provider and --session together", async () => {
-    const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    await runExpectingError(
-      () =>
-        statusCmd.run!({
-          args: {
-            provider: "hubspot",
-            session: "550e8400-e29b-41d4-a716-446655440000",
-            json: true,
-          },
-        } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
-      "invalid_input",
-    )
-  })
-
-  test("passes provider aliases through to Core for status", async () => {
+  test("normalizes the Gmail alias before calling Core", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
     await captureStdout(() =>
-      statusCmd.run!({
-        args: { provider: "gmail", json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+      statusCmd.run!({ args: { provider: "gmail", json: true } } as Parameters<
+        NonNullable<typeof statusCmd.run>
+      >[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_sync_status", {
-      provider: "gmail",
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_status", {
+      provider: "google-mail",
     })
   })
 
-  test("accepts canonical provider IDs returned by integrations list", async () => {
-    const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-
-    for (const provider of ["google-mail", "granola", "hubspot"]) {
-      mockCallTool.mockClear()
-      await captureStdout(() =>
-        statusCmd.run!({
-          args: { provider, json: true },
-        } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
-      )
-
-      expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_sync_status", {
-        provider,
-      })
-    }
-  })
-
-  test("hides blank-model sync rows from per-provider status output", async () => {
+  test("preserves the concise canonical status in JSON", async () => {
     mockCallTool.mockImplementationOnce(async () => ({
-      provider: "google-mail",
-      syncs: [
+      integrations: [
         {
-          model: "",
-          status: "ERROR",
-          lastSyncedAt: "2026-04-20T07:08:52.438Z",
-          errorMessage: "script_error",
-        },
-        {
-          model: null,
-          status: "ERROR",
-          lastSyncedAt: "2026-04-20T07:08:52.438Z",
-          errorMessage: "missing_model",
-        },
-        {
-          status: "ERROR",
-          lastSyncedAt: "2026-04-20T07:08:52.438Z",
-          errorMessage: "missing_model_key",
-        },
-        {
-          model: "Email",
-          status: "IDLE",
-          lastSyncedAt: "2026-04-26T19:48:49.002Z",
-          errorMessage: null,
+          provider: "hubspot",
+          name: "HubSpot",
+          category: "crm",
+          status: "setup_required",
         },
       ],
     }))
 
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    const parsed = await captureStdout<{
-      syncs: Array<{
-        model: string
-        status: string
-        lastSyncedAt: string
-        errorMessage: string | null
-      }>
-    }>(() =>
-      statusCmd.run!({
-        args: { provider: "gmail", json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+    const parsed = await captureStdout(() =>
+      statusCmd.run!({ args: { provider: "hubspot", json: true } } as Parameters<
+        NonNullable<typeof statusCmd.run>
+      >[0]),
     )
 
-    expect(parsed.syncs).toEqual([
-      {
-        model: "Email",
-        status: "IDLE",
-        lastSyncedAt: "2026-04-26T19:48:49.002Z",
-        errorMessage: null,
-      },
-    ])
-  })
-
-  test("passes unknown providers through so Core owns provider validation", async () => {
-    const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    await captureStdout(() =>
-      statusCmd.run!({
-        args: { provider: "nonexistent", json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
-    )
-
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_sync_status", {
-      provider: "nonexistent",
+    expect(parsed).toEqual({
+      integrations: [
+        expect.objectContaining({
+          status: "setup_required",
+        }),
+      ],
     })
   })
 
-  test("outputs JSON for summary view", async () => {
-    const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    const parsed = await captureStdout(() =>
-      statusCmd.run!({
-        args: { json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
-    )
-
-    expect(Array.isArray(parsed.integrations)).toBe(true)
-  })
-
-  test("outputs JSON for per-provider detail view", async () => {
-    const { default: statusCmd } = await import("../../../src/commands/integrations/status")
-    const parsed = await captureStdout(() =>
-      statusCmd.run!({
-        args: { provider: "slack", json: true },
-      } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
-    )
-
-    expect(Array.isArray(parsed.syncs)).toBe(true)
-  })
-
-  test("renders table in interactive mode for summary", async () => {
+  test("renders a canonical-state table in interactive mode", async () => {
     setInteractive()
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
     const logSpy = spyOn(console, "log").mockImplementation(() => {})
     try {
       await statusCmd.run!({ args: {} } as Parameters<NonNullable<typeof statusCmd.run>>[0])
 
-      const output = logSpy.mock.calls.map((c) => c[0] as string).join("\n")
+      const output = logSpy.mock.calls.map((call) => call[0] as string).join("\n")
       expect(output).toContain("┌")
       expect(output).toContain("Name")
-      expect(output).toContain("Sync Status")
+      expect(output).toContain("Status")
       expect(output).toContain("Slack")
+      expect(output).not.toContain("First Data")
     } finally {
       logSpy.mockRestore()
       setNonInteractive()
     }
   })
 
-  test("exits 1 when API call fails", async () => {
+  test("exits 1 when the preferred tool fails", async () => {
     mockCallTool.mockImplementationOnce(async () => {
       throw new Error("API error (401): Unauthorized")
     })
@@ -265,10 +142,33 @@ describe("integrations status", () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
     await runExpectingError(
       () =>
-        statusCmd.run!({
-          args: { json: true },
-        } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
+        statusCmd.run!({ args: { json: true } } as Parameters<
+          NonNullable<typeof statusCmd.run>
+        >[0]),
       "api_error",
     )
+  })
+
+  test.each([
+    "not_connected",
+    "awaiting_auth",
+    "setup_required",
+    "ready",
+    "requires_intervention",
+  ])("returns raw JSON and exits successfully for valid state %s", async (status) => {
+    mockCallTool.mockImplementationOnce(async () => ({
+      integrations: [{ provider: "hubspot", name: "HubSpot", category: "crm", status }],
+    }))
+
+    const { default: statusCmd } = await import("../../../src/commands/integrations/status")
+    const result = await captureStdout(() =>
+      statusCmd.run!({ args: { provider: "hubspot", json: true } } as Parameters<
+        NonNullable<typeof statusCmd.run>
+      >[0]),
+    )
+
+    expect(result).toEqual({
+      integrations: [{ provider: "hubspot", name: "HubSpot", category: "crm", status }],
+    })
   })
 })
