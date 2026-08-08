@@ -8434,7 +8434,6 @@ export const consumerToolPolicies = {
     "outlit_get_source",
     "outlit_list_sources",
     "outlit_search_customer_context",
-    "outlit_create_behavior_metric",
   ],
   "analytical": [
     "outlit_list_customers",
@@ -8446,7 +8445,6 @@ export const consumerToolPolicies = {
     "outlit_get_source",
     "outlit_list_sources",
     "outlit_search_customer_context",
-    "outlit_create_behavior_metric",
     "outlit_query",
     "outlit_schema",
   ],
@@ -9780,4 +9778,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "c9e1f7f9c1054cf1abb5abf6b068137e7f577724affdc837f725dbc221ab0b17" as const
+export const sdkConsumerContractHash = "7fb2d55ad2f2f627a1593b6536b84aad645d1e40ca436a1f48fa80e39db41f0b" as const

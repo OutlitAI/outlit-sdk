@@ -72,7 +72,7 @@ describe("toolsets", () => {
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
 
-  test("keeps the default agent toolset aligned with the generated policy", () => {
+  test("keeps the default agent toolset to the nine read-only intelligence tools", () => {
     expect(defaultToolNames).toEqual([
       "outlit_list_customers",
       "outlit_list_users",
@@ -83,7 +83,6 @@ describe("toolsets", () => {
       "outlit_get_source",
       "outlit_list_sources",
       "outlit_search_customer_context",
-      "outlit_create_behavior_metric",
     ])
     expect(sqlToolNames).toEqual(["outlit_query", "outlit_schema"])
     expect(cliToolNames).toEqual(allPublicToolNames)
@@ -152,8 +151,8 @@ describe("tool contracts", () => {
         }),
       }),
     )
-    expect(defaultToolNames).toContain("outlit_create_behavior_metric")
-    expect(analyticalToolNames).toContain("outlit_create_behavior_metric")
+    expect(defaultToolNames).not.toContain("outlit_create_behavior_metric")
+    expect(analyticalToolNames).not.toContain("outlit_create_behavior_metric")
     expect(cliToolNames).toContain("outlit_create_behavior_metric")
   })
 
