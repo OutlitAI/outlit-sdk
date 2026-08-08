@@ -34,6 +34,8 @@ If no API key is available, `onboard` starts the browser approval flow outside C
 
 `onboard` does not connect third-party integrations by itself. Use `outlit integrations setup <provider> --json`, then `outlit integrations status <provider> --json`. Setup first negotiates capabilities without credentials. Interactive mode can prompt securely after Core requests a credential or open a safe browser handoff; automation must opt into strict stdin JSON with `--config-stdin`.
 
+For headless CRM setup, add `--accept-recommended` to submit the exact recommendation returned by Core. It conflicts only with a custom CRM mapping supplied through `--config-stdin`.
+
 ## Auto-Setup
 
 Detect installed coding agents and install `outlit` for all of them:

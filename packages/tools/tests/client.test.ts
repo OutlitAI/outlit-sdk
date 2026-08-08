@@ -20,6 +20,7 @@ import {
   defaultToolNames,
   getPublicToolContract,
   isOutlitToolsApiError,
+  matchesGeneratedJsonSchema,
   normalizeCustomerSourceType,
   publicOpenApiTransports,
   resolveCustomerContextSearchInput,
@@ -28,6 +29,33 @@ import {
   toolGatewayErrorCodes,
   toolGatewayErrorSchema,
 } from "../src/index.js"
+
+describe("matchesGeneratedJsonSchema", () => {
+  test("accepts maxLength and maxItems boundaries and rejects values above them", () => {
+    expect(matchesGeneratedJsonSchema("abc", { type: "string", maxLength: 3 })).toBe(true)
+    expect(matchesGeneratedJsonSchema("abcd", { type: "string", maxLength: 3 })).toBe(false)
+    expect(matchesGeneratedJsonSchema([1, 2], { type: "array", maxItems: 2 })).toBe(true)
+    expect(matchesGeneratedJsonSchema([1, 2, 3], { type: "array", maxItems: 2 })).toBe(false)
+  })
+
+  test("accepts numeric boundaries and rejects values outside minimum and maximum", () => {
+    const schema = { type: "number", minimum: 1, maximum: 3 }
+
+    expect(matchesGeneratedJsonSchema(1, schema)).toBe(true)
+    expect(matchesGeneratedJsonSchema(3, schema)).toBe(true)
+    expect(matchesGeneratedJsonSchema(0.99, schema)).toBe(false)
+    expect(matchesGeneratedJsonSchema(3.01, schema)).toBe(false)
+  })
+
+  test("accepts safe integer boundaries and rejects unsafe integers", () => {
+    const schema = { type: "integer" }
+
+    expect(matchesGeneratedJsonSchema(Number.MAX_SAFE_INTEGER, schema)).toBe(true)
+    expect(matchesGeneratedJsonSchema(Number.MIN_SAFE_INTEGER, schema)).toBe(true)
+    expect(matchesGeneratedJsonSchema(Number.MAX_SAFE_INTEGER + 1, schema)).toBe(false)
+    expect(matchesGeneratedJsonSchema(Number.MIN_SAFE_INTEGER - 1, schema)).toBe(false)
+  })
+})
 
 describe("toolsets", () => {
   test("matches the Core-owned public tool set, including customer collaboration", () => {
