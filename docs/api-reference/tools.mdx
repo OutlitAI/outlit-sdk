@@ -56,7 +56,7 @@ POST https://app.outlit.ai/api/tools/call
 | `outlit_list_integrations` through `outlit_get_integration_sync_status` | Inspect integrations and start safe browser setup handoffs |
 | `outlit_get_customer_activation` through `outlit_update_customer_activation` | Inspect, preview, and configure the ordinary activation event |
 | `outlit_get_workspace_settings`, `outlit_update_workspace_settings` | Read and update safe workspace settings |
-| `outlit_create_usage_metric` | Create a workspace usage metric with a name and optional description |
+| `outlit_create_behavior_metric` | Create an event-based Behavior Metric from a source and exact event selection |
 
 <Info>
   Tool input schemas are published by `@outlit/tools` as `publicToolContracts`. Use that package when building schema-driven clients or model tool definitions.

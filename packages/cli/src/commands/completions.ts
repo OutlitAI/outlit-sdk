@@ -302,15 +302,18 @@ const COMMANDS: readonly CmdDef[] = [
   },
   {
     name: "metrics",
-    desc: "Configure workspace usage metrics",
+    desc: "Configure Behavior Metrics",
     subs: [
       {
         name: "create",
-        desc: "Create a workspace usage metric",
+        desc: "Create an event-based Behavior Metric",
         flags: [
           ...COMMON,
-          { name: "--name", desc: "Usage metric name" },
-          { name: "--description", desc: "Optional usage metric description" },
+          { name: "--source-key", desc: "Behavior Metric source key" },
+          { name: "--event-name", desc: "Exact tracked event name" },
+          { name: "--behavior-key", desc: "Stable lower_snake_case metric key" },
+          { name: "--label", desc: "Human-readable metric label" },
+          { name: "--property-filters", desc: "Optional JSON event property filters" },
         ],
       },
     ],

@@ -4,4 +4,4 @@
 "@outlit/pi": patch
 ---
 
-Expose the Core-generated usage metric creation capability and add `outlit metrics create`.
+Expose Core's event-based Behavior Metric creation capability and add `outlit metrics create`.

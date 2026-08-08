@@ -85,45 +85,86 @@ describe("platform lifecycle commands", () => {
     })
   })
 
-  test("runs usage metric create with the canonical tool payload", async () => {
-    const { default: createUsageMetricCmd } = await import(
-      "../../src/commands/usage-metrics/create"
-    )
+  test("runs Behavior Metric create with the canonical event-based payload", async () => {
+    const { default: createBehaviorMetricCmd } = await import("../../src/commands/metrics/create")
 
     await captureStdout(() =>
-      createUsageMetricCmd.run!({
+      createBehaviorMetricCmd.run!({
         args: {
-          name: "Monthly Active Users",
-          description: "Count of active users in the month",
+          "source-key": "metric_source_v1_0123456789abcdef0123456789abcdef",
+          "event-name": "report_exported",
+          "behavior-key": "reports_exported",
+          label: "Reports exported",
+          "property-filters": JSON.stringify([
+            {
+              property: "environment",
+              operator: "equals",
+              value: { type: "string", value: "production" },
+            },
+          ]),
           json: true,
         },
-      } as Parameters<NonNullable<typeof createUsageMetricCmd.run>>[0]),
+      } as Parameters<NonNullable<typeof createBehaviorMetricCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_usage_metric", {
-      name: "Monthly Active Users",
-      description: "Count of active users in the month",
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_behavior_metric", {
+      sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",
+      eventName: "report_exported",
+      behaviorKey: "reports_exported",
+      label: "Reports exported",
+      propertyFilters: [
+        {
+          property: "environment",
+          operator: "equals",
+          value: { type: "string", value: "production" },
+        },
+      ],
     })
   })
 
-  test("omits an empty optional usage metric description", async () => {
-    const { default: createUsageMetricCmd } = await import(
-      "../../src/commands/usage-metrics/create"
-    )
+  test("defaults omitted Behavior Metric property filters to an empty array", async () => {
+    const { default: createBehaviorMetricCmd } = await import("../../src/commands/metrics/create")
 
     await captureStdout(() =>
-      createUsageMetricCmd.run!({
+      createBehaviorMetricCmd.run!({
         args: {
-          name: "Monthly Active Users",
-          description: "  ",
+          "source-key": "metric_source_v1_0123456789abcdef0123456789abcdef",
+          "event-name": "report_exported",
+          "behavior-key": "reports_exported",
+          label: "Reports exported",
           json: true,
         },
-      } as Parameters<NonNullable<typeof createUsageMetricCmd.run>>[0]),
+      } as Parameters<NonNullable<typeof createBehaviorMetricCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_usage_metric", {
-      name: "Monthly Active Users",
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_behavior_metric", {
+      sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",
+      eventName: "report_exported",
+      behaviorKey: "reports_exported",
+      label: "Reports exported",
+      propertyFilters: [],
     })
+  })
+
+  test("rejects invalid Behavior Metric property-filter JSON before calling the API", async () => {
+    const { default: createBehaviorMetricCmd } = await import("../../src/commands/metrics/create")
+
+    await runExpectingError(
+      () =>
+        createBehaviorMetricCmd.run!({
+          args: {
+            "source-key": "metric_source_v1_0123456789abcdef0123456789abcdef",
+            "event-name": "report_exported",
+            "behavior-key": "reports_exported",
+            label: "Reports exported",
+            "property-filters": "not-json",
+            json: true,
+          },
+        } as Parameters<NonNullable<typeof createBehaviorMetricCmd.run>>[0]),
+      "invalid_input",
+    )
+
+    expect(mockCallTool).not.toHaveBeenCalled()
   })
 
   test("requires at least one destination update field", async () => {

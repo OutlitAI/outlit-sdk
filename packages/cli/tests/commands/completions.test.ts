@@ -103,7 +103,9 @@ describe("completions command", () => {
     expect(out).not.toContain("--signals --match --threshold --window")
     expect(out).not.toContain("--client-request-id")
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --default-timezone"')
-    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --name --description"')
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --source-key --event-name --behavior-key --label --property-filters"',
+    )
     expect(out).not.toContain("--slack-channel-name")
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --type --channel-id --label --default --disabled"',
@@ -125,7 +127,7 @@ describe("completions command", () => {
     expect(out).toContain("'auth:Manage authentication'")
     expect(out).toContain("'ws-users:Workspace-user operations'")
     expect(out).toContain("'settings:Configure workspace settings'")
-    expect(out).toContain("'metrics:Configure workspace usage metrics'")
+    expect(out).toContain("'metrics:Configure Behavior Metrics'")
     expect(out).not.toContain("'identity:Inspect and manage identity resolution'")
     expect(out).toContain("'activation:Configure contact and company activation'")
     expect(out).not.toContain("workspace-users")
@@ -199,8 +201,8 @@ describe("completions command", () => {
     expect(out).not.toContain("-n '__outlit_using_cmd settings report'")
     expect(out).not.toContain("settings notifications default")
     expect(out).toContain("-n '__outlit_using_cmd settings update' -l default-timezone")
-    expect(out).toContain("-n '__outlit_using_cmd metrics create' -l name")
-    expect(out).toContain("-n '__outlit_using_cmd metrics create' -l description")
+    expect(out).toContain("-n '__outlit_using_cmd metrics create' -l source-key")
+    expect(out).toContain("-n '__outlit_using_cmd metrics create' -l property-filters")
     expect(out).not.toContain("-n '__outlit_using_cmd settings report update'")
     expect(out).not.toContain("settings notifications")
     expect(out).not.toContain("__outlit_using_cmd identity")

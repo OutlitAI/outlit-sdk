@@ -65,7 +65,7 @@ describe("toolsets", () => {
       "outlit_update_customer_activation",
       "outlit_get_workspace_settings",
       "outlit_update_workspace_settings",
-      "outlit_create_usage_metric",
+      "outlit_create_behavior_metric",
     ])
     expect(allPublicToolNames).toHaveLength(34)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
@@ -83,7 +83,7 @@ describe("toolsets", () => {
       "outlit_get_source",
       "outlit_list_sources",
       "outlit_search_customer_context",
-      "outlit_create_usage_metric",
+      "outlit_create_behavior_metric",
     ])
     expect(sqlToolNames).toEqual(["outlit_query", "outlit_schema"])
     expect(cliToolNames).toEqual(allPublicToolNames)
@@ -118,7 +118,7 @@ describe("tool contracts", () => {
     })
     expect(apiKeyGrants).not.toContain("agents:read")
     expect(apiKeyGrants).not.toContain("agents:write")
-    expect(apiKeyGrants).toContain("usage_metrics:manage")
+    expect(apiKeyGrants).toContain("behavior_metrics:manage")
     expect(toolGatewayErrorSchema.properties.code.enum).toEqual(toolGatewayErrorCodes)
     expect(toolGatewayErrorSchema.required).toEqual(["code", "message", "retryable", "requestId"])
     expect(toolGatewayErrorSchema.additionalProperties).toBe(false)
@@ -134,22 +134,27 @@ describe("tool contracts", () => {
     expect(analyticsRow.activated_at).toBeNull()
   })
 
-  test("projects the generated usage metric capability into public and consumer catalogues", () => {
-    const contract = getPublicToolContract("outlit_create_usage_metric")
+  test("projects the generated Behavior Metric capability into public catalogues", () => {
+    const contract = getPublicToolContract("outlit_create_behavior_metric")
 
-    expect(contract.commandId).toBe("usage_metric.create")
+    expect(contract.commandId).toBe("behavior_metric.create")
     expect(contract.inputSchema).toEqual(
       expect.objectContaining({
-        required: ["name"],
+        required: ["sourceKey", "eventName", "behaviorKey", "label"],
         properties: expect.objectContaining({
-          name: expect.objectContaining({ minLength: 1, maxLength: 191 }),
-          description: expect.objectContaining({ maxLength: 191 }),
+          sourceKey: expect.objectContaining({
+            pattern: "^metric_source_v1_[a-f0-9]{32}$",
+          }),
+          eventName: expect.objectContaining({ minLength: 1, maxLength: 191 }),
+          behaviorKey: expect.objectContaining({ maxLength: 64 }),
+          label: expect.objectContaining({ minLength: 1, maxLength: 255 }),
+          propertyFilters: expect.objectContaining({ default: [], maxItems: 5 }),
         }),
       }),
     )
-    expect(defaultToolNames).toContain("outlit_create_usage_metric")
-    expect(analyticalToolNames).toContain("outlit_create_usage_metric")
-    expect(cliToolNames).toContain("outlit_create_usage_metric")
+    expect(defaultToolNames).toContain("outlit_create_behavior_metric")
+    expect(analyticalToolNames).toContain("outlit_create_behavior_metric")
+    expect(cliToolNames).toContain("outlit_create_behavior_metric")
   })
 
   test("infers activatedAt on typed customer list and get client results", async () => {

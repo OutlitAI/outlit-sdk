@@ -559,10 +559,10 @@
                     "properties": {
                       "tool": {
                         "type": "string",
-                        "const": "outlit_create_usage_metric"
+                        "const": "outlit_create_behavior_metric"
                       },
                       "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_create_usage_metric"
+                        "$ref": "#/components/schemas/ToolInput_outlit_create_behavior_metric"
                       }
                     },
                     "required": [
@@ -685,7 +685,7 @@
                       "$ref": "#/components/schemas/ToolOutput_outlit_update_workspace_settings"
                     },
                     {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_create_usage_metric"
+                      "$ref": "#/components/schemas/ToolOutput_outlit_create_behavior_metric"
                     }
                   ]
                 }
@@ -1094,7 +1094,7 @@
                     "workspace_members:read",
                     "analytics:read",
                     "destinations:manage",
-                    "usage_metrics:manage",
+                    "behavior_metrics:manage",
                     "integrations:manage",
                     "activation:read",
                     "activation:manage",
@@ -1151,7 +1151,7 @@
                     "workspace_members:read",
                     "analytics:read",
                     "destinations:manage",
-                    "usage_metrics:manage",
+                    "behavior_metrics:manage",
                     "integrations:manage",
                     "activation:read",
                     "activation:manage",
@@ -3021,21 +3021,140 @@
         ],
         "additionalProperties": false
       },
-      "ToolInput_outlit_create_usage_metric": {
+      "ToolInput_outlit_create_behavior_metric": {
         "type": "object",
         "properties": {
-          "name": {
+          "sourceKey": {
+            "type": "string",
+            "pattern": "^metric_source_v1_[a-f0-9]{32}$"
+          },
+          "eventName": {
             "type": "string",
             "minLength": 1,
             "maxLength": 191
           },
-          "description": {
+          "behaviorKey": {
             "type": "string",
-            "maxLength": 191
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "propertyFilters": {
+            "default": [],
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "property": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191
+                    },
+                    "operator": {
+                      "type": "string",
+                      "const": "equals"
+                    },
+                    "value": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "const": "string"
+                            },
+                            "value": {
+                              "type": "string",
+                              "maxLength": 191
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "value"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "const": "number"
+                            },
+                            "value": {
+                              "type": "number",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "value"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "const": "boolean"
+                            },
+                            "value": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "value"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "property",
+                    "operator",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "property": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191
+                    },
+                    "operator": {
+                      "type": "string",
+                      "const": "exists"
+                    }
+                  },
+                  "required": [
+                    "property",
+                    "operator"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
           }
         },
         "required": [
-          "name"
+          "sourceKey",
+          "eventName",
+          "behaviorKey",
+          "label"
         ],
         "additionalProperties": false
       },
@@ -9629,93 +9748,244 @@
         ],
         "additionalProperties": false
       },
-      "ToolOutput_outlit_create_usage_metric": {
+      "ToolOutput_outlit_create_behavior_metric": {
         "type": "object",
         "properties": {
+          "created": {
+            "type": "boolean"
+          },
           "metric": {
             "type": "object",
             "properties": {
-              "id": {
+              "sourceKey": {
                 "type": "string",
-                "format": "uuid",
-                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                "pattern": "^metric_source_v1_[a-f0-9]{32}$"
               },
-              "name": {
+              "behaviorKey": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
+              },
+              "label": {
                 "type": "string",
                 "minLength": 1,
-                "maxLength": 191
+                "maxLength": 255
               },
-              "description": {
-                "anyOf": [
+              "eventSelection": {
+                "oneOf": [
                   {
-                    "type": "string",
-                    "maxLength": 191
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "const": "exact_event_names"
+                      },
+                      "eventNames": {
+                        "minItems": 1,
+                        "maxItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 191
+                        }
+                      }
+                    },
+                    "required": [
+                      "mode",
+                      "eventNames"
+                    ],
+                    "additionalProperties": false
                   },
                   {
-                    "type": "null"
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "const": "configured_event"
+                      },
+                      "eventName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191
+                      },
+                      "propertyFilters": {
+                        "minItems": 1,
+                        "maxItems": 5,
+                        "type": "array",
+                        "items": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "property": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 191
+                                },
+                                "operator": {
+                                  "type": "string",
+                                  "const": "equals"
+                                },
+                                "value": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "const": "string"
+                                        },
+                                        "value": {
+                                          "type": "string",
+                                          "maxLength": 191
+                                        }
+                                      },
+                                      "required": [
+                                        "type",
+                                        "value"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "const": "number"
+                                        },
+                                        "value": {
+                                          "type": "number",
+                                          "minimum": -9007199254740991,
+                                          "maximum": 9007199254740991
+                                        }
+                                      },
+                                      "required": [
+                                        "type",
+                                        "value"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "const": "boolean"
+                                        },
+                                        "value": {
+                                          "type": "boolean"
+                                        }
+                                      },
+                                      "required": [
+                                        "type",
+                                        "value"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "property",
+                                "operator",
+                                "value"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "property": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 191
+                                },
+                                "operator": {
+                                  "type": "string",
+                                  "const": "exists"
+                                }
+                              },
+                              "required": [
+                                "property",
+                                "operator"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "mode",
+                      "eventName",
+                      "propertyFilters"
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               },
-              "aggregationType": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "enum": [
-                      "COUNT",
-                      "UNIQUE",
-                      "SUM"
-                    ]
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "archived": {
-                "type": "boolean"
-              },
-              "archivedAt": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "format": "date-time",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "createdAt": {
+              "status": {
                 "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                "const": "ENABLED"
               },
-              "updatedAt": {
+              "evaluationMode": {
                 "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                "const": "SHADOW"
+              },
+              "definitions": {
+                "minItems": 2,
+                "maxItems": 2,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "metricKey": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191
+                    },
+                    "aggregation": {
+                      "type": "string",
+                      "enum": [
+                        "active_days",
+                        "event_count"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "metricKey",
+                    "aggregation"
+                  ],
+                  "additionalProperties": false
+                }
               }
             },
             "required": [
-              "id",
-              "name",
-              "description",
-              "aggregationType",
-              "archived",
-              "archivedAt",
-              "createdAt",
-              "updatedAt"
+              "sourceKey",
+              "behaviorKey",
+              "label",
+              "eventSelection",
+              "status",
+              "evaluationMode",
+              "definitions"
             ],
             "additionalProperties": false
           }
         },
         "required": [
+          "created",
           "metric"
         ],
         "additionalProperties": false
       }
     }
   },
-  "x-outlit-contract-hash": "29541bc40c9106794bf9a27d99ae5e7b1e40e94a35ae18ce2fb7a4317267ed6c"
+  "x-outlit-contract-hash": "c9e1f7f9c1054cf1abb5abf6b068137e7f577724affdc837f725dbc221ab0b17"
 }
