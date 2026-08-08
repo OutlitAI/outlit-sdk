@@ -2,9 +2,11 @@ import { defaultToolNames, getPublicToolContract } from "@outlit/tools"
 import { describe, expect, test, vi } from "vitest"
 
 import {
+  allPublicToolNames,
   createOutlitPiExtension,
   createOutlitPiTool,
   type OutlitPiToolDefinition,
+  piToolNames,
 } from "../src/index.js"
 
 function createPiMock() {
@@ -89,6 +91,20 @@ describe("createOutlitPiExtension", () => {
         fetch: vi.fn(),
       }),
     ).toThrow("Unknown Outlit public tool")
+  })
+
+  test("rejects Behavior Metric creation even when explicitly requested", () => {
+    expect(() =>
+      createOutlitPiTool("outlit_create_behavior_metric" as never, {
+        apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+        fetch: vi.fn(),
+      }),
+    ).toThrow("Tool is not available in @outlit/pi")
+  })
+
+  test("exposes only Pi-supported tools from the Pi package", () => {
+    expect(allPublicToolNames).toEqual(piToolNames)
+    expect(allPublicToolNames).not.toContain("outlit_create_behavior_metric")
   })
 
   test("deduplicates custom tool names before registration", () => {

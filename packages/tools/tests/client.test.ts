@@ -21,6 +21,7 @@ import {
   getPublicToolContract,
   isOutlitToolsApiError,
   normalizeCustomerSourceType,
+  piToolNames,
   publicOpenApiTransports,
   resolveCustomerContextSearchInput,
   sdkConsumerContractHash,
@@ -85,6 +86,9 @@ describe("toolsets", () => {
       "outlit_search_customer_context",
     ])
     expect(sqlToolNames).toEqual(["outlit_query", "outlit_schema"])
+    expect(piToolNames).toEqual(
+      allPublicToolNames.filter((name) => name !== "outlit_create_behavior_metric"),
+    )
     expect(cliToolNames).toEqual(allPublicToolNames)
   })
 
