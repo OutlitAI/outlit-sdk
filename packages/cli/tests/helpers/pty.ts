@@ -1,3 +1,4 @@
+import { accessSync, constants } from "node:fs"
 import path from "node:path"
 
 export type SecretPromptScenario = "success" | "cancel" | "throw" | "SIGINT" | "SIGTERM"
@@ -13,7 +14,7 @@ export async function runSecretPromptPtyScenario(
   syntheticSecret: string,
 ): Promise<SecretPromptPtyResult> {
   const runner = path.join(import.meta.dir, "pty-runner.cjs")
-  const child = Bun.spawn(["node", runner, scenario], {
+  const child = Bun.spawn([resolveNodeBinary(), runner, scenario], {
     cwd,
     env: { ...process.env, PTY_TEST_SECRET: syntheticSecret },
     stdout: "pipe",
@@ -30,4 +31,20 @@ export async function runSecretPromptPtyScenario(
   }
 
   return JSON.parse(stdout) as SecretPromptPtyResult
+}
+
+function resolveNodeBinary(): string {
+  const configuredBinary = process.env.OUTLIT_NODE_BINARY?.trim()
+  if (!configuredBinary) return "node"
+  if (!path.isAbsolute(configuredBinary)) {
+    throw new Error("OUTLIT_NODE_BINARY must be an absolute executable path")
+  }
+
+  try {
+    accessSync(configuredBinary, constants.X_OK)
+  } catch {
+    throw new Error("OUTLIT_NODE_BINARY must be an absolute executable path")
+  }
+
+  return configuredBinary
 }
