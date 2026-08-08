@@ -1,9 +1,9 @@
-import { accessSync, constants } from "node:fs"
+import { accessSync, constants, realpathSync } from "node:fs"
 import path from "node:path"
 
-const NODE_IDENTITY_SCRIPT =
-  "process.stdout.write(process.release.name + ':' + process.versions.node)"
-const NODE_IDENTITY_PATTERN = /^node:\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/
+const NODE_VERSION_DIRECTORY_PATTERN = /^\d+\.\d+\.\d+$/
+const INVALID_TOOL_CACHE_NODE_ERROR =
+  "OUTLIT_NODE_BINARY must point to the GitHub Actions Node tool-cache executable"
 
 export type SecretPromptScenario = "success" | "cancel" | "throw" | "SIGINT" | "SIGTERM"
 
@@ -40,33 +40,41 @@ export async function runSecretPromptPtyScenario(
 function resolveNodeBinary(): string {
   const configuredBinary = process.env.OUTLIT_NODE_BINARY?.trim()
   if (!configuredBinary) return "node"
+  if (process.env.GITHUB_ACTIONS !== "true") {
+    throw new Error("OUTLIT_NODE_BINARY is only supported in GitHub Actions")
+  }
   if (!path.isAbsolute(configuredBinary)) {
     throw new Error("OUTLIT_NODE_BINARY must be an absolute executable path")
   }
 
-  try {
-    accessSync(configuredBinary, constants.X_OK)
-  } catch {
-    throw new Error("OUTLIT_NODE_BINARY must be an absolute executable path")
+  const runnerToolCache = process.env.RUNNER_TOOL_CACHE?.trim()
+  if (!runnerToolCache || !path.isAbsolute(runnerToolCache)) {
+    throw new Error(INVALID_TOOL_CACHE_NODE_ERROR)
   }
 
-  if (!isNodeExecutable(configuredBinary)) {
-    throw new Error("OUTLIT_NODE_BINARY must point to a Node.js executable")
-  }
-
-  return configuredBinary
-}
-
-function isNodeExecutable(binary: string): boolean {
   try {
-    const result = Bun.spawnSync([binary, "--eval", NODE_IDENTITY_SCRIPT], {
-      stdout: "pipe",
-      stderr: "ignore",
-    })
-    if (result.exitCode !== 0) return false
+    const nodeToolCache = realpathSync(path.join(runnerToolCache, "node"))
+    const resolvedBinary = realpathSync(configuredBinary)
+    const relativeBinary = path.relative(nodeToolCache, resolvedBinary)
+    const [version, architecture, binDirectory, executable, ...extraSegments] =
+      relativeBinary.split(path.sep)
 
-    return NODE_IDENTITY_PATTERN.test(new TextDecoder().decode(result.stdout).trim())
+    if (
+      !version ||
+      !NODE_VERSION_DIRECTORY_PATTERN.test(version) ||
+      !architecture ||
+      binDirectory !== "bin" ||
+      executable !== "node" ||
+      extraSegments.length > 0 ||
+      path.isAbsolute(relativeBinary)
+    ) {
+      throw new Error(INVALID_TOOL_CACHE_NODE_ERROR)
+    }
+
+    accessSync(resolvedBinary, constants.X_OK)
+
+    return resolvedBinary
   } catch {
-    return false
+    throw new Error(INVALID_TOOL_CACHE_NODE_ERROR)
   }
 }
