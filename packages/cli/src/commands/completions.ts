@@ -239,17 +239,19 @@ const COMMANDS: readonly CmdDef[] = [
     name: "integrations",
     desc: "Manage platform integrations",
     subs: [
-      { name: "list", desc: "List integrations and status", flags: [...COMMON] },
-      { name: "capabilities", desc: "Show setup capabilities", flags: [JSON_F] },
       {
         name: "setup",
-        desc: "Start a safe browser setup handoff",
-        flags: [...COMMON],
+        desc: "Set up or repair an integration",
+        flags: [
+          ...COMMON,
+          { name: "--config-stdin", desc: "Read provider configuration JSON from stdin" },
+          { name: "--accept-recommended", desc: "Apply the exact CRM recommendation" },
+        ],
       },
       {
         name: "status",
-        desc: "Show sync or setup-session status",
-        flags: [...COMMON, { name: "--session", desc: "Browser-auth setup session ID" }],
+        desc: "Show configuration readiness",
+        flags: [...COMMON],
       },
     ],
   },

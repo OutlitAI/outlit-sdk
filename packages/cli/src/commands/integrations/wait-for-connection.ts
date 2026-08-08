@@ -2,38 +2,50 @@ import type { OutlitClient } from "../../lib/client"
 import { pollUntil } from "../../lib/poll"
 import { createSpinner } from "../../lib/spinner"
 
-const terminalIntegrationStatuses = new Set([
-  "not_connected",
-  "setup_incomplete",
-  "synchronizing",
-  "ready",
-  "needs_attention",
-])
+type SetupSessionStatus = "expired" | "pending" | "connected" | "failed"
 
-interface IntegrationStatusResponse {
-  integrations?: Array<{ status?: string }>
+interface SetupSessionStatusResponse {
+  provider: string | null
+  status: SetupSessionStatus
 }
 
 interface WaitForConnectionOptions {
   client: OutlitClient
-  provider: string
+  sessionId: string
   displayName: string
 }
 
-/** Polls the preferred status projection until browser authentication advances or times out. */
+export class IntegrationAuthTimeoutError extends Error {
+  constructor() {
+    super("Integration authentication timed out after 5 minutes.")
+    this.name = "IntegrationAuthTimeoutError"
+  }
+}
+
+export class IntegrationAuthError extends Error {
+  readonly status: "expired" | "failed"
+
+  constructor(status: "expired" | "failed") {
+    super(`Integration authentication ${status}.`)
+    this.name = "IntegrationAuthError"
+    this.status = status
+  }
+}
+
+/** Polls only the actor-bound compatibility setup session until authentication completes. */
 export async function waitForIntegrationConnection({
   client,
-  provider,
+  sessionId,
   displayName,
 }: WaitForConnectionOptions): Promise<void> {
   const spinner = createSpinner(`Waiting for ${displayName} authentication...`)
 
-  const result = await pollUntil<IntegrationStatusResponse>(
+  const result = await pollUntil<SetupSessionStatusResponse>(
     () =>
       client
-        .callTool("outlit_get_integration_status", { provider })
-        .then((response) => response as IntegrationStatusResponse),
-    (response) => terminalIntegrationStatuses.has(response.integrations?.[0]?.status ?? ""),
+        .callTool("outlit_get_integration_setup_status", { sessionId })
+        .then((response) => response as SetupSessionStatusResponse),
+    (response) => response.status !== "pending",
     {
       intervalMs: 2_000,
       timeoutMs: 300_000,
@@ -42,18 +54,20 @@ export async function waitForIntegrationConnection({
     },
   )
 
-  const status = result?.integrations?.[0]?.status
-  if (!result || !status || status === "not_connected") {
+  if (!result) {
     spinner.fail("Connection timed out")
-    console.log("\n  Authentication did not complete before the handoff expired.")
-    process.exit(1)
+    throw new IntegrationAuthTimeoutError()
   }
 
-  if (status === "needs_attention") {
-    spinner.fail(`${displayName} needs attention`)
-    process.exit(1)
+  if (result.status === "expired" || result.status === "failed") {
+    spinner.fail(`${displayName} authentication ${result.status}`)
+    throw new IntegrationAuthError(result.status)
+  }
+
+  if (result.status !== "connected") {
+    spinner.fail("Connection timed out")
+    throw new IntegrationAuthTimeoutError()
   }
 
   spinner.stop(`${displayName} authentication completed`)
-  console.log("    Outlit will continue setup and initial synchronization automatically.")
 }

@@ -47,7 +47,8 @@
     "citty": "^0.2.1"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "node-pty": "^1.1.0",
+    "typescript": "^5.9.3"
   }
 }

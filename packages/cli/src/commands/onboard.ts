@@ -22,7 +22,7 @@ interface IntegrationProviderCapability {
   setupMode?: string
 }
 
-interface IntegrationListItem {
+interface IntegrationStatusItem {
   status?: string
 }
 
@@ -235,20 +235,20 @@ async function checkIntegrationReadiness(
       message: `${providers.length} provider setup capabilities available`,
     })
 
-    const integrations = (await client.callTool("outlit_list_integrations", {})) as {
-      integrations?: IntegrationListItem[]
+    const integrations = (await client.callTool("outlit_get_integration_status", {})) as {
+      integrations?: IntegrationStatusItem[]
     }
     const items = Array.isArray(integrations.integrations) ? integrations.integrations : []
-    summary.connectedCount = items.filter((item) => item.status === "connected").length
-    summary.errorCount = items.filter((item) => item.status === "error").length
+    summary.connectedCount = items.filter((item) => item.status === "ready").length
+    summary.errorCount = items.filter((item) => item.status === "requires_intervention").length
 
     checks.push({
       name: "Integrations",
       status: summary.errorCount > 0 ? "warn" : "pass",
       message:
         summary.errorCount > 0
-          ? `${summary.connectedCount} connected, ${summary.errorCount} with errors`
-          : `${summary.connectedCount} connected`,
+          ? `${summary.connectedCount} ready, ${summary.errorCount} requiring intervention`
+          : `${summary.connectedCount} ready`,
     })
   } catch (err) {
     checks.push({

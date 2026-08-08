@@ -29,6 +29,28 @@ describe("createClient", () => {
     await expect(createClient()).rejects.toThrow("Invalid API key format")
   })
 
+  test("rejects non-HTTPS non-loopback API origins before creating a client", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+    process.env.OUTLIT_API_URL = "http://api.example.com"
+
+    await expect(createClient()).rejects.toThrow(
+      "OUTLIT_API_URL must use HTTPS unless it is a loopback development URL",
+    )
+  })
+
+  test.each([
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://[::1]:3000",
+  ])("allows loopback development origin %s", async (baseUrl) => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+    process.env.OUTLIT_API_URL = baseUrl
+
+    const client = await createClient()
+
+    expect(client.baseUrl).toBe(baseUrl)
+  })
+
   test("routes every Core-owned CLI capability through the generated gateway transport", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
     process.env.OUTLIT_API_URL = "https://example.outlit.test"

@@ -16,7 +16,6 @@ const mockCallTool = mock(
         name: "Slack",
         category: "communication",
         status: "ready",
-        lastDataReceivedAt: new Date().toISOString(),
       },
     ],
   }),
@@ -43,7 +42,6 @@ describe("integrations status", () => {
           name: "Slack",
           category: "communication",
           status: "ready",
-          lastDataReceivedAt: new Date().toISOString(),
         },
       ],
     }))
@@ -76,7 +74,7 @@ describe("integrations status", () => {
     expect(Object.keys(statusCmd.args ?? {})).toEqual(["api-key", "json", "provider"])
   })
 
-  test("passes provider aliases through to Core", async () => {
+  test("normalizes the Gmail alias before calling Core", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
     await captureStdout(() =>
       statusCmd.run!({ args: { provider: "gmail", json: true } } as Parameters<
@@ -85,7 +83,7 @@ describe("integrations status", () => {
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_status", {
-      provider: "gmail",
+      provider: "google-mail",
     })
   })
 
@@ -96,8 +94,7 @@ describe("integrations status", () => {
           provider: "hubspot",
           name: "HubSpot",
           category: "crm",
-          status: "setup_incomplete",
-          lastDataReceivedAt: null,
+          status: "setup_required",
         },
       ],
     }))
@@ -112,8 +109,7 @@ describe("integrations status", () => {
     expect(parsed).toEqual({
       integrations: [
         expect.objectContaining({
-          status: "setup_incomplete",
-          lastDataReceivedAt: null,
+          status: "setup_required",
         }),
       ],
     })
@@ -131,6 +127,7 @@ describe("integrations status", () => {
       expect(output).toContain("Name")
       expect(output).toContain("Status")
       expect(output).toContain("Slack")
+      expect(output).not.toContain("First Data")
     } finally {
       logSpy.mockRestore()
       setNonInteractive()
@@ -150,5 +147,28 @@ describe("integrations status", () => {
         >[0]),
       "api_error",
     )
+  })
+
+  test.each([
+    "not_connected",
+    "awaiting_auth",
+    "setup_required",
+    "ready",
+    "requires_intervention",
+  ])("returns raw JSON and exits successfully for valid state %s", async (status) => {
+    mockCallTool.mockImplementationOnce(async () => ({
+      integrations: [{ provider: "hubspot", name: "HubSpot", category: "crm", status }],
+    }))
+
+    const { default: statusCmd } = await import("../../../src/commands/integrations/status")
+    const result = await captureStdout(() =>
+      statusCmd.run!({ args: { provider: "hubspot", json: true } } as Parameters<
+        NonNullable<typeof statusCmd.run>
+      >[0]),
+    )
+
+    expect(result).toEqual({
+      integrations: [{ provider: "hubspot", name: "HubSpot", category: "crm", status }],
+    })
   })
 })

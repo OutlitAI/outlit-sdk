@@ -13,9 +13,9 @@ Outlit exposes model-safe platform configuration through `POST /api/tools/call`.
 | Activation | Get, preview, and update the ordinary customer activation event |
 | Workspace settings | Get and update the workspace timezone |
 | Behavior Metrics | List eligible sources, list source-scoped event candidates, and create event-based metrics |
-| Integrations | List, inspect capabilities, begin browser setup, and inspect setup/sync status |
+| Integrations | List, negotiate and perform bounded setup, and inspect configuration readiness |
 
-Destination results expose masked configuration. The public surface does not include destination option discovery, report settings, provider credentials, setup steps, integration disconnect, secret reveal/rotation, arbitrary notification sending, or generic agent/automation/signal administration.
+Destination results expose masked configuration. Integration setup accepts only the generated provider-specific credential and configuration shapes and never returns submitted credentials. The public surface does not include destination option discovery, report settings, integration disconnect, secret reveal/rotation, arbitrary notification sending, or generic agent/automation/signal administration.
 
 Authored CLI commands preserve a resource-oriented experience while all retained commands call the same gateway:
 

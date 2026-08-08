@@ -22,7 +22,9 @@ export function isPublicToolName(value: string): value is PublicToolName {
   return publicToolNameSet.has(value)
 }
 
-export function getPublicToolContract(name: PublicToolName): PublicToolContract {
+export function getPublicToolContract<TName extends PublicToolName>(
+  name: TName,
+): (typeof publicToolContracts)[TName] {
   return publicToolContracts[name]
 }
 
