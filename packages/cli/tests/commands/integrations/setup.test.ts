@@ -19,7 +19,18 @@ const mockPassword = mock(async () => "synthetic-secret")
 const mockText = mock(async () => "visible-value")
 const mockSelect = mock(async () => "us")
 const mockConfirm = mock(async () => true)
+const mockSpinnerUpdate = mock((_message: string) => {})
+const mockSpinnerStop = mock((_message: string) => {})
+const mockSpinnerFail = mock((_message: string) => {})
 const promptCancelled = Symbol("prompt-cancelled")
+
+class MockIntegrationAuthTimeoutError extends Error {}
+
+class MockIntegrationAuthError extends Error {
+  constructor(readonly status: "expired" | "failed") {
+    super(`Integration authentication ${status}.`)
+  }
+}
 
 mock.module("../../../src/lib/tty", () => ({
   isUnicodeSupported: true,
@@ -31,8 +42,16 @@ mock.module("../../../src/lib/tty", () => ({
 
 mock.module("../../../src/commands/integrations/wait-for-connection", () => ({
   waitForIntegrationConnection: mockWaitForIntegrationConnection,
-  IntegrationAuthError: class IntegrationAuthError extends Error {},
-  IntegrationAuthTimeoutError: class IntegrationAuthTimeoutError extends Error {},
+  IntegrationAuthError: MockIntegrationAuthError,
+  IntegrationAuthTimeoutError: MockIntegrationAuthTimeoutError,
+}))
+
+mock.module("../../../src/lib/spinner", () => ({
+  createSpinner: () => ({
+    update: mockSpinnerUpdate,
+    stop: mockSpinnerStop,
+    fail: mockSpinnerFail,
+  }),
 }))
 
 mock.module("@clack/prompts", () => ({
@@ -108,6 +127,10 @@ describe("integrations setup", () => {
     mockText.mockClear()
     mockSelect.mockClear()
     mockConfirm.mockClear()
+    mockSpinnerUpdate.mockClear()
+    mockSpinnerStop.mockClear()
+    mockSpinnerFail.mockClear()
+    mockSpinnerFail.mockImplementation(() => {})
     mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
       if (toolName === "outlit_get_integration_capabilities") {
         const provider = String(input.provider)
@@ -153,22 +176,153 @@ describe("integrations setup", () => {
     })
 
     const { default: setup } = await import("../../../src/commands/integrations/setup")
-    const stdinSpy = spyOn(Bun.stdin, "text").mockResolvedValue(
-      JSON.stringify({ credentials: { apiKey: "must-not-be-read" } }),
-    )
-    try {
-      await captureStdout(() =>
-        setup.run!({ args: { provider: "hubspot", json: true, "config-stdin": true } } as never),
-      )
-    } finally {
-      stdinSpy.mockRestore()
-    }
+    await captureStdout(() => setup.run!({ args: { provider: "hubspot", json: true } } as never))
 
     expect(mockCallTool).toHaveBeenCalledTimes(2)
     expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_begin_integration_setup", {
       provider: "hubspot",
     })
+  })
+
+  test.each([
+    ["--config-stdin", { "config-stdin": true }],
+    ["--accept-recommended", { "accept-recommended": true }],
+  ])("rejects %s on old Core before reading or transmitting input", async (_flag, flagArgs) => {
+    const secret = "synthetic-legacy-secret-never-read"
+    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
+      if (toolName === "outlit_get_integration_capabilities") {
+        return { providers: [capability(String(input.provider))] }
+      }
+      if (toolName === "outlit_begin_integration_setup") {
+        return {
+          provider: input.provider,
+          state: "handoff_ready",
+          sessionId: "00000000-0000-4000-8000-000000000001",
+          connectUrl: "https://app.outlit.ai/integrations/connect",
+          expiresAt: "2026-08-04T22:00:00.000Z",
+        }
+      }
+      throw new Error(`unexpected tool ${toolName}`)
+    })
+
+    const { default: setup } = await import("../../../src/commands/integrations/setup")
+    const stdinSpy = spyOn(Bun.stdin, "text").mockResolvedValue(
+      JSON.stringify({ credentials: { apiKey: secret } }),
+    )
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    let thrown: unknown
+    let stderrWritten = ""
+    try {
+      await setup.run!({
+        args: { provider: "hubspot", json: true, ...flagArgs },
+      } as never)
+    } catch (error) {
+      thrown = error
+      stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
+    } finally {
+      stdinSpy.mockRestore()
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+    }
+
+    expect(thrown).toBeInstanceOf(ExitError)
+    expect(JSON.parse(stderrWritten)).toMatchObject({ code: "unsupported_core_version" })
+    expect(stderrWritten).not.toContain(secret)
     expect(stdinSpy).not.toHaveBeenCalled()
+    expect(mockCallTool).toHaveBeenCalledTimes(1)
+    expect(mockOpenBrowser).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    ["a missing handoff URL", null],
+    ["an untrusted handoff URL", "https://untrusted.example/connect"],
+  ])("fails the legacy spinner before reporting %s", async (_case, connectUrl) => {
+    setInteractive()
+    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
+      if (toolName === "outlit_get_integration_capabilities") {
+        return { providers: [capability(String(input.provider))] }
+      }
+      if (toolName === "outlit_begin_integration_setup") {
+        return {
+          provider: input.provider,
+          state: "handoff_ready",
+          sessionId: null,
+          connectUrl,
+          expiresAt: null,
+        }
+      }
+      throw new Error(`unexpected tool ${toolName}`)
+    })
+
+    const events: string[] = []
+    mockSpinnerFail.mockImplementationOnce(() => {
+      events.push("spinner.fail")
+    })
+    const errorSpy = spyOn(console, "error").mockImplementation(() => {
+      events.push("outputError")
+    })
+    const exitSpy = mockExitThrow()
+    let thrown: unknown
+    try {
+      const { default: setup } = await import("../../../src/commands/integrations/setup")
+      await setup.run!({ args: { provider: "hubspot" } } as never)
+    } catch (error) {
+      thrown = error
+    } finally {
+      errorSpy.mockRestore()
+      exitSpy.mockRestore()
+    }
+
+    expect(thrown).toBeInstanceOf(ExitError)
+    expect(events).toEqual(["spinner.fail", "outputError"])
+  })
+
+  test.each([
+    ["timeout", new MockIntegrationAuthTimeoutError(), "AUTH_TIMEOUT"],
+    ["expired", new MockIntegrationAuthError("expired"), "AUTH_TIMEOUT"],
+    ["failed", new MockIntegrationAuthError("failed"), "AUTH_FAILED"],
+    ["unexpected error", new Error("unexpected poll failure"), "AUTH_FAILED"],
+  ])("maps a legacy %s poll outcome conservatively", async (_case, pollError, expectedCode) => {
+    setInteractive()
+    mockWaitForIntegrationConnection.mockImplementationOnce(async () => {
+      throw pollError
+    })
+    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
+      if (toolName === "outlit_get_integration_capabilities") {
+        return { providers: [capability(String(input.provider))] }
+      }
+      if (toolName === "outlit_begin_integration_setup") {
+        return {
+          provider: input.provider,
+          state: "handoff_ready",
+          sessionId: "00000000-0000-4000-8000-000000000001",
+          connectUrl: "https://app.outlit.ai/integrations/connect",
+          expiresAt: "2026-08-04T22:00:00.000Z",
+        }
+      }
+      throw new Error(`unexpected tool ${toolName}`)
+    })
+
+    const outputModule = await import("../../../src/lib/output")
+    let capturedError: { message: string; code?: string } | undefined
+    const outputErrorSpy = spyOn(outputModule, "outputError").mockImplementation(((error: {
+      message: string
+      code?: string
+    }) => {
+      capturedError = error
+      throw new ExitError(1)
+    }) as typeof outputModule.outputError)
+    try {
+      const { default: setup } = await import("../../../src/commands/integrations/setup")
+      await expect(setup.run!({ args: { provider: "hubspot" } } as never)).rejects.toBeInstanceOf(
+        ExitError,
+      )
+    } finally {
+      outputErrorSpy.mockRestore()
+    }
+
+    expect(capturedError?.code).toBe(expectedCode)
   })
 
   test("returns an OAuth handoff unchanged in JSON without opening or polling", async () => {

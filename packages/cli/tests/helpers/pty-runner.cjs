@@ -7,7 +7,13 @@ const helperCandidates = [
   path.join(packageRoot, "prebuilds", `${process.platform}-${process.arch}`, "spawn-helper"),
 ]
 const spawnHelper = helperCandidates.find(existsSync)
-if (spawnHelper) chmodSync(spawnHelper, 0o755)
+if (spawnHelper) {
+  try {
+    chmodSync(spawnHelper, 0o755)
+  } catch {
+    process.stderr.write("Could not set executable permission on the node-pty spawn helper.\n")
+  }
+}
 
 const { spawn } = require("node-pty")
 const scenario = process.argv[2] || "success"
@@ -50,7 +56,9 @@ terminal.onData((data) => {
 })
 
 terminal.onExit(({ exitCode, signal }) => {
-  if (!finished) fail(`PTY exited before echo verification (exit ${exitCode}, signal ${signal})`)
+  setImmediate(() => {
+    if (!finished) fail(`PTY exited before echo verification (exit ${exitCode}, signal ${signal})`)
+  })
 })
 
 const timeout = setTimeout(() => fail("Timed out waiting for PTY scenario"), 10_000)

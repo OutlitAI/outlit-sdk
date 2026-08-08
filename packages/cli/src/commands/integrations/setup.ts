@@ -131,6 +131,16 @@ export default defineCommand({
     )
 
     if (preferredSetupVersion !== 1) {
+      if (args["config-stdin"] || args["accept-recommended"]) {
+        return outputError(
+          {
+            message:
+              "This Outlit deployment does not support negotiated setup; --config-stdin and --accept-recommended are unavailable.",
+            code: "unsupported_core_version",
+          },
+          json,
+        )
+      }
       return runLegacySetup(client, capability, json, machineMode)
     }
 
@@ -396,11 +406,15 @@ async function runLegacySetup(
     return outputResult({ status: "already_connected", ...setup, capabilities: capability })
   }
 
-  if (!setup.connectUrl) return invalidSetupResponse(json)
+  if (!setup.connectUrl) {
+    spinner.fail(`Failed to start ${capability.name} setup`)
+    return invalidSetupResponse(json)
+  }
   let connectUrl: string
   try {
     connectUrl = validateHandoffUrl(setup.connectUrl, client.baseUrl)
   } catch {
+    spinner.fail(`Failed to start ${capability.name} setup`)
     return invalidSetupResponse(json)
   }
 
@@ -415,12 +429,21 @@ async function runLegacySetup(
           sessionId: setup.sessionId,
           displayName: capability.name,
         })
-      } catch {
+      } catch (error) {
+        if (
+          error instanceof IntegrationAuthTimeoutError ||
+          (error instanceof IntegrationAuthError && error.status === "expired")
+        ) {
+          return outputError(
+            {
+              message: "Integration authentication timed out after 5 minutes.",
+              code: "AUTH_TIMEOUT",
+            },
+            json,
+          )
+        }
         return outputError(
-          {
-            message: "Integration authentication timed out after 5 minutes.",
-            code: "AUTH_TIMEOUT",
-          },
+          { message: "Integration authentication failed.", code: "AUTH_FAILED" },
           json,
         )
       }
