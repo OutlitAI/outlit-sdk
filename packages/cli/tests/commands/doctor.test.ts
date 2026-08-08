@@ -4,8 +4,7 @@ import { join } from "node:path"
 import { ExitError, mockExitThrow, setNonInteractive, TEST_API_KEY, useTempEnv } from "../helpers"
 
 const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
-  items: [],
-  pagination: { hasMore: false },
+  integrations: [],
 }))
 
 mock.module("../../src/lib/client", () => ({
@@ -111,6 +110,7 @@ describe("doctor command", () => {
     const checks = parsed.checks as Array<Record<string, unknown>>
     expect(Array.isArray(checks)).toBe(true)
     expect(checks.every((c) => c.name && c.status && c.message)).toBe(true)
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_status", {})
   })
 
   test("reports detected coding agents as missing until the outlit skill is installed", async () => {

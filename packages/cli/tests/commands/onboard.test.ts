@@ -56,8 +56,8 @@ const capabilitiesPayload = {
 
 const integrationsPayload = {
   integrations: [
-    { id: "pylon", name: "Pylon", status: "connected" },
-    { id: "hubspot", name: "HubSpot", status: "available" },
+    { provider: "pylon", name: "Pylon", category: "support", status: "ready" },
+    { provider: "hubspot", name: "HubSpot", category: "crm", status: "not_connected" },
   ],
 }
 
@@ -152,6 +152,16 @@ describe("onboard", () => {
     })
     expect(parsed.nextActions).toContain("outlit doctor --json")
     expect(parsed.nextActions).toContain("outlit integrations setup <provider> --json")
+    const toolBodies = fetchSpy.mock.calls
+      .slice(1)
+      .map(
+        (call: unknown[]) =>
+          JSON.parse(String((call[1] as RequestInit | undefined)?.body)) as { tool: string },
+      )
+    expect(toolBodies.map((body: { tool: string }) => body.tool)).toEqual([
+      "outlit_get_integration_capabilities",
+      "outlit_get_integration_status",
+    ])
   })
 
   test("starts browser auth when no API key exists", async () => {

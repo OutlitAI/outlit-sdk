@@ -60,13 +60,14 @@ describe("toolsets", () => {
       "outlit_begin_integration_setup",
       "outlit_get_integration_setup_status",
       "outlit_get_integration_status",
+      "outlit_setup_integration",
       "outlit_get_customer_activation",
       "outlit_preview_customer_activation",
       "outlit_update_customer_activation",
       "outlit_get_workspace_settings",
       "outlit_update_workspace_settings",
     ])
-    expect(allPublicToolNames).toHaveLength(33)
+    expect(allPublicToolNames).toHaveLength(34)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -175,7 +176,7 @@ describe("tool contracts", () => {
     const workspaceUsersContract = getPublicToolContract("outlit_list_workspace_users")
     const workspaceProperties = workspaceUsersContract.inputSchema.properties as Record<
       string,
-      { type?: string; enum?: string[] }
+      { type?: string; enum?: readonly string[] }
     >
 
     expect(workspaceProperties.search).toEqual(
@@ -269,7 +270,7 @@ describe("tool contracts", () => {
     const contract = getPublicToolContract("outlit_list_facts")
     const properties = contract.inputSchema.properties as Record<
       string,
-      { items?: { enum?: string[] } }
+      { items?: { enum?: readonly string[] } }
     >
 
     expect(properties.factTypes?.items?.enum).not.toContain("CORE_ACTION_DECAY")
@@ -311,14 +312,14 @@ describe("tool contracts", () => {
     const exactSourceContract = getPublicToolContract("outlit_get_source")
     const exactSourceProperties = exactSourceContract.inputSchema.properties as Record<
       string,
-      { enum?: string[] }
+      { enum?: readonly string[] }
     >
     expect(exactSourceProperties.sourceType?.enum).toEqual(customerSourceTypeInputs)
 
     const searchContract = getPublicToolContract("outlit_search_customer_context")
     const searchProperties = searchContract.inputSchema.properties as Record<
       string,
-      { items?: { enum?: string[] } }
+      { items?: { enum?: readonly string[] } }
     >
     expect(searchProperties.sourceTypes?.items?.enum).toEqual(customerSourceTypeInputs)
   })

@@ -2,7 +2,7 @@ import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
-import { capitalize, relativeDate, truncate } from "../../lib/format"
+import { capitalize, truncate } from "../../lib/format"
 import { normalizeProviderInput } from "../../lib/providers"
 
 export default defineCommand({
@@ -13,7 +13,7 @@ export default defineCommand({
       "",
       "Without a provider name, shows the status of every available integration.",
       "With a provider name, returns its single canonical readiness status.",
-      "Browser-auth session and raw provider-state details stay internal to Outlit.",
+      "Status reports configuration readiness, not sync, backfill, or data availability.",
       "",
       "Examples:",
       "  outlit integrations status",
@@ -44,7 +44,6 @@ export default defineCommand({
           { header: "Name", key: "name", format: (value) => truncate(value, 24) },
           { header: "Category", key: "category", format: capitalize },
           { header: "Status", key: "status" },
-          { header: "First Data", key: "lastDataReceivedAt", format: relativeDate },
         ],
       },
     })

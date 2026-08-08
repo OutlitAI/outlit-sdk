@@ -479,6 +479,22 @@
                     "properties": {
                       "tool": {
                         "type": "string",
+                        "const": "outlit_setup_integration"
+                      },
+                      "input": {
+                        "$ref": "#/components/schemas/ToolInput_outlit_setup_integration"
+                      }
+                    },
+                    "required": [
+                      "tool"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
                         "const": "outlit_get_customer_activation"
                       },
                       "input": {
@@ -652,6 +668,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_get_integration_status"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ToolOutput_outlit_setup_integration"
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_get_customer_activation"
@@ -2921,11 +2940,463 @@
         "properties": {
           "provider": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 80
+            "enum": [
+              "salesforce",
+              "hubspot",
+              "attio",
+              "slack",
+              "google-calendar",
+              "google-mail",
+              "granola",
+              "gong",
+              "fireflies",
+              "pylon",
+              "stripe",
+              "mixpanel",
+              "posthog",
+              "supabase",
+              "clerk"
+            ]
           }
         },
         "additionalProperties": false
+      },
+      "ToolInput_outlit_setup_integration": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "salesforce",
+                  "hubspot",
+                  "attio"
+                ]
+              },
+              "configuration": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "crm_mapping"
+                  },
+                  "mappings": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "pipelineId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "pipelineName": {
+                          "type": "string"
+                        },
+                        "mappings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "outlitStage": {
+                                "type": "string",
+                                "enum": [
+                                  "Created",
+                                  "Quoting",
+                                  "Negotiation",
+                                  "Won",
+                                  "Lost"
+                                ]
+                              },
+                              "crmStages": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "name"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              }
+                            },
+                            "required": [
+                              "outlitStage",
+                              "crmStages"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "pipelineId",
+                        "pipelineName",
+                        "mappings"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "confirm": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "kind",
+                  "mappings",
+                  "confirm"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "slack",
+                  "google-calendar",
+                  "google-mail",
+                  "gong"
+                ]
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "const": "stripe"
+              },
+              "connectionMode": {
+                "type": "string",
+                "const": "oauth"
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "const": "stripe"
+              },
+              "connectionMode": {
+                "type": "string",
+                "const": "restricted_key"
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^rk_.*"
+                  }
+                },
+                "required": [
+                  "apiKey"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "provider",
+              "connectionMode"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "const": "granola"
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "authScope": {
+                    "default": "personal",
+                    "type": "string",
+                    "enum": [
+                      "personal",
+                      "enterprise"
+                    ]
+                  },
+                  "enterpriseKeyAcknowledged": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "apiKey"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "const": "fireflies"
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "apiKey"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "const": "pylon"
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "apiToken": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "apiToken"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "const": "mixpanel"
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "secret": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "projectId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "us",
+                      "eu",
+                      "in"
+                    ]
+                  }
+                },
+                "required": [
+                  "username",
+                  "secret",
+                  "projectId",
+                  "region"
+                ],
+                "additionalProperties": false
+              },
+              "configuration": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "mixpanel_mapping"
+                  },
+                  "mapping": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "mode": {
+                            "type": "string",
+                            "const": "group_key"
+                          },
+                          "groupKey": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "mode",
+                          "groupKey"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "mode": {
+                            "type": "string",
+                            "const": "event_property"
+                          },
+                          "propertyName": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "mode",
+                          "propertyName"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "mode": {
+                            "type": "string",
+                            "const": "email_domain"
+                          }
+                        },
+                        "required": [
+                          "mode"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "confirm": {
+                    "type": "boolean",
+                    "const": true
+                  }
+                },
+                "required": [
+                  "kind",
+                  "mapping",
+                  "confirm"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "const": "posthog"
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 10,
+                    "pattern": "^phx_.*"
+                  },
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "us",
+                      "eu"
+                    ]
+                  },
+                  "projectId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^\\d+$"
+                  }
+                },
+                "required": [
+                  "apiKey",
+                  "region",
+                  "projectId"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "clerk",
+                  "supabase"
+                ]
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "additionalProperties": false
+          }
+        ]
       },
       "ToolInput_outlit_get_customer_activation": {
         "type": "object",
@@ -9028,39 +9499,7 @@
                     "support"
                   ]
                 },
-                "status": {
-                  "type": "string",
-                  "enum": [
-                    "available",
-                    "connected",
-                    "setup_required"
-                  ]
-                },
-                "lastDataReceivedAt": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "syncStatus": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 80
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "hasSyncError": {
+                "isConnected": {
                   "type": "boolean"
                 }
               },
@@ -9068,10 +9507,7 @@
                 "provider",
                 "name",
                 "category",
-                "status",
-                "lastDataReceivedAt",
-                "syncStatus",
-                "hasSyncError"
+                "isConnected"
               ],
               "additionalProperties": false
             }
@@ -9142,6 +9578,10 @@
               ],
               "additionalProperties": false
             }
+          },
+          "preferredSetupVersion": {
+            "type": "number",
+            "const": 1
           }
         },
         "required": [
@@ -9276,22 +9716,9 @@
                   "enum": [
                     "not_connected",
                     "awaiting_auth",
-                    "setup_incomplete",
-                    "synchronizing",
+                    "setup_required",
                     "ready",
-                    "needs_attention"
-                  ]
-                },
-                "lastDataReceivedAt": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                    },
-                    {
-                      "type": "null"
-                    }
+                    "requires_intervention"
                   ]
                 }
               },
@@ -9299,8 +9726,7 @@
                 "provider",
                 "name",
                 "category",
-                "status",
-                "lastDataReceivedAt"
+                "status"
               ],
               "additionalProperties": false
             }
@@ -9308,6 +9734,379 @@
         },
         "required": [
           "integrations"
+        ],
+        "additionalProperties": false
+      },
+      "ToolOutput_outlit_setup_integration": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "salesforce",
+              "hubspot",
+              "attio",
+              "slack",
+              "google-calendar",
+              "google-mail",
+              "granola",
+              "gong",
+              "fireflies",
+              "pylon",
+              "stripe",
+              "mixpanel",
+              "posthog",
+              "supabase",
+              "clerk"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "crm",
+              "communication",
+              "storage",
+              "calls",
+              "calendar",
+              "analytics",
+              "billing",
+              "support"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "not_connected",
+              "awaiting_auth",
+              "setup_required",
+              "ready",
+              "requires_intervention"
+            ]
+          },
+          "next": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "browser_handoff"
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "authentication",
+                          "recovery",
+                          "external_setup"
+                        ]
+                      },
+                      "url": {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      "sessionId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "expiresAt": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "purpose",
+                      "url",
+                      "sessionId",
+                      "expiresAt"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "crm_mapping"
+                      },
+                      "recommendation": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "pipelineId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "pipelineName": {
+                              "type": "string"
+                            },
+                            "mappings": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "outlitStage": {
+                                    "type": "string",
+                                    "enum": [
+                                      "Created",
+                                      "Quoting",
+                                      "Negotiation",
+                                      "Won",
+                                      "Lost"
+                                    ]
+                                  },
+                                  "crmStages": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "name": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "name"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "outlitStage",
+                                  "crmStages"
+                                ],
+                                "additionalProperties": false
+                              }
+                            }
+                          },
+                          "required": [
+                            "pipelineId",
+                            "pipelineName",
+                            "mappings"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "recommendation"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "mixpanel_mapping"
+                      },
+                      "preview": {
+                        "type": "object",
+                        "properties": {
+                          "sampleSize": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "sampleWindowStartAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                          },
+                          "sampleWindowEndAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                          },
+                          "accountKeyCoveragePct": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 100
+                          },
+                          "emailOrDomainCoveragePct": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 100
+                          },
+                          "unmappedPct": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 100
+                          },
+                          "matchedCustomerCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "opaqueOnlyUnmappedCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "candidateAccountKeys": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "key": {
+                                  "type": "string"
+                                },
+                                "count": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "coveragePct": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 100
+                                }
+                              },
+                              "required": [
+                                "key",
+                                "count",
+                                "coveragePct"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "unmappedReasons": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "reason": {
+                                  "type": "string",
+                                  "enum": [
+                                    "missing_account_key",
+                                    "missing_email_or_domain",
+                                    "no_matching_customer"
+                                  ]
+                                },
+                                "count": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": [
+                                "reason",
+                                "count"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "warnings": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "sampleSize",
+                          "sampleWindowStartAt",
+                          "sampleWindowEndAt",
+                          "accountKeyCoveragePct",
+                          "emailOrDomainCoveragePct",
+                          "unmappedPct",
+                          "matchedCustomerCount",
+                          "opaqueOnlyUnmappedCount",
+                          "candidateAccountKeys",
+                          "unmappedReasons",
+                          "warnings"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "preview"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "enum": [
+                      "OWNER_REQUIRED",
+                      "CONNECTION_CONFLICT",
+                      "CREDENTIAL_REQUIRED",
+                      "CREDENTIAL_REJECTED",
+                      "LEGACY_CONNECTION_REQUIRED",
+                      "HANDOFF_UNAVAILABLE",
+                      "TRANSIENT_FAILURE"
+                    ]
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "retryable"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "provider",
+          "name",
+          "category",
+          "status",
+          "next",
+          "error"
         ],
         "additionalProperties": false
       },
@@ -9577,5 +10376,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "460205ef9e794a9e937f01144a619bc107c92cb909fd574a5f1d6ab6a2b5d947"
+  "x-outlit-contract-hash": "43562eed8ffac2164828ce38f1e39a5df58960b08564c35d238d9e4566bc243c"
 }

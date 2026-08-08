@@ -168,42 +168,44 @@ async function checkIntegrations(apiKey: string): Promise<CheckResult> {
       setTimeout(() => reject(new Error("Integrations check timed out")), 10_000),
     )
     const data = (await Promise.race([
-      client.callTool("outlit_list_integrations", {}),
+      client.callTool("outlit_get_integration_status", {}),
       timeout,
     ])) as {
-      items?: Array<{ status: string }>
+      integrations?: Array<{ status: string }>
     }
-    const items = data.items ?? []
-    const connected = items.filter((i) => i.status === "connected").length
-    const errors = items.filter((i) => i.status === "error").length
+    const items = data.integrations ?? []
+    const ready = items.filter((item) => item.status === "ready").length
+    const requiringIntervention = items.filter(
+      (item) => item.status === "requires_intervention",
+    ).length
 
-    if (errors > 0) {
+    if (requiringIntervention > 0) {
       return {
         name: "Integrations",
         status: "warn",
-        message: `${connected} connected, ${errors} with errors`,
+        message: `${ready} ready, ${requiringIntervention} requiring intervention`,
         detail: "Run `outlit integrations status` for details",
       }
     }
-    if (connected === 0) {
+    if (ready === 0) {
       return {
         name: "Integrations",
         status: "pass",
-        message: "No integrations connected",
+        message: "No integrations ready",
         detail: "Run `outlit integrations status` to inspect integrations",
       }
     }
     return {
       name: "Integrations",
       status: "pass",
-      message: `${connected} integration(s) connected`,
+      message: `${ready} integration(s) ready`,
     }
   } catch {
     return {
       name: "Integrations",
       status: "warn",
       message: "Could not check integrations",
-      detail: "Integration status endpoint may not be available yet",
+      detail: "Integration readiness may not be available yet",
     }
   }
 }
