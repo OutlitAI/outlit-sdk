@@ -13,7 +13,10 @@ afterEach(() => {
 
 describe("PTY Node subprocess", () => {
   test("prefers the absolute Node binary supplied by the workflow", async () => {
-    process.env.OUTLIT_NODE_BINARY = "/bin/sh"
+    const nodeBinary = originalNodeBinary ?? Bun.which("node")
+    if (!nodeBinary) throw new Error("Node.js is required for the PTY test harness")
+
+    process.env.OUTLIT_NODE_BINARY = nodeBinary
     let command: readonly string[] | undefined
     const spawnSpy = spyOn(Bun, "spawn").mockImplementation(((args: readonly string[]) => {
       command = args
@@ -28,7 +31,23 @@ describe("PTY Node subprocess", () => {
       spawnSpy.mockRestore()
     }
 
-    expect(command?.[0]).toBe("/bin/sh")
+    expect(command?.[0]).toBe(nodeBinary)
+  })
+
+  test("rejects an arbitrary absolute executable before spawning", async () => {
+    process.env.OUTLIT_NODE_BINARY = "/bin/sh"
+    const spawnSpy = spyOn(Bun, "spawn").mockImplementation(() => {
+      throw new Error("spawn should not be called")
+    })
+
+    try {
+      await expect(
+        runSecretPromptPtyScenario(import.meta.dir, "success", "synthetic-secret"),
+      ).rejects.toThrow("OUTLIT_NODE_BINARY must point to a Node.js executable")
+      expect(spawnSpy).not.toHaveBeenCalled()
+    } finally {
+      spawnSpy.mockRestore()
+    }
   })
 
   test("rejects a non-absolute workflow binary before spawning", async () => {
