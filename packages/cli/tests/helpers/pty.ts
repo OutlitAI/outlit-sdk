@@ -1,6 +1,10 @@
 import { accessSync, constants } from "node:fs"
 import path from "node:path"
 
+const NODE_IDENTITY_SCRIPT =
+  "process.stdout.write(process.release.name + ':' + process.versions.node)"
+const NODE_IDENTITY_PATTERN = /^node:\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/
+
 export type SecretPromptScenario = "success" | "cancel" | "throw" | "SIGINT" | "SIGTERM"
 
 export interface SecretPromptPtyResult {
@@ -46,5 +50,23 @@ function resolveNodeBinary(): string {
     throw new Error("OUTLIT_NODE_BINARY must be an absolute executable path")
   }
 
+  if (!isNodeExecutable(configuredBinary)) {
+    throw new Error("OUTLIT_NODE_BINARY must point to a Node.js executable")
+  }
+
   return configuredBinary
+}
+
+function isNodeExecutable(binary: string): boolean {
+  try {
+    const result = Bun.spawnSync([binary, "--eval", NODE_IDENTITY_SCRIPT], {
+      stdout: "pipe",
+      stderr: "ignore",
+    })
+    if (result.exitCode !== 0) return false
+
+    return NODE_IDENTITY_PATTERN.test(new TextDecoder().decode(result.stdout).trim())
+  } catch {
+    return false
+  }
 }
