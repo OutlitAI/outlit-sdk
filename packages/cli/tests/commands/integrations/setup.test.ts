@@ -302,6 +302,41 @@ describe("integrations setup", () => {
     expect(result).toEqual(setupResult())
   })
 
+  test("accepts the CRM recommendation without prompting when the interactive flag is set", async () => {
+    setInteractive()
+    const recommendation = [
+      {
+        pipelineId: "default",
+        pipelineName: "Sales",
+        mappings: [{ outlitStage: "Won", crmStages: [] }],
+      },
+    ]
+    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
+      if (toolName === "outlit_get_integration_capabilities") {
+        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
+      }
+      if (toolName === "outlit_setup_integration" && !input.configuration) {
+        return setupResult({
+          status: "setup_required",
+          next: { kind: "crm_mapping", recommendation },
+        })
+      }
+      if (toolName === "outlit_setup_integration") return setupResult()
+      throw new Error(`unexpected tool ${toolName}`)
+    })
+
+    const { default: setup } = await import("../../../src/commands/integrations/setup")
+    await setup.run!({
+      args: { provider: "hubspot", "accept-recommended": true },
+    } as never)
+
+    expect(mockConfirm).not.toHaveBeenCalled()
+    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_setup_integration", {
+      provider: "hubspot",
+      configuration: { kind: "crm_mapping", mappings: recommendation, confirm: true },
+    })
+  })
+
   test("bounds an interactive OAuth to post-auth CRM flow at three setup calls", async () => {
     setInteractive()
     const recommendation = [
@@ -517,6 +552,65 @@ describe("integrations setup", () => {
     )
 
     expect(mockCallTool).toHaveBeenCalledTimes(3)
+  })
+
+  test("displays the returned Mixpanel preview before asking for a mapping", async () => {
+    setInteractive()
+    const preview = {
+      sampleSize: 1,
+      sampleWindowStartAt: "2026-08-01T00:00:00.000Z",
+      sampleWindowEndAt: "2026-08-02T00:00:00.000Z",
+      accountKeyCoveragePct: 100,
+      emailOrDomainCoveragePct: 100,
+      unmappedPct: 0,
+      matchedCustomerCount: 1,
+      opaqueOnlyUnmappedCount: 0,
+      candidateAccountKeys: [{ key: "company_id", count: 1, coveragePct: 100 }],
+      unmappedReasons: [],
+      warnings: ["Synthetic preview warning"],
+    }
+    let setupCalls = 0
+    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
+      if (toolName === "outlit_get_integration_capabilities") {
+        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
+      }
+      if (toolName !== "outlit_setup_integration") throw new Error(`unexpected tool ${toolName}`)
+      setupCalls += 1
+      if (setupCalls === 1) {
+        return setupResult({
+          provider: "mixpanel",
+          name: "Mixpanel",
+          category: "analytics",
+          status: "setup_required",
+          next: { kind: "mixpanel_mapping", preview },
+        })
+      }
+      return setupResult({
+        provider: "mixpanel",
+        name: "Mixpanel",
+        category: "analytics",
+      })
+    })
+
+    const logSpy = spyOn(console, "log").mockImplementation(() => {})
+    let previewSeenBeforeChoice = false
+    mockSelect.mockImplementationOnce(async () => {
+      const output = logSpy.mock.calls.map((call) => call[0]).join("\n")
+      previewSeenBeforeChoice =
+        output.includes("Mixpanel mapping preview") && output.includes("Synthetic preview warning")
+      return "group_key"
+    })
+    mockSelect.mockResolvedValueOnce("company_id")
+
+    try {
+      const { default: setup } = await import("../../../src/commands/integrations/setup")
+      await setup.run!({ args: { provider: "mixpanel" } } as never)
+    } finally {
+      logSpy.mockRestore()
+    }
+
+    expect(setupCalls).toBe(2)
+    expect(previewSeenBeforeChoice).toBe(true)
   })
 
   test("fails with the stable Core setup error without echoing submitted secrets", async () => {

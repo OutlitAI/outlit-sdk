@@ -304,7 +304,7 @@ async function runPreferredSetup(options: {
       if (mappingUsed || transitions.has("crm_mapping")) return stalled(json)
 
       let shouldApply = acceptRecommended
-      if (!machineMode) {
+      if (!acceptRecommended && !machineMode) {
         try {
           shouldApply = await confirmCrmRecommendation()
         } catch (error) {
@@ -334,6 +334,7 @@ async function runPreferredSetup(options: {
 
     if (response.next.kind === "mixpanel_mapping") {
       if (mappingUsed || transitions.has("mixpanel_mapping")) return stalled(json)
+      printMixpanelPreview(response.next.preview, machineMode)
       if (machineMode || suppliedConfig) return finishSetup(response, machineMode)
 
       let mapping: Record<string, string>
@@ -537,6 +538,12 @@ function isLoopbackHostname(hostname: string): boolean {
 function printRecommendation(recommendation: unknown, machineMode: boolean): void {
   if (!machineMode) {
     console.log(`Recommended CRM mapping:\n${JSON.stringify(recommendation, null, 2)}`)
+  }
+}
+
+function printMixpanelPreview(preview: unknown, machineMode: boolean): void {
+  if (!machineMode) {
+    console.log(`Mixpanel mapping preview:\n${JSON.stringify(preview, null, 2)}`)
   }
 }
 
