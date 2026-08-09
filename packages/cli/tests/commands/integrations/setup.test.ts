@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
+import { OutlitToolsApiError, type ToolGatewayErrorEnvelope } from "@outlit/tools"
 import { runCommand } from "citty"
 import {
   captureStdout,
@@ -96,6 +97,34 @@ function setupResult(
   }
 }
 
+function gatewayError(
+  envelope: ToolGatewayErrorEnvelope,
+  status = envelope.retryable ? 503 : 400,
+): OutlitToolsApiError {
+  return new OutlitToolsApiError(status, JSON.stringify(envelope), envelope)
+}
+
+async function captureJsonError(fn: () => Promise<void>): Promise<Record<string, unknown>> {
+  const exitSpy = mockExitThrow()
+  const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+  let thrown: unknown
+  let stderrWritten = ""
+  try {
+    await fn()
+  } catch (error) {
+    thrown = error
+    stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
+  } finally {
+    exitSpy.mockRestore()
+    stderrSpy.mockRestore()
+  }
+
+  expect(thrown).toBeInstanceOf(ExitError)
+  expect((thrown as ExitError).code).toBe(1)
+  return JSON.parse(stderrWritten) as Record<string, unknown>
+}
+
 const mockCallTool = mock(async (toolName: string, input: ToolInput): Promise<unknown> => {
   if (toolName === "outlit_get_integration_capabilities") {
     const provider = String(input.provider)
@@ -156,6 +185,69 @@ describe("integrations setup", () => {
       provider: "hubspot",
     })
     expect(result).toEqual(setupResult())
+  })
+
+  test("preserves an authorization envelope from the capability probe", async () => {
+    const envelope = {
+      code: "TOOL_CALL_FORBIDDEN" as const,
+      message: "API key is missing the required integration grant.",
+      retryable: false,
+      requestId: "request_capability_denied",
+    }
+    mockCallTool.mockRejectedValueOnce(gatewayError(envelope, 403))
+
+    const { default: setup } = await import("../../../src/commands/integrations/setup")
+    const error = await captureJsonError(() =>
+      setup.run!({ args: { provider: "hubspot", json: true } } as never),
+    )
+
+    expect(error).toEqual(envelope)
+  })
+
+  test("preserves a validation envelope from preferred setup", async () => {
+    const envelope = {
+      code: "INVALID_TOOL_INPUT" as const,
+      message: "Integration setup input is invalid.",
+      retryable: false,
+      requestId: "request_setup_invalid",
+    }
+    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
+      if (toolName === "outlit_get_integration_capabilities") {
+        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
+      }
+      if (toolName === "outlit_setup_integration") throw gatewayError(envelope, 400)
+      throw new Error(`unexpected tool ${toolName}`)
+    })
+
+    const { default: setup } = await import("../../../src/commands/integrations/setup")
+    const error = await captureJsonError(() =>
+      setup.run!({ args: { provider: "hubspot", json: true } } as never),
+    )
+
+    expect(error).toEqual(envelope)
+  })
+
+  test("preserves retryability and request ID from a preferred setup failure", async () => {
+    const envelope = {
+      code: "TOOL_IMPLEMENTATION_ERROR" as const,
+      message: "Integration setup is temporarily unavailable.",
+      retryable: true,
+      requestId: "request_setup_retryable",
+    }
+    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
+      if (toolName === "outlit_get_integration_capabilities") {
+        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
+      }
+      if (toolName === "outlit_setup_integration") throw gatewayError(envelope)
+      throw new Error(`unexpected tool ${toolName}`)
+    })
+
+    const { default: setup } = await import("../../../src/commands/integrations/setup")
+    const error = await captureJsonError(() =>
+      setup.run!({ args: { provider: "hubspot", json: true } } as never),
+    )
+
+    expect(error).toEqual(envelope)
   })
 
   test("uses the old-Core browser fallback without sending provider configuration", async () => {

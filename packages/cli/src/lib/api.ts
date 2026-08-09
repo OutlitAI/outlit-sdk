@@ -152,6 +152,27 @@ export async function validateKeyOrExit(
   }
 }
 
+/**
+ * Preserves Core's stable gateway error envelope while keeping untyped failures behind a
+ * caller-owned, non-sensitive fallback message.
+ */
+export function outputApiError(
+  error: unknown,
+  json: boolean,
+  fallback: { message: string; code?: string },
+): never {
+  if (isOutlitToolsApiError(error) && error.envelope) {
+    if (isJsonMode(json)) {
+      process.stderr.write(`${JSON.stringify(error.envelope, null, 2)}\n`)
+      process.exit(1)
+    }
+
+    return outputError({ message: error.envelope.message, code: error.envelope.code }, json)
+  }
+
+  return outputError(fallback, json)
+}
+
 /** Renders API response data as a TTY table with optional pagination hint. */
 function renderApiTable(data: unknown, table: NonNullable<RunToolOptions["table"]>): void {
   const record =
@@ -228,14 +249,9 @@ export async function runTool<TToolName extends CliToolName>(
     renderApiTable(data, table)
   } catch (err) {
     spinner?.fail("Failed")
-    if (isOutlitToolsApiError(err) && err.envelope) {
-      if (isJsonMode(json)) {
-        process.stderr.write(`${JSON.stringify(err.envelope, null, 2)}\n`)
-        process.exit(1)
-      }
-
-      return outputError({ message: err.envelope.message, code: err.envelope.code }, json)
-    }
-    return outputError({ message: errorMessage(err, "Request failed"), code: "api_error" }, json)
+    return outputApiError(err, json, {
+      message: errorMessage(err, "Request failed"),
+      code: "api_error",
+    })
   }
 }

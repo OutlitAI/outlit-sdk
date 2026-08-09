@@ -2,7 +2,7 @@ import { matchesGeneratedJsonSchema, publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { getClientOrExit } from "../../lib/api"
+import { getClientOrExit, outputApiError } from "../../lib/api"
 import type { OutlitClient } from "../../lib/client"
 import { isJsonMode, outputError, outputResult } from "../../lib/output"
 import { normalizeProviderInput } from "../../lib/providers"
@@ -209,8 +209,11 @@ async function runPreferredSetup(options: {
         return invalidSetupResponse(json)
       }
       response = raw as SetupResponse
-    } catch {
-      return outputError({ message: "Integration setup request failed.", code: "api_error" }, json)
+    } catch (error) {
+      return outputApiError(error, json, {
+        message: "Integration setup request failed.",
+        code: "api_error",
+      })
     }
 
     if (response.error) {
@@ -517,14 +520,11 @@ async function fetchProviderCapability(
       { message: `Unknown integration: "${provider}"`, code: "unknown_provider" },
       json,
     )
-  } catch {
-    return outputError(
-      {
-        message: "Failed to fetch integration capabilities.",
-        code: "api_error",
-      },
-      json,
-    )
+  } catch (error) {
+    return outputApiError(error, json, {
+      message: "Failed to fetch integration capabilities.",
+      code: "api_error",
+    })
   }
 }
 
