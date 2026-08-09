@@ -38,6 +38,9 @@ export const publicToolNames = [
   "outlit_update_customer_activation",
   "outlit_get_workspace_settings",
   "outlit_update_workspace_settings",
+  "outlit_list_behavior_metric_sources",
+  "outlit_list_behavior_metric_events",
+  "outlit_create_behavior_metric",
 ] as const
 
 export const publicToolContracts = {
@@ -8794,6 +8797,547 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
+  "outlit_list_behavior_metric_sources": {
+    "toolName": "outlit_list_behavior_metric_sources",
+    "commandId": "behavior_metric_source.list",
+    "commandVersion": 1,
+    "ownerDomain": "behavior_metrics",
+    "title": "List Behavior Metric Sources",
+    "description": "List product-event sources eligible for Behavior Metric discovery.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sourceKey": {
+                "type": "string",
+                "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+              },
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "outlit_sdk",
+                  "posthog",
+                  "mixpanel",
+                ],
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+              },
+              "readiness": {
+                "type": "string",
+                "enum": [
+                  "READY",
+                  "WARMING",
+                  "BLOCKED",
+                ],
+              },
+            },
+            "required": [
+              "sourceKey",
+              "provider",
+              "label",
+              "readiness",
+            ],
+            "additionalProperties": false,
+          },
+        },
+      },
+      "required": [
+        "sources",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_list_behavior_metric_events": {
+    "toolName": "outlit_list_behavior_metric_events",
+    "commandId": "behavior_metric_event.list",
+    "commandVersion": 1,
+    "ownerDomain": "behavior_metrics",
+    "title": "List Behavior Metric Events",
+    "description": "List attributed event candidates for a Behavior Metric source.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sourceKey": {
+          "type": "string",
+          "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+        },
+        "weeks": {
+          "default": 12,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 53,
+        },
+        "limit": {
+          "default": 100,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+        },
+      },
+      "required": [
+        "sourceKey",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "eventName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191,
+              },
+              "eventCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+              },
+              "distinctCustomers": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+              },
+              "activeWeeks": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 53,
+              },
+              "propertyKeys": {
+                "maxItems": 10,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 191,
+                },
+              },
+            },
+            "required": [
+              "eventName",
+              "eventCount",
+              "distinctCustomers",
+              "activeWeeks",
+              "propertyKeys",
+            ],
+            "additionalProperties": false,
+          },
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+      },
+      "required": [
+        "events",
+        "truncated",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_create_behavior_metric": {
+    "toolName": "outlit_create_behavior_metric",
+    "commandId": "behavior_metric.create",
+    "commandVersion": 1,
+    "ownerDomain": "behavior_metrics",
+    "title": "Create Behavior Metric",
+    "description": "Create or idempotently return an event-based Behavior Metric in ENABLED and SHADOW.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sourceKey": {
+          "type": "string",
+          "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+        },
+        "eventName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "behaviorKey": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+        },
+        "propertyFilters": {
+          "default": [],
+          "maxItems": 5,
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "property": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  "operator": {
+                    "type": "string",
+                    "const": "equals",
+                  },
+                  "value": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "string",
+                          },
+                          "value": {
+                            "type": "string",
+                            "maxLength": 191,
+                          },
+                        },
+                        "required": [
+                          "type",
+                          "value",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "number",
+                          },
+                          "value": {
+                            "type": "number",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                          },
+                        },
+                        "required": [
+                          "type",
+                          "value",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "boolean",
+                          },
+                          "value": {
+                            "type": "boolean",
+                          },
+                        },
+                        "required": [
+                          "type",
+                          "value",
+                        ],
+                        "additionalProperties": false,
+                      },
+                    ],
+                  },
+                },
+                "required": [
+                  "property",
+                  "operator",
+                  "value",
+                ],
+                "additionalProperties": false,
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "property": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  "operator": {
+                    "type": "string",
+                    "const": "exists",
+                  },
+                },
+                "required": [
+                  "property",
+                  "operator",
+                ],
+                "additionalProperties": false,
+              },
+            ],
+          },
+        },
+      },
+      "required": [
+        "sourceKey",
+        "eventName",
+        "behaviorKey",
+        "label",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "boolean",
+        },
+        "metric": {
+          "type": "object",
+          "properties": {
+            "sourceKey": {
+              "type": "string",
+              "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+            },
+            "behaviorKey": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+            },
+            "eventSelection": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "const": "exact_event_names",
+                    },
+                    "eventNames": {
+                      "minItems": 1,
+                      "maxItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191,
+                      },
+                    },
+                  },
+                  "required": [
+                    "mode",
+                    "eventNames",
+                  ],
+                  "additionalProperties": false,
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "const": "configured_event",
+                    },
+                    "eventName": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191,
+                    },
+                    "propertyFilters": {
+                      "minItems": 1,
+                      "maxItems": 5,
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "property": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 191,
+                              },
+                              "operator": {
+                                "type": "string",
+                                "const": "equals",
+                              },
+                              "value": {
+                                "oneOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "const": "string",
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "maxLength": 191,
+                                      },
+                                    },
+                                    "required": [
+                                      "type",
+                                      "value",
+                                    ],
+                                    "additionalProperties": false,
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "const": "number",
+                                      },
+                                      "value": {
+                                        "type": "number",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991,
+                                      },
+                                    },
+                                    "required": [
+                                      "type",
+                                      "value",
+                                    ],
+                                    "additionalProperties": false,
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "type": "string",
+                                        "const": "boolean",
+                                      },
+                                      "value": {
+                                        "type": "boolean",
+                                      },
+                                    },
+                                    "required": [
+                                      "type",
+                                      "value",
+                                    ],
+                                    "additionalProperties": false,
+                                  },
+                                ],
+                              },
+                            },
+                            "required": [
+                              "property",
+                              "operator",
+                              "value",
+                            ],
+                            "additionalProperties": false,
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "property": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 191,
+                              },
+                              "operator": {
+                                "type": "string",
+                                "const": "exists",
+                              },
+                            },
+                            "required": [
+                              "property",
+                              "operator",
+                            ],
+                            "additionalProperties": false,
+                          },
+                        ],
+                      },
+                    },
+                  },
+                  "required": [
+                    "mode",
+                    "eventName",
+                    "propertyFilters",
+                  ],
+                  "additionalProperties": false,
+                },
+              ],
+            },
+            "status": {
+              "type": "string",
+              "const": "ENABLED",
+            },
+            "evaluationMode": {
+              "type": "string",
+              "const": "SHADOW",
+            },
+            "definitions": {
+              "minItems": 2,
+              "maxItems": 2,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  },
+                  "metricKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  "aggregation": {
+                    "type": "string",
+                    "enum": [
+                      "active_days",
+                      "event_count",
+                    ],
+                  },
+                },
+                "required": [
+                  "id",
+                  "metricKey",
+                  "aggregation",
+                ],
+                "additionalProperties": false,
+              },
+            },
+          },
+          "required": [
+            "sourceKey",
+            "behaviorKey",
+            "label",
+            "eventSelection",
+            "status",
+            "evaluationMode",
+            "definitions",
+          ],
+          "additionalProperties": false,
+        },
+      },
+      "required": [
+        "created",
+        "metric",
+      ],
+      "additionalProperties": false,
+    },
+  },
 } as const
 
 export const publicOpenApiTransports = [
@@ -8839,6 +9383,42 @@ export const consumerToolPolicies = {
     "outlit_query",
     "outlit_schema",
   ],
+  "pi": [
+    "outlit_list_customers",
+    "outlit_list_users",
+    "outlit_list_workspace_users",
+    "outlit_get_customer",
+    "outlit_assign_customer_owner",
+    "outlit_grant_customer_access",
+    "outlit_update_customer_access",
+    "outlit_revoke_customer_access",
+    "outlit_get_timeline",
+    "outlit_list_facts",
+    "outlit_get_fact",
+    "outlit_get_source",
+    "outlit_list_sources",
+    "outlit_search_customer_context",
+    "outlit_query",
+    "outlit_schema",
+    "outlit_list_destinations",
+    "outlit_get_destination",
+    "outlit_create_destination",
+    "outlit_update_destination",
+    "outlit_enable_destination",
+    "outlit_disable_destination",
+    "outlit_archive_destination",
+    "outlit_list_integrations",
+    "outlit_get_integration_capabilities",
+    "outlit_begin_integration_setup",
+    "outlit_get_integration_setup_status",
+    "outlit_get_integration_status",
+    "outlit_setup_integration",
+    "outlit_get_customer_activation",
+    "outlit_preview_customer_activation",
+    "outlit_update_customer_activation",
+    "outlit_get_workspace_settings",
+    "outlit_update_workspace_settings",
+  ],
   "cli": [
     "outlit_list_customers",
     "outlit_list_users",
@@ -8874,6 +9454,9 @@ export const consumerToolPolicies = {
     "outlit_update_customer_activation",
     "outlit_get_workspace_settings",
     "outlit_update_workspace_settings",
+    "outlit_list_behavior_metric_sources",
+    "outlit_list_behavior_metric_events",
+    "outlit_create_behavior_metric",
   ],
 } as const
 
@@ -8915,6 +9498,8 @@ export const apiKeyGrants = [
   "workspace_members:read",
   "analytics:read",
   "destinations:manage",
+  "behavior_metrics:manage",
+  "integrations:connect_own",
   "integrations:manage",
   "activation:read",
   "activation:manage",
@@ -9042,6 +9627,8 @@ export const apiKeyValidationSuccessSchema = {
               "workspace_members:read",
               "analytics:read",
               "destinations:manage",
+              "behavior_metrics:manage",
+              "integrations:connect_own",
               "integrations:manage",
               "activation:read",
               "activation:manage",
@@ -9098,6 +9685,8 @@ export const apiKeyValidationSuccessSchema = {
               "workspace_members:read",
               "analytics:read",
               "destinations:manage",
+              "behavior_metrics:manage",
+              "integrations:connect_own",
               "integrations:manage",
               "activation:read",
               "activation:manage",
@@ -10166,4 +10755,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "43562eed8ffac2164828ce38f1e39a5df58960b08564c35d238d9e4566bc243c" as const
+export const sdkConsumerContractHash = "e62f1d6025d4aabcdb2a45343a1cf946ace7c503eb04dd9d02c8b6784147f701" as const

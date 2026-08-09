@@ -99,7 +99,7 @@ describe("toolsets", () => {
       "outlit_list_behavior_metric_events",
       "outlit_create_behavior_metric",
     ])
-    expect(allPublicToolNames).toHaveLength(36)
+    expect(allPublicToolNames).toHaveLength(37)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
