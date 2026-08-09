@@ -4,8 +4,10 @@ description: "Set up integrations and inspect their configuration readiness from
 ---
 
 The CLI exposes two integration commands: `outlit integrations setup` and
-`outlit integrations status`. Both use the public tool gateway. Setup requires an API key with
-`integrations:manage` authority.
+`outlit integrations status`. Both use the public tool gateway. Supported actor-owned setup uses
+an API key with `integrations:connect_own`; workspace or admin setup uses
+`integrations:manage`. Core determines which authorization route applies to each provider and
+request.
 
 ## Integration setup
 
@@ -39,18 +41,19 @@ be opened, the CLI prints it for the user without treating the setup response as
 
 ### Automation and JSON mode
 
-Use `--config-stdin` to opt into reading exactly one strict JSON object from stdin:
+Use `--config-stdin` to opt into reading exactly one strict JSON object from stdin. Its shape is
+provider-specific. For example, a Fireflies API key is supplied only through stdin:
 
-```json
-{
-  "connectionMode": "provider-specific-mode",
-  "credentials": {
-    "apiKey": "<provider credential>"
-  },
-  "configuration": {
-    "kind": "provider-specific configuration"
-  }
-}
+```bash
+printf '%s\n' '{"credentials":{"apiKey":"<fireflies-api-key>"}}' \\
+  | outlit integrations setup fireflies --config-stdin --json
+```
+
+An explicit HubSpot CRM mapping is likewise supplied as the generated CRM mapping shape:
+
+```bash
+printf '%s\n' '{"configuration":{"kind":"crm_mapping","mappings":[{"pipelineId":"default","pipelineName":"Sales","mappings":[{"outlitStage":"Won","crmStages":[{"id":"closedwon","name":"Closed Won"}]}]}],"confirm":true}}' \\
+  | outlit integrations setup hubspot --config-stdin --json
 ```
 
 The provider remains the positional CLI argument and is rejected inside the stdin document. Unknown

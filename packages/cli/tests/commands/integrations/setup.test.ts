@@ -537,6 +537,62 @@ describe("integrations setup", () => {
     expect(setupCalls).toBe(3)
   })
 
+  test("preserves a supplied CRM mapping through an OAuth continuation", async () => {
+    setInteractive()
+    const configuration = {
+      kind: "crm_mapping",
+      mappings: [
+        {
+          pipelineId: "default",
+          pipelineName: "Sales",
+          mappings: [
+            {
+              outlitStage: "Won",
+              crmStages: [{ id: "closedwon", name: "Closed Won" }],
+            },
+          ],
+        },
+      ],
+      confirm: true,
+    }
+    let setupCalls = 0
+    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
+      if (toolName === "outlit_get_integration_capabilities") {
+        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
+      }
+      if (toolName !== "outlit_setup_integration") throw new Error(`unexpected tool ${toolName}`)
+      setupCalls += 1
+      if (setupCalls === 1) {
+        return setupResult({
+          status: "awaiting_auth",
+          next: {
+            kind: "browser_handoff",
+            purpose: "authentication",
+            url: "https://app.outlit.ai/integrations/connect",
+            sessionId: "00000000-0000-4000-8000-000000000001",
+            expiresAt: "2026-08-04T22:00:00.000Z",
+          },
+        })
+      }
+      return setupResult()
+    })
+
+    const stdinSpy = spyOn(Bun.stdin, "text").mockResolvedValue(JSON.stringify({ configuration }))
+    try {
+      const { default: setup } = await import("../../../src/commands/integrations/setup")
+      await setup.run!({
+        args: { provider: "hubspot", "config-stdin": true },
+      } as never)
+    } finally {
+      stdinSpy.mockRestore()
+    }
+
+    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_setup_integration", {
+      provider: "hubspot",
+      configuration,
+    })
+  })
+
   test("treats external setup handoff as terminal and never polls", async () => {
     const handoff = setupResult({
       provider: "pylon",

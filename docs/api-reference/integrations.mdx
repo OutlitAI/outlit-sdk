@@ -5,7 +5,9 @@ description: "Negotiate setup, configure providers, and read canonical integrati
 
 Integration automation uses `POST /api/tools/call`. There are no public provider-credential or
 disconnect REST routes. Send an Outlit bearer API key in the `Authorization` header; setup calls
-require `integrations:manage` authority.
+for supported actor-owned integrations use `integrations:connect_own`, while workspace or admin
+setup uses `integrations:manage`. Core determines which authorization route applies to the setup
+request.
 
 ## Available tools
 

@@ -80,6 +80,7 @@ export default defineCommand({
       "",
       "Interactive setup prompts for provider secrets only after Core requests them.",
       "Automation may pass one strict JSON document on stdin with --config-stdin.",
+      "Supported actor-owned setup uses integrations:connect_own; workspace or admin setup uses integrations:manage.",
       "",
       "Examples:",
       "  outlit integrations setup slack",
@@ -304,8 +305,7 @@ async function runPreferredSetup(options: {
         )
       }
 
-      const connectionMode = options.input.connectionMode
-      input = connectionMode === undefined ? { provider } : { provider, connectionMode }
+      input = authenticationContinuationInput(input)
       continue
     }
 
@@ -549,6 +549,13 @@ export function validateHandoffUrl(value: string, configuredBaseUrl: string): st
   }
 
   return url.toString()
+}
+
+function authenticationContinuationInput(input: SetupToolInput): SetupToolInput {
+  const continuation: SetupToolInput = { provider: input.provider }
+  if (input.connectionMode !== undefined) continuation.connectionMode = input.connectionMode
+  if (input.configuration !== undefined) continuation.configuration = input.configuration
+  return continuation
 }
 
 function isLoopbackHostname(hostname: string): boolean {

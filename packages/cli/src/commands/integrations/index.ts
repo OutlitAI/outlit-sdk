@@ -4,15 +4,15 @@ export default defineCommand({
   meta: {
     name: "integrations",
     description: [
-      "Manage platform integrations (communication, analytics, billing, etc.).",
+      "Set up actor-owned integrations and inspect canonical readiness.",
       "",
-      "Start safe browser handoffs and check canonical readiness.",
+      "Supported actor-owned setup uses integrations:connect_own; workspace or admin setup uses integrations:manage.",
       "",
       "Commands:",
-      "  setup <provider>    Start a browser handoff when supported",
+      "  setup <provider>    Run bounded provider setup when authorized",
       "  status [provider]   Show canonical integration readiness",
       "",
-      "Credential and provider-specific configuration remains in the Outlit web app.",
+      "Core determines whether the requested setup is actor-owned or workspace/admin scoped.",
     ].join("\n"),
   },
   subCommands: {
