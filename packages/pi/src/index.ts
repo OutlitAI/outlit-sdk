@@ -162,6 +162,8 @@ function firstLine(value: string): string {
 }
 
 export type { PiToolName } from "@outlit/tools"
+/** @deprecated Use PiToolName. */
+export type PublicToolName = PiToolName
 export {
   analyticalToolNames,
   defaultToolNames,

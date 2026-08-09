@@ -6,6 +6,8 @@ import {
   createOutlitPiExtension,
   createOutlitPiTool,
   type OutlitPiToolDefinition,
+  type PiToolName,
+  type PublicToolName,
   piToolNames,
 } from "../src/index.js"
 
@@ -113,6 +115,13 @@ describe("createOutlitPiExtension", () => {
     expect(allPublicToolNames).not.toContain("outlit_list_behavior_metric_sources")
     expect(allPublicToolNames).not.toContain("outlit_list_behavior_metric_events")
     expect(allPublicToolNames).not.toContain("outlit_create_behavior_metric")
+  })
+
+  test("preserves PublicToolName as a compatibility alias", () => {
+    const legacyToolName: PublicToolName = "outlit_list_customers"
+    const currentToolName: PiToolName = legacyToolName
+
+    expect(currentToolName).toBe("outlit_list_customers")
   })
 
   test("deduplicates custom tool names before registration", () => {

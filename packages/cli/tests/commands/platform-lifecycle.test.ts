@@ -146,6 +146,30 @@ describe("platform lifecycle commands", () => {
     })
   })
 
+  test("preserves the exact discovered Behavior Metric event name", async () => {
+    const { default: createBehaviorMetricCmd } = await import("../../src/commands/metrics/create")
+
+    await captureStdout(() =>
+      createBehaviorMetricCmd.run!({
+        args: {
+          source: "metric_source_v1_0123456789abcdef0123456789abcdef",
+          event: " report_exported ",
+          key: "reports_exported",
+          label: "Reports exported",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof createBehaviorMetricCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_behavior_metric", {
+      sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",
+      eventName: " report_exported ",
+      behaviorKey: "reports_exported",
+      label: "Reports exported",
+      propertyFilters: [],
+    })
+  })
+
   test("rejects invalid Behavior Metric property-filter JSON before calling the API", async () => {
     const { default: createBehaviorMetricCmd } = await import("../../src/commands/metrics/create")
 

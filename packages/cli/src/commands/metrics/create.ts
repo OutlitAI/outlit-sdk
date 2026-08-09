@@ -3,7 +3,7 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { errorMessage, outputError } from "../../lib/output"
-import { requiredTrimmedString } from "../../lib/platform-input"
+import { requiredString, requiredTrimmedString } from "../../lib/platform-input"
 
 function parsePropertyFilters(value: string | undefined, json: boolean): unknown[] {
   if (!value?.trim()) return []
@@ -58,7 +58,7 @@ export default defineCommand({
     const client = await getClientOrExit(args["api-key"], json)
     const input = {
       sourceKey: requiredTrimmedString(args.source, "--source", json),
-      eventName: requiredTrimmedString(args.event, "--event", json),
+      eventName: requiredString(args.event, "--event", json),
       behaviorKey: requiredTrimmedString(args.key, "--key", json),
       label: requiredTrimmedString(args.label, "--label", json),
       propertyFilters: parsePropertyFilters(args["property-filters"], json),

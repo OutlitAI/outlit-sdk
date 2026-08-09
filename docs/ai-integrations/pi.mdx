@@ -53,14 +53,14 @@ The extension reads `OUTLIT_API_KEY` from the environment and uses `https://app.
 Pass `toolNames` when you want a narrower or broader toolset:
 
 ```ts
-import { allPublicToolNames, createOutlitPiExtension } from "@outlit/pi"
+import { createOutlitPiExtension, piToolNames } from "@outlit/pi"
 
 export default createOutlitPiExtension({
-  toolNames: allPublicToolNames,
+  toolNames: piToolNames,
 })
 ```
 
-`allPublicToolNames` includes SQL and the broader public management surface. The default membership comes directly from Core's `default` consumer policy and contains only the nine read-only customer intelligence tools above; import `analyticalToolNames` for that same policy plus `outlit_schema` and `outlit_query`. Both agent policies exclude integration setup and mutations. Provider credentials and configuration stay in the authored web UI.
+`piToolNames` includes SQL and the broader Pi-supported Platform surface. The default membership comes directly from Core's `default` consumer policy and contains only the nine read-only customer intelligence tools above; import `analyticalToolNames` for that same policy plus `outlit_schema` and `outlit_query`. Behavior Metric source discovery, event discovery, and creation are intentionally unavailable in Pi.
 
 ## Growth Agent Examples
 
