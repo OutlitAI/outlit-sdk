@@ -273,6 +273,10 @@ The changeset file will be committed with your PR and used to generate changelog
 - **CI** (`ci.yml`) - Runs on PRs: lint, typecheck, build, test
 - **Release** (`release.yml`) - Runs on main: publish canary to npm + CDN, create version PR or publish stable releases
 
+Stable releases are intentionally separate from SDK source merges. See
+[`docs/release-coordination.md`](docs/release-coordination.md) for the Version Packages checklist
+and the required Core-before-SDK order for coordinated contracts.
+
 ### Required Secrets
 
 For maintainers setting up the repository:
