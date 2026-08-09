@@ -35,8 +35,8 @@ export default defineCommand({
       "Create an event-based Outlit Behavior Metric.",
       "",
       "Examples:",
-      "  outlit metrics create --source-key metric_source_v1_0123456789abcdef0123456789abcdef --event-name report_exported --behavior-key reports_exported --label 'Reports exported' --json",
-      '  outlit metrics create --source-key metric_source_v1_0123456789abcdef0123456789abcdef --event-name report_exported --behavior-key production_reports_exported --label \'Production reports exported\' --property-filters \'[{"property":"environment","operator":"equals","value":{"type":"string","value":"production"}}]\' --json',
+      "  outlit metrics create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key reports_exported --label 'Reports exported' --json",
+      '  outlit metrics create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key production_reports_exported --label \'Production reports exported\' --property-filters \'[{"property":"environment","operator":"equals","value":{"type":"string","value":"production"}}]\' --json',
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -44,9 +44,9 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    "source-key": { type: "string", description: "Behavior Metric source key" },
-    "event-name": { type: "string", description: "Exact tracked event name" },
-    "behavior-key": { type: "string", description: "Stable lower_snake_case metric key" },
+    source: { type: "string", description: "Behavior Metric source key" },
+    event: { type: "string", description: "Exact tracked event name" },
+    key: { type: "string", description: "Stable lower_snake_case metric key" },
     label: { type: "string", description: "Human-readable metric label" },
     "property-filters": {
       type: "string",
@@ -57,9 +57,9 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
     const input = {
-      sourceKey: requiredTrimmedString(args["source-key"], "--source-key", json),
-      eventName: requiredTrimmedString(args["event-name"], "--event-name", json),
-      behaviorKey: requiredTrimmedString(args["behavior-key"], "--behavior-key", json),
+      sourceKey: requiredTrimmedString(args.source, "--source", json),
+      eventName: requiredTrimmedString(args.event, "--event", json),
+      behaviorKey: requiredTrimmedString(args.key, "--key", json),
       label: requiredTrimmedString(args.label, "--label", json),
       propertyFilters: parsePropertyFilters(args["property-filters"], json),
     }

@@ -93,17 +93,25 @@ describe("createOutlitPiExtension", () => {
     ).toThrow("Unknown Outlit public tool")
   })
 
-  test("rejects Behavior Metric creation even when explicitly requested", () => {
-    expect(() =>
-      createOutlitPiTool("outlit_create_behavior_metric" as never, {
-        apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
-        fetch: vi.fn(),
-      }),
-    ).toThrow("Tool is not available in @outlit/pi")
+  test("rejects every Behavior Metric command even when explicitly requested", () => {
+    for (const toolName of [
+      "outlit_list_behavior_metric_sources",
+      "outlit_list_behavior_metric_events",
+      "outlit_create_behavior_metric",
+    ]) {
+      expect(() =>
+        createOutlitPiTool(toolName as never, {
+          apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+          fetch: vi.fn(),
+        }),
+      ).toThrow("Tool is not available in @outlit/pi")
+    }
   })
 
   test("exposes only Pi-supported tools from the Pi package", () => {
     expect(allPublicToolNames).toEqual(piToolNames)
+    expect(allPublicToolNames).not.toContain("outlit_list_behavior_metric_sources")
+    expect(allPublicToolNames).not.toContain("outlit_list_behavior_metric_events")
     expect(allPublicToolNames).not.toContain("outlit_create_behavior_metric")
   })
 

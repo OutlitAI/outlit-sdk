@@ -559,6 +559,38 @@
                     "properties": {
                       "tool": {
                         "type": "string",
+                        "const": "outlit_list_behavior_metric_sources"
+                      },
+                      "input": {
+                        "$ref": "#/components/schemas/ToolInput_outlit_list_behavior_metric_sources"
+                      }
+                    },
+                    "required": [
+                      "tool"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
+                        "const": "outlit_list_behavior_metric_events"
+                      },
+                      "input": {
+                        "$ref": "#/components/schemas/ToolInput_outlit_list_behavior_metric_events"
+                      }
+                    },
+                    "required": [
+                      "tool"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
                         "const": "outlit_create_behavior_metric"
                       },
                       "input": {
@@ -683,6 +715,12 @@
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_update_workspace_settings"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ToolOutput_outlit_list_behavior_metric_sources"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ToolOutput_outlit_list_behavior_metric_events"
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_create_behavior_metric"
@@ -3018,6 +3056,36 @@
         },
         "required": [
           "defaultTimezone"
+        ],
+        "additionalProperties": false
+      },
+      "ToolInput_outlit_list_behavior_metric_sources": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "ToolInput_outlit_list_behavior_metric_events": {
+        "type": "object",
+        "properties": {
+          "sourceKey": {
+            "type": "string",
+            "pattern": "^metric_source_v1_[a-f0-9]{32}$"
+          },
+          "weeks": {
+            "default": 12,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 53
+          },
+          "limit": {
+            "default": 100,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "sourceKey"
         ],
         "additionalProperties": false
       },
@@ -9748,6 +9816,113 @@
         ],
         "additionalProperties": false
       },
+      "ToolOutput_outlit_list_behavior_metric_sources": {
+        "type": "object",
+        "properties": {
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sourceKey": {
+                  "type": "string",
+                  "pattern": "^metric_source_v1_[a-f0-9]{32}$"
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "outlit_sdk",
+                    "posthog",
+                    "mixpanel"
+                  ]
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255
+                },
+                "readiness": {
+                  "type": "string",
+                  "enum": [
+                    "READY",
+                    "WARMING",
+                    "BLOCKED"
+                  ]
+                }
+              },
+              "required": [
+                "sourceKey",
+                "provider",
+                "label",
+                "readiness"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "sources"
+        ],
+        "additionalProperties": false
+      },
+      "ToolOutput_outlit_list_behavior_metric_events": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "eventName": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 191
+                },
+                "eventCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "distinctCustomers": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "activeWeeks": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 53
+                },
+                "propertyKeys": {
+                  "maxItems": 10,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191
+                  }
+                }
+              },
+              "required": [
+                "eventName",
+                "eventCount",
+                "distinctCustomers",
+                "activeWeeks",
+                "propertyKeys"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "events",
+          "truncated"
+        ],
+        "additionalProperties": false
+      },
       "ToolOutput_outlit_create_behavior_metric": {
         "type": "object",
         "properties": {
@@ -9987,5 +10162,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "3f5ba26298a7180a4d4c43f45eba04eb0d54b8716de810b5df81fbb195daff04"
+  "x-outlit-contract-hash": "6787113c49f855b36a1b8e871ed06775172bbc29fec7fcb76ab2694b2515cdba"
 }

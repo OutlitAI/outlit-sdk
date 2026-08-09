@@ -71,7 +71,7 @@ describe("completions command", () => {
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "settings" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "get update" -- "$cur"))')
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "metrics" ]]`)
-    expect(out).toContain('COMPREPLY=($(compgen -W "create" -- "$cur"))')
+    expect(out).toContain('COMPREPLY=($(compgen -W "sources events create" -- "$cur"))')
     expect(out).not.toContain(`"${bashCompWord(1)}" == "identity"`)
     expect(out).not.toContain("settings notifications")
     expect(out).not.toContain("settings notifications default")
@@ -104,8 +104,9 @@ describe("completions command", () => {
     expect(out).not.toContain("--client-request-id")
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --default-timezone"')
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --source-key --event-name --behavior-key --label --property-filters"',
+      'COMPREPLY=($(compgen -W "--api-key --json --source --event --key --label --property-filters"',
     )
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --source --weeks --limit"')
     expect(out).not.toContain("--slack-channel-name")
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --type --channel-id --label --default --disabled"',
@@ -201,8 +202,9 @@ describe("completions command", () => {
     expect(out).not.toContain("-n '__outlit_using_cmd settings report'")
     expect(out).not.toContain("settings notifications default")
     expect(out).toContain("-n '__outlit_using_cmd settings update' -l default-timezone")
-    expect(out).toContain("-n '__outlit_using_cmd metrics create' -l source-key")
+    expect(out).toContain("-n '__outlit_using_cmd metrics create' -l source")
     expect(out).toContain("-n '__outlit_using_cmd metrics create' -l property-filters")
+    expect(out).toContain("-n '__outlit_using_cmd metrics events' -l source")
     expect(out).not.toContain("-n '__outlit_using_cmd settings report update'")
     expect(out).not.toContain("settings notifications")
     expect(out).not.toContain("__outlit_using_cmd identity")

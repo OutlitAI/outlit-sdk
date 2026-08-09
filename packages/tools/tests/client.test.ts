@@ -66,9 +66,11 @@ describe("toolsets", () => {
       "outlit_update_customer_activation",
       "outlit_get_workspace_settings",
       "outlit_update_workspace_settings",
+      "outlit_list_behavior_metric_sources",
+      "outlit_list_behavior_metric_events",
       "outlit_create_behavior_metric",
     ])
-    expect(allPublicToolNames).toHaveLength(34)
+    expect(allPublicToolNames).toHaveLength(36)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -87,7 +89,12 @@ describe("toolsets", () => {
     ])
     expect(sqlToolNames).toEqual(["outlit_query", "outlit_schema"])
     expect(piToolNames).toEqual(
-      allPublicToolNames.filter((name) => name !== "outlit_create_behavior_metric"),
+      allPublicToolNames.filter(
+        (name) =>
+          name !== "outlit_list_behavior_metric_sources" &&
+          name !== "outlit_list_behavior_metric_events" &&
+          name !== "outlit_create_behavior_metric",
+      ),
     )
     expect(cliToolNames).toEqual(allPublicToolNames)
   })
@@ -137,9 +144,30 @@ describe("tool contracts", () => {
     expect(analyticsRow.activated_at).toBeNull()
   })
 
-  test("projects the generated Behavior Metric capability into public catalogues", () => {
+  test("projects generated Behavior Metric discovery and creation capabilities into public catalogues", () => {
+    const sourcesContract = getPublicToolContract("outlit_list_behavior_metric_sources")
+    const eventsContract = getPublicToolContract("outlit_list_behavior_metric_events")
     const contract = getPublicToolContract("outlit_create_behavior_metric")
 
+    expect(sourcesContract.commandId).toBe("behavior_metric_source.list")
+    expect(sourcesContract.inputSchema).toEqual(expect.objectContaining({ type: "object" }))
+    expect(sourcesContract.outputSchema).toEqual(
+      expect.objectContaining({
+        properties: expect.objectContaining({
+          sources: expect.objectContaining({ type: "array" }),
+        }),
+      }),
+    )
+    expect(eventsContract.commandId).toBe("behavior_metric_event.list")
+    expect(eventsContract.inputSchema).toEqual(
+      expect.objectContaining({
+        required: ["sourceKey"],
+        properties: expect.objectContaining({
+          weeks: expect.objectContaining({ default: 12, minimum: 1, maximum: 53 }),
+          limit: expect.objectContaining({ default: 100, minimum: 1, maximum: 100 }),
+        }),
+      }),
+    )
     expect(contract.commandId).toBe("behavior_metric.create")
     expect(contract.inputSchema).toEqual(
       expect.objectContaining({
@@ -158,6 +186,16 @@ describe("tool contracts", () => {
     expect(defaultToolNames).not.toContain("outlit_create_behavior_metric")
     expect(analyticalToolNames).not.toContain("outlit_create_behavior_metric")
     expect(cliToolNames).toContain("outlit_create_behavior_metric")
+    for (const toolName of [
+      "outlit_list_behavior_metric_sources",
+      "outlit_list_behavior_metric_events",
+      "outlit_create_behavior_metric",
+    ] as const) {
+      expect(defaultToolNames).not.toContain(toolName)
+      expect(analyticalToolNames).not.toContain(toolName)
+      expect(piToolNames).not.toContain(toolName)
+      expect(cliToolNames).toContain(toolName)
+    }
   })
 
   test("infers activatedAt on typed customer list and get client results", async () => {

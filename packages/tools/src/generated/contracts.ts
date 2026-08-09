@@ -37,6 +37,8 @@ export const publicToolNames = [
   "outlit_update_customer_activation",
   "outlit_get_workspace_settings",
   "outlit_update_workspace_settings",
+  "outlit_list_behavior_metric_sources",
+  "outlit_list_behavior_metric_events",
   "outlit_create_behavior_metric",
 ] as const
 
@@ -8019,6 +8021,163 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
+  "outlit_list_behavior_metric_sources": {
+    "toolName": "outlit_list_behavior_metric_sources",
+    "commandId": "behavior_metric_source.list",
+    "commandVersion": 1,
+    "ownerDomain": "behavior_metrics",
+    "title": "List Behavior Metric Sources",
+    "description": "List product-event sources eligible for Behavior Metric discovery.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sourceKey": {
+                "type": "string",
+                "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+              },
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "outlit_sdk",
+                  "posthog",
+                  "mixpanel",
+                ],
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+              },
+              "readiness": {
+                "type": "string",
+                "enum": [
+                  "READY",
+                  "WARMING",
+                  "BLOCKED",
+                ],
+              },
+            },
+            "required": [
+              "sourceKey",
+              "provider",
+              "label",
+              "readiness",
+            ],
+            "additionalProperties": false,
+          },
+        },
+      },
+      "required": [
+        "sources",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_list_behavior_metric_events": {
+    "toolName": "outlit_list_behavior_metric_events",
+    "commandId": "behavior_metric_event.list",
+    "commandVersion": 1,
+    "ownerDomain": "behavior_metrics",
+    "title": "List Behavior Metric Events",
+    "description": "List attributed event candidates for a Behavior Metric source.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sourceKey": {
+          "type": "string",
+          "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+        },
+        "weeks": {
+          "default": 12,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 53,
+        },
+        "limit": {
+          "default": 100,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+        },
+      },
+      "required": [
+        "sourceKey",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "eventName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191,
+              },
+              "eventCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+              },
+              "distinctCustomers": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+              },
+              "activeWeeks": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 53,
+              },
+              "propertyKeys": {
+                "maxItems": 10,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 191,
+                },
+              },
+            },
+            "required": [
+              "eventName",
+              "eventCount",
+              "distinctCustomers",
+              "activeWeeks",
+              "propertyKeys",
+            ],
+            "additionalProperties": false,
+          },
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+      },
+      "required": [
+        "events",
+        "truncated",
+      ],
+      "additionalProperties": false,
+    },
+  },
   "outlit_create_behavior_metric": {
     "toolName": "outlit_create_behavior_metric",
     "commandId": "behavior_metric.create",
@@ -8517,6 +8676,8 @@ export const consumerToolPolicies = {
     "outlit_update_customer_activation",
     "outlit_get_workspace_settings",
     "outlit_update_workspace_settings",
+    "outlit_list_behavior_metric_sources",
+    "outlit_list_behavior_metric_events",
     "outlit_create_behavior_metric",
   ],
 } as const
@@ -9813,4 +9974,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "3f5ba26298a7180a4d4c43f45eba04eb0d54b8716de810b5df81fbb195daff04" as const
+export const sdkConsumerContractHash = "6787113c49f855b36a1b8e871ed06775172bbc29fec7fcb76ab2694b2515cdba" as const
