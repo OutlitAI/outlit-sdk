@@ -275,7 +275,7 @@ The changeset file will be committed with your PR and used to generate changelog
 
 Stable releases are intentionally separate from SDK source merges. See
 [`docs/release-coordination.md`](docs/release-coordination.md) for the Version Packages checklist
-and the required Core-before-SDK order for coordinated contracts.
+and the required Core-production-before-stable-SDK order for coordinated contracts.
 
 ### Required Secrets
 

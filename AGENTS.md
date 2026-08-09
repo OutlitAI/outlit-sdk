@@ -51,8 +51,8 @@ Bun workspaces resolve any matching version range to the local package, so concr
 - Stable releases happen only when the bot-authored "Version Packages" PR is merged. Treat that
   merge as the production release button, not as routine repository maintenance.
 - Before merging the Version Packages PR, run CI on its exact latest head by adding the existing
-  `skip-changelog` label (or removing and re-adding it after a bot update), wait for Changeset
-  Check, Lint/Build/Test, and Rust CI, then review the final package/version list.
+  `skip-changelog` label (or removing and re-adding it after a bot update), wait for `Changeset
+  Check`, `Lint, Build & Test`, and `Rust CI`, then review the final package/version list.
 - For contracts coordinated with Core, use this order: merge the SDK source PR to `main`, merge
   and promote the matching Core change to production, verify Core production, and only then merge
   the Version Packages PR. Do not publish the stable SDK merely because SDK `main` or a canary is
@@ -66,7 +66,7 @@ See `docs/release-coordination.md` for the maintainer checklist.
 
 After pushing a PR, monitor it through to merge:
 
-1. **Poll CI checks** (`gh pr checks`) until all required checks pass: Changeset Check, Lint/Build/Test, Rust CI
+1. **Poll CI checks** (`gh pr checks`) until all required checks pass: `Changeset Check`, `Lint, Build & Test`, `Rust CI`
 2. **Review AI comments** — CodeRabbit reviews PRs automatically. Pull down any inline comments (`gh api repos/OutlitAI/outlit-sdk/pulls/<number>/comments`) and review-level feedback (`gh api repos/OutlitAI/outlit-sdk/pulls/<number>/reviews`)
 3. **Validate before fixing** — don't blindly apply AI suggestions. Check whether each comment is technically correct and relevant. Fix only what's valid; ignore or dismiss the rest
 4. **Merge with rebase** when all checks are green and comments are resolved: `gh pr merge <number> --repo OutlitAI/outlit-sdk --rebase`
