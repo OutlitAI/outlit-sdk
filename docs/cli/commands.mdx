@@ -614,20 +614,24 @@ Destination creation and update are Slack-channel backed. Use `--default` on `de
 
 ## Behavior Metrics
 
-Create event-based Behavior Metrics using the same contract as the Outlit UI, API, and MCP tool.
+Create event-based Behavior Metrics using the same contract as the Outlit UI, API, and MCP tools. Discover an eligible source, then its attributed events, before creating a metric.
 
 ```text
-outlit metrics create --source-key <source-key> --event-name <event-name> --behavior-key <behavior-key> --label <label> [--property-filters <json-array>] [flags]
+outlit metrics sources [flags]
+outlit metrics events --source <source-key> [--weeks <1-53>] [--limit <1-100>] [flags]
+outlit metrics create --source <source-key> --event <event-name> --key <behavior-key> --label <label> [--property-filters <json-array>] [flags]
 ```
 
 ### Examples
 
 ```bash
-outlit metrics create --source-key metric_source_v1_0123456789abcdef0123456789abcdef --event-name report_exported --behavior-key reports_exported --label "Reports exported" --json
-outlit metrics create --source-key metric_source_v1_0123456789abcdef0123456789abcdef --event-name report_exported --behavior-key production_reports_exported --label "Production reports exported" --property-filters '[{"property":"environment","operator":"equals","value":{"type":"string","value":"production"}}]' --json
+outlit metrics sources --json
+outlit metrics events --source metric_source_v1_0123456789abcdef0123456789abcdef --weeks 4 --limit 20 --json
+outlit metrics create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key reports_exported --label "Reports exported" --json
+outlit metrics create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key production_reports_exported --label "Production reports exported" --property-filters '[{"property":"environment","operator":"equals","value":{"type":"string","value":"production"}}]' --json
 ```
 
-The source key, exact event name, stable lower-snake-case behavior key, and label are required. `--property-filters` accepts an optional JSON array of up to five typed `equals` or `exists` filters.
+`metrics sources` returns opaque source keys. `metrics events` requires one returned `--source` and accepts optional `--weeks` (default 12) and `--limit` (default 100); it returns candidate event names and property keys. `metrics create` requires a returned source key, an exact discovered event name, a stable lower-snake-case behavior key, and a label. `--property-filters` accepts an optional JSON array of up to five typed `equals` or `exists` filters.
 
 ## Settings
 
