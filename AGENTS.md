@@ -46,8 +46,21 @@ Bun workspaces resolve any matching version range to the local package, so concr
 - Config: `.changeset/config.json`
 - `@outlit/core`, `@outlit/browser`, and `@outlit/node` are **linked** — they version together
 - `updateInternalDependencies: "patch"` — changesets updates internal dep ranges on any bump
-- Canary snapshots publish on every push to `main` when unreleased changesets exist
-- Stable releases happen when the "Version Packages" PR is merged
+- Canary snapshots publish on every push to `main` when unreleased changesets exist. Canary
+  publication does not update stable npm tags, stable CDN assets, or CLI binaries.
+- Stable releases happen only when the bot-authored "Version Packages" PR is merged. Treat that
+  merge as the production release button, not as routine repository maintenance.
+- Before merging the Version Packages PR, run CI on its exact latest head by adding the existing
+  `skip-changelog` label (or removing and re-adding it after a bot update), wait for Changeset
+  Check, Lint/Build/Test, and Rust CI, then review the final package/version list.
+- For contracts coordinated with Core, use this order: merge the SDK source PR to `main`, merge
+  and promote the matching Core change to production, verify Core production, and only then merge
+  the Version Packages PR. Do not publish the stable SDK merely because SDK `main` or a canary is
+  green.
+- Keep Core's default SDK-main drift validation fail-closed. Do not replace this release order
+  with mutable counterpart branches or a bypass of either repository's normal drift checks.
+
+See `docs/release-coordination.md` for the maintainer checklist.
 
 ## PR workflow
 
