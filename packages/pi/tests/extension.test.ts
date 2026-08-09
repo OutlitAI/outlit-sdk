@@ -2,9 +2,13 @@ import { defaultToolNames, getPublicToolContract } from "@outlit/tools"
 import { describe, expect, test, vi } from "vitest"
 
 import {
+  allPublicToolNames,
   createOutlitPiExtension,
   createOutlitPiTool,
   type OutlitPiToolDefinition,
+  type PiToolName,
+  type PublicToolName,
+  piToolNames,
 } from "../src/index.js"
 
 function createPiMock() {
@@ -89,6 +93,35 @@ describe("createOutlitPiExtension", () => {
         fetch: vi.fn(),
       }),
     ).toThrow("Unknown Outlit public tool")
+  })
+
+  test("rejects every Behavior Metric command even when explicitly requested", () => {
+    for (const toolName of [
+      "outlit_list_behavior_metric_sources",
+      "outlit_list_behavior_metric_events",
+      "outlit_create_behavior_metric",
+    ]) {
+      expect(() =>
+        createOutlitPiTool(toolName as never, {
+          apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+          fetch: vi.fn(),
+        }),
+      ).toThrow("Tool is not available in @outlit/pi")
+    }
+  })
+
+  test("exposes only Pi-supported tools from the Pi package", () => {
+    expect(allPublicToolNames).toEqual(piToolNames)
+    expect(allPublicToolNames).not.toContain("outlit_list_behavior_metric_sources")
+    expect(allPublicToolNames).not.toContain("outlit_list_behavior_metric_events")
+    expect(allPublicToolNames).not.toContain("outlit_create_behavior_metric")
+  })
+
+  test("preserves PublicToolName as a compatibility alias", () => {
+    const legacyToolName: PublicToolName = "outlit_list_customers"
+    const currentToolName: PiToolName = legacyToolName
+
+    expect(currentToolName).toBe("outlit_list_customers")
   })
 
   test("deduplicates custom tool names before registration", () => {

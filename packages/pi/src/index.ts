@@ -6,24 +6,27 @@ import {
   getPublicToolContract,
   isPublicToolName,
   type OutlitToolsFetch,
-  type PublicToolName,
+  type PiToolName,
+  piToolNames,
 } from "@outlit/tools"
 import type { TSchema } from "@sinclair/typebox"
 
 export const OUTLIT_API_KEY_ENV = "OUTLIT_API_KEY"
 export const OUTLIT_API_URL_ENV = "OUTLIT_API_URL"
 
+const piToolNameSet = new Set<string>(piToolNames)
+
 export type OutlitPiExtensionOptions = {
   apiKey?: string
   baseUrl?: string
   fetch?: OutlitToolsFetch
-  toolNames?: readonly PublicToolName[]
+  toolNames?: readonly PiToolName[]
 }
 
 export type OutlitPiRegistry = Pick<ExtensionAPI, "registerTool">
 
 export type OutlitPiToolDetails = {
-  toolName: PublicToolName
+  toolName: PiToolName
   result: unknown
 }
 
@@ -46,11 +49,14 @@ export function createOutlitPiTools(
 }
 
 export function createOutlitPiTool(
-  toolName: PublicToolName,
+  toolName: PiToolName,
   options: OutlitPiExtensionOptions = {},
 ): OutlitPiToolDefinition {
   if (!isPublicToolName(toolName)) {
     throw new Error(`Unknown Outlit public tool: ${toolName}`)
+  }
+  if (!piToolNameSet.has(toolName)) {
+    throw new Error(`Tool is not available in @outlit/pi: ${toolName}`)
   }
 
   const contract = getPublicToolContract(toolName)
@@ -84,14 +90,14 @@ function toPiToolParameters(inputSchema: unknown): TSchema {
   return schema as unknown as TSchema
 }
 
-export function formatOutlitToolLabel(toolName: PublicToolName): string {
+export function formatOutlitToolLabel(toolName: PiToolName): string {
   return toolName
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ")
 }
 
-function resolveToolNames(toolNames: readonly PublicToolName[] | undefined): PublicToolName[] {
+function resolveToolNames(toolNames: readonly PiToolName[] | undefined): PiToolName[] {
   const names = toolNames ?? defaultToolNames
 
   return [...new Set(names)].map((name) => {
@@ -139,7 +145,7 @@ function normalizeToolInput(params: unknown): Record<string, unknown> {
 }
 
 function formatToolResult(
-  toolName: PublicToolName,
+  toolName: PiToolName,
   result: unknown,
 ): AgentToolResult<OutlitPiToolDetails> {
   return {
@@ -155,11 +161,14 @@ function firstLine(value: string): string {
   return value.split("\n", 1)[0] ?? value
 }
 
-export type { PublicToolName } from "@outlit/tools"
+export type { PiToolName } from "@outlit/tools"
+/** @deprecated Use PiToolName. */
+export type PublicToolName = PiToolName
 export {
-  allPublicToolNames,
   analyticalToolNames,
   defaultToolNames,
+  piToolNames,
+  piToolNames as allPublicToolNames,
   sqlToolNames,
 } from "@outlit/tools"
 

@@ -22,12 +22,15 @@ export function requiredTrimmedString(
   flag: string,
   json: boolean,
 ): string {
-  const trimmed = value?.trim()
-  if (!trimmed) {
+  return requiredString(value, flag, json).trim()
+}
+
+export function requiredString(value: string | undefined, flag: string, json: boolean): string {
+  if (!value?.trim()) {
     return outputError({ message: `Provide ${flag}`, code: "missing_input" }, json)
   }
 
-  return trimmed
+  return value
 }
 
 export function optionalTrimmedString(value: string | undefined): string | null {

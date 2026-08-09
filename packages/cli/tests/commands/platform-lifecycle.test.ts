@@ -85,6 +85,185 @@ describe("platform lifecycle commands", () => {
     })
   })
 
+  test("runs Behavior Metric create with the canonical event-based payload", async () => {
+    const { default: createBehaviorMetricCmd } = await import("../../src/commands/metrics/create")
+
+    await captureStdout(() =>
+      createBehaviorMetricCmd.run!({
+        args: {
+          source: "metric_source_v1_0123456789abcdef0123456789abcdef",
+          event: "report_exported",
+          key: "reports_exported",
+          label: "Reports exported",
+          "property-filters": JSON.stringify([
+            {
+              property: "environment",
+              operator: "equals",
+              value: { type: "string", value: "production" },
+            },
+          ]),
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof createBehaviorMetricCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_behavior_metric", {
+      sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",
+      eventName: "report_exported",
+      behaviorKey: "reports_exported",
+      label: "Reports exported",
+      propertyFilters: [
+        {
+          property: "environment",
+          operator: "equals",
+          value: { type: "string", value: "production" },
+        },
+      ],
+    })
+  })
+
+  test("defaults omitted Behavior Metric property filters to an empty array", async () => {
+    const { default: createBehaviorMetricCmd } = await import("../../src/commands/metrics/create")
+
+    await captureStdout(() =>
+      createBehaviorMetricCmd.run!({
+        args: {
+          source: "metric_source_v1_0123456789abcdef0123456789abcdef",
+          event: "report_exported",
+          key: "reports_exported",
+          label: "Reports exported",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof createBehaviorMetricCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_behavior_metric", {
+      sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",
+      eventName: "report_exported",
+      behaviorKey: "reports_exported",
+      label: "Reports exported",
+      propertyFilters: [],
+    })
+  })
+
+  test("preserves the exact discovered Behavior Metric event name", async () => {
+    const { default: createBehaviorMetricCmd } = await import("../../src/commands/metrics/create")
+
+    await captureStdout(() =>
+      createBehaviorMetricCmd.run!({
+        args: {
+          source: "metric_source_v1_0123456789abcdef0123456789abcdef",
+          event: " report_exported ",
+          key: "reports_exported",
+          label: "Reports exported",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof createBehaviorMetricCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_behavior_metric", {
+      sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",
+      eventName: " report_exported ",
+      behaviorKey: "reports_exported",
+      label: "Reports exported",
+      propertyFilters: [],
+    })
+  })
+
+  test("rejects invalid Behavior Metric property-filter JSON before calling the API", async () => {
+    const { default: createBehaviorMetricCmd } = await import("../../src/commands/metrics/create")
+
+    await runExpectingError(
+      () =>
+        createBehaviorMetricCmd.run!({
+          args: {
+            source: "metric_source_v1_0123456789abcdef0123456789abcdef",
+            event: "report_exported",
+            key: "reports_exported",
+            label: "Reports exported",
+            "property-filters": "not-json",
+            json: true,
+          },
+        } as Parameters<NonNullable<typeof createBehaviorMetricCmd.run>>[0]),
+      "invalid_input",
+    )
+
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("runs Behavior Metric source and event discovery with caller-selected bounds", async () => {
+    const { default: listBehaviorMetricSourcesCmd } = await import(
+      "../../src/commands/metrics/sources"
+    )
+    const { default: listBehaviorMetricEventsCmd } = await import(
+      "../../src/commands/metrics/events"
+    )
+
+    await captureStdout(() =>
+      listBehaviorMetricSourcesCmd.run!({
+        args: { json: true },
+      } as Parameters<NonNullable<typeof listBehaviorMetricSourcesCmd.run>>[0]),
+    )
+    await captureStdout(() =>
+      listBehaviorMetricEventsCmd.run!({
+        args: {
+          source: "metric_source_v1_0123456789abcdef0123456789abcdef",
+          weeks: "4",
+          limit: "20",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof listBehaviorMetricEventsCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_list_behavior_metric_sources", {})
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_list_behavior_metric_events", {
+      sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",
+      weeks: 4,
+      limit: 20,
+    })
+  })
+
+  test("uses the canonical event discovery defaults", async () => {
+    const { default: listBehaviorMetricEventsCmd } = await import(
+      "../../src/commands/metrics/events"
+    )
+
+    await captureStdout(() =>
+      listBehaviorMetricEventsCmd.run!({
+        args: {
+          source: "metric_source_v1_0123456789abcdef0123456789abcdef",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof listBehaviorMetricEventsCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_behavior_metric_events", {
+      sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",
+      weeks: 12,
+      limit: 100,
+    })
+  })
+
+  test("rejects out-of-range Behavior Metric event discovery bounds before calling the API", async () => {
+    const { default: listBehaviorMetricEventsCmd } = await import(
+      "../../src/commands/metrics/events"
+    )
+
+    await runExpectingError(
+      () =>
+        listBehaviorMetricEventsCmd.run!({
+          args: {
+            source: "metric_source_v1_0123456789abcdef0123456789abcdef",
+            weeks: "54",
+            json: true,
+          },
+        } as Parameters<NonNullable<typeof listBehaviorMetricEventsCmd.run>>[0]),
+      "invalid_input",
+    )
+
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
   test("requires at least one destination update field", async () => {
     const { default: updateDestinationCmd } = await import("../../src/commands/destinations/update")
 

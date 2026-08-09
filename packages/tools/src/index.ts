@@ -75,11 +75,12 @@ export type {
   JsonSchemaValue,
   PublicToolResult,
 } from "./results.js"
-export type { CliToolName } from "./toolsets.js"
+export type { CliToolName, PiToolName } from "./toolsets.js"
 export {
   allPublicToolNames,
   analyticalToolNames,
   cliToolNames,
   defaultToolNames,
+  piToolNames,
   sqlToolNames,
 } from "./toolsets.js"
