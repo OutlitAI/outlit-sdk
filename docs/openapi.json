@@ -399,22 +399,6 @@
                     "properties": {
                       "tool": {
                         "type": "string",
-                        "const": "outlit_list_integrations"
-                      },
-                      "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_list_integrations"
-                      }
-                    },
-                    "required": [
-                      "tool"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "tool": {
-                        "type": "string",
                         "const": "outlit_get_integration_capabilities"
                       },
                       "input": {
@@ -701,9 +685,6 @@
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_archive_destination"
-                    },
-                    {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_list_integrations"
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_get_integration_capabilities"
@@ -2945,16 +2926,6 @@
         "required": [
           "id"
         ],
-        "additionalProperties": false
-      },
-      "ToolInput_outlit_list_integrations": {
-        "type": "object",
-        "properties": {
-          "connectedOnly": {
-            "default": false,
-            "type": "boolean"
-          }
-        },
         "additionalProperties": false
       },
       "ToolInput_outlit_get_integration_capabilities": {
@@ -9696,56 +9667,6 @@
         ],
         "additionalProperties": false
       },
-      "ToolOutput_outlit_list_integrations": {
-        "type": "object",
-        "properties": {
-          "integrations": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "provider": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 80
-                },
-                "name": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 120
-                },
-                "category": {
-                  "type": "string",
-                  "enum": [
-                    "crm",
-                    "communication",
-                    "storage",
-                    "calls",
-                    "calendar",
-                    "analytics",
-                    "billing",
-                    "support"
-                  ]
-                },
-                "isConnected": {
-                  "type": "boolean"
-                }
-              },
-              "required": [
-                "provider",
-                "name",
-                "category",
-                "isConnected"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "integrations"
-        ],
-        "additionalProperties": false
-      },
       "ToolOutput_outlit_get_integration_capabilities": {
         "type": "object",
         "properties": {
@@ -10948,5 +10869,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "e62f1d6025d4aabcdb2a45343a1cf946ace7c503eb04dd9d02c8b6784147f701"
+  "x-outlit-contract-hash": "eddc4c0f5d93f609a1f36d8934afd8b8e2cc024aa61da050c6516650fcae56c8"
 }

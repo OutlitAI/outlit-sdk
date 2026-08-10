@@ -84,7 +84,6 @@ describe("toolsets", () => {
       "outlit_enable_destination",
       "outlit_disable_destination",
       "outlit_archive_destination",
-      "outlit_list_integrations",
       "outlit_get_integration_capabilities",
       "outlit_begin_integration_setup",
       "outlit_get_integration_setup_status",
@@ -99,7 +98,7 @@ describe("toolsets", () => {
       "outlit_list_behavior_metric_events",
       "outlit_create_behavior_metric",
     ])
-    expect(allPublicToolNames).toHaveLength(37)
+    expect(allPublicToolNames).toHaveLength(36)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })

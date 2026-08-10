@@ -27,7 +27,6 @@ export const publicToolNames = [
   "outlit_enable_destination",
   "outlit_disable_destination",
   "outlit_archive_destination",
-  "outlit_list_integrations",
   "outlit_get_integration_capabilities",
   "outlit_begin_integration_setup",
   "outlit_get_integration_setup_status",
@@ -7199,76 +7198,6 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
-  "outlit_list_integrations": {
-    "toolName": "outlit_list_integrations",
-    "commandId": "integration.list",
-    "commandVersion": 2,
-    "ownerDomain": "integrations",
-    "title": "List Integrations",
-    "description": "List the available integrations and whether each has an active connection.",
-    "inputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "connectedOnly": {
-          "default": false,
-          "type": "boolean",
-        },
-      },
-      "additionalProperties": false,
-    },
-    "outputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "integrations": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "provider": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 80,
-              },
-              "name": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 120,
-              },
-              "category": {
-                "type": "string",
-                "enum": [
-                  "crm",
-                  "communication",
-                  "storage",
-                  "calls",
-                  "calendar",
-                  "analytics",
-                  "billing",
-                  "support",
-                ],
-              },
-              "isConnected": {
-                "type": "boolean",
-              },
-            },
-            "required": [
-              "provider",
-              "name",
-              "category",
-              "isConnected",
-            ],
-            "additionalProperties": false,
-          },
-        },
-      },
-      "required": [
-        "integrations",
-      ],
-      "additionalProperties": false,
-    },
-  },
   "outlit_get_integration_capabilities": {
     "toolName": "outlit_get_integration_capabilities",
     "commandId": "integration.capabilities.get",
@@ -9407,7 +9336,6 @@ export const consumerToolPolicies = {
     "outlit_enable_destination",
     "outlit_disable_destination",
     "outlit_archive_destination",
-    "outlit_list_integrations",
     "outlit_get_integration_capabilities",
     "outlit_begin_integration_setup",
     "outlit_get_integration_setup_status",
@@ -9443,7 +9371,6 @@ export const consumerToolPolicies = {
     "outlit_enable_destination",
     "outlit_disable_destination",
     "outlit_archive_destination",
-    "outlit_list_integrations",
     "outlit_get_integration_capabilities",
     "outlit_begin_integration_setup",
     "outlit_get_integration_setup_status",
@@ -10755,4 +10682,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "e62f1d6025d4aabcdb2a45343a1cf946ace7c503eb04dd9d02c8b6784147f701" as const
+export const sdkConsumerContractHash = "eddc4c0f5d93f609a1f36d8934afd8b8e2cc024aa61da050c6516650fcae56c8" as const

@@ -95,7 +95,7 @@ describe("Core-generated OpenAPI spec", () => {
     expect(spec["x-outlit-contract-hash"]).toBe(sdkConsumerContractHash)
   })
 
-  test("keeps gateway schemas aligned with all 37 public capabilities", () => {
+  test("keeps gateway schemas aligned with all 36 public capabilities", () => {
     const spec = readSpec()
     const schemas = spec.components?.schemas ?? {}
     const gateway = spec.paths?.[toolGatewayTransport.path]?.post as GatewayOperation
@@ -105,7 +105,7 @@ describe("Core-generated OpenAPI spec", () => {
       expect(schemas[`ToolInput_${toolName}`]).toBeDefined()
       expect(schemas[`ToolOutput_${toolName}`]).toBeDefined()
     }
-    expect(Object.keys(schemas).filter((name) => name.startsWith("ToolInput_"))).toHaveLength(37)
+    expect(Object.keys(schemas).filter((name) => name.startsWith("ToolInput_"))).toHaveLength(36)
   })
 
   test("documents the stable gateway error envelope", () => {
