@@ -36,9 +36,10 @@ export default defineCommand({
   meta: {
     name: "list",
     description: [
-      "List and filter internal workspace users.",
+      "List all active workspace members with local Outlit user records.",
       "",
-      "Use this to discover CSMs, managers, and account owners before composing dynamic customer reports.",
+      "By default, customer ownership does not limit results; --has-owned-customers is the only customer-related filter.",
+      "Use JSON output to copy exact user IDs for customer ownership and access commands.",
       "Output is JSON when piped or when --json is passed.",
       "",
       "Examples:",
@@ -68,7 +69,7 @@ export default defineCommand({
     },
     "has-owned-customers": {
       type: "boolean",
-      description: "Return only workspace users who own at least one customer",
+      description: "Return only members who own customers; omit for all eligible members",
     },
   },
   async run({ args }) {

@@ -152,7 +152,7 @@ describe("completions command", () => {
     expect(out).toContain("'update-access:Update a customer collaborator")
     expect(out).toContain("'revoke-access:Revoke explicit customer access'")
     expect(out).toContain("'preview:Preview historical exact-event activation matches'")
-    expect(out).toContain("'list:List and filter internal workspace users'")
+    expect(out).toContain("'list:List eligible active workspace members'")
     expect(out).toContain("'signup:Create an Outlit account'")
     expect(out).toContain("'setup:Set up or repair an integration'")
     expect(out).not.toContain("'capabilities:Show setup capabilities'")
