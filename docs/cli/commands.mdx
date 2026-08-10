@@ -257,6 +257,15 @@ Assign a primary owner or manage a workspace member's explicit Viewer or Editor 
 These write commands require exact IDs and never resolve customer names, domains, or user
 emails on your behalf.
 
+For API keys, workspace-member discovery and customer mutations are independent capabilities.
+`outlit ws-users list` requires `workspace_members:read`; assign owner, grant access, update
+access, and revoke access require `customer_access:manage`. The complete discover-then-mutate
+flow needs both grants, while automation that already knows exact IDs may use
+`customer_access:manage` alone. API keys are independent workspace principals and do not inherit
+their creator's human permissions or customer access. Read only includes discovery but not
+mutation, Full workspace access includes both grants, and Custom includes only the grants you
+select; there is no separate customer-collaboration preset.
+
 First discover the customer UUID. Use JSON output because the interactive table is optimized
 for scanning rather than copying identifiers:
 
@@ -269,6 +278,10 @@ Copy the exact `items[].id` for the intended customer. Then discover the target 
 ```bash
 outlit ws-users list --search "alex@example.com" --json
 ```
+
+Without `--has-owned-customers`, this command lists all active workspace members that resolve to
+local Outlit users, including members who own no customers. Use `--has-owned-customers` only when
+you intentionally want to restrict discovery to current owners.
 
 Copy the exact workspace-user `items[].id` as `--target-user-id`. Review multiple matches before
 writing; the ownership and access commands intentionally do not perform fuzzy name matching.

@@ -171,13 +171,13 @@ const COMMANDS: readonly CmdDef[] = [
     subs: [
       {
         name: "list",
-        desc: "List and filter internal workspace users",
+        desc: "List eligible active workspace members",
         flags: [
           ...PAGINATED,
           { name: "--search", desc: "Search name, email, title, role, or territory" },
           { name: "--role", desc: "Filter by role metadata" },
           { name: "--manager-email", desc: "Filter by manager email" },
-          { name: "--has-owned-customers", desc: "Only users who own customers" },
+          { name: "--has-owned-customers", desc: "Only members who own customers" },
           { name: "--order-by", desc: "Sort field" },
           { name: "--order-direction", desc: "Sort direction (asc, desc)" },
         ],

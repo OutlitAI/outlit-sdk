@@ -38,6 +38,22 @@ describe("ws-users list", () => {
     mockCallTool.mockClear()
   })
 
+  test("documents every eligible member as the default exact-ID discovery population", async () => {
+    const { default: listCmd } = await import("../../../src/commands/ws-users/list")
+    const metaSource = listCmd.meta
+    const meta =
+      typeof metaSource === "function" ? await metaSource() : await Promise.resolve(metaSource)
+    const argsSource = listCmd.args
+    const args =
+      typeof argsSource === "function" ? await argsSource() : await Promise.resolve(argsSource)
+    const description = meta?.description ?? ""
+
+    expect(description).toContain("all active workspace members with local Outlit user records")
+    expect(description).toContain("customer ownership does not limit results")
+    expect(description).toContain("exact user IDs")
+    expect(args?.["has-owned-customers"]?.description).toContain("omit for all eligible members")
+  })
+
   async function expectInvalidSortArgs(args: Record<string, unknown>) {
     const { default: listCmd } = await import("../../../src/commands/ws-users/list")
     const exitSpy = mockExitThrow()
