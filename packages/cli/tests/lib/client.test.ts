@@ -82,11 +82,11 @@ describe("createClient", () => {
       new Response(JSON.stringify({ integrations: [] }), { status: 200 }),
     )
     const client = await createClient()
-    await client.callTool("outlit_list_integrations", { connectedOnly: true })
+    await client.callTool("outlit_get_integration_status", { provider: "slack" })
 
     expect(JSON.parse(String(fetchSpy.mock.calls[0]?.[1]?.body))).toEqual({
-      tool: "outlit_list_integrations",
-      input: { connectedOnly: true },
+      tool: "outlit_get_integration_status",
+      input: { provider: "slack" },
     })
     fetchSpy.mockRestore()
   })
