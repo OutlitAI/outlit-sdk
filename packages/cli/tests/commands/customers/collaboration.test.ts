@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
-import { OutlitToolsApiError } from "@outlit/tools"
+import { OutlitToolsApiError, type PublicToolResult } from "@outlit/tools"
 import {
   expectErrorExit,
   mockExitThrow,
@@ -10,13 +10,46 @@ import {
 
 const customerId = "10000000-0000-4000-8000-000000000000"
 const targetUserId = "user_target_123"
-
-const mockCallTool = mock(
-  async (_toolName: string, _params: unknown): Promise<unknown> => ({
+const assignOwnerResponse = {
+  customerId,
+  ownerId: targetUserId,
+  previousOwnerId: "user_previous_owner_123",
+} satisfies PublicToolResult<"outlit_assign_customer_owner">
+const grantAccessResponse = {
+  access: {
     customerId,
     userId: targetUserId,
-  }),
-)
+    role: "VIEWER",
+    grantedById: "user_actor_123",
+  },
+} satisfies PublicToolResult<"outlit_grant_customer_access">
+const updateAccessResponse = {
+  access: {
+    customerId,
+    userId: targetUserId,
+    role: "EDITOR",
+    grantedById: "user_actor_123",
+  },
+} satisfies PublicToolResult<"outlit_update_customer_access">
+const revokeAccessResponse = {
+  customerId,
+  userId: targetUserId,
+} satisfies PublicToolResult<"outlit_revoke_customer_access">
+
+const mockCallTool = mock(async (toolName: string, _params: unknown): Promise<unknown> => {
+  switch (toolName) {
+    case "outlit_assign_customer_owner":
+      return assignOwnerResponse
+    case "outlit_grant_customer_access":
+      return grantAccessResponse
+    case "outlit_update_customer_access":
+      return updateAccessResponse
+    case "outlit_revoke_customer_access":
+      return revokeAccessResponse
+    default:
+      throw new Error(`Unexpected tool call: ${toolName}`)
+  }
+})
 
 mock.module("../../../src/lib/client", () => ({
   createClient: async () => ({
@@ -37,11 +70,15 @@ async function loadCommand(module: Promise<unknown>) {
 async function runCommand(module: Promise<unknown>, args: Record<string, unknown>) {
   const command = (await loadCommand(module)).default
   const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+  let stdoutOutput = ""
   try {
     await command.run?.({ args } as never)
   } finally {
+    stdoutOutput = writeSpy.mock.calls.map((call) => call[0] as string).join("")
     writeSpy.mockRestore()
   }
+
+  return stdoutOutput
 }
 
 async function expectLocalValidationError(
@@ -77,7 +114,7 @@ describe("customer collaboration commands", () => {
   })
 
   test("assign-owner sends the canonical owner assignment payload", async () => {
-    await runCommand(import("../../../src/commands/customers/assign-owner"), {
+    const stdout = await runCommand(import("../../../src/commands/customers/assign-owner"), {
       "customer-id": customerId,
       "target-user-id": targetUserId,
       json: true,
@@ -87,10 +124,11 @@ describe("customer collaboration commands", () => {
       customerId,
       targetUserId,
     })
+    expect(stdout).toBe(`${JSON.stringify(assignOwnerResponse, null, 2)}\n`)
   })
 
   test("grant-access sends the canonical access grant payload", async () => {
-    await runCommand(import("../../../src/commands/customers/grant-access"), {
+    const stdout = await runCommand(import("../../../src/commands/customers/grant-access"), {
       "customer-id": customerId,
       "target-user-id": targetUserId,
       role: "viewer",
@@ -102,10 +140,11 @@ describe("customer collaboration commands", () => {
       targetUserId,
       role: "VIEWER",
     })
+    expect(stdout).toBe(`${JSON.stringify(grantAccessResponse, null, 2)}\n`)
   })
 
   test("update-access sends the canonical access update payload", async () => {
-    await runCommand(import("../../../src/commands/customers/update-access"), {
+    const stdout = await runCommand(import("../../../src/commands/customers/update-access"), {
       "customer-id": customerId,
       "target-user-id": targetUserId,
       role: "EDITOR",
@@ -117,10 +156,11 @@ describe("customer collaboration commands", () => {
       targetUserId,
       role: "EDITOR",
     })
+    expect(stdout).toBe(`${JSON.stringify(updateAccessResponse, null, 2)}\n`)
   })
 
   test("revoke-access sends the canonical access revocation payload", async () => {
-    await runCommand(import("../../../src/commands/customers/revoke-access"), {
+    const stdout = await runCommand(import("../../../src/commands/customers/revoke-access"), {
       "customer-id": customerId,
       "target-user-id": targetUserId,
       json: true,
@@ -130,6 +170,7 @@ describe("customer collaboration commands", () => {
       customerId,
       targetUserId,
     })
+    expect(stdout).toBe(`${JSON.stringify(revokeAccessResponse, null, 2)}\n`)
   })
 
   for (const [name, load] of [
