@@ -45,14 +45,14 @@ Use `--config-stdin` to opt into reading exactly one strict JSON object from std
 provider-specific. For example, a Fireflies API key is supplied only through stdin:
 
 ```bash
-printf '%s\n' '{"credentials":{"apiKey":"<fireflies-api-key>"}}' \\
+printf '%s\n' '{"credentials":{"apiKey":"<fireflies-api-key>"}}' \
   | outlit integrations setup fireflies --config-stdin --json
 ```
 
 An explicit HubSpot CRM mapping is likewise supplied as the generated CRM mapping shape:
 
 ```bash
-printf '%s\n' '{"configuration":{"kind":"crm_mapping","mappings":[{"pipelineId":"default","pipelineName":"Sales","mappings":[{"outlitStage":"Won","crmStages":[{"id":"closedwon","name":"Closed Won"}]}]}],"confirm":true}}' \\
+printf '%s\n' '{"configuration":{"kind":"crm_mapping","mappings":[{"pipelineId":"default","pipelineName":"Sales","mappings":[{"outlitStage":"Won","crmStages":[{"id":"closedwon","name":"Closed Won"}]}]}],"confirm":true}}' \
   | outlit integrations setup hubspot --config-stdin --json
 ```
 
