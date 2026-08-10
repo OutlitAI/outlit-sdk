@@ -57,7 +57,9 @@ describe("completions command", () => {
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "sources" ]]`)
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "ws-users" ]]`)
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "customers" ]]`)
-    expect(out).toContain('COMPREPLY=($(compgen -W "list get timeline" -- "$cur"))')
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "list get timeline assign-owner grant-access update-access revoke-access" -- "$cur"))',
+    )
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "activation" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "get preview update disable" -- "$cur"))')
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "integrations" ]]`)
@@ -87,6 +89,10 @@ describe("completions command", () => {
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --source-types --fact-types --fact-categories --after --before"',
     )
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --fact-id --include"')
+    expect(out).toContain(
+      `[[ $COMP_CWORD -gt 2 && "${bashCompWord(1)}" == "customers" && "${bashCompWord(2)}" == "grant-access" ]]`,
+    )
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --target-user-id --role"')
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --source-type --customer --participant --provider --has-transcript --after --before"',
     )
@@ -141,6 +147,10 @@ describe("completions command", () => {
     const out = await captureCompletions("zsh")
     expect(out).toContain("CURRENT == 3")
     expect(out).toContain("'list:List and filter customers'")
+    expect(out).toContain("'assign-owner:Assign the primary customer owner'")
+    expect(out).toContain("'grant-access:Grant Viewer or Editor customer access'")
+    expect(out).toContain("'update-access:Update a customer collaborator")
+    expect(out).toContain("'revoke-access:Revoke explicit customer access'")
     expect(out).toContain("'preview:Preview historical exact-event activation matches'")
     expect(out).toContain("'list:List and filter internal workspace users'")
     expect(out).toContain("'signup:Create an Outlit account'")
@@ -162,6 +172,9 @@ describe("completions command", () => {
     expect(out).toContain("'--owner-id:Filter by owner user ID'")
     expect(out).toContain("'--owner-email:Filter by owner email'")
     expect(out).toContain("'--has-owner:Only customers with an owner'")
+    expect(out).toContain("'--target-user-id:Required workspace-user ID'")
+    expect(out).toContain("'--role:Required access role (VIEWER, EDITOR)'")
+    expect(out).toContain('[[ "$words[2]" == "customers" && "$words[3]" == "grant-access" ]]')
     expect(out).toContain('[[ "$words[2]" == "facts" && "$words[3]" == "list" ]]')
     expect(out).toContain('[[ "$words[2]" == "sources" && "$words[3]" == "list" ]]')
     expect(out).toContain('[[ "$words[2]" == "sources" && "$words[3]" == "get" ]]')
@@ -187,6 +200,11 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-email")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l has-owner")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l trait")
+    expect(out).toContain("-n '__outlit_using_cmd customers assign-owner' -l target-user-id")
+    expect(out).toContain("-n '__outlit_using_cmd customers grant-access' -l target-user-id")
+    expect(out).toContain("-n '__outlit_using_cmd customers grant-access' -l role")
+    expect(out).toContain("-n '__outlit_using_cmd customers update-access' -l role")
+    expect(out).toContain("-n '__outlit_using_cmd customers revoke-access' -l target-user-id")
     expect(out).toContain("-n '__outlit_using_cmd auth login' -l key")
     expect(out).toContain("-n '__outlit_using_cmd users list' -l journey-stage")
     expect(out).toContain("-n '__outlit_using_cmd users list' -l trait")

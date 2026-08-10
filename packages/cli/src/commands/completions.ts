@@ -86,6 +86,34 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--end-date", desc: "End date (ISO 8601)" },
         ],
       },
+      {
+        name: "assign-owner",
+        desc: "Assign the primary customer owner",
+        flags: [...COMMON, { name: "--target-user-id", desc: "Required workspace-user ID" }],
+      },
+      {
+        name: "grant-access",
+        desc: "Grant Viewer or Editor customer access",
+        flags: [
+          ...COMMON,
+          { name: "--target-user-id", desc: "Required workspace-user ID" },
+          { name: "--role", desc: "Required access role (VIEWER, EDITOR)" },
+        ],
+      },
+      {
+        name: "update-access",
+        desc: "Update a customer collaborator's role",
+        flags: [
+          ...COMMON,
+          { name: "--target-user-id", desc: "Required workspace-user ID" },
+          { name: "--role", desc: "Required access role (VIEWER, EDITOR)" },
+        ],
+      },
+      {
+        name: "revoke-access",
+        desc: "Revoke explicit customer access",
+        flags: [...COMMON, { name: "--target-user-id", desc: "Required workspace-user ID" }],
+      },
     ],
   },
   {
