@@ -251,6 +251,74 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
   `users`.
 </Info>
 
+## Customer Ownership and Access
+
+Assign a primary owner or manage a workspace member's explicit Viewer or Editor access.
+These write commands require exact IDs and never resolve customer names, domains, or user
+emails on your behalf.
+
+First discover the customer UUID. Use JSON output because the interactive table is optimized
+for scanning rather than copying identifiers:
+
+```bash
+outlit customers list --search "acme" --json
+```
+
+Copy the exact `items[].id` for the intended customer. Then discover the target workspace user:
+
+```bash
+outlit ws-users list --search "alex@example.com" --json
+```
+
+Copy the exact workspace-user `items[].id` as `--target-user-id`. Review multiple matches before
+writing; the ownership and access commands intentionally do not perform fuzzy name matching.
+
+### Assign Owner
+
+```bash
+outlit customers assign-owner \
+  10000000-0000-4000-8000-000000000000 \
+  --target-user-id user_123 \
+  --json
+```
+
+The target must be an active workspace member. When ownership changes, the former owner keeps
+Editor access.
+
+### Grant Access
+
+```bash
+outlit customers grant-access \
+  10000000-0000-4000-8000-000000000000 \
+  --target-user-id user_123 \
+  --role VIEWER \
+  --json
+```
+
+### Update Access
+
+```bash
+outlit customers update-access \
+  10000000-0000-4000-8000-000000000000 \
+  --target-user-id user_123 \
+  --role EDITOR \
+  --json
+```
+
+### Revoke Access
+
+```bash
+outlit customers revoke-access \
+  10000000-0000-4000-8000-000000000000 \
+  --target-user-id user_123 \
+  --json
+```
+
+`--role` accepts only `VIEWER` or `EDITOR`; `OWNER` is represented by the separate primary-owner
+assignment. Malformed customer IDs, missing or oversized target-user IDs, and invalid roles fail
+locally without sending a request. Permission, conflict, and other gateway failures retain Core's
+structured `code`, `message`, `retryable`, and `requestId` fields in JSON output.
+
 ## Customers Timeline
 
 View the activity timeline for a customer, filtered by channel and event type.
