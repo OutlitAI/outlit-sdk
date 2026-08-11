@@ -1,6 +1,6 @@
 {
   "name": "@outlit/tools",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Customer intelligence tool contracts and API client helpers for Outlit agents",
   "license": "Apache-2.0",
   "author": "Outlit AI",

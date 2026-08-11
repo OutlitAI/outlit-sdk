@@ -1,5 +1,35 @@
 # @outlit/cli
 
+## 3.0.0
+
+### Major Changes
+
+- [#186](https://github.com/OutlitAI/outlit-sdk/pull/186) [`d5360f8`](https://github.com/OutlitAI/outlit-sdk/commit/d5360f8485252dfe4772876b1b44a9488b1f3d32) Thanks [@leo-paz](https://github.com/leo-paz)! - Remove `integrations list`, `integrations capabilities`, and the generated
+  `outlit_get_integration_sync_status` tool. `outlit integrations setup` and
+  `outlit integrations status` are the supported CLI workflow. Add the generated
+  `outlit_setup_integration` contract and a bounded preferred setup client with secret-safe interactive
+  prompts, strict opt-in stdin configuration, safe browser handoffs, and old-Core compatibility.
+  Status now returns only the five canonical configuration-readiness states, without browser-session,
+  raw provider-state, sync, backfill, or action metadata.
+
+### Minor Changes
+
+- [#184](https://github.com/OutlitAI/outlit-sdk/pull/184) [`2ec7678`](https://github.com/OutlitAI/outlit-sdk/commit/2ec7678f93187e9287b3ed3216fe27ffc86c0540) Thanks [@leo-paz](https://github.com/leo-paz)! - Expose Core's event-based Behavior Metric source/event discovery and creation capabilities through tools and CLI while explicitly excluding the full capability family from Pi.
+
+- [#188](https://github.com/OutlitAI/outlit-sdk/pull/188) [`222bba6`](https://github.com/OutlitAI/outlit-sdk/commit/222bba6c3ad50138a0e3a84013a322a7bfe2b35a) Thanks [@leo-paz](https://github.com/leo-paz)! - Add first-class `customers owner set`, `customers grant`, and `customers revoke` commands with all-member exact-ID discovery guidance, split API-key grant documentation, local contract validation, and synchronized Core contract metadata. Re-running `grant` changes an existing collaborator's Viewer/Editor role.
+
+### Patch Changes
+
+- [#181](https://github.com/OutlitAI/outlit-sdk/pull/181) [`327eef1`](https://github.com/OutlitAI/outlit-sdk/commit/327eef1012d8fba8e76f22c0947fd484dc3d21fb) Thanks [@leo-paz](https://github.com/leo-paz)! - Expose Core's customer owner and sharing tool contracts to SDK tool consumers. Republish the
+  CLI and Pi wrappers with their compatible tool-runtime dependency.
+
+- [#190](https://github.com/OutlitAI/outlit-sdk/pull/190) [`975249a`](https://github.com/OutlitAI/outlit-sdk/commit/975249aa249f5677d42929664c1f5161dcd914da) Thanks [@leo-paz](https://github.com/leo-paz)! - Include Slack conversations in the deterministic source-listing CLI help.
+
+- [#183](https://github.com/OutlitAI/outlit-sdk/pull/183) [`ba4380a`](https://github.com/OutlitAI/outlit-sdk/commit/ba4380aefb9c137a527cd8d9a2d1913a8817c24e) Thanks [@leo-paz](https://github.com/leo-paz)! - Route Stripe through the Core-advertised OAuth handoff and reject legacy provider credential arguments.
+
+- Updated dependencies [[`2ec7678`](https://github.com/OutlitAI/outlit-sdk/commit/2ec7678f93187e9287b3ed3216fe27ffc86c0540), [`222bba6`](https://github.com/OutlitAI/outlit-sdk/commit/222bba6c3ad50138a0e3a84013a322a7bfe2b35a), [`327eef1`](https://github.com/OutlitAI/outlit-sdk/commit/327eef1012d8fba8e76f22c0947fd484dc3d21fb), [`d5360f8`](https://github.com/OutlitAI/outlit-sdk/commit/d5360f8485252dfe4772876b1b44a9488b1f3d32)]:
+  - @outlit/tools@2.0.0
+
 ## 2.0.0
 
 ### Major Changes
