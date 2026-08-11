@@ -157,6 +157,26 @@ describe("sources list", () => {
     mockCallTool.mockClear()
   })
 
+  test("advertises Slack conversations in CLI help", async () => {
+    const proc = Bun.spawn(
+      ["bun", `${import.meta.dir}/../../src/cli.ts`, "sources", "list", "--help"],
+      {
+        env: { ...process.env, OUTLIT_NO_UPDATE_NOTIFIER: "1" },
+        stdout: "pipe",
+        stderr: "pipe",
+      },
+    )
+    const [stdout, stderr, exitCode] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+      proc.exited,
+    ])
+
+    expect(exitCode).toBe(0)
+    expect(stderr).toBe("")
+    expect(stdout).toContain("Slack conversations")
+  })
+
   test("sends source listing filters to outlit_list_sources", async () => {
     const { default: sourcesListCmd } = await import("../../src/commands/sources/list")
 

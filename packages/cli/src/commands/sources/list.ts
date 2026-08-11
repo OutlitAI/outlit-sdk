@@ -68,7 +68,7 @@ export default defineCommand({
     description: [
       "List concrete source records deterministically.",
       "",
-      "Use this when you need enumerated calls, emails, calendar events, support tickets, or opportunities rather than semantic ranking.",
+      "Use this when you need enumerated calls, emails, calendar events, support tickets, opportunities, or Slack conversations rather than semantic ranking.",
       "",
       "Examples:",
       "  outlit sources list --customer acme.com --source-type CALL",
