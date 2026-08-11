@@ -1,6 +1,6 @@
 import { publicToolContracts } from "@outlit/tools"
 import { outputError } from "../../lib/output"
-import { requiredTrimmedString } from "../../lib/platform-input"
+import { requiredString } from "../../lib/platform-input"
 
 const customerIdSchema =
   publicToolContracts.outlit_assign_customer_owner.inputSchema.properties.customerId
@@ -33,7 +33,7 @@ export function parseCustomerCollaborationIds(
   args: { "customer-id"?: string; "target-user-id"?: string },
   json: boolean,
 ): { customerId: string; targetUserId: string } {
-  const customerId = requiredTrimmedString(args["customer-id"], "<customer-id>", json)
+  const customerId = requiredString(args["customer-id"], "<customer-id>", json)
   const customerIdPattern = new RegExp(customerIdSchema.pattern)
   if (!customerIdPattern.test(customerId)) {
     return outputError(
@@ -42,7 +42,7 @@ export function parseCustomerCollaborationIds(
     )
   }
 
-  const targetUserId = requiredTrimmedString(args["target-user-id"], "--target-user-id", json)
+  const targetUserId = requiredString(args["target-user-id"], "--target-user-id", json)
   if (targetUserId.length > targetUserIdSchema.maxLength) {
     return outputError(
       {
@@ -60,8 +60,8 @@ export function parseCustomerAccessRole(
   value: string | undefined,
   json: boolean,
 ): (typeof customerAccessRoles)[number] {
-  const normalized = requiredTrimmedString(value, "--role", json).toUpperCase()
-  const role = customerAccessRoles.find((candidate) => candidate === normalized)
+  const input = requiredString(value, "--role", json)
+  const role = customerAccessRoles.find((candidate) => candidate === input)
   if (!role) {
     return outputError(
       {

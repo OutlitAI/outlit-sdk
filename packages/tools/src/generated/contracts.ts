@@ -605,7 +605,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "users",
     "title": "List Workspace Users",
-    "description": "Browse internal workspace users such as CSMs, managers, account owners, and admins. Use this to discover who owns customers before composing dynamic reports across account books.",
+    "description": "List active workspace members who resolve to local Outlit users. Use this to discover exact user IDs for customer ownership and access commands or to browse account ownership.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -626,7 +626,7 @@ export const publicToolContracts = {
           "maxLength": 500,
         },
         "hasOwnedCustomers": {
-          "description": "When true, return only workspace users who own at least one customer",
+          "description": "When true, return only members who own customers; when false, return only members who own none",
           "type": "boolean",
         },
         "limit": {
@@ -10682,4 +10682,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "eddc4c0f5d93f609a1f36d8934afd8b8e2cc024aa61da050c6516650fcae56c8" as const
+export const sdkConsumerContractHash = "39fe276d5127aa59cdfc0172cc44c9281beb62b1942c44094421f2a56fbb40fa" as const

@@ -23,14 +23,14 @@ const grantAccessResponse = {
     grantedById: "user_actor_123",
   },
 } satisfies PublicToolResult<"outlit_grant_customer_access">
-const updateAccessResponse = {
+const changedAccessResponse = {
   access: {
     customerId,
     userId: targetUserId,
     role: "EDITOR",
     grantedById: "user_actor_123",
   },
-} satisfies PublicToolResult<"outlit_update_customer_access">
+} satisfies PublicToolResult<"outlit_grant_customer_access">
 const revokeAccessResponse = {
   customerId,
   userId: targetUserId,
@@ -42,21 +42,20 @@ const mockCallTool = mock(async (toolName: string, _params: unknown): Promise<un
       return assignOwnerResponse
     case "outlit_grant_customer_access":
       return grantAccessResponse
-    case "outlit_update_customer_access":
-      return updateAccessResponse
     case "outlit_revoke_customer_access":
       return revokeAccessResponse
     default:
       throw new Error(`Unexpected tool call: ${toolName}`)
   }
 })
+const mockCreateClient = mock(async () => ({
+  key: TEST_API_KEY,
+  baseUrl: "https://app.outlit.ai",
+  callTool: mockCallTool,
+}))
 
 mock.module("../../../src/lib/client", () => ({
-  createClient: async () => ({
-    key: TEST_API_KEY,
-    baseUrl: "https://app.outlit.ai",
-    callTool: mockCallTool,
-  }),
+  createClient: mockCreateClient,
 }))
 
 setNonInteractive()
@@ -103,6 +102,7 @@ async function expectLocalValidationError(
   }
 
   expectErrorExit(thrown, stderrOutput, expectedCode)
+  expect(mockCreateClient).not.toHaveBeenCalled()
   expect(mockCallTool).not.toHaveBeenCalled()
 }
 
@@ -110,11 +110,12 @@ describe("customer collaboration commands", () => {
   useTempEnv("customer-collaboration-test")
 
   beforeEach(() => {
+    mockCreateClient.mockClear()
     mockCallTool.mockClear()
   })
 
-  test("assign-owner sends the canonical owner assignment payload", async () => {
-    const stdout = await runCommand(import("../../../src/commands/customers/assign-owner"), {
+  test("owner set sends the canonical owner assignment payload", async () => {
+    const stdout = await runCommand(import("../../../src/commands/customers/owner/set"), {
       "customer-id": customerId,
       "target-user-id": targetUserId,
       json: true,
@@ -127,11 +128,11 @@ describe("customer collaboration commands", () => {
     expect(stdout).toBe(`${JSON.stringify(assignOwnerResponse, null, 2)}\n`)
   })
 
-  test("grant-access sends the canonical access grant payload", async () => {
-    const stdout = await runCommand(import("../../../src/commands/customers/grant-access"), {
+  test("grant sends the canonical access grant payload", async () => {
+    const stdout = await runCommand(import("../../../src/commands/customers/grant"), {
       "customer-id": customerId,
       "target-user-id": targetUserId,
-      role: "viewer",
+      role: "VIEWER",
       json: true,
     })
 
@@ -143,24 +144,25 @@ describe("customer collaboration commands", () => {
     expect(stdout).toBe(`${JSON.stringify(grantAccessResponse, null, 2)}\n`)
   })
 
-  test("update-access sends the canonical access update payload", async () => {
-    const stdout = await runCommand(import("../../../src/commands/customers/update-access"), {
+  test("grant changes an existing collaborator by reusing the canonical upsert", async () => {
+    mockCallTool.mockResolvedValueOnce(changedAccessResponse)
+    const stdout = await runCommand(import("../../../src/commands/customers/grant"), {
       "customer-id": customerId,
       "target-user-id": targetUserId,
       role: "EDITOR",
       json: true,
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_update_customer_access", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_grant_customer_access", {
       customerId,
       targetUserId,
       role: "EDITOR",
     })
-    expect(stdout).toBe(`${JSON.stringify(updateAccessResponse, null, 2)}\n`)
+    expect(stdout).toBe(`${JSON.stringify(changedAccessResponse, null, 2)}\n`)
   })
 
-  test("revoke-access sends the canonical access revocation payload", async () => {
-    const stdout = await runCommand(import("../../../src/commands/customers/revoke-access"), {
+  test("revoke sends the canonical access revocation payload", async () => {
+    const stdout = await runCommand(import("../../../src/commands/customers/revoke"), {
       "customer-id": customerId,
       "target-user-id": targetUserId,
       json: true,
@@ -174,10 +176,9 @@ describe("customer collaboration commands", () => {
   })
 
   for (const [name, load] of [
-    ["assign-owner", () => import("../../../src/commands/customers/assign-owner")],
-    ["grant-access", () => import("../../../src/commands/customers/grant-access")],
-    ["update-access", () => import("../../../src/commands/customers/update-access")],
-    ["revoke-access", () => import("../../../src/commands/customers/revoke-access")],
+    ["owner set", () => import("../../../src/commands/customers/owner/set")],
+    ["grant", () => import("../../../src/commands/customers/grant")],
+    ["revoke", () => import("../../../src/commands/customers/revoke")],
   ] as const) {
     test(`${name} rejects a non-UUID customer ID before any network call`, async () => {
       await expectLocalValidationError(load(), {
@@ -187,11 +188,19 @@ describe("customer collaboration commands", () => {
         json: true,
       })
     })
+
+    test(`${name} rejects a whitespace-padded customer ID before any network call`, async () => {
+      await expectLocalValidationError(load(), {
+        "customer-id": ` ${customerId} `,
+        "target-user-id": targetUserId,
+        role: "VIEWER",
+        json: true,
+      })
+    })
   }
 
   for (const [name, load] of [
-    ["grant-access", () => import("../../../src/commands/customers/grant-access")],
-    ["update-access", () => import("../../../src/commands/customers/update-access")],
+    ["grant", () => import("../../../src/commands/customers/grant")],
   ] as const) {
     test(`${name} rejects OWNER before any network call`, async () => {
       await expectLocalValidationError(load(), {
@@ -201,11 +210,37 @@ describe("customer collaboration commands", () => {
         json: true,
       })
     })
+
+    test(`${name} rejects a lowercase role before any network call`, async () => {
+      await expectLocalValidationError(
+        load(),
+        {
+          "customer-id": customerId,
+          "target-user-id": targetUserId,
+          role: "viewer",
+          json: true,
+        },
+        "invalid_input",
+      )
+    })
+
+    test(`${name} rejects a whitespace-padded role before any network call`, async () => {
+      await expectLocalValidationError(
+        load(),
+        {
+          "customer-id": customerId,
+          "target-user-id": targetUserId,
+          role: " VIEWER ",
+          json: true,
+        },
+        "invalid_input",
+      )
+    })
   }
 
   test("rejects a blank target user ID before any network call", async () => {
     await expectLocalValidationError(
-      import("../../../src/commands/customers/assign-owner"),
+      import("../../../src/commands/customers/owner/set"),
       {
         "customer-id": customerId,
         "target-user-id": "   ",
@@ -216,16 +251,15 @@ describe("customer collaboration commands", () => {
   })
 
   test("rejects an oversized target user ID before any network call", async () => {
-    await expectLocalValidationError(import("../../../src/commands/customers/assign-owner"), {
+    await expectLocalValidationError(import("../../../src/commands/customers/owner/set"), {
       "customer-id": customerId,
-      "target-user-id": "u".repeat(501),
+      "target-user-id": `${"u".repeat(500)} `,
       json: true,
     })
   })
 
   for (const [name, load] of [
-    ["grant-access", () => import("../../../src/commands/customers/grant-access")],
-    ["update-access", () => import("../../../src/commands/customers/update-access")],
+    ["grant", () => import("../../../src/commands/customers/grant")],
   ] as const) {
     test(`${name} rejects a missing role before any network call`, async () => {
       await expectLocalValidationError(
@@ -250,7 +284,7 @@ describe("customer collaboration commands", () => {
     mockCallTool.mockRejectedValueOnce(
       new OutlitToolsApiError(403, JSON.stringify(envelope), envelope),
     )
-    const command = (await import("../../../src/commands/customers/grant-access")).default
+    const command = (await import("../../../src/commands/customers/grant")).default
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
     const exitSpy = mockExitThrow()
     let thrown: unknown
@@ -286,7 +320,7 @@ describe("customer collaboration commands", () => {
     mockCallTool.mockRejectedValueOnce(
       new OutlitToolsApiError(409, JSON.stringify(envelope), envelope),
     )
-    const command = (await import("../../../src/commands/customers/revoke-access")).default
+    const command = (await import("../../../src/commands/customers/revoke")).default
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
     const exitSpy = mockExitThrow()
     let thrown: unknown

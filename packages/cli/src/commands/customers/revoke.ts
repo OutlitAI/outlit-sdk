@@ -7,14 +7,14 @@ import { customerCollaborationIdArgs, parseCustomerCollaborationIds } from "./co
 
 export default defineCommand({
   meta: {
-    name: "revoke-access",
+    name: "revoke",
     description: [
       "Remove a collaborator's explicit access to a customer.",
       "The primary owner cannot be removed.",
       "Both IDs must be exact; discover them with customer and workspace-user list commands.",
       "",
       "Example:",
-      "  outlit customers revoke-access 10000000-0000-4000-8000-000000000000 --target-user-id user_123 --json",
+      "  outlit customers revoke 10000000-0000-4000-8000-000000000000 --target-user-id user_123 --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
