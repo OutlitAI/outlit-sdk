@@ -24,12 +24,16 @@ describe("customer-surface documentation", () => {
     }
   })
 
-  test("includes Slack in source-listing documentation", () => {
+  test("includes Slack in source-listing and semantic-search documentation", () => {
+    const mcpDocs = readDoc("docs/ai-integrations/mcp.mdx")
     const sourceDescription =
       "calls, emails, calendar events, support tickets, Slack messages, or opportunities"
+    const searchDescription =
+      "customer facts, emails, calls, calendar events, support tickets, Slack messages, and CRM opportunities"
 
     expect(readDoc("docs/api-reference/tools.mdx")).toContain(sourceDescription)
-    expect(readDoc("docs/ai-integrations/mcp.mdx")).toContain(sourceDescription)
+    expect(mcpDocs).toContain(sourceDescription)
+    expect(mcpDocs).toContain(searchDescription)
   })
 
   test("leads CLI timeline documentation with canonical channels and aliases", () => {
