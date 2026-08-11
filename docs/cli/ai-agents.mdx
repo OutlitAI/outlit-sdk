@@ -30,9 +30,11 @@ Run `onboard` for the agent you use, or run `outlit setup --yes` to detect insta
 outlit onboard --agent codex --json
 ```
 
-If no API key is available, `onboard` starts the browser approval flow outside CI and stores the approved CLI key. It then validates the key, installs the Outlit skill, checks integration capabilities/status, and returns next commands such as `outlit integrations setup <provider> --json`.
+If no API key is available, `onboard` starts the browser approval flow outside CI and stores the approved CLI key. It then validates the key, installs the Outlit skill, reads canonical integration status, and returns next commands such as `outlit integrations setup <provider> --json`.
 
-`onboard` does not connect third-party integrations by itself. Use `outlit integrations capabilities --json`, then `outlit integrations setup <provider> --json`. The CLI starts a browser handoff when one is available; credential entry and provider-specific configuration stay in the Outlit web app.
+`onboard` does not connect third-party integrations by itself. Use `outlit integrations setup <provider> --json`, then `outlit integrations status <provider> --json`. Setup first negotiates capabilities without credentials. Interactive mode can prompt securely after Core requests a credential or open a safe browser handoff; automation must opt into strict stdin JSON with `--config-stdin`.
+
+For headless CRM setup, add `--accept-recommended` to submit the exact recommendation returned by Core. It conflicts only with a custom CRM mapping supplied through `--config-stdin`.
 
 ## Auto-Setup
 

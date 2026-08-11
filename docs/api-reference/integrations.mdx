@@ -1,38 +1,76 @@
 ---
-title: "Integration Capabilities"
-description: "Call safe integration capabilities through the public tool gateway"
+title: "Integration Tools"
+description: "Negotiate setup, configure providers, and read canonical integration readiness"
 ---
 
-Integration automation uses `POST /api/tools/call`; there are no public integration credential, setup-step, or disconnect REST routes. Complete secret-bearing and provider-specific setup in the Outlit web app.
-
-All gateway requests use an Outlit bearer:
-
-```http
-Authorization: Bearer ok_...
-```
+Integration automation uses `POST /api/tools/call`. There are no public provider-credential or
+disconnect REST routes. Send an Outlit bearer API key in the `Authorization` header; setup calls
+for supported actor-owned integrations use `integrations:connect_own`, while workspace or admin
+setup uses `integrations:manage`. Core determines which authorization route applies to the setup
+request.
 
 ## Available tools
 
 | Tool | Purpose |
 |------|---------|
-| `outlit_list_integrations` | List integrations and safe connection health |
-| `outlit_get_integration_capabilities` | Describe browser-handoff or human-controlled setup modes |
-| `outlit_begin_integration_setup` | Start a short-lived browser handoff |
-| `outlit_get_integration_setup_status` | Poll a handoff owned by the current actor |
-| `outlit_get_integration_sync_status` | Inspect safe model-level sync status |
+| `outlit_get_integration_capabilities` | Negotiate setup without sending credentials; `preferredSetupVersion: 1` selects the preferred flow. |
+| `outlit_setup_integration` | Perform one bounded credential, configuration, or safe-handoff setup transition. |
+| `outlit_get_integration_status` | Return canonical configuration readiness for all providers or one provider. |
+| `outlit_begin_integration_setup` | Compatibility tool for starting an older browser handoff. |
+| `outlit_get_integration_setup_status` | Compatibility tool for polling an authentication session owned by the current actor. |
 
-## Example
+Older installed clients may continue to call legacy integration reads during the compatibility
+window, but those names are intentionally absent from public discovery. New agents should use
+`outlit_get_integration_status` and `outlit_setup_integration` only.
+
+The generated [OpenAPI specification](/openapi.json) and `@outlit/tools`
+`publicToolContracts` contain the exact input and output schemas.
+
+## Preferred setup negotiation
+
+Call `outlit_get_integration_capabilities` with the provider first. Do not include credentials in
+this request. When the result contains `preferredSetupVersion: 1`, call
+`outlit_setup_integration` with the provider and, when requested, its generated
+`connectionMode`, `credentials`, or `configuration` shape.
 
 ```bash
 curl -X POST https://app.outlit.ai/api/tools/call \
-  -H "Authorization: Bearer ok_your_api_key" \
+  -H "Authorization: Bearer ${OUTLIT_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
-    "tool": "outlit_begin_integration_setup",
+    "tool": "outlit_get_integration_capabilities",
     "input": { "provider": "hubspot" }
   }'
 ```
 
-A successful handoff returns `provider`, `state`, `sessionId`, `connectUrl`, and `expiresAt`. Providers whose credentials or configuration cannot safely cross a model boundary report `setupMode: "human_controlled"` from the capabilities tool.
+`outlit_setup_integration` returns the provider, its canonical status, an optional `next`
+transition, and an optional stable error. Supported next transitions are:
 
-The generated [OpenAPI specification](/openapi.json) contains the exact input and output schema for every public capability.
+- `browser_handoff` for authentication, recovery, or provider-controlled external setup
+- `crm_mapping` with the exact recommendation that can be confirmed and returned
+- `mixpanel_mapping` with a preview used to choose and confirm an exact mapping
+
+On `CREDENTIAL_REQUIRED`, collect the provider's declared credential shape through a secret-safe
+channel and retry once. Never log, serialize into errors, or return submitted credentials. Browser
+handoffs must remain on the configured Outlit origin and must not carry credential material in the
+URL. Only authentication handoffs with a session ID use the compatibility status poll; recovery and
+external-setup handoffs are terminal responses.
+
+If `preferredSetupVersion` is absent or not `1`, use the browser compatibility tools without sending
+credentials or provider configuration.
+
+## Canonical readiness
+
+`outlit_get_integration_status` returns exactly these configuration-readiness states:
+
+| State | Meaning |
+| --- | --- |
+| `not_connected` | No usable provider connection exists. |
+| `awaiting_auth` | Authentication must be completed. |
+| `setup_required` | Provider configuration or mapping remains. |
+| `ready` | Required authentication and configuration are complete. |
+| `requires_intervention` | Setup needs human attention or repair. |
+
+`ready` is not evidence that sync, backfill, or data ingestion is complete. Consumers must not
+compose the compatibility session status, raw provider state, or sync metadata into a different
+readiness contract.

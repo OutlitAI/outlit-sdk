@@ -1,6 +1,8 @@
 export function normalizeProviderInput(input: string): string {
-  return input
+  const normalized = input
     .trim()
     .toLowerCase()
     .replace(/[\s_]+/g, "-")
+
+  return normalized === "gmail" ? "google-mail" : normalized
 }

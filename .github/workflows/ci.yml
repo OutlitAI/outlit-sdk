@@ -176,6 +176,8 @@ jobs:
         if: steps.changes.outputs.cli == 'true'
         working-directory: packages/cli
         run: |
+          OUTLIT_NODE_BINARY="$(command -v node)"
+          export OUTLIT_NODE_BINARY
           # config and client tests use real (unmocked) modules.
           # Run them in their own process so mock.module() calls from
           # other test files don't leak and replace the real modules.

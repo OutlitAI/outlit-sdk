@@ -92,6 +92,40 @@ describe("pollUntil", () => {
     expect(result).toBeNull()
   })
 
+  test("aborts a hung request at the overall deadline", async () => {
+    let receivedSignal: AbortSignal | undefined
+    const fn = mock(
+      (signal?: AbortSignal) =>
+        new Promise<{ status: string }>((_resolve, reject) => {
+          receivedSignal = signal
+          signal?.addEventListener("abort", () => reject(signal.reason), { once: true })
+        }),
+    )
+
+    const result = await pollUntil(fn, (value) => value.status === "done", {
+      intervalMs: 10,
+      timeoutMs: 30,
+    })
+
+    expect(result).toBeNull()
+    expect(receivedSignal?.aborted).toBe(true)
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
+
+  test("propagates errors the caller classifies as non-retryable", async () => {
+    const error = new Error("forbidden")
+
+    await expect(
+      pollUntil(
+        async () => {
+          throw error
+        },
+        () => false,
+        { timeoutMs: 100, shouldRetry: () => false },
+      ),
+    ).rejects.toBe(error)
+  })
+
   test("uses default options when none provided", async () => {
     const fn = mock(async () => ({ ready: true }))
 

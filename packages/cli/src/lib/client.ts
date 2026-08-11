@@ -23,6 +23,7 @@ export interface OutlitClient {
   callTool<TToolName extends CliToolName>(
     toolName: TToolName,
     params: OutlitToolParams<TToolName>,
+    options?: { signal?: AbortSignal },
   ): Promise<unknown>
 }
 
@@ -41,6 +42,7 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
   }
 
   const baseUrl = process.env.OUTLIT_API_URL ?? DEFAULT_API_URL
+  validateApiBaseUrl(baseUrl)
   const toolsClient = createOutlitClient({ apiKey: credential.key, baseUrl })
 
   return {
@@ -49,11 +51,36 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
     async callTool<TToolName extends CliToolName>(
       toolName: TToolName,
       params: OutlitToolParams<TToolName>,
+      callOptions?: { signal?: AbortSignal },
     ): Promise<unknown> {
       if (!isPublicToolName(toolName) || !cliToolNameSet.has(toolName)) {
         throw new Error(`Unknown CLI tool: ${toolName}`)
       }
-      return toolsClient.callTool(toolName as PublicToolName, params as Record<string, unknown>)
+      return toolsClient.callTool(toolName as PublicToolName, params as Record<string, unknown>, {
+        signal: callOptions?.signal,
+      })
     },
   }
+}
+
+export function validateApiBaseUrl(baseUrl: string): void {
+  let url: URL
+  try {
+    url = new URL(baseUrl)
+  } catch {
+    throw new Error("OUTLIT_API_URL must be a valid absolute URL")
+  }
+
+  if (url.protocol === "https:" || (url.protocol === "http:" && isLoopbackHost(url.hostname))) {
+    return
+  }
+
+  throw new Error("OUTLIT_API_URL must use HTTPS unless it is a loopback development URL")
+}
+
+function isLoopbackHost(hostname: string): boolean {
+  const normalized = hostname.toLowerCase().replace(/^\[|\]$/g, "")
+  return (
+    normalized === "localhost" || normalized === "::1" || /^127(?:\.\d{1,3}){3}$/.test(normalized)
+  )
 }

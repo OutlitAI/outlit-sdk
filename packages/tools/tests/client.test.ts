@@ -20,6 +20,7 @@ import {
   defaultToolNames,
   getPublicToolContract,
   isOutlitToolsApiError,
+  matchesGeneratedJsonSchema,
   normalizeCustomerSourceType,
   piToolNames,
   publicOpenApiTransports,
@@ -29,6 +30,33 @@ import {
   toolGatewayErrorCodes,
   toolGatewayErrorSchema,
 } from "../src/index.js"
+
+describe("matchesGeneratedJsonSchema", () => {
+  test("accepts maxLength and maxItems boundaries and rejects values above them", () => {
+    expect(matchesGeneratedJsonSchema("abc", { type: "string", maxLength: 3 })).toBe(true)
+    expect(matchesGeneratedJsonSchema("abcd", { type: "string", maxLength: 3 })).toBe(false)
+    expect(matchesGeneratedJsonSchema([1, 2], { type: "array", maxItems: 2 })).toBe(true)
+    expect(matchesGeneratedJsonSchema([1, 2, 3], { type: "array", maxItems: 2 })).toBe(false)
+  })
+
+  test("accepts numeric boundaries and rejects values outside minimum and maximum", () => {
+    const schema = { type: "number", minimum: 1, maximum: 3 }
+
+    expect(matchesGeneratedJsonSchema(1, schema)).toBe(true)
+    expect(matchesGeneratedJsonSchema(3, schema)).toBe(true)
+    expect(matchesGeneratedJsonSchema(0.99, schema)).toBe(false)
+    expect(matchesGeneratedJsonSchema(3.01, schema)).toBe(false)
+  })
+
+  test("accepts safe integer boundaries and rejects unsafe integers", () => {
+    const schema = { type: "integer" }
+
+    expect(matchesGeneratedJsonSchema(Number.MAX_SAFE_INTEGER, schema)).toBe(true)
+    expect(matchesGeneratedJsonSchema(Number.MIN_SAFE_INTEGER, schema)).toBe(true)
+    expect(matchesGeneratedJsonSchema(Number.MAX_SAFE_INTEGER + 1, schema)).toBe(false)
+    expect(matchesGeneratedJsonSchema(Number.MIN_SAFE_INTEGER - 1, schema)).toBe(false)
+  })
+})
 
 describe("toolsets", () => {
   test("matches the Core-owned public tool set, including customer collaboration", () => {
@@ -56,11 +84,11 @@ describe("toolsets", () => {
       "outlit_enable_destination",
       "outlit_disable_destination",
       "outlit_archive_destination",
-      "outlit_list_integrations",
       "outlit_get_integration_capabilities",
       "outlit_begin_integration_setup",
       "outlit_get_integration_setup_status",
-      "outlit_get_integration_sync_status",
+      "outlit_get_integration_status",
+      "outlit_setup_integration",
       "outlit_get_customer_activation",
       "outlit_preview_customer_activation",
       "outlit_update_customer_activation",
@@ -242,7 +270,7 @@ describe("tool contracts", () => {
     const workspaceUsersContract = getPublicToolContract("outlit_list_workspace_users")
     const workspaceProperties = workspaceUsersContract.inputSchema.properties as Record<
       string,
-      { type?: string; enum?: string[] }
+      { type?: string; enum?: readonly string[] }
     >
 
     expect(workspaceProperties.search).toEqual(
@@ -336,7 +364,7 @@ describe("tool contracts", () => {
     const contract = getPublicToolContract("outlit_list_facts")
     const properties = contract.inputSchema.properties as Record<
       string,
-      { items?: { enum?: string[] } }
+      { items?: { enum?: readonly string[] } }
     >
 
     expect(properties.factTypes?.items?.enum).not.toContain("CORE_ACTION_DECAY")
@@ -378,14 +406,14 @@ describe("tool contracts", () => {
     const exactSourceContract = getPublicToolContract("outlit_get_source")
     const exactSourceProperties = exactSourceContract.inputSchema.properties as Record<
       string,
-      { enum?: string[] }
+      { enum?: readonly string[] }
     >
     expect(exactSourceProperties.sourceType?.enum).toEqual(customerSourceTypeInputs)
 
     const searchContract = getPublicToolContract("outlit_search_customer_context")
     const searchProperties = searchContract.inputSchema.properties as Record<
       string,
-      { items?: { enum?: string[] } }
+      { items?: { enum?: readonly string[] } }
     >
     expect(searchProperties.sourceTypes?.items?.enum).toEqual(customerSourceTypeInputs)
   })
@@ -436,6 +464,22 @@ describe("createOutlitClient", () => {
         input: { type: "WEBHOOK" },
       }),
     })
+  })
+
+  test("forwards a caller deadline signal to the gateway request", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true })))
+    const controller = new AbortController()
+    const client = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: fetchMock,
+    })
+
+    await client.callTool("outlit_get_integration_status", {}, { signal: controller.signal })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://app.outlit.ai/api/tools/call",
+      expect.objectContaining({ signal: controller.signal }),
+    )
   })
 
   test("rejects unknown tool names at runtime", async () => {

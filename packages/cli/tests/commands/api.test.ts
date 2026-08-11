@@ -138,6 +138,37 @@ describe("runTool()", () => {
     expect(JSON.parse(written)).toEqual(gatewayEnvelope)
   })
 
+  test("does not write spinner output around a JSON gateway error on an interactive TTY", async () => {
+    const gatewayEnvelope = {
+      code: "TOOL_CALL_FORBIDDEN" as const,
+      message: "API key is missing the required grant.",
+      requestId: "request_denied_tty_123",
+      retryable: false,
+    }
+    mockCallTool.mockRejectedValueOnce(
+      new OutlitToolsApiError(403, JSON.stringify(gatewayEnvelope), gatewayEnvelope),
+    )
+    const { getClientOrExit, runTool } = await import("../../src/lib/api")
+    const client = await getClientOrExit(TEST_API_KEY, true)
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    const exitSpy = mockExitThrow()
+    setInteractive()
+    let written = ""
+    try {
+      await runTool(client, "outlit_get_integration_status", {}, true, {
+        spinnerMessage: "Loading integration status...",
+      })
+    } catch {
+      written = stderrSpy.mock.calls.map((call) => String(call[0])).join("")
+    } finally {
+      setNonInteractive()
+      stderrSpy.mockRestore()
+      exitSpy.mockRestore()
+    }
+
+    expect(JSON.parse(written)).toEqual(gatewayEnvelope)
+  })
+
   test("renders table rows from nested response paths", async () => {
     mockCallTool.mockResolvedValueOnce({
       destinations: [{ id: "dest_123", label: "#customer-ops" }],

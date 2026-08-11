@@ -55,6 +55,7 @@ export type OutlitToolsClient = {
   callTool<TToolName extends PublicToolName>(
     toolName: TToolName,
     input?: Record<string, unknown>,
+    options?: { signal?: AbortSignal },
   ): Promise<PublicToolResult<TToolName>>
 }
 
@@ -77,6 +78,7 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
     async callTool<TToolName extends PublicToolName>(
       toolName: TToolName,
       input: Record<string, unknown> = {},
+      callOptions?: { signal?: AbortSignal },
     ): Promise<PublicToolResult<TToolName>> {
       if (!isPublicToolName(toolName)) {
         throw new Error(`Unknown public tool: ${toolName}`)
@@ -92,6 +94,7 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
           tool: toolName,
           input,
         }),
+        ...(callOptions?.signal ? { signal: callOptions.signal } : {}),
       })
 
       if (!response.ok) {
@@ -126,6 +129,13 @@ export type RuntimeJsonSchema = {
   readonly properties?: Readonly<Record<string, RuntimeJsonSchema>>
   readonly required?: readonly string[]
   readonly additionalProperties?: boolean | RuntimeJsonSchema
+  readonly minLength?: number
+  readonly maxLength?: number
+  readonly pattern?: string
+  readonly minItems?: number
+  readonly maxItems?: number
+  readonly minimum?: number
+  readonly maximum?: number
 }
 
 export function matchesGeneratedJsonSchema<TSchema extends RuntimeJsonSchema>(
@@ -175,17 +185,23 @@ export function matchesGeneratedJsonSchema<TSchema extends RuntimeJsonSchema>(
     }
     case "array": {
       if (!Array.isArray(value)) return false
+      if (schema.minItems !== undefined && value.length < schema.minItems) return false
+      if (schema.maxItems !== undefined && value.length > schema.maxItems) return false
       const itemSchema = schema.items
       return !itemSchema || value.every((item) => matchesGeneratedJsonSchema(item, itemSchema))
     }
-    case "string":
-      return typeof value === "string"
+    case "string": {
+      if (typeof value !== "string") return false
+      if (schema.minLength !== undefined && value.length < schema.minLength) return false
+      if (schema.maxLength !== undefined && value.length > schema.maxLength) return false
+      return schema.pattern === undefined || new RegExp(schema.pattern).test(value)
+    }
     case "boolean":
       return typeof value === "boolean"
     case "number":
-      return typeof value === "number" && Number.isFinite(value)
+      return matchesNumberBounds(value, schema, false)
     case "integer":
-      return typeof value === "number" && Number.isSafeInteger(value)
+      return matchesNumberBounds(value, schema, true)
     case "null":
       return value === null
     case undefined:
@@ -193,4 +209,16 @@ export function matchesGeneratedJsonSchema<TSchema extends RuntimeJsonSchema>(
     default:
       return false
   }
+}
+
+function matchesNumberBounds(
+  value: unknown,
+  schema: RuntimeJsonSchema,
+  integer: boolean,
+): value is number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return false
+  if (integer && !Number.isSafeInteger(value)) return false
+  if (schema.minimum !== undefined && value < schema.minimum) return false
+  if (schema.maximum !== undefined && value > schema.maximum) return false
+  return true
 }
