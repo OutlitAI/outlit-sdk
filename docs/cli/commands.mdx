@@ -748,6 +748,8 @@ outlit metrics create --source metric_source_v1_0123456789abcdef0123456789abcdef
 
 `metrics sources` returns opaque source keys. `metrics events` requires one returned `--source` and accepts optional `--weeks` (default 12) and `--limit` (default 100); it returns candidate event names and property keys. `metrics create` requires a returned source key, an exact discovered event name, a stable lower-snake-case behavior key, and a label. `--property-filters` accepts an optional JSON array of up to five typed `equals` or `exists` filters.
 
+`metrics create` returns an enabled, production Behavior Metric immediately. Source readiness remains independent ingestion-health information.
+
 ## Settings
 
 Inspect and configure the model-safe workspace timezone. Delivery and report configuration remains in the authored web UI.

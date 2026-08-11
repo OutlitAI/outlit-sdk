@@ -9,7 +9,11 @@ import {
 
 const mockResult = { destination: { id: "destination_123" } }
 
-const mockCallTool = mock(async (_toolName: string, _params: Record<string, unknown>) => mockResult)
+const mockCallTool = mock(async (toolName: string, _params: Record<string, unknown>) =>
+  toolName === "outlit_create_behavior_metric"
+    ? { created: true, metric: { status: "ENABLED", evaluationMode: "PRODUCTION" } }
+    : mockResult,
+)
 
 mock.module("../../src/lib/client", () => ({
   createClient: async () => ({
@@ -88,7 +92,7 @@ describe("platform lifecycle commands", () => {
   test("runs Behavior Metric create with the canonical event-based payload", async () => {
     const { default: createBehaviorMetricCmd } = await import("../../src/commands/metrics/create")
 
-    await captureStdout(() =>
+    const result = await captureStdout<{ metric: { evaluationMode: string } }>(() =>
       createBehaviorMetricCmd.run!({
         args: {
           source: "metric_source_v1_0123456789abcdef0123456789abcdef",
@@ -106,6 +110,8 @@ describe("platform lifecycle commands", () => {
         },
       } as Parameters<NonNullable<typeof createBehaviorMetricCmd.run>>[0]),
     )
+
+    expect(result.metric.evaluationMode).toBe("PRODUCTION")
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_create_behavior_metric", {
       sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",

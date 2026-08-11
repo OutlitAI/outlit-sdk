@@ -10813,7 +10813,7 @@
               },
               "evaluationMode": {
                 "type": "string",
-                "const": "SHADOW"
+                "const": "PRODUCTION"
               },
               "definitions": {
                 "minItems": 2,
@@ -10869,5 +10869,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "39fe276d5127aa59cdfc0172cc44c9281beb62b1942c44094421f2a56fbb40fa"
+  "x-outlit-contract-hash": "4b149bbd1f2699cac76ca7be6420697d52c5bf4ab826838e4025ccb33958c0d8"
 }

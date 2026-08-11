@@ -197,6 +197,8 @@ describe("tool contracts", () => {
       }),
     )
     expect(contract.commandId).toBe("behavior_metric.create")
+    expect(contract.description).toContain("ENABLED and PRODUCTION")
+    expect(contract.description).not.toContain("SHADOW")
     expect(contract.inputSchema).toEqual(
       expect.objectContaining({
         required: ["sourceKey", "eventName", "behaviorKey", "label"],
@@ -208,6 +210,17 @@ describe("tool contracts", () => {
           behaviorKey: expect.objectContaining({ maxLength: 64 }),
           label: expect.objectContaining({ minLength: 1, maxLength: 255 }),
           propertyFilters: expect.objectContaining({ default: [], maxItems: 5 }),
+        }),
+      }),
+    )
+    expect(contract.outputSchema).toEqual(
+      expect.objectContaining({
+        properties: expect.objectContaining({
+          metric: expect.objectContaining({
+            properties: expect.objectContaining({
+              evaluationMode: { type: "string", const: "PRODUCTION" },
+            }),
+          }),
         }),
       }),
     )

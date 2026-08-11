@@ -8889,7 +8889,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "behavior_metrics",
     "title": "Create Behavior Metric",
-    "description": "Create or idempotently return an event-based Behavior Metric in ENABLED and SHADOW.",
+    "description": "Create or idempotently return an event-based Behavior Metric in ENABLED and PRODUCTION.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -9212,7 +9212,7 @@ export const publicToolContracts = {
             },
             "evaluationMode": {
               "type": "string",
-              "const": "SHADOW",
+              "const": "PRODUCTION",
             },
             "definitions": {
               "minItems": 2,
@@ -10682,4 +10682,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "39fe276d5127aa59cdfc0172cc44c9281beb62b1942c44094421f2a56fbb40fa" as const
+export const sdkConsumerContractHash = "4b149bbd1f2699cac76ca7be6420697d52c5bf4ab826838e4025ccb33958c0d8" as const
