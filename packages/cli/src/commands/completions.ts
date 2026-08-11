@@ -87,13 +87,19 @@ const COMMANDS: readonly CmdDef[] = [
         ],
       },
       {
-        name: "assign-owner",
-        desc: "Assign the primary customer owner",
-        flags: [...COMMON, { name: "--target-user-id", desc: "Required workspace-user ID" }],
+        name: "owner",
+        desc: "Manage the primary customer owner",
+        subs: [
+          {
+            name: "set",
+            desc: "Assign the primary customer owner",
+            flags: [...COMMON, { name: "--target-user-id", desc: "Required workspace-user ID" }],
+          },
+        ],
       },
       {
-        name: "grant-access",
-        desc: "Grant Viewer or Editor customer access",
+        name: "grant",
+        desc: "Grant or change Viewer or Editor customer access",
         flags: [
           ...COMMON,
           { name: "--target-user-id", desc: "Required workspace-user ID" },
@@ -101,16 +107,7 @@ const COMMANDS: readonly CmdDef[] = [
         ],
       },
       {
-        name: "update-access",
-        desc: "Update a customer collaborator's role",
-        flags: [
-          ...COMMON,
-          { name: "--target-user-id", desc: "Required workspace-user ID" },
-          { name: "--role", desc: "Required access role (VIEWER, EDITOR)" },
-        ],
-      },
-      {
-        name: "revoke-access",
+        name: "revoke",
         desc: "Revoke explicit customer access",
         flags: [...COMMON, { name: "--target-user-id", desc: "Required workspace-user ID" }],
       },

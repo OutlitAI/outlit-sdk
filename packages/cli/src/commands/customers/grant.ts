@@ -12,13 +12,14 @@ import {
 
 export default defineCommand({
   meta: {
-    name: "update-access",
+    name: "grant",
     description: [
-      "Change an existing customer collaborator between Viewer and Editor.",
+      "Grant or change Viewer or Editor customer access for an active workspace member.",
+      "Re-run this command with a different role to update an existing collaborator.",
       "Both IDs must be exact; discover them with customer and workspace-user list commands.",
       "",
       "Example:",
-      "  outlit customers update-access 10000000-0000-4000-8000-000000000000 --target-user-id user_123 --role EDITOR --json",
+      "  outlit customers grant 10000000-0000-4000-8000-000000000000 --target-user-id user_123 --role VIEWER --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -37,10 +38,10 @@ export default defineCommand({
 
     return runTool(
       client,
-      publicToolContracts.outlit_update_customer_access.toolName,
+      publicToolContracts.outlit_grant_customer_access.toolName,
       { ...ids, role },
       json,
-      { spinnerMessage: "Updating customer access..." },
+      { spinnerMessage: "Granting customer access..." },
     )
   },
 })

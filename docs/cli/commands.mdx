@@ -258,8 +258,8 @@ These write commands require exact IDs and never resolve customer names, domains
 emails on your behalf.
 
 For API keys, workspace-member discovery and customer mutations are independent capabilities.
-`outlit ws-users list` requires `workspace_members:read`; assign owner, grant access, update
-access, and revoke access require `customer_access:manage`. The complete discover-then-mutate
+`outlit ws-users list` requires `workspace_members:read`; setting an owner, granting or changing
+access, and revoking access require `customer_access:manage`. The complete discover-then-mutate
 flow needs both grants, while automation that already knows exact IDs may use
 `customer_access:manage` alone. API keys are independent workspace principals and do not inherit
 their creator's human permissions or customer access. Read only includes discovery but not
@@ -286,10 +286,10 @@ you intentionally want to restrict discovery to current owners.
 Copy the exact workspace-user `items[].id` as `--target-user-id`. Review multiple matches before
 writing; the ownership and access commands intentionally do not perform fuzzy name matching.
 
-### Assign Owner
+### Set Owner
 
 ```bash
-outlit customers assign-owner \
+outlit customers owner set \
   10000000-0000-4000-8000-000000000000 \
   --target-user-id user_123 \
   --json
@@ -298,30 +298,23 @@ outlit customers assign-owner \
 The target must be an active workspace member. When ownership changes, the former owner keeps
 Editor access.
 
-### Grant Access
+### Grant or Change Access
 
 ```bash
-outlit customers grant-access \
+outlit customers grant \
   10000000-0000-4000-8000-000000000000 \
   --target-user-id user_123 \
   --role VIEWER \
   --json
 ```
 
-### Update Access
-
-```bash
-outlit customers update-access \
-  10000000-0000-4000-8000-000000000000 \
-  --target-user-id user_123 \
-  --role EDITOR \
-  --json
-```
+Run the same `grant` command again with the other role to change an existing collaborator
+between Viewer and Editor.
 
 ### Revoke Access
 
 ```bash
-outlit customers revoke-access \
+outlit customers revoke \
   10000000-0000-4000-8000-000000000000 \
   --target-user-id user_123 \
   --json

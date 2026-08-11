@@ -2234,7 +2234,7 @@
             "maxLength": 500
           },
           "hasOwnedCustomers": {
-            "description": "When true, return only workspace users who own at least one customer",
+            "description": "When true, return only members who own customers; when false, return only members who own none",
             "type": "boolean"
           },
           "limit": {
@@ -10869,5 +10869,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "eddc4c0f5d93f609a1f36d8934afd8b8e2cc024aa61da050c6516650fcae56c8"
+  "x-outlit-contract-hash": "39fe276d5127aa59cdfc0172cc44c9281beb62b1942c44094421f2a56fbb40fa"
 }
