@@ -24,16 +24,36 @@ describe("customer-surface documentation", () => {
     }
   })
 
-  test("includes Slack in source-listing and semantic-search documentation", () => {
+  test("includes Slack conversations in source-listing and semantic-search documentation", () => {
     const mcpDocs = readDoc("docs/ai-integrations/mcp.mdx")
     const sourceDescription =
-      "calls, emails, calendar events, support tickets, Slack messages, or opportunities"
+      "calls, emails, calendar events, support tickets, Slack conversations, or opportunities"
     const searchDescription =
-      "customer facts, emails, calls, calendar events, support tickets, Slack messages, and CRM opportunities"
+      "customer facts, emails, calls, calendar events, support tickets, Slack conversations, and CRM opportunities"
 
     expect(readDoc("docs/api-reference/tools.mdx")).toContain(sourceDescription)
     expect(mcpDocs).toContain(sourceDescription)
     expect(mcpDocs).toContain(searchDescription)
+    expect(readDoc("docs/api-reference/tools.mdx")).not.toContain("Slack messages")
+    expect(mcpDocs).not.toContain("Slack messages")
+  })
+
+  test("documents CLI Slack search and deterministic source listing", () => {
+    const cliDocs = readDoc("docs/cli/commands.mdx")
+
+    expect(cliDocs).toContain(
+      "Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`",
+    )
+    expect(cliDocs).toContain("### List Sources")
+    expect(cliDocs).toContain("outlit sources list [flags]")
+    expect(cliDocs).toContain(
+      "List enumerated calls, emails, calendar events, support tickets, Slack conversations, or opportunities.",
+    )
+    expect(cliDocs).toContain(
+      "outlit sources list --source-type SLACK --customer acme.com --limit 25 --json",
+    )
+    expect(cliDocs).toContain("the paginated `items` and `pagination` response")
+    expect(cliDocs).toContain("`pagination.nextCursor`")
   })
 
   test("leads CLI timeline documentation with canonical channels and aliases", () => {
