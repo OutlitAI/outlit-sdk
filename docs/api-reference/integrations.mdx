@@ -13,12 +13,15 @@ request.
 
 | Tool | Purpose |
 |------|---------|
-| `outlit_list_integrations` | List the integration catalog and safe connection health. |
 | `outlit_get_integration_capabilities` | Negotiate setup without sending credentials; `preferredSetupVersion: 1` selects the preferred flow. |
 | `outlit_setup_integration` | Perform one bounded credential, configuration, or safe-handoff setup transition. |
 | `outlit_get_integration_status` | Return canonical configuration readiness for all providers or one provider. |
 | `outlit_begin_integration_setup` | Compatibility tool for starting an older browser handoff. |
 | `outlit_get_integration_setup_status` | Compatibility tool for polling an authentication session owned by the current actor. |
+
+Older installed clients may continue to call legacy integration reads during the compatibility
+window, but those names are intentionally absent from public discovery. New agents should use
+`outlit_get_integration_status` and `outlit_setup_integration` only.
 
 The generated [OpenAPI specification](/openapi.json) and `@outlit/tools`
 `publicToolContracts` contain the exact input and output schemas.

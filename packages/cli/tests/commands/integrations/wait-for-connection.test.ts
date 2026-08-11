@@ -1,16 +1,17 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test"
+import { OutlitToolsApiError } from "@outlit/tools"
 
 let pollResult: unknown = null
 let pollOptions: Record<string, unknown> | undefined
 
 const mockPollUntil = mock(
   async <T>(
-    fn: () => Promise<T>,
+    fn: (signal?: AbortSignal) => Promise<T>,
     predicate: (value: T) => boolean,
     options: Record<string, unknown>,
   ): Promise<T | null> => {
     pollOptions = options
-    const result = await fn()
+    const result = await fn(new AbortController().signal)
     if (pollResult === null) return null
     expect(predicate(result)).toBe(true)
     return result
@@ -38,9 +39,13 @@ describe("waitForIntegrationConnection", () => {
       displayName: "HubSpot",
     })
 
-    expect(callTool).toHaveBeenCalledWith("outlit_get_integration_setup_status", {
-      sessionId: "00000000-0000-4000-8000-000000000001",
-    })
+    expect(callTool).toHaveBeenCalledWith(
+      "outlit_get_integration_setup_status",
+      {
+        sessionId: "00000000-0000-4000-8000-000000000001",
+      },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    )
     expect(pollOptions).toMatchObject({ intervalMs: 2_000, timeoutMs: 300_000 })
   })
 
@@ -74,5 +79,32 @@ describe("waitForIntegrationConnection", () => {
         displayName: "HubSpot",
       }),
     ).rejects.toBeInstanceOf(IntegrationAuthError)
+  })
+
+  test("propagates a non-retryable gateway error without converting it to a timeout", async () => {
+    const envelope = {
+      code: "TOOL_CALL_FORBIDDEN" as const,
+      message: "API key is missing the required grant.",
+      requestId: "request_poll_denied_123",
+      retryable: false,
+    }
+    const error = new OutlitToolsApiError(403, JSON.stringify(envelope), envelope)
+    const callTool = mock(async () => {
+      throw error
+    })
+    const { waitForIntegrationConnection } = await import(
+      "../../../src/commands/integrations/wait-for-connection"
+    )
+
+    await expect(
+      waitForIntegrationConnection({
+        client: { key: "unused", baseUrl: "https://app.outlit.ai", callTool } as never,
+        sessionId: "00000000-0000-4000-8000-000000000001",
+        displayName: "HubSpot",
+      }),
+    ).rejects.toBe(error)
+    expect((pollOptions?.shouldRetry as ((error: unknown) => boolean) | undefined)?.(error)).toBe(
+      false,
+    )
   })
 })

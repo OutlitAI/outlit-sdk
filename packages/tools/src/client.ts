@@ -55,6 +55,7 @@ export type OutlitToolsClient = {
   callTool<TToolName extends PublicToolName>(
     toolName: TToolName,
     input?: Record<string, unknown>,
+    options?: { signal?: AbortSignal },
   ): Promise<PublicToolResult<TToolName>>
 }
 
@@ -77,6 +78,7 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
     async callTool<TToolName extends PublicToolName>(
       toolName: TToolName,
       input: Record<string, unknown> = {},
+      callOptions?: { signal?: AbortSignal },
     ): Promise<PublicToolResult<TToolName>> {
       if (!isPublicToolName(toolName)) {
         throw new Error(`Unknown public tool: ${toolName}`)
@@ -92,6 +94,7 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
           tool: toolName,
           input,
         }),
+        ...(callOptions?.signal ? { signal: callOptions.signal } : {}),
       })
 
       if (!response.ok) {

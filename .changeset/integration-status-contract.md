@@ -1,6 +1,7 @@
 ---
 "@outlit/cli": major
 "@outlit/tools": major
+"@outlit/pi": major
 ---
 
 Remove `integrations list`, `integrations capabilities`, and the generated

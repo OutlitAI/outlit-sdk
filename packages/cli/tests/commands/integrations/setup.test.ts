@@ -276,6 +276,29 @@ describe("integrations setup", () => {
     })
   })
 
+  test("preserves a legacy setup gateway envelope in JSON mode", async () => {
+    const envelope = {
+      code: "TOOL_CALL_FORBIDDEN" as const,
+      message: "API key is missing the required grant.",
+      requestId: "request_legacy_denied_123",
+      retryable: false,
+    }
+    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
+      if (toolName === "outlit_get_integration_capabilities") {
+        return { providers: [capability(String(input.provider))] }
+      }
+      if (toolName === "outlit_begin_integration_setup") throw gatewayError(envelope)
+      throw new Error(`unexpected tool ${toolName}`)
+    })
+
+    const { default: setup } = await import("../../../src/commands/integrations/setup")
+    const error = await captureJsonError(() =>
+      setup.run!({ args: { provider: "hubspot", json: true } } as never),
+    )
+
+    expect(error).toEqual(envelope)
+  })
+
   test.each([
     ["--config-stdin", { "config-stdin": true }],
     ["--accept-recommended", { "accept-recommended": true }],

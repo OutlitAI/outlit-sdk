@@ -234,7 +234,8 @@ export async function runTool<TToolName extends CliToolName>(
   json: boolean,
   opts?: RunToolOptions,
 ): Promise<void> {
-  const spinner = opts?.spinnerMessage ? createSpinner(opts.spinnerMessage) : null
+  const spinner =
+    opts?.spinnerMessage && !isJsonMode(json) ? createSpinner(opts.spinnerMessage) : null
 
   try {
     const rawData = await client.callTool(toolName, params)

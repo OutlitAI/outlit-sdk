@@ -23,6 +23,7 @@ export interface OutlitClient {
   callTool<TToolName extends CliToolName>(
     toolName: TToolName,
     params: OutlitToolParams<TToolName>,
+    options?: { signal?: AbortSignal },
   ): Promise<unknown>
 }
 
@@ -50,11 +51,14 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
     async callTool<TToolName extends CliToolName>(
       toolName: TToolName,
       params: OutlitToolParams<TToolName>,
+      callOptions?: { signal?: AbortSignal },
     ): Promise<unknown> {
       if (!isPublicToolName(toolName) || !cliToolNameSet.has(toolName)) {
         throw new Error(`Unknown CLI tool: ${toolName}`)
       }
-      return toolsClient.callTool(toolName as PublicToolName, params as Record<string, unknown>)
+      return toolsClient.callTool(toolName as PublicToolName, params as Record<string, unknown>, {
+        signal: callOptions?.signal,
+      })
     },
   }
 }

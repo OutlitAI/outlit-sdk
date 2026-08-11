@@ -466,6 +466,22 @@ describe("createOutlitClient", () => {
     })
   })
 
+  test("forwards a caller deadline signal to the gateway request", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true })))
+    const controller = new AbortController()
+    const client = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: fetchMock,
+    })
+
+    await client.callTool("outlit_get_integration_status", {}, { signal: controller.signal })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://app.outlit.ai/api/tools/call",
+      expect.objectContaining({ signal: controller.signal }),
+    )
+  })
+
   test("rejects unknown tool names at runtime", async () => {
     const client = createOutlitClient({
       apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",

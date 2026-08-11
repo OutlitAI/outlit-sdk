@@ -1,3 +1,4 @@
+import { isOutlitToolsApiError } from "@outlit/tools"
 import type { OutlitClient } from "../../lib/client"
 import { pollUntil } from "../../lib/poll"
 import { createSpinner } from "../../lib/spinner"
@@ -41,9 +42,9 @@ export async function waitForIntegrationConnection({
   const spinner = createSpinner(`Waiting for ${displayName} authentication...`)
 
   const result = await pollUntil<SetupSessionStatusResponse>(
-    () =>
+    (signal) =>
       client
-        .callTool("outlit_get_integration_setup_status", { sessionId })
+        .callTool("outlit_get_integration_setup_status", { sessionId }, { signal })
         .then((response) => response as SetupSessionStatusResponse),
     (response) => response.status !== "pending",
     {
@@ -51,6 +52,11 @@ export async function waitForIntegrationConnection({
       timeoutMs: 300_000,
       spinner,
       spinnerMessage: `Waiting for ${displayName} authentication...`,
+      shouldRetry(error) {
+        if (!isOutlitToolsApiError(error)) return true
+        if (error.envelope) return error.envelope.retryable
+        return error.status === 408 || error.status === 429 || error.status >= 500
+      },
     },
   )
 

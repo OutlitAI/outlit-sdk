@@ -302,10 +302,10 @@ async function runPreferredSetup(options: {
             json,
           )
         }
-        return outputError(
-          { message: "Integration authentication failed.", code: "AUTH_FAILED" },
-          json,
-        )
+        return outputApiError(error, json, {
+          message: "Integration authentication failed.",
+          code: "AUTH_FAILED",
+        })
       }
 
       input = authenticationContinuationInput(input)
@@ -393,37 +393,40 @@ async function runLegacySetup(
     })
   }
 
-  const spinner = createSpinner(`Starting ${capability.name} setup...`)
+  const spinner = machineMode ? null : createSpinner(`Starting ${capability.name} setup...`)
   let setup: LegacySetupResponse
   try {
     setup = (await client.callTool("outlit_begin_integration_setup", {
       provider: capability.provider,
     })) as LegacySetupResponse
-  } catch {
-    spinner.fail(`Failed to start ${capability.name} setup`)
-    return outputError({ message: "Failed to start setup flow.", code: "api_error" }, json)
+  } catch (error) {
+    spinner?.fail(`Failed to start ${capability.name} setup`)
+    return outputApiError(error, json, {
+      message: "Failed to start setup flow.",
+      code: "api_error",
+    })
   }
 
   if (setup.state === "already_connected") {
-    spinner.stop(`${capability.name} is already connected`)
+    spinner?.stop(`${capability.name} is already connected`)
     return outputResult({ status: "already_connected", ...setup, capabilities: capability })
   }
 
   if (!setup.connectUrl) {
-    spinner.fail(`Failed to start ${capability.name} setup`)
+    spinner?.fail(`Failed to start ${capability.name} setup`)
     return invalidSetupResponse(json)
   }
   let connectUrl: string
   try {
     connectUrl = validateHandoffUrl(setup.connectUrl, client.baseUrl)
   } catch {
-    spinner.fail(`Failed to start ${capability.name} setup`)
+    spinner?.fail(`Failed to start ${capability.name} setup`)
     return invalidSetupResponse(json)
   }
 
   if (!machineMode) {
     const opened = openBrowser(connectUrl)
-    spinner.stop(opened ? `Browser opened for ${capability.name}` : "Could not open browser")
+    spinner?.stop(opened ? `Browser opened for ${capability.name}` : "Could not open browser")
     if (!opened) console.log(`Open this URL to continue: ${connectUrl}`)
     if (setup.sessionId) {
       try {
@@ -452,8 +455,6 @@ async function runLegacySetup(
       }
       return
     }
-  } else {
-    spinner.stop(`Started ${capability.name} setup`)
   }
 
   return outputResult({

@@ -9,6 +9,8 @@ export interface PollOptions {
   spinner?: Spinner
   /** Base message for spinner updates. */
   spinnerMessage?: string
+  /** Return false to propagate a non-retryable polling error immediately. */
+  shouldRetry?: (error: unknown) => boolean
 }
 
 /**
@@ -18,7 +20,7 @@ export interface PollOptions {
  * Optionally updates a spinner with elapsed time during polling.
  */
 export async function pollUntil<T>(
-  fn: () => Promise<T>,
+  fn: (signal?: AbortSignal) => Promise<T>,
   predicate: (result: T) => boolean,
   opts: PollOptions = {},
 ): Promise<T | null> {
@@ -27,11 +29,18 @@ export async function pollUntil<T>(
   const start = Date.now()
 
   while (Date.now() - start < timeoutMs) {
+    const remainingMs = timeoutMs - (Date.now() - start)
+    const controller = new AbortController()
+    const deadline = setTimeout(() => controller.abort(), remainingMs)
     try {
-      const result = await fn()
+      const result = await fn(controller.signal)
       if (predicate(result)) return result
-    } catch {
+    } catch (error) {
+      if (controller.signal.aborted && Date.now() - start >= timeoutMs) return null
+      if (opts.shouldRetry?.(error) === false) throw error
       // Transient error (network hiccup, 503, etc.) — keep polling until timeout
+    } finally {
+      clearTimeout(deadline)
     }
 
     // Update spinner with elapsed time
@@ -40,7 +49,7 @@ export async function pollUntil<T>(
       opts.spinner.update(`${opts.spinnerMessage} (${elapsed}s)`)
     }
 
-    await sleep(intervalMs)
+    await sleep(Math.min(intervalMs, Math.max(0, timeoutMs - (Date.now() - start))))
   }
 
   return null
