@@ -238,7 +238,7 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
   "recentTimeline": [
     {
       "type": "PAGE_VIEW",
-      "channel": "SDK",
+      "channel": "PRODUCT",
       "occurredAt": "2025-02-10T15:30:00Z"
     }
   ]
@@ -346,7 +346,7 @@ outlit customers timeline <customer> [flags]
 | `--timeframe` | string | `30d` | Lookback window: `7d`, `14d`, `30d`, `90d`, `all` |
 | `--start-date` | string | — | Start datetime (ISO 8601, for example `2025-01-01T00:00:00Z`) — overrides `--timeframe` |
 | `--end-date` | string | — | End datetime (ISO 8601, for example `2025-03-01T23:59:59Z`) — overrides `--timeframe` |
-| `--channels` | string | — | Comma-separated channels: `SDK`, `EMAIL`, `SLACK`, `CALL`, `CRM`, `BILLING`, `SUPPORT`, `INTERNAL` |
+| `--channels` | string | — | Comma-separated canonical channels: `PRODUCT`, `COMMUNICATION`, `MEETING`, `CRM`, `BILLING`, `SUPPORT`, `IDENTITY`, `DOCUMENT`, `SYSTEM` |
 | `--event-types` | string | — | Comma-separated types: `PAGE_VIEW`, `MEETING`, `SUPPORT_TICKET`, etc. |
 | `--limit` | number | `20` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor |
@@ -355,14 +355,20 @@ outlit customers timeline <customer> [flags]
   When `--start-date` or `--end-date` is provided, `--timeframe` is ignored.
 </Note>
 
+<Note>
+  The CLI also accepts and normalizes these legacy aliases: `SDK` → `PRODUCT`, `EMAIL` →
+  `COMMUNICATION`, `SLACK` → `COMMUNICATION`, `CALL` → `MEETING`, `CALENDAR` → `MEETING`, and
+  `INTERNAL` → `SYSTEM`.
+</Note>
+
 ### Examples
 
 ```bash
 # Last 30 days (default)
 outlit customers timeline acme.com
 
-# Last 90 days, email and Slack only
-outlit customers timeline acme.com --timeframe 90d --channels EMAIL,SLACK
+# Last 90 days, communication and meeting activity
+outlit customers timeline acme.com --timeframe 90d --channels COMMUNICATION,MEETING
 
 # Custom date range
 outlit customers timeline acme.com --start-date 2025-01-01T00:00:00Z --end-date 2025-03-01T23:59:59Z
@@ -380,7 +386,7 @@ outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50
       "id": "event-uuid",
       "customerId": "customer-uuid",
       "type": "PAGE_VIEW",
-      "channel": "SDK",
+      "channel": "PRODUCT",
       "occurredAt": "2025-02-10T15:30:00Z",
       "metadata": {
         "url": "https://acme.com/pricing",
@@ -579,7 +585,7 @@ outlit search <query> [flags]
 | `--top-k` | number | `20` | Maximum results to return (1–50) |
 | `--after` | string | — | Filter to events after this ISO 8601 datetime |
 | `--before` | string | — | Filter to events before this ISO 8601 datetime |
-| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 
 ### Examples
 
@@ -633,7 +639,42 @@ outlit search "churn risk" --top-k 50 --json
 
 ## Sources
 
-Fetch one exact source by generic `sourceType` and `sourceId`.
+List concrete source records deterministically or fetch one exact source by generic `sourceType` and `sourceId`.
+
+### List Sources
+
+List enumerated calls, emails, calendar events, support tickets, Slack conversations, or opportunities. Use this command when you need deterministic source records; use [`outlit search`](#search) for semantic ranking. Results are paginated.
+
+```text
+outlit sources list [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--source-type` | string | — | Generic source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--customer` | string | — | Customer UUID, domain, or name to scope source listing |
+| `--participant` | string | — | Participant email or name to filter source records |
+| `--provider` | string | — | Provider identifier such as `gmail`, `gong`, or `google-calendar` |
+| `--has-transcript` | boolean | `false` | Only list call sources with a finalized transcript; when combined with `--source-type`, that type must be `CALL` |
+| `--after` | string | — | Filter to sources occurring after this ISO 8601 UTC datetime |
+| `--before` | string | — | Filter to sources occurring before this ISO 8601 UTC datetime |
+| `--limit` | number | `50` | Results per page (1–100) |
+| `--cursor` | string | — | Pagination cursor from a previous response (`pagination.nextCursor`) |
+
+Source-type aliases are normalized to their canonical values before the request. With `--json`, the command returns the paginated `items` and `pagination` response. In interactive output, rows show `TYPE`, `OCCURRED`, `TITLE`, and `SOURCE ID`; when more results are available, the next cursor is printed for the following `--cursor` request.
+
+### Examples
+
+```bash
+outlit sources list --customer acme.com --source-type CALL
+outlit sources list --participant alice@acme.com --source-type CALENDAR_EVENT --json
+outlit sources list --source-type SLACK --customer acme.com --limit 25 --json
+outlit sources list --after 2026-01-01T00:00:00Z --limit 25
+```
+
+### Get a Source
 
 ```text
 outlit sources get --source-type <type> --source-id <id> [--limit <count>] [--cursor <cursor>]
