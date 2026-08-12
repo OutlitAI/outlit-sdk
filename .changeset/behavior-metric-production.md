@@ -1,7 +1,7 @@
 ---
-"@outlit/tools": minor
-"@outlit/cli": minor
+"@outlit/tools": major
+"@outlit/cli": major
 "@outlit/pi": patch
 ---
 
-Reflect that customer-created Behavior Metrics are enabled and production immediately in the generated tools, OpenAPI, and CLI contract surface.
+Reflect command version 2: one important-event configuration atomically creates active-days and event-count metrics in production immediately, returned under explicit `activeDays` and `eventCount` fields. This is a breaking output-contract change from the former `SHADOW` literal.

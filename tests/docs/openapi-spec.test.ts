@@ -112,7 +112,7 @@ describe("Core-generated OpenAPI spec", () => {
     const schema = readSpec().components?.schemas?.ToolOutput_outlit_create_behavior_metric as {
       properties?: {
         metric?: {
-          properties?: { evaluationMode?: unknown }
+          properties?: { evaluationMode?: unknown; definitions?: unknown }
         }
       }
     }
@@ -120,6 +120,15 @@ describe("Core-generated OpenAPI spec", () => {
     expect(schema.properties?.metric?.properties?.evaluationMode).toEqual({
       type: "string",
       const: "PRODUCTION",
+    })
+    expect(schema.properties?.metric?.properties?.definitions).toMatchObject({
+      type: "object",
+      required: ["activeDays", "eventCount"],
+      additionalProperties: false,
+      properties: {
+        activeDays: { properties: { aggregation: { const: "active_days" } } },
+        eventCount: { properties: { aggregation: { const: "event_count" } } },
+      },
     })
   })
 

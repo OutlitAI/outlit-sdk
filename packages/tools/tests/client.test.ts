@@ -22,8 +22,10 @@ import {
   isOutlitToolsApiError,
   matchesGeneratedJsonSchema,
   normalizeCustomerSourceType,
+  type PublicToolResult,
   piToolNames,
   publicOpenApiTransports,
+  type RuntimeJsonSchema,
   resolveCustomerContextSearchInput,
   sdkConsumerContractHash,
   sqlToolNames,
@@ -197,6 +199,7 @@ describe("tool contracts", () => {
       }),
     )
     expect(contract.commandId).toBe("behavior_metric.create")
+    expect(contract.commandVersion).toBe(2)
     expect(contract.description).toContain("ENABLED and PRODUCTION")
     expect(contract.description).not.toContain("SHADOW")
     expect(contract.inputSchema).toEqual(
@@ -224,6 +227,52 @@ describe("tool contracts", () => {
         }),
       }),
     )
+    const definitionsSchema = (
+      contract.outputSchema as {
+        properties: { metric: { properties: { definitions: RuntimeJsonSchema } } }
+      }
+    ).properties.metric.properties.definitions
+    expect(definitionsSchema).toMatchObject({
+      type: "object",
+      required: ["activeDays", "eventCount"],
+      additionalProperties: false,
+      properties: {
+        activeDays: { properties: { aggregation: { const: "active_days" } } },
+        eventCount: { properties: { aggregation: { const: "event_count" } } },
+      },
+    })
+    expectTypeOf<
+      PublicToolResult<"outlit_create_behavior_metric">["metric"]["definitions"]["activeDays"]["aggregation"]
+    >().toEqualTypeOf<"active_days">()
+    expectTypeOf<
+      PublicToolResult<"outlit_create_behavior_metric">["metric"]["definitions"]["eventCount"]["aggregation"]
+    >().toEqualTypeOf<"event_count">()
+
+    const validDefinitions = {
+      activeDays: {
+        id: "10000000-0000-4000-8000-000000000001",
+        metricKey: "weekly_reports_exported_active_days",
+        aggregation: "active_days",
+      },
+      eventCount: {
+        id: "10000000-0000-4000-8000-000000000002",
+        metricKey: "weekly_reports_exported_event_count",
+        aggregation: "event_count",
+      },
+    }
+    expect(matchesGeneratedJsonSchema(validDefinitions, definitionsSchema)).toBe(true)
+    expect(matchesGeneratedJsonSchema(Object.values(validDefinitions), definitionsSchema)).toBe(
+      false,
+    )
+    expect(
+      matchesGeneratedJsonSchema(
+        {
+          activeDays: validDefinitions.eventCount,
+          eventCount: validDefinitions.activeDays,
+        },
+        definitionsSchema,
+      ),
+    ).toBe(false)
     expect(defaultToolNames).not.toContain("outlit_create_behavior_metric")
     expect(analyticalToolNames).not.toContain("outlit_create_behavior_metric")
     expect(cliToolNames).toContain("outlit_create_behavior_metric")

@@ -10816,37 +10816,64 @@
                 "const": "PRODUCTION"
               },
               "definitions": {
-                "minItems": 2,
-                "maxItems": 2,
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                "type": "object",
+                "properties": {
+                  "activeDays": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "metricKey": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191
+                      },
+                      "aggregation": {
+                        "type": "string",
+                        "const": "active_days"
+                      }
                     },
-                    "metricKey": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 191
-                    },
-                    "aggregation": {
-                      "type": "string",
-                      "enum": [
-                        "active_days",
-                        "event_count"
-                      ]
-                    }
+                    "required": [
+                      "id",
+                      "metricKey",
+                      "aggregation"
+                    ],
+                    "additionalProperties": false
                   },
-                  "required": [
-                    "id",
-                    "metricKey",
-                    "aggregation"
-                  ],
-                  "additionalProperties": false
-                }
+                  "eventCount": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "metricKey": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191
+                      },
+                      "aggregation": {
+                        "type": "string",
+                        "const": "event_count"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "metricKey",
+                      "aggregation"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "activeDays",
+                  "eventCount"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -10869,5 +10896,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "4b149bbd1f2699cac76ca7be6420697d52c5bf4ab826838e4025ccb33958c0d8"
+  "x-outlit-contract-hash": "ffc529b7075a715be117cc1ce8c29446dba87df699b1020f70b0a56991f497c9"
 }

@@ -729,7 +729,7 @@ Destination creation and update are Slack-channel backed. Use `--default` on `de
 
 ## Behavior Metrics
 
-Create event-based Behavior Metrics using the same contract as the Outlit UI, API, and MCP tools. Discover an eligible source, then its attributed events, before creating a metric.
+Create an important-event configuration using the same contract as the Outlit UI, API, and MCP tools. Discover an eligible source, then its attributed events, before creating the configuration.
 
 ```text
 outlit metrics sources [flags]
@@ -748,7 +748,7 @@ outlit metrics create --source metric_source_v1_0123456789abcdef0123456789abcdef
 
 `metrics sources` returns opaque source keys. `metrics events` requires one returned `--source` and accepts optional `--weeks` (default 12) and `--limit` (default 100); it returns candidate event names and property keys. `metrics create` requires a returned source key, an exact discovered event name, a stable lower-snake-case behavior key, and a label. `--property-filters` accepts an optional JSON array of up to five typed `equals` or `exists` filters.
 
-`metrics create` returns an enabled, production Behavior Metric immediately. Source readiness remains independent ingestion-health information.
+`metrics create` atomically returns two enabled production metrics immediately: weekly active days under `metric.definitions.activeDays` and weekly event count under `metric.definitions.eventCount`. Source readiness remains independent ingestion-health information.
 
 ## Settings
 
