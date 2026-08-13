@@ -8,8 +8,33 @@ import {
 } from "../helpers"
 
 const mockResult = { destination: { id: "destination_123" } }
+const behaviorMetricResult = {
+  created: true,
+  metric: {
+    sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",
+    behaviorKey: "reports_exported",
+    label: "Reports exported",
+    eventSelection: { mode: "exact_event_names", eventNames: ["report_exported"] },
+    status: "ENABLED",
+    evaluationMode: "PRODUCTION",
+    definitions: {
+      activeDays: {
+        id: "10000000-0000-4000-8000-000000000001",
+        metricKey: "weekly_reports_exported_active_days",
+        aggregation: "active_days",
+      },
+      eventCount: {
+        id: "10000000-0000-4000-8000-000000000002",
+        metricKey: "weekly_reports_exported_event_count",
+        aggregation: "event_count",
+      },
+    },
+  },
+} as const
 
-const mockCallTool = mock(async (_toolName: string, _params: Record<string, unknown>) => mockResult)
+const mockCallTool = mock(async (toolName: string, _params: Record<string, unknown>) =>
+  toolName === "outlit_create_behavior_metric" ? behaviorMetricResult : mockResult,
+)
 
 mock.module("../../src/lib/client", () => ({
   createClient: async () => ({
@@ -88,7 +113,7 @@ describe("platform lifecycle commands", () => {
   test("runs Behavior Metric create with the canonical event-based payload", async () => {
     const { default: createBehaviorMetricCmd } = await import("../../src/commands/metrics/create")
 
-    await captureStdout(() =>
+    const result = await captureStdout<typeof behaviorMetricResult>(() =>
       createBehaviorMetricCmd.run!({
         args: {
           source: "metric_source_v1_0123456789abcdef0123456789abcdef",
@@ -106,6 +131,8 @@ describe("platform lifecycle commands", () => {
         },
       } as Parameters<NonNullable<typeof createBehaviorMetricCmd.run>>[0]),
     )
+
+    expect(result).toEqual(behaviorMetricResult)
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_create_behavior_metric", {
       sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",

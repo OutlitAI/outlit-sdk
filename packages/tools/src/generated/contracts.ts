@@ -8886,10 +8886,10 @@ export const publicToolContracts = {
   "outlit_create_behavior_metric": {
     "toolName": "outlit_create_behavior_metric",
     "commandId": "behavior_metric.create",
-    "commandVersion": 1,
+    "commandVersion": 2,
     "ownerDomain": "behavior_metrics",
     "title": "Create Behavior Metric",
-    "description": "Create or idempotently return an event-based Behavior Metric in ENABLED and SHADOW.",
+    "description": "Create or idempotently return an important-event configuration that atomically installs active-days and event-count metrics in ENABLED and PRODUCTION.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -9212,40 +9212,67 @@ export const publicToolContracts = {
             },
             "evaluationMode": {
               "type": "string",
-              "const": "SHADOW",
+              "const": "PRODUCTION",
             },
             "definitions": {
-              "minItems": 2,
-              "maxItems": 2,
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "object",
+              "properties": {
+                "activeDays": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    },
+                    "metricKey": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191,
+                    },
+                    "aggregation": {
+                      "type": "string",
+                      "const": "active_days",
+                    },
                   },
-                  "metricKey": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 191,
-                  },
-                  "aggregation": {
-                    "type": "string",
-                    "enum": [
-                      "active_days",
-                      "event_count",
-                    ],
-                  },
+                  "required": [
+                    "id",
+                    "metricKey",
+                    "aggregation",
+                  ],
+                  "additionalProperties": false,
                 },
-                "required": [
-                  "id",
-                  "metricKey",
-                  "aggregation",
-                ],
-                "additionalProperties": false,
+                "eventCount": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    },
+                    "metricKey": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191,
+                    },
+                    "aggregation": {
+                      "type": "string",
+                      "const": "event_count",
+                    },
+                  },
+                  "required": [
+                    "id",
+                    "metricKey",
+                    "aggregation",
+                  ],
+                  "additionalProperties": false,
+                },
               },
+              "required": [
+                "activeDays",
+                "eventCount",
+              ],
+              "additionalProperties": false,
             },
           },
           "required": [
@@ -10682,4 +10709,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "39fe276d5127aa59cdfc0172cc44c9281beb62b1942c44094421f2a56fbb40fa" as const
+export const sdkConsumerContractHash = "ffc529b7075a715be117cc1ce8c29446dba87df699b1020f70b0a56991f497c9" as const

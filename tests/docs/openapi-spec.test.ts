@@ -108,6 +108,30 @@ describe("Core-generated OpenAPI spec", () => {
     expect(Object.keys(schemas).filter((name) => name.startsWith("ToolInput_"))).toHaveLength(36)
   })
 
+  test("documents immediate production for created Behavior Metrics", () => {
+    const schema = readSpec().components?.schemas?.ToolOutput_outlit_create_behavior_metric as {
+      properties?: {
+        metric?: {
+          properties?: { evaluationMode?: unknown; definitions?: unknown }
+        }
+      }
+    }
+
+    expect(schema.properties?.metric?.properties?.evaluationMode).toEqual({
+      type: "string",
+      const: "PRODUCTION",
+    })
+    expect(schema.properties?.metric?.properties?.definitions).toMatchObject({
+      type: "object",
+      required: ["activeDays", "eventCount"],
+      additionalProperties: false,
+      properties: {
+        activeDays: { properties: { aggregation: { const: "active_days" } } },
+        eventCount: { properties: { aggregation: { const: "event_count" } } },
+      },
+    })
+  })
+
   test("documents the stable gateway error envelope", () => {
     const { $schema: _jsonSchemaDialect, ...openApiErrorSchema } = toolGatewayErrorSchema
 
