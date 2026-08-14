@@ -8,6 +8,7 @@ export const publicToolNames = [
   "outlit_list_users",
   "outlit_list_workspace_users",
   "outlit_get_customer",
+  "outlit_get_customer_overview",
   "outlit_assign_customer_owner",
   "outlit_grant_customer_access",
   "outlit_update_customer_access",
@@ -1539,6 +1540,203 @@ export const publicToolContracts = {
       },
       "required": [
         "customer",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_get_customer_overview": {
+    "toolName": "outlit_get_customer_overview",
+    "commandId": "customer.overview.get",
+    "commandVersion": 1,
+    "ownerDomain": "customers",
+    "title": "Get Customer Overview",
+    "description": "Get the bounded, evidence-backed relationship context shown on a customer page. Returns a headline, categorized current statements with ISO observed-at timestamps when supported, source labels, and simple provenance without raw facts, quotes, or internal status.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Customer ID, domain, or exact customer name to look up",
+        },
+      },
+      "required": [
+        "customer",
+      ],
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customer": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+            },
+            "name": {
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "domain": {
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "billingStatus": {
+              "type": "string",
+              "enum": [
+                "NONE",
+                "TRIALING",
+                "PAYING",
+                "PAST_DUE",
+                "CHURNED",
+              ],
+            },
+          },
+          "required": [
+            "id",
+            "name",
+            "domain",
+            "billingStatus",
+          ],
+          "additionalProperties": false,
+        },
+        "overview": {
+          "type": "object",
+          "properties": {
+            "relationshipContext": {
+              "type": "object",
+              "properties": {
+                "headline": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 240,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "items": {
+                  "maxItems": 8,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "category": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120,
+                      },
+                      "statement": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500,
+                      },
+                      "observedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "sources": {
+                        "maxItems": 4,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "label": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100,
+                            },
+                          },
+                          "required": [
+                            "label",
+                          ],
+                          "additionalProperties": false,
+                        },
+                      },
+                    },
+                    "required": [
+                      "category",
+                      "statement",
+                      "observedAt",
+                      "sources",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+              },
+              "required": [
+                "headline",
+                "items",
+              ],
+              "additionalProperties": false,
+            },
+            "provenance": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "compiled_context",
+                    "active_fact_fallback",
+                    "empty",
+                  ],
+                },
+                "asOf": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "required": [
+                "kind",
+                "asOf",
+              ],
+              "additionalProperties": false,
+            },
+          },
+          "required": [
+            "relationshipContext",
+            "provenance",
+          ],
+          "additionalProperties": false,
+        },
+      },
+      "required": [
+        "customer",
+        "overview",
       ],
       "additionalProperties": false,
     },
@@ -9344,6 +9542,7 @@ export const consumerToolPolicies = {
     "outlit_list_users",
     "outlit_list_workspace_users",
     "outlit_get_customer",
+    "outlit_get_customer_overview",
     "outlit_assign_customer_owner",
     "outlit_grant_customer_access",
     "outlit_update_customer_access",
@@ -9379,6 +9578,7 @@ export const consumerToolPolicies = {
     "outlit_list_users",
     "outlit_list_workspace_users",
     "outlit_get_customer",
+    "outlit_get_customer_overview",
     "outlit_assign_customer_owner",
     "outlit_grant_customer_access",
     "outlit_update_customer_access",
@@ -10709,4 +10909,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "ffc529b7075a715be117cc1ce8c29446dba87df699b1020f70b0a56991f497c9" as const
+export const sdkConsumerContractHash = "83cce5fd1c59c8fcbc15a49a8b5831792db03d2b81e35b811736f18f8a541830" as const

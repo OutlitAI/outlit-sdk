@@ -58,7 +58,7 @@ describe("completions command", () => {
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "ws-users" ]]`)
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "customers" ]]`)
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "list get timeline owner grant revoke" -- "$cur"))',
+      'COMPREPLY=($(compgen -W "list get overview timeline owner grant revoke" -- "$cur"))',
     )
     expect(out).toContain(
       `[[ $COMP_CWORD -eq 3 && "${bashCompWord(1)}" == "customers" && "${bashCompWord(2)}" == "owner" ]]`,

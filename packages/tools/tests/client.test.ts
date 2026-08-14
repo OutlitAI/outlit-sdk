@@ -13,6 +13,8 @@ import {
   type CustomerDetailResult,
   type CustomerListItem,
   type CustomerListResult,
+  type CustomerOverview,
+  type CustomerOverviewResult,
   cliToolNames,
   createOutlitClient,
   customerSourceTypeInputs,
@@ -67,6 +69,7 @@ describe("toolsets", () => {
       "outlit_list_users",
       "outlit_list_workspace_users",
       "outlit_get_customer",
+      "outlit_get_customer_overview",
       "outlit_assign_customer_owner",
       "outlit_grant_customer_access",
       "outlit_update_customer_access",
@@ -100,7 +103,7 @@ describe("toolsets", () => {
       "outlit_list_behavior_metric_events",
       "outlit_create_behavior_metric",
     ])
-    expect(allPublicToolNames).toHaveLength(36)
+    expect(allPublicToolNames).toHaveLength(37)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -307,6 +310,23 @@ describe("tool contracts", () => {
               id: "customer_1",
               name: "Acme",
               domain: "acme.com",
+              billingStatus: "PAYING",
+            },
+            overview: {
+              relationshipContext: { headline: null, items: [] },
+              provenance: { kind: "empty", asOf: null },
+            },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            customer: {
+              id: "customer_1",
+              name: "Acme",
+              domain: "acme.com",
               activatedAt: null,
             },
           }),
@@ -322,10 +342,15 @@ describe("tool contracts", () => {
     const detailResult = await client.callTool("outlit_get_customer", {
       customer: "acme.com",
     })
+    const overviewResult = await client.callTool("outlit_get_customer_overview", {
+      customer: "acme.com",
+    })
 
     expectTypeOf(listResult).toEqualTypeOf<CustomerListResult>()
     expectTypeOf(detailResult).toEqualTypeOf<CustomerDetailResult>()
     expectTypeOf(detailResult.customer).toEqualTypeOf<CustomerDetail>()
+    expectTypeOf(overviewResult).toEqualTypeOf<CustomerOverviewResult>()
+    expectTypeOf(overviewResult.overview).toEqualTypeOf<CustomerOverview>()
   })
 
   test("exposes workspace users and customer owner filters", () => {

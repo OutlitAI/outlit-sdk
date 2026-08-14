@@ -75,6 +75,11 @@ const COMMANDS: readonly CmdDef[] = [
         ],
       },
       {
+        name: "overview",
+        desc: "Get a bounded customer relationship overview",
+        flags: [...COMMON],
+      },
+      {
         name: "timeline",
         desc: "Show activity timeline",
         flags: [
