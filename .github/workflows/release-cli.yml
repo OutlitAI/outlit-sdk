@@ -54,7 +54,10 @@ jobs:
           bun test tests/lib/config.test.ts tests/lib/client.test.ts
           bun test $(find tests -name '*.test.ts' \
             ! -path 'tests/lib/config.test.ts' \
-            ! -path 'tests/lib/client.test.ts' | tr '\n' ' ')
+            ! -path 'tests/lib/client.test.ts' \
+            ! -path 'tests/commands/integrations/wait-for-connection.test.ts' | tr '\n' ' ')
+          # This test stubs pollUntil while the integration setup suite stubs this module.
+          bun test tests/commands/integrations/wait-for-connection.test.ts
 
       - name: Build all binaries
         working-directory: packages/cli
