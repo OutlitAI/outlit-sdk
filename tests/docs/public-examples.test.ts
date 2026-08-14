@@ -279,6 +279,111 @@ describe("public documentation examples", () => {
     expect(failures).toEqual([])
   })
 
+  test("keeps @outlit package imports resolvable", () => {
+    const scriptKinds: Record<string, ts.ScriptKind> = {
+      javascript: ts.ScriptKind.JS,
+      js: ts.ScriptKind.JS,
+      jsx: ts.ScriptKind.JSX,
+      ts: ts.ScriptKind.TS,
+      tsx: ts.ScriptKind.TSX,
+      typescript: ts.ScriptKind.TS,
+    }
+    const imports: string[] = []
+    const usages: string[] = []
+    let importId = 0
+
+    for (const file of listPublicDocumentationFiles()) {
+      for (const block of extractFencedBlocks(file)) {
+        const scriptKind = scriptKinds[block.language]
+        if (scriptKind === undefined) continue
+
+        const sourceFile = ts.createSourceFile(
+          `${file}.${block.language}`,
+          block.code,
+          ts.ScriptTarget.Latest,
+          true,
+          scriptKind,
+        )
+
+        for (const statement of sourceFile.statements) {
+          if (
+            !ts.isImportDeclaration(statement) ||
+            !ts.isStringLiteral(statement.moduleSpecifier)
+          ) {
+            continue
+          }
+
+          const moduleName = statement.moduleSpecifier.text
+          const importClause = statement.importClause
+          if (!moduleName.startsWith("@outlit/") || !importClause) continue
+
+          const origin = `${file}:${block.line}`
+          if (importClause.name) {
+            const alias = `documentedDefault${importId++}`
+            imports.push(`import ${alias} from ${JSON.stringify(moduleName)} // ${origin}`)
+            usages.push(`void ${alias}`)
+          }
+
+          if (importClause.namedBindings && ts.isNamespaceImport(importClause.namedBindings)) {
+            const alias = `documentedNamespace${importId++}`
+            imports.push(`import * as ${alias} from ${JSON.stringify(moduleName)} // ${origin}`)
+            usages.push(`void ${alias}`)
+          }
+
+          if (importClause.namedBindings && ts.isNamedImports(importClause.namedBindings)) {
+            for (const element of importClause.namedBindings.elements) {
+              const importedName = element.propertyName?.text ?? element.name.text
+              const alias = `documentedImport${importId++}`
+              const typeOnly = importClause.isTypeOnly || element.isTypeOnly
+              imports.push(
+                `${typeOnly ? "import type" : "import"} { ${importedName} as ${alias} } from ${JSON.stringify(moduleName)} // ${origin}`,
+              )
+              usages.push(typeOnly ? `type DocumentedType${importId} = ${alias}` : `void ${alias}`)
+            }
+          }
+        }
+      }
+    }
+
+    const virtualFile = join(process.cwd(), "tests/docs/.public-imports-doctest.ts")
+    const virtualSource = [...imports, ...usages].join("\n")
+    const compilerOptions: ts.CompilerOptions = {
+      baseUrl: process.cwd(),
+      module: ts.ModuleKind.NodeNext,
+      moduleResolution: ts.ModuleResolutionKind.NodeNext,
+      noEmit: true,
+      paths: {
+        "@outlit/browser": ["packages/browser/dist/index.d.ts"],
+        "@outlit/browser/react": ["packages/browser/dist/react/index.d.ts"],
+        "@outlit/browser/vue": ["packages/browser/dist/vue/index.d.ts"],
+        "@outlit/core": ["packages/core/dist/index.d.ts"],
+        "@outlit/node": ["packages/node/dist/index.d.ts"],
+        "@outlit/pi": ["packages/pi/dist/index.d.ts"],
+        "@outlit/tools": ["packages/tools/dist/index.d.ts"],
+      },
+      skipLibCheck: true,
+      target: ts.ScriptTarget.ES2022,
+    }
+    const compilerHost = ts.createCompilerHost(compilerOptions)
+    const getSourceFile = compilerHost.getSourceFile.bind(compilerHost)
+    compilerHost.fileExists = (fileName) => fileName === virtualFile || ts.sys.fileExists(fileName)
+    compilerHost.readFile = (fileName) =>
+      fileName === virtualFile ? virtualSource : ts.sys.readFile(fileName)
+    compilerHost.getSourceFile = (fileName, languageVersion, onError, shouldCreateNewSourceFile) =>
+      fileName === virtualFile
+        ? ts.createSourceFile(fileName, virtualSource, languageVersion, true, ts.ScriptKind.TS)
+        : getSourceFile(fileName, languageVersion, onError, shouldCreateNewSourceFile)
+
+    const program = ts.createProgram([virtualFile], compilerOptions, compilerHost)
+    const failures = ts
+      .getPreEmitDiagnostics(program)
+      .filter((diagnostic) => !diagnostic.file || diagnostic.file.fileName === virtualFile)
+      .map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, " "))
+
+    expect(imports.length).toBeGreaterThan(0)
+    expect(failures).toEqual([])
+  })
+
   test("keeps Vue fences compilable as single-file components", () => {
     const failures: string[] = []
     let blockId = 0

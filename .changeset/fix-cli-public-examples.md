@@ -1,5 +1,6 @@
 ---
 "@outlit/cli": patch
+"@outlit/pi": patch
 ---
 
-Align the root help journey-stage example with the current public customer contract.
+Align CLI and Pi public examples with the current customer and tool-policy contracts.
