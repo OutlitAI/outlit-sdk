@@ -24,6 +24,7 @@ describe("customers command", () => {
     expect(Object.keys(subCommands)).toEqual([
       "list",
       "get",
+      "overview",
       "timeline",
       "owner",
       "grant",

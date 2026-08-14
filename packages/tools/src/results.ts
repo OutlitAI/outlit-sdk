@@ -71,6 +71,8 @@ export type CustomerListResult = PublicToolResult<"outlit_list_customers">
 export type CustomerListItem = CustomerListResult["items"][number]
 export type CustomerDetailResult = PublicToolResult<"outlit_get_customer">
 export type CustomerDetail = CustomerDetailResult["customer"]
+export type CustomerOverviewResult = PublicToolResult<"outlit_get_customer_overview">
+export type CustomerOverview = CustomerOverviewResult["overview"]
 
 export interface CustomerAnalyticsRow {
   activated_at: string | null
