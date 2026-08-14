@@ -185,7 +185,10 @@ jobs:
           # All other tests share compatible mock.module() setups.
           bun test $(find tests -name '*.test.ts' \
             ! -path 'tests/lib/config.test.ts' \
-            ! -path 'tests/lib/client.test.ts' | tr '\n' ' ')
+            ! -path 'tests/lib/client.test.ts' \
+            ! -path 'tests/commands/integrations/wait-for-connection.test.ts' | tr '\n' ' ')
+          # This test stubs pollUntil while the integration setup suite stubs this module.
+          bun test tests/commands/integrations/wait-for-connection.test.ts
 
       - name: Run tools tests
         if: steps.changes.outputs.tools == 'true'
