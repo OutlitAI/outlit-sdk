@@ -119,6 +119,23 @@ const COMMANDS: readonly CmdDef[] = [
     ],
   },
   {
+    name: "attention",
+    desc: "Inspect customer Attention items",
+    subs: [
+      {
+        name: "list",
+        desc: "List open or resolved Attention items",
+        flags: [
+          ...PAGINATED,
+          { name: "--status", desc: "Lifecycle: open or resolved" },
+          { name: "--customer-id", desc: "Filter by exact customer UUID" },
+          { name: "--priority", desc: "Priority: NORMAL, HIGH, or URGENT" },
+        ],
+      },
+      { name: "get", desc: "Get one Attention item by exact ID", flags: [...COMMON] },
+    ],
+  },
+  {
     name: "activation",
     desc: "Configure contact and company activation",
     subs: [

@@ -112,6 +112,8 @@ describe("createOutlitPiExtension", () => {
 
   test("exposes only Pi-supported tools from the Pi package", () => {
     expect(allPublicToolNames).toEqual(piToolNames)
+    expect(allPublicToolNames).toContain("outlit_list_attention_items")
+    expect(allPublicToolNames).toContain("outlit_get_attention_item")
     expect(allPublicToolNames).not.toContain("outlit_list_behavior_metric_sources")
     expect(allPublicToolNames).not.toContain("outlit_list_behavior_metric_events")
     expect(allPublicToolNames).not.toContain("outlit_create_behavior_metric")

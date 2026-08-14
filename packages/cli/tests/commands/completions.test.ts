@@ -40,6 +40,7 @@ describe("completions command", () => {
     expect(out).toContain("ws-users")
     expect(out).toContain("settings")
     expect(out).toContain("metrics")
+    expect(out).toContain("attention")
     expect(out).not.toContain("usage-metrics")
     expect(out).not.toContain("identity")
     expect(out).not.toContain("agents")
@@ -60,6 +61,8 @@ describe("completions command", () => {
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "list get overview timeline owner grant revoke" -- "$cur"))',
     )
+    expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "attention" ]]`)
+    expect(out).toContain('COMPREPLY=($(compgen -W "list get" -- "$cur"))')
     expect(out).toContain(
       `[[ $COMP_CWORD -eq 3 && "${bashCompWord(1)}" == "customers" && "${bashCompWord(2)}" == "owner" ]]`,
     )
@@ -111,6 +114,9 @@ describe("completions command", () => {
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --owner-id --owner-email --has-owner --activated-since --search"',
     )
     expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --customer-id --priority"',
+    )
+    expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --event --lookback-days --example-limit"',
     )
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --event"')
@@ -146,6 +152,7 @@ describe("completions command", () => {
     expect(out).toContain("'ws-users:Workspace-user operations'")
     expect(out).toContain("'settings:Configure workspace settings'")
     expect(out).toContain("'metrics:Configure Behavior Metrics'")
+    expect(out).toContain("'attention:Inspect customer Attention items'")
     expect(out).not.toContain("'identity:Inspect and manage identity resolution'")
     expect(out).toContain("'activation:Configure contact and company activation'")
     expect(out).not.toContain("workspace-users")
@@ -155,6 +162,7 @@ describe("completions command", () => {
     const out = await captureCompletions("zsh")
     expect(out).toContain("CURRENT == 3")
     expect(out).toContain("'list:List and filter customers'")
+    expect(out).toContain("'list:List open or resolved Attention items'")
     expect(out).toContain("'owner:Manage the primary customer owner'")
     expect(out).toContain("'set:Assign the primary customer owner'")
     expect(out).toContain("'grant:Grant or change Viewer or Editor customer access'")
@@ -206,6 +214,9 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd sources get' -l limit")
     expect(out).toContain("-n '__outlit_using_cmd sources get' -l cursor")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
+    expect(out).toContain("-n '__outlit_using_cmd attention list' -l status")
+    expect(out).toContain("-n '__outlit_using_cmd attention list' -l customer-id")
+    expect(out).toContain("-n '__outlit_using_cmd attention list' -l priority")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l activated-since")
     expect(out).toContain("-n '__outlit_using_cmd activation preview' -l lookback-days")
     expect(out).toContain("-n '__outlit_using_cmd activation preview' -l event")
