@@ -9586,10 +9586,6 @@ export const publicToolContracts = {
                 "minLength": 1,
                 "maxLength": 500,
               },
-              "responsibilityKey": {
-                "type": "string",
-                "const": "churn",
-              },
               "customer": {
                 "type": "object",
                 "properties": {
@@ -9834,7 +9830,6 @@ export const publicToolContracts = {
             },
             "required": [
               "id",
-              "responsibilityKey",
               "customer",
               "title",
               "priority",
@@ -9902,10 +9897,6 @@ export const publicToolContracts = {
           "type": "string",
           "minLength": 1,
           "maxLength": 500,
-        },
-        "responsibilityKey": {
-          "type": "string",
-          "const": "churn",
         },
         "customer": {
           "type": "object",
@@ -10319,7 +10310,6 @@ export const publicToolContracts = {
       },
       "required": [
         "id",
-        "responsibilityKey",
         "customer",
         "title",
         "priority",
@@ -11759,4 +11749,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "b5dd1479f1aa020b6abb0ee2f4c15d53f85f3729e578212acb39c611623fff4a" as const
+export const sdkConsumerContractHash = "595fc84df2d02db9f9eac83e802b96b68aea566296a4e2680ac834e9d0f896f5" as const
