@@ -1699,34 +1699,61 @@ export const publicToolContracts = {
               "additionalProperties": false,
             },
             "provenance": {
-              "type": "object",
-              "properties": {
-                "kind": {
-                  "type": "string",
-                  "enum": [
-                    "compiled_context",
-                    "active_fact_fallback",
-                    "empty",
-                  ],
-                },
-                "asOf": {
-                  "anyOf": [
-                    {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "compiled_context",
+                    },
+                    "asOf": {
                       "type": "string",
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                     },
-                    {
+                  },
+                  "required": [
+                    "kind",
+                    "asOf",
+                  ],
+                  "additionalProperties": false,
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "active_fact_fallback",
+                    },
+                    "asOf": {
                       "type": "null",
                     },
+                  },
+                  "required": [
+                    "kind",
+                    "asOf",
                   ],
+                  "additionalProperties": false,
                 },
-              },
-              "required": [
-                "kind",
-                "asOf",
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "empty",
+                    },
+                    "asOf": {
+                      "type": "null",
+                    },
+                  },
+                  "required": [
+                    "kind",
+                    "asOf",
+                  ],
+                  "additionalProperties": false,
+                },
               ],
-              "additionalProperties": false,
             },
           },
           "required": [
@@ -9698,8 +9725,9 @@ export const publicToolContracts = {
                   "arrCents": {
                     "anyOf": [
                       {
-                        "type": "number",
+                        "type": "integer",
                         "minimum": 0,
+                        "maximum": 9007199254740991,
                       },
                       {
                         "type": "null",
@@ -10014,8 +10042,9 @@ export const publicToolContracts = {
             "arrCents": {
               "anyOf": [
                 {
-                  "type": "number",
+                  "type": "integer",
                   "minimum": 0,
+                  "maximum": 9007199254740991,
                 },
                 {
                   "type": "null",
@@ -11730,4 +11759,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "2d2bf81cbc8e62cf75c8fd96311a002ff57d740ac4c9cec07cbd5f4a8cd4b137" as const
+export const sdkConsumerContractHash = "b5dd1479f1aa020b6abb0ee2f4c15d53f85f3729e578212acb39c611623fff4a" as const
