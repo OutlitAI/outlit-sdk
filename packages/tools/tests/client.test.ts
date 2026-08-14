@@ -3,6 +3,9 @@ import { resolve } from "node:path"
 import { describe, expect, expectTypeOf, test, vi } from "vitest"
 
 import {
+  type AttentionItemResult,
+  type AttentionItemSummary,
+  type AttentionListResult,
   allPublicToolNames,
   analyticalToolNames,
   apiKeyGrants,
@@ -102,8 +105,10 @@ describe("toolsets", () => {
       "outlit_list_behavior_metric_sources",
       "outlit_list_behavior_metric_events",
       "outlit_create_behavior_metric",
+      "outlit_list_attention_items",
+      "outlit_get_attention_item",
     ])
-    expect(allPublicToolNames).toHaveLength(37)
+    expect(allPublicToolNames).toHaveLength(39)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -130,6 +135,12 @@ describe("toolsets", () => {
       ),
     )
     expect(cliToolNames).toEqual(allPublicToolNames)
+    for (const toolName of ["outlit_list_attention_items", "outlit_get_attention_item"] as const) {
+      expect(defaultToolNames).not.toContain(toolName)
+      expect(analyticalToolNames).not.toContain(toolName)
+      expect(piToolNames).toContain(toolName)
+      expect(cliToolNames).toContain(toolName)
+    }
   })
 
   test("exposes an analytical agent toolset with only default tools plus SQL", () => {
@@ -175,6 +186,16 @@ describe("tool contracts", () => {
     expectTypeOf<CustomerListItem["activatedAt"]>().toEqualTypeOf<string | null>()
     expectTypeOf<CustomerDetail["activatedAt"]>().toEqualTypeOf<string | null>()
     expect(analyticsRow.activated_at).toBeNull()
+  })
+
+  test("exports generated Attention result types with Core-owned ARR fields", () => {
+    expectTypeOf<AttentionListResult["items"][number]>().toEqualTypeOf<AttentionItemSummary>()
+    expectTypeOf<AttentionItemResult["accountImportance"]["arrCents"]>().toEqualTypeOf<
+      number | null
+    >()
+    expectTypeOf<
+      AttentionItemSummary["accountImportance"]["shareOfOrganizationArr"]
+    >().toEqualTypeOf<number | null>()
   })
 
   test("projects generated Behavior Metric discovery and creation capabilities into public catalogues", () => {

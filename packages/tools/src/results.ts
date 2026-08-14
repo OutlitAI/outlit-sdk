@@ -73,6 +73,10 @@ export type CustomerDetailResult = PublicToolResult<"outlit_get_customer">
 export type CustomerDetail = CustomerDetailResult["customer"]
 export type CustomerOverviewResult = PublicToolResult<"outlit_get_customer_overview">
 export type CustomerOverview = CustomerOverviewResult["overview"]
+export type AttentionListResult = PublicToolResult<"outlit_list_attention_items">
+export type AttentionItemSummary = AttentionListResult["items"][number]
+export type AttentionItemResult = PublicToolResult<"outlit_get_attention_item">
+export type AttentionItem = AttentionItemResult
 
 export interface CustomerAnalyticsRow {
   activated_at: string | null

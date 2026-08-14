@@ -67,6 +67,10 @@ export {
 export type {
   ApiKeyValidationFailure,
   ApiKeyValidationSuccess,
+  AttentionItem,
+  AttentionItemResult,
+  AttentionItemSummary,
+  AttentionListResult,
   CustomerAnalyticsRow,
   CustomerDetail,
   CustomerDetailResult,

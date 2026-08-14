@@ -304,6 +304,78 @@ outlit customers overview acme.com --json
 available, `active_fact_fallback` when Core safely uses current active facts instead, and
 `empty` when neither is available. It is a freshness/source signal, not internal compiler status.
 
+## Attention
+
+Inspect the authorized, read-only Attention collection. Attention is separate from customer
+relationship context and from the chronological customer timeline.
+
+```text
+outlit attention list [flags]
+outlit attention get <id> [flags]
+```
+
+`attention list` defaults to open items. It accepts optional `--customer-id`, `--priority`
+(`NORMAL`, `HIGH`, or `URGENT`), `--limit` (1–100; Core default 25), and an opaque `--cursor`
+returned with the same filters. Use `--status resolved` for resolved items.
+
+```bash
+outlit attention list --priority HIGH --json
+outlit attention list --status resolved --customer-id 550e8400-e29b-41d4-a716-446655440000 --json
+outlit attention get 550e8400-e29b-41d4-a716-446655440000 --json
+```
+
+List rows contain bounded customer identity, current priority, evidence count, lifecycle times,
+and account importance. Detail adds the current assessment, timeline, evidence summaries, and
+latest visible update. `accountImportance.arrCents` is calculated by Core from stored monthly
+revenue; clients must not multiply it again. `shareOfOrganizationArr` is the matching
+organization ratio.
+
+Both responses may contain `preparedAction` with only `kind`, `status`, `canExecute`, and
+`reviewUrl`. They never include action IDs, email drafts, recipients, evidence IDs, source URLs,
+quotes, internal responsibility-agent configuration, or billing-recovery details. The commands
+are read-only: there is no resolve, reopen, send, or review operation.
+
+### JSON Response
+
+```json
+{
+  "items": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "responsibilityKey": "churn",
+      "customer": {
+        "id": "4ad7ee3b-a3ff-46a8-902b-2b8eae6be671",
+        "name": "Acme Corp",
+        "domain": "acme.com",
+        "ownerDisplayName": "Ada Lovelace"
+      },
+      "title": "Reporting usage collapsed",
+      "priority": "HIGH",
+      "evidenceCount": 2,
+      "lifecycle": {
+        "status": "open",
+        "customerVisibleAt": "2026-08-01T00:00:00.000Z",
+        "resolvedAt": null,
+        "reopenedAt": null,
+        "createdAt": "2026-08-01T00:00:00.000Z",
+        "updatedAt": "2026-08-02T00:00:00.000Z",
+        "materialUpdateAt": null
+      },
+      "accountImportance": {
+        "arrCents": 1200000,
+        "currency": "USD",
+        "shareOfOrganizationArr": 0.12,
+        "revenuePercentile": 95,
+        "segments": ["Enterprise"]
+      },
+      "preparedAction": null
+    }
+  ],
+  "total": 1,
+  "nextCursor": null
+}
+```
+
 ## Customer Ownership and Access
 
 Assign a primary owner or manage a workspace member's explicit Viewer or Editor access.
