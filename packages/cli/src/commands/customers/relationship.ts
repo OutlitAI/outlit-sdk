@@ -6,14 +6,14 @@ import { getClientOrExit, runTool } from "../../lib/api"
 
 export default defineCommand({
   meta: {
-    name: "overview",
+    name: "relationship",
     description: [
-      "Get the bounded relationship context for a customer.",
+      "Get the bounded relationship for a customer.",
       "",
-      "Returns the durable customer-detail read model: a relationship-context headline, up to eight",
-      "categorized current statements, ISO observed-at timestamps when supported, source labels, and",
-      "a provenance marker. It does not expand the compact customer get response, expose raw fact IDs",
-      "or source quotes, or replace the chronological timeline.",
+      "Returns the durable customer-detail read model: a relationship summary, up to eight categorized",
+      "current statements, ISO observed-at timestamps when supported, source labels, and a compiled",
+      "summary timestamp when available. It does not expand the compact customer get response, expose",
+      "raw fact IDs or source quotes, or replace the chronological timeline.",
       "",
       "The customer argument accepts:",
       "  - Customer domain (acme.com)",
@@ -21,8 +21,8 @@ export default defineCommand({
       "  - Exact customer name",
       "",
       "Examples:",
-      "  outlit customers overview acme.com",
-      "  outlit customers overview acme.com --json",
+      "  outlit customers relationship acme.com",
+      "  outlit customers relationship acme.com --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -42,7 +42,7 @@ export default defineCommand({
 
     return runTool(
       client,
-      publicToolContracts.outlit_get_customer_overview.toolName,
+      publicToolContracts.outlit_get_customer_relationship.toolName,
       { customer: args.customer },
       json,
     )

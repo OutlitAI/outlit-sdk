@@ -16,8 +16,8 @@ import {
   type CustomerDetailResult,
   type CustomerListItem,
   type CustomerListResult,
-  type CustomerOverview,
-  type CustomerOverviewResult,
+  type CustomerRelationship,
+  type CustomerRelationshipResult,
   cliToolNames,
   createOutlitClient,
   customerSourceTypeInputs,
@@ -72,7 +72,7 @@ describe("toolsets", () => {
       "outlit_list_users",
       "outlit_list_workspace_users",
       "outlit_get_customer",
-      "outlit_get_customer_overview",
+      "outlit_get_customer_relationship",
       "outlit_assign_customer_owner",
       "outlit_grant_customer_access",
       "outlit_update_customer_access",
@@ -194,7 +194,7 @@ describe("tool contracts", () => {
       number | null
     >()
     expectTypeOf<
-      AttentionItemSummary["accountImportance"]["shareOfOrganizationArr"]
+      AttentionItemSummary["accountImportance"]["arrShareWithinCurrency"]
     >().toEqualTypeOf<number | null>()
   })
 
@@ -331,11 +331,11 @@ describe("tool contracts", () => {
               id: "customer_1",
               name: "Acme",
               domain: "acme.com",
-              billingStatus: "PAYING",
             },
-            overview: {
-              relationshipContext: { headline: null, items: [] },
-              provenance: { kind: "empty", asOf: null },
+            relationship: {
+              summary: null,
+              items: [],
+              updatedAt: null,
             },
           }),
           { status: 200 },
@@ -360,18 +360,18 @@ describe("tool contracts", () => {
     })
 
     const listResult = await client.callTool("outlit_list_customers")
-    const detailResult = await client.callTool("outlit_get_customer", {
+    const relationshipResult = await client.callTool("outlit_get_customer_relationship", {
       customer: "acme.com",
     })
-    const overviewResult = await client.callTool("outlit_get_customer_overview", {
+    const detailResult = await client.callTool("outlit_get_customer", {
       customer: "acme.com",
     })
 
     expectTypeOf(listResult).toEqualTypeOf<CustomerListResult>()
     expectTypeOf(detailResult).toEqualTypeOf<CustomerDetailResult>()
     expectTypeOf(detailResult.customer).toEqualTypeOf<CustomerDetail>()
-    expectTypeOf(overviewResult).toEqualTypeOf<CustomerOverviewResult>()
-    expectTypeOf(overviewResult.overview).toEqualTypeOf<CustomerOverview>()
+    expectTypeOf(relationshipResult).toEqualTypeOf<CustomerRelationshipResult>()
+    expectTypeOf(relationshipResult.relationship).toEqualTypeOf<CustomerRelationship>()
   })
 
   test("exposes workspace users and customer owner filters", () => {

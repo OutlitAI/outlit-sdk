@@ -15,7 +15,7 @@ const attentionItem = {
     id: "22222222-2222-4222-8222-222222222222",
     name: "Acme",
     domain: "acme.test",
-    ownerDisplayName: "Ada Lovelace",
+    ownerName: "Ada Lovelace",
   },
   title: "Reporting usage collapsed",
   priority: "HIGH",
@@ -32,11 +32,11 @@ const attentionItem = {
   accountImportance: {
     arrCents: 1_200_000,
     currency: "USD",
-    shareOfOrganizationArr: 0.12,
-    revenuePercentile: 95,
+    arrShareWithinCurrency: 0.12,
+    arrPercentileWithinCurrency: 95,
     segments: ["Enterprise"],
   },
-  preparedAction: null,
+  preparedActionUrl: null,
 } as const
 
 const mockCallTool = mock(async (toolName: string) => {
@@ -53,7 +53,7 @@ const mockCallTool = mock(async (toolName: string) => {
     }
   }
 
-  return { items: [attentionItem], total: 1, nextCursor: null }
+  return { items: [attentionItem], pagination: { hasMore: false, total: 1, nextCursor: null } }
 })
 
 mock.module("../../src/lib/client", () => ({
@@ -83,6 +83,7 @@ describe("attention commands", () => {
       expect(mockCallTool).toHaveBeenCalledWith("outlit_list_attention_items", {})
       const output = JSON.parse((writeSpy.mock.calls[0]?.[0] as string) ?? "{}")
       expect(output.items[0].accountImportance).toEqual(attentionItem.accountImportance)
+      expect(output.pagination).toEqual({ hasMore: false, total: 1, nextCursor: null })
       expect(JSON.stringify(output)).not.toContain("mrrCents")
     } finally {
       writeSpy.mockRestore()
@@ -169,6 +170,8 @@ describe("attention commands", () => {
     expect(docs).toContain("outlit attention list")
     expect(docs).toContain("outlit attention get <id>")
     expect(docs).toContain("arrCents")
+    expect(docs).toContain("arrShareWithinCurrency")
+    expect(docs).toContain("preparedActionUrl")
     expect(docs).not.toContain("outlit responsibilities")
     expect(docs).not.toContain("prepared email body")
   })

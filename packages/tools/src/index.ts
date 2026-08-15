@@ -76,8 +76,8 @@ export type {
   CustomerDetailResult,
   CustomerListItem,
   CustomerListResult,
-  CustomerOverview,
-  CustomerOverviewResult,
+  CustomerRelationship,
+  CustomerRelationshipResult,
   JsonSchemaValue,
   PublicToolResult,
 } from "./results.js"

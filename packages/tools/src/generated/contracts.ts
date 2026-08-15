@@ -8,7 +8,7 @@ export const publicToolNames = [
   "outlit_list_users",
   "outlit_list_workspace_users",
   "outlit_get_customer",
-  "outlit_get_customer_overview",
+  "outlit_get_customer_relationship",
   "outlit_assign_customer_owner",
   "outlit_grant_customer_access",
   "outlit_update_customer_access",
@@ -1546,13 +1546,13 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
-  "outlit_get_customer_overview": {
-    "toolName": "outlit_get_customer_overview",
-    "commandId": "customer.overview.get",
+  "outlit_get_customer_relationship": {
+    "toolName": "outlit_get_customer_relationship",
+    "commandId": "customer.relationship.get",
     "commandVersion": 1,
     "ownerDomain": "customers",
-    "title": "Get Customer Overview",
-    "description": "Get the bounded, evidence-backed relationship context shown on a customer page. Returns a headline, categorized current statements with ISO observed-at timestamps when supported, source labels, and simple provenance without raw facts, quotes, or internal status.",
+    "title": "Get Customer Relationship",
+    "description": "Get the bounded, evidence-backed relationship shown on a customer page. Returns a summary, categorized current statements with ISO observed-at timestamps when supported, source labels, and the compiled summary timestamp when available without raw facts, quotes, or internal status.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1567,6 +1567,7 @@ export const publicToolContracts = {
       "required": [
         "customer",
       ],
+      "additionalProperties": false,
     },
     "outputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1598,174 +1599,100 @@ export const publicToolContracts = {
                 },
               ],
             },
-            "billingStatus": {
-              "type": "string",
-              "enum": [
-                "NONE",
-                "TRIALING",
-                "PAYING",
-                "PAST_DUE",
-                "CHURNED",
-              ],
-            },
           },
           "required": [
             "id",
             "name",
             "domain",
-            "billingStatus",
           ],
           "additionalProperties": false,
         },
-        "overview": {
+        "relationship": {
           "type": "object",
           "properties": {
-            "relationshipContext": {
-              "type": "object",
-              "properties": {
-                "headline": {
-                  "anyOf": [
-                    {
+            "summary": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 240,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "items": {
+              "maxItems": 8,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120,
+                  },
+                  "statement": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
+                  },
+                  "observedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
+                  "sourceLabels": {
+                    "maxItems": 4,
+                    "type": "array",
+                    "items": {
                       "type": "string",
                       "minLength": 1,
-                      "maxLength": 240,
+                      "maxLength": 100,
                     },
-                    {
-                      "type": "null",
-                    },
-                  ],
-                },
-                "items": {
-                  "maxItems": 8,
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "category": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 120,
-                      },
-                      "statement": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 500,
-                      },
-                      "observedAt": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                          },
-                          {
-                            "type": "null",
-                          },
-                        ],
-                      },
-                      "sources": {
-                        "maxItems": 4,
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "label": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 100,
-                            },
-                          },
-                          "required": [
-                            "label",
-                          ],
-                          "additionalProperties": false,
-                        },
-                      },
-                    },
-                    "required": [
-                      "category",
-                      "statement",
-                      "observedAt",
-                      "sources",
-                    ],
-                    "additionalProperties": false,
                   },
                 },
+                "required": [
+                  "category",
+                  "statement",
+                  "observedAt",
+                  "sourceLabels",
+                ],
+                "additionalProperties": false,
               },
-              "required": [
-                "headline",
-                "items",
-              ],
-              "additionalProperties": false,
             },
-            "provenance": {
-              "oneOf": [
+            "updatedAt": {
+              "anyOf": [
                 {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "compiled_context",
-                    },
-                    "asOf": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                    },
-                  },
-                  "required": [
-                    "kind",
-                    "asOf",
-                  ],
-                  "additionalProperties": false,
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                 },
                 {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "active_fact_fallback",
-                    },
-                    "asOf": {
-                      "type": "null",
-                    },
-                  },
-                  "required": [
-                    "kind",
-                    "asOf",
-                  ],
-                  "additionalProperties": false,
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "kind": {
-                      "type": "string",
-                      "const": "empty",
-                    },
-                    "asOf": {
-                      "type": "null",
-                    },
-                  },
-                  "required": [
-                    "kind",
-                    "asOf",
-                  ],
-                  "additionalProperties": false,
+                  "type": "null",
                 },
               ],
             },
           },
           "required": [
-            "relationshipContext",
-            "provenance",
+            "summary",
+            "items",
+            "updatedAt",
           ],
           "additionalProperties": false,
         },
       },
       "required": [
         "customer",
-        "overview",
+        "relationship",
       ],
       "additionalProperties": false,
     },
@@ -9527,7 +9454,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "attention",
     "title": "List Attention Items",
-    "description": "List authorized open or resolved Attention items. Returns bounded customer identity, current priority, ARR importance, lifecycle timestamps, and prepared-action metadata without evidence bodies or internal agent state.",
+    "description": "List authorized open or resolved Attention items. Returns bounded customer identity, current priority, ARR importance, lifecycle timestamps, and a prepared-action URL without evidence bodies or internal agent state.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -9570,6 +9497,7 @@ export const publicToolContracts = {
           "maxLength": 2000,
         },
       },
+      "additionalProperties": false,
     },
     "outputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9603,7 +9531,7 @@ export const publicToolContracts = {
                     "type": "string",
                     "maxLength": 253,
                   },
-                  "ownerDisplayName": {
+                  "ownerName": {
                     "anyOf": [
                       {
                         "type": "string",
@@ -9620,7 +9548,7 @@ export const publicToolContracts = {
                   "id",
                   "name",
                   "domain",
-                  "ownerDisplayName",
+                  "ownerName",
                 ],
                 "additionalProperties": false,
               },
@@ -9741,7 +9669,7 @@ export const publicToolContracts = {
                       },
                     ],
                   },
-                  "shareOfOrganizationArr": {
+                  "arrShareWithinCurrency": {
                     "anyOf": [
                       {
                         "type": "number",
@@ -9752,8 +9680,9 @@ export const publicToolContracts = {
                         "type": "null",
                       },
                     ],
+                    "description": "Organization ARR share among customers using the same currency",
                   },
-                  "revenuePercentile": {
+                  "arrPercentileWithinCurrency": {
                     "anyOf": [
                       {
                         "type": "number",
@@ -9764,6 +9693,7 @@ export const publicToolContracts = {
                         "type": "null",
                       },
                     ],
+                    "description": "ARR percentile among customers using the same currency",
                   },
                   "segments": {
                     "maxItems": 50,
@@ -9778,49 +9708,18 @@ export const publicToolContracts = {
                 "required": [
                   "arrCents",
                   "currency",
-                  "shareOfOrganizationArr",
-                  "revenuePercentile",
+                  "arrShareWithinCurrency",
+                  "arrPercentileWithinCurrency",
                   "segments",
                 ],
                 "additionalProperties": false,
               },
-              "preparedAction": {
+              "preparedActionUrl": {
                 "anyOf": [
                   {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "const": "send_customer_email",
-                      },
-                      "status": {
-                        "type": "string",
-                        "enum": [
-                          "OPEN",
-                          "ENGAGED",
-                          "EXECUTING",
-                          "EXECUTED",
-                          "DISMISSED",
-                          "EXPIRED",
-                          "FAILED",
-                        ],
-                      },
-                      "canExecute": {
-                        "type": "boolean",
-                      },
-                      "reviewUrl": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 2000,
-                      },
-                    },
-                    "required": [
-                      "kind",
-                      "status",
-                      "canExecute",
-                      "reviewUrl",
-                    ],
-                    "additionalProperties": false,
+                    "type": "string",
+                    "maxLength": 2000,
+                    "format": "uri",
                   },
                   {
                     "type": "null",
@@ -9836,33 +9735,46 @@ export const publicToolContracts = {
               "evidenceCount",
               "lifecycle",
               "accountImportance",
-              "preparedAction",
+              "preparedActionUrl",
             ],
             "additionalProperties": false,
           },
         },
-        "total": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 9007199254740991,
-        },
-        "nextCursor": {
-          "anyOf": [
-            {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 2000,
+        "pagination": {
+          "type": "object",
+          "properties": {
+            "hasMore": {
+              "type": "boolean",
             },
-            {
-              "type": "null",
+            "nextCursor": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000,
+                },
+                {
+                  "type": "null",
+                },
+              ],
             },
+            "total": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+            },
+          },
+          "required": [
+            "hasMore",
+            "nextCursor",
+            "total",
           ],
+          "additionalProperties": false,
         },
       },
       "required": [
         "items",
-        "total",
-        "nextCursor",
+        "pagination",
       ],
       "additionalProperties": false,
     },
@@ -9873,7 +9785,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "attention",
     "title": "Get Attention Item",
-    "description": "Get one authorized Attention item with its bounded current assessment, timeline, evidence summaries, and prepared-action metadata. Does not return evidence IDs, quotes, email drafts, or internal agent state.",
+    "description": "Get one authorized Attention item with its bounded current assessment, timeline, evidence summaries, and prepared-action URL. Does not return evidence IDs, quotes, email drafts, or internal agent state.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -9888,6 +9800,7 @@ export const publicToolContracts = {
       "required": [
         "id",
       ],
+      "additionalProperties": false,
     },
     "outputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9915,7 +9828,7 @@ export const publicToolContracts = {
               "type": "string",
               "maxLength": 253,
             },
-            "ownerDisplayName": {
+            "ownerName": {
               "anyOf": [
                 {
                   "type": "string",
@@ -9932,7 +9845,7 @@ export const publicToolContracts = {
             "id",
             "name",
             "domain",
-            "ownerDisplayName",
+            "ownerName",
           ],
           "additionalProperties": false,
         },
@@ -10053,7 +9966,7 @@ export const publicToolContracts = {
                 },
               ],
             },
-            "shareOfOrganizationArr": {
+            "arrShareWithinCurrency": {
               "anyOf": [
                 {
                   "type": "number",
@@ -10064,8 +9977,9 @@ export const publicToolContracts = {
                   "type": "null",
                 },
               ],
+              "description": "Organization ARR share among customers using the same currency",
             },
-            "revenuePercentile": {
+            "arrPercentileWithinCurrency": {
               "anyOf": [
                 {
                   "type": "number",
@@ -10076,6 +9990,7 @@ export const publicToolContracts = {
                   "type": "null",
                 },
               ],
+              "description": "ARR percentile among customers using the same currency",
             },
             "segments": {
               "maxItems": 50,
@@ -10090,49 +10005,18 @@ export const publicToolContracts = {
           "required": [
             "arrCents",
             "currency",
-            "shareOfOrganizationArr",
-            "revenuePercentile",
+            "arrShareWithinCurrency",
+            "arrPercentileWithinCurrency",
             "segments",
           ],
           "additionalProperties": false,
         },
-        "preparedAction": {
+        "preparedActionUrl": {
           "anyOf": [
             {
-              "type": "object",
-              "properties": {
-                "kind": {
-                  "type": "string",
-                  "const": "send_customer_email",
-                },
-                "status": {
-                  "type": "string",
-                  "enum": [
-                    "OPEN",
-                    "ENGAGED",
-                    "EXECUTING",
-                    "EXECUTED",
-                    "DISMISSED",
-                    "EXPIRED",
-                    "FAILED",
-                  ],
-                },
-                "canExecute": {
-                  "type": "boolean",
-                },
-                "reviewUrl": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 2000,
-                },
-              },
-              "required": [
-                "kind",
-                "status",
-                "canExecute",
-                "reviewUrl",
-              ],
-              "additionalProperties": false,
+              "type": "string",
+              "maxLength": 2000,
+              "format": "uri",
             },
             {
               "type": "null",
@@ -10316,7 +10200,7 @@ export const publicToolContracts = {
         "evidenceCount",
         "lifecycle",
         "accountImportance",
-        "preparedAction",
+        "preparedActionUrl",
         "whatChanged",
         "whyItMatters",
         "uncertainty",
@@ -10378,7 +10262,7 @@ export const consumerToolPolicies = {
     "outlit_list_users",
     "outlit_list_workspace_users",
     "outlit_get_customer",
-    "outlit_get_customer_overview",
+    "outlit_get_customer_relationship",
     "outlit_assign_customer_owner",
     "outlit_grant_customer_access",
     "outlit_update_customer_access",
@@ -10416,7 +10300,7 @@ export const consumerToolPolicies = {
     "outlit_list_users",
     "outlit_list_workspace_users",
     "outlit_get_customer",
-    "outlit_get_customer_overview",
+    "outlit_get_customer_relationship",
     "outlit_assign_customer_owner",
     "outlit_grant_customer_access",
     "outlit_update_customer_access",
@@ -11749,4 +11633,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "595fc84df2d02db9f9eac83e802b96b68aea566296a4e2680ac834e9d0f896f5" as const
+export const sdkConsumerContractHash = "530e083301530c25b03f081965a91aa9163fded6dfa148edce84fd4bf7520fc7" as const

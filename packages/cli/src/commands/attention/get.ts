@@ -11,7 +11,7 @@ export default defineCommand({
       "Get one authorized Attention item by exact ID.",
       "",
       "Returns the bounded current assessment, timeline, evidence summaries, Core-owned ARR",
-      "importance, and prepared-action metadata. It does not expose email drafts, evidence IDs,",
+      "importance, and a prepared-action URL when review is available. It does not expose email drafts, evidence IDs,",
       "quotes, or internal agent state.",
       "",
       "Examples:",

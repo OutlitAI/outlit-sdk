@@ -22,7 +22,7 @@ export default defineCommand({
       "List authorized open or resolved Attention items.",
       "",
       "The response is bounded and includes current priority, lifecycle, customer identity,",
-      "Core-owned ARR importance, and prepared-action metadata. It does not include email drafts,",
+      "Core-owned ARR importance, and a prepared-action URL when review is available. It does not include email drafts,",
       "evidence identifiers, quotes, or internal agent state.",
       "",
       "Examples:",
