@@ -129,7 +129,6 @@ const COMMANDS: readonly CmdDef[] = [
           ...PAGINATED,
           { name: "--status", desc: "Lifecycle: open or resolved" },
           { name: "--customer-id", desc: "Filter by exact customer UUID" },
-          { name: "--priority", desc: "Priority: NORMAL, HIGH, or URGENT" },
         ],
       },
       { name: "get", desc: "Get one Attention item by exact ID", flags: [...COMMON] },

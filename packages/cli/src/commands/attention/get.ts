@@ -12,7 +12,7 @@ export default defineCommand({
       "",
       "Returns the bounded current assessment, timeline, evidence summaries, Core-owned ARR",
       "importance, and a prepared-action URL when review is available. It does not expose email drafts, evidence IDs,",
-      "quotes, or internal agent state.",
+      "raw source-quote fields, or internal agent state.",
       "",
       "Examples:",
       "  outlit attention get 550e8400-e29b-41d4-a716-446655440000",

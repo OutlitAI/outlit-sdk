@@ -305,12 +305,12 @@ outlit attention list [flags]
 outlit attention get <id> [flags]
 ```
 
-`attention list` defaults to open items. It accepts optional `--customer-id`, `--priority`
-(`NORMAL`, `HIGH`, or `URGENT`), `--limit` (1–100; Core default 25), and an opaque `--cursor`
-returned with the same filters. Use `--status resolved` for resolved items.
+`attention list` defaults to open items. It accepts optional `--customer-id`, `--limit`
+(1–100; Core default 25), and an opaque `--cursor` returned with the same filters. Use
+`--status resolved` for resolved items. Each returned item includes its current priority;
+priority filtering is not part of V1.
 
 ```bash
-outlit attention list --priority HIGH --json
 outlit attention list --status resolved --customer-id 550e8400-e29b-41d4-a716-446655440000 --json
 outlit attention get 550e8400-e29b-41d4-a716-446655440000 --json
 ```
@@ -324,8 +324,8 @@ conversion or an all-currency organization total.
 
 Both responses may contain a current reviewable `preparedActionUrl` only. They never include
 action IDs, action lifecycle or execution state, email drafts, recipients, evidence IDs, source
-URLs, quotes, internal responsibility-agent configuration, or billing-recovery details. The
-commands are read-only: there is no resolve, reopen, send, or review operation.
+URLs, internal responsibility-agent configuration, or billing-recovery details. The commands are
+read-only: there is no resolve, reopen, send, or review operation.
 
 ### JSON Response
 
