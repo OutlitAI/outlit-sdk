@@ -90,7 +90,7 @@ describe("attention commands", () => {
     }
   })
 
-  test("maps Attention list filters and the opaque cursor directly to the public tool", async () => {
+  test("maps supported Attention list filters and the opaque cursor directly to the public tool", async () => {
     const { default: listCommand } = await import("../../src/commands/attention/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -98,7 +98,6 @@ describe("attention commands", () => {
         args: {
           status: "resolved",
           "customer-id": "22222222-2222-4222-8222-222222222222",
-          priority: "URGENT",
           limit: "50",
           cursor: "opaque-cursor",
           json: true,
@@ -108,13 +107,18 @@ describe("attention commands", () => {
       expect(mockCallTool).toHaveBeenCalledWith("outlit_list_attention_items", {
         status: "resolved",
         customerId: "22222222-2222-4222-8222-222222222222",
-        priority: "URGENT",
         limit: 50,
         cursor: "opaque-cursor",
       })
     } finally {
       writeSpy.mockRestore()
     }
+  })
+
+  test("does not register a removed Attention priority flag", async () => {
+    const { default: listCommand } = await import("../../src/commands/attention/list")
+
+    expect(listCommand.args).not.toHaveProperty("priority")
   })
 
   test("gets one Attention item by its exact ID", async () => {

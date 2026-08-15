@@ -9474,15 +9474,6 @@ export const publicToolContracts = {
           "format": "uuid",
           "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
         },
-        "priority": {
-          "description": "Filter by current attention priority",
-          "type": "string",
-          "enum": [
-            "NORMAL",
-            "HIGH",
-            "URGENT",
-          ],
-        },
         "limit": {
           "description": "Results per page (default: 25, max: 100)",
           "default": 25,
@@ -9649,9 +9640,8 @@ export const publicToolContracts = {
                   "arrCents": {
                     "anyOf": [
                       {
-                        "type": "integer",
+                        "type": "number",
                         "minimum": 0,
-                        "maximum": 9007199254740991,
                       },
                       {
                         "type": "null",
@@ -9946,9 +9936,8 @@ export const publicToolContracts = {
             "arrCents": {
               "anyOf": [
                 {
-                  "type": "integer",
+                  "type": "number",
                   "minimum": 0,
-                  "maximum": 9007199254740991,
                 },
                 {
                   "type": "null",
@@ -11633,4 +11622,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "530e083301530c25b03f081965a91aa9163fded6dfa148edce84fd4bf7520fc7" as const
+export const sdkConsumerContractHash = "176e5b86f483b89c3b0eb167bc63cacd5157ab639cadda7c118d01a8452a8d82" as const

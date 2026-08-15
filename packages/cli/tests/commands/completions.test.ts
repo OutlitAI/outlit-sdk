@@ -114,7 +114,10 @@ describe("completions command", () => {
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --owner-id --owner-email --has-owner --activated-since --search"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --customer-id --priority"',
+      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --customer-id"',
+    )
+    expect(out).not.toContain(
+      '"--api-key --json --limit --cursor --status --customer-id --priority"',
     )
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --event --lookback-days --example-limit"',
@@ -216,7 +219,7 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
     expect(out).toContain("-n '__outlit_using_cmd attention list' -l status")
     expect(out).toContain("-n '__outlit_using_cmd attention list' -l customer-id")
-    expect(out).toContain("-n '__outlit_using_cmd attention list' -l priority")
+    expect(out).not.toContain("-n '__outlit_using_cmd attention list' -l priority")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l activated-since")
     expect(out).toContain("-n '__outlit_using_cmd activation preview' -l lookback-days")
     expect(out).toContain("-n '__outlit_using_cmd activation preview' -l event")

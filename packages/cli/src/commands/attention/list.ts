@@ -6,7 +6,6 @@ import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
 
 const statuses = ["open", "resolved"] as const
-const priorities = ["NORMAL", "HIGH", "URGENT"] as const
 
 function isOneOf<TValue extends string>(
   values: readonly TValue[],
@@ -23,11 +22,11 @@ export default defineCommand({
       "",
       "The response is bounded and includes current priority, lifecycle, customer identity,",
       "Core-owned ARR importance, and a prepared-action URL when review is available. It does not include email drafts,",
-      "evidence identifiers, quotes, or internal agent state.",
+      "evidence identifiers, raw source-quote fields, or internal agent state.",
       "",
       "Examples:",
       "  outlit attention list",
-      "  outlit attention list --status resolved --priority HIGH",
+      "  outlit attention list --status resolved",
       "  outlit attention list --customer-id 550e8400-e29b-41d4-a716-446655440000 --json",
       "",
       AGENT_JSON_HINT,
@@ -43,10 +42,6 @@ export default defineCommand({
     "customer-id": {
       type: "string",
       description: "Filter by exact customer UUID",
-    },
-    priority: {
-      type: "string",
-      description: "Current priority: NORMAL, HIGH, or URGENT",
     },
     limit: {
       type: "string",
@@ -65,20 +60,9 @@ export default defineCommand({
         json,
       )
     }
-    if (args.priority !== undefined && !isOneOf(priorities, args.priority)) {
-      return outputError(
-        {
-          message: `--priority must be one of: ${priorities.join(", ")}`,
-          code: "invalid_input",
-        },
-        json,
-      )
-    }
-
     const params: Record<string, unknown> = {}
     if (args.status) params.status = args.status
     if (args["customer-id"]) params.customerId = args["customer-id"]
-    if (args.priority) params.priority = args.priority
     if (args.limit) {
       const limit = Number(args.limit)
       if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
