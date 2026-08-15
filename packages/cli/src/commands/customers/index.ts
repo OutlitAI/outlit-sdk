@@ -12,7 +12,7 @@ export default defineCommand({
       "Subcommands:",
       "  list      -- list customers with filters",
       "  get       -- get a specific customer by ID or domain",
-      "  overview  -- get the bounded relationship overview for a customer",
+      "  relationship -- get the bounded relationship for a customer",
       "  timeline  -- show activity timeline for a customer",
       "  owner set -- assign a primary customer owner",
       "  grant     -- grant or change Viewer or Editor access",
@@ -24,7 +24,7 @@ export default defineCommand({
   subCommands: {
     list: () => import("./list").then((m) => m.default),
     get: () => import("./get").then((m) => m.default),
-    overview: () => import("./overview").then((m) => m.default),
+    relationship: () => import("./relationship").then((m) => m.default),
     timeline: () => import("./timeline").then((m) => m.default),
     owner: () => import("./owner").then((m) => m.default),
     grant: () => import("./grant").then((m) => m.default),

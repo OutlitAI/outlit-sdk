@@ -251,23 +251,24 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
   `users`.
 </Info>
 
-## Customers Overview
+## Customers Relationship
 
 Get the bounded relationship read model used for customer detail, without adding it to the
 compact `customers get` response or replacing the chronological activity timeline.
 
 ```text
-outlit customers overview <customer>
+outlit customers relationship <customer>
 ```
 
-`<customer>` accepts a customer domain, UUID, or exact name. The overview returns the stable
-customer identity, a bounded `relationshipContext` section (headline plus up to eight categorized
-current statements), and a provenance marker. Each statement carries an ISO `observedAt`
-timestamp when the authorized source supports one and bounded source labels. The response never
-includes raw quotes, internal memory-card data, unrestricted fact IDs, or unbounded source records.
+`<customer>` accepts a customer domain, UUID, or exact name. The relationship returns the stable
+customer identity and a bounded `relationship` section (summary plus up to eight categorized
+current statements). Each statement carries an ISO `observedAt` timestamp when the authorized
+source supports one and bounded `sourceLabels`. `updatedAt` is the compiled summary timestamp when
+available, and otherwise `null`. The response never includes raw quotes, internal memory-card data,
+unrestricted fact IDs, or unbounded source records.
 
 ```bash
-outlit customers overview acme.com --json
+outlit customers relationship acme.com --json
 ```
 
 ### JSON Response
@@ -277,37 +278,27 @@ outlit customers overview acme.com --json
   "customer": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "name": "Acme Corp",
-    "domain": "acme.com",
-    "billingStatus": "PAYING"
+    "domain": "acme.com"
   },
-  "overview": {
-    "relationshipContext": {
-      "headline": "Renewal needs attention",
-      "items": [
-        {
-          "category": "Renewal",
-          "statement": "The renewal is under active review.",
-          "observedAt": "2026-08-01T10:30:00.000Z",
-          "sources": [{ "label": "CRM opportunity" }]
-        }
-      ]
-    },
-    "provenance": {
-      "kind": "compiled_context",
-      "asOf": "2026-08-13T00:00:00.000Z"
-    }
+  "relationship": {
+    "summary": "Renewal needs attention",
+    "items": [
+      {
+        "category": "Renewal",
+        "statement": "The renewal is under active review.",
+        "observedAt": "2026-08-01T10:30:00.000Z",
+        "sourceLabels": ["CRM opportunity"]
+      }
+    ],
+    "updatedAt": "2026-08-13T00:00:00.000Z"
   }
 }
 ```
 
-`provenance.kind` is `compiled_context` when the authorized compiled relationship context is
-available, `active_fact_fallback` when Core safely uses current active facts instead, and
-`empty` when neither is available. It is a freshness/source signal, not internal compiler status.
-
 ## Attention
 
 Inspect the authorized, read-only Attention collection. Attention is separate from customer
-relationship context and from the chronological customer timeline.
+relationship and from the chronological customer timeline.
 
 ```text
 outlit attention list [flags]
@@ -327,13 +318,14 @@ outlit attention get 550e8400-e29b-41d4-a716-446655440000 --json
 List rows contain bounded customer identity, current priority, evidence count, lifecycle times,
 and account importance. Detail adds the current assessment, timeline, evidence summaries, and
 latest visible update. `accountImportance.arrCents` is calculated by Core from stored monthly
-revenue; clients must not multiply it again. `shareOfOrganizationArr` is the matching
-organization ratio.
+revenue; clients must not multiply it again. `arrShareWithinCurrency` and
+`arrPercentileWithinCurrency` compare only customers in the same currency; neither implies FX
+conversion or an all-currency organization total.
 
-Both responses may contain `preparedAction` with only `kind`, `status`, `canExecute`, and
-`reviewUrl`. They never include action IDs, email drafts, recipients, evidence IDs, source URLs,
-quotes, internal responsibility-agent configuration, or billing-recovery details. The commands
-are read-only: there is no resolve, reopen, send, or review operation.
+Both responses may contain a current reviewable `preparedActionUrl` only. They never include
+action IDs, action lifecycle or execution state, email drafts, recipients, evidence IDs, source
+URLs, quotes, internal responsibility-agent configuration, or billing-recovery details. The
+commands are read-only: there is no resolve, reopen, send, or review operation.
 
 ### JSON Response
 
@@ -346,7 +338,7 @@ are read-only: there is no resolve, reopen, send, or review operation.
         "id": "4ad7ee3b-a3ff-46a8-902b-2b8eae6be671",
         "name": "Acme Corp",
         "domain": "acme.com",
-        "ownerDisplayName": "Ada Lovelace"
+        "ownerName": "Ada Lovelace"
       },
       "title": "Reporting usage collapsed",
       "priority": "HIGH",
@@ -363,15 +355,18 @@ are read-only: there is no resolve, reopen, send, or review operation.
       "accountImportance": {
         "arrCents": 1200000,
         "currency": "USD",
-        "shareOfOrganizationArr": 0.12,
-        "revenuePercentile": 95,
+        "arrShareWithinCurrency": 0.12,
+        "arrPercentileWithinCurrency": 95,
         "segments": ["Enterprise"]
       },
-      "preparedAction": null
+      "preparedActionUrl": null
     }
   ],
-  "total": 1,
-  "nextCursor": null
+  "pagination": {
+    "hasMore": false,
+    "nextCursor": null,
+    "total": 1
+  }
 }
 ```
 

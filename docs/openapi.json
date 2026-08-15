@@ -95,10 +95,10 @@
                     "properties": {
                       "tool": {
                         "type": "string",
-                        "const": "outlit_get_customer_overview"
+                        "const": "outlit_get_customer_relationship"
                       },
                       "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_get_customer_overview"
+                        "$ref": "#/components/schemas/ToolInput_outlit_get_customer_relationship"
                       }
                     },
                     "required": [
@@ -678,7 +678,7 @@
                       "$ref": "#/components/schemas/ToolOutput_outlit_get_customer"
                     },
                     {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_get_customer_overview"
+                      "$ref": "#/components/schemas/ToolOutput_outlit_get_customer_relationship"
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_assign_customer_owner"
@@ -2365,7 +2365,7 @@
           "customer"
         ]
       },
-      "ToolInput_outlit_get_customer_overview": {
+      "ToolInput_outlit_get_customer_relationship": {
         "type": "object",
         "properties": {
           "customer": {
@@ -2377,7 +2377,8 @@
         },
         "required": [
           "customer"
-        ]
+        ],
+        "additionalProperties": false
       },
       "ToolInput_outlit_assign_customer_owner": {
         "type": "object",
@@ -3778,7 +3779,8 @@
             "minLength": 1,
             "maxLength": 2000
           }
-        }
+        },
+        "additionalProperties": false
       },
       "ToolInput_outlit_get_attention_item": {
         "type": "object",
@@ -3792,7 +3794,8 @@
         },
         "required": [
           "id"
-        ]
+        ],
+        "additionalProperties": false
       },
       "ToolOutput_outlit_list_customers": {
         "type": "object",
@@ -4949,7 +4952,7 @@
         ],
         "additionalProperties": false
       },
-      "ToolOutput_outlit_get_customer_overview": {
+      "ToolOutput_outlit_get_customer_relationship": {
         "type": "object",
         "properties": {
           "customer": {
@@ -4977,175 +4980,101 @@
                     "type": "null"
                   }
                 ]
-              },
-              "billingStatus": {
-                "type": "string",
-                "enum": [
-                  "NONE",
-                  "TRIALING",
-                  "PAYING",
-                  "PAST_DUE",
-                  "CHURNED"
-                ]
               }
             },
             "required": [
               "id",
               "name",
-              "domain",
-              "billingStatus"
+              "domain"
             ],
             "additionalProperties": false
           },
-          "overview": {
+          "relationship": {
             "type": "object",
             "properties": {
-              "relationshipContext": {
-                "type": "object",
-                "properties": {
-                  "headline": {
-                    "anyOf": [
-                      {
+              "summary": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 240
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "items": {
+                "maxItems": 8,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "category": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "statement": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    },
+                    "observedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "sourceLabels": {
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": {
                         "type": "string",
                         "minLength": 1,
-                        "maxLength": 240
-                      },
-                      {
-                        "type": "null"
+                        "maxLength": 100
                       }
-                    ]
-                  },
-                  "items": {
-                    "maxItems": 8,
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "category": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 120
-                        },
-                        "statement": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 500
-                        },
-                        "observedAt": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "format": "date-time",
-                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "sources": {
-                          "maxItems": 4,
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "label": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 100
-                              }
-                            },
-                            "required": [
-                              "label"
-                            ],
-                            "additionalProperties": false
-                          }
-                        }
-                      },
-                      "required": [
-                        "category",
-                        "statement",
-                        "observedAt",
-                        "sources"
-                      ],
-                      "additionalProperties": false
                     }
-                  }
-                },
-                "required": [
-                  "headline",
-                  "items"
-                ],
-                "additionalProperties": false
+                  },
+                  "required": [
+                    "category",
+                    "statement",
+                    "observedAt",
+                    "sourceLabels"
+                  ],
+                  "additionalProperties": false
+                }
               },
-              "provenance": {
-                "oneOf": [
+              "updatedAt": {
+                "anyOf": [
                   {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "const": "compiled_context"
-                      },
-                      "asOf": {
-                        "type": "string",
-                        "format": "date-time",
-                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                      }
-                    },
-                    "required": [
-                      "kind",
-                      "asOf"
-                    ],
-                    "additionalProperties": false
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                   },
                   {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "const": "active_fact_fallback"
-                      },
-                      "asOf": {
-                        "type": "null"
-                      }
-                    },
-                    "required": [
-                      "kind",
-                      "asOf"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "const": "empty"
-                      },
-                      "asOf": {
-                        "type": "null"
-                      }
-                    },
-                    "required": [
-                      "kind",
-                      "asOf"
-                    ],
-                    "additionalProperties": false
+                    "type": "null"
                   }
                 ]
               }
             },
             "required": [
-              "relationshipContext",
-              "provenance"
+              "summary",
+              "items",
+              "updatedAt"
             ],
             "additionalProperties": false
           }
         },
         "required": [
           "customer",
-          "overview"
+          "relationship"
         ],
         "additionalProperties": false
       },
@@ -11252,7 +11181,7 @@
                       "type": "string",
                       "maxLength": 253
                     },
-                    "ownerDisplayName": {
+                    "ownerName": {
                       "anyOf": [
                         {
                           "type": "string",
@@ -11269,7 +11198,7 @@
                     "id",
                     "name",
                     "domain",
-                    "ownerDisplayName"
+                    "ownerName"
                   ],
                   "additionalProperties": false
                 },
@@ -11390,7 +11319,7 @@
                         }
                       ]
                     },
-                    "shareOfOrganizationArr": {
+                    "arrShareWithinCurrency": {
                       "anyOf": [
                         {
                           "type": "number",
@@ -11400,9 +11329,10 @@
                         {
                           "type": "null"
                         }
-                      ]
+                      ],
+                      "description": "Organization ARR share among customers using the same currency"
                     },
-                    "revenuePercentile": {
+                    "arrPercentileWithinCurrency": {
                       "anyOf": [
                         {
                           "type": "number",
@@ -11412,7 +11342,8 @@
                         {
                           "type": "null"
                         }
-                      ]
+                      ],
+                      "description": "ARR percentile among customers using the same currency"
                     },
                     "segments": {
                       "maxItems": 50,
@@ -11427,49 +11358,18 @@
                   "required": [
                     "arrCents",
                     "currency",
-                    "shareOfOrganizationArr",
-                    "revenuePercentile",
+                    "arrShareWithinCurrency",
+                    "arrPercentileWithinCurrency",
                     "segments"
                   ],
                   "additionalProperties": false
                 },
-                "preparedAction": {
+                "preparedActionUrl": {
                   "anyOf": [
                     {
-                      "type": "object",
-                      "properties": {
-                        "kind": {
-                          "type": "string",
-                          "const": "send_customer_email"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "OPEN",
-                            "ENGAGED",
-                            "EXECUTING",
-                            "EXECUTED",
-                            "DISMISSED",
-                            "EXPIRED",
-                            "FAILED"
-                          ]
-                        },
-                        "canExecute": {
-                          "type": "boolean"
-                        },
-                        "reviewUrl": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 2000
-                        }
-                      },
-                      "required": [
-                        "kind",
-                        "status",
-                        "canExecute",
-                        "reviewUrl"
-                      ],
-                      "additionalProperties": false
+                      "type": "string",
+                      "maxLength": 2000,
+                      "format": "uri"
                     },
                     {
                       "type": "null"
@@ -11485,33 +11385,46 @@
                 "evidenceCount",
                 "lifecycle",
                 "accountImportance",
-                "preparedAction"
+                "preparedActionUrl"
               ],
               "additionalProperties": false
             }
           },
-          "total": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "nextCursor": {
-            "anyOf": [
-              {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 2000
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "hasMore": {
+                "type": "boolean"
               },
-              {
-                "type": "null"
+              "nextCursor": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "total": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               }
-            ]
+            },
+            "required": [
+              "hasMore",
+              "nextCursor",
+              "total"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
           "items",
-          "total",
-          "nextCursor"
+          "pagination"
         ],
         "additionalProperties": false
       },
@@ -11540,7 +11453,7 @@
                 "type": "string",
                 "maxLength": 253
               },
-              "ownerDisplayName": {
+              "ownerName": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -11557,7 +11470,7 @@
               "id",
               "name",
               "domain",
-              "ownerDisplayName"
+              "ownerName"
             ],
             "additionalProperties": false
           },
@@ -11678,7 +11591,7 @@
                   }
                 ]
               },
-              "shareOfOrganizationArr": {
+              "arrShareWithinCurrency": {
                 "anyOf": [
                   {
                     "type": "number",
@@ -11688,9 +11601,10 @@
                   {
                     "type": "null"
                   }
-                ]
+                ],
+                "description": "Organization ARR share among customers using the same currency"
               },
-              "revenuePercentile": {
+              "arrPercentileWithinCurrency": {
                 "anyOf": [
                   {
                     "type": "number",
@@ -11700,7 +11614,8 @@
                   {
                     "type": "null"
                   }
-                ]
+                ],
+                "description": "ARR percentile among customers using the same currency"
               },
               "segments": {
                 "maxItems": 50,
@@ -11715,49 +11630,18 @@
             "required": [
               "arrCents",
               "currency",
-              "shareOfOrganizationArr",
-              "revenuePercentile",
+              "arrShareWithinCurrency",
+              "arrPercentileWithinCurrency",
               "segments"
             ],
             "additionalProperties": false
           },
-          "preparedAction": {
+          "preparedActionUrl": {
             "anyOf": [
               {
-                "type": "object",
-                "properties": {
-                  "kind": {
-                    "type": "string",
-                    "const": "send_customer_email"
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "OPEN",
-                      "ENGAGED",
-                      "EXECUTING",
-                      "EXECUTED",
-                      "DISMISSED",
-                      "EXPIRED",
-                      "FAILED"
-                    ]
-                  },
-                  "canExecute": {
-                    "type": "boolean"
-                  },
-                  "reviewUrl": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 2000
-                  }
-                },
-                "required": [
-                  "kind",
-                  "status",
-                  "canExecute",
-                  "reviewUrl"
-                ],
-                "additionalProperties": false
+                "type": "string",
+                "maxLength": 2000,
+                "format": "uri"
               },
               {
                 "type": "null"
@@ -11941,7 +11825,7 @@
           "evidenceCount",
           "lifecycle",
           "accountImportance",
-          "preparedAction",
+          "preparedActionUrl",
           "whatChanged",
           "whyItMatters",
           "uncertainty",
@@ -11954,5 +11838,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "595fc84df2d02db9f9eac83e802b96b68aea566296a4e2680ac834e9d0f896f5"
+  "x-outlit-contract-hash": "530e083301530c25b03f081965a91aa9163fded6dfa148edce84fd4bf7520fc7"
 }
