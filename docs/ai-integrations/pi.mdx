@@ -60,7 +60,7 @@ export default createOutlitPiExtension({
 })
 ```
 
-`piToolNames` includes SQL and the broader Pi-supported Platform surface. The default membership comes directly from Core's `default` consumer policy and contains only the nine read-only customer intelligence tools above; import `analyticalToolNames` for that same policy plus `outlit_schema` and `outlit_query`. Behavior Metric source discovery, event discovery, and creation are intentionally unavailable in Pi.
+`piToolNames` includes SQL and the broader Pi-supported Platform surface. The default membership comes directly from Core's `default` consumer policy and contains only the nine read-only customer intelligence tools above; import `analyticalToolNames` for that same policy plus `outlit_schema` and `outlit_query`. The broader Pi policy includes the product-facing Value Feature workspace, create, archive, and customer-usage tools. The default and analytical policies remain unchanged.
 
 ## Growth Agent Examples
 

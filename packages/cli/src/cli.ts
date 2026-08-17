@@ -45,6 +45,8 @@ async function startCli() {
       schema: () => import("./commands/schema").then((m) => m.default),
       destinations: () => import("./commands/destinations/index").then((m) => m.default),
       metrics: () => import("./commands/metrics/index").then((module) => module.default),
+      "value-features": () =>
+        import("./commands/value-features/index").then((module) => module.default),
       settings: () => import("./commands/settings/index").then((m) => m.default),
       integrations: () => import("./commands/integrations/index").then((m) => m.default),
       completions: () => import("./commands/completions").then((m) => m.default),

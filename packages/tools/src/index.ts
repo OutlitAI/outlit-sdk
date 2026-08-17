@@ -74,12 +74,20 @@ export type {
   CustomerAnalyticsRow,
   CustomerDetail,
   CustomerDetailResult,
+  CustomerFeatureUsage,
+  CustomerFeatureUsageResult,
   CustomerListItem,
   CustomerListResult,
   CustomerRelationship,
   CustomerRelationshipResult,
   JsonSchemaValue,
   PublicToolResult,
+  ValueFeature,
+  ValueFeatureArchiveResult,
+  ValueFeatureCreateResult,
+  ValueFeatureDefinition,
+  ValueFeatureRef,
+  ValueFeatureWorkspaceResult,
 } from "./results.js"
 export type { CliToolName, PiToolName } from "./toolsets.js"
 export {

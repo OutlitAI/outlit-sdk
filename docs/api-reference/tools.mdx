@@ -63,6 +63,10 @@ POST https://app.outlit.ai/api/tools/call
 | `outlit_list_behavior_metric_sources` | List eligible product-event sources for Behavior Metrics |
 | `outlit_list_behavior_metric_events` | List attributed event candidates for one eligible Behavior Metric source |
 | `outlit_create_behavior_metric` | Create an event-based Behavior Metric from a discovered source and exact event selection |
+| `outlit_get_value_feature_workspace` | Read configured Value Features, exact historical usage, eligible sources, and ready, partial, or unavailable candidate discovery |
+| `outlit_create_value_feature` | Create or idempotently return one Value Feature observed by one event rule |
+| `outlit_archive_value_feature` | Archive a Value Feature using its opaque id and current revision when another active feature remains |
+| `outlit_get_customer_feature_usage` | Read exact historical Value Feature usage for one authorized customer |
 
 <Info>
   Tool input schemas are published by `@outlit/tools` as `publicToolContracts`. Use that package when building schema-driven clients or model tool definitions.
@@ -167,6 +171,22 @@ curl -X POST https://app.outlit.ai/api/tools/call \
   }
 }
 ```
+
+### Read Customer Feature Usage
+
+```json
+{
+  "tool": "outlit_get_customer_feature_usage",
+  "input": {
+    "customer": "acme.com",
+    "weeks": 12
+  }
+}
+```
+
+Feature usage is factual historical evidence. A feature can report complete or partial counts,
+no matches in the requested window, or unavailable source evidence. Unavailable evidence is not
+converted to zero. Archive is the only self-service lifecycle action in the MVP.
 
 ## Response
 

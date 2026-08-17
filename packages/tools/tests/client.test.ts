@@ -14,6 +14,8 @@ import {
   type CustomerContextSearchInput,
   type CustomerDetail,
   type CustomerDetailResult,
+  type CustomerFeatureUsage,
+  type CustomerFeatureUsageResult,
   type CustomerListItem,
   type CustomerListResult,
   type CustomerRelationship,
@@ -36,6 +38,12 @@ import {
   sqlToolNames,
   toolGatewayErrorCodes,
   toolGatewayErrorSchema,
+  type ValueFeature,
+  type ValueFeatureArchiveResult,
+  type ValueFeatureCreateResult,
+  type ValueFeatureDefinition,
+  type ValueFeatureRef,
+  type ValueFeatureWorkspaceResult,
 } from "../src/index.js"
 
 describe("matchesGeneratedJsonSchema", () => {
@@ -105,10 +113,14 @@ describe("toolsets", () => {
       "outlit_list_behavior_metric_sources",
       "outlit_list_behavior_metric_events",
       "outlit_create_behavior_metric",
+      "outlit_get_value_feature_workspace",
+      "outlit_create_value_feature",
+      "outlit_archive_value_feature",
+      "outlit_get_customer_feature_usage",
       "outlit_list_attention_items",
       "outlit_get_attention_item",
     ])
-    expect(allPublicToolNames).toHaveLength(39)
+    expect(allPublicToolNames).toHaveLength(43)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -136,6 +148,17 @@ describe("toolsets", () => {
     )
     expect(cliToolNames).toEqual(allPublicToolNames)
     for (const toolName of ["outlit_list_attention_items", "outlit_get_attention_item"] as const) {
+      expect(defaultToolNames).not.toContain(toolName)
+      expect(analyticalToolNames).not.toContain(toolName)
+      expect(piToolNames).toContain(toolName)
+      expect(cliToolNames).toContain(toolName)
+    }
+    for (const toolName of [
+      "outlit_get_value_feature_workspace",
+      "outlit_create_value_feature",
+      "outlit_archive_value_feature",
+      "outlit_get_customer_feature_usage",
+    ] as const) {
       expect(defaultToolNames).not.toContain(toolName)
       expect(analyticalToolNames).not.toContain(toolName)
       expect(piToolNames).toContain(toolName)
@@ -310,6 +333,88 @@ describe("tool contracts", () => {
       expect(piToolNames).not.toContain(toolName)
       expect(cliToolNames).toContain(toolName)
     }
+  })
+
+  test("projects the product-facing Value Feature lifecycle and customer usage contracts", () => {
+    const workspace = getPublicToolContract("outlit_get_value_feature_workspace")
+    const create = getPublicToolContract("outlit_create_value_feature")
+    const archive = getPublicToolContract("outlit_archive_value_feature")
+    const customerUsage = getPublicToolContract("outlit_get_customer_feature_usage")
+
+    expect(workspace.commandId).toBe("value_feature_workspace.get")
+    expect(workspace.inputSchema.properties).toEqual(
+      expect.objectContaining({
+        sourceKey: expect.objectContaining({ pattern: "^metric_source_v1_[a-f0-9]{32}$" }),
+        weeks: expect.objectContaining({ default: 12, minimum: 1, maximum: 53 }),
+        candidateLimit: expect.objectContaining({ default: 100, minimum: 1, maximum: 100 }),
+      }),
+    )
+    expect(workspace.outputSchema.properties.candidates.oneOf).toEqual([
+      expect.objectContaining({
+        properties: expect.objectContaining({
+          status: { type: "string", const: "ready" },
+          items: expect.objectContaining({ type: "array", maxItems: 100 }),
+          truncated: { type: "boolean" },
+        }),
+        required: ["status", "items", "truncated"],
+      }),
+      expect.objectContaining({
+        properties: expect.objectContaining({
+          status: { type: "string", const: "partial" },
+          items: expect.objectContaining({ type: "array", maxItems: 100 }),
+          truncated: { type: "boolean" },
+        }),
+        required: ["status", "items", "truncated"],
+      }),
+      expect.objectContaining({
+        properties: expect.objectContaining({
+          status: { type: "string", const: "unavailable" },
+          reason: {
+            type: "string",
+            enum: ["SOURCE_BLOCKED", "SOURCE_NOT_READY", "QUERY_FAILED"],
+          },
+        }),
+        required: ["status", "reason"],
+      }),
+    ])
+    expect(workspace.outputSchema.properties).not.toHaveProperty("candidatesTruncated")
+    expect(create.commandId).toBe("value_feature.create")
+    expect(create.inputSchema.required).toEqual(["sourceKey", "eventName", "featureKey", "name"])
+    expect(create.inputSchema.properties.propertyFilters).toEqual(
+      expect.objectContaining({ default: [], maxItems: 5 }),
+    )
+    expect(archive.commandId).toBe("value_feature.archive")
+    expect(archive.inputSchema.required).toEqual(["id", "revision"])
+    expect(archive.inputSchema.properties).not.toHaveProperty("restore")
+    expect(customerUsage.commandId).toBe("customer_feature_usage.get")
+    expect(customerUsage.inputSchema.required).toEqual(["customer"])
+    expect(customerUsage.outputSchema.required).toEqual(["customer", "features"])
+
+    const publicContractText = JSON.stringify([workspace, create, archive, customerUsage])
+    expect(publicContractText).not.toMatch(
+      /Behavior Metric|metric pair|Churn clock|Stripe|entitlement/i,
+    )
+  })
+
+  test("exports generated Value Feature and customer usage result aliases", () => {
+    type WorkspaceCandidates = ValueFeatureWorkspaceResult["candidates"]
+    type ReadyCandidates = Extract<WorkspaceCandidates, { status: "ready" }>
+    type PartialCandidates = Extract<WorkspaceCandidates, { status: "partial" }>
+    type UnavailableCandidates = Extract<WorkspaceCandidates, { status: "unavailable" }>
+
+    expectTypeOf<ValueFeatureWorkspaceResult["features"][number]>().toEqualTypeOf<ValueFeature>()
+    expectTypeOf<ReadyCandidates["items"][number]["eventName"]>().toEqualTypeOf<string>()
+    expectTypeOf<ReadyCandidates["truncated"]>().toEqualTypeOf<boolean>()
+    expectTypeOf<PartialCandidates["items"][number]["eventName"]>().toEqualTypeOf<string>()
+    expectTypeOf<PartialCandidates["truncated"]>().toEqualTypeOf<boolean>()
+    expectTypeOf<UnavailableCandidates["reason"]>().toEqualTypeOf<
+      "SOURCE_BLOCKED" | "SOURCE_NOT_READY" | "QUERY_FAILED"
+    >()
+    expectTypeOf<ValueFeatureCreateResult["feature"]>().toEqualTypeOf<ValueFeatureDefinition>()
+    expectTypeOf<ValueFeatureArchiveResult["feature"]>().toEqualTypeOf<ValueFeatureRef>()
+    expectTypeOf<
+      CustomerFeatureUsageResult["features"][number]
+    >().toEqualTypeOf<CustomerFeatureUsage>()
   })
 
   test("infers activatedAt on typed customer list and get client results", async () => {
