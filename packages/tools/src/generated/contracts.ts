@@ -10386,7 +10386,7 @@ export const publicToolContracts = {
         "customer": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 191,
+          "maxLength": 500,
         },
         "weeks": {
           "default": 12,
@@ -12903,4 +12903,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "70d31c1aca711a65f296b7ae62a3281f8ac92853a308fea2ada58dd4feedfd1f" as const
+export const sdkConsumerContractHash = "417bba34d66b8c536914b5c16b1f27df56aa00b3c20dc4baa744f68ccbad4480" as const

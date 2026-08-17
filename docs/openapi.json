@@ -3998,7 +3998,7 @@
           "customer": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 191
+            "maxLength": 500
           },
           "weeks": {
             "default": 12,
@@ -13132,5 +13132,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "70d31c1aca711a65f296b7ae62a3281f8ac92853a308fea2ada58dd4feedfd1f"
+  "x-outlit-contract-hash": "417bba34d66b8c536914b5c16b1f27df56aa00b3c20dc4baa744f68ccbad4480"
 }
