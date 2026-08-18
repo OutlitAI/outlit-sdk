@@ -1,7 +1,7 @@
 # Value Feature SDK Implementation Plan
 
 **Goal:** Expose Core's additive Value Feature contracts through the generated tools client, Pi/MCP, and a small product-facing CLI.
-**Source:** Core's `2026-08-17-customer-feature-usage-mvp.md` plan at `a656f437efd4c9ae79b6d82fd10fe0913d0f1fec`, the generated contract hash `c6db1bcb84bf3dfb1fcf76cdafd41d30b1d7e92fdf441cb2c0afe635e5cfcec1`, and the coordinated SDK request.
+**Source:** Core's `2026-08-17-customer-feature-usage-mvp.md` plan at `a587f2acf3a6bb41722a6546ddbce89e7cf110b3`, the generated contract hash `c6db1bcb84bf3dfb1fcf76cdafd41d30b1d7e92fdf441cb2c0afe635e5cfcec1`, and the coordinated SDK request.
 **Approach:** Keep Core-generated contracts and OpenAPI authoritative, add hand-authored result aliases and CLI adapters around the four generated tool names, and leave existing commands unchanged.
 **Scope:** Workspace taxonomy/evidence read, single-rule create, non-final archive, and authorized customer feature-usage read. Archive is the only self-service lifecycle action in the MVP.
 **Key risks:** SDK code must not diverge from Core schemas or consumer policies; the CLI must preserve exact event names; archive must require the opaque current revision; unavailable evidence must remain distinct from zero usage.
