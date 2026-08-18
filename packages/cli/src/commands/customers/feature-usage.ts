@@ -18,6 +18,7 @@ export default defineCommand({
       "Examples:",
       "  outlit customers feature-usage acme.com --json",
       "  outlit customers feature-usage acme.com --weeks 6 --json",
+      "  outlit customers feature-usage acme.com --weeks 53 --weekly --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -31,6 +32,11 @@ export default defineCommand({
       required: true,
     },
     weeks: { type: "string", description: "Historical usage window in weeks (1-53, default: 12)" },
+    weekly: {
+      type: "boolean",
+      description: "Include ordered weekly event counts and active days",
+      default: false,
+    },
   },
   async run({ args }) {
     const json = !!args.json
@@ -42,6 +48,7 @@ export default defineCommand({
       {
         customer: requiredTrimmedString(args.customer, "<customer>", json),
         weeks: parseBoundedInteger(args.weeks, 12, "--weeks", 1, 53, json),
+        ...(args.weekly ? { includeWeeklyUsage: true } : {}),
       },
       json,
       { spinnerMessage: "Loading customer feature usage..." },

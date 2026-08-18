@@ -157,6 +157,22 @@ describe("Value Feature commands", () => {
     })
   })
 
+  test("can request ordered weekly feature usage", async () => {
+    const { default: featureUsageCmd } = await import("../../src/commands/customers/feature-usage")
+
+    await captureStdout(() =>
+      featureUsageCmd.run!({
+        args: { customer: "acme.com", weeks: "53", weekly: true, json: true },
+      } as Parameters<NonNullable<typeof featureUsageCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer_feature_usage", {
+      customer: "acme.com",
+      weeks: 53,
+      includeWeeklyUsage: true,
+    })
+  })
+
   test("rejects malformed filters and out-of-range windows before calling Core", async () => {
     const { default: createCmd } = await import("../../src/commands/value-features/create")
     const { default: workspaceCmd } = await import("../../src/commands/value-features/workspace")

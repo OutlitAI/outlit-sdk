@@ -278,6 +278,7 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd value-features create' -l property-filters")
     expect(out).toContain("-n '__outlit_using_cmd value-features archive' -l revision")
     expect(out).toContain("-n '__outlit_using_cmd customers feature-usage' -l weeks")
+    expect(out).toContain("-n '__outlit_using_cmd customers feature-usage' -l weekly")
     expect(out).not.toContain("-n '__outlit_using_cmd settings report update'")
     expect(out).not.toContain("settings notifications")
     expect(out).not.toContain("__outlit_using_cmd identity")

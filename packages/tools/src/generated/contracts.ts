@@ -10394,6 +10394,10 @@ export const publicToolContracts = {
           "minimum": 1,
           "maximum": 53,
         },
+        "includeWeeklyUsage": {
+          "default": false,
+          "type": "boolean",
+        },
       },
       "required": [
         "customer",
@@ -10642,6 +10646,67 @@ export const publicToolContracts = {
                             "type": "null",
                           },
                         ],
+                      },
+                      "weeklyUsage": {
+                        "maxItems": 53,
+                        "type": "array",
+                        "items": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "weekStartAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                },
+                                "coverage": {
+                                  "type": "string",
+                                  "enum": [
+                                    "complete",
+                                    "partial",
+                                  ],
+                                },
+                                "eventCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                },
+                                "activeDays": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 7,
+                                },
+                              },
+                              "required": [
+                                "weekStartAt",
+                                "coverage",
+                                "eventCount",
+                                "activeDays",
+                              ],
+                              "additionalProperties": false,
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "weekStartAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                },
+                                "coverage": {
+                                  "type": "string",
+                                  "const": "unavailable",
+                                },
+                              },
+                              "required": [
+                                "weekStartAt",
+                                "coverage",
+                              ],
+                              "additionalProperties": false,
+                            },
+                          ],
+                        },
                       },
                     },
                     "required": [
@@ -12903,4 +12968,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "417bba34d66b8c536914b5c16b1f27df56aa00b3c20dc4baa744f68ccbad4480" as const
+export const sdkConsumerContractHash = "ff9454ddf7bdfc8d0d21daf78fa36a8249ba592a0b6afc18ad5c60b9ce4bf975" as const

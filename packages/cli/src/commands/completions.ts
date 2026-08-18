@@ -82,7 +82,11 @@ const COMMANDS: readonly CmdDef[] = [
       {
         name: "feature-usage",
         desc: "Get exact Value Feature usage for a customer",
-        flags: [...COMMON, { name: "--weeks", desc: "Historical usage window (1-53 weeks)" }],
+        flags: [
+          ...COMMON,
+          { name: "--weeks", desc: "Historical usage window (1-53 weeks)" },
+          { name: "--weekly", desc: "Include ordered weekly usage" },
+        ],
       },
       {
         name: "timeline",

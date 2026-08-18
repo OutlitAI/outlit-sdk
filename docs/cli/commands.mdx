@@ -300,17 +300,19 @@ outlit customers relationship acme.com --json
 Read exact historical Value Feature usage for one authorized customer.
 
 ```text
-outlit customers feature-usage <customer> [--weeks 1-53]
+outlit customers feature-usage <customer> [--weeks 1-53] [--weekly]
 ```
 
 `<customer>` accepts a customer domain, UUID, or exact name. The default window is 12 weeks.
 Each feature reports factual observation evidence from its configured event rule. Complete or
 partial coverage, no matches, and unavailable source evidence remain distinct; unavailable
-evidence is never rendered as zero usage.
+evidence is never rendered as zero usage. Add `--weekly` to include the ordered weekly
+`eventCount` and `activeDays` projection used by the customer feature lanes.
 
 ```bash
 outlit customers feature-usage acme.com --json
 outlit customers feature-usage acme.com --weeks 6 --json
+outlit customers feature-usage acme.com --weeks 53 --weekly --json
 ```
 
 ## Value Features
