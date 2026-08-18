@@ -11472,6 +11472,11 @@
               }
             ]
           },
+          "workspaceActiveFeatureCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
           "features": {
             "maxItems": 100,
             "type": "array",
@@ -11925,6 +11930,7 @@
         "required": [
           "sources",
           "selectedSourceKey",
+          "workspaceActiveFeatureCount",
           "features",
           "candidates"
         ],
@@ -13197,5 +13203,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "ff9454ddf7bdfc8d0d21daf78fa36a8249ba592a0b6afc18ad5c60b9ce4bf975"
+  "x-outlit-contract-hash": "c6db1bcb84bf3dfb1fcf76cdafd41d30b1d7e92fdf441cb2c0afe635e5cfcec1"
 }

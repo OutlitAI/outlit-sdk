@@ -9537,6 +9537,11 @@ export const publicToolContracts = {
             },
           ],
         },
+        "workspaceActiveFeatureCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+        },
         "features": {
           "maxItems": 100,
           "type": "array",
@@ -9990,6 +9995,7 @@ export const publicToolContracts = {
       "required": [
         "sources",
         "selectedSourceKey",
+        "workspaceActiveFeatureCount",
         "features",
         "candidates",
       ],
@@ -12968,4 +12974,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "ff9454ddf7bdfc8d0d21daf78fa36a8249ba592a0b6afc18ad5c60b9ce4bf975" as const
+export const sdkConsumerContractHash = "c6db1bcb84bf3dfb1fcf76cdafd41d30b1d7e92fdf441cb2c0afe635e5cfcec1" as const
