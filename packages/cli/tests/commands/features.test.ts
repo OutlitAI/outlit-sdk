@@ -18,7 +18,7 @@ mock.module("../../src/lib/client", () => ({
   }),
 }))
 
-describe("Value Feature commands", () => {
+describe("Feature commands", () => {
   useTempEnv("value-feature-commands-test")
 
   beforeEach(() => {
@@ -27,7 +27,7 @@ describe("Value Feature commands", () => {
   })
 
   test("reads the workspace with explicit source and bounded discovery inputs", async () => {
-    const { default: workspaceCmd } = await import("../../src/commands/value-features/workspace")
+    const { default: workspaceCmd } = await import("../../src/commands/features/list")
 
     await captureStdout(() =>
       workspaceCmd.run!({
@@ -40,7 +40,7 @@ describe("Value Feature commands", () => {
       } as Parameters<NonNullable<typeof workspaceCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_value_feature_workspace", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_features", {
       sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",
       weeks: 4,
       candidateLimit: 20,
@@ -48,7 +48,7 @@ describe("Value Feature commands", () => {
   })
 
   test("lets Core auto-select a source while applying workspace defaults", async () => {
-    const { default: workspaceCmd } = await import("../../src/commands/value-features/workspace")
+    const { default: workspaceCmd } = await import("../../src/commands/features/list")
 
     await captureStdout(() =>
       workspaceCmd.run!({
@@ -56,14 +56,14 @@ describe("Value Feature commands", () => {
       } as Parameters<NonNullable<typeof workspaceCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_value_feature_workspace", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_features", {
       weeks: 12,
       candidateLimit: 100,
     })
   })
 
-  test("creates one Value Feature while preserving the exact discovered event name", async () => {
-    const { default: createCmd } = await import("../../src/commands/value-features/create")
+  test("creates one Feature while preserving the exact discovered event name", async () => {
+    const { default: createCmd } = await import("../../src/commands/features/create")
 
     await captureStdout(() =>
       createCmd.run!({
@@ -84,7 +84,7 @@ describe("Value Feature commands", () => {
       } as Parameters<NonNullable<typeof createCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_value_feature", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_feature", {
       sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",
       eventName: " Report Exported ",
       featureKey: "reports_exported",
@@ -99,8 +99,8 @@ describe("Value Feature commands", () => {
     })
   })
 
-  test("defaults omitted Value Feature filters to an empty array", async () => {
-    const { default: createCmd } = await import("../../src/commands/value-features/create")
+  test("defaults omitted Feature filters to an empty array", async () => {
+    const { default: createCmd } = await import("../../src/commands/features/create")
 
     await captureStdout(() =>
       createCmd.run!({
@@ -114,7 +114,7 @@ describe("Value Feature commands", () => {
       } as Parameters<NonNullable<typeof createCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_value_feature", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_create_feature", {
       sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",
       eventName: "report_exported",
       featureKey: "reports_exported",
@@ -124,7 +124,7 @@ describe("Value Feature commands", () => {
   })
 
   test("archives only with the opaque feature id and current revision", async () => {
-    const { default: archiveCmd } = await import("../../src/commands/value-features/archive")
+    const { default: archiveCmd } = await import("../../src/commands/features/archive")
 
     await captureStdout(() =>
       archiveCmd.run!({
@@ -136,14 +136,14 @@ describe("Value Feature commands", () => {
       } as Parameters<NonNullable<typeof archiveCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_archive_value_feature", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_archive_feature", {
       id: "value_feature_v1_0123456789abcdef0123456789abcdef",
       revision: "value_feature_revision_v1_fedcba9876543210fedcba9876543210",
     })
   })
 
   test("reads customer feature usage with the canonical window", async () => {
-    const { default: featureUsageCmd } = await import("../../src/commands/customers/feature-usage")
+    const { default: featureUsageCmd } = await import("../../src/commands/customers/features")
 
     await captureStdout(() =>
       featureUsageCmd.run!({
@@ -151,14 +151,14 @@ describe("Value Feature commands", () => {
       } as Parameters<NonNullable<typeof featureUsageCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer_feature_usage", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer_features", {
       customer: "acme.com",
       weeks: 6,
     })
   })
 
   test("can request ordered weekly feature usage", async () => {
-    const { default: featureUsageCmd } = await import("../../src/commands/customers/feature-usage")
+    const { default: featureUsageCmd } = await import("../../src/commands/customers/features")
 
     await captureStdout(() =>
       featureUsageCmd.run!({
@@ -166,7 +166,7 @@ describe("Value Feature commands", () => {
       } as Parameters<NonNullable<typeof featureUsageCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer_feature_usage", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer_features", {
       customer: "acme.com",
       weeks: 53,
       includeWeeklyUsage: true,
@@ -174,8 +174,8 @@ describe("Value Feature commands", () => {
   })
 
   test("rejects malformed filters and out-of-range windows before calling Core", async () => {
-    const { default: createCmd } = await import("../../src/commands/value-features/create")
-    const { default: workspaceCmd } = await import("../../src/commands/value-features/workspace")
+    const { default: createCmd } = await import("../../src/commands/features/create")
+    const { default: workspaceCmd } = await import("../../src/commands/features/list")
 
     await runExpectingError(
       () =>

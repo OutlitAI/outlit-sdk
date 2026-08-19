@@ -295,12 +295,12 @@ outlit customers relationship acme.com --json
 }
 ```
 
-## Customers Feature Usage
+## Customers Features
 
-Read exact historical Value Feature usage for one authorized customer.
+Read exact historical Feature usage for one authorized customer.
 
 ```text
-outlit customers feature-usage <customer> [--weeks 1-53] [--weekly]
+outlit customers features <customer> [--weeks 1-53] [--weekly]
 ```
 
 `<customer>` accepts a customer domain, UUID, or exact name. The default window is 12 weeks.
@@ -310,23 +310,23 @@ evidence is never rendered as zero usage. Add `--weekly` to include the ordered 
 `eventCount` and `activeDays` projection used by the customer feature lanes.
 
 ```bash
-outlit customers feature-usage acme.com --json
-outlit customers feature-usage acme.com --weeks 6 --json
-outlit customers feature-usage acme.com --weeks 53 --weekly --json
+outlit customers features acme.com --json
+outlit customers features acme.com --weeks 6 --json
+outlit customers features acme.com --weeks 53 --weekly --json
 ```
 
-## Value Features
+## Features
 
 Configure the small workspace taxonomy of product capabilities whose recurring use represents
 customer value.
 
 ```text
-outlit value-features workspace [flags]
-outlit value-features create [flags]
-outlit value-features archive <id> --revision <revision>
+outlit features list [flags]
+outlit features create [flags]
+outlit features archive <id> --revision <revision>
 ```
 
-`value-features workspace` returns eligible product-event sources, the selected source, active
+`features list` returns eligible product-event sources, the selected source, active
 features with exact historical evidence, and candidate discovery. Candidate discovery is a
 discriminated result: `ready` and `partial` contain `items` and `truncated`, while `unavailable`
 contains a reason. Core auto-selects a source only when exactly one is eligible.
@@ -340,7 +340,7 @@ contains a reason. Core auto-selects a source only when exactly one is eligible.
 Create one feature from one exact event rule:
 
 ```bash
-outlit value-features create \
+outlit features create \
   --source metric_source_v1_0123456789abcdef0123456789abcdef \
   --event report_exported \
   --key reports_exported \
@@ -355,15 +355,18 @@ workspace command.
 Archive requires both opaque values returned by Core:
 
 ```bash
-outlit value-features archive \
+outlit features archive \
   value_feature_v1_0123456789abcdef0123456789abcdef \
   --revision value_feature_revision_v1_fedcba9876543210fedcba9876543210 \
   --json
 ```
 
+Creating a Feature atomically creates its internal weekly event-count and active-days metrics.
+Those metrics are implementation details rather than separate CLI resources.
+
 Archive is intentionally limited in the MVP. Core rejects stale revisions and prevents archiving
 the final active feature. Historical usage remains retained, and archive is the only self-service
-lifecycle action in this release. Existing CLI commands remain unchanged.
+lifecycle action in this release.
 
 ## Attention
 
@@ -915,29 +918,6 @@ outlit destinations archive 10000000-0000-4000-8000-000000000003 --json
 ```
 
 Destination creation and update are Slack-channel backed. Use `--default` on `destinations create` or `destinations update` to make a destination the default fallback. `destinations update` patches only the fields you pass. Raw destination secrets and unmasked provider configuration are not returned.
-
-## Behavior Metrics
-
-Create an important-event configuration using the same contract as the Outlit UI, API, and MCP tools. Discover an eligible source, then its attributed events, before creating the configuration.
-
-```text
-outlit metrics sources [flags]
-outlit metrics events --source <source-key> [--weeks <1-53>] [--limit <1-100>] [flags]
-outlit metrics create --source <source-key> --event <event-name> --key <behavior-key> --label <label> [--property-filters <json-array>] [flags]
-```
-
-### Examples
-
-```bash
-outlit metrics sources --json
-outlit metrics events --source metric_source_v1_0123456789abcdef0123456789abcdef --weeks 4 --limit 20 --json
-outlit metrics create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key reports_exported --label "Reports exported" --json
-outlit metrics create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key production_reports_exported --label "Production reports exported" --property-filters '[{"property":"environment","operator":"equals","value":{"type":"string","value":"production"}}]' --json
-```
-
-`metrics sources` returns opaque source keys. `metrics events` requires one returned `--source` and accepts optional `--weeks` (default 12) and `--limit` (default 100); it returns candidate event names and property keys. `metrics create` requires a returned source key, an exact discovered event name, a stable lower-snake-case behavior key, and a label. `--property-filters` accepts an optional JSON array of up to five typed `equals` or `exists` filters.
-
-`metrics create` atomically returns two enabled production metrics immediately: weekly active days under `metric.definitions.activeDays` and weekly event count under `metric.definitions.eventCount`. Source readiness remains independent ingestion-health information.
 
 ## Settings
 

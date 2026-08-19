@@ -14,8 +14,8 @@ import {
   type CustomerContextSearchInput,
   type CustomerDetail,
   type CustomerDetailResult,
-  type CustomerFeatureUsage,
-  type CustomerFeatureUsageResult,
+  type CustomerFeature,
+  type CustomerFeaturesResult,
   type CustomerListItem,
   type CustomerListResult,
   type CustomerRelationship,
@@ -25,25 +25,23 @@ import {
   customerSourceTypeInputs,
   customerSourceTypes,
   defaultToolNames,
+  type Feature,
+  type FeatureArchiveResult,
+  type FeatureCreateResult,
+  type FeatureDefinition,
+  type FeatureListResult,
+  type FeatureRef,
   getPublicToolContract,
   isOutlitToolsApiError,
   matchesGeneratedJsonSchema,
   normalizeCustomerSourceType,
-  type PublicToolResult,
   piToolNames,
   publicOpenApiTransports,
-  type RuntimeJsonSchema,
   resolveCustomerContextSearchInput,
   sdkConsumerContractHash,
   sqlToolNames,
   toolGatewayErrorCodes,
   toolGatewayErrorSchema,
-  type ValueFeature,
-  type ValueFeatureArchiveResult,
-  type ValueFeatureCreateResult,
-  type ValueFeatureDefinition,
-  type ValueFeatureRef,
-  type ValueFeatureWorkspaceResult,
 } from "../src/index.js"
 
 describe("matchesGeneratedJsonSchema", () => {
@@ -110,17 +108,14 @@ describe("toolsets", () => {
       "outlit_update_customer_activation",
       "outlit_get_workspace_settings",
       "outlit_update_workspace_settings",
-      "outlit_list_behavior_metric_sources",
-      "outlit_list_behavior_metric_events",
-      "outlit_create_behavior_metric",
-      "outlit_get_value_feature_workspace",
-      "outlit_create_value_feature",
-      "outlit_archive_value_feature",
-      "outlit_get_customer_feature_usage",
+      "outlit_list_features",
+      "outlit_create_feature",
+      "outlit_archive_feature",
+      "outlit_get_customer_features",
       "outlit_list_attention_items",
       "outlit_get_attention_item",
     ])
-    expect(allPublicToolNames).toHaveLength(43)
+    expect(allPublicToolNames).toHaveLength(40)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -138,14 +133,7 @@ describe("toolsets", () => {
       "outlit_search_customer_context",
     ])
     expect(sqlToolNames).toEqual(["outlit_query", "outlit_schema"])
-    expect(piToolNames).toEqual(
-      allPublicToolNames.filter(
-        (name) =>
-          name !== "outlit_list_behavior_metric_sources" &&
-          name !== "outlit_list_behavior_metric_events" &&
-          name !== "outlit_create_behavior_metric",
-      ),
-    )
+    expect(piToolNames).toEqual(allPublicToolNames)
     expect(cliToolNames).toEqual(allPublicToolNames)
     for (const toolName of ["outlit_list_attention_items", "outlit_get_attention_item"] as const) {
       expect(defaultToolNames).not.toContain(toolName)
@@ -154,10 +142,10 @@ describe("toolsets", () => {
       expect(cliToolNames).toContain(toolName)
     }
     for (const toolName of [
-      "outlit_get_value_feature_workspace",
-      "outlit_create_value_feature",
-      "outlit_archive_value_feature",
-      "outlit_get_customer_feature_usage",
+      "outlit_list_features",
+      "outlit_create_feature",
+      "outlit_archive_feature",
+      "outlit_get_customer_features",
     ] as const) {
       expect(defaultToolNames).not.toContain(toolName)
       expect(analyticalToolNames).not.toContain(toolName)
@@ -221,125 +209,11 @@ describe("tool contracts", () => {
     >().toEqualTypeOf<number | null>()
   })
 
-  test("projects generated Behavior Metric discovery and creation capabilities into public catalogues", () => {
-    const sourcesContract = getPublicToolContract("outlit_list_behavior_metric_sources")
-    const eventsContract = getPublicToolContract("outlit_list_behavior_metric_events")
-    const contract = getPublicToolContract("outlit_create_behavior_metric")
-
-    expect(sourcesContract.commandId).toBe("behavior_metric_source.list")
-    expect(sourcesContract.inputSchema).toEqual(expect.objectContaining({ type: "object" }))
-    expect(sourcesContract.outputSchema).toEqual(
-      expect.objectContaining({
-        properties: expect.objectContaining({
-          sources: expect.objectContaining({ type: "array" }),
-        }),
-      }),
-    )
-    expect(eventsContract.commandId).toBe("behavior_metric_event.list")
-    expect(eventsContract.inputSchema).toEqual(
-      expect.objectContaining({
-        required: ["sourceKey"],
-        properties: expect.objectContaining({
-          weeks: expect.objectContaining({ default: 12, minimum: 1, maximum: 53 }),
-          limit: expect.objectContaining({ default: 100, minimum: 1, maximum: 100 }),
-        }),
-      }),
-    )
-    expect(contract.commandId).toBe("behavior_metric.create")
-    expect(contract.commandVersion).toBe(2)
-    expect(contract.description).toContain("ENABLED and PRODUCTION")
-    expect(contract.description).not.toContain("SHADOW")
-    expect(contract.inputSchema).toEqual(
-      expect.objectContaining({
-        required: ["sourceKey", "eventName", "behaviorKey", "label"],
-        properties: expect.objectContaining({
-          sourceKey: expect.objectContaining({
-            pattern: "^metric_source_v1_[a-f0-9]{32}$",
-          }),
-          eventName: expect.objectContaining({ minLength: 1, maxLength: 191 }),
-          behaviorKey: expect.objectContaining({ maxLength: 64 }),
-          label: expect.objectContaining({ minLength: 1, maxLength: 255 }),
-          propertyFilters: expect.objectContaining({ default: [], maxItems: 5 }),
-        }),
-      }),
-    )
-    expect(contract.outputSchema).toEqual(
-      expect.objectContaining({
-        properties: expect.objectContaining({
-          metric: expect.objectContaining({
-            properties: expect.objectContaining({
-              evaluationMode: { type: "string", const: "PRODUCTION" },
-            }),
-          }),
-        }),
-      }),
-    )
-    const definitionsSchema = (
-      contract.outputSchema as {
-        properties: { metric: { properties: { definitions: RuntimeJsonSchema } } }
-      }
-    ).properties.metric.properties.definitions
-    expect(definitionsSchema).toMatchObject({
-      type: "object",
-      required: ["activeDays", "eventCount"],
-      additionalProperties: false,
-      properties: {
-        activeDays: { properties: { aggregation: { const: "active_days" } } },
-        eventCount: { properties: { aggregation: { const: "event_count" } } },
-      },
-    })
-    expectTypeOf<
-      PublicToolResult<"outlit_create_behavior_metric">["metric"]["definitions"]["activeDays"]["aggregation"]
-    >().toEqualTypeOf<"active_days">()
-    expectTypeOf<
-      PublicToolResult<"outlit_create_behavior_metric">["metric"]["definitions"]["eventCount"]["aggregation"]
-    >().toEqualTypeOf<"event_count">()
-
-    const validDefinitions = {
-      activeDays: {
-        id: "10000000-0000-4000-8000-000000000001",
-        metricKey: "weekly_reports_exported_active_days",
-        aggregation: "active_days",
-      },
-      eventCount: {
-        id: "10000000-0000-4000-8000-000000000002",
-        metricKey: "weekly_reports_exported_event_count",
-        aggregation: "event_count",
-      },
-    }
-    expect(matchesGeneratedJsonSchema(validDefinitions, definitionsSchema)).toBe(true)
-    expect(matchesGeneratedJsonSchema(Object.values(validDefinitions), definitionsSchema)).toBe(
-      false,
-    )
-    expect(
-      matchesGeneratedJsonSchema(
-        {
-          activeDays: validDefinitions.eventCount,
-          eventCount: validDefinitions.activeDays,
-        },
-        definitionsSchema,
-      ),
-    ).toBe(false)
-    expect(defaultToolNames).not.toContain("outlit_create_behavior_metric")
-    expect(analyticalToolNames).not.toContain("outlit_create_behavior_metric")
-    expect(cliToolNames).toContain("outlit_create_behavior_metric")
-    for (const toolName of [
-      "outlit_list_behavior_metric_sources",
-      "outlit_list_behavior_metric_events",
-      "outlit_create_behavior_metric",
-    ] as const) {
-      expect(defaultToolNames).not.toContain(toolName)
-      expect(analyticalToolNames).not.toContain(toolName)
-      expect(piToolNames).not.toContain(toolName)
-      expect(cliToolNames).toContain(toolName)
-    }
-  })
-
-  test("projects the product-facing Value Feature lifecycle and customer usage contracts", () => {
-    const workspace = getPublicToolContract("outlit_get_value_feature_workspace")
-    const create = getPublicToolContract("outlit_create_value_feature")
-    const archive = getPublicToolContract("outlit_archive_value_feature")
-    const customerUsage = getPublicToolContract("outlit_get_customer_feature_usage")
+  test("projects the product-facing Feature lifecycle and customer usage contracts", () => {
+    const workspace = getPublicToolContract("outlit_list_features")
+    const create = getPublicToolContract("outlit_create_feature")
+    const archive = getPublicToolContract("outlit_archive_feature")
+    const customerUsage = getPublicToolContract("outlit_get_customer_features")
 
     expect(workspace.commandId).toBe("value_feature_workspace.get")
     expect(workspace.inputSchema.properties).toEqual(
@@ -396,13 +270,13 @@ describe("tool contracts", () => {
     )
   })
 
-  test("exports generated Value Feature and customer usage result aliases", () => {
-    type WorkspaceCandidates = ValueFeatureWorkspaceResult["candidates"]
+  test("exports generated Feature and customer usage result aliases", () => {
+    type WorkspaceCandidates = FeatureListResult["candidates"]
     type ReadyCandidates = Extract<WorkspaceCandidates, { status: "ready" }>
     type PartialCandidates = Extract<WorkspaceCandidates, { status: "partial" }>
     type UnavailableCandidates = Extract<WorkspaceCandidates, { status: "unavailable" }>
 
-    expectTypeOf<ValueFeatureWorkspaceResult["features"][number]>().toEqualTypeOf<ValueFeature>()
+    expectTypeOf<FeatureListResult["features"][number]>().toEqualTypeOf<Feature>()
     expectTypeOf<ReadyCandidates["items"][number]["eventName"]>().toEqualTypeOf<string>()
     expectTypeOf<ReadyCandidates["truncated"]>().toEqualTypeOf<boolean>()
     expectTypeOf<PartialCandidates["items"][number]["eventName"]>().toEqualTypeOf<string>()
@@ -410,11 +284,9 @@ describe("tool contracts", () => {
     expectTypeOf<UnavailableCandidates["reason"]>().toEqualTypeOf<
       "SOURCE_BLOCKED" | "SOURCE_NOT_READY" | "QUERY_FAILED"
     >()
-    expectTypeOf<ValueFeatureCreateResult["feature"]>().toEqualTypeOf<ValueFeatureDefinition>()
-    expectTypeOf<ValueFeatureArchiveResult["feature"]>().toEqualTypeOf<ValueFeatureRef>()
-    expectTypeOf<
-      CustomerFeatureUsageResult["features"][number]
-    >().toEqualTypeOf<CustomerFeatureUsage>()
+    expectTypeOf<FeatureCreateResult["feature"]>().toEqualTypeOf<FeatureDefinition>()
+    expectTypeOf<FeatureArchiveResult["feature"]>().toEqualTypeOf<FeatureRef>()
+    expectTypeOf<CustomerFeaturesResult["features"][number]>().toEqualTypeOf<CustomerFeature>()
   })
 
   test("infers activatedAt on typed customer list and get client results", async () => {

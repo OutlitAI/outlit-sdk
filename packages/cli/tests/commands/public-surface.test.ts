@@ -4,7 +4,14 @@ import { join } from "node:path"
 
 const packageRoot = join(import.meta.dir, "..", "..")
 
-const retiredCommandFamilies = ["agents", "automations", "signals", "identity"] as const
+const retiredCommandFamilies = [
+  "agents",
+  "automations",
+  "signals",
+  "identity",
+  "metrics",
+  "value-features",
+] as const
 const retiredToolPrefixes = [
   "outlit_agent_",
   "outlit_automation_",

@@ -80,8 +80,8 @@ const COMMANDS: readonly CmdDef[] = [
         flags: [...COMMON],
       },
       {
-        name: "feature-usage",
-        desc: "Get exact Value Feature usage for a customer",
+        name: "features",
+        desc: "Get exact Feature usage for a customer",
         flags: [
           ...COMMON,
           { name: "--weeks", desc: "Historical usage window (1-53 weeks)" },
@@ -358,45 +358,12 @@ const COMMANDS: readonly CmdDef[] = [
     ],
   },
   {
-    name: "metrics",
-    desc: "Configure Behavior Metrics",
+    name: "features",
+    desc: "Configure Features",
     subs: [
       {
-        name: "sources",
-        desc: "List product-event sources eligible for Behavior Metrics",
-        flags: [...COMMON],
-      },
-      {
-        name: "events",
-        desc: "List attributed event candidates for a Behavior Metric source",
-        flags: [
-          ...COMMON,
-          { name: "--source", desc: "Behavior Metric source key" },
-          { name: "--weeks", desc: "History window in weeks (1-53, default: 12)" },
-          { name: "--limit", desc: "Maximum event candidates (1-100, default: 100)" },
-        ],
-      },
-      {
-        name: "create",
-        desc: "Create an event-based Behavior Metric",
-        flags: [
-          ...COMMON,
-          { name: "--source", desc: "Behavior Metric source key" },
-          { name: "--event", desc: "Exact tracked event name" },
-          { name: "--key", desc: "Stable lower_snake_case metric key" },
-          { name: "--label", desc: "Human-readable metric label" },
-          { name: "--property-filters", desc: "Optional JSON event property filters" },
-        ],
-      },
-    ],
-  },
-  {
-    name: "value-features",
-    desc: "Configure Value Features",
-    subs: [
-      {
-        name: "workspace",
-        desc: "Read workspace Value Features and usage evidence",
+        name: "list",
+        desc: "Read workspace Features and usage evidence",
         flags: [
           ...COMMON,
           { name: "--source", desc: "Optional product-event source key" },
@@ -406,19 +373,19 @@ const COMMANDS: readonly CmdDef[] = [
       },
       {
         name: "create",
-        desc: "Create one event-based Value Feature",
+        desc: "Create one event-based Feature",
         flags: [
           ...COMMON,
           { name: "--source", desc: "Product-event source key" },
           { name: "--event", desc: "Exact tracked event name" },
           { name: "--key", desc: "Stable lower_snake_case feature key" },
-          { name: "--name", desc: "Human-readable Value Feature name" },
+          { name: "--name", desc: "Human-readable Feature name" },
           { name: "--property-filters", desc: "Optional JSON exact or exists filters" },
         ],
       },
       {
         name: "archive",
-        desc: "Archive a non-final Value Feature",
+        desc: "Archive a non-final Feature",
         flags: [...COMMON, { name: "--revision", desc: "Current opaque feature revision" }],
       },
     ],

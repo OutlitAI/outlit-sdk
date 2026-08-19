@@ -38,13 +38,10 @@ export const publicToolNames = [
   "outlit_update_customer_activation",
   "outlit_get_workspace_settings",
   "outlit_update_workspace_settings",
-  "outlit_list_behavior_metric_sources",
-  "outlit_list_behavior_metric_events",
-  "outlit_create_behavior_metric",
-  "outlit_get_value_feature_workspace",
-  "outlit_create_value_feature",
-  "outlit_archive_value_feature",
-  "outlit_get_customer_feature_usage",
+  "outlit_list_features",
+  "outlit_create_feature",
+  "outlit_archive_feature",
+  "outlit_get_customer_features",
   "outlit_list_attention_items",
   "outlit_get_attention_item",
 ] as const
@@ -8884,581 +8881,13 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
-  "outlit_list_behavior_metric_sources": {
-    "toolName": "outlit_list_behavior_metric_sources",
-    "commandId": "behavior_metric_source.list",
-    "commandVersion": 1,
-    "ownerDomain": "behavior_metrics",
-    "title": "List Behavior Metric Sources",
-    "description": "List product-event sources eligible for Behavior Metric discovery.",
-    "inputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {},
-      "additionalProperties": false,
-    },
-    "outputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "sources": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "sourceKey": {
-                "type": "string",
-                "pattern": "^metric_source_v1_[a-f0-9]{32}$",
-              },
-              "provider": {
-                "type": "string",
-                "enum": [
-                  "outlit_sdk",
-                  "posthog",
-                  "mixpanel",
-                ],
-              },
-              "label": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 255,
-              },
-              "readiness": {
-                "type": "string",
-                "enum": [
-                  "READY",
-                  "WARMING",
-                  "BLOCKED",
-                ],
-              },
-            },
-            "required": [
-              "sourceKey",
-              "provider",
-              "label",
-              "readiness",
-            ],
-            "additionalProperties": false,
-          },
-        },
-      },
-      "required": [
-        "sources",
-      ],
-      "additionalProperties": false,
-    },
-  },
-  "outlit_list_behavior_metric_events": {
-    "toolName": "outlit_list_behavior_metric_events",
-    "commandId": "behavior_metric_event.list",
-    "commandVersion": 1,
-    "ownerDomain": "behavior_metrics",
-    "title": "List Behavior Metric Events",
-    "description": "List attributed event candidates for a Behavior Metric source.",
-    "inputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "sourceKey": {
-          "type": "string",
-          "pattern": "^metric_source_v1_[a-f0-9]{32}$",
-        },
-        "weeks": {
-          "default": 12,
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 53,
-        },
-        "limit": {
-          "default": 100,
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100,
-        },
-      },
-      "required": [
-        "sourceKey",
-      ],
-      "additionalProperties": false,
-    },
-    "outputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "events": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "eventName": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 191,
-              },
-              "eventCount": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991,
-              },
-              "distinctCustomers": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991,
-              },
-              "activeWeeks": {
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 53,
-              },
-              "propertyKeys": {
-                "maxItems": 10,
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 191,
-                },
-              },
-            },
-            "required": [
-              "eventName",
-              "eventCount",
-              "distinctCustomers",
-              "activeWeeks",
-              "propertyKeys",
-            ],
-            "additionalProperties": false,
-          },
-        },
-        "truncated": {
-          "type": "boolean",
-        },
-      },
-      "required": [
-        "events",
-        "truncated",
-      ],
-      "additionalProperties": false,
-    },
-  },
-  "outlit_create_behavior_metric": {
-    "toolName": "outlit_create_behavior_metric",
-    "commandId": "behavior_metric.create",
-    "commandVersion": 2,
-    "ownerDomain": "behavior_metrics",
-    "title": "Create Behavior Metric",
-    "description": "Create or idempotently return an important-event configuration that atomically installs active-days and event-count metrics in ENABLED and PRODUCTION.",
-    "inputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "sourceKey": {
-          "type": "string",
-          "pattern": "^metric_source_v1_[a-f0-9]{32}$",
-        },
-        "eventName": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 191,
-        },
-        "behaviorKey": {
-          "type": "string",
-          "maxLength": 64,
-          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
-        },
-        "label": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 255,
-        },
-        "propertyFilters": {
-          "default": [],
-          "maxItems": 5,
-          "type": "array",
-          "items": {
-            "oneOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "property": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 191,
-                  },
-                  "operator": {
-                    "type": "string",
-                    "const": "equals",
-                  },
-                  "value": {
-                    "oneOf": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "const": "string",
-                          },
-                          "value": {
-                            "type": "string",
-                            "maxLength": 191,
-                          },
-                        },
-                        "required": [
-                          "type",
-                          "value",
-                        ],
-                        "additionalProperties": false,
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "const": "number",
-                          },
-                          "value": {
-                            "type": "number",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991,
-                          },
-                        },
-                        "required": [
-                          "type",
-                          "value",
-                        ],
-                        "additionalProperties": false,
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "const": "boolean",
-                          },
-                          "value": {
-                            "type": "boolean",
-                          },
-                        },
-                        "required": [
-                          "type",
-                          "value",
-                        ],
-                        "additionalProperties": false,
-                      },
-                    ],
-                  },
-                },
-                "required": [
-                  "property",
-                  "operator",
-                  "value",
-                ],
-                "additionalProperties": false,
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "property": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 191,
-                  },
-                  "operator": {
-                    "type": "string",
-                    "const": "exists",
-                  },
-                },
-                "required": [
-                  "property",
-                  "operator",
-                ],
-                "additionalProperties": false,
-              },
-            ],
-          },
-        },
-      },
-      "required": [
-        "sourceKey",
-        "eventName",
-        "behaviorKey",
-        "label",
-      ],
-      "additionalProperties": false,
-    },
-    "outputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "created": {
-          "type": "boolean",
-        },
-        "metric": {
-          "type": "object",
-          "properties": {
-            "sourceKey": {
-              "type": "string",
-              "pattern": "^metric_source_v1_[a-f0-9]{32}$",
-            },
-            "behaviorKey": {
-              "type": "string",
-              "maxLength": 64,
-              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
-            },
-            "label": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 255,
-            },
-            "eventSelection": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "mode": {
-                      "type": "string",
-                      "const": "exact_event_names",
-                    },
-                    "eventNames": {
-                      "minItems": 1,
-                      "maxItems": 1,
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 191,
-                      },
-                    },
-                  },
-                  "required": [
-                    "mode",
-                    "eventNames",
-                  ],
-                  "additionalProperties": false,
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "mode": {
-                      "type": "string",
-                      "const": "configured_event",
-                    },
-                    "eventName": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 191,
-                    },
-                    "propertyFilters": {
-                      "minItems": 1,
-                      "maxItems": 5,
-                      "type": "array",
-                      "items": {
-                        "oneOf": [
-                          {
-                            "type": "object",
-                            "properties": {
-                              "property": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 191,
-                              },
-                              "operator": {
-                                "type": "string",
-                                "const": "equals",
-                              },
-                              "value": {
-                                "oneOf": [
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "type": {
-                                        "type": "string",
-                                        "const": "string",
-                                      },
-                                      "value": {
-                                        "type": "string",
-                                        "maxLength": 191,
-                                      },
-                                    },
-                                    "required": [
-                                      "type",
-                                      "value",
-                                    ],
-                                    "additionalProperties": false,
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "type": {
-                                        "type": "string",
-                                        "const": "number",
-                                      },
-                                      "value": {
-                                        "type": "number",
-                                        "minimum": -9007199254740991,
-                                        "maximum": 9007199254740991,
-                                      },
-                                    },
-                                    "required": [
-                                      "type",
-                                      "value",
-                                    ],
-                                    "additionalProperties": false,
-                                  },
-                                  {
-                                    "type": "object",
-                                    "properties": {
-                                      "type": {
-                                        "type": "string",
-                                        "const": "boolean",
-                                      },
-                                      "value": {
-                                        "type": "boolean",
-                                      },
-                                    },
-                                    "required": [
-                                      "type",
-                                      "value",
-                                    ],
-                                    "additionalProperties": false,
-                                  },
-                                ],
-                              },
-                            },
-                            "required": [
-                              "property",
-                              "operator",
-                              "value",
-                            ],
-                            "additionalProperties": false,
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "property": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 191,
-                              },
-                              "operator": {
-                                "type": "string",
-                                "const": "exists",
-                              },
-                            },
-                            "required": [
-                              "property",
-                              "operator",
-                            ],
-                            "additionalProperties": false,
-                          },
-                        ],
-                      },
-                    },
-                  },
-                  "required": [
-                    "mode",
-                    "eventName",
-                    "propertyFilters",
-                  ],
-                  "additionalProperties": false,
-                },
-              ],
-            },
-            "status": {
-              "type": "string",
-              "const": "ENABLED",
-            },
-            "evaluationMode": {
-              "type": "string",
-              "const": "PRODUCTION",
-            },
-            "definitions": {
-              "type": "object",
-              "properties": {
-                "activeDays": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                    },
-                    "metricKey": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 191,
-                    },
-                    "aggregation": {
-                      "type": "string",
-                      "const": "active_days",
-                    },
-                  },
-                  "required": [
-                    "id",
-                    "metricKey",
-                    "aggregation",
-                  ],
-                  "additionalProperties": false,
-                },
-                "eventCount": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                    },
-                    "metricKey": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 191,
-                    },
-                    "aggregation": {
-                      "type": "string",
-                      "const": "event_count",
-                    },
-                  },
-                  "required": [
-                    "id",
-                    "metricKey",
-                    "aggregation",
-                  ],
-                  "additionalProperties": false,
-                },
-              },
-              "required": [
-                "activeDays",
-                "eventCount",
-              ],
-              "additionalProperties": false,
-            },
-          },
-          "required": [
-            "sourceKey",
-            "behaviorKey",
-            "label",
-            "eventSelection",
-            "status",
-            "evaluationMode",
-            "definitions",
-          ],
-          "additionalProperties": false,
-        },
-      },
-      "required": [
-        "created",
-        "metric",
-      ],
-      "additionalProperties": false,
-    },
-  },
-  "outlit_get_value_feature_workspace": {
-    "toolName": "outlit_get_value_feature_workspace",
+  "outlit_list_features": {
+    "toolName": "outlit_list_features",
     "commandId": "value_feature_workspace.get",
     "commandVersion": 1,
     "ownerDomain": "value_features",
-    "title": "Get Value Feature Workspace",
-    "description": "Read configured value features, exact historical usage, and observed event candidates.",
+    "title": "List Features",
+    "description": "List configured features, exact historical usage, eligible sources, and observed event candidates.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -10002,12 +9431,12 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
-  "outlit_create_value_feature": {
-    "toolName": "outlit_create_value_feature",
+  "outlit_create_feature": {
+    "toolName": "outlit_create_feature",
     "commandId": "value_feature.create",
     "commandVersion": 1,
     "ownerDomain": "value_features",
-    "title": "Create Value Feature",
+    "title": "Create Feature",
     "description": "Create or idempotently return one customer-value feature observed by one event rule.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -10318,12 +9747,12 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
-  "outlit_archive_value_feature": {
-    "toolName": "outlit_archive_value_feature",
+  "outlit_archive_feature": {
+    "toolName": "outlit_archive_feature",
     "commandId": "value_feature.archive",
     "commandVersion": 1,
     "ownerDomain": "value_features",
-    "title": "Archive Value Feature",
+    "title": "Archive Feature",
     "description": "Archive a value feature when at least one other active feature remains.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -10378,12 +9807,12 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
-  "outlit_get_customer_feature_usage": {
-    "toolName": "outlit_get_customer_feature_usage",
+  "outlit_get_customer_features": {
+    "toolName": "outlit_get_customer_features",
     "commandId": "customer_feature_usage.get",
     "commandVersion": 1,
     "ownerDomain": "value_features",
-    "title": "Get Customer Feature Usage",
+    "title": "Get Customer Features",
     "description": "Read exact historical feature-usage evidence for one authorized customer.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -11625,10 +11054,10 @@ export const consumerToolPolicies = {
     "outlit_update_customer_activation",
     "outlit_get_workspace_settings",
     "outlit_update_workspace_settings",
-    "outlit_get_value_feature_workspace",
-    "outlit_create_value_feature",
-    "outlit_archive_value_feature",
-    "outlit_get_customer_feature_usage",
+    "outlit_list_features",
+    "outlit_create_feature",
+    "outlit_archive_feature",
+    "outlit_get_customer_features",
     "outlit_list_attention_items",
     "outlit_get_attention_item",
   ],
@@ -11667,13 +11096,10 @@ export const consumerToolPolicies = {
     "outlit_update_customer_activation",
     "outlit_get_workspace_settings",
     "outlit_update_workspace_settings",
-    "outlit_list_behavior_metric_sources",
-    "outlit_list_behavior_metric_events",
-    "outlit_create_behavior_metric",
-    "outlit_get_value_feature_workspace",
-    "outlit_create_value_feature",
-    "outlit_archive_value_feature",
-    "outlit_get_customer_feature_usage",
+    "outlit_list_features",
+    "outlit_create_feature",
+    "outlit_archive_feature",
+    "outlit_get_customer_features",
     "outlit_list_attention_items",
     "outlit_get_attention_item",
   ],
@@ -12974,4 +12400,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "c6db1bcb84bf3dfb1fcf76cdafd41d30b1d7e92fdf441cb2c0afe635e5cfcec1" as const
+export const sdkConsumerContractHash = "81b993f496162d562eff5cb7b5ce36b25ea6bd4cd6a6dd27e6f23eb93caa159e" as const

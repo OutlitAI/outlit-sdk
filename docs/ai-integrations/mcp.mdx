@@ -88,11 +88,11 @@ Headless clients that cannot complete OAuth may send an Outlit API key as their 
 | `outlit_search_customer_context` | Search across customer facts, emails, calls, calendar events, support tickets, Slack conversations, and CRM opportunities using natural language. Returns grouped artifact-level matches for `source` and `fact` results, with `sourceTypes` and time-range filters | "What pricing concerns does Acme have?" |
 | `outlit_query` | Run read-only SQL queries against your customer data | "Which channels lead to the most revenue?" |
 | `outlit_schema` | Get view schemas to help write accurate SQL queries | "Show me the available analytics views" |
-| `outlit_get_value_feature_workspace` | Read configured Value Features, historical evidence, sources, and ready, partial, or unavailable candidate discovery | "Show me our Value Features and their usage over the last 12 weeks" |
-| `outlit_create_value_feature` | Create one Value Feature from an exact product-event rule | "Create a Value Feature for the `report_exported` event" |
-| `outlit_archive_value_feature` | Archive a non-final Value Feature using its current opaque revision | "Archive this Value Feature after confirming another active feature remains" |
-| `outlit_get_customer_feature_usage` | Read exact Value Feature usage for one authorized customer | "Which Value Features has Acme used in the last 12 weeks?" |
+| `outlit_list_features` | Read configured Features, historical evidence, sources, and ready, partial, or unavailable candidate discovery | "Show me our Features and their usage over the last 12 weeks" |
+| `outlit_create_feature` | Create one Feature from an exact product-event rule | "Create a Feature for the `report_exported` event" |
+| `outlit_archive_feature` | Archive a non-final Feature using its current opaque revision | "Archive this Feature after confirming another active feature remains" |
+| `outlit_get_customer_features` | Read exact Feature usage for one authorized customer | "Which Features has Acme used in the last 12 weeks?" |
 
 <Note>
-  MCP registers the entire public catalog, including customer ownership/access, Value Features, and the safe destination, integration setup/status, activation, and workspace-settings capabilities described in [Platform Capabilities](/ai-integrations/platform-actions). Value Feature creation and archive still require the underlying workspace permission and feature availability. Generic agent, automation, signal, identity-merge, notification-send, credential, and destructive integration operations are not public tools.
+  MCP registers the entire public catalog, including customer ownership/access, Features, and the safe destination, integration setup/status, activation, and workspace-settings capabilities described in [Platform Capabilities](/ai-integrations/platform-actions). Feature creation and archive still require the underlying workspace permission and feature availability. Generic agent, automation, signal, identity-merge, notification-send, credential, and destructive integration operations are not public tools.
 </Note>

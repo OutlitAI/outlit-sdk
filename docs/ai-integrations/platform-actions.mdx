@@ -1,6 +1,6 @@
 ---
 title: "Platform Capabilities"
-description: "Manage safe destinations, activation, workspace settings, and Behavior Metrics through the tool gateway"
+description: "Manage safe destinations, activation, workspace settings, and Features through the tool gateway"
 ---
 
 Outlit exposes model-safe platform configuration through `POST /api/tools/call`. The Core capability catalog owns the tool names, descriptions, schemas, and consumer memberships used by `@outlit/tools`, the CLI, and Pi.
@@ -12,7 +12,7 @@ Outlit exposes model-safe platform configuration through `POST /api/tools/call`.
 | Destinations | List, get, create, update, enable, disable, and archive |
 | Activation | Get, preview, and update the ordinary customer activation event |
 | Workspace settings | Get and update the workspace timezone |
-| Behavior Metrics | List eligible sources, list source-scoped event candidates, and create event-based metrics |
+| Features | List, create, and archive product capabilities observed through exact event rules |
 | Integrations | List, negotiate and perform bounded setup, and inspect configuration readiness |
 
 Destination results expose masked configuration. Integration setup accepts only the generated provider-specific credential and configuration shapes and never returns submitted credentials. The public surface does not include destination option discovery, report settings, integration disconnect, secret reveal/rotation, arbitrary notification sending, or generic agent/automation/signal administration.
@@ -23,9 +23,9 @@ Authored CLI commands preserve a resource-oriented experience while all retained
 outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --default --json
 outlit activation preview --event activated --json
 outlit settings update --default-timezone America/Los_Angeles --json
-outlit metrics sources --json
-outlit metrics events --source metric_source_v1_0123456789abcdef0123456789abcdef --json
-outlit metrics create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key reports_exported --label "Reports exported" --json
+outlit features list --json
+outlit features create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key reports_exported --name "Reports exported" --json
+outlit features archive value_feature_v1_0123456789abcdef0123456789abcdef --revision value_feature_revision_v1_fedcba9876543210fedcba9876543210 --json
 ```
 
 Use the generated [OpenAPI specification](/openapi.json) for the exact request, output, and stable gateway error schemas.

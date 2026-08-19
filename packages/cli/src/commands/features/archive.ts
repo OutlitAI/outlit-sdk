@@ -9,12 +9,12 @@ export default defineCommand({
   meta: {
     name: "archive",
     description: [
-      "Archive a Value Feature using its opaque id and current revision.",
+      "Archive a Feature using its opaque id and current revision.",
       "Core rejects stale revisions and prevents archiving the final active feature.",
       "Self-service restore is not available in the MVP; retained historical usage is not deleted.",
       "",
       "Example:",
-      "  outlit value-features archive value_feature_v1_0123456789abcdef0123456789abcdef --revision value_feature_revision_v1_fedcba9876543210fedcba9876543210 --json",
+      "  outlit features archive value_feature_v1_0123456789abcdef0123456789abcdef --revision value_feature_revision_v1_fedcba9876543210fedcba9876543210 --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -22,8 +22,8 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    id: { type: "positional", description: "Opaque Value Feature id", required: true },
-    revision: { type: "string", description: "Current opaque Value Feature revision" },
+    id: { type: "positional", description: "Opaque Feature id", required: true },
+    revision: { type: "string", description: "Current opaque Feature revision" },
   },
   async run({ args }) {
     const json = !!args.json
@@ -31,13 +31,13 @@ export default defineCommand({
 
     return runTool(
       client,
-      publicToolContracts.outlit_archive_value_feature.toolName,
+      publicToolContracts.outlit_archive_feature.toolName,
       {
         id: requiredTrimmedString(args.id, "<id>", json),
         revision: requiredTrimmedString(args.revision, "--revision", json),
       },
       json,
-      { spinnerMessage: "Archiving Value Feature..." },
+      { spinnerMessage: "Archiving Feature..." },
     )
   },
 })

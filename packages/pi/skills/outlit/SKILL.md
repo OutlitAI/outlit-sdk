@@ -22,10 +22,10 @@ Do not invent customer state when Outlit can answer it. Call out sparse or messy
 - Use `outlit_search_customer_context` for fuzzy or thematic questions such as pricing concern, blocked integration, not using, renewal, champion left, negative sentiment, expansion, implementation, or support escalation.
 - Use `outlit_list_sources` to discover the source artifacts available for a customer before retrieving one in full.
 - Use `outlit_get_source` when a fact or search result needs stronger evidence from the underlying source artifact.
-- Use `outlit_get_customer_feature_usage` for exact, customer-level Value Feature observations. Treat unavailable coverage as unknown, not zero usage.
-- Use `outlit_get_value_feature_workspace` to inspect the confirmed workspace taxonomy, historical evidence, eligible sources, and event candidates.
-- Use `outlit_create_value_feature` only when the user explicitly asks to configure one confirmed product capability from one exact event rule.
-- Use `outlit_archive_value_feature` only when the user explicitly asks to archive a feature and supplies the current opaque id and revision. The MVP has no restore operation and rejects archiving the final active feature.
+- Use `outlit_get_customer_features` for exact, customer-level Feature observations. Treat unavailable coverage as unknown, not zero usage.
+- Use `outlit_list_features` to inspect the confirmed workspace taxonomy, historical evidence, eligible sources, and event candidates.
+- Use `outlit_create_feature` only when the user explicitly asks to configure one confirmed product capability from one exact event rule. Outlit creates the supporting usage metrics internally.
+- Use `outlit_archive_feature` only when the user explicitly asks to archive a feature and supplies the current opaque id and revision. The MVP has no restore operation and rejects archiving the final active feature.
 
 Use customer lookups before SQL. SQL is for aggregates, joins, cohorts, time-series analysis, and custom reporting.
 
@@ -61,7 +61,7 @@ For supported query patterns, read [references/sql-reference.md](references/sql-
 - Cite the kind of evidence used, such as timeline event, fact, search result, source, customer record, user record, or SQL result.
 - If tools return empty or inconsistent data, say what is missing and how that affects confidence.
 - Do not send messages, create tasks, update CRM records, or take external actions unless the user explicitly asks and the necessary tools are available.
-- Do not create or archive Value Features unless the user explicitly asks. Treat feature usage only as observed product evidence.
+- Do not create or archive Features unless the user explicitly asks. Treat feature usage only as observed product evidence.
 - If an Outlit tool errors because `OUTLIT_API_KEY` is missing, tell the user to set `OUTLIT_API_KEY` and retry.
 
 ## Output

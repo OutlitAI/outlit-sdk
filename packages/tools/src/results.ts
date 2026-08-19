@@ -77,14 +77,14 @@ export type AttentionListResult = PublicToolResult<"outlit_list_attention_items"
 export type AttentionItemSummary = AttentionListResult["items"][number]
 export type AttentionItemResult = PublicToolResult<"outlit_get_attention_item">
 export type AttentionItem = AttentionItemResult
-export type ValueFeatureWorkspaceResult = PublicToolResult<"outlit_get_value_feature_workspace">
-export type ValueFeature = ValueFeatureWorkspaceResult["features"][number]
-export type ValueFeatureCreateResult = PublicToolResult<"outlit_create_value_feature">
-export type ValueFeatureDefinition = ValueFeatureCreateResult["feature"]
-export type ValueFeatureArchiveResult = PublicToolResult<"outlit_archive_value_feature">
-export type ValueFeatureRef = ValueFeatureArchiveResult["feature"]
-export type CustomerFeatureUsageResult = PublicToolResult<"outlit_get_customer_feature_usage">
-export type CustomerFeatureUsage = CustomerFeatureUsageResult["features"][number]
+export type FeatureListResult = PublicToolResult<"outlit_list_features">
+export type Feature = FeatureListResult["features"][number]
+export type FeatureCreateResult = PublicToolResult<"outlit_create_feature">
+export type FeatureDefinition = FeatureCreateResult["feature"]
+export type FeatureArchiveResult = PublicToolResult<"outlit_archive_feature">
+export type FeatureRef = FeatureArchiveResult["feature"]
+export type CustomerFeaturesResult = PublicToolResult<"outlit_get_customer_features">
+export type CustomerFeature = CustomerFeaturesResult["features"][number]
 
 export interface CustomerAnalyticsRow {
   activated_at: string | null
