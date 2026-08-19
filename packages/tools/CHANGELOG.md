@@ -1,5 +1,30 @@
 # @outlit/tools
 
+## 3.0.0
+
+### Major Changes
+
+- [#195](https://github.com/OutlitAI/outlit-sdk/pull/195) [`dbcbe4c`](https://github.com/OutlitAI/outlit-sdk/commit/dbcbe4c0f1661b1c599ba0f6cda1ca1b0a4eee50) Thanks [@leo-paz](https://github.com/leo-paz)! - Replace the public Behavior Metric and Value Feature surfaces with one canonical Feature lifecycle.
+  Use `outlit features list|create|archive` and `outlit customers features`; the generated public tools
+  are `outlit_list_features`, `outlit_create_feature`, `outlit_archive_feature`, and
+  `outlit_get_customer_features`. Creating a Feature still atomically creates the supporting weekly
+  event-count and active-days metrics inside Outlit.
+
+### Patch Changes
+
+- [#193](https://github.com/OutlitAI/outlit-sdk/pull/193) [`2ab7311`](https://github.com/OutlitAI/outlit-sdk/commit/2ab7311de9e1d9a432669395f61b17a29712d96a) Thanks [@leo-paz](https://github.com/leo-paz)! - Add a bounded `customers relationship` command and typed customer relationship result for the
+  authorized customer-detail tool. The response provides the UI-aligned Relationship projection
+  rather than internal fact or memory-card records.
+
+  Normalize Attention list pagination and public names for owner, same-currency ARR cohort
+  metrics, and the current reviewable prepared-action URL.
+
+- [#193](https://github.com/OutlitAI/outlit-sdk/pull/193) [`b25bbee`](https://github.com/OutlitAI/outlit-sdk/commit/b25bbee0010fb5f3de0f81951d22da7374b79009) Thanks [@leo-paz](https://github.com/leo-paz)! - Add read-only Attention list and detail contracts plus `outlit attention list` and
+  `outlit attention get <id>`. Attention exposes bounded, authorized customer-risk detail with
+  Core-owned finite nonnegative ARR values and no email draft content or internal
+  agent state. V1 list filtering is limited to lifecycle and customer; each row
+  still reports its current priority.
+
 ## 2.0.0
 
 ### Major Changes
