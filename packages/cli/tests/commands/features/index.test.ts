@@ -19,15 +19,15 @@ async function runHelp(...args: string[]) {
   return { stdout, stderr, exitCode }
 }
 
-describe("Value Feature command routing", () => {
-  test("registers the product-facing Value Feature lifecycle", async () => {
-    const result = await runHelp("value-features")
+describe("Feature command routing", () => {
+  test("registers the product-facing Feature lifecycle", async () => {
+    const result = await runHelp("features")
 
     expect(result.exitCode).toBe(0)
     expect(result.stderr).toBe("")
-    expect(result.stdout).toContain("USAGE outlit value-features workspace|create|archive")
-    expect(result.stdout).toContain("Configure workspace Value Features")
-    expect(result.stdout).not.toContain("workspace|create|archive|restore")
+    expect(result.stdout).toContain("USAGE outlit features list|create|archive")
+    expect(result.stdout).toContain("Configure workspace Features")
+    expect(result.stdout).not.toContain("list|create|archive|restore")
   })
 
   test("registers customer feature usage with customer reads", async () => {
@@ -35,6 +35,7 @@ describe("Value Feature command routing", () => {
 
     expect(result.exitCode).toBe(0)
     expect(result.stderr).toBe("")
-    expect(result.stdout).toContain("feature-usage")
+    expect(result.stdout).toContain("features")
+    expect(result.stdout).not.toContain("feature-usage")
   })
 })

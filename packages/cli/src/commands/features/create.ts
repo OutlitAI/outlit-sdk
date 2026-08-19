@@ -10,11 +10,12 @@ export default defineCommand({
   meta: {
     name: "create",
     description: [
-      "Create or idempotently return one Value Feature observed by one exact event rule.",
+      "Create or idempotently return one Feature observed by one exact event rule.",
+      "Outlit creates the supporting weekly event-count and active-days metrics internally.",
       "",
       "Examples:",
-      "  outlit value-features create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key reports_exported --name 'Reports exported' --json",
-      '  outlit value-features create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key production_reports_exported --name \'Production reports exported\' --property-filters \'[{"property":"environment","operator":"equals","value":{"type":"string","value":"production"}}]\' --json',
+      "  outlit features create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key reports_exported --name 'Reports exported' --json",
+      '  outlit features create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key production_reports_exported --name \'Production reports exported\' --property-filters \'[{"property":"environment","operator":"equals","value":{"type":"string","value":"production"}}]\' --json',
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -25,7 +26,7 @@ export default defineCommand({
     source: { type: "string", description: "Product-event source key" },
     event: { type: "string", description: "Exact tracked event name" },
     key: { type: "string", description: "Stable lower_snake_case feature key" },
-    name: { type: "string", description: "Human-readable Value Feature name" },
+    name: { type: "string", description: "Human-readable Feature name" },
     "property-filters": {
       type: "string",
       description: "Optional JSON array of exact or exists property filters",
@@ -37,7 +38,7 @@ export default defineCommand({
 
     return runTool(
       client,
-      publicToolContracts.outlit_create_value_feature.toolName,
+      publicToolContracts.outlit_create_feature.toolName,
       {
         sourceKey: requiredTrimmedString(args.source, "--source", json),
         eventName: requiredString(args.event, "--event", json),
@@ -46,7 +47,7 @@ export default defineCommand({
         propertyFilters: parsePropertyFilters(args["property-filters"], json),
       },
       json,
-      { spinnerMessage: "Creating Value Feature..." },
+      { spinnerMessage: "Creating Feature..." },
     )
   },
 })

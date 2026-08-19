@@ -95,7 +95,7 @@ describe("createOutlitPiExtension", () => {
     ).toThrow("Unknown Outlit public tool")
   })
 
-  test("rejects every Behavior Metric command even when explicitly requested", () => {
+  test("rejects retired public Behavior Metric commands", () => {
     for (const toolName of [
       "outlit_list_behavior_metric_sources",
       "outlit_list_behavior_metric_events",
@@ -106,7 +106,7 @@ describe("createOutlitPiExtension", () => {
           apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
           fetch: vi.fn(),
         }),
-      ).toThrow("Tool is not available in @outlit/pi")
+      ).toThrow("Unknown Outlit public tool")
     }
   })
 
@@ -115,10 +115,10 @@ describe("createOutlitPiExtension", () => {
     expect(allPublicToolNames).toContain("outlit_get_customer_relationship")
     expect(allPublicToolNames).toContain("outlit_list_attention_items")
     expect(allPublicToolNames).toContain("outlit_get_attention_item")
-    expect(allPublicToolNames).toContain("outlit_get_value_feature_workspace")
-    expect(allPublicToolNames).toContain("outlit_create_value_feature")
-    expect(allPublicToolNames).toContain("outlit_archive_value_feature")
-    expect(allPublicToolNames).toContain("outlit_get_customer_feature_usage")
+    expect(allPublicToolNames).toContain("outlit_list_features")
+    expect(allPublicToolNames).toContain("outlit_create_feature")
+    expect(allPublicToolNames).toContain("outlit_archive_feature")
+    expect(allPublicToolNames).toContain("outlit_get_customer_features")
     expect(allPublicToolNames).not.toContain("outlit_list_behavior_metric_sources")
     expect(allPublicToolNames).not.toContain("outlit_list_behavior_metric_events")
     expect(allPublicToolNames).not.toContain("outlit_create_behavior_metric")

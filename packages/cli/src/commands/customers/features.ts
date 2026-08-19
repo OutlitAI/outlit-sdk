@@ -4,21 +4,21 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { requiredTrimmedString } from "../../lib/platform-input"
-import { parseBoundedInteger } from "../value-features/input"
+import { parseBoundedInteger } from "../features/input"
 
 export default defineCommand({
   meta: {
-    name: "feature-usage",
+    name: "features",
     description: [
-      "Read exact historical Value Feature usage for one authorized customer.",
+      "Read exact historical Feature usage for one authorized customer.",
       "Unavailable source evidence remains distinct from no matches in the requested window.",
       "",
       "The customer argument accepts a customer domain, UUID, or exact name.",
       "",
       "Examples:",
-      "  outlit customers feature-usage acme.com --json",
-      "  outlit customers feature-usage acme.com --weeks 6 --json",
-      "  outlit customers feature-usage acme.com --weeks 53 --weekly --json",
+      "  outlit customers features acme.com --json",
+      "  outlit customers features acme.com --weeks 6 --json",
+      "  outlit customers features acme.com --weeks 53 --weekly --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -44,7 +44,7 @@ export default defineCommand({
 
     return runTool(
       client,
-      publicToolContracts.outlit_get_customer_feature_usage.toolName,
+      publicToolContracts.outlit_get_customer_features.toolName,
       {
         customer: requiredTrimmedString(args.customer, "<customer>", json),
         weeks: parseBoundedInteger(args.weeks, 12, "--weeks", 1, 53, json),

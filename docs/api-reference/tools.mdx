@@ -60,13 +60,10 @@ POST https://app.outlit.ai/api/tools/call
 | `outlit_get_integration_capabilities` through `outlit_setup_integration` | Negotiate and perform bounded integration setup, and read canonical configuration readiness |
 | `outlit_get_customer_activation` through `outlit_update_customer_activation` | Inspect, preview, and configure the ordinary activation event |
 | `outlit_get_workspace_settings`, `outlit_update_workspace_settings` | Read and update safe workspace settings |
-| `outlit_list_behavior_metric_sources` | List eligible product-event sources for Behavior Metrics |
-| `outlit_list_behavior_metric_events` | List attributed event candidates for one eligible Behavior Metric source |
-| `outlit_create_behavior_metric` | Create an event-based Behavior Metric from a discovered source and exact event selection |
-| `outlit_get_value_feature_workspace` | Read configured Value Features, exact historical usage, eligible sources, and ready, partial, or unavailable candidate discovery |
-| `outlit_create_value_feature` | Create or idempotently return one Value Feature observed by one event rule |
-| `outlit_archive_value_feature` | Archive a Value Feature using its opaque id and current revision when another active feature remains |
-| `outlit_get_customer_feature_usage` | Read exact historical Value Feature usage for one authorized customer |
+| `outlit_list_features` | Read configured Features, exact historical usage, eligible sources, and ready, partial, or unavailable candidate discovery |
+| `outlit_create_feature` | Create or idempotently return one Feature observed by one event rule |
+| `outlit_archive_feature` | Archive a Feature using its opaque id and current revision when another active feature remains |
+| `outlit_get_customer_features` | Read exact historical Feature usage for one authorized customer |
 
 <Info>
   Tool input schemas are published by `@outlit/tools` as `publicToolContracts`. Use that package when building schema-driven clients or model tool definitions.
@@ -172,11 +169,11 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 }
 ```
 
-### Read Customer Feature Usage
+### Read Customer Features
 
 ```json
 {
-  "tool": "outlit_get_customer_feature_usage",
+  "tool": "outlit_get_customer_features",
   "input": {
     "customer": "acme.com",
     "weeks": 12
@@ -187,6 +184,8 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 Feature usage is factual historical evidence. A feature can report complete or partial counts,
 no matches in the requested window, or unavailable source evidence. Unavailable evidence is not
 converted to zero. Archive is the only self-service lifecycle action in the MVP.
+Creating a Feature also creates the supporting weekly event-count and active-days metrics inside
+Outlit; those metrics are not separate public resources.
 
 ## Response
 

@@ -8,16 +8,16 @@ import { parseBoundedInteger } from "./input"
 
 export default defineCommand({
   meta: {
-    name: "workspace",
+    name: "list",
     description: [
-      "Read configured Value Features, their exact historical usage, and event candidates.",
+      "List configured Features, their exact historical usage, and event candidates.",
       "When exactly one eligible source exists, Core selects it automatically.",
       "Candidate discovery returns ready or partial items, or an unavailable reason.",
       "Unavailable evidence remains distinct from zero usage.",
       "",
       "Examples:",
-      "  outlit value-features workspace --json",
-      "  outlit value-features workspace --source metric_source_v1_0123456789abcdef0123456789abcdef --weeks 4 --candidate-limit 20 --json",
+      "  outlit features list --json",
+      "  outlit features list --source metric_source_v1_0123456789abcdef0123456789abcdef --weeks 4 --candidate-limit 20 --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -49,12 +49,8 @@ export default defineCommand({
     const sourceKey = optionalTrimmedString(args.source)
     if (sourceKey) input.sourceKey = sourceKey
 
-    return runTool(
-      client,
-      publicToolContracts.outlit_get_value_feature_workspace.toolName,
-      input,
-      json,
-      { spinnerMessage: "Loading Value Features..." },
-    )
+    return runTool(client, publicToolContracts.outlit_list_features.toolName, input, json, {
+      spinnerMessage: "Loading Features...",
+    })
   },
 })

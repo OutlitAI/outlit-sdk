@@ -110,28 +110,17 @@ describe("Core-generated OpenAPI spec", () => {
     )
   })
 
-  test("documents immediate production for created Behavior Metrics", () => {
-    const schema = readSpec().components?.schemas?.ToolOutput_outlit_create_behavior_metric as {
-      properties?: {
-        metric?: {
-          properties?: { evaluationMode?: unknown; definitions?: unknown }
-        }
-      }
+  test("documents Feature creation without a public Behavior Metric resource", () => {
+    const schemas = readSpec().components?.schemas ?? {}
+    const schema = schemas.ToolOutput_outlit_create_feature as {
+      required?: string[]
+      properties?: { created?: unknown; feature?: unknown }
     }
 
-    expect(schema.properties?.metric?.properties?.evaluationMode).toEqual({
-      type: "string",
-      const: "PRODUCTION",
-    })
-    expect(schema.properties?.metric?.properties?.definitions).toMatchObject({
-      type: "object",
-      required: ["activeDays", "eventCount"],
-      additionalProperties: false,
-      properties: {
-        activeDays: { properties: { aggregation: { const: "active_days" } } },
-        eventCount: { properties: { aggregation: { const: "event_count" } } },
-      },
-    })
+    expect(schema.required).toEqual(["created", "feature"])
+    expect(schema.properties?.created).toEqual({ type: "boolean" })
+    expect(schema.properties?.feature).toBeDefined()
+    expect(schemas.ToolOutput_outlit_create_behavior_metric).toBeUndefined()
   })
 
   test("documents the stable gateway error envelope", () => {

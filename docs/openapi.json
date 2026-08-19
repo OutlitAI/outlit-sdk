@@ -575,10 +575,10 @@
                     "properties": {
                       "tool": {
                         "type": "string",
-                        "const": "outlit_list_behavior_metric_sources"
+                        "const": "outlit_list_features"
                       },
                       "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_list_behavior_metric_sources"
+                        "$ref": "#/components/schemas/ToolInput_outlit_list_features"
                       }
                     },
                     "required": [
@@ -591,10 +591,10 @@
                     "properties": {
                       "tool": {
                         "type": "string",
-                        "const": "outlit_list_behavior_metric_events"
+                        "const": "outlit_create_feature"
                       },
                       "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_list_behavior_metric_events"
+                        "$ref": "#/components/schemas/ToolInput_outlit_create_feature"
                       }
                     },
                     "required": [
@@ -607,10 +607,10 @@
                     "properties": {
                       "tool": {
                         "type": "string",
-                        "const": "outlit_create_behavior_metric"
+                        "const": "outlit_archive_feature"
                       },
                       "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_create_behavior_metric"
+                        "$ref": "#/components/schemas/ToolInput_outlit_archive_feature"
                       }
                     },
                     "required": [
@@ -623,58 +623,10 @@
                     "properties": {
                       "tool": {
                         "type": "string",
-                        "const": "outlit_get_value_feature_workspace"
+                        "const": "outlit_get_customer_features"
                       },
                       "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_get_value_feature_workspace"
-                      }
-                    },
-                    "required": [
-                      "tool"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "tool": {
-                        "type": "string",
-                        "const": "outlit_create_value_feature"
-                      },
-                      "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_create_value_feature"
-                      }
-                    },
-                    "required": [
-                      "tool"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "tool": {
-                        "type": "string",
-                        "const": "outlit_archive_value_feature"
-                      },
-                      "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_archive_value_feature"
-                      }
-                    },
-                    "required": [
-                      "tool"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "tool": {
-                        "type": "string",
-                        "const": "outlit_get_customer_feature_usage"
-                      },
-                      "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_get_customer_feature_usage"
+                        "$ref": "#/components/schemas/ToolInput_outlit_get_customer_features"
                       }
                     },
                     "required": [
@@ -832,25 +784,16 @@
                       "$ref": "#/components/schemas/ToolOutput_outlit_update_workspace_settings"
                     },
                     {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_list_behavior_metric_sources"
+                      "$ref": "#/components/schemas/ToolOutput_outlit_list_features"
                     },
                     {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_list_behavior_metric_events"
+                      "$ref": "#/components/schemas/ToolOutput_outlit_create_feature"
                     },
                     {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_create_behavior_metric"
+                      "$ref": "#/components/schemas/ToolOutput_outlit_archive_feature"
                     },
                     {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_get_value_feature_workspace"
-                    },
-                    {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_create_value_feature"
-                    },
-                    {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_archive_value_feature"
-                    },
-                    {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_get_customer_feature_usage"
+                      "$ref": "#/components/schemas/ToolOutput_outlit_get_customer_features"
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_list_attention_items"
@@ -3648,174 +3591,7 @@
         ],
         "additionalProperties": false
       },
-      "ToolInput_outlit_list_behavior_metric_sources": {
-        "type": "object",
-        "properties": {},
-        "additionalProperties": false
-      },
-      "ToolInput_outlit_list_behavior_metric_events": {
-        "type": "object",
-        "properties": {
-          "sourceKey": {
-            "type": "string",
-            "pattern": "^metric_source_v1_[a-f0-9]{32}$"
-          },
-          "weeks": {
-            "default": 12,
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 53
-          },
-          "limit": {
-            "default": 100,
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 100
-          }
-        },
-        "required": [
-          "sourceKey"
-        ],
-        "additionalProperties": false
-      },
-      "ToolInput_outlit_create_behavior_metric": {
-        "type": "object",
-        "properties": {
-          "sourceKey": {
-            "type": "string",
-            "pattern": "^metric_source_v1_[a-f0-9]{32}$"
-          },
-          "eventName": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 191
-          },
-          "behaviorKey": {
-            "type": "string",
-            "maxLength": 64,
-            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
-          },
-          "label": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 255
-          },
-          "propertyFilters": {
-            "default": [],
-            "maxItems": 5,
-            "type": "array",
-            "items": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "property": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 191
-                    },
-                    "operator": {
-                      "type": "string",
-                      "const": "equals"
-                    },
-                    "value": {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "type": "string",
-                              "const": "string"
-                            },
-                            "value": {
-                              "type": "string",
-                              "maxLength": 191
-                            }
-                          },
-                          "required": [
-                            "type",
-                            "value"
-                          ],
-                          "additionalProperties": false
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "type": "string",
-                              "const": "number"
-                            },
-                            "value": {
-                              "type": "number",
-                              "minimum": -9007199254740991,
-                              "maximum": 9007199254740991
-                            }
-                          },
-                          "required": [
-                            "type",
-                            "value"
-                          ],
-                          "additionalProperties": false
-                        },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "type": "string",
-                              "const": "boolean"
-                            },
-                            "value": {
-                              "type": "boolean"
-                            }
-                          },
-                          "required": [
-                            "type",
-                            "value"
-                          ],
-                          "additionalProperties": false
-                        }
-                      ]
-                    }
-                  },
-                  "required": [
-                    "property",
-                    "operator",
-                    "value"
-                  ],
-                  "additionalProperties": false
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "property": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 191
-                    },
-                    "operator": {
-                      "type": "string",
-                      "const": "exists"
-                    }
-                  },
-                  "required": [
-                    "property",
-                    "operator"
-                  ],
-                  "additionalProperties": false
-                }
-              ]
-            }
-          }
-        },
-        "required": [
-          "sourceKey",
-          "eventName",
-          "behaviorKey",
-          "label"
-        ],
-        "additionalProperties": false
-      },
-      "ToolInput_outlit_get_value_feature_workspace": {
+      "ToolInput_outlit_list_features": {
         "type": "object",
         "properties": {
           "sourceKey": {
@@ -3837,7 +3613,7 @@
         },
         "additionalProperties": false
       },
-      "ToolInput_outlit_create_value_feature": {
+      "ToolInput_outlit_create_feature": {
         "type": "object",
         "properties": {
           "sourceKey": {
@@ -3974,7 +3750,7 @@
         ],
         "additionalProperties": false
       },
-      "ToolInput_outlit_archive_value_feature": {
+      "ToolInput_outlit_archive_feature": {
         "type": "object",
         "properties": {
           "id": {
@@ -3992,7 +3768,7 @@
         ],
         "additionalProperties": false
       },
-      "ToolInput_outlit_get_customer_feature_usage": {
+      "ToolInput_outlit_get_customer_features": {
         "type": "object",
         "properties": {
           "customer": {
@@ -11047,378 +10823,7 @@
         ],
         "additionalProperties": false
       },
-      "ToolOutput_outlit_list_behavior_metric_sources": {
-        "type": "object",
-        "properties": {
-          "sources": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "sourceKey": {
-                  "type": "string",
-                  "pattern": "^metric_source_v1_[a-f0-9]{32}$"
-                },
-                "provider": {
-                  "type": "string",
-                  "enum": [
-                    "outlit_sdk",
-                    "posthog",
-                    "mixpanel"
-                  ]
-                },
-                "label": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 255
-                },
-                "readiness": {
-                  "type": "string",
-                  "enum": [
-                    "READY",
-                    "WARMING",
-                    "BLOCKED"
-                  ]
-                }
-              },
-              "required": [
-                "sourceKey",
-                "provider",
-                "label",
-                "readiness"
-              ],
-              "additionalProperties": false
-            }
-          }
-        },
-        "required": [
-          "sources"
-        ],
-        "additionalProperties": false
-      },
-      "ToolOutput_outlit_list_behavior_metric_events": {
-        "type": "object",
-        "properties": {
-          "events": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "eventName": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 191
-                },
-                "eventCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 9007199254740991
-                },
-                "distinctCustomers": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 9007199254740991
-                },
-                "activeWeeks": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "maximum": 53
-                },
-                "propertyKeys": {
-                  "maxItems": 10,
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 191
-                  }
-                }
-              },
-              "required": [
-                "eventName",
-                "eventCount",
-                "distinctCustomers",
-                "activeWeeks",
-                "propertyKeys"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "truncated": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "events",
-          "truncated"
-        ],
-        "additionalProperties": false
-      },
-      "ToolOutput_outlit_create_behavior_metric": {
-        "type": "object",
-        "properties": {
-          "created": {
-            "type": "boolean"
-          },
-          "metric": {
-            "type": "object",
-            "properties": {
-              "sourceKey": {
-                "type": "string",
-                "pattern": "^metric_source_v1_[a-f0-9]{32}$"
-              },
-              "behaviorKey": {
-                "type": "string",
-                "maxLength": 64,
-                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
-              },
-              "label": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 255
-              },
-              "eventSelection": {
-                "oneOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "mode": {
-                        "type": "string",
-                        "const": "exact_event_names"
-                      },
-                      "eventNames": {
-                        "minItems": 1,
-                        "maxItems": 1,
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 191
-                        }
-                      }
-                    },
-                    "required": [
-                      "mode",
-                      "eventNames"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "mode": {
-                        "type": "string",
-                        "const": "configured_event"
-                      },
-                      "eventName": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 191
-                      },
-                      "propertyFilters": {
-                        "minItems": 1,
-                        "maxItems": 5,
-                        "type": "array",
-                        "items": {
-                          "oneOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "property": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 191
-                                },
-                                "operator": {
-                                  "type": "string",
-                                  "const": "equals"
-                                },
-                                "value": {
-                                  "oneOf": [
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "type": {
-                                          "type": "string",
-                                          "const": "string"
-                                        },
-                                        "value": {
-                                          "type": "string",
-                                          "maxLength": 191
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "type": {
-                                          "type": "string",
-                                          "const": "number"
-                                        },
-                                        "value": {
-                                          "type": "number",
-                                          "minimum": -9007199254740991,
-                                          "maximum": 9007199254740991
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value"
-                                      ],
-                                      "additionalProperties": false
-                                    },
-                                    {
-                                      "type": "object",
-                                      "properties": {
-                                        "type": {
-                                          "type": "string",
-                                          "const": "boolean"
-                                        },
-                                        "value": {
-                                          "type": "boolean"
-                                        }
-                                      },
-                                      "required": [
-                                        "type",
-                                        "value"
-                                      ],
-                                      "additionalProperties": false
-                                    }
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "property",
-                                "operator",
-                                "value"
-                              ],
-                              "additionalProperties": false
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "property": {
-                                  "type": "string",
-                                  "minLength": 1,
-                                  "maxLength": 191
-                                },
-                                "operator": {
-                                  "type": "string",
-                                  "const": "exists"
-                                }
-                              },
-                              "required": [
-                                "property",
-                                "operator"
-                              ],
-                              "additionalProperties": false
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "mode",
-                      "eventName",
-                      "propertyFilters"
-                    ],
-                    "additionalProperties": false
-                  }
-                ]
-              },
-              "status": {
-                "type": "string",
-                "const": "ENABLED"
-              },
-              "evaluationMode": {
-                "type": "string",
-                "const": "PRODUCTION"
-              },
-              "definitions": {
-                "type": "object",
-                "properties": {
-                  "activeDays": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      },
-                      "metricKey": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 191
-                      },
-                      "aggregation": {
-                        "type": "string",
-                        "const": "active_days"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "metricKey",
-                      "aggregation"
-                    ],
-                    "additionalProperties": false
-                  },
-                  "eventCount": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      },
-                      "metricKey": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 191
-                      },
-                      "aggregation": {
-                        "type": "string",
-                        "const": "event_count"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "metricKey",
-                      "aggregation"
-                    ],
-                    "additionalProperties": false
-                  }
-                },
-                "required": [
-                  "activeDays",
-                  "eventCount"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "sourceKey",
-              "behaviorKey",
-              "label",
-              "eventSelection",
-              "status",
-              "evaluationMode",
-              "definitions"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "created",
-          "metric"
-        ],
-        "additionalProperties": false
-      },
-      "ToolOutput_outlit_get_value_feature_workspace": {
+      "ToolOutput_outlit_list_features": {
         "type": "object",
         "properties": {
           "sources": {
@@ -11936,7 +11341,7 @@
         ],
         "additionalProperties": false
       },
-      "ToolOutput_outlit_create_value_feature": {
+      "ToolOutput_outlit_create_feature": {
         "type": "object",
         "properties": {
           "created": {
@@ -12105,7 +11510,7 @@
         ],
         "additionalProperties": false
       },
-      "ToolOutput_outlit_archive_value_feature": {
+      "ToolOutput_outlit_archive_feature": {
         "type": "object",
         "properties": {
           "archived": {
@@ -12137,7 +11542,7 @@
         ],
         "additionalProperties": false
       },
-      "ToolOutput_outlit_get_customer_feature_usage": {
+      "ToolOutput_outlit_get_customer_features": {
         "type": "object",
         "properties": {
           "customer": {
@@ -13203,5 +12608,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "c6db1bcb84bf3dfb1fcf76cdafd41d30b1d7e92fdf441cb2c0afe635e5cfcec1"
+  "x-outlit-contract-hash": "6f255fcf2144a087ffe9223e4c9385ac3bcc72e13fa6aee1db2cb06981afc6ad"
 }

@@ -25,14 +25,14 @@ describe("customers command", () => {
       "list",
       "get",
       "relationship",
-      "feature-usage",
+      "features",
       "timeline",
       "owner",
       "grant",
       "revoke",
     ])
     expect(description).toContain("owner set")
-    expect(description).toContain("feature-usage")
+    expect(description).toContain("features")
     expect(description).toContain("grant")
     expect(description).toContain("revoke")
     expect(description).not.toContain("assign-owner")
