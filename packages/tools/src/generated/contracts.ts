@@ -9437,7 +9437,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "value_features",
     "title": "Create Feature",
-    "description": "Create or idempotently return one customer-value feature observed by one event rule.",
+    "description": "Create or idempotently return one customer-value Feature observed by one event rule.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -9753,7 +9753,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "value_features",
     "title": "Archive Feature",
-    "description": "Archive a value feature when at least one other active feature remains.",
+    "description": "Archive a Feature when at least one other active Feature remains.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -12400,4 +12400,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "81b993f496162d562eff5cb7b5ce36b25ea6bd4cd6a6dd27e6f23eb93caa159e" as const
+export const sdkConsumerContractHash = "6f255fcf2144a087ffe9223e4c9385ac3bcc72e13fa6aee1db2cb06981afc6ad" as const
