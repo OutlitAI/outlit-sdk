@@ -41,6 +41,10 @@ export const publicToolNames = [
   "outlit_list_behavior_metric_sources",
   "outlit_list_behavior_metric_events",
   "outlit_create_behavior_metric",
+  "outlit_get_value_feature_workspace",
+  "outlit_create_value_feature",
+  "outlit_archive_value_feature",
+  "outlit_get_customer_feature_usage",
   "outlit_list_attention_items",
   "outlit_get_attention_item",
 ] as const
@@ -9448,6 +9452,1346 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
+  "outlit_get_value_feature_workspace": {
+    "toolName": "outlit_get_value_feature_workspace",
+    "commandId": "value_feature_workspace.get",
+    "commandVersion": 1,
+    "ownerDomain": "value_features",
+    "title": "Get Value Feature Workspace",
+    "description": "Read configured value features, exact historical usage, and observed event candidates.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sourceKey": {
+          "type": "string",
+          "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+        },
+        "weeks": {
+          "default": 12,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 53,
+        },
+        "candidateLimit": {
+          "default": 100,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+        },
+      },
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sourceKey": {
+                "type": "string",
+                "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+              },
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "outlit_sdk",
+                  "posthog",
+                  "mixpanel",
+                ],
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+              },
+              "readiness": {
+                "type": "string",
+                "enum": [
+                  "READY",
+                  "WARMING",
+                  "BLOCKED",
+                ],
+              },
+            },
+            "required": [
+              "sourceKey",
+              "provider",
+              "label",
+              "readiness",
+            ],
+            "additionalProperties": false,
+          },
+        },
+        "selectedSourceKey": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "workspaceActiveFeatureCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+        },
+        "features": {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^value_feature_v1_[a-f0-9]{32}$",
+              },
+              "revision": {
+                "type": "string",
+                "pattern": "^value_feature_revision_v1_[a-f0-9]{32}$",
+              },
+              "sourceKey": {
+                "type": "string",
+                "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+              },
+              "featureKey": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+              },
+              "rule": {
+                "type": "object",
+                "properties": {
+                  "eventName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  "propertyFilters": {
+                    "maxItems": 5,
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "property": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 191,
+                            },
+                            "operator": {
+                              "type": "string",
+                              "const": "equals",
+                            },
+                            "value": {
+                              "oneOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "string",
+                                    },
+                                    "value": {
+                                      "type": "string",
+                                      "maxLength": 191,
+                                    },
+                                  },
+                                  "required": [
+                                    "type",
+                                    "value",
+                                  ],
+                                  "additionalProperties": false,
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "number",
+                                    },
+                                    "value": {
+                                      "type": "number",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                    },
+                                  },
+                                  "required": [
+                                    "type",
+                                    "value",
+                                  ],
+                                  "additionalProperties": false,
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "boolean",
+                                    },
+                                    "value": {
+                                      "type": "boolean",
+                                    },
+                                  },
+                                  "required": [
+                                    "type",
+                                    "value",
+                                  ],
+                                  "additionalProperties": false,
+                                },
+                              ],
+                            },
+                          },
+                          "required": [
+                            "property",
+                            "operator",
+                            "value",
+                          ],
+                          "additionalProperties": false,
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "property": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 191,
+                            },
+                            "operator": {
+                              "type": "string",
+                              "const": "exists",
+                            },
+                          },
+                          "required": [
+                            "property",
+                            "operator",
+                          ],
+                          "additionalProperties": false,
+                        },
+                      ],
+                    },
+                  },
+                },
+                "required": [
+                  "eventName",
+                  "propertyFilters",
+                ],
+                "additionalProperties": false,
+              },
+              "evidence": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "window": {
+                        "type": "object",
+                        "properties": {
+                          "startAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                          },
+                          "endAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                          },
+                        },
+                        "required": [
+                          "startAt",
+                          "endAt",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      "coverage": {
+                        "type": "string",
+                        "enum": [
+                          "complete",
+                          "partial",
+                        ],
+                      },
+                      "eventCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      "activeDays": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      "activeWeeks": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 53,
+                      },
+                      "firstObservedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "lastObservedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "distinctCustomers": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                    },
+                    "required": [
+                      "window",
+                      "coverage",
+                      "eventCount",
+                      "activeDays",
+                      "activeWeeks",
+                      "firstObservedAt",
+                      "lastObservedAt",
+                      "distinctCustomers",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "window": {
+                        "type": "object",
+                        "properties": {
+                          "startAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                          },
+                          "endAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                          },
+                        },
+                        "required": [
+                          "startAt",
+                          "endAt",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      "coverage": {
+                        "type": "string",
+                        "const": "unavailable",
+                      },
+                      "reason": {
+                        "type": "string",
+                        "enum": [
+                          "SOURCE_BLOCKED",
+                          "SOURCE_NOT_READY",
+                          "QUERY_FAILED",
+                        ],
+                      },
+                    },
+                    "required": [
+                      "window",
+                      "coverage",
+                      "reason",
+                    ],
+                    "additionalProperties": false,
+                  },
+                ],
+              },
+            },
+            "required": [
+              "id",
+              "revision",
+              "sourceKey",
+              "featureKey",
+              "name",
+              "rule",
+              "evidence",
+            ],
+            "additionalProperties": false,
+          },
+        },
+        "candidates": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "const": "ready",
+                },
+                "items": {
+                  "maxItems": 100,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "eventName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191,
+                      },
+                      "eventCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      "distinctCustomers": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      "activeWeeks": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 53,
+                      },
+                      "propertyKeys": {
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 191,
+                        },
+                      },
+                    },
+                    "required": [
+                      "eventName",
+                      "eventCount",
+                      "distinctCustomers",
+                      "activeWeeks",
+                      "propertyKeys",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "truncated": {
+                  "type": "boolean",
+                },
+              },
+              "required": [
+                "status",
+                "items",
+                "truncated",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "const": "partial",
+                },
+                "items": {
+                  "maxItems": 100,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "eventName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191,
+                      },
+                      "eventCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      "distinctCustomers": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      "activeWeeks": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 53,
+                      },
+                      "propertyKeys": {
+                        "maxItems": 10,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 191,
+                        },
+                      },
+                    },
+                    "required": [
+                      "eventName",
+                      "eventCount",
+                      "distinctCustomers",
+                      "activeWeeks",
+                      "propertyKeys",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "truncated": {
+                  "type": "boolean",
+                },
+              },
+              "required": [
+                "status",
+                "items",
+                "truncated",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "const": "unavailable",
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "SOURCE_BLOCKED",
+                    "SOURCE_NOT_READY",
+                    "QUERY_FAILED",
+                  ],
+                },
+              },
+              "required": [
+                "status",
+                "reason",
+              ],
+              "additionalProperties": false,
+            },
+          ],
+        },
+      },
+      "required": [
+        "sources",
+        "selectedSourceKey",
+        "workspaceActiveFeatureCount",
+        "features",
+        "candidates",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_create_value_feature": {
+    "toolName": "outlit_create_value_feature",
+    "commandId": "value_feature.create",
+    "commandVersion": 1,
+    "ownerDomain": "value_features",
+    "title": "Create Value Feature",
+    "description": "Create or idempotently return one customer-value feature observed by one event rule.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "sourceKey": {
+          "type": "string",
+          "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+        },
+        "eventName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "featureKey": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+        },
+        "propertyFilters": {
+          "default": [],
+          "maxItems": 5,
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "property": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  "operator": {
+                    "type": "string",
+                    "const": "equals",
+                  },
+                  "value": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "string",
+                          },
+                          "value": {
+                            "type": "string",
+                            "maxLength": 191,
+                          },
+                        },
+                        "required": [
+                          "type",
+                          "value",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "number",
+                          },
+                          "value": {
+                            "type": "number",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                          },
+                        },
+                        "required": [
+                          "type",
+                          "value",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "boolean",
+                          },
+                          "value": {
+                            "type": "boolean",
+                          },
+                        },
+                        "required": [
+                          "type",
+                          "value",
+                        ],
+                        "additionalProperties": false,
+                      },
+                    ],
+                  },
+                },
+                "required": [
+                  "property",
+                  "operator",
+                  "value",
+                ],
+                "additionalProperties": false,
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "property": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  "operator": {
+                    "type": "string",
+                    "const": "exists",
+                  },
+                },
+                "required": [
+                  "property",
+                  "operator",
+                ],
+                "additionalProperties": false,
+              },
+            ],
+          },
+        },
+      },
+      "required": [
+        "sourceKey",
+        "eventName",
+        "featureKey",
+        "name",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "boolean",
+        },
+        "feature": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^value_feature_v1_[a-f0-9]{32}$",
+            },
+            "revision": {
+              "type": "string",
+              "pattern": "^value_feature_revision_v1_[a-f0-9]{32}$",
+            },
+            "sourceKey": {
+              "type": "string",
+              "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+            },
+            "featureKey": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+            },
+            "rule": {
+              "type": "object",
+              "properties": {
+                "eventName": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 191,
+                },
+                "propertyFilters": {
+                  "maxItems": 5,
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "property": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 191,
+                          },
+                          "operator": {
+                            "type": "string",
+                            "const": "equals",
+                          },
+                          "value": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "string",
+                                  },
+                                  "value": {
+                                    "type": "string",
+                                    "maxLength": 191,
+                                  },
+                                },
+                                "required": [
+                                  "type",
+                                  "value",
+                                ],
+                                "additionalProperties": false,
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "number",
+                                  },
+                                  "value": {
+                                    "type": "number",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                  },
+                                },
+                                "required": [
+                                  "type",
+                                  "value",
+                                ],
+                                "additionalProperties": false,
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "boolean",
+                                  },
+                                  "value": {
+                                    "type": "boolean",
+                                  },
+                                },
+                                "required": [
+                                  "type",
+                                  "value",
+                                ],
+                                "additionalProperties": false,
+                              },
+                            ],
+                          },
+                        },
+                        "required": [
+                          "property",
+                          "operator",
+                          "value",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "property": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 191,
+                          },
+                          "operator": {
+                            "type": "string",
+                            "const": "exists",
+                          },
+                        },
+                        "required": [
+                          "property",
+                          "operator",
+                        ],
+                        "additionalProperties": false,
+                      },
+                    ],
+                  },
+                },
+              },
+              "required": [
+                "eventName",
+                "propertyFilters",
+              ],
+              "additionalProperties": false,
+            },
+          },
+          "required": [
+            "id",
+            "revision",
+            "sourceKey",
+            "featureKey",
+            "name",
+            "rule",
+          ],
+          "additionalProperties": false,
+        },
+      },
+      "required": [
+        "created",
+        "feature",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_archive_value_feature": {
+    "toolName": "outlit_archive_value_feature",
+    "commandId": "value_feature.archive",
+    "commandVersion": 1,
+    "ownerDomain": "value_features",
+    "title": "Archive Value Feature",
+    "description": "Archive a value feature when at least one other active feature remains.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^value_feature_v1_[a-f0-9]{32}$",
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^value_feature_revision_v1_[a-f0-9]{32}$",
+        },
+      },
+      "required": [
+        "id",
+        "revision",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "archived": {
+          "type": "boolean",
+          "const": true,
+        },
+        "feature": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^value_feature_v1_[a-f0-9]{32}$",
+            },
+            "revision": {
+              "type": "string",
+              "pattern": "^value_feature_revision_v1_[a-f0-9]{32}$",
+            },
+          },
+          "required": [
+            "id",
+            "revision",
+          ],
+          "additionalProperties": false,
+        },
+      },
+      "required": [
+        "archived",
+        "feature",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_get_customer_feature_usage": {
+    "toolName": "outlit_get_customer_feature_usage",
+    "commandId": "customer_feature_usage.get",
+    "commandVersion": 1,
+    "ownerDomain": "value_features",
+    "title": "Get Customer Feature Usage",
+    "description": "Read exact historical feature-usage evidence for one authorized customer.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+        },
+        "weeks": {
+          "default": 12,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 53,
+        },
+        "includeWeeklyUsage": {
+          "default": false,
+          "type": "boolean",
+        },
+      },
+      "required": [
+        "customer",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customer": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+            },
+          },
+          "required": [
+            "id",
+            "name",
+          ],
+          "additionalProperties": false,
+        },
+        "features": {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^value_feature_v1_[a-f0-9]{32}$",
+              },
+              "revision": {
+                "type": "string",
+                "pattern": "^value_feature_revision_v1_[a-f0-9]{32}$",
+              },
+              "sourceKey": {
+                "type": "string",
+                "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+              },
+              "featureKey": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255,
+              },
+              "rule": {
+                "type": "object",
+                "properties": {
+                  "eventName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  "propertyFilters": {
+                    "maxItems": 5,
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "property": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 191,
+                            },
+                            "operator": {
+                              "type": "string",
+                              "const": "equals",
+                            },
+                            "value": {
+                              "oneOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "string",
+                                    },
+                                    "value": {
+                                      "type": "string",
+                                      "maxLength": 191,
+                                    },
+                                  },
+                                  "required": [
+                                    "type",
+                                    "value",
+                                  ],
+                                  "additionalProperties": false,
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "number",
+                                    },
+                                    "value": {
+                                      "type": "number",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                    },
+                                  },
+                                  "required": [
+                                    "type",
+                                    "value",
+                                  ],
+                                  "additionalProperties": false,
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "boolean",
+                                    },
+                                    "value": {
+                                      "type": "boolean",
+                                    },
+                                  },
+                                  "required": [
+                                    "type",
+                                    "value",
+                                  ],
+                                  "additionalProperties": false,
+                                },
+                              ],
+                            },
+                          },
+                          "required": [
+                            "property",
+                            "operator",
+                            "value",
+                          ],
+                          "additionalProperties": false,
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "property": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 191,
+                            },
+                            "operator": {
+                              "type": "string",
+                              "const": "exists",
+                            },
+                          },
+                          "required": [
+                            "property",
+                            "operator",
+                          ],
+                          "additionalProperties": false,
+                        },
+                      ],
+                    },
+                  },
+                },
+                "required": [
+                  "eventName",
+                  "propertyFilters",
+                ],
+                "additionalProperties": false,
+              },
+              "evidence": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "window": {
+                        "type": "object",
+                        "properties": {
+                          "startAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                          },
+                          "endAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                          },
+                        },
+                        "required": [
+                          "startAt",
+                          "endAt",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      "coverage": {
+                        "type": "string",
+                        "enum": [
+                          "complete",
+                          "partial",
+                        ],
+                      },
+                      "eventCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      "activeDays": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      "activeWeeks": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 53,
+                      },
+                      "firstObservedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "lastObservedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "weeklyUsage": {
+                        "maxItems": 53,
+                        "type": "array",
+                        "items": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "weekStartAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                },
+                                "coverage": {
+                                  "type": "string",
+                                  "enum": [
+                                    "complete",
+                                    "partial",
+                                  ],
+                                },
+                                "eventCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                },
+                                "activeDays": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 7,
+                                },
+                              },
+                              "required": [
+                                "weekStartAt",
+                                "coverage",
+                                "eventCount",
+                                "activeDays",
+                              ],
+                              "additionalProperties": false,
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "weekStartAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                },
+                                "coverage": {
+                                  "type": "string",
+                                  "const": "unavailable",
+                                },
+                              },
+                              "required": [
+                                "weekStartAt",
+                                "coverage",
+                              ],
+                              "additionalProperties": false,
+                            },
+                          ],
+                        },
+                      },
+                    },
+                    "required": [
+                      "window",
+                      "coverage",
+                      "eventCount",
+                      "activeDays",
+                      "activeWeeks",
+                      "firstObservedAt",
+                      "lastObservedAt",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "window": {
+                        "type": "object",
+                        "properties": {
+                          "startAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                          },
+                          "endAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                          },
+                        },
+                        "required": [
+                          "startAt",
+                          "endAt",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      "coverage": {
+                        "type": "string",
+                        "const": "unavailable",
+                      },
+                      "reason": {
+                        "type": "string",
+                        "enum": [
+                          "SOURCE_BLOCKED",
+                          "SOURCE_NOT_READY",
+                          "QUERY_FAILED",
+                        ],
+                      },
+                    },
+                    "required": [
+                      "window",
+                      "coverage",
+                      "reason",
+                    ],
+                    "additionalProperties": false,
+                  },
+                ],
+              },
+            },
+            "required": [
+              "id",
+              "revision",
+              "sourceKey",
+              "featureKey",
+              "name",
+              "rule",
+              "evidence",
+            ],
+            "additionalProperties": false,
+          },
+        },
+      },
+      "required": [
+        "customer",
+        "features",
+      ],
+      "additionalProperties": false,
+    },
+  },
   "outlit_list_attention_items": {
     "toolName": "outlit_list_attention_items",
     "commandId": "attention.list",
@@ -10281,6 +11625,10 @@ export const consumerToolPolicies = {
     "outlit_update_customer_activation",
     "outlit_get_workspace_settings",
     "outlit_update_workspace_settings",
+    "outlit_get_value_feature_workspace",
+    "outlit_create_value_feature",
+    "outlit_archive_value_feature",
+    "outlit_get_customer_feature_usage",
     "outlit_list_attention_items",
     "outlit_get_attention_item",
   ],
@@ -10322,6 +11670,10 @@ export const consumerToolPolicies = {
     "outlit_list_behavior_metric_sources",
     "outlit_list_behavior_metric_events",
     "outlit_create_behavior_metric",
+    "outlit_get_value_feature_workspace",
+    "outlit_create_value_feature",
+    "outlit_archive_value_feature",
+    "outlit_get_customer_feature_usage",
     "outlit_list_attention_items",
     "outlit_get_attention_item",
   ],
@@ -11622,4 +12974,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "176e5b86f483b89c3b0eb167bc63cacd5157ab639cadda7c118d01a8452a8d82" as const
+export const sdkConsumerContractHash = "c6db1bcb84bf3dfb1fcf76cdafd41d30b1d7e92fdf441cb2c0afe635e5cfcec1" as const

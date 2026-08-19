@@ -295,6 +295,76 @@ outlit customers relationship acme.com --json
 }
 ```
 
+## Customers Feature Usage
+
+Read exact historical Value Feature usage for one authorized customer.
+
+```text
+outlit customers feature-usage <customer> [--weeks 1-53] [--weekly]
+```
+
+`<customer>` accepts a customer domain, UUID, or exact name. The default window is 12 weeks.
+Each feature reports factual observation evidence from its configured event rule. Complete or
+partial coverage, no matches, and unavailable source evidence remain distinct; unavailable
+evidence is never rendered as zero usage. Add `--weekly` to include the ordered weekly
+`eventCount` and `activeDays` projection used by the customer feature lanes.
+
+```bash
+outlit customers feature-usage acme.com --json
+outlit customers feature-usage acme.com --weeks 6 --json
+outlit customers feature-usage acme.com --weeks 53 --weekly --json
+```
+
+## Value Features
+
+Configure the small workspace taxonomy of product capabilities whose recurring use represents
+customer value.
+
+```text
+outlit value-features workspace [flags]
+outlit value-features create [flags]
+outlit value-features archive <id> --revision <revision>
+```
+
+`value-features workspace` returns eligible product-event sources, the selected source, active
+features with exact historical evidence, and candidate discovery. Candidate discovery is a
+discriminated result: `ready` and `partial` contain `items` and `truncated`, while `unavailable`
+contains a reason. Core auto-selects a source only when exactly one is eligible.
+
+| Workspace flag | Default | Description |
+|----------------|---------|-------------|
+| `--source` | auto-select when unambiguous | Exact source key returned by the workspace command |
+| `--weeks` | `12` | Historical evidence window from 1 to 53 weeks |
+| `--candidate-limit` | `100` | Maximum event candidates from 1 to 100 |
+
+Create one feature from one exact event rule:
+
+```bash
+outlit value-features create \
+  --source metric_source_v1_0123456789abcdef0123456789abcdef \
+  --event report_exported \
+  --key reports_exported \
+  --name "Reports exported" \
+  --json
+```
+
+Use `--property-filters` with a JSON array of generated exact or exists filter objects when the
+event alone is too broad. Event names are preserved exactly; use the candidate returned by the
+workspace command.
+
+Archive requires both opaque values returned by Core:
+
+```bash
+outlit value-features archive \
+  value_feature_v1_0123456789abcdef0123456789abcdef \
+  --revision value_feature_revision_v1_fedcba9876543210fedcba9876543210 \
+  --json
+```
+
+Archive is intentionally limited in the MVP. Core rejects stale revisions and prevents archiving
+the final active feature. Historical usage remains retained, and archive is the only self-service
+lifecycle action in this release. Existing CLI commands remain unchanged.
+
 ## Attention
 
 Inspect the authorized, read-only Attention collection. Attention is separate from customer

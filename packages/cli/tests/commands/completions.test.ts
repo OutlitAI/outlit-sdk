@@ -40,6 +40,7 @@ describe("completions command", () => {
     expect(out).toContain("ws-users")
     expect(out).toContain("settings")
     expect(out).toContain("metrics")
+    expect(out).toContain("value-features")
     expect(out).toContain("attention")
     expect(out).not.toContain("usage-metrics")
     expect(out).not.toContain("identity")
@@ -59,7 +60,7 @@ describe("completions command", () => {
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "ws-users" ]]`)
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "customers" ]]`)
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "list get relationship timeline owner grant revoke" -- "$cur"))',
+      'COMPREPLY=($(compgen -W "list get relationship feature-usage timeline owner grant revoke" -- "$cur"))',
     )
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "attention" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "list get" -- "$cur"))')
@@ -85,6 +86,8 @@ describe("completions command", () => {
     expect(out).toContain('COMPREPLY=($(compgen -W "get update" -- "$cur"))')
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "metrics" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "sources events create" -- "$cur"))')
+    expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "value-features" ]]`)
+    expect(out).toContain('COMPREPLY=($(compgen -W "workspace create archive" -- "$cur"))')
     expect(out).not.toContain(`"${bashCompWord(1)}" == "identity"`)
     expect(out).not.toContain("settings notifications")
     expect(out).not.toContain("settings notifications default")
@@ -133,6 +136,13 @@ describe("completions command", () => {
       'COMPREPLY=($(compgen -W "--api-key --json --source --event --key --label --property-filters"',
     )
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --source --weeks --limit"')
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --source --weeks --candidate-limit"',
+    )
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --source --event --key --name --property-filters"',
+    )
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --revision"')
     expect(out).not.toContain("--slack-channel-name")
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --type --channel-id --label --default --disabled"',
@@ -155,6 +165,7 @@ describe("completions command", () => {
     expect(out).toContain("'ws-users:Workspace-user operations'")
     expect(out).toContain("'settings:Configure workspace settings'")
     expect(out).toContain("'metrics:Configure Behavior Metrics'")
+    expect(out).toContain("'value-features:Configure Value Features'")
     expect(out).toContain("'attention:Inspect customer Attention items'")
     expect(out).not.toContain("'identity:Inspect and manage identity resolution'")
     expect(out).toContain("'activation:Configure contact and company activation'")
@@ -263,6 +274,11 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd metrics create' -l source")
     expect(out).toContain("-n '__outlit_using_cmd metrics create' -l property-filters")
     expect(out).toContain("-n '__outlit_using_cmd metrics events' -l source")
+    expect(out).toContain("-n '__outlit_using_cmd value-features workspace' -l candidate-limit")
+    expect(out).toContain("-n '__outlit_using_cmd value-features create' -l property-filters")
+    expect(out).toContain("-n '__outlit_using_cmd value-features archive' -l revision")
+    expect(out).toContain("-n '__outlit_using_cmd customers feature-usage' -l weeks")
+    expect(out).toContain("-n '__outlit_using_cmd customers feature-usage' -l weekly")
     expect(out).not.toContain("-n '__outlit_using_cmd settings report update'")
     expect(out).not.toContain("settings notifications")
     expect(out).not.toContain("__outlit_using_cmd identity")
