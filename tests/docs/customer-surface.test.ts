@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs"
 import { describe, expect, test } from "vitest"
 import { timelineChannels } from "../../packages/tools/src/generated/contracts"
+import { piToolNames } from "../../packages/tools/src/toolsets"
 
 function readDoc(path: string): string {
   return readFileSync(path, "utf8")
@@ -22,6 +23,23 @@ describe("customer-surface documentation", () => {
       expect(apiDocs).toContain(`| \`${toolName}\` |`)
       expect(mcpDocs).toContain(`| \`${toolName}\` |`)
     }
+  })
+
+  test("keeps the Pi policy and its public documentation aligned", () => {
+    const piTools = new Set<string>(piToolNames)
+    const piDocs = readDoc("docs/ai-integrations/pi.mdx")
+    const piReadme = readDoc("packages/pi/README.md")
+    const piExamples = readDoc("examples/pi-agents/README.md")
+
+    for (const toolName of collaborationTools) expect(piTools.has(toolName)).toBe(true)
+
+    expect(piDocs).toContain("customer relationship and Attention reads")
+    expect(piDocs).toContain("customer ownership and access actions")
+    expect(piReadme).toContain("customer ownership and access actions")
+    expect(piExamples).toContain("createOutlitPiExtension, piToolNames")
+    expect(piExamples).toContain("toolNames: piToolNames")
+    expect(piExamples).not.toContain("allPublicToolNames")
+    expect(readDoc("docs/api-reference/tools.mdx")).toContain("`piToolNames`")
   })
 
   test("includes Slack conversations in source-listing and semantic-search documentation", () => {
