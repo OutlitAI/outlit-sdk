@@ -34,7 +34,7 @@ async function startCli() {
         "  outlit customers get acme.com --include users,revenue",
         "  outlit customers relationship acme.com",
         "  outlit customers timeline acme.com --timeframe 90d",
-        "  outlit users list --journey-stage CHAMPION",
+        "  outlit users list --journey-stage ENGAGED",
         "  outlit ws-users list --role CSM --has-owned-customers",
         "  outlit facts list acme.com --fact-types CHURN_RISK,EXPANSION",
         "  outlit facts get --fact-id fact_123 --include evidence",

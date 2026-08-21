@@ -145,10 +145,13 @@ outlit customers list --json | jq '.items[] | {domain, activatedAt}'
       "domain": "acme.com",
       "billingStatus": "PAYING",
       "currentMrr": 500000,
+      "mrrCalculationStatus": "calculated",
+      "contactCount": 42,
+      "firstSeenAt": "2025-01-02T10:00:00Z",
       "lastActivityAt": "2025-02-10T15:30:00Z",
       "activatedAt": "2025-01-20T09:15:00Z",
-      "status": "ACTIVE",
-      "type": "COMPANY"
+      "owner": null,
+      "daysSinceActivity": 3
     }
   ],
   "pagination": {
@@ -221,24 +224,31 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
     "name": "Acme Corp",
     "domain": "acme.com",
     "billingStatus": "PAYING",
-    "activatedAt": "2025-01-20T09:15:00Z"
+    "activatedAt": "2025-01-20T09:15:00Z",
+    "firstSeenAt": "2025-01-02T10:00:00Z",
+    "lastActivityAt": "2025-02-10T15:30:00Z",
+    "owner": null
   },
   "users": [
     {
       "id": "user-uuid",
       "name": "Jane Doe",
       "email": "jane@acme.com",
-      "journeyStage": "ENGAGED"
+      "journeyStage": "ENGAGED",
+      "lastActivityAt": "2025-02-10T15:30:00Z"
     }
   ],
   "revenue": {
     "currentMrr": 500000,
-    "historicalMrr": []
+    "mrrCalculationStatus": "calculated",
+    "lifetimeRevenue": 2400000,
+    "activeSubscriptions": 1
   },
   "recentTimeline": [
     {
       "type": "PAGE_VIEW",
-      "channel": "PRODUCT",
+      "title": "Pricing page viewed",
+      "contact": "jane@acme.com",
       "occurredAt": "2025-02-10T15:30:00Z"
     }
   ]
@@ -573,13 +583,18 @@ outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50
 
 ```json
 {
-  "items": [
+  "events": [
     {
       "id": "event-uuid",
-      "customerId": "customer-uuid",
-      "type": "PAGE_VIEW",
+      "eventType": "PAGE_VIEW",
+      "eventName": "pricing_page_viewed",
       "channel": "PRODUCT",
+      "title": "Pricing page viewed",
+      "summary": "Jane viewed the pricing page",
       "occurredAt": "2025-02-10T15:30:00Z",
+      "contact": "jane@acme.com",
+      "sourceType": null,
+      "sourceId": null,
       "metadata": {
         "url": "https://acme.com/pricing",
         "title": "Pricing Page"
@@ -588,8 +603,7 @@ outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50
   ],
   "pagination": {
     "hasMore": false,
-    "nextCursor": null,
-    "total": 45
+    "nextCursor": null
   }
 }
 ```
@@ -643,8 +657,11 @@ outlit users list --search "alice" --order-by last_activity_at
       "email": "jane@acme.com",
       "name": "Jane Doe",
       "customerId": "customer-uuid",
+      "customerName": "Acme Corp",
+      "customerDomain": "acme.com",
       "journeyStage": "ENGAGED",
-      "lastActivityAt": "2025-02-10T15:30:00Z"
+      "lastActivityAt": "2025-02-10T15:30:00Z",
+      "daysSinceActivity": 3
     }
   ],
   "pagination": {
@@ -722,13 +739,17 @@ outlit facts get --fact-id fact_123 --include evidence
     {
       "id": "fact-uuid",
       "assertion": "Budget concerns raised",
+      "reasoning": "The customer explicitly deferred the purchase because of budget timing.",
       "factType": "BUDGET",
       "factCategory": "MEMORY",
       "status": "ACTIVE",
       "confidence": 0.92,
+      "priority": "HIGH",
       "severity": "HIGH",
       "occurredAt": "2025-02-10T14:00:00Z",
       "detectedAt": "2025-02-10T15:30:00Z",
+      "validFrom": "2025-02-10T14:00:00Z",
+      "validUntil": null,
       "linkedSourceRef": {
         "sourceType": "CALL",
         "sourceId": "call_123",
@@ -741,7 +762,18 @@ outlit facts get --fact-id fact_123 --include evidence
         "sourceOccurredAt": "2025-02-10T14:00:00Z",
         "sourceQuote": "Budget is blocked until next quarter.",
         "permalink": "https://granola.ai/notes/call_123"
-      }
+      },
+      "evidenceCount": 1,
+      "metricName": null,
+      "metricValue": null,
+      "metricPreviousValue": null,
+      "metricDelta": null,
+      "metricUnit": null,
+      "periodStart": null,
+      "periodEnd": null,
+      "changePointDate": null,
+      "occurrenceCount": 1,
+      "lastDetectedAt": "2025-02-10T15:30:00Z"
     }
   ],
   "pagination": {
@@ -815,6 +847,8 @@ outlit search "churn risk" --top-k 50 --json
       "sourceType": "CALL",
       "sourceId": "call_456",
       "occurredAt": "2025-02-10T15:30:00Z",
+      "title": "Q1 planning meeting",
+      "permalink": "https://granola.ai/notes/call_456",
       "matches": [
         {
           "text": "Customer mentioned pricing concerns in Q1 planning meeting"
@@ -977,11 +1011,16 @@ outlit sql "SELECT domain, mrr_cents FROM customers ORDER BY mrr_cents DESC LIMI
 
 ```json
 {
-  "rows": [
+  "success": true,
+  "data": [
     { "event_type": "PAGE_VIEW", "cnt": 12500 },
     { "event_type": "MEETING", "cnt": 340 }
   ],
-  "rowCount": 2
+  "metadata": {
+    "rowsReturned": 2,
+    "executionTimeMs": 18.4,
+    "truncated": false
+  }
 }
 ```
 
@@ -1030,14 +1069,22 @@ The public `customers` analytics view exposes company activation as
 
 ```json
 {
-  "tables": [
+  "name": "customers",
+  "description": "One row per customer with current account and revenue attributes.",
+  "columns": [
     {
-      "name": "activity",
-      "columns": [
-        { "name": "id", "type": "uuid", "nullable": false },
-        { "name": "event_type", "type": "varchar", "nullable": false }
-      ]
+      "name": "domain",
+      "type": "Nullable(String)",
+      "description": "Customer domain when known."
+    },
+    {
+      "name": "mrr_cents",
+      "type": "Nullable(Int64)",
+      "description": "Current monthly recurring revenue in cents."
     }
+  ],
+  "exampleQueries": [
+    "SELECT domain, mrr_cents FROM customers ORDER BY mrr_cents DESC LIMIT 10"
   ]
 }
 ```

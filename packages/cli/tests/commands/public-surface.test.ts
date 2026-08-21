@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
+import { userJourneyStages } from "@outlit/tools"
 
 const packageRoot = join(import.meta.dir, "..", "..")
 
@@ -20,6 +21,19 @@ const retiredToolPrefixes = [
 ] as const
 
 describe("public CLI surface", () => {
+  test("uses current journey-stage values in root help examples", () => {
+    const cliSource = readFileSync(join(packageRoot, "src", "cli.ts"), "utf8")
+    const documentedStages = [
+      ...cliSource.matchAll(/outlit users list --journey-stage ([A-Z_]+)/g),
+    ].map((match) => match[1] ?? "")
+    const allowedStages = new Set<string>(userJourneyStages)
+
+    expect(documentedStages.length).toBeGreaterThan(0)
+    for (const stage of documentedStages) {
+      expect(allowedStages.has(stage)).toBe(true)
+    }
+  })
+
   test("does not register retired command families or notification sending", () => {
     const cliSource = readFileSync(join(packageRoot, "src", "cli.ts"), "utf8")
 
