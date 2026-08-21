@@ -186,14 +186,14 @@ The examples use the analytical policy because they intentionally need SQL. Pref
 For example:
 
 ```ts
-import { allPublicToolNames, createOutlitPiExtension } from "@outlit/pi"
+import { createOutlitPiExtension, piToolNames } from "@outlit/pi"
 
 export default createOutlitPiExtension({
-  toolNames: allPublicToolNames,
+  toolNames: piToolNames,
 })
 ```
 
-Keep integration setup or integration-management actions outside customer-facing Pi agents unless you are intentionally building an internal admin package. Customer-facing agents should usually read customer intelligence, not modify integration configuration.
+Keep customer ownership and access actions, Feature creation and archive, and integration-management actions outside customer-facing Pi agents unless you are intentionally building an internal admin package. Customer-facing agents should usually read customer intelligence, not modify customer responsibility or platform configuration.
 
 ## Quality Bar
 
