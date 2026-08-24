@@ -1,7 +1,7 @@
 ---
-"@outlit/cli": major
-"@outlit/tools": major
-"@outlit/pi": major
+"@outlit/cli": minor
+"@outlit/tools": minor
+"@outlit/pi": minor
 ---
 
 Replace the public Behavior Metric and Value Feature surfaces with one canonical Feature lifecycle.
