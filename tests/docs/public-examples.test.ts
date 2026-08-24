@@ -258,6 +258,21 @@ describe("public documentation examples", () => {
     expect(failures).toEqual([])
   })
 
+  test("keeps timeline end-of-day examples precise to milliseconds", () => {
+    const legacyEndOfDay = "2025-03-01T23:59:59Z"
+    const preciseEndOfDay = "2025-03-01T23:59:59.999Z"
+
+    for (const file of [
+      "docs/cli/commands.mdx",
+      "packages/cli/src/commands/customers/timeline.ts",
+    ]) {
+      const source = readFileSync(file, "utf8")
+
+      expect(source).not.toContain(legacyEndOfDay)
+      expect(source).toContain(preciseEndOfDay)
+    }
+  })
+
   test("keeps TypeScript and JavaScript fences syntactically valid", () => {
     const scriptKinds: Record<string, ts.ScriptKind> = {
       javascript: ts.ScriptKind.JS,
