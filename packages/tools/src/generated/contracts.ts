@@ -2015,13 +2015,13 @@ export const publicToolContracts = {
           ],
         },
         "startDate": {
-          "description": "Start of time window (ISO 8601, e.g. '2025-01-01T00:00:00Z'). Cannot be used with timeframe.",
+          "description": "Start of time window, inclusive (ISO 8601 UTC, e.g. '2025-01-01T00:00:00.000Z'). Cannot be used with timeframe.",
           "type": "string",
           "format": "date-time",
           "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
         },
         "endDate": {
-          "description": "End of time window (ISO 8601, e.g. '2025-01-31T23:59:59Z'). Cannot be used with timeframe.",
+          "description": "End of time window, inclusive of the instant it names (ISO 8601 UTC, e.g. '2025-01-31T23:59:59.999Z'). Use millisecond precision: timestamps are stored to the millisecond, so '...T23:59:59Z' includes only the first instant of that second and excludes the rest of it. Cannot be used with timeframe.",
           "type": "string",
           "format": "date-time",
           "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
@@ -12400,4 +12400,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "6f255fcf2144a087ffe9223e4c9385ac3bcc72e13fa6aee1db2cb06981afc6ad" as const
+export const sdkConsumerContractHash = "b5ae0da99791dfe29fff680e3c7320fd333d81d4b68ad09824791dd7e993d266" as const
