@@ -1,5 +1,22 @@
 # @outlit/pi
 
+## 2.1.0
+
+### Minor Changes
+
+- [#195](https://github.com/OutlitAI/outlit-sdk/pull/195) [`dbcbe4c`](https://github.com/OutlitAI/outlit-sdk/commit/dbcbe4c0f1661b1c599ba0f6cda1ca1b0a4eee50) Thanks [@leo-paz](https://github.com/leo-paz)! - Replace the public Behavior Metric and Value Feature surfaces with one canonical Feature lifecycle.
+  Use `outlit features list|create|archive` and `outlit customers features`; the generated public tools
+  are `outlit_list_features`, `outlit_create_feature`, `outlit_archive_feature`, and
+  `outlit_get_customer_features`. Creating a Feature still atomically creates the supporting weekly
+  event-count and active-days metrics inside Outlit.
+
+### Patch Changes
+
+- [#196](https://github.com/OutlitAI/outlit-sdk/pull/196) [`d37138d`](https://github.com/OutlitAI/outlit-sdk/commit/d37138d98fc1c1e868ae1f1a578ec0bbe0902d4f) Thanks [@leo-paz](https://github.com/leo-paz)! - Align CLI and Pi public examples with current generated contracts and policy exports.
+
+- Updated dependencies [[`2ab7311`](https://github.com/OutlitAI/outlit-sdk/commit/2ab7311de9e1d9a432669395f61b17a29712d96a), [`dbcbe4c`](https://github.com/OutlitAI/outlit-sdk/commit/dbcbe4c0f1661b1c599ba0f6cda1ca1b0a4eee50), [`b25bbee`](https://github.com/OutlitAI/outlit-sdk/commit/b25bbee0010fb5f3de0f81951d22da7374b79009), [`0d3bfd6`](https://github.com/OutlitAI/outlit-sdk/commit/0d3bfd63de335b7b59d6523efbbde51f8d8f2061)]:
+  - @outlit/tools@2.1.0
+
 ## 2.0.0
 
 ### Major Changes
