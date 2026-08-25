@@ -1,5 +1,11 @@
 # @outlit/tools
 
+## 2.1.1
+
+### Patch Changes
+
+- [#199](https://github.com/OutlitAI/outlit-sdk/pull/199) [`b933cf1`](https://github.com/OutlitAI/outlit-sdk/commit/b933cf1c09e6fdc3ae37274dfea34551c18c5d90) Thanks [@leo-paz](https://github.com/leo-paz)! - Expose customer contact relationship and professional profile fields in the generated people contracts.
+
 ## 2.1.0
 
 ### Minor Changes
