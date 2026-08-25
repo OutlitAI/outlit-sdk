@@ -551,6 +551,47 @@ export const publicToolContracts = {
                   },
                 ],
               },
+              "relationshipRole": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "jobTitle": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "department": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "employmentStartDate": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
             },
             "required": [
               "id",
@@ -562,6 +603,10 @@ export const publicToolContracts = {
               "journeyStage",
               "lastActivityAt",
               "daysSinceActivity",
+              "relationshipRole",
+              "jobTitle",
+              "department",
+              "employmentStartDate",
             ],
             "additionalProperties": false,
           },
@@ -995,6 +1040,47 @@ export const publicToolContracts = {
                   },
                 ],
               },
+              "relationshipRole": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "jobTitle": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "department": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "employmentStartDate": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
             },
             "required": [
               "id",
@@ -1002,6 +1088,10 @@ export const publicToolContracts = {
               "name",
               "journeyStage",
               "lastActivityAt",
+              "relationshipRole",
+              "jobTitle",
+              "department",
+              "employmentStartDate",
             ],
             "additionalProperties": false,
           },
@@ -12400,4 +12490,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "b5ae0da99791dfe29fff680e3c7320fd333d81d4b68ad09824791dd7e993d266" as const
+export const sdkConsumerContractHash = "fabc5dbceb5a7c624482b138ea6cb89622f315526a44bb43068c8c66fea3fbc3" as const

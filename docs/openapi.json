@@ -4113,6 +4113,47 @@
                       "type": "null"
                     }
                   ]
+                },
+                "relationshipRole": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "jobTitle": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "department": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "employmentStartDate": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -4124,7 +4165,11 @@
                 "customerDomain",
                 "journeyStage",
                 "lastActivityAt",
-                "daysSinceActivity"
+                "daysSinceActivity",
+                "relationshipRole",
+                "jobTitle",
+                "department",
+                "employmentStartDate"
               ],
               "additionalProperties": false
             }
@@ -4444,6 +4489,47 @@
                       "type": "null"
                     }
                   ]
+                },
+                "relationshipRole": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "jobTitle": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "department": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "employmentStartDate": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -4451,7 +4537,11 @@
                 "email",
                 "name",
                 "journeyStage",
-                "lastActivityAt"
+                "lastActivityAt",
+                "relationshipRole",
+                "jobTitle",
+                "department",
+                "employmentStartDate"
               ],
               "additionalProperties": false
             }
@@ -12608,5 +12698,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "b5ae0da99791dfe29fff680e3c7320fd333d81d4b68ad09824791dd7e993d266"
+  "x-outlit-contract-hash": "fabc5dbceb5a7c624482b138ea6cb89622f315526a44bb43068c8c66fea3fbc3"
 }
