@@ -431,7 +431,14 @@ describe("tool contracts", () => {
       expect.objectContaining({
         type: "array",
         items: expect.objectContaining({
-          enum: expect.arrayContaining(["CHURN_RISK", "EXPANSION", "CHAMPION_RISK"]),
+          enum: expect.arrayContaining([
+            "CHURN_RISK",
+            "EXPANSION",
+            "CHAMPION_RISK",
+            "CONTACT_DEPARTURE",
+            "CONTACT_POSITION_CHANGE",
+            "CONTACT_DISENGAGEMENT",
+          ]),
         }),
       }),
     )
@@ -439,7 +446,7 @@ describe("tool contracts", () => {
       expect.objectContaining({
         type: "array",
         items: expect.objectContaining({
-          enum: ["MEMORY", "CUSTOM"],
+          enum: ["MEMORY", "RELATIONSHIP", "CUSTOM"],
         }),
       }),
     )

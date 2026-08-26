@@ -2361,16 +2361,20 @@ export const publicToolContracts = {
               "PRODUCT_USAGE",
               "CONTACT_INFO",
               "CONTACT_PREFERENCE",
+              "CONTACT_DEPARTURE",
+              "CONTACT_POSITION_CHANGE",
+              "CONTACT_DISENGAGEMENT",
             ],
           },
         },
         "factCategories": {
-          "description": "Optional public fact category filters. Supported values: MEMORY, CUSTOM.",
+          "description": "Optional public fact category filters. Supported values: MEMORY, RELATIONSHIP, CUSTOM.",
           "type": "array",
           "items": {
             "type": "string",
             "enum": [
               "MEMORY",
+              "RELATIONSHIP",
               "CUSTOM",
             ],
           },
@@ -12371,6 +12375,9 @@ export const customerFactTypes = [
   "PRODUCT_USAGE",
   "CONTACT_INFO",
   "CONTACT_PREFERENCE",
+  "CONTACT_DEPARTURE",
+  "CONTACT_POSITION_CHANGE",
+  "CONTACT_DISENGAGEMENT",
 ] as const
 
 export const unsupportedCustomerFactTypes = [
@@ -12388,6 +12395,7 @@ export const unsupportedCustomerFactTypes = [
 
 export const customerFactCategories = [
   "MEMORY",
+  "RELATIONSHIP",
   "CUSTOM",
 ] as const
 
@@ -12490,4 +12498,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "fabc5dbceb5a7c624482b138ea6cb89622f315526a44bb43068c8c66fea3fbc3" as const
+export const sdkConsumerContractHash = "447567b7dd779a29dc5b1f4edfd792a601aa42b929da98117da1511d0946bb98" as const
