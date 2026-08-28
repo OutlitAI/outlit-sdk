@@ -175,7 +175,7 @@ These launch examples use the default customer intelligence tools plus SQL/schem
 
 The base `@outlit/pi` default toolset does not include SQL, but these harder examples use `analyticalToolNames` because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks.
 
-Facts can also be narrowed with `factTypes`. These examples use those filters for extracted customer-memory facts such as `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `BUDGET`, `REQUIREMENTS`, `PRODUCT_USAGE`, and `CHAMPION_RISK`.
+Facts can also be narrowed with `factTypes`. Public filters include customer-memory facts such as `CHURN_RISK`, `EXPANSION`, and `PRODUCT_USAGE`, plus relationship transitions such as `CONTACT_DEPARTURE`, `CONTACT_POSITION_CHANGE`, and `CONTACT_DISENGAGEMENT`.
 
 The usage-decay and activation agents do not depend on behavioral/anomaly fact types like `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF`. Those fact types are not supported as public filters because many customers will not have configured core actions, activation paths, or funnels. The examples use SQL and customer/user/event evidence as the primary signal for those jobs.
 

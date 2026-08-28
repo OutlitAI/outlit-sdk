@@ -701,8 +701,8 @@ outlit facts get --fact-id <id> [flags]
 |------|------|---------|-------------|
 | `--status` | string | — | Comma-separated fact status filter: `ACTIVE`, `ACKNOWLEDGED`, `RESOLVED`, `SNOOZED`, `CANDIDATE` |
 | `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
-| `--fact-types` | string | — | Comma-separated customer-memory fact type filter: e.g. `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `PRODUCT_USAGE` |
-| `--fact-categories` | string | — | Comma-separated fact category filter: `MEMORY`, `CUSTOM` |
+| `--fact-types` | string | — | Comma-separated public fact type filter, including `CHURN_RISK`, `PRODUCT_USAGE`, `CONTACT_DEPARTURE`, `CONTACT_POSITION_CHANGE`, and `CONTACT_DISENGAGEMENT` |
+| `--fact-categories` | string | — | Comma-separated fact category filter: `MEMORY`, `RELATIONSHIP`, `CUSTOM` |
 | `--after` | string | — | Lower bound on fact occurrence time (ISO 8601 datetime) |
 | `--before` | string | — | Upper bound on fact occurrence time (ISO 8601 datetime) |
 | `--limit` | number | `20` | Results per page (1–100) |

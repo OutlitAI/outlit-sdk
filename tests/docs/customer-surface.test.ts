@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs"
 import { describe, expect, test } from "vitest"
-import { timelineChannels } from "../../packages/tools/src/generated/contracts"
+import {
+  customerFactCategories,
+  customerFactTypes,
+  timelineChannels,
+} from "../../packages/tools/src/generated/contracts"
 import { piToolNames } from "../../packages/tools/src/toolsets"
 
 function readDoc(path: string): string {
@@ -12,6 +16,12 @@ const collaborationTools = [
   "outlit_grant_customer_access",
   "outlit_update_customer_access",
   "outlit_revoke_customer_access",
+] as const
+
+const contactTransitionFactTypes = [
+  "CONTACT_DEPARTURE",
+  "CONTACT_POSITION_CHANGE",
+  "CONTACT_DISENGAGEMENT",
 ] as const
 
 describe("customer-surface documentation", () => {
@@ -40,6 +50,39 @@ describe("customer-surface documentation", () => {
     expect(piExamples).toContain("toolNames: piToolNames")
     expect(piExamples).not.toContain("allPublicToolNames")
     expect(readDoc("docs/api-reference/tools.mdx")).toContain("`piToolNames`")
+  })
+
+  test("documents contact-transition fact types without recommending category filters", () => {
+    const cliDocs = readDoc("docs/cli/commands.mdx")
+    const cliSource = readDoc("packages/cli/src/commands/facts/list.ts")
+    const toolsDocs = readDoc("docs/api-reference/tools.mdx")
+    const piReadme = readDoc("packages/pi/README.md")
+    const piSkill = readDoc("packages/pi/skills/outlit/SKILL.md")
+    const piExamples = readDoc("examples/pi-agents/README.md")
+    const piExtension = readDoc("examples/pi-agents/extensions/outlit-growth-agents.ts")
+
+    expect(customerFactCategories).toContain("RELATIONSHIP")
+    for (const factType of contactTransitionFactTypes) {
+      expect(customerFactTypes).toContain(factType)
+      expect(cliDocs).toContain(`\`${factType}\``)
+      expect(toolsDocs).toContain(`"${factType}"`)
+      expect(piReadme).toContain(`\`${factType}\``)
+      expect(piSkill).toContain(`\`${factType}\``)
+      expect(piExamples).toContain(`\`${factType}\``)
+      expect(piExtension).toContain(factType)
+    }
+
+    for (const category of customerFactCategories) {
+      expect(cliDocs).toContain(`\`${category}\``)
+    }
+
+    for (const source of [cliDocs, cliSource]) {
+      expect(source).not.toContain("--fact-categories RELATIONSHIP")
+    }
+    for (const source of [toolsDocs, piSkill, piExamples, piExtension]) {
+      expect(source).not.toContain('factCategories: ["RELATIONSHIP"]')
+      expect(source).not.toContain('"factCategories": ["RELATIONSHIP"]')
+    }
   })
 
   test("includes Slack conversations in source-listing and semantic-search documentation", () => {

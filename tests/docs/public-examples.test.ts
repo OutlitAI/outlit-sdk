@@ -170,7 +170,7 @@ describe("public documentation examples", () => {
     const cases = [
       ["Get Customer Details", "outlit_get_customer"],
       ["Search Customer Context", "outlit_search_customer_context"],
-      ["List Active Facts From Calls And Opportunities", "outlit_list_facts"],
+      ["List Active Contact Transition Facts", "outlit_list_facts"],
       ["Open One Source Record", "outlit_get_source"],
       ["Read Customer Features", "outlit_get_customer_features"],
     ] as const
