@@ -2333,6 +2333,7 @@ export const publicToolContracts = {
               "SUPPORT_TICKET",
               "OPPORTUNITY",
               "SLACK",
+              "PERSON_PROFILE",
               "CRM",
               "CRM_OPPORTUNITY",
             ],
@@ -2555,6 +2556,7 @@ export const publicToolContracts = {
                           "SUPPORT_TICKET",
                           "OPPORTUNITY",
                           "SLACK",
+                          "PERSON_PROFILE",
                         ],
                       },
                       "sourceId": {
@@ -2615,6 +2617,7 @@ export const publicToolContracts = {
                               "SUPPORT_TICKET",
                               "OPPORTUNITY",
                               "SLACK",
+                              "PERSON_PROFILE",
                             ],
                           },
                           {
@@ -2825,6 +2828,7 @@ export const publicToolContracts = {
                                 "SUPPORT_TICKET",
                                 "OPPORTUNITY",
                                 "SLACK",
+                                "PERSON_PROFILE",
                               ],
                             },
                             {
@@ -3086,6 +3090,7 @@ export const publicToolContracts = {
                     "SUPPORT_TICKET",
                     "OPPORTUNITY",
                     "SLACK",
+                    "PERSON_PROFILE",
                   ],
                 },
                 "sourceId": {
@@ -3146,6 +3151,7 @@ export const publicToolContracts = {
                         "SUPPORT_TICKET",
                         "OPPORTUNITY",
                         "SLACK",
+                        "PERSON_PROFILE",
                       ],
                     },
                     {
@@ -3356,6 +3362,7 @@ export const publicToolContracts = {
                           "SUPPORT_TICKET",
                           "OPPORTUNITY",
                           "SLACK",
+                          "PERSON_PROFILE",
                         ],
                       },
                       {
@@ -3465,6 +3472,7 @@ export const publicToolContracts = {
             "SUPPORT_TICKET",
             "OPPORTUNITY",
             "SLACK",
+            "PERSON_PROFILE",
             "CRM",
             "CRM_OPPORTUNITY",
           ],
@@ -3505,6 +3513,7 @@ export const publicToolContracts = {
             "SUPPORT_TICKET",
             "OPPORTUNITY",
             "SLACK",
+            "PERSON_PROFILE",
           ],
         },
         "sourceId": {
@@ -3714,6 +3723,7 @@ export const publicToolContracts = {
             "SUPPORT_TICKET",
             "OPPORTUNITY",
             "SLACK",
+            "PERSON_PROFILE",
             "CRM",
             "CRM_OPPORTUNITY",
           ],
@@ -3786,6 +3796,7 @@ export const publicToolContracts = {
                   "SUPPORT_TICKET",
                   "OPPORTUNITY",
                   "SLACK",
+                  "PERSON_PROFILE",
                 ],
               },
               "sourceId": {
@@ -4065,6 +4076,7 @@ export const publicToolContracts = {
               "SUPPORT_TICKET",
               "OPPORTUNITY",
               "SLACK",
+              "PERSON_PROFILE",
               "CRM",
               "CRM_OPPORTUNITY",
             ],
@@ -4269,6 +4281,7 @@ export const publicToolContracts = {
                                   "SUPPORT_TICKET",
                                   "OPPORTUNITY",
                                   "SLACK",
+                                  "PERSON_PROFILE",
                                 ],
                               },
                               "sourceId": {
@@ -4329,6 +4342,7 @@ export const publicToolContracts = {
                                       "SUPPORT_TICKET",
                                       "OPPORTUNITY",
                                       "SLACK",
+                                      "PERSON_PROFILE",
                                     ],
                                   },
                                   {
@@ -4539,6 +4553,7 @@ export const publicToolContracts = {
                                         "SUPPORT_TICKET",
                                         "OPPORTUNITY",
                                         "SLACK",
+                                        "PERSON_PROFILE",
                                       ],
                                     },
                                     {
@@ -4656,6 +4671,7 @@ export const publicToolContracts = {
                       "SUPPORT_TICKET",
                       "OPPORTUNITY",
                       "SLACK",
+                      "PERSON_PROFILE",
                     ],
                   },
                   "sourceId": {
@@ -12421,6 +12437,7 @@ export const customerSourceTypes = [
   "SUPPORT_TICKET",
   "OPPORTUNITY",
   "SLACK",
+  "PERSON_PROFILE",
 ] as const
 
 export const customerSourceTypeAliasMap = {
@@ -12440,6 +12457,7 @@ export const customerSourceTypeInputs = [
   "SUPPORT_TICKET",
   "OPPORTUNITY",
   "SLACK",
+  "PERSON_PROFILE",
   "CRM",
   "CRM_OPPORTUNITY",
 ] as const
@@ -12498,4 +12516,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "447567b7dd779a29dc5b1f4edfd792a601aa42b929da98117da1511d0946bb98" as const
+export const sdkConsumerContractHash = "6e94d54edef77e194566831299475f1814ec8a4cf6302aa38f7fd2d596623673" as const
