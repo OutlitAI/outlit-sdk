@@ -2599,6 +2599,7 @@
                 "SUPPORT_TICKET",
                 "OPPORTUNITY",
                 "SLACK",
+                "PERSON_PROFILE",
                 "CRM",
                 "CRM_OPPORTUNITY"
               ]
@@ -2708,6 +2709,7 @@
               "SUPPORT_TICKET",
               "OPPORTUNITY",
               "SLACK",
+              "PERSON_PROFILE",
               "CRM",
               "CRM_OPPORTUNITY"
             ]
@@ -2748,6 +2750,7 @@
               "SUPPORT_TICKET",
               "OPPORTUNITY",
               "SLACK",
+              "PERSON_PROFILE",
               "CRM",
               "CRM_OPPORTUNITY"
             ]
@@ -2854,6 +2857,7 @@
                 "SUPPORT_TICKET",
                 "OPPORTUNITY",
                 "SLACK",
+                "PERSON_PROFILE",
                 "CRM",
                 "CRM_OPPORTUNITY"
               ]
@@ -5649,7 +5653,8 @@
                             "CALENDAR_EVENT",
                             "SUPPORT_TICKET",
                             "OPPORTUNITY",
-                            "SLACK"
+                            "SLACK",
+                            "PERSON_PROFILE"
                           ]
                         },
                         "sourceId": {
@@ -5709,7 +5714,8 @@
                                 "CALENDAR_EVENT",
                                 "SUPPORT_TICKET",
                                 "OPPORTUNITY",
-                                "SLACK"
+                                "SLACK",
+                                "PERSON_PROFILE"
                               ]
                             },
                             {
@@ -5919,7 +5925,8 @@
                                   "CALENDAR_EVENT",
                                   "SUPPORT_TICKET",
                                   "OPPORTUNITY",
-                                  "SLACK"
+                                  "SLACK",
+                                  "PERSON_PROFILE"
                                 ]
                               },
                               {
@@ -6147,7 +6154,8 @@
                       "CALENDAR_EVENT",
                       "SUPPORT_TICKET",
                       "OPPORTUNITY",
-                      "SLACK"
+                      "SLACK",
+                      "PERSON_PROFILE"
                     ]
                   },
                   "sourceId": {
@@ -6207,7 +6215,8 @@
                           "CALENDAR_EVENT",
                           "SUPPORT_TICKET",
                           "OPPORTUNITY",
-                          "SLACK"
+                          "SLACK",
+                          "PERSON_PROFILE"
                         ]
                       },
                       {
@@ -6417,7 +6426,8 @@
                             "CALENDAR_EVENT",
                             "SUPPORT_TICKET",
                             "OPPORTUNITY",
-                            "SLACK"
+                            "SLACK",
+                            "PERSON_PROFILE"
                           ]
                         },
                         {
@@ -6517,7 +6527,8 @@
               "CALENDAR_EVENT",
               "SUPPORT_TICKET",
               "OPPORTUNITY",
-              "SLACK"
+              "SLACK",
+              "PERSON_PROFILE"
             ]
           },
           "sourceId": {
@@ -6721,7 +6732,8 @@
                     "CALENDAR_EVENT",
                     "SUPPORT_TICKET",
                     "OPPORTUNITY",
-                    "SLACK"
+                    "SLACK",
+                    "PERSON_PROFILE"
                   ]
                 },
                 "sourceId": {
@@ -7131,7 +7143,8 @@
                                     "CALENDAR_EVENT",
                                     "SUPPORT_TICKET",
                                     "OPPORTUNITY",
-                                    "SLACK"
+                                    "SLACK",
+                                    "PERSON_PROFILE"
                                   ]
                                 },
                                 "sourceId": {
@@ -7191,7 +7204,8 @@
                                         "CALENDAR_EVENT",
                                         "SUPPORT_TICKET",
                                         "OPPORTUNITY",
-                                        "SLACK"
+                                        "SLACK",
+                                        "PERSON_PROFILE"
                                       ]
                                     },
                                     {
@@ -7401,7 +7415,8 @@
                                           "CALENDAR_EVENT",
                                           "SUPPORT_TICKET",
                                           "OPPORTUNITY",
-                                          "SLACK"
+                                          "SLACK",
+                                          "PERSON_PROFILE"
                                         ]
                                       },
                                       {
@@ -7518,7 +7533,8 @@
                         "CALENDAR_EVENT",
                         "SUPPORT_TICKET",
                         "OPPORTUNITY",
-                        "SLACK"
+                        "SLACK",
+                        "PERSON_PROFILE"
                       ]
                     },
                     "sourceId": {
@@ -12702,5 +12718,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "447567b7dd779a29dc5b1f4edfd792a601aa42b929da98117da1511d0946bb98"
+  "x-outlit-contract-hash": "6e94d54edef77e194566831299475f1814ec8a4cf6302aa38f7fd2d596623673"
 }
