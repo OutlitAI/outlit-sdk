@@ -1,5 +1,16 @@
 # @outlit/pi
 
+## 2.1.2
+
+### Patch Changes
+
+- [#201](https://github.com/OutlitAI/outlit-sdk/pull/201) [`d743465`](https://github.com/OutlitAI/outlit-sdk/commit/d743465964df644a340e3fde70778a54a32bbb72) Thanks [@leo-paz](https://github.com/leo-paz)! - Expose contact departure, position change, and disengagement facts through the generated customer fact filters.
+
+- [#203](https://github.com/OutlitAI/outlit-sdk/pull/203) [`3214815`](https://github.com/OutlitAI/outlit-sdk/commit/321481599c1ca61b5c198ae776055208ba824fdd) Thanks [@leo-paz](https://github.com/leo-paz)! - Document the public contact-transition fact filters in CLI help and the bundled Pi guidance.
+
+- Updated dependencies [[`d743465`](https://github.com/OutlitAI/outlit-sdk/commit/d743465964df644a340e3fde70778a54a32bbb72), [`1de7d3f`](https://github.com/OutlitAI/outlit-sdk/commit/1de7d3fc1fdf6c56f09cfd7c8808f5d43270974d)]:
+  - @outlit/tools@2.1.2
+
 ## 2.1.1
 
 ### Patch Changes
