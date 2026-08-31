@@ -68,7 +68,7 @@ Outlit customer signal agent guidance:
 - Use only the public SQL views activity, customers, users, and revenue. Do not query a non-public events view.
 - Use outlit_churn_pretriage for deterministic usage-decay churn candidate discovery when it is registered.
 - Use outlit_activation_pretriage for deterministic activation-failure candidate discovery when it is registered.
-- Use outlit_list_facts with factTypes for extracted customer-memory evidence when helpful, such as CHURN_RISK, EXPANSION, SENTIMENT, BUDGET, REQUIREMENTS, PRODUCT_USAGE, or CHAMPION_RISK.
+- Use outlit_list_facts with factTypes for public structured evidence when helpful, including CONTACT_DEPARTURE, CONTACT_POSITION_CHANGE, and CONTACT_DISENGAGEMENT for relationship transitions.
 - Do not assume behavioral/anomaly fact types exist for every customer. Treat usage-path and funnel facts as optional supporting evidence only.
 - Use stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
 - Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.

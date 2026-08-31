@@ -32,7 +32,7 @@ Use customer lookups before SQL. SQL is for aggregates, joins, cohorts, time-ser
 ## Facts vs Search vs Timeline
 
 - Use `outlit_list_facts` to list what Outlit already knows about an account.
-- Use `factTypes` for specific extracted fact classes such as `CHURN_RISK`, `EXPANSION`, `SENTIMENT`, `BUDGET`, `REQUIREMENTS`, `PRODUCT_USAGE`, or `CHAMPION_RISK` when those are relevant. Do not request anomaly detector fact types such as `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF` as filters.
+- Use `factTypes` for specific public fact classes such as `CHURN_RISK`, `EXPANSION`, `PRODUCT_USAGE`, `CONTACT_DEPARTURE`, `CONTACT_POSITION_CHANGE`, or `CONTACT_DISENGAGEMENT` when those are relevant. Do not request anomaly detector fact types such as `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF` as filters.
 - Use `outlit_get_fact` when you already have a fact id and need that exact fact.
 - Use `outlit_search_customer_context` for a specific question or theme, including cross-customer questions.
 - Use `outlit_get_source` when you need the exact email, call, calendar event, ticket, or other source artifact behind a fact or search hit.

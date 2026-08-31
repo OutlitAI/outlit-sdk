@@ -142,7 +142,7 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 }
 ```
 
-### List Active Facts From Calls And Opportunities
+### List Active Contact Transition Facts
 
 ```json
 {
@@ -151,6 +151,7 @@ curl -X POST https://app.outlit.ai/api/tools/call \
     "customer": "acme.com",
     "status": ["ACTIVE"],
     "sourceTypes": ["CALL", "OPPORTUNITY"],
+    "factTypes": ["CONTACT_DEPARTURE", "CONTACT_POSITION_CHANGE", "CONTACT_DISENGAGEMENT"],
     "after": "2026-01-01T00:00:00Z",
     "limit": 20
   }

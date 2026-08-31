@@ -81,7 +81,7 @@ Headless clients that cannot complete OAuth may send an Outlit API key as their 
 | `outlit_update_customer_access` | Change an existing collaborator between Viewer and Editor | "Change Alex's access to Acme to Viewer" |
 | `outlit_revoke_customer_access` | Remove a collaborator's explicit access to a customer | "Remove Alex's access to Acme" |
 | `outlit_get_timeline` | Get the activity timeline for a customer, filtered by channel and event type | "Show me Acme Corp's email and Slack activity from the last 7 days" |
-| `outlit_list_facts` | Retrieve structured customer facts with status, source type, customer-memory fact type, public category, occurrence time filters, pagination, and source provenance (`sourceMetadata` includes `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink`) | "Show me active churn-risk facts for acme.com from calls last quarter" |
+| `outlit_list_facts` | Retrieve structured customer facts with status, source type, public fact type and category, occurrence time filters, pagination, and source provenance (`sourceMetadata` includes `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink`) | "Show me active contact-departure facts for acme.com from calls last quarter" |
 | `outlit_get_fact` | Retrieve one exact fact by ID, optionally expanding best-effort related data like evidence | "Get fact_123 with evidence" |
 | `outlit_get_source` | Retrieve one exact source record by generic `sourceType` and `sourceId` | "Open the support ticket source for ticket_456" |
 | `outlit_list_sources` | List concrete source records such as calls, emails, calendar events, support tickets, Slack conversations, or opportunities | "List Acme's support tickets and calls from January" |

@@ -120,7 +120,7 @@ export default defineCommand({
     "fact-types": {
       type: "string",
       description:
-        "Comma-separated customer-memory fact type filter, such as CHURN_RISK, EXPANSION, or SENTIMENT",
+        "Comma-separated public fact type filter, such as CHURN_RISK, CONTACT_DEPARTURE, or CONTACT_POSITION_CHANGE",
     },
     "fact-categories": {
       type: "string",
@@ -184,7 +184,7 @@ export default defineCommand({
 
       if (anomalyFactTypes.length > 0) {
         messageParts.push(
-          `Anomaly detector fact types are not supported as public filters: ${anomalyFactTypes.join(", ")}. Use customer-memory fact types such as CHURN_RISK, EXPANSION, SENTIMENT, or PRODUCT_USAGE.`,
+          `Anomaly detector fact types are not supported as public filters: ${anomalyFactTypes.join(", ")}. Use public fact types such as CHURN_RISK, PRODUCT_USAGE, CONTACT_DEPARTURE, or CONTACT_POSITION_CHANGE.`,
         )
       }
 
