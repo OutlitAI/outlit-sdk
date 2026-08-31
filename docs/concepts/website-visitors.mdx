@@ -249,6 +249,8 @@ client.identify(email("user@example.com"))
 ```typescript
 import { Outlit } from '@outlit/node'
 
+const outlit = new Outlit({ publicKey: process.env.OUTLIT_KEY! })
+
 // Get or generate device fingerprint
 const deviceId = await getOrCreateDeviceId()
 
