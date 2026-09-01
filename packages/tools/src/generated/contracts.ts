@@ -2380,6 +2380,12 @@ export const publicToolContracts = {
             ],
           },
         },
+        "asOf": {
+          "description": "Return only active, unsuperseded facts valid at this ISO 8601 cutoff. Hosted responsibilities use the persisted run cutoff.",
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+        },
         "after": {
           "description": "ISO 8601 datetime lower bound",
           "type": "string",
@@ -3475,6 +3481,7 @@ export const publicToolContracts = {
             "PERSON_PROFILE",
             "CRM",
             "CRM_OPPORTUNITY",
+            "EXTRACTED",
           ],
         },
         "sourceId": {
@@ -3483,13 +3490,13 @@ export const publicToolContracts = {
           "maxLength": 500,
         },
         "limit": {
-          "description": "Slack replies per page (default 50, maximum 100). Ignored for other source types.",
+          "description": "Exact content segments per page (default 10, maximum 100).",
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
         },
         "cursor": {
-          "description": "Opaque Slack reply cursor returned by a previous exact lookup.",
+          "description": "Opaque cursor returned by a previous exact lookup for the same source.",
           "type": "string",
           "minLength": 1,
           "maxLength": 2000,
@@ -3685,6 +3692,135 @@ export const publicToolContracts = {
             "type": "string",
           },
           "additionalProperties": {},
+        },
+        "contentPage": {
+          "type": "object",
+          "properties": {
+            "sourceType": {
+              "type": "string",
+              "enum": [
+                "EMAIL",
+                "CALL",
+                "CALENDAR_EVENT",
+                "SUPPORT_TICKET",
+                "OPPORTUNITY",
+                "SLACK",
+                "PERSON_PROFILE",
+              ],
+            },
+            "sourceId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500,
+            },
+            "contentKind": {
+              "type": "string",
+              "enum": [
+                "email_body",
+                "call_transcript",
+                "support_thread",
+                "slack_thread",
+              ],
+            },
+            "segments": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000,
+                  },
+                  "occurredAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                  },
+                  "authorLabel": {
+                    "type": "string",
+                    "maxLength": 500,
+                  },
+                  "text": {
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "id",
+                  "text",
+                ],
+                "additionalProperties": false,
+              },
+            },
+            "page": {
+              "type": "object",
+              "properties": {
+                "returned": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                "hasMore": {
+                  "type": "boolean",
+                },
+                "nextCursor": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 2000,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "required": [
+                "returned",
+                "hasMore",
+                "nextCursor",
+              ],
+              "additionalProperties": false,
+            },
+            "completeness": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "complete",
+                    "partial",
+                    "unavailable",
+                  ],
+                },
+                "reason": {
+                  "type": "string",
+                  "maxLength": 1000,
+                },
+                "omittedFields": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 500,
+                  },
+                },
+              },
+              "required": [
+                "status",
+                "omittedFields",
+              ],
+              "additionalProperties": false,
+            },
+          },
+          "required": [
+            "sourceType",
+            "sourceId",
+            "contentKind",
+            "segments",
+            "page",
+            "completeness",
+          ],
+          "additionalProperties": false,
         },
       },
       "required": [
@@ -3968,6 +4104,135 @@ export const publicToolContracts = {
                   "type": "string",
                 },
                 "additionalProperties": {},
+              },
+              "contentPage": {
+                "type": "object",
+                "properties": {
+                  "sourceType": {
+                    "type": "string",
+                    "enum": [
+                      "EMAIL",
+                      "CALL",
+                      "CALENDAR_EVENT",
+                      "SUPPORT_TICKET",
+                      "OPPORTUNITY",
+                      "SLACK",
+                      "PERSON_PROFILE",
+                    ],
+                  },
+                  "sourceId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
+                  },
+                  "contentKind": {
+                    "type": "string",
+                    "enum": [
+                      "email_body",
+                      "call_transcript",
+                      "support_thread",
+                      "slack_thread",
+                    ],
+                  },
+                  "segments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 1000,
+                        },
+                        "occurredAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                        },
+                        "authorLabel": {
+                          "type": "string",
+                          "maxLength": 500,
+                        },
+                        "text": {
+                          "type": "string",
+                        },
+                      },
+                      "required": [
+                        "id",
+                        "text",
+                      ],
+                      "additionalProperties": false,
+                    },
+                  },
+                  "page": {
+                    "type": "object",
+                    "properties": {
+                      "returned": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      "hasMore": {
+                        "type": "boolean",
+                      },
+                      "nextCursor": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 2000,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                    },
+                    "required": [
+                      "returned",
+                      "hasMore",
+                      "nextCursor",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  "completeness": {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "complete",
+                          "partial",
+                          "unavailable",
+                        ],
+                      },
+                      "reason": {
+                        "type": "string",
+                        "maxLength": 1000,
+                      },
+                      "omittedFields": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 500,
+                        },
+                      },
+                    },
+                    "required": [
+                      "status",
+                      "omittedFields",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "sourceType",
+                  "sourceId",
+                  "contentKind",
+                  "segments",
+                  "page",
+                  "completeness",
+                ],
+                "additionalProperties": false,
               },
             },
             "required": [
@@ -11225,6 +11490,7 @@ export const toolGatewayTransport = {
     403,
     404,
     409,
+    413,
     422,
     429,
     500,
@@ -11495,6 +11761,7 @@ export const toolGatewayErrorCodes = [
   "TOOL_BINDING_MISSING",
   "TOOL_IMPLEMENTATION_ERROR",
   "TOOL_OUTPUT_INVALID",
+  "TOOL_RESULT_TOO_LARGE",
   "TOOL_GATEWAY_ERROR",
   "plan_api_limit_exceeded",
   "plan_billing_action_required",
@@ -11515,6 +11782,7 @@ export const toolGatewayErrorSchema = {
         "TOOL_BINDING_MISSING",
         "TOOL_IMPLEMENTATION_ERROR",
         "TOOL_OUTPUT_INVALID",
+        "TOOL_RESULT_TOO_LARGE",
         "TOOL_GATEWAY_ERROR",
         "plan_api_limit_exceeded",
         "plan_billing_action_required",
@@ -11544,6 +11812,16 @@ export const toolGatewayErrorSchema = {
           "type": "null",
         },
       ],
+    },
+    "limitBytes": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991,
+    },
+    "actualBytes": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991,
     },
   },
   "required": [
@@ -12516,4 +12794,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "6e94d54edef77e194566831299475f1814ec8a4cf6302aa38f7fd2d596623673" as const
+export const sdkConsumerContractHash = "5c2ef9378273bd30acf1fb50abb54d37fb313475e428abc45d4c57143520210b" as const
