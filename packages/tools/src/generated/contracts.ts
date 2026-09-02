@@ -2380,12 +2380,6 @@ export const publicToolContracts = {
             ],
           },
         },
-        "asOf": {
-          "description": "Return only active, unsuperseded facts valid at this ISO 8601 cutoff. Hosted responsibilities use the persisted run cutoff.",
-          "type": "string",
-          "format": "date-time",
-          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-        },
         "after": {
           "description": "ISO 8601 datetime lower bound",
           "type": "string",
@@ -12794,4 +12788,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "5c2ef9378273bd30acf1fb50abb54d37fb313475e428abc45d4c57143520210b" as const
+export const sdkConsumerContractHash = "fb69fe6745dd5e8b9cfcfd8f50b46e8826177ffe389facfd0da44f903e3726bf" as const

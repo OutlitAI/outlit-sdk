@@ -4,4 +4,4 @@
 "@outlit/pi": patch
 ---
 
-Expose bounded exact-source content pages, historical fact cutoffs, and typed oversized tool-result errors.
+Expose bounded exact-source content pages, occurrence-time fact filters, and typed oversized tool-result errors.
