@@ -466,7 +466,7 @@ describe("tool contracts", () => {
     expect(properties.factCategories?.items?.enum).not.toContain("JOURNEY")
   })
 
-  test("exposes canonical source types with CRM aliases for inputs", () => {
+  test("exposes canonical source types while scoping EXTRACTED to exact lookups", () => {
     expect(customerSourceTypes).toEqual([
       "EMAIL",
       "CALL",
@@ -503,7 +503,10 @@ describe("tool contracts", () => {
       string,
       { enum?: readonly string[] }
     >
-    expect(exactSourceProperties.sourceType?.enum).toEqual(customerSourceTypeInputs)
+    expect(exactSourceProperties.sourceType?.enum).toEqual([
+      ...customerSourceTypeInputs,
+      "EXTRACTED",
+    ])
 
     const searchContract = getPublicToolContract("outlit_search_customer_context")
     const searchProperties = searchContract.inputSchema.properties as Record<
@@ -511,6 +514,7 @@ describe("tool contracts", () => {
       { items?: { enum?: readonly string[] } }
     >
     expect(searchProperties.sourceTypes?.items?.enum).toEqual(customerSourceTypeInputs)
+    expect(searchProperties.sourceTypes?.items?.enum).not.toContain("EXTRACTED")
   })
 })
 
