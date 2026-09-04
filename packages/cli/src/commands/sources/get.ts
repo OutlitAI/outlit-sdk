@@ -47,11 +47,11 @@ export default defineCommand({
     },
     limit: {
       type: "string",
-      description: "Slack replies per page (1-100). Default: 50. Ignored for other source types.",
+      description: publicToolContracts.outlit_get_source.inputSchema.properties.limit.description,
     },
     cursor: {
       type: "string",
-      description: "Opaque Slack reply cursor returned by a previous exact lookup.",
+      description: publicToolContracts.outlit_get_source.inputSchema.properties.cursor.description,
     },
   },
   async run({ args }) {

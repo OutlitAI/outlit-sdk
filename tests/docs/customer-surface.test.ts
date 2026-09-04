@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest"
 import {
   customerFactCategories,
   customerFactTypes,
+  customerSourceTypes,
   timelineChannels,
 } from "../../packages/tools/src/generated/contracts"
 import { piToolNames } from "../../packages/tools/src/toolsets"
@@ -103,7 +104,7 @@ describe("customer-surface documentation", () => {
     const cliDocs = readDoc("docs/cli/commands.mdx")
 
     expect(cliDocs).toContain(
-      "Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`",
+      "Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`",
     )
     expect(cliDocs).toContain("### List Sources")
     expect(cliDocs).toContain("outlit sources list [flags]")
@@ -115,6 +116,17 @@ describe("customer-surface documentation", () => {
     )
     expect(cliDocs).toContain("the paginated `items` and `pagination` response")
     expect(cliDocs).toContain("`pagination.nextCursor`")
+  })
+
+  test("keeps every CLI source-type flag reference aligned with canonical source types", () => {
+    const rows = readDoc("docs/cli/commands.mdx")
+      .split("\n")
+      .filter((line) => /^\| `--source-types?` \|/.test(line))
+
+    expect(rows).toHaveLength(4)
+    for (const row of rows) {
+      for (const sourceType of customerSourceTypes) expect(row).toContain(`\`${sourceType}\``)
+    }
   })
 
   test("leads CLI timeline documentation with canonical channels and aliases", () => {

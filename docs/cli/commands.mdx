@@ -700,7 +700,7 @@ outlit facts get --fact-id <id> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--status` | string | — | Comma-separated fact status filter: `ACTIVE`, `ACKNOWLEDGED`, `RESOLVED`, `SNOOZED`, `CANDIDATE` |
-| `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--fact-types` | string | — | Comma-separated public fact type filter, including `CHURN_RISK`, `PRODUCT_USAGE`, `CONTACT_DEPARTURE`, `CONTACT_POSITION_CHANGE`, and `CONTACT_DISENGAGEMENT` |
 | `--fact-categories` | string | — | Comma-separated fact category filter: `MEMORY`, `RELATIONSHIP`, `CUSTOM` |
 | `--after` | string | — | Lower bound on fact occurrence time (ISO 8601 datetime) |
@@ -817,7 +817,7 @@ outlit search <query> [flags]
 | `--top-k` | number | `20` | Maximum results to return (1–50) |
 | `--after` | string | — | Filter to events after this ISO 8601 datetime |
 | `--before` | string | — | Filter to events before this ISO 8601 datetime |
-| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 
 ### Examples
 
@@ -887,7 +887,7 @@ outlit sources list [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Generic source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-type` | string | — | Generic source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--customer` | string | — | Customer UUID, domain, or name to scope source listing |
 | `--participant` | string | — | Participant email or name to filter source records |
 | `--provider` | string | — | Provider identifier such as `gmail`, `gong`, or `google-calendar` |
@@ -918,19 +918,32 @@ outlit sources get --source-type <type> --source-id <id> [--limit <count>] [--cu
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--source-id` | string | — | Exact source identifier |
-| `--limit` | number | `50` | Slack replies per page (1–100). Ignored for other source types. |
-| `--cursor` | string | — | Opaque Slack reply cursor returned by the previous exact lookup. |
+| `--limit` | number | `10` | Exact content segments per page (1–100). |
+| `--cursor` | string | — | Opaque cursor returned by a previous exact lookup for the same source. |
 
 ### Examples
 
 ```bash
-outlit sources get --source-type CALL --source-id call_123
+outlit sources get --source-type CALL --source-id call_123 --limit 10 --json
+outlit sources get --source-type CALL --source-id call_123 --cursor "$CURSOR" --json
 outlit sources get --source-type SLACK --source-id thread_123 --limit 50
 outlit sources get --source-type SLACK --source-id thread_123 --cursor "$CURSOR"
 outlit sources get --source-type OPPORTUNITY --source-id opp_123
 outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
+```
+
+When a response includes `contentPage`, read `contentPage.segments` and check
+`contentPage.completeness` for partial or unavailable content. If
+`contentPage.page.hasMore` is true, pass `contentPage.page.nextCursor` as `--cursor`
+with the same source type and ID. Use `--json` to inspect these fields.
+
+When a fact or search result references a `PERSON_PROFILE` source, pass that source
+ID to exact lookup to inspect its evidence:
+
+```bash
+outlit sources get --source-type PERSON_PROFILE --source-id "$SOURCE_ID" --json
 ```
 
 ## Destinations

@@ -172,6 +172,8 @@ describe("public documentation examples", () => {
       ["Search Customer Context", "outlit_search_customer_context"],
       ["List Active Contact Transition Facts", "outlit_list_facts"],
       ["Open One Source Record", "outlit_get_source"],
+      ["Read Exact Source Content", "outlit_get_source"],
+      ["Follow Person Profile Evidence", "outlit_get_source"],
       ["Read Customer Features", "outlit_get_customer_features"],
     ] as const
     const failures: string[] = []
@@ -193,6 +195,21 @@ describe("public documentation examples", () => {
     }
 
     expect(failures).toEqual([])
+  })
+
+  test("validates the documented exact-source content response against its generated schema", () => {
+    const file = "docs/api-reference/tools.mdx"
+    const request = findFencedBlockInSection(file, "Read Exact Source Content", 3)
+    const response = extractFencedBlocks(file).find(
+      (block) => block.language === "json" && block.line > (request?.line ?? Infinity),
+    )
+
+    expect(response).toBeDefined()
+    const output = JSON.parse(response?.code ?? "null")
+    expect(output?.contentPage).toBeDefined()
+    expect(
+      matchesGeneratedJsonSchema(output, publicToolContracts.outlit_get_source.outputSchema),
+    ).toBe(true)
   })
 
   test("keeps CLI JSON response examples aligned with generated output schemas", () => {

@@ -170,6 +170,65 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 }
 ```
 
+### Read Exact Source Content
+
+Exact lookup can include a `contentPage` with bounded content segments. The default
+page size is 10 segments, with a maximum of 100. Pass the returned
+`contentPage.page.nextCursor` with the same source type and ID when
+`contentPage.page.hasMore` is true. Check `contentPage.completeness` before treating
+the content as complete.
+
+```json
+{
+  "tool": "outlit_get_source",
+  "input": {
+    "sourceType": "CALL",
+    "sourceId": "call_123",
+    "limit": 10
+  }
+}
+```
+
+Example response with complete content:
+
+```json
+{
+  "sourceType": "CALL",
+  "sourceId": "call_123",
+  "occurredAt": "2026-09-01T12:00:00Z",
+  "title": "Renewal discussion",
+  "summary": "The customer asked for a renewal proposal.",
+  "permalink": null,
+  "provider": "gong",
+  "customer": { "id": "cust_123", "name": "Acme", "domain": "acme.com" },
+  "participants": [],
+  "record": {},
+  "contentPage": {
+    "sourceType": "CALL",
+    "sourceId": "call_123",
+    "contentKind": "call_transcript",
+    "segments": [{ "id": "segment_1", "text": "Please send the renewal proposal." }],
+    "page": { "returned": 1, "hasMore": false, "nextCursor": null },
+    "completeness": { "status": "complete", "omittedFields": [] }
+  }
+}
+```
+
+### Follow Person Profile Evidence
+
+When a fact or search result references a `PERSON_PROFILE` source, use its source ID
+for exact lookup. Replace the example ID with the ID from that reference.
+
+```json
+{
+  "tool": "outlit_get_source",
+  "input": {
+    "sourceType": "PERSON_PROFILE",
+    "sourceId": "snapshot_123"
+  }
+}
+```
+
 ### Read Customer Features
 
 ```json
