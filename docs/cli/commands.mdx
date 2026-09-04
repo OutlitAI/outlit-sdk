@@ -934,6 +934,9 @@ outlit sources get --source-type OPPORTUNITY --source-id opp_123
 outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
 ```
 
+`EXTRACTED` is accepted by the exact-source tool API but is currently rejected by
+`outlit sources get`. Use one of the source types listed above in the CLI.
+
 When a response includes `contentPage`, read `contentPage.segments` and check
 `contentPage.completeness` for partial or unavailable content. If
 `contentPage.page.hasMore` is true, pass `contentPage.page.nextCursor` as `--cursor`

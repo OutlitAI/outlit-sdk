@@ -97,6 +97,19 @@ describe("sources get", () => {
     expect(mockCallTool).not.toHaveBeenCalled()
   })
 
+  test("rejects EXTRACTED because it is not a CLI source type", async () => {
+    const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
+
+    await runExpectingError(
+      () =>
+        sourcesGetCmd.run!({
+          args: { "source-type": "EXTRACTED", "source-id": "source_123", json: true },
+        } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
+      "invalid_input",
+    )
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
   test("normalizes CRM source aliases before lookup", async () => {
     const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
 

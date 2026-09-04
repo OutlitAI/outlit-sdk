@@ -84,21 +84,28 @@ function findFencedBlockInSection(
   heading: string,
   level: 2 | 3,
   language = "json",
+  blockIndex = 0,
 ): FencedBlock | undefined {
   const lines = readFileSync(file, "utf8").split(/\r?\n/)
   const marker = `${"#".repeat(level)} ${heading}`
   const startIndex = lines.indexOf(marker)
   if (startIndex === -1) return undefined
 
-  const nextMarker = `${"#".repeat(level)} `
-  const relativeEndIndex = lines
-    .slice(startIndex + 1)
-    .findIndex((line) => line.startsWith(nextMarker))
+  const blocks = extractFencedBlocks(file)
+  const nextHeading = new RegExp(`^#{1,${level}} `)
+  const relativeEndIndex = lines.slice(startIndex + 1).findIndex((line, offset) => {
+    const lineNumber = startIndex + offset + 2
+    const insideFence = blocks.some(
+      (block) =>
+        lineNumber >= block.line && lineNumber <= block.line + block.code.split("\n").length + 1,
+    )
+    return !insideFence && nextHeading.test(line)
+  })
   const endLine = relativeEndIndex === -1 ? lines.length + 1 : startIndex + relativeEndIndex + 2
 
-  return extractFencedBlocks(file).find(
+  return blocks.filter(
     (block) => block.language === language && block.line > startIndex + 1 && block.line < endLine,
-  )
+  )[blockIndex]
 }
 
 describe("public documentation examples", () => {
@@ -123,6 +130,29 @@ describe("public documentation examples", () => {
         { code: '{"valid":true}', language: "json", line: 1 },
         { code: 'const embeddedFence = "```"', language: "typescript", line: 4 },
       ])
+    } finally {
+      rmSync(fixtureDirectory, { force: true, recursive: true })
+    }
+  })
+
+  test.each(["##", "###"])("does not find a response past a %s section boundary", (heading) => {
+    const fixtureDirectory = mkdtempSync(join(tmpdir(), "outlit-docs-section-"))
+    const fixture = join(fixtureDirectory, "sections.md")
+    try {
+      writeFileSync(
+        fixture,
+        [
+          "### Exact source",
+          "```json",
+          '{"request":true}',
+          "```",
+          `${heading} Other section`,
+          "```json",
+          '{"response":true}',
+          "```",
+        ].join("\n"),
+      )
+      expect(findFencedBlockInSection(fixture, "Exact source", 3, "json", 1)).toBeUndefined()
     } finally {
       rmSync(fixtureDirectory, { force: true, recursive: true })
     }
@@ -199,10 +229,7 @@ describe("public documentation examples", () => {
 
   test("validates the documented exact-source content response against its generated schema", () => {
     const file = "docs/api-reference/tools.mdx"
-    const request = findFencedBlockInSection(file, "Read Exact Source Content", 3)
-    const response = extractFencedBlocks(file).find(
-      (block) => block.language === "json" && block.line > (request?.line ?? Infinity),
-    )
+    const response = findFencedBlockInSection(file, "Read Exact Source Content", 3, "json", 1)
 
     expect(response).toBeDefined()
     const output = JSON.parse(response?.code ?? "null")
