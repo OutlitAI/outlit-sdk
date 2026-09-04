@@ -94,9 +94,9 @@ export async function queryRows<TRow>(client: QueryClient, sql: string): Promise
     throw new Error("outlit_query returned an unexpected response")
   }
 
-  const rows = result.rows ?? result.data
+  const rows = result.data
   if (!Array.isArray(rows)) {
-    throw new Error("outlit_query response must include rows")
+    throw new Error("outlit_query response must include a data array")
   }
 
   return rows as TRow[]
