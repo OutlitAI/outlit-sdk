@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
+import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 import { ExitError, mockExitThrow, setNonInteractive, TEST_API_KEY, useTempEnv } from "../helpers"
@@ -24,6 +24,12 @@ function getValidateApiKeyUrl(): string {
 
 describe("doctor command", () => {
   const testDir = useTempEnv("doctor-test")
+  const originalPath = process.env.PATH
+
+  afterEach(() => {
+    if (originalPath === undefined) Reflect.deleteProperty(process.env, "PATH")
+    else process.env.PATH = originalPath
+  })
 
   beforeEach(() => {
     setNonInteractive()
