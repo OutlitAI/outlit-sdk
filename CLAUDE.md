@@ -1,5 +1,7 @@
 # Outlit SDK
 
+Read [AGENTS.md](AGENTS.md) for shared repository workflow and task scope before applying the guidance below.
+
 Monorepo for Outlit's TypeScript tracking SDKs (`@outlit/core`, `@outlit/browser`, `@outlit/node`) and CLI (`@outlit/cli`).
 
 ## Tech stack
@@ -51,12 +53,12 @@ Bun workspaces resolve any matching version range to the local package, so concr
 
 ## PR workflow
 
-After pushing a PR, monitor it through to merge:
+After an authorized PR push, monitor CI and review feedback through the requested handoff:
 
-1. **Poll CI checks** (`gh pr checks`) until all required checks pass: Changeset Check, Lint/Build/Test, Rust CI
+1. **Poll CI checks** (`gh pr checks`) until all required checks pass: `Changeset Check`, `Lint, Build & Test`, `Rust CI`
 2. **Review AI comments** — CodeRabbit reviews PRs automatically. Pull down any inline comments (`gh api repos/OutlitAI/outlit-sdk/pulls/<number>/comments`) and review-level feedback (`gh api repos/OutlitAI/outlit-sdk/pulls/<number>/reviews`)
 3. **Validate before fixing** — don't blindly apply AI suggestions. Check whether each comment is technically correct and relevant. Fix only what's valid; ignore or dismiss the rest
-4. **Merge with rebase** when all checks are green and comments are resolved: `gh pr merge <number> --repo OutlitAI/outlit-sdk --rebase`
+4. **When the user has authorized merging**, merge with rebase after all required checks pass and valid review findings are resolved: `gh pr merge <number> --repo OutlitAI/outlit-sdk --rebase`
 
 Non-required checks (e.g. Mintlify Deployment) can be skipped.
 
