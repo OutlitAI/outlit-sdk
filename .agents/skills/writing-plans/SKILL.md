@@ -16,7 +16,7 @@ Write an implementation plan when any of these apply:
 - Delivery has multiple meaningful stages, owners, repositories, deployments, or long-running checkpoints.
 - Correctness depends on resolving sequencing, interface, or verification choices before implementation.
 
-Proceed without a plan only when the request is exact, local, reversible, low-risk, and small enough to implement and verify as one coherent change. File count alone does not determine complexity. Discoverable details such as paths or existing commands should be inspected before deciding.
+Use a short internal plan when the outcome is clear and the work has no meaningful sequencing or unresolved contract decisions. A change to behavior or several files does not by itself require a separate plan document. Inspect discoverable details before deciding; preserve the user's requested planning depth.
 
 If high-impact product or architecture decisions remain unresolved, use `brainstorming` before writing the plan.
 
@@ -100,6 +100,8 @@ For risky or staged work, state ordering, ownership, feature-flag or migration s
 - Use explicit discovery steps only when information cannot be determined while planning; name the artifact or command that will resolve it.
 
 ## Handoff
+
+For an authorized implementation request, continue into implementation after the plan is ready. Do not stop to ask whether to execute it or require the user to choose a workflow. Ask only about unresolved decisions that materially change the outcome or require additional authorization. A planning-only request ends with the plan.
 
 Keep planning separate from implementation and review orchestration:
 

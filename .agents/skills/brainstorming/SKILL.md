@@ -1,68 +1,28 @@
 ---
 name: brainstorming
-description: Use before creative implementation work such as creating or changing features, components, interfaces, content, or behavior.
+description: Resolve design decisions before implementation when requirements, contracts, or product trade-offs need clarification; scale the process to existing decisions and task risk.
 ---
 
 # Brainstorming
 
-## Scope and Complexity Gate
+Use this skill to resolve design decisions that affect the requested outcome. First inspect the relevant code, requirements, and existing decisions.
 
-Before implementation, run a brief internal check. Proceed directly only when **all** are true **and none of the full-workflow triggers below apply**:
+## Choose the necessary depth
 
-- **Clear:** Target, outcome, and constraints are explicit; no meaningful choice remains.
-- **Local:** The surface is small and creates no cross-component contract.
-- **Reversible and low-risk:** It is easy to undo and has no material security, billing, data, migration, compliance, public API, compatibility, or rollout risk.
-- **Non-material:** It is copy, asset, style, configuration, or mechanical work—not a substantial behavior or workflow change.
+- Proceed with implementation when the intended behavior and constraints are clear and remaining choices are routine and reversible. File count or a behavior change alone does not require a design approval loop.
+- For substantial work, write a scaled design covering the actual contracts, failure modes, verification, and rollout. Reuse an approved spec or existing plan rather than generating another.
+- Ask focused questions only for unresolved decisions that materially change product behavior, scope, compatibility, data handling, security, cost, or rollback. Discover file locations and existing conventions yourself.
+- Offer alternatives when there is a real trade-off. Do not manufacture multiple designs for an already specified outcome.
+- Continue independent authorized work while a necessary answer is pending. Do not perform a dependent action until its required decision or approval is available.
 
-If all are true, confirm the target, implement, and verify. Do **not** require questions, alternatives, a design document, approval loop, or `writing-plans`. Keep the check internal.
+## Authorization and handoff
 
-Use the full workflow if **any** of these apply:
+The user's request and prior decisions establish the authorized scope. Do not ask for the same approval twice, and do not infer permission for unrelated external actions. Repository-specific security, data, and release requirements remain in force.
 
-- Ambiguity or meaningful product trade-offs
-- Architectural, cross-component, or public-contract changes
-- High risk or difficult rollback
-- Material behavior, data, or workflow changes
-- An explicit request to brainstorm, design, or specify
+Save a design in the repository's established location when it will help implementation or future review. Use `writing-plans` when sequencing needs a durable implementation plan and that skill is available. For an implementation request, continue through implementation and relevant verification after resolving the design. For a design-only request, deliver the design and stop at that requested boundary.
 
-If uncertainty is a discoverable fact, such as a file location, inspect the project and reevaluate. Do not turn routine discovery into design.
+Before handoff, check scope, unresolved assumptions, and the evidence needed for completion. If an instruction prevents progress, identify its exact file and requirement rather than attributing the stop vaguely to the skill.
 
-## Existing Decisions and Approval
+Read [visual-companion.md](visual-companion.md) only when a visual design companion is useful and requested or accepted.
 
-Treat an imperative, exact request as approval only of the decisions it states; never infer approval of unstated high-impact details. Reuse an approved design or specification, and never ask for the same approval twice.
-
-## Decision Examples
-
-| Proceed directly | Use full brainstorming |
-|---|---|
-| Change two specified labels in an existing social graphic, preserving everything else. | “Make onboarding better” without goals or success criteria. |
-| Replace exact button copy in one component. | Replace authentication across web, API, and mobile clients. |
-| Apply the same specified config-key change in two known files. | Add a billing flow, destructive migration, or new public API. |
-
-Boundary checks:
-
-- Multiple files can be simple when work is mechanical; one file can be complex when security, data, or core behavior changes.
-- Exact wording does not make an irreversible or high-risk request simple.
-- Content needs full brainstorming when its concept, audience, or visual direction is undecided.
-
-## Full Workflow
-
-1. Explore relevant files, docs, and recent changes.
-2. Ask one question at a time about unresolved high-impact decisions.
-3. Propose 2–3 approaches only when real alternatives exist.
-4. Present a scaled design covering relevant architecture, data flow, failures, verification, and rollout.
-5. Obtain only missing approval.
-6. Write or update `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`, unless another location is required. Reuse approved specs.
-7. Self-review for placeholders, contradictions, scope, and ambiguity.
-8. Invoke `writing-plans` before implementation.
-
-<HARD-GATE>
-Do not implement work that fails the gate until its unresolved design is approved. This does not apply to work that passes every direct-work condition.
-</HARD-GATE>
-
-## Red Flags
-
-- “The skill triggered, so a spec is mandatory.” Run the gate first.
-- “Several files means architectural.” Judge contracts, risk, and behavior—not file count.
-- “Leadership approved it, so details do not matter.” Resolve unapproved high-impact decisions.
-
-If a design question is genuinely clearer visually, offer the visual companion just in time. Read [visual-companion.md](visual-companion.md) only if the user accepts. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for upstream licensing.
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for upstream attribution and licensing.
