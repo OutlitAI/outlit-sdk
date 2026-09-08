@@ -1,5 +1,16 @@
 # @outlit/cli
 
+## 3.1.3
+
+### Patch Changes
+
+- [#205](https://github.com/OutlitAI/outlit-sdk/pull/205) [`79dc13a`](https://github.com/OutlitAI/outlit-sdk/commit/79dc13a46751b4fd7a8b0c6c491b1069c536af8d) Thanks [@leo-paz](https://github.com/leo-paz)! - Expose bounded exact-source content pages, occurrence-time fact filters, and typed oversized tool-result errors.
+
+- [#207](https://github.com/OutlitAI/outlit-sdk/pull/207) [`bac6a85`](https://github.com/OutlitAI/outlit-sdk/commit/bac6a85c7e7dca3dd3a24ea0b73e83d1ee6e4b4e) Thanks [@leo-paz](https://github.com/leo-paz)! - Align exact-source pagination help with the generated content-segment contract.
+
+- Updated dependencies [[`79dc13a`](https://github.com/OutlitAI/outlit-sdk/commit/79dc13a46751b4fd7a8b0c6c491b1069c536af8d)]:
+  - @outlit/tools@2.1.3
+
 ## 3.1.2
 
 ### Patch Changes
