@@ -1,5 +1,11 @@
 # @outlit/tools
 
+## 2.1.3
+
+### Patch Changes
+
+- [#205](https://github.com/OutlitAI/outlit-sdk/pull/205) [`79dc13a`](https://github.com/OutlitAI/outlit-sdk/commit/79dc13a46751b4fd7a8b0c6c491b1069c536af8d) Thanks [@leo-paz](https://github.com/leo-paz)! - Expose bounded exact-source content pages, occurrence-time fact filters, and typed oversized tool-result errors.
+
 ## 2.1.2
 
 ### Patch Changes
