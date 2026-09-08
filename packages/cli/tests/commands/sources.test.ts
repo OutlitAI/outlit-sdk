@@ -50,13 +50,18 @@ describe("sources get", () => {
     })
   })
 
-  test("sends Slack reply pagination to outlit_get_source", async () => {
+  test.each([
+    "SLACK",
+    "CALL",
+    "EMAIL",
+    "SUPPORT_TICKET",
+  ])("sends %s content pagination to outlit_get_source", async (sourceType) => {
     const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
 
     await captureStdout(() =>
       sourcesGetCmd.run!({
         args: {
-          "source-type": "SLACK",
+          "source-type": sourceType,
           "source-id": "thread_123",
           limit: "100",
           cursor: "cursor_123",
@@ -66,14 +71,14 @@ describe("sources get", () => {
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_get_source", {
-      sourceType: "SLACK",
+      sourceType,
       sourceId: "thread_123",
       limit: 100,
       cursor: "cursor_123",
     })
   })
 
-  test.each(["0", "101", "1.5"])("rejects invalid Slack reply limit %s", async (limit) => {
+  test.each(["0", "101", "1.5"])("rejects invalid content segment limit %s", async (limit) => {
     const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
 
     await runExpectingError(
@@ -89,6 +94,19 @@ describe("sources get", () => {
       "invalid_input",
     )
 
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("rejects EXTRACTED because it is not a CLI source type", async () => {
+    const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
+
+    await runExpectingError(
+      () =>
+        sourcesGetCmd.run!({
+          args: { "source-type": "EXTRACTED", "source-id": "source_123", json: true },
+        } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
+      "invalid_input",
+    )
     expect(mockCallTool).not.toHaveBeenCalled()
   })
 

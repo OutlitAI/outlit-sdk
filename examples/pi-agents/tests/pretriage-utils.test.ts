@@ -1,15 +1,39 @@
+import { matchesGeneratedJsonSchema, publicToolContracts } from "@outlit/tools"
 import { describe, expect, test } from "vitest"
 
 import {
   buildBillingScopeFilter,
   buildFingerprint,
+  createPretriageClient,
   normalizeEventNames,
   normalizeNow,
+  queryRows,
   toSqlDateTime,
   toSqlStringList,
 } from "../lib/pretriage-utils.js"
 
 describe("pretriage utilities", () => {
+  test("reads SQL data through the current tool client contract", async () => {
+    const data = [{ customerId: "cust_123" }]
+    const response = {
+      success: true,
+      data,
+      metadata: { rowsReturned: 1, executionTimeMs: 1, truncated: false },
+    }
+    expect(
+      matchesGeneratedJsonSchema(response, publicToolContracts.outlit_query.outputSchema),
+    ).toBe(true)
+    const client = createPretriageClient(
+      {
+        apiKey: "ok_test",
+        fetch: async () => new Response(JSON.stringify(response)),
+      },
+      "test",
+    )
+
+    expect(await queryRows(client, "SELECT customer_id AS customerId FROM customers")).toEqual(data)
+  })
+
   test("normalizes event names for deterministic SQL filters", () => {
     expect(normalizeEventNames([" Onboarding_Completed ", "", "CUSTOM_EVENT"])).toEqual([
       "onboarding_completed",
