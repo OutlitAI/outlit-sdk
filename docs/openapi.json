@@ -1196,29 +1196,6 @@
             "type": "integer",
             "exclusiveMinimum": 0,
             "maximum": 9007199254740991
-          },
-          "validationIssues": {
-            "maxItems": 10,
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "code": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 100
-                },
-                "path": {
-                  "type": "string",
-                  "maxLength": 200
-                }
-              },
-              "required": [
-                "code",
-                "path"
-              ],
-              "additionalProperties": false
-            }
           }
         },
         "required": [
@@ -2507,7 +2484,8 @@
                 "revenue",
                 "recentTimeline",
                 "behaviorMetrics",
-                "enrichment"
+                "enrichment",
+                "credits"
               ]
             }
           },
@@ -3230,7 +3208,8 @@
               "mixpanel",
               "posthog",
               "supabase",
-              "clerk"
+              "clerk",
+              "autumn"
             ]
           }
         },
@@ -3664,6 +3643,32 @@
                   "clerk",
                   "supabase"
                 ]
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "const": "autumn"
+              },
+              "credentials": {
+                "type": "object",
+                "properties": {
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "apiKey"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -5363,6 +5368,288 @@
               "lastAttemptAt",
               "expiresAt",
               "error"
+            ],
+            "additionalProperties": false
+          },
+          "credits": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "not_connected",
+                  "unavailable",
+                  "no_match",
+                  "available"
+                ],
+                "description": "Credit snapshot availability. no_match means a successful import produced no matching account snapshot; it does not prove the provider account does not exist."
+              },
+              "coverage": {
+                "type": "object",
+                "properties": {
+                  "scope": {
+                    "type": "string",
+                    "const": "customer"
+                  },
+                  "entityBalancesIncluded": {
+                    "type": "boolean",
+                    "const": false,
+                    "description": "Entity-level balances are excluded from this customer-scoped snapshot."
+                  }
+                },
+                "required": [
+                  "scope",
+                  "entityBalancesIncluded"
+                ],
+                "additionalProperties": false
+              },
+              "connections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "connectionId": {
+                      "type": "string"
+                    },
+                    "syncStatus": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "lastSyncedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "connectionId",
+                    "syncStatus",
+                    "lastSyncedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "accounts": {
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "providerCustomerId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2048
+                    },
+                    "provider": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "label": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "label"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "environment": {
+                      "type": "string",
+                      "enum": [
+                        "sandbox",
+                        "live"
+                      ]
+                    },
+                    "customerName": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "customerEmail": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "attributionBasis": {
+                      "type": "string",
+                      "enum": [
+                        "domain",
+                        "personal_email"
+                      ]
+                    },
+                    "observedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "stale": {
+                      "type": "boolean"
+                    },
+                    "balances": {
+                      "maxItems": 200,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "featureId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 2048
+                          },
+                          "featureName": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "maxLength": 2048
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "featureType": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "maxLength": 2048
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "unit": {
+                            "type": "string",
+                            "const": "feature_units"
+                          },
+                          "granted": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "remaining": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "usage": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "unlimited": {
+                            "type": "boolean"
+                          },
+                          "overageAllowed": {
+                            "type": "boolean"
+                          },
+                          "maxPurchase": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "nextResetAt": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "featureId",
+                          "featureName",
+                          "featureType",
+                          "unit",
+                          "granted",
+                          "remaining",
+                          "usage",
+                          "unlimited",
+                          "overageAllowed",
+                          "maxPurchase",
+                          "nextResetAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "providerCustomerId",
+                    "provider",
+                    "environment",
+                    "customerName",
+                    "customerEmail",
+                    "attributionBasis",
+                    "observedAt",
+                    "stale",
+                    "balances"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "truncated": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "status",
+              "coverage",
+              "connections",
+              "accounts",
+              "truncated"
             ],
             "additionalProperties": false
           }
@@ -10852,7 +11139,8 @@
               "mixpanel",
               "posthog",
               "supabase",
-              "clerk"
+              "clerk",
+              "autumn"
             ]
           },
           "name": {
@@ -11172,6 +11460,7 @@
                       "CREDENTIAL_REJECTED",
                       "LEGACY_CONNECTION_REQUIRED",
                       "HANDOFF_UNAVAILABLE",
+                      "SYNC_START_FAILED",
                       "TRANSIENT_FAILURE"
                     ]
                   },
@@ -14125,5 +14414,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "a6c97712e3be28db8515131e1852ccf4e31159739c0c06fddff32df1b01b6858"
+  "x-outlit-contract-hash": "100fb766dd7b1701e4706fb95e1e633b38fb04d74240e3030418d5db8826d653"
 }

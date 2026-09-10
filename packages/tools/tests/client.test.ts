@@ -22,6 +22,7 @@ import {
   type CustomerRelationshipResult,
   cliToolNames,
   createOutlitClient,
+  customerIncludeSections,
   customerSourceTypeInputs,
   customerSourceTypes,
   defaultToolNames,
@@ -426,6 +427,38 @@ describe("tool contracts", () => {
         }),
       }),
     )
+  })
+
+  test("exposes customer credit input and derived output types", () => {
+    const contract = getPublicToolContract("outlit_get_customer")
+    const inputProperties = contract.inputSchema.properties as Record<string, unknown>
+    const outputProperties = (contract.outputSchema as { properties: Record<string, unknown> })
+      .properties
+
+    expect(customerIncludeSections).toContain("credits")
+    expect(inputProperties.include).toEqual(
+      expect.objectContaining({
+        items: expect.objectContaining({ enum: expect.arrayContaining(["credits"]) }),
+      }),
+    )
+    expect(outputProperties.credits).toEqual(expect.objectContaining({ type: "object" }))
+    expectTypeOf<
+      NonNullable<CustomerDetailResult["credits"]>["accounts"][number]["balances"][number]["unit"]
+    >().toEqualTypeOf<"feature_units">()
+    expectTypeOf<
+      NonNullable<CustomerDetailResult["credits"]>["coverage"]["entityBalancesIncluded"]
+    >().toEqualTypeOf<false>()
+  })
+
+  test("accepts Autumn direct API-key setup through the generated public contract", () => {
+    const contract = getPublicToolContract("outlit_setup_integration")
+
+    expect(
+      matchesGeneratedJsonSchema(
+        { provider: "autumn", credentials: { apiKey: "am_sk_test_example" } },
+        contract.inputSchema,
+      ),
+    ).toBe(true)
   })
 
   test("exposes fact type and category filters on facts listing", () => {
