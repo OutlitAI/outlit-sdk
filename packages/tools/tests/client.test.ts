@@ -435,18 +435,20 @@ describe("tool contracts", () => {
     const outputProperties = (contract.outputSchema as { properties: Record<string, unknown> })
       .properties
 
-    expect(customerIncludeSections).toContain("credits")
+    expect(customerIncludeSections).toContain("featureBalances")
     expect(inputProperties.include).toEqual(
       expect.objectContaining({
-        items: expect.objectContaining({ enum: expect.arrayContaining(["credits"]) }),
+        items: expect.objectContaining({ enum: expect.arrayContaining(["featureBalances"]) }),
       }),
     )
-    expect(outputProperties.credits).toEqual(expect.objectContaining({ type: "object" }))
+    expect(outputProperties.featureBalances).toEqual(expect.objectContaining({ type: "object" }))
     expectTypeOf<
-      NonNullable<CustomerDetailResult["credits"]>["accounts"][number]["balances"][number]["unit"]
-    >().toEqualTypeOf<"feature_units">()
+      NonNullable<
+        CustomerDetailResult["featureBalances"]
+      >["accounts"][number]["balances"][number]["quantityKind"]
+    >().toEqualTypeOf<"provider_defined">()
     expectTypeOf<
-      NonNullable<CustomerDetailResult["credits"]>["coverage"]["entityBalancesIncluded"]
+      NonNullable<CustomerDetailResult["featureBalances"]>["coverage"]["entityBalancesIncluded"]
     >().toEqualTypeOf<false>()
   })
 
