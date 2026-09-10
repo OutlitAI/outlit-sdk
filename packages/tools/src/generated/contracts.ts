@@ -44,6 +44,11 @@ export const publicToolNames = [
   "outlit_get_customer_features",
   "outlit_list_attention_items",
   "outlit_get_attention_item",
+  "outlit_get_customer_identity",
+  "outlit_list_identity_merge_suggestions",
+  "outlit_reject_identity_merge_suggestion",
+  "outlit_merge_customers",
+  "outlit_get_customer_merge_status",
 ] as const
 
 export const publicToolContracts = {
@@ -11343,6 +11348,1081 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
+  "outlit_get_customer_identity": {
+    "toolName": "outlit_get_customer_identity",
+    "commandId": "customer.identity.get",
+    "commandVersion": 1,
+    "ownerDomain": "identity",
+    "title": "Get customer identity",
+    "description": "Read one customer's identity coverage and bounded possible split records in the same workspace. Candidate matches are leads, not proof that companies are the same. Returns supporting anchor evidence and search limitations; an empty or incomplete result does not prove zero usage. Does not merge, create suggestions, or authorize combining customer activity.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+      },
+      "required": [
+        "customerId",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "checkedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+        },
+        "evidenceCutoffAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+        },
+        "basis": {
+          "type": "string",
+          "const": "unchanged_records_at_cutoff",
+        },
+        "window": {
+          "type": "object",
+          "properties": {
+            "after": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+            },
+            "before": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+            },
+          },
+          "required": [
+            "after",
+            "before",
+          ],
+          "additionalProperties": false,
+        },
+        "coverage": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "complete_within_bounds",
+                "incomplete",
+              ],
+            },
+            "reasons": {
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+              },
+            },
+          },
+          "required": [
+            "status",
+            "reasons",
+          ],
+          "additionalProperties": false,
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "calls": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+            },
+            "domains": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+            },
+            "candidates": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+            },
+          },
+          "required": [
+            "calls",
+            "domains",
+            "candidates",
+          ],
+          "additionalProperties": false,
+        },
+        "candidates": {
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191,
+              },
+              "name": {
+                "type": "string",
+                "maxLength": 500,
+              },
+              "domain": {
+                "type": "string",
+                "maxLength": 500,
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "COMPANY",
+                  "INDIVIDUAL",
+                ],
+              },
+              "reasons": {
+                "maxItems": 50,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "participant_domain",
+                    },
+                    "domain": {
+                      "type": "string",
+                      "maxLength": 253,
+                    },
+                    "sourceType": {
+                      "type": "string",
+                      "const": "CALL",
+                    },
+                    "sourceId": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191,
+                    },
+                    "field": {
+                      "type": "string",
+                      "const": "participants.email",
+                    },
+                  },
+                  "required": [
+                    "kind",
+                    "domain",
+                    "sourceType",
+                    "sourceId",
+                    "field",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+            },
+            "required": [
+              "id",
+              "name",
+              "domain",
+              "type",
+              "reasons",
+            ],
+            "additionalProperties": false,
+          },
+        },
+      },
+      "required": [
+        "customerId",
+        "checkedAt",
+        "window",
+        "coverage",
+        "limits",
+        "candidates",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_list_identity_merge_suggestions": {
+    "toolName": "outlit_list_identity_merge_suggestions",
+    "commandId": "identity.suggestions.list",
+    "commandVersion": 1,
+    "ownerDomain": "identity",
+    "title": "List identity merge suggestions",
+    "description": "Browse saved identity merge suggestions and history with complete details, review notes and latest job status. When latestJob.operationId is non-null, pass it to outlit_get_customer_merge_status to track that merge. Filter by exact suggestion or customer ID to inspect a record without scanning pages. Empty saved suggestions do not prove there is no identity split; use customer identity reads for bounded diagnosis. Follow nextCursor for more results.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "suggestionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "cursor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "suggested",
+            "processing",
+            "merged",
+            "rejected",
+          ],
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "HIGH",
+            "MEDIUM",
+            "LOW",
+          ],
+        },
+        "limit": {
+          "default": 50,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+        },
+      },
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "suggestions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191,
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "suggested",
+                  "processing",
+                  "merged",
+                  "rejected",
+                ],
+              },
+              "proposalStatus": {
+                "type": "string",
+                "enum": [
+                  "PROPOSED",
+                  "STAGED",
+                  "STALE",
+                  "REJECTED",
+                  "APPLIED",
+                ],
+              },
+              "confidence": {
+                "type": "string",
+                "enum": [
+                  "HIGH",
+                  "MEDIUM",
+                  "LOW",
+                ],
+              },
+              "survivor": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
+                  },
+                  "domain": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500,
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "COMPANY",
+                      "INDIVIDUAL",
+                    ],
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PROVISIONAL",
+                          "ACTIVE",
+                          "CHURNED",
+                          "MERGED",
+                        ],
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
+                  "identifierCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  "contactCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "domain",
+                  "type",
+                  "status",
+                  "identifierCount",
+                  "contactCount",
+                ],
+                "additionalProperties": false,
+              },
+              "duplicate": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
+                  },
+                  "domain": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500,
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "COMPANY",
+                      "INDIVIDUAL",
+                    ],
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PROVISIONAL",
+                          "ACTIVE",
+                          "CHURNED",
+                          "MERGED",
+                        ],
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
+                  "identifierCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  "contactCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "domain",
+                  "type",
+                  "status",
+                  "identifierCount",
+                  "contactCount",
+                ],
+                "additionalProperties": false,
+              },
+              "reviewNotes": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 10000,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "reviewedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "reviewedByName": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "appliedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "appliedByName": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+              },
+              "explanation": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1000,
+                },
+              },
+              "impact": {
+                "type": "object",
+                "properties": {
+                  "identifiers": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  "users": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  "activities": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  "visitors": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  "billingEvents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  "facts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  "supportTickets": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  "calls": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  "accessEntries": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  "analyticsEvents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  "analyticsDimensions": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                },
+                "required": [
+                  "identifiers",
+                  "users",
+                  "activities",
+                  "visitors",
+                  "billingEvents",
+                  "facts",
+                  "supportTickets",
+                  "calls",
+                  "accessEntries",
+                  "analyticsEvents",
+                  "analyticsDimensions",
+                ],
+                "additionalProperties": false,
+              },
+              "latestJob": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191,
+                      },
+                      "operationId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 191,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                        "description": "Pass to outlit_get_customer_merge_status. Null when this job has no matching tracked operation.",
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "QUEUED",
+                          "RUNNING",
+                          "COMPLETED",
+                          "FAILED",
+                        ],
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      },
+                    },
+                    "required": [
+                      "id",
+                      "operationId",
+                      "status",
+                      "createdAt",
+                      "updatedAt",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "canMerge": {
+                "type": "boolean",
+              },
+              "canReject": {
+                "type": "boolean",
+              },
+            },
+            "required": [
+              "id",
+              "status",
+              "proposalStatus",
+              "confidence",
+              "survivor",
+              "duplicate",
+              "reviewNotes",
+              "reviewedAt",
+              "reviewedByName",
+              "appliedAt",
+              "appliedByName",
+              "createdAt",
+              "explanation",
+              "impact",
+              "latestJob",
+              "canMerge",
+              "canReject",
+            ],
+            "additionalProperties": false,
+          },
+        },
+        "canManageIdentityMerges": {
+          "type": "boolean",
+        },
+        "nextCursor": {
+          "default": null,
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "suggestions",
+        "canManageIdentityMerges",
+        "nextCursor",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_reject_identity_merge_suggestion": {
+    "toolName": "outlit_reject_identity_merge_suggestion",
+    "commandId": "identity.suggestions.reject",
+    "commandVersion": 1,
+    "ownerDomain": "identity",
+    "title": "Reject identity merge suggestion",
+    "description": "Reject a saved identity merge suggestion and optionally record why. Requires identity review permission. Keeps the customer profiles separate; does not merge or change customer identities. Outlit-owned agents cannot perform this operation.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "suggestionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "reviewNotes": {
+          "type": "string",
+          "maxLength": 10000,
+        },
+      },
+      "required": [
+        "suggestionId",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "suggestionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "status": {
+          "type": "string",
+          "const": "REJECTED",
+        },
+      },
+      "required": [
+        "suggestionId",
+        "status",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_merge_customers": {
+    "toolName": "outlit_merge_customers",
+    "commandId": "customer.merge",
+    "commandVersion": 1,
+    "ownerDomain": "identity",
+    "title": "Merge customers",
+    "description": "DANGEROUS execution with no supported undo. Preview or execute a merge of two exact records into the specified survivor; defaults to preview (dryRun:true). Without suggestionId, both records must be COMPANY. Any pair involving an INDIVIDUAL requires an eligible saved suggestionId for that exact pair. Execute only when authorized and absolutely certain both records represent the same customer; two company records must represent the same company. Similar names, related domains, shared participants, parent/subsidiary relationships or a suggested match are insufficient. If uncertain, do not execute. Execution moves customer data and access relationships and requires the reviewed previewToken, stable requestId and explicit merge permission. A preview grants no execution authority. Reuse identical request inputs for retries. Execution is asynchronous; queued does not mean complete. Outlit-owned agents cannot perform this operation.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "survivingCustomerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "duplicateCustomerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "suggestionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "Eligible saved suggestion for this exact pair. Required if either record is INDIVIDUAL; optional for two COMPANY records.",
+        },
+        "reviewNotes": {
+          "type": "string",
+          "maxLength": 10000,
+        },
+        "dryRun": {
+          "default": true,
+          "type": "boolean",
+        },
+        "previewToken": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+      },
+      "required": [
+        "survivingCustomerId",
+        "duplicateCustomerId",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "preview",
+            },
+            "survivingCustomerId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "duplicateCustomerId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "previewToken": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096,
+            },
+            "evaluatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+            },
+            "impact": {
+              "type": "object",
+              "properties": {
+                "identifiers": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                "contacts": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                "facts": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                "communications": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                "accessEntries": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+              },
+              "required": [
+                "identifiers",
+                "contacts",
+                "facts",
+                "communications",
+                "accessEntries",
+              ],
+              "additionalProperties": false,
+            },
+            "warnings": {
+              "maxItems": 30,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                  },
+                  "message": {
+                    "type": "string",
+                    "maxLength": 1000,
+                  },
+                },
+                "required": [
+                  "code",
+                  "message",
+                ],
+                "additionalProperties": false,
+              },
+            },
+          },
+          "required": [
+            "kind",
+            "survivingCustomerId",
+            "duplicateCustomerId",
+            "previewToken",
+            "evaluatedAt",
+            "impact",
+            "warnings",
+          ],
+          "additionalProperties": false,
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "operation",
+            },
+            "operationId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "survivingCustomerId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "duplicateCustomerId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "queued",
+                "running",
+                "completed",
+                "failed",
+              ],
+            },
+            "phase": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+            },
+            "error": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100,
+                },
+                "message": {
+                  "type": "string",
+                  "maxLength": 1000,
+                },
+              },
+              "required": [
+                "code",
+                "message",
+              ],
+              "additionalProperties": false,
+            },
+          },
+          "required": [
+            "kind",
+            "operationId",
+            "survivingCustomerId",
+            "duplicateCustomerId",
+            "status",
+            "phase",
+          ],
+          "additionalProperties": false,
+        },
+      ],
+    },
+  },
+  "outlit_get_customer_merge_status": {
+    "toolName": "outlit_get_customer_merge_status",
+    "commandId": "customer.merge.status",
+    "commandVersion": 1,
+    "ownerDomain": "identity",
+    "title": "Get customer merge status",
+    "description": "Read a customer merge operation's current progress, completion or bounded failure information. Requires current read access; possession of an operation ID does not grant access. Queued or running operations are not complete. Does not retry, restart, cancel or undo the merge.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "operationId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+      },
+      "required": [
+        "operationId",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "operation",
+        },
+        "operationId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "survivingCustomerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "duplicateCustomerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "queued",
+            "running",
+            "completed",
+            "failed",
+          ],
+        },
+        "phase": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+        },
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+            },
+            "message": {
+              "type": "string",
+              "maxLength": 1000,
+            },
+          },
+          "required": [
+            "code",
+            "message",
+          ],
+          "additionalProperties": false,
+        },
+      },
+      "required": [
+        "kind",
+        "operationId",
+        "survivingCustomerId",
+        "duplicateCustomerId",
+        "status",
+        "phase",
+      ],
+      "additionalProperties": false,
+    },
+  },
 } as const
 
 export const publicOpenApiTransports = [
@@ -11429,6 +12509,11 @@ export const consumerToolPolicies = {
     "outlit_get_customer_features",
     "outlit_list_attention_items",
     "outlit_get_attention_item",
+    "outlit_get_customer_identity",
+    "outlit_list_identity_merge_suggestions",
+    "outlit_reject_identity_merge_suggestion",
+    "outlit_merge_customers",
+    "outlit_get_customer_merge_status",
   ],
   "cli": [
     "outlit_list_customers",
@@ -11471,6 +12556,11 @@ export const consumerToolPolicies = {
     "outlit_get_customer_features",
     "outlit_list_attention_items",
     "outlit_get_attention_item",
+    "outlit_get_customer_identity",
+    "outlit_list_identity_merge_suggestions",
+    "outlit_reject_identity_merge_suggestion",
+    "outlit_merge_customers",
+    "outlit_get_customer_merge_status",
   ],
 } as const
 
@@ -11521,6 +12611,8 @@ export const apiKeyGrants = [
   "workspace_settings:read",
   "workspace_settings:manage",
   "customer_access:manage",
+  "customer_identity:review",
+  "customer_identity:merge",
 ] as const
 
 export const apiKeyValidationSuccessSchema = {
@@ -11650,6 +12742,8 @@ export const apiKeyValidationSuccessSchema = {
               "workspace_settings:read",
               "workspace_settings:manage",
               "customer_access:manage",
+              "customer_identity:review",
+              "customer_identity:merge",
             ],
           },
         },
@@ -11708,6 +12802,8 @@ export const apiKeyValidationSuccessSchema = {
               "workspace_settings:read",
               "workspace_settings:manage",
               "customer_access:manage",
+              "customer_identity:review",
+              "customer_identity:merge",
             ],
           },
         },
@@ -12788,4 +13884,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "fb69fe6745dd5e8b9cfcfd8f50b46e8826177ffe389facfd0da44f903e3726bf" as const
+export const sdkConsumerContractHash = "e22772254d3f57aaae5718c535f3c7c2dfaebbf04cceb911eb3e975b704f83fc" as const

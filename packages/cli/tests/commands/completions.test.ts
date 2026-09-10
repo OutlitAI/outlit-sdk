@@ -43,7 +43,7 @@ describe("completions command", () => {
     expect(out).not.toContain("value-features")
     expect(out).toContain("attention")
     expect(out).not.toContain("usage-metrics")
-    expect(out).not.toContain("identity")
+    expect(out).toContain("identity")
     expect(out).not.toContain("agents")
     expect(out).not.toContain("automations")
     expect(out).not.toContain("signals")
@@ -60,7 +60,7 @@ describe("completions command", () => {
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "ws-users" ]]`)
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "customers" ]]`)
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "list get relationship features timeline owner grant revoke" -- "$cur"))',
+      'COMPREPLY=($(compgen -W "list get relationship identity merge merge-status features timeline owner grant revoke" -- "$cur"))',
     )
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "attention" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "list get" -- "$cur"))')
@@ -87,7 +87,7 @@ describe("completions command", () => {
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "features" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "list create archive" -- "$cur"))')
     expect(out).not.toContain(`"${bashCompWord(1)}" == "metrics"`)
-    expect(out).not.toContain(`"${bashCompWord(1)}" == "identity"`)
+    expect(out).toContain(`"${bashCompWord(1)}" == "identity"`)
     expect(out).not.toContain("settings notifications")
     expect(out).not.toContain("settings notifications default")
   })
@@ -145,8 +145,8 @@ describe("completions command", () => {
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --type --label --default --enabled --disabled"',
     )
-    expect(out).not.toContain("--confidence")
-    expect(out).not.toContain("--review-notes")
+    expect(out).toContain("--customer-id --suggestion-id --status --confidence")
+    expect(out).toContain("--preview-token --request-id --suggestion-id --review-notes")
     expect(out).not.toContain('COMPREPLY=($(compgen -W "--api-key --json --destination-id"')
   })
 
@@ -275,7 +275,7 @@ describe("completions command", () => {
     expect(out).not.toContain("__outlit_using_cmd metrics")
     expect(out).not.toContain("-n '__outlit_using_cmd settings report update'")
     expect(out).not.toContain("settings notifications")
-    expect(out).not.toContain("__outlit_using_cmd identity")
+    expect(out).toContain("__outlit_using_cmd identity suggestions")
     expect(out).not.toContain("-n '__outlit_using_cmd destinations options'")
     expect(out).toContain("-n '__outlit_using_cmd setup' -l yes")
     expect(out).toContain("-n '__outlit_using_cmd setup claude-code' -l json")

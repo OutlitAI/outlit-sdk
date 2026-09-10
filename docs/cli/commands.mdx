@@ -309,6 +309,47 @@ outlit customers relationship acme.com --json
 }
 ```
 
+## Customer identity and merging
+
+Inspect a customer's identity coverage and possible split records using its exact customer ID:
+
+```bash
+outlit customers identity "<customerId>" --json
+```
+
+Candidate records are leads, not proof of common identity. An empty or incomplete search does not prove the account has zero usage. This read never creates a merge suggestion or combines customer activity.
+
+Saved suggestions and review history are a separate read. List returns complete details; use `--suggestion-id` to retrieve one exact record in the same collection response, or `--customer-id` to scope the list. Follow `nextCursor` using `--cursor`.
+
+```bash
+outlit identity suggestions list --customer-id "<customerId>" --limit 20 --json
+outlit identity suggestions list --suggestion-id "<suggestionId>" --json
+outlit identity suggestions reject "<suggestionId>" --review-notes "Different companies" --json
+```
+
+List also accepts `--status suggested|processing|merged|rejected` and `--confidence HIGH|MEDIUM|LOW`. Rejection requires identity review authority and does not authorize merging. It returns only `{ "suggestionId": "…", "status": "REJECTED" }`; read the suggestion list again for updated details.
+
+The merge command previews by default. Both positional arguments are exact IDs; the first is the surviving record. Without `--suggestion-id`, both records must be `COMPANY` customers. A pair involving an `INDIVIDUAL` requires an eligible saved suggestion for that exact pair. An optional `--suggestion-id` links an existing suggestion to the exact pair, and `--review-notes` records the review explanation.
+
+```bash
+outlit customers merge "<survivorId>" "<duplicateId>" --json
+```
+
+<Warning>
+Merge execution is dangerous and has no supported undo. It moves customer data and access relationships into the survivor. Execute only when authorized and certain that the records represent the same customer; two company records must represent the same company. Similar names, related domains, shared participants, and parent/subsidiary relationships do not establish that identity. If uncertain, do not execute.
+</Warning>
+
+Execution requires an explicit `--execute`, the reviewed preview's token, a stable request ID, and dedicated merge authority. A read-only credential can preview but cannot execute. A merge API key must include an explicitly selected `customer_identity:merge` grant; ordinary full-access and personal CLI presets exclude it. Use the same pair, token, request ID, and review inputs when retrying an execution.
+
+```bash
+outlit customers merge "<survivorId>" "<duplicateId>" --execute --preview-token "<token>" --request-id "<stableId>" --json
+outlit customers merge-status "<operationId>" --json
+```
+
+A saved suggestion's `latestJob.operationId`, when present, can be passed to `customers merge-status`. A null value means that job has no public operation ID attached.
+
+Queued or running status does not mean merged. Status reads the admitted operation without repeating execution, including after a partial failure. These commands require the matching Core deployment. Updating the CLI does not enable backend access or grant permission.
+
 ## Customers Features
 
 Read exact historical Feature usage for one authorized customer.
