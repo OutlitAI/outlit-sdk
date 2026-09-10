@@ -114,8 +114,13 @@ describe("toolsets", () => {
       "outlit_get_customer_features",
       "outlit_list_attention_items",
       "outlit_get_attention_item",
+      "outlit_get_customer_identity",
+      "outlit_list_identity_merge_suggestions",
+      "outlit_reject_identity_merge_suggestion",
+      "outlit_merge_customers",
+      "outlit_get_customer_merge_status",
     ])
-    expect(allPublicToolNames).toHaveLength(40)
+    expect(allPublicToolNames).toHaveLength(45)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })

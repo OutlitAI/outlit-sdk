@@ -58,6 +58,7 @@ async function startCli() {
       activation: () => import("./commands/activation/index").then((m) => m.default),
       attention: () => import("./commands/attention/index").then((m) => m.default),
       customers: () => import("./commands/customers/index").then((m) => m.default),
+      identity: () => import("./commands/identity/index").then((m) => m.default),
       users: () => import("./commands/users/index").then((m) => m.default),
       "ws-users": () => import("./commands/ws-users/index").then((m) => m.default),
       onboard: () => import("./commands/onboard").then((m) => m.default),

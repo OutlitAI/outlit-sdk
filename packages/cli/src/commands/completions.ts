@@ -80,6 +80,24 @@ const COMMANDS: readonly CmdDef[] = [
         flags: [...COMMON],
       },
       {
+        name: "identity",
+        desc: "Inspect customer identity and possible split records",
+        flags: [...COMMON],
+      },
+      {
+        name: "merge",
+        desc: "Preview an exact customer merge; execution requires explicit inputs",
+        flags: [
+          ...COMMON,
+          { name: "--execute", desc: "Execute the reviewed merge instead of previewing" },
+          { name: "--preview-token", desc: "Reviewed preview token" },
+          { name: "--request-id", desc: "Stable execution request ID" },
+          { name: "--suggestion-id", desc: "Optional originating suggestion ID" },
+          { name: "--review-notes", desc: "Optional merge explanation" },
+        ],
+      },
+      { name: "merge-status", desc: "Read an admitted merge operation", flags: [...COMMON] },
+      {
         name: "features",
         desc: "Get exact Feature usage for a customer",
         flags: [
@@ -141,6 +159,34 @@ const COMMANDS: readonly CmdDef[] = [
         ],
       },
       { name: "get", desc: "Get one Attention item by exact ID", flags: [...COMMON] },
+    ],
+  },
+  {
+    name: "identity",
+    desc: "Review customer identity suggestions",
+    subs: [
+      {
+        name: "suggestions",
+        desc: "Saved suggestions and history",
+        subs: [
+          {
+            name: "list",
+            desc: "List complete suggestion details",
+            flags: [
+              ...PAGINATED,
+              { name: "--customer-id", desc: "Filter by exact customer ID" },
+              { name: "--suggestion-id", desc: "Retrieve one exact suggestion" },
+              { name: "--status", desc: "suggested, processing, merged, or rejected" },
+              { name: "--confidence", desc: "HIGH, MEDIUM, or LOW" },
+            ],
+          },
+          {
+            name: "reject",
+            desc: "Reject a saved suggestion",
+            flags: [...COMMON, { name: "--review-notes", desc: "Optional reason for rejection" }],
+          },
+        ],
+      },
     ],
   },
   {

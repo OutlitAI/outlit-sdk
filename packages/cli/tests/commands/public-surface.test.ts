@@ -9,7 +9,6 @@ const retiredCommandFamilies = [
   "agents",
   "automations",
   "signals",
-  "identity",
   "metrics",
   "value-features",
 ] as const

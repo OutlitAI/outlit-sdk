@@ -665,6 +665,86 @@
                       "tool"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
+                        "const": "outlit_get_customer_identity"
+                      },
+                      "input": {
+                        "$ref": "#/components/schemas/ToolInput_outlit_get_customer_identity"
+                      }
+                    },
+                    "required": [
+                      "tool"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
+                        "const": "outlit_list_identity_merge_suggestions"
+                      },
+                      "input": {
+                        "$ref": "#/components/schemas/ToolInput_outlit_list_identity_merge_suggestions"
+                      }
+                    },
+                    "required": [
+                      "tool"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
+                        "const": "outlit_reject_identity_merge_suggestion"
+                      },
+                      "input": {
+                        "$ref": "#/components/schemas/ToolInput_outlit_reject_identity_merge_suggestion"
+                      }
+                    },
+                    "required": [
+                      "tool"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
+                        "const": "outlit_merge_customers"
+                      },
+                      "input": {
+                        "$ref": "#/components/schemas/ToolInput_outlit_merge_customers"
+                      }
+                    },
+                    "required": [
+                      "tool"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
+                        "const": "outlit_get_customer_merge_status"
+                      },
+                      "input": {
+                        "$ref": "#/components/schemas/ToolInput_outlit_get_customer_merge_status"
+                      }
+                    },
+                    "required": [
+                      "tool"
+                    ],
+                    "additionalProperties": false
                   }
                 ],
                 "discriminator": {
@@ -800,6 +880,21 @@
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_get_attention_item"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ToolOutput_outlit_get_customer_identity"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ToolOutput_outlit_list_identity_merge_suggestions"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ToolOutput_outlit_reject_identity_merge_suggestion"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ToolOutput_outlit_merge_customers"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ToolOutput_outlit_get_customer_merge_status"
                     }
                   ]
                 }
@@ -1236,7 +1331,9 @@
                     "activation:manage",
                     "workspace_settings:read",
                     "workspace_settings:manage",
-                    "customer_access:manage"
+                    "customer_access:manage",
+                    "customer_identity:review",
+                    "customer_identity:merge"
                   ]
                 }
               },
@@ -1294,7 +1391,9 @@
                     "activation:manage",
                     "workspace_settings:read",
                     "workspace_settings:manage",
-                    "customer_access:manage"
+                    "customer_access:manage",
+                    "customer_identity:review",
+                    "customer_identity:merge"
                   ]
                 }
               }
@@ -3868,6 +3967,139 @@
         },
         "required": [
           "id"
+        ],
+        "additionalProperties": false
+      },
+      "ToolInput_outlit_get_customer_identity": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          }
+        },
+        "required": [
+          "customerId"
+        ],
+        "additionalProperties": false
+      },
+      "ToolInput_outlit_list_identity_merge_suggestions": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "suggestionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "cursor": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "suggested",
+              "processing",
+              "merged",
+              "rejected"
+            ]
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "HIGH",
+              "MEDIUM",
+              "LOW"
+            ]
+          },
+          "limit": {
+            "default": 50,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "additionalProperties": false
+      },
+      "ToolInput_outlit_reject_identity_merge_suggestion": {
+        "type": "object",
+        "properties": {
+          "suggestionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "reviewNotes": {
+            "type": "string",
+            "maxLength": 10000
+          }
+        },
+        "required": [
+          "suggestionId"
+        ],
+        "additionalProperties": false
+      },
+      "ToolInput_outlit_merge_customers": {
+        "type": "object",
+        "properties": {
+          "survivingCustomerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "duplicateCustomerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "suggestionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "reviewNotes": {
+            "type": "string",
+            "maxLength": 10000
+          },
+          "dryRun": {
+            "default": true,
+            "type": "boolean"
+          },
+          "previewToken": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          }
+        },
+        "required": [
+          "survivingCustomerId",
+          "duplicateCustomerId"
+        ],
+        "additionalProperties": false
+      },
+      "ToolInput_outlit_get_customer_merge_status": {
+        "type": "object",
+        "properties": {
+          "operationId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          }
+        },
+        "required": [
+          "operationId"
         ],
         "additionalProperties": false
       },
@@ -12995,8 +13227,884 @@
           "latestUpdate"
         ],
         "additionalProperties": false
+      },
+      "ToolOutput_outlit_get_customer_identity": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "evidenceCutoffAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "basis": {
+            "type": "string",
+            "const": "unchanged_records_at_cutoff"
+          },
+          "window": {
+            "type": "object",
+            "properties": {
+              "after": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "before": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": [
+              "after",
+              "before"
+            ],
+            "additionalProperties": false
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "complete_within_bounds",
+                  "incomplete"
+                ]
+              },
+              "reasons": {
+                "maxItems": 20,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
+              }
+            },
+            "required": [
+              "status",
+              "reasons"
+            ],
+            "additionalProperties": false
+          },
+          "limits": {
+            "type": "object",
+            "properties": {
+              "calls": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "domains": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "candidates": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "calls",
+              "domains",
+              "candidates"
+            ],
+            "additionalProperties": false
+          },
+          "candidates": {
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 191
+                },
+                "name": {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                "domain": {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "COMPANY",
+                    "INDIVIDUAL"
+                  ]
+                },
+                "reasons": {
+                  "maxItems": 50,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "participant_domain"
+                      },
+                      "domain": {
+                        "type": "string",
+                        "maxLength": 253
+                      },
+                      "sourceType": {
+                        "type": "string",
+                        "const": "CALL"
+                      },
+                      "sourceId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191
+                      },
+                      "field": {
+                        "type": "string",
+                        "const": "participants.email"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "domain",
+                      "sourceType",
+                      "sourceId",
+                      "field"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "domain",
+                "type",
+                "reasons"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "customerId",
+          "checkedAt",
+          "window",
+          "coverage",
+          "limits",
+          "candidates"
+        ],
+        "additionalProperties": false
+      },
+      "ToolOutput_outlit_list_identity_merge_suggestions": {
+        "type": "object",
+        "properties": {
+          "suggestions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 191
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "suggested",
+                    "processing",
+                    "merged",
+                    "rejected"
+                  ]
+                },
+                "proposalStatus": {
+                  "type": "string",
+                  "enum": [
+                    "PROPOSED",
+                    "STAGED",
+                    "STALE",
+                    "REJECTED",
+                    "APPLIED"
+                  ]
+                },
+                "confidence": {
+                  "type": "string",
+                  "enum": [
+                    "HIGH",
+                    "MEDIUM",
+                    "LOW"
+                  ]
+                },
+                "survivor": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    },
+                    "domain": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "COMPANY",
+                        "INDIVIDUAL"
+                      ]
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PROVISIONAL",
+                            "ACTIVE",
+                            "CHURNED",
+                            "MERGED"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "identifierCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "contactCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "domain",
+                    "type",
+                    "status",
+                    "identifierCount",
+                    "contactCount"
+                  ],
+                  "additionalProperties": false
+                },
+                "duplicate": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    },
+                    "domain": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "COMPANY",
+                        "INDIVIDUAL"
+                      ]
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PROVISIONAL",
+                            "ACTIVE",
+                            "CHURNED",
+                            "MERGED"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "identifierCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "contactCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "domain",
+                    "type",
+                    "status",
+                    "identifierCount",
+                    "contactCount"
+                  ],
+                  "additionalProperties": false
+                },
+                "reviewNotes": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 10000
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "reviewedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "reviewedByName": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "appliedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "appliedByName": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                },
+                "explanation": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000
+                  }
+                },
+                "impact": {
+                  "type": "object",
+                  "properties": {
+                    "identifiers": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "users": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "activities": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "visitors": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "billingEvents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "facts": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "supportTickets": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "calls": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "accessEntries": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "analyticsEvents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "analyticsDimensions": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "identifiers",
+                    "users",
+                    "activities",
+                    "visitors",
+                    "billingEvents",
+                    "facts",
+                    "supportTickets",
+                    "calls",
+                    "accessEntries",
+                    "analyticsEvents",
+                    "analyticsDimensions"
+                  ],
+                  "additionalProperties": false
+                },
+                "latestJob": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 191
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "QUEUED",
+                            "RUNNING",
+                            "COMPLETED",
+                            "FAILED"
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "status",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "canMerge": {
+                  "type": "boolean"
+                },
+                "canReject": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "status",
+                "proposalStatus",
+                "confidence",
+                "survivor",
+                "duplicate",
+                "reviewNotes",
+                "reviewedAt",
+                "reviewedByName",
+                "appliedAt",
+                "appliedByName",
+                "createdAt",
+                "explanation",
+                "impact",
+                "latestJob",
+                "canMerge",
+                "canReject"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "canManageIdentityMerges": {
+            "type": "boolean"
+          },
+          "nextCursor": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "suggestions",
+          "canManageIdentityMerges",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "ToolOutput_outlit_reject_identity_merge_suggestion": {
+        "type": "object",
+        "properties": {
+          "proposalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "STAGED",
+              "REJECTED"
+            ]
+          },
+          "jobId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "jobStatus": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "COMPLETED",
+              "FAILED"
+            ]
+          }
+        },
+        "required": [
+          "proposalId",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "ToolOutput_outlit_merge_customers": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "preview"
+              },
+              "survivingCustomerId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191
+              },
+              "duplicateCustomerId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191
+              },
+              "previewToken": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              },
+              "evaluatedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              "impact": {
+                "type": "object",
+                "properties": {
+                  "identifiers": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "contacts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "facts": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "communications": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "accessEntries": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "identifiers",
+                  "contacts",
+                  "facts",
+                  "communications",
+                  "accessEntries"
+                ],
+                "additionalProperties": false
+              },
+              "warnings": {
+                "maxItems": 30,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    "message": {
+                      "type": "string",
+                      "maxLength": 1000
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "eligible": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "kind",
+              "survivingCustomerId",
+              "duplicateCustomerId",
+              "previewToken",
+              "evaluatedAt",
+              "impact",
+              "warnings",
+              "eligible"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "operation"
+              },
+              "operationId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191
+              },
+              "survivingCustomerId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191
+              },
+              "duplicateCustomerId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "running",
+                  "completed",
+                  "failed"
+                ]
+              },
+              "phase": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "message": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "kind",
+              "operationId",
+              "survivingCustomerId",
+              "duplicateCustomerId",
+              "status",
+              "phase"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "ToolOutput_outlit_get_customer_merge_status": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "operation"
+          },
+          "operationId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "survivingCustomerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "duplicateCustomerId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "failed"
+            ]
+          },
+          "phase": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "kind",
+          "operationId",
+          "survivingCustomerId",
+          "duplicateCustomerId",
+          "status",
+          "phase"
+        ],
+        "additionalProperties": false
       }
     }
   },
-  "x-outlit-contract-hash": "fb69fe6745dd5e8b9cfcfd8f50b46e8826177ffe389facfd0da44f903e3726bf"
+  "x-outlit-contract-hash": "cee499765c8f765ecd33b06b9adfe84c79d6226df78cc606bde64d77d029e002"
 }
