@@ -12019,6 +12019,8 @@ export const publicToolContracts = {
           "anyOf": [
             {
               "type": "string",
+              "minLength": 1,
+              "maxLength": 2000,
             },
             {
               "type": "null",
@@ -13888,4 +13890,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "cee499765c8f765ecd33b06b9adfe84c79d6226df78cc606bde64d77d029e002" as const
+export const sdkConsumerContractHash = "b094dfbd1a3e47e9a234c99a7eb7b56202e110008cec477d27664a632286c532" as const
