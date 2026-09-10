@@ -868,7 +868,7 @@ export const publicToolContracts = {
               "recentTimeline",
               "behaviorMetrics",
               "enrichment",
-              "credits",
+              "featureBalances",
             ],
           },
         },
@@ -1636,7 +1636,7 @@ export const publicToolContracts = {
           ],
           "additionalProperties": false,
         },
-        "credits": {
+        "featureBalances": {
           "type": "object",
           "properties": {
             "status": {
@@ -1647,7 +1647,7 @@ export const publicToolContracts = {
                 "no_match",
                 "available",
               ],
-              "description": "Credit snapshot availability. no_match means a successful import produced no matching account snapshot; it does not prove the provider account does not exist.",
+              "description": "Provider feature balance availability. no_match means a successful import produced no account matching the Customer’s usable identifiers; it does not prove the provider account does not exist. Missing usable identifiers is unavailable.",
             },
             "coverage": {
               "type": "object",
@@ -1763,7 +1763,7 @@ export const publicToolContracts = {
                       },
                     ],
                   },
-                  "attributionBasis": {
+                  "matchBasis": {
                     "type": "string",
                     "enum": [
                       "domain",
@@ -1811,9 +1811,10 @@ export const publicToolContracts = {
                             },
                           ],
                         },
-                        "unit": {
+                        "quantityKind": {
                           "type": "string",
-                          "const": "feature_units",
+                          "const": "provider_defined",
+                          "description": "Quantities use this provider feature’s own units; do not sum or compare them across features or treat them as currency.",
                         },
                         "granted": {
                           "anyOf": [
@@ -1878,7 +1879,7 @@ export const publicToolContracts = {
                         "featureId",
                         "featureName",
                         "featureType",
-                        "unit",
+                        "quantityKind",
                         "granted",
                         "remaining",
                         "usage",
@@ -1897,7 +1898,7 @@ export const publicToolContracts = {
                   "environment",
                   "customerName",
                   "customerEmail",
-                  "attributionBasis",
+                  "matchBasis",
                   "observedAt",
                   "stale",
                   "balances",
@@ -14108,7 +14109,7 @@ export const customerIncludeSections = [
   "recentTimeline",
   "behaviorMetrics",
   "enrichment",
-  "credits",
+  "featureBalances",
 ] as const
 
 export const customerSourceTypes = [
@@ -14197,4 +14198,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "100fb766dd7b1701e4706fb95e1e633b38fb04d74240e3030418d5db8826d653" as const
+export const sdkConsumerContractHash = "43b7b9a1c4cf9ac8bf7b027bbf6cb57a0aa8a287cd9695c1873b378b21a247a7" as const

@@ -2485,7 +2485,7 @@
                 "recentTimeline",
                 "behaviorMetrics",
                 "enrichment",
-                "credits"
+                "featureBalances"
               ]
             }
           },
@@ -5371,7 +5371,7 @@
             ],
             "additionalProperties": false
           },
-          "credits": {
+          "featureBalances": {
             "type": "object",
             "properties": {
               "status": {
@@ -5382,7 +5382,7 @@
                   "no_match",
                   "available"
                 ],
-                "description": "Credit snapshot availability. no_match means a successful import produced no matching account snapshot; it does not prove the provider account does not exist."
+                "description": "Provider feature balance availability. no_match means a successful import produced no account matching the Customer’s usable identifiers; it does not prove the provider account does not exist. Missing usable identifiers is unavailable."
               },
               "coverage": {
                 "type": "object",
@@ -5498,7 +5498,7 @@
                         }
                       ]
                     },
-                    "attributionBasis": {
+                    "matchBasis": {
                       "type": "string",
                       "enum": [
                         "domain",
@@ -5546,9 +5546,10 @@
                               }
                             ]
                           },
-                          "unit": {
+                          "quantityKind": {
                             "type": "string",
-                            "const": "feature_units"
+                            "const": "provider_defined",
+                            "description": "Quantities use this provider feature’s own units; do not sum or compare them across features or treat them as currency."
                           },
                           "granted": {
                             "anyOf": [
@@ -5613,7 +5614,7 @@
                           "featureId",
                           "featureName",
                           "featureType",
-                          "unit",
+                          "quantityKind",
                           "granted",
                           "remaining",
                           "usage",
@@ -5632,7 +5633,7 @@
                     "environment",
                     "customerName",
                     "customerEmail",
-                    "attributionBasis",
+                    "matchBasis",
                     "observedAt",
                     "stale",
                     "balances"
@@ -14414,5 +14415,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "100fb766dd7b1701e4706fb95e1e633b38fb04d74240e3030418d5db8826d653"
+  "x-outlit-contract-hash": "43b7b9a1c4cf9ac8bf7b027bbf6cb57a0aa8a287cd9695c1873b378b21a247a7"
 }
