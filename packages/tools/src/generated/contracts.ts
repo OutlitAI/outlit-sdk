@@ -11562,7 +11562,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "identity",
     "title": "List identity merge suggestions",
-    "description": "Browse saved identity merge suggestions and history with complete details, review notes and latest job status. Filter by exact suggestion or customer ID to inspect a record without scanning pages. Empty saved suggestions do not prove there is no identity split; use customer identity reads for bounded diagnosis. Follow nextCursor for more results.",
+    "description": "Browse saved identity merge suggestions and history with complete details, review notes and latest job status. When latestJob.operationId is non-null, pass it to outlit_get_customer_merge_status to track that merge. Filter by exact suggestion or customer ID to inspect a record without scanning pages. Empty saved suggestions do not prove there is no identity split; use customer identity reads for bounded diagnosis. Follow nextCursor for more results.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -11949,6 +11949,19 @@ export const publicToolContracts = {
                         "minLength": 1,
                         "maxLength": 191,
                       },
+                      "operationId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 191,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                        "description": "Pass to outlit_get_customer_merge_status. Null when this job has no matching tracked operation.",
+                      },
                       "status": {
                         "type": "string",
                         "enum": [
@@ -11971,6 +11984,7 @@ export const publicToolContracts = {
                     },
                     "required": [
                       "id",
+                      "operationId",
                       "status",
                       "createdAt",
                       "updatedAt",
@@ -12070,35 +12084,18 @@ export const publicToolContracts = {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
-        "proposalId": {
+        "suggestionId": {
           "type": "string",
           "minLength": 1,
           "maxLength": 191,
         },
         "status": {
           "type": "string",
-          "enum": [
-            "STAGED",
-            "REJECTED",
-          ],
-        },
-        "jobId": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 191,
-        },
-        "jobStatus": {
-          "type": "string",
-          "enum": [
-            "QUEUED",
-            "RUNNING",
-            "COMPLETED",
-            "FAILED",
-          ],
+          "const": "REJECTED",
         },
       },
       "required": [
-        "proposalId",
+        "suggestionId",
         "status",
       ],
       "additionalProperties": false,
@@ -12110,7 +12107,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "identity",
     "title": "Merge customers",
-    "description": "DANGEROUS execution with no supported undo. Preview or execute a merge of two exact records into the specified survivor; defaults to preview (dryRun:true). Execute only when authorized and absolutely certain both records represent the same customer; two company records must represent the same company. Similar names, related domains, shared participants, parent/subsidiary relationships or a suggested match are insufficient. If uncertain, do not execute. Execution moves customer data and access relationships and requires the reviewed previewToken, stable requestId and explicit merge permission. A preview grants no execution authority. Reuse identical request inputs for retries. Execution is asynchronous; queued does not mean complete. Outlit-owned agents cannot perform this operation.",
+    "description": "DANGEROUS execution with no supported undo. Preview or execute a merge of two exact records into the specified survivor; defaults to preview (dryRun:true). Without suggestionId, both records must be COMPANY. Any pair involving an INDIVIDUAL requires an eligible saved suggestionId for that exact pair. Execute only when authorized and absolutely certain both records represent the same customer; two company records must represent the same company. Similar names, related domains, shared participants, parent/subsidiary relationships or a suggested match are insufficient. If uncertain, do not execute. Execution moves customer data and access relationships and requires the reviewed previewToken, stable requestId and explicit merge permission. A preview grants no execution authority. Reuse identical request inputs for retries. Execution is asynchronous; queued does not mean complete. Outlit-owned agents cannot perform this operation.",
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": true,
@@ -12133,6 +12130,7 @@ export const publicToolContracts = {
           "type": "string",
           "minLength": 1,
           "maxLength": 191,
+          "description": "Eligible saved suggestion for this exact pair. Required if either record is INDIVIDUAL; optional for two COMPANY records.",
         },
         "reviewNotes": {
           "type": "string",
@@ -12250,9 +12248,6 @@ export const publicToolContracts = {
                 "additionalProperties": false,
               },
             },
-            "eligible": {
-              "type": "boolean",
-            },
           },
           "required": [
             "kind",
@@ -12262,7 +12257,6 @@ export const publicToolContracts = {
             "evaluatedAt",
             "impact",
             "warnings",
-            "eligible",
           ],
           "additionalProperties": false,
         },
@@ -13890,4 +13884,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "b094dfbd1a3e47e9a234c99a7eb7b56202e110008cec477d27664a632286c532" as const
+export const sdkConsumerContractHash = "e22772254d3f57aaae5718c535f3c7c2dfaebbf04cceb911eb3e975b704f83fc" as const

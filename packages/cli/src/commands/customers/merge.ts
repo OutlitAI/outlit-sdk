@@ -36,7 +36,11 @@ export default defineCommand({
       type: "string",
       description: "Stable execution request ID, reuse for identical retries",
     },
-    "suggestion-id": { type: "string", description: "Optional originating merge suggestion ID" },
+    "suggestion-id": {
+      type: "string",
+      description:
+        publicToolContracts.outlit_merge_customers.inputSchema.properties.suggestionId.description,
+    },
     "review-notes": { type: "string", description: "Optional explanation for this merge" },
   },
   async run({ args }) {

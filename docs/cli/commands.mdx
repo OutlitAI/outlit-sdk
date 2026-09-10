@@ -327,9 +327,9 @@ outlit identity suggestions list --suggestion-id "<suggestionId>" --json
 outlit identity suggestions reject "<suggestionId>" --review-notes "Different companies" --json
 ```
 
-List also accepts `--status suggested|processing|merged|rejected` and `--confidence HIGH|MEDIUM|LOW`. Rejection requires identity review authority and does not authorize merging.
+List also accepts `--status suggested|processing|merged|rejected` and `--confidence HIGH|MEDIUM|LOW`. Rejection requires identity review authority and does not authorize merging. It returns only `{ "suggestionId": "…", "status": "REJECTED" }`; read the suggestion list again for updated details.
 
-The merge command previews by default. Both positional arguments are exact IDs; the first is the surviving record. An optional `--suggestion-id` and `--review-notes` attach review provenance to the same pair.
+The merge command previews by default. Both positional arguments are exact IDs; the first is the surviving record. Without `--suggestion-id`, both records must be `COMPANY` customers. A pair involving an `INDIVIDUAL` requires an eligible saved suggestion for that exact pair. An optional `--suggestion-id` links an existing suggestion to the exact pair, and `--review-notes` records the review explanation.
 
 ```bash
 outlit customers merge "<survivorId>" "<duplicateId>" --json
@@ -345,6 +345,8 @@ Execution requires an explicit `--execute`, the reviewed preview's token, a stab
 outlit customers merge "<survivorId>" "<duplicateId>" --execute --preview-token "<token>" --request-id "<stableId>" --json
 outlit customers merge-status "<operationId>" --json
 ```
+
+A saved suggestion's `latestJob.operationId`, when present, can be passed to `customers merge-status`. A null value means that job has no public operation ID attached.
 
 Queued or running status does not mean merged. Status reads the admitted operation without repeating execution, including after a partial failure. These commands require the matching Core deployment. Updating the CLI does not enable backend access or grant permission.
 

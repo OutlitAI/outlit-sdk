@@ -9,6 +9,9 @@ mock.module("../../src/lib/client", () => ({
     baseUrl: "https://app.outlit.ai",
     callTool: async (tool: string, params: unknown) => {
       calls.push({ tool, params })
+      if (tool === "outlit_reject_identity_merge_suggestion") {
+        return { suggestionId: "proposal_1", status: "REJECTED" }
+      }
       return { operationId: "operation_1", status: "queued" }
     },
   }),
@@ -108,10 +111,11 @@ describe("identity CLI tools", () => {
     try {
       await runCommand(cmd.root, { rawArgs: [...cmd.prefix, ...rawArgs, "--json"] })
       expect(calls).toEqual([{ tool, params }])
-      expect(JSON.parse(String(write.mock.calls[0]?.[0]))).toEqual({
-        operationId: "operation_1",
-        status: "queued",
-      })
+      expect(JSON.parse(String(write.mock.calls[0]?.[0]))).toEqual(
+        tool === "outlit_reject_identity_merge_suggestion"
+          ? { suggestionId: "proposal_1", status: "REJECTED" }
+          : { operationId: "operation_1", status: "queued" },
+      )
     } finally {
       write.mockRestore()
     }

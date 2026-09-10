@@ -4062,7 +4062,8 @@
           "suggestionId": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 191
+            "maxLength": 191,
+            "description": "Eligible saved suggestion for this exact pair. Required if either record is INDIVIDUAL; optional for two COMPANY records."
           },
           "reviewNotes": {
             "type": "string",
@@ -13744,6 +13745,19 @@
                           "minLength": 1,
                           "maxLength": 191
                         },
+                        "operationId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 191
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Pass to outlit_get_customer_merge_status. Null when this job has no matching tracked operation."
+                        },
                         "status": {
                           "type": "string",
                           "enum": [
@@ -13766,6 +13780,7 @@
                       },
                       "required": [
                         "id",
+                        "operationId",
                         "status",
                         "createdAt",
                         "updatedAt"
@@ -13833,35 +13848,18 @@
       "ToolOutput_outlit_reject_identity_merge_suggestion": {
         "type": "object",
         "properties": {
-          "proposalId": {
+          "suggestionId": {
             "type": "string",
             "minLength": 1,
             "maxLength": 191
           },
           "status": {
             "type": "string",
-            "enum": [
-              "STAGED",
-              "REJECTED"
-            ]
-          },
-          "jobId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 191
-          },
-          "jobStatus": {
-            "type": "string",
-            "enum": [
-              "QUEUED",
-              "RUNNING",
-              "COMPLETED",
-              "FAILED"
-            ]
+            "const": "REJECTED"
           }
         },
         "required": [
-          "proposalId",
+          "suggestionId",
           "status"
         ],
         "additionalProperties": false
@@ -13955,9 +13953,6 @@
                   ],
                   "additionalProperties": false
                 }
-              },
-              "eligible": {
-                "type": "boolean"
               }
             },
             "required": [
@@ -13967,8 +13962,7 @@
               "previewToken",
               "evaluatedAt",
               "impact",
-              "warnings",
-              "eligible"
+              "warnings"
             ],
             "additionalProperties": false
           },
@@ -14108,5 +14102,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "b094dfbd1a3e47e9a234c99a7eb7b56202e110008cec477d27664a632286c532"
+  "x-outlit-contract-hash": "e22772254d3f57aaae5718c535f3c7c2dfaebbf04cceb911eb3e975b704f83fc"
 }
