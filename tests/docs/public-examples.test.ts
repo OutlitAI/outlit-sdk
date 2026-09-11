@@ -199,6 +199,11 @@ describe("public documentation examples", () => {
     const file = "docs/api-reference/tools.mdx"
     const cases = [
       ["Get Customer Details", "outlit_get_customer"],
+      ["Inspect customer identity", "outlit_get_customer_identity"],
+      ["List identity merge suggestions", "outlit_list_identity_merge_suggestions"],
+      ["Reject an identity merge suggestion", "outlit_reject_identity_merge_suggestion"],
+      ["Preview a customer merge", "outlit_merge_customers"],
+      ["Read customer merge status", "outlit_get_customer_merge_status"],
       ["Search Customer Context", "outlit_search_customer_context"],
       ["List Active Contact Transition Facts", "outlit_list_facts"],
       ["Open One Source Record", "outlit_get_source"],
