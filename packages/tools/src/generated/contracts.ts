@@ -12913,6 +12913,29 @@ export const toolGatewayErrorSchema = {
       "exclusiveMinimum": 0,
       "maximum": 9007199254740991,
     },
+    "validationIssues": {
+      "maxItems": 10,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 200,
+          },
+        },
+        "required": [
+          "code",
+          "path",
+        ],
+        "additionalProperties": false,
+      },
+    },
   },
   "required": [
     "code",
@@ -13884,4 +13907,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "e22772254d3f57aaae5718c535f3c7c2dfaebbf04cceb911eb3e975b704f83fc" as const
+export const sdkConsumerContractHash = "a6c97712e3be28db8515131e1852ccf4e31159739c0c06fddff32df1b01b6858" as const
