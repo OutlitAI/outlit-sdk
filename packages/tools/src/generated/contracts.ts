@@ -1874,6 +1874,51 @@ export const publicToolContracts = {
                             },
                           ],
                         },
+                        "usageHistory": {
+                          "type": "object",
+                          "properties": {
+                            "startAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            },
+                            "endAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            },
+                            "days": {
+                              "maxItems": 91,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "date": {
+                                    "type": "string",
+                                    "format": "date",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                  },
+                                  "usage": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                  },
+                                },
+                                "required": [
+                                  "date",
+                                  "usage",
+                                ],
+                                "additionalProperties": false,
+                              },
+                            },
+                          },
+                          "required": [
+                            "startAt",
+                            "endAt",
+                            "days",
+                          ],
+                          "additionalProperties": false,
+                          "description": "Daily provider-reported usage for the whole provider customer account, including entity usage aggregated by the provider. Omitted days are unknown rather than zero.",
+                        },
                       },
                       "required": [
                         "featureId",
@@ -14198,4 +14243,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "43b7b9a1c4cf9ac8bf7b027bbf6cb57a0aa8a287cd9695c1873b378b21a247a7" as const
+export const sdkConsumerContractHash = "8f8a299c46f75855eae6bdddccd060f1da0f6339445310dc85e6669a27744b12" as const
