@@ -93,6 +93,9 @@ describe("customer-surface documentation", () => {
     ]) {
       expect(source).toContain("customer identity review and merge")
       expect(source).toContain("Customer merge execution has no supported undo")
+      expect(source).toContain(
+        "Execution retries must reuse the stable request ID and identical request inputs",
+      )
     }
     expect(mcpDocs).not.toContain("identity-merge")
   })

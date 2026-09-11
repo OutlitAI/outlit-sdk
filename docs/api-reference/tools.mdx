@@ -177,7 +177,7 @@ Rejection requires identity review permission. It keeps both customer records se
 
 ### Preview a customer merge
 
-Customer merge execution has no supported undo. Preview first and inspect the returned impact and warnings. Execution requires the reviewed preview token, a stable request ID, and explicit `customer_identity:merge` permission. The example below does not execute the merge.
+Customer merge execution has no supported undo. Preview first and inspect the returned impact and warnings. Execution requires the reviewed preview token, a stable request ID, and explicit `customer_identity:merge` permission. Execution retries must reuse the stable request ID and identical request inputs. The example below does not execute the merge.
 
 ```json
 {
