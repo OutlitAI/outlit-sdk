@@ -771,6 +771,33 @@ describe("integrations setup", () => {
     expect(mockCallTool).toHaveBeenCalledTimes(3)
   })
 
+  test.each([
+    ["autumn", "Autumn secret key", { apiKey: "synthetic-secret" }],
+    ["ergo", "Ergo API key", { apiKey: "synthetic-secret" }],
+  ] as const)("collects the %s credential through the secret prompt", async (provider, prompt, credentials) => {
+    const { collectProviderCredentials } = await import(
+      "../../../src/commands/integrations/setup-input"
+    )
+
+    await expect(collectProviderCredentials(provider)).resolves.toEqual({
+      provider,
+      credentials,
+    })
+    expect(mockPassword).toHaveBeenCalledWith(expect.objectContaining({ message: prompt }))
+  })
+
+  test.each([
+    "autumn",
+    "ergo",
+  ] as const)("cancels %s setup without producing credentials when its secret prompt is cancelled", async (provider) => {
+    mockPassword.mockResolvedValueOnce(promptCancelled as never)
+    const { collectProviderCredentials, SetupCancelledError } = await import(
+      "../../../src/commands/integrations/setup-input"
+    )
+
+    await expect(collectProviderCredentials(provider)).rejects.toBeInstanceOf(SetupCancelledError)
+  })
+
   test("exits nonzero when a credential prompt is cancelled", async () => {
     setInteractive()
     mockPassword.mockResolvedValueOnce(promptCancelled as never)
