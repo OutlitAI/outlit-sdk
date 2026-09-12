@@ -1888,7 +1888,7 @@ export const publicToolContracts = {
                               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
                             },
                             "days": {
-                              "maxItems": 91,
+                              "maxItems": 97,
                               "type": "array",
                               "items": {
                                 "type": "object",
@@ -1899,6 +1899,11 @@ export const publicToolContracts = {
                                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
                                   },
                                   "usage": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                  },
+                                  "customerBalanceUsage": {
+                                    "description": "Actual credit deductions from customer-level balances only, excluding entity balances. Present only when a complete provider deduction breakdown reconciles with whole-account usage. Omitted means the customer-level amount is unknown.",
                                     "type": "number",
                                     "minimum": 0,
                                   },
@@ -14294,4 +14299,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "c00e96d31a53a62f8ebee3e454386c906d0825d945904653fcf88d245022259a" as const
+export const sdkConsumerContractHash = "849edd923a90b3cd921bdc03a0e5dff0ddc7c7303c2a1b13bd53af6b9d6b8d44" as const
