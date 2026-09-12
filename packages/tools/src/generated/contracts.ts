@@ -8310,6 +8310,7 @@ export const publicToolContracts = {
             "granola",
             "gong",
             "fireflies",
+            "ergo",
             "pylon",
             "stripe",
             "mixpanel",
@@ -8602,6 +8603,32 @@ export const publicToolContracts = {
           "properties": {
             "provider": {
               "type": "string",
+              "const": "ergo",
+            },
+            "credentials": {
+              "type": "object",
+              "properties": {
+                "apiKey": {
+                  "type": "string",
+                  "minLength": 1,
+                },
+              },
+              "required": [
+                "apiKey",
+              ],
+              "additionalProperties": false,
+            },
+          },
+          "required": [
+            "provider",
+          ],
+          "additionalProperties": false,
+        },
+        {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
               "const": "fireflies",
             },
             "credentials": {
@@ -8868,6 +8895,7 @@ export const publicToolContracts = {
             "granola",
             "gong",
             "fireflies",
+            "ergo",
             "pylon",
             "stripe",
             "mixpanel",
@@ -13271,6 +13299,29 @@ export const toolGatewayErrorSchema = {
       "exclusiveMinimum": 0,
       "maximum": 9007199254740991,
     },
+    "validationIssues": {
+      "maxItems": 10,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 200,
+          },
+        },
+        "required": [
+          "code",
+          "path",
+        ],
+        "additionalProperties": false,
+      },
+    },
   },
   "required": [
     "code",
@@ -14243,4 +14294,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "8f8a299c46f75855eae6bdddccd060f1da0f6339445310dc85e6669a27744b12" as const
+export const sdkConsumerContractHash = "c00e96d31a53a62f8ebee3e454386c906d0825d945904653fcf88d245022259a" as const
