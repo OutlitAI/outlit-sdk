@@ -1,5 +1,14 @@
 # @outlit/pi
 
+## 2.1.4
+
+### Patch Changes
+
+- [#209](https://github.com/OutlitAI/outlit-sdk/pull/209) [`485f4f0`](https://github.com/OutlitAI/outlit-sdk/commit/485f4f0c8f686100ab64414733e56b8a2e267041) Thanks [@leo-paz](https://github.com/leo-paz)! - Add the shared customer identity diagnostic, saved suggestion review, and exact customer merge contracts. Preserve merge safety annotations in generated contracts. Add CLI commands for identity reads, suggestion list/reject, merge preview or explicit execution, and operation status. Merging requires the matching Core deployment and an explicitly granted credential.
+
+- Updated dependencies [[`13a605f`](https://github.com/OutlitAI/outlit-sdk/commit/13a605fdfd241e583635218276eb306ba493b894), [`485f4f0`](https://github.com/OutlitAI/outlit-sdk/commit/485f4f0c8f686100ab64414733e56b8a2e267041), [`1fd4bd2`](https://github.com/OutlitAI/outlit-sdk/commit/1fd4bd209560a8218cb91985a7c0d5895effd565)]:
+  - @outlit/tools@2.2.0
+
 ## 2.1.3
 
 ### Patch Changes
