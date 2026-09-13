@@ -48,6 +48,7 @@ async function startCli() {
         "  outlit features list --json",
         "  outlit features create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key reports_exported --name 'Reports exported' --json",
         "  outlit customers features acme.com --weekly --json",
+        "  outlit customers credits acme.com --json",
         "  outlit doctor --json",
         "",
         "For AI agents: commands auto-output JSON when stdout is piped. No --json flag needed.",

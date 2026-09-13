@@ -199,7 +199,7 @@ outlit customers get <customer> [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--include` | string | — | Comma-separated sections: `users`, `revenue`, `recentTimeline`, `behaviorMetrics` |
+| `--include` | string | — | Comma-separated sections: `users`, `revenue`, `recentTimeline`, `behaviorMetrics`, `enrichment` |
 | `--timeframe` | string | `30d` | Lookback window for included sections: `7d`, `14d`, `30d`, `90d` |
 
 ### Examples
@@ -208,7 +208,7 @@ outlit customers get <customer> [flags]
 # Basic profile
 outlit customers get acme.com
 
-# Full profile with all sections
+# Profile with people, revenue, and recent activity
 outlit customers get acme.com --include users,revenue,recentTimeline --timeframe 90d
 
 # By UUID
@@ -350,19 +350,44 @@ A saved suggestion's `latestJob.operationId`, when present, can be passed to `cu
 
 Queued or running status does not mean merged. Status reads the admitted operation without repeating execution, including after a partial failure. These commands require the matching Core deployment. Updating the CLI does not enable backend access or grant permission.
 
+## Customers Credits
+
+Read imported credit pools and burn summaries for one authorized customer.
+
+```text
+outlit customers credits <customer>
+```
+
+`<customer>` accepts a customer domain, UUID, or exact name. The command returns the same JSON
+schema as `outlit_get_customer_credits`: the resolved customer, overall availability status,
+credit pools, and a `truncated` marker. Each credit pool keeps its provider source, observation
+time, staleness, granted and remaining amounts, reset date, and burn summary. Missing or stale
+provider observations remain distinct from a zero balance.
+
+```bash
+outlit customers credits acme.com --json
+```
+
 ## Customers Features
 
-Read exact historical Feature usage for one authorized customer.
+Read event-based and imported metered Feature usage for one authorized customer.
 
 ```text
 outlit customers features <customer> [--weeks 1-53] [--weekly]
 ```
 
 `<customer>` accepts a customer domain, UUID, or exact name. The default window is 12 weeks.
-Each feature reports factual observation evidence from its configured event rule. Complete or
-partial coverage, no matches, and unavailable source evidence remain distinct; unavailable
-evidence is never rendered as zero usage. Add `--weekly` to include the ordered weekly
-`eventCount` and `activeDays` projection used by the customer feature lanes.
+The response is a flat `features` array. Every item has a `kind` discriminator. An `event` item
+reports historical evidence from its configured Outlit event rule. A `metered` item reports
+provider-defined quantities imported from Autumn and may link to an event Feature. These values
+use different units and must not be added together. The response also lists source status so a
+missing provider connection, unavailable source, and an available source with no matches remain
+distinct. Top-level `events` is `available` or `unavailable`; if the event source cannot be
+read, imported metered Features can still be returned.
+
+Complete, partial, and unavailable evidence remain distinct; unavailable evidence is never
+rendered as zero usage. Add `--weekly` to include ordered weekly buckets. Event Features report
+`eventCount` and `activeDays`. Metered Features report their provider quantity and observed days.
 
 ```bash
 outlit customers features acme.com --json

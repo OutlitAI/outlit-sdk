@@ -10,8 +10,9 @@ export default defineCommand({
   meta: {
     name: "features",
     description: [
-      "Read exact historical Feature usage for one authorized customer.",
+      "Read event-based and imported metered Feature usage for one authorized customer.",
       "Unavailable source evidence remains distinct from no matches in the requested window.",
+      "Provider-defined units remain separate from linked event counts.",
       "",
       "The customer argument accepts a customer domain, UUID, or exact name.",
       "",
@@ -34,7 +35,7 @@ export default defineCommand({
     weeks: { type: "string", description: "Historical usage window in weeks (1-53, default: 12)" },
     weekly: {
       type: "boolean",
-      description: "Include ordered weekly event counts and active days",
+      description: "Include weekly event counts, metered quantities, and active days",
       default: false,
     },
   },

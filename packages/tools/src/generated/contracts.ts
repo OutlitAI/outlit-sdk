@@ -42,6 +42,7 @@ export const publicToolNames = [
   "outlit_create_feature",
   "outlit_archive_feature",
   "outlit_get_customer_features",
+  "outlit_get_customer_credits",
   "outlit_list_attention_items",
   "outlit_get_attention_item",
   "outlit_get_customer_identity",
@@ -846,7 +847,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Use this when you already know which customer you want to inspect. Optionally include related data (users, revenue, recent activity, engagement metrics, company enrichment).",
+    "description": "Get full details for a single customer. Optionally include users, revenue, recent activity, engagement metrics, or company enrichment.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -868,7 +869,6 @@ export const publicToolContracts = {
               "recentTimeline",
               "behaviorMetrics",
               "enrichment",
-              "featureBalances",
             ],
           },
         },
@@ -1633,334 +1633,6 @@ export const publicToolContracts = {
             "lastAttemptAt",
             "expiresAt",
             "error",
-          ],
-          "additionalProperties": false,
-        },
-        "featureBalances": {
-          "type": "object",
-          "properties": {
-            "status": {
-              "type": "string",
-              "enum": [
-                "not_connected",
-                "unavailable",
-                "no_match",
-                "available",
-              ],
-              "description": "Provider feature balance availability. no_match means a successful import produced no account matching the Customer’s usable identifiers; it does not prove the provider account does not exist. Missing usable identifiers is unavailable.",
-            },
-            "coverage": {
-              "type": "object",
-              "properties": {
-                "scope": {
-                  "type": "string",
-                  "const": "customer",
-                },
-                "entityBalancesIncluded": {
-                  "type": "boolean",
-                  "const": false,
-                  "description": "Entity-level balances are excluded from this customer-scoped snapshot.",
-                },
-              },
-              "required": [
-                "scope",
-                "entityBalancesIncluded",
-              ],
-              "additionalProperties": false,
-            },
-            "connections": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "connectionId": {
-                    "type": "string",
-                  },
-                  "syncStatus": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                  },
-                  "lastSyncedAt": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "format": "date-time",
-                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                  },
-                },
-                "required": [
-                  "connectionId",
-                  "syncStatus",
-                  "lastSyncedAt",
-                ],
-                "additionalProperties": false,
-              },
-            },
-            "accounts": {
-              "maxItems": 20,
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "providerCustomerId": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 2048,
-                  },
-                  "provider": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                      },
-                      "label": {
-                        "type": "string",
-                      },
-                    },
-                    "required": [
-                      "id",
-                      "label",
-                    ],
-                    "additionalProperties": false,
-                  },
-                  "environment": {
-                    "type": "string",
-                    "enum": [
-                      "sandbox",
-                      "live",
-                    ],
-                  },
-                  "customerName": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 2048,
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                  },
-                  "customerEmail": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 2048,
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                  },
-                  "matchBasis": {
-                    "type": "string",
-                    "enum": [
-                      "domain",
-                      "personal_email",
-                    ],
-                  },
-                  "observedAt": {
-                    "type": "string",
-                    "format": "date-time",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                  },
-                  "stale": {
-                    "type": "boolean",
-                  },
-                  "balances": {
-                    "maxItems": 200,
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "featureId": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 2048,
-                        },
-                        "featureName": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "maxLength": 2048,
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                        "featureType": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "maxLength": 2048,
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                        "quantityKind": {
-                          "type": "string",
-                          "const": "provider_defined",
-                          "description": "Quantities use this provider feature’s own units; do not sum or compare them across features or treat them as currency.",
-                        },
-                        "granted": {
-                          "anyOf": [
-                            {
-                              "type": "number",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                        "remaining": {
-                          "anyOf": [
-                            {
-                              "type": "number",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                        "usage": {
-                          "anyOf": [
-                            {
-                              "type": "number",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                        "unlimited": {
-                          "type": "boolean",
-                        },
-                        "overageAllowed": {
-                          "type": "boolean",
-                        },
-                        "maxPurchase": {
-                          "anyOf": [
-                            {
-                              "type": "number",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                        "nextResetAt": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "format": "date-time",
-                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                        "usageHistory": {
-                          "type": "object",
-                          "properties": {
-                            "startAt": {
-                              "type": "string",
-                              "format": "date-time",
-                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                            },
-                            "endAt": {
-                              "type": "string",
-                              "format": "date-time",
-                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                            },
-                            "days": {
-                              "maxItems": 91,
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "date": {
-                                    "type": "string",
-                                    "format": "date",
-                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
-                                  },
-                                  "usage": {
-                                    "type": "number",
-                                    "minimum": 0,
-                                  },
-                                },
-                                "required": [
-                                  "date",
-                                  "usage",
-                                ],
-                                "additionalProperties": false,
-                              },
-                            },
-                          },
-                          "required": [
-                            "startAt",
-                            "endAt",
-                            "days",
-                          ],
-                          "additionalProperties": false,
-                          "description": "Daily provider-reported usage for the whole provider customer account, including entity usage aggregated by the provider. Omitted days are unknown rather than zero.",
-                        },
-                      },
-                      "required": [
-                        "featureId",
-                        "featureName",
-                        "featureType",
-                        "quantityKind",
-                        "granted",
-                        "remaining",
-                        "usage",
-                        "unlimited",
-                        "overageAllowed",
-                        "maxPurchase",
-                        "nextResetAt",
-                      ],
-                      "additionalProperties": false,
-                    },
-                  },
-                },
-                "required": [
-                  "providerCustomerId",
-                  "provider",
-                  "environment",
-                  "customerName",
-                  "customerEmail",
-                  "matchBasis",
-                  "observedAt",
-                  "stale",
-                  "balances",
-                ],
-                "additionalProperties": false,
-              },
-            },
-            "truncated": {
-              "type": "boolean",
-            },
-          },
-          "required": [
-            "status",
-            "coverage",
-            "connections",
-            "accounts",
-            "truncated",
           ],
           "additionalProperties": false,
         },
@@ -10573,7 +10245,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "value_features",
     "title": "Get Customer Features",
-    "description": "Read exact historical feature-usage evidence for one authorized customer.",
+    "description": "Read Outlit event evidence and stored non-credit Autumn feature quantities, frequency, recency, weekly coverage, and explicit links for one authorized customer. Provider totals and linked event counts remain separate.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -10623,157 +10295,919 @@ export const publicToolContracts = {
           ],
           "additionalProperties": false,
         },
+        "events": {
+          "type": "string",
+          "enum": [
+            "available",
+            "unavailable",
+          ],
+          "description": "Whether configured event features could be enumerated and their evidence reads attempted. Individual event coverage may still be unavailable. If unavailable, event features are omitted and stored provider features remain independently readable.",
+        },
         "features": {
-          "maxItems": 100,
+          "maxItems": 4100,
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "pattern": "^value_feature_v1_[a-f0-9]{32}$",
-              },
-              "revision": {
-                "type": "string",
-                "pattern": "^value_feature_revision_v1_[a-f0-9]{32}$",
-              },
-              "sourceKey": {
-                "type": "string",
-                "pattern": "^metric_source_v1_[a-f0-9]{32}$",
-              },
-              "featureKey": {
-                "type": "string",
-                "maxLength": 64,
-                "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
-              },
-              "name": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 255,
-              },
-              "rule": {
+            "oneOf": [
+              {
                 "type": "object",
                 "properties": {
-                  "eventName": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^value_feature_v1_[a-f0-9]{32}$",
+                  },
+                  "revision": {
+                    "type": "string",
+                    "pattern": "^value_feature_revision_v1_[a-f0-9]{32}$",
+                  },
+                  "kind": {
+                    "type": "string",
+                    "const": "event",
+                  },
+                  "sourceKey": {
+                    "type": "string",
+                    "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+                  },
+                  "source": {
+                    "type": "object",
+                    "properties": {
+                      "provider": {
+                        "type": "string",
+                        "enum": [
+                          "outlit_sdk",
+                          "posthog",
+                          "mixpanel",
+                        ],
+                      },
+                      "connection": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "scope": {
+                        "type": "string",
+                      },
+                      "label": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                    },
+                    "required": [
+                      "provider",
+                      "connection",
+                      "scope",
+                      "label",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  "featureKey": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+                  },
+                  "name": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 191,
+                    "maxLength": 255,
                   },
-                  "propertyFilters": {
-                    "maxItems": 5,
-                    "type": "array",
-                    "items": {
-                      "oneOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "property": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 191,
+                  "rule": {
+                    "type": "object",
+                    "properties": {
+                      "eventName": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191,
+                      },
+                      "propertyFilters": {
+                        "maxItems": 5,
+                        "type": "array",
+                        "items": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "property": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 191,
+                                },
+                                "operator": {
+                                  "type": "string",
+                                  "const": "equals",
+                                },
+                                "value": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "const": "string",
+                                        },
+                                        "value": {
+                                          "type": "string",
+                                          "maxLength": 191,
+                                        },
+                                      },
+                                      "required": [
+                                        "type",
+                                        "value",
+                                      ],
+                                      "additionalProperties": false,
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "const": "number",
+                                        },
+                                        "value": {
+                                          "type": "number",
+                                          "minimum": -9007199254740991,
+                                          "maximum": 9007199254740991,
+                                        },
+                                      },
+                                      "required": [
+                                        "type",
+                                        "value",
+                                      ],
+                                      "additionalProperties": false,
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "const": "boolean",
+                                        },
+                                        "value": {
+                                          "type": "boolean",
+                                        },
+                                      },
+                                      "required": [
+                                        "type",
+                                        "value",
+                                      ],
+                                      "additionalProperties": false,
+                                    },
+                                  ],
+                                },
+                              },
+                              "required": [
+                                "property",
+                                "operator",
+                                "value",
+                              ],
+                              "additionalProperties": false,
                             },
-                            "operator": {
-                              "type": "string",
-                              "const": "equals",
+                            {
+                              "type": "object",
+                              "properties": {
+                                "property": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 191,
+                                },
+                                "operator": {
+                                  "type": "string",
+                                  "const": "exists",
+                                },
+                              },
+                              "required": [
+                                "property",
+                                "operator",
+                              ],
+                              "additionalProperties": false,
                             },
-                            "value": {
+                          ],
+                        },
+                      },
+                    },
+                    "required": [
+                      "eventName",
+                      "propertyFilters",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  "evidence": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "window": {
+                            "type": "object",
+                            "properties": {
+                              "startAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                              },
+                              "endAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                              },
+                            },
+                            "required": [
+                              "startAt",
+                              "endAt",
+                            ],
+                            "additionalProperties": false,
+                          },
+                          "coverage": {
+                            "type": "string",
+                            "enum": [
+                              "complete",
+                              "partial",
+                            ],
+                          },
+                          "eventCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                          },
+                          "activeDays": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                          },
+                          "activeWeeks": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 53,
+                          },
+                          "firstObservedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                          "lastObservedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                          "weeklyUsage": {
+                            "maxItems": 53,
+                            "type": "array",
+                            "items": {
                               "oneOf": [
                                 {
                                   "type": "object",
                                   "properties": {
-                                    "type": {
+                                    "weekStartAt": {
                                       "type": "string",
-                                      "const": "string",
+                                      "format": "date-time",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
                                     },
-                                    "value": {
+                                    "coverage": {
                                       "type": "string",
-                                      "maxLength": 191,
+                                      "enum": [
+                                        "complete",
+                                        "partial",
+                                      ],
                                     },
-                                  },
-                                  "required": [
-                                    "type",
-                                    "value",
-                                  ],
-                                  "additionalProperties": false,
-                                },
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string",
-                                      "const": "number",
-                                    },
-                                    "value": {
-                                      "type": "number",
-                                      "minimum": -9007199254740991,
+                                    "eventCount": {
+                                      "type": "integer",
+                                      "minimum": 0,
                                       "maximum": 9007199254740991,
                                     },
+                                    "activeDays": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 7,
+                                    },
                                   },
                                   "required": [
-                                    "type",
-                                    "value",
+                                    "weekStartAt",
+                                    "coverage",
+                                    "eventCount",
+                                    "activeDays",
                                   ],
                                   "additionalProperties": false,
                                 },
                                 {
                                   "type": "object",
                                   "properties": {
-                                    "type": {
+                                    "weekStartAt": {
                                       "type": "string",
-                                      "const": "boolean",
+                                      "format": "date-time",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
                                     },
-                                    "value": {
-                                      "type": "boolean",
+                                    "coverage": {
+                                      "type": "string",
+                                      "const": "unavailable",
                                     },
                                   },
                                   "required": [
-                                    "type",
-                                    "value",
+                                    "weekStartAt",
+                                    "coverage",
                                   ],
                                   "additionalProperties": false,
                                 },
                               ],
                             },
                           },
-                          "required": [
-                            "property",
-                            "operator",
-                            "value",
-                          ],
-                          "additionalProperties": false,
                         },
-                        {
-                          "type": "object",
-                          "properties": {
-                            "property": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 191,
+                        "required": [
+                          "window",
+                          "coverage",
+                          "eventCount",
+                          "activeDays",
+                          "activeWeeks",
+                          "firstObservedAt",
+                          "lastObservedAt",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "window": {
+                            "type": "object",
+                            "properties": {
+                              "startAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                              },
+                              "endAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                              },
                             },
-                            "operator": {
-                              "type": "string",
-                              "const": "exists",
-                            },
+                            "required": [
+                              "startAt",
+                              "endAt",
+                            ],
+                            "additionalProperties": false,
                           },
-                          "required": [
-                            "property",
-                            "operator",
-                          ],
-                          "additionalProperties": false,
+                          "coverage": {
+                            "type": "string",
+                            "const": "unavailable",
+                          },
+                          "reason": {
+                            "type": "string",
+                            "enum": [
+                              "SOURCE_BLOCKED",
+                              "SOURCE_NOT_READY",
+                              "QUERY_FAILED",
+                            ],
+                          },
                         },
-                      ],
-                    },
+                        "required": [
+                          "window",
+                          "coverage",
+                          "reason",
+                        ],
+                        "additionalProperties": false,
+                      },
+                    ],
                   },
                 },
                 "required": [
-                  "eventName",
-                  "propertyFilters",
+                  "id",
+                  "revision",
+                  "kind",
+                  "sourceKey",
+                  "source",
+                  "featureKey",
+                  "name",
+                  "rule",
+                  "evidence",
                 ],
                 "additionalProperties": false,
               },
-              "evidence": {
-                "oneOf": [
-                  {
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "metered",
+                  },
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048,
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048,
+                  },
+                  "source": {
+                    "type": "object",
+                    "properties": {
+                      "provider": {
+                        "type": "string",
+                        "const": "autumn",
+                      },
+                      "connection": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "account": {
+                        "type": "string",
+                      },
+                      "environment": {
+                        "type": "string",
+                        "enum": [
+                          "sandbox",
+                          "live",
+                        ],
+                      },
+                      "observed": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                      },
+                      "stale": {
+                        "type": "boolean",
+                      },
+                    },
+                    "required": [
+                      "provider",
+                      "connection",
+                      "account",
+                      "environment",
+                      "observed",
+                      "stale",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  "unit": {
+                    "type": "string",
+                    "const": "provider_defined",
+                    "description": "This feature's own units; never sum across features or with linked event counts.",
+                  },
+                  "reported": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                    "description": "Provider-reported balance usage, independent of the requested history window.",
+                  },
+                  "links": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^value_feature_v1_[a-f0-9]{32}$",
+                        },
+                        "source": {
+                          "type": "string",
+                          "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+                        },
+                        "feature": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "pattern": "^value_feature_v1_[a-f0-9]{32}$",
+                                },
+                                "revision": {
+                                  "type": "string",
+                                  "pattern": "^value_feature_revision_v1_[a-f0-9]{32}$",
+                                },
+                                "kind": {
+                                  "type": "string",
+                                  "const": "event",
+                                },
+                                "sourceKey": {
+                                  "type": "string",
+                                  "pattern": "^metric_source_v1_[a-f0-9]{32}$",
+                                },
+                                "source": {
+                                  "type": "object",
+                                  "properties": {
+                                    "provider": {
+                                      "type": "string",
+                                      "enum": [
+                                        "outlit_sdk",
+                                        "posthog",
+                                        "mixpanel",
+                                      ],
+                                    },
+                                    "connection": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                    },
+                                    "scope": {
+                                      "type": "string",
+                                    },
+                                    "label": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                  "required": [
+                                    "provider",
+                                    "connection",
+                                    "scope",
+                                    "label",
+                                  ],
+                                  "additionalProperties": false,
+                                },
+                                "featureKey": {
+                                  "type": "string",
+                                  "maxLength": 64,
+                                  "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 255,
+                                },
+                                "rule": {
+                                  "type": "object",
+                                  "properties": {
+                                    "eventName": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 191,
+                                    },
+                                    "propertyFilters": {
+                                      "maxItems": 5,
+                                      "type": "array",
+                                      "items": {
+                                        "oneOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "property": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 191,
+                                              },
+                                              "operator": {
+                                                "type": "string",
+                                                "const": "equals",
+                                              },
+                                              "value": {
+                                                "oneOf": [
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "type": {
+                                                        "type": "string",
+                                                        "const": "string",
+                                                      },
+                                                      "value": {
+                                                        "type": "string",
+                                                        "maxLength": 191,
+                                                      },
+                                                    },
+                                                    "required": [
+                                                      "type",
+                                                      "value",
+                                                    ],
+                                                    "additionalProperties": false,
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "type": {
+                                                        "type": "string",
+                                                        "const": "number",
+                                                      },
+                                                      "value": {
+                                                        "type": "number",
+                                                        "minimum": -9007199254740991,
+                                                        "maximum": 9007199254740991,
+                                                      },
+                                                    },
+                                                    "required": [
+                                                      "type",
+                                                      "value",
+                                                    ],
+                                                    "additionalProperties": false,
+                                                  },
+                                                  {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "type": {
+                                                        "type": "string",
+                                                        "const": "boolean",
+                                                      },
+                                                      "value": {
+                                                        "type": "boolean",
+                                                      },
+                                                    },
+                                                    "required": [
+                                                      "type",
+                                                      "value",
+                                                    ],
+                                                    "additionalProperties": false,
+                                                  },
+                                                ],
+                                              },
+                                            },
+                                            "required": [
+                                              "property",
+                                              "operator",
+                                              "value",
+                                            ],
+                                            "additionalProperties": false,
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "property": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 191,
+                                              },
+                                              "operator": {
+                                                "type": "string",
+                                                "const": "exists",
+                                              },
+                                            },
+                                            "required": [
+                                              "property",
+                                              "operator",
+                                            ],
+                                            "additionalProperties": false,
+                                          },
+                                        ],
+                                      },
+                                    },
+                                  },
+                                  "required": [
+                                    "eventName",
+                                    "propertyFilters",
+                                  ],
+                                  "additionalProperties": false,
+                                },
+                                "evidence": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "window": {
+                                          "type": "object",
+                                          "properties": {
+                                            "startAt": {
+                                              "type": "string",
+                                              "format": "date-time",
+                                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                            },
+                                            "endAt": {
+                                              "type": "string",
+                                              "format": "date-time",
+                                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                            },
+                                          },
+                                          "required": [
+                                            "startAt",
+                                            "endAt",
+                                          ],
+                                          "additionalProperties": false,
+                                        },
+                                        "coverage": {
+                                          "type": "string",
+                                          "enum": [
+                                            "complete",
+                                            "partial",
+                                          ],
+                                        },
+                                        "eventCount": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 9007199254740991,
+                                        },
+                                        "activeDays": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 9007199254740991,
+                                        },
+                                        "activeWeeks": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 53,
+                                        },
+                                        "firstObservedAt": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string",
+                                              "format": "date-time",
+                                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                            },
+                                            {
+                                              "type": "null",
+                                            },
+                                          ],
+                                        },
+                                        "lastObservedAt": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string",
+                                              "format": "date-time",
+                                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                            },
+                                            {
+                                              "type": "null",
+                                            },
+                                          ],
+                                        },
+                                        "weeklyUsage": {
+                                          "maxItems": 53,
+                                          "type": "array",
+                                          "items": {
+                                            "oneOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "weekStartAt": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                                  },
+                                                  "coverage": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                      "complete",
+                                                      "partial",
+                                                    ],
+                                                  },
+                                                  "eventCount": {
+                                                    "type": "integer",
+                                                    "minimum": 0,
+                                                    "maximum": 9007199254740991,
+                                                  },
+                                                  "activeDays": {
+                                                    "type": "integer",
+                                                    "minimum": 0,
+                                                    "maximum": 7,
+                                                  },
+                                                },
+                                                "required": [
+                                                  "weekStartAt",
+                                                  "coverage",
+                                                  "eventCount",
+                                                  "activeDays",
+                                                ],
+                                                "additionalProperties": false,
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "weekStartAt": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                                  },
+                                                  "coverage": {
+                                                    "type": "string",
+                                                    "const": "unavailable",
+                                                  },
+                                                },
+                                                "required": [
+                                                  "weekStartAt",
+                                                  "coverage",
+                                                ],
+                                                "additionalProperties": false,
+                                              },
+                                            ],
+                                          },
+                                        },
+                                      },
+                                      "required": [
+                                        "window",
+                                        "coverage",
+                                        "eventCount",
+                                        "activeDays",
+                                        "activeWeeks",
+                                        "firstObservedAt",
+                                        "lastObservedAt",
+                                      ],
+                                      "additionalProperties": false,
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "window": {
+                                          "type": "object",
+                                          "properties": {
+                                            "startAt": {
+                                              "type": "string",
+                                              "format": "date-time",
+                                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                            },
+                                            "endAt": {
+                                              "type": "string",
+                                              "format": "date-time",
+                                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                            },
+                                          },
+                                          "required": [
+                                            "startAt",
+                                            "endAt",
+                                          ],
+                                          "additionalProperties": false,
+                                        },
+                                        "coverage": {
+                                          "type": "string",
+                                          "const": "unavailable",
+                                        },
+                                        "reason": {
+                                          "type": "string",
+                                          "enum": [
+                                            "SOURCE_BLOCKED",
+                                            "SOURCE_NOT_READY",
+                                            "QUERY_FAILED",
+                                          ],
+                                        },
+                                      },
+                                      "required": [
+                                        "window",
+                                        "coverage",
+                                        "reason",
+                                      ],
+                                      "additionalProperties": false,
+                                    },
+                                  ],
+                                },
+                              },
+                              "required": [
+                                "id",
+                                "revision",
+                                "kind",
+                                "sourceKey",
+                                "source",
+                                "featureKey",
+                                "name",
+                                "rule",
+                                "evidence",
+                              ],
+                              "additionalProperties": false,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "Linked Outlit definition and event evidence, or null when unavailable. Never added to provider quantities.",
+                        },
+                      },
+                      "required": [
+                        "id",
+                        "source",
+                        "feature",
+                      ],
+                      "additionalProperties": false,
+                    },
+                  },
+                  "evidence": {
                     "type": "object",
                     "properties": {
                       "window": {
@@ -10801,24 +11235,45 @@ export const publicToolContracts = {
                         "enum": [
                           "complete",
                           "partial",
+                          "unavailable",
                         ],
                       },
-                      "eventCount": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991,
+                      "quantity": {
+                        "anyOf": [
+                          {
+                            "type": "number",
+                            "minimum": 0,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
                       },
-                      "activeDays": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991,
+                      "days": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
                       },
-                      "activeWeeks": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 53,
+                      "weeks": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
                       },
-                      "firstObservedAt": {
+                      "first": {
                         "anyOf": [
                           {
                             "type": "string",
@@ -10829,8 +11284,9 @@ export const publicToolContracts = {
                             "type": "null",
                           },
                         ],
+                        "description": "First positive daily observation in the requested window, at UTC day precision.",
                       },
-                      "lastObservedAt": {
+                      "last": {
                         "anyOf": [
                           {
                             "type": "string",
@@ -10841,8 +11297,9 @@ export const publicToolContracts = {
                             "type": "null",
                           },
                         ],
+                        "description": "Latest positive daily observation in the requested window, at UTC day precision.",
                       },
-                      "weeklyUsage": {
+                      "weekly": {
                         "maxItems": 53,
                         "type": "array",
                         "items": {
@@ -10850,7 +11307,7 @@ export const publicToolContracts = {
                             {
                               "type": "object",
                               "properties": {
-                                "weekStartAt": {
+                                "start": {
                                   "type": "string",
                                   "format": "date-time",
                                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
@@ -10862,29 +11319,28 @@ export const publicToolContracts = {
                                     "partial",
                                   ],
                                 },
-                                "eventCount": {
-                                  "type": "integer",
+                                "quantity": {
+                                  "type": "number",
                                   "minimum": 0,
-                                  "maximum": 9007199254740991,
                                 },
-                                "activeDays": {
+                                "days": {
                                   "type": "integer",
                                   "minimum": 0,
                                   "maximum": 7,
                                 },
                               },
                               "required": [
-                                "weekStartAt",
+                                "start",
                                 "coverage",
-                                "eventCount",
-                                "activeDays",
+                                "quantity",
+                                "days",
                               ],
                               "additionalProperties": false,
                             },
                             {
                               "type": "object",
                               "properties": {
-                                "weekStartAt": {
+                                "start": {
                                   "type": "string",
                                   "format": "date-time",
                                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
@@ -10895,7 +11351,7 @@ export const publicToolContracts = {
                                 },
                               },
                               "required": [
-                                "weekStartAt",
+                                "start",
                                 "coverage",
                               ],
                               "additionalProperties": false,
@@ -10907,68 +11363,56 @@ export const publicToolContracts = {
                     "required": [
                       "window",
                       "coverage",
-                      "eventCount",
-                      "activeDays",
-                      "activeWeeks",
-                      "firstObservedAt",
-                      "lastObservedAt",
+                      "quantity",
+                      "days",
+                      "weeks",
+                      "first",
+                      "last",
                     ],
                     "additionalProperties": false,
                   },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "window": {
-                        "type": "object",
-                        "properties": {
-                          "startAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                          },
-                          "endAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-                          },
-                        },
-                        "required": [
-                          "startAt",
-                          "endAt",
-                        ],
-                        "additionalProperties": false,
-                      },
-                      "coverage": {
-                        "type": "string",
-                        "const": "unavailable",
-                      },
-                      "reason": {
-                        "type": "string",
-                        "enum": [
-                          "SOURCE_BLOCKED",
-                          "SOURCE_NOT_READY",
-                          "QUERY_FAILED",
-                        ],
-                      },
-                    },
-                    "required": [
-                      "window",
-                      "coverage",
-                      "reason",
-                    ],
-                    "additionalProperties": false,
-                  },
+                },
+                "required": [
+                  "kind",
+                  "id",
+                  "name",
+                  "source",
+                  "unit",
+                  "reported",
+                  "links",
+                  "evidence",
                 ],
+                "additionalProperties": false,
+              },
+            ],
+          },
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "const": "autumn",
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "not_connected",
+                  "unavailable",
+                  "no_match",
+                  "available",
+                ],
+              },
+              "truncated": {
+                "type": "boolean",
               },
             },
             "required": [
-              "id",
-              "revision",
-              "sourceKey",
-              "featureKey",
-              "name",
-              "rule",
-              "evidence",
+              "provider",
+              "status",
+              "truncated",
             ],
             "additionalProperties": false,
           },
@@ -10976,9 +11420,362 @@ export const publicToolContracts = {
       },
       "required": [
         "customer",
+        "events",
         "features",
+        "sources",
       ],
       "additionalProperties": false,
+    },
+  },
+  "outlit_get_customer_credits": {
+    "toolName": "outlit_get_customer_credits",
+    "commandId": "customer.credits.get",
+    "commandVersion": 1,
+    "ownerDomain": "customers",
+    "title": "Get Customer Credits",
+    "description": "Read a customer's credit pools, remaining credits, provider reset dates, and deterministic daily burn rate, rate change, runway, and trend from stored data. Missing or stale evidence is explicit; no live provider calls. For individual product feature usage use outlit_get_customer_features.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Customer ID, domain, or exact name",
+        },
+      },
+      "required": [
+        "customer",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customer": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+            },
+          },
+          "required": [
+            "id",
+            "name",
+          ],
+          "additionalProperties": false,
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_connected",
+            "unavailable",
+            "no_match",
+            "available",
+          ],
+        },
+        "credits": {
+          "maxItems": 4000,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "source": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "const": "autumn",
+                  },
+                  "connection": {
+                    "type": "string",
+                    "minLength": 1,
+                  },
+                  "account": {
+                    "type": "string",
+                    "minLength": 1,
+                  },
+                  "environment": {
+                    "type": "string",
+                    "enum": [
+                      "sandbox",
+                      "live",
+                    ],
+                  },
+                },
+                "required": [
+                  "provider",
+                  "connection",
+                  "account",
+                  "environment",
+                ],
+                "additionalProperties": false,
+              },
+              "observed": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              },
+              "stale": {
+                "type": "boolean",
+              },
+              "scope": {
+                "type": "string",
+                "const": "customer",
+                "description": "Customer-level pool; excludes entity balances.",
+              },
+              "granted": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "remaining": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "unlimited": {
+                "type": "boolean",
+              },
+              "overage": {
+                "type": "boolean",
+              },
+              "reset": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "burn": {
+                "type": "object",
+                "properties": {
+                  "rate": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                    "description": "Average daily usage over the last seven complete UTC days. See scope before interpreting this as pool deductions.",
+                  },
+                  "scope": {
+                    "type": "string",
+                    "enum": [
+                      "customer_balance",
+                      "account",
+                    ],
+                  },
+                  "change": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                    "description": "Percentage change in customer-balance burn rate versus the preceding seven complete days. Null when either window is incomplete or the prior rate is zero.",
+                  },
+                  "days": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                    "description": "Estimated days until exhaustion. Null when an estimate is unavailable or the allowance resets first.",
+                  },
+                  "depletion": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "available",
+                      "stale",
+                      "incomplete",
+                      "unknown_scope",
+                      "no_usage",
+                      "unlimited",
+                      "reset_due",
+                      "exhausted",
+                      "beyond_range",
+                      "through_reset",
+                    ],
+                  },
+                  "window": {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "end": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                    },
+                    "required": [
+                      "start",
+                      "end",
+                    ],
+                    "additionalProperties": false,
+                    "description": "UTC dates for the seven-day rate window; end is exclusive.",
+                  },
+                  "trend": {
+                    "maxItems": 14,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "date": {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                        },
+                        "usage": {
+                          "anyOf": [
+                            {
+                              "type": "number",
+                              "minimum": 0,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                        },
+                        "rate": {
+                          "anyOf": [
+                            {
+                              "type": "number",
+                              "minimum": 0,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                        },
+                      },
+                      "required": [
+                        "date",
+                        "usage",
+                        "rate",
+                      ],
+                      "additionalProperties": false,
+                    },
+                    "description": "Daily customer-balance deductions and seven-day rolling rates. Missing observations remain null.",
+                  },
+                },
+                "required": [
+                  "rate",
+                  "scope",
+                  "change",
+                  "days",
+                  "depletion",
+                  "status",
+                  "window",
+                  "trend",
+                ],
+                "additionalProperties": false,
+              },
+            },
+            "required": [
+              "id",
+              "name",
+              "source",
+              "observed",
+              "stale",
+              "scope",
+              "granted",
+              "remaining",
+              "unlimited",
+              "overage",
+              "reset",
+              "burn",
+            ],
+            "additionalProperties": false,
+          },
+        },
+        "truncated": {
+          "type": "boolean",
+        },
+      },
+      "required": [
+        "customer",
+        "status",
+        "credits",
+        "truncated",
+      ],
+      "additionalProperties": false,
+      "description": "Credit pools read from stored provider snapshots. An available empty list means no credit pools were found in the matched snapshots. No provider refresh is triggered.",
     },
   },
   "outlit_list_attention_items": {
@@ -12893,6 +13690,7 @@ export const consumerToolPolicies = {
     "outlit_create_feature",
     "outlit_archive_feature",
     "outlit_get_customer_features",
+    "outlit_get_customer_credits",
     "outlit_list_attention_items",
     "outlit_get_attention_item",
     "outlit_get_customer_identity",
@@ -12940,6 +13738,7 @@ export const consumerToolPolicies = {
     "outlit_create_feature",
     "outlit_archive_feature",
     "outlit_get_customer_features",
+    "outlit_get_customer_credits",
     "outlit_list_attention_items",
     "outlit_get_attention_item",
     "outlit_get_customer_identity",
@@ -14205,7 +15004,6 @@ export const customerIncludeSections = [
   "recentTimeline",
   "behaviorMetrics",
   "enrichment",
-  "featureBalances",
 ] as const
 
 export const customerSourceTypes = [
@@ -14294,4 +15092,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "c00e96d31a53a62f8ebee3e454386c906d0825d945904653fcf88d245022259a" as const
+export const sdkConsumerContractHash = "75e02bc3470803a20bb414f4a3b7b86e0a7ac11f7a754823553be9ba5a8fb89b" as const

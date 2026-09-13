@@ -72,6 +72,8 @@ export type {
   AttentionItemSummary,
   AttentionListResult,
   CustomerAnalyticsRow,
+  CustomerCredit,
+  CustomerCreditsResult,
   CustomerDetail,
   CustomerDetailResult,
   CustomerFeature,

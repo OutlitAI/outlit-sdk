@@ -89,3 +89,10 @@ Non-required checks (e.g. Mintlify Deployment) can be skipped.
 - Biome for formatting and linting (not eslint/prettier)
 - No semicolons in most files (biome config)
 - Prefer `bun` over `npm`/`npx` for running scripts
+
+## CLI naming
+
+- Prefer short, lowercase, single-word command, flag, and section names (for example, `credits`, `features`, and `activity`).
+- When multiple words are necessary, follow the existing kebab-case flag convention (for example, `--api-key` and `--order-by`). Never introduce camelCase CLI names or mix camelCase and kebab-case for the same kind of CLI input.
+- Do not expose API field names as CLI vocabulary by default. Map human CLI names to the wire contract at the CLI boundary; preserve established JSON/MCP schema names unless a separate contract migration is authorized. Provider IDs, user-defined keys, and existing API enum values are data, not new CLI names.
+- Keep help, examples, completion descriptions, and parsing consistent. Preserve previously published spellings as compatibility inputs when needed, but advertise only the preferred names.

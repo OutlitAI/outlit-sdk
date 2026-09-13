@@ -29,6 +29,7 @@ describe("customers command", () => {
       "merge",
       "merge-status",
       "features",
+      "credits",
       "timeline",
       "owner",
       "grant",
@@ -36,6 +37,7 @@ describe("customers command", () => {
     ])
     expect(description).toContain("owner set")
     expect(description).toContain("features")
+    expect(description).toContain("credits")
     expect(description).toContain("grant")
     expect(description).toContain("revoke")
     expect(description).not.toContain("assign-owner")
