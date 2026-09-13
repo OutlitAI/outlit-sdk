@@ -10,8 +10,9 @@ export default defineCommand({
   meta: {
     name: "features",
     description: [
-      "Read exact historical Feature usage for one authorized customer.",
+      "Read event-based and imported metered Feature usage for one authorized customer.",
       "Unavailable source evidence remains distinct from no matches in the requested window.",
+      "Provider-defined units remain separate from linked event counts.",
       "",
       "The customer argument accepts a customer domain, UUID, or exact name.",
       "",

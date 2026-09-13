@@ -65,37 +65,36 @@ describe("customers get", () => {
     }
   })
 
-  test.each([
-    ["balances,activity,metrics", ["featureBalances", "recentTimeline", "behaviorMetrics"]],
-    [
-      "featureBalances,recentTimeline,behaviorMetrics",
-      ["featureBalances", "recentTimeline", "behaviorMetrics"],
-    ],
-    ["balances, featureBalances, users", ["featureBalances", "users"]],
-  ])("maps --include %s to the existing API contract", async (include, expected) => {
+  test("preserves established customer include names", async () => {
     const { default: getCmd } = await import("../../../src/commands/customers/get")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await getCmd.run!({
-        args: { customer: "acme.com", include, json: true },
+        args: {
+          customer: "acme.com",
+          include: "recentTimeline,behaviorMetrics,enrichment",
+          json: true,
+        },
       } as Parameters<NonNullable<typeof getCmd.run>>[0])
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_get_customer",
-        expect.objectContaining({ include: expected }),
+        expect.objectContaining({
+          include: ["recentTimeline", "behaviorMetrics", "enrichment"],
+        }),
       )
     } finally {
       writeSpy.mockRestore()
     }
   })
 
-  test("advertises simple section names without exposing wire spellings", async () => {
+  test("advertises established contract section names", async () => {
     const { default: getCmd } = await import("../../../src/commands/customers/get")
     const meta = typeof getCmd.meta === "function" ? await getCmd.meta() : await getCmd.meta
     const args = typeof getCmd.args === "function" ? await getCmd.args() : await getCmd.args
     const help = `${meta?.description}\n${args?.include?.description}`
-    for (const name of ["balances", "activity", "metrics"]) expect(help).toContain(name)
-    for (const name of ["featureBalances", "recentTimeline", "behaviorMetrics"])
-      expect(help).not.toContain(name)
+    for (const name of ["recentTimeline", "behaviorMetrics", "enrichment"])
+      expect(help).toContain(name)
+    expect(help).not.toContain("balances")
   })
 
   test("passes timeframe arg to API", async () => {

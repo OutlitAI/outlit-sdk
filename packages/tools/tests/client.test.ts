@@ -12,6 +12,8 @@ import {
   apiKeyValidationTransport,
   type CustomerAnalyticsRow,
   type CustomerContextSearchInput,
+  type CustomerCredit,
+  type CustomerCreditsResult,
   type CustomerDetail,
   type CustomerDetailResult,
   type CustomerFeature,
@@ -113,6 +115,7 @@ describe("toolsets", () => {
       "outlit_create_feature",
       "outlit_archive_feature",
       "outlit_get_customer_features",
+      "outlit_get_customer_credits",
       "outlit_list_attention_items",
       "outlit_get_attention_item",
       "outlit_get_customer_identity",
@@ -121,7 +124,7 @@ describe("toolsets", () => {
       "outlit_merge_customers",
       "outlit_get_customer_merge_status",
     ])
-    expect(allPublicToolNames).toHaveLength(45)
+    expect(allPublicToolNames).toHaveLength(46)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -152,6 +155,7 @@ describe("toolsets", () => {
       "outlit_create_feature",
       "outlit_archive_feature",
       "outlit_get_customer_features",
+      "outlit_get_customer_credits",
     ] as const) {
       expect(defaultToolNames).not.toContain(toolName)
       expect(analyticalToolNames).not.toContain(toolName)
@@ -268,7 +272,15 @@ describe("tool contracts", () => {
     expect(archive.inputSchema.properties).not.toHaveProperty("restore")
     expect(customerUsage.commandId).toBe("customer_feature_usage.get")
     expect(customerUsage.inputSchema.required).toEqual(["customer"])
-    expect(customerUsage.outputSchema.required).toEqual(["customer", "features"])
+    expect(customerUsage.outputSchema.required).toEqual(["customer", "features", "sources"])
+    expect(customerUsage.outputSchema.properties.features.items.oneOf).toEqual([
+      expect.objectContaining({
+        properties: expect.objectContaining({ kind: { type: "string", const: "event" } }),
+      }),
+      expect.objectContaining({
+        properties: expect.objectContaining({ kind: { type: "string", const: "metered" } }),
+      }),
+    ])
 
     const publicContractText = JSON.stringify([workspace, create, archive, customerUsage])
     expect(publicContractText).not.toMatch(
@@ -293,6 +305,12 @@ describe("tool contracts", () => {
     expectTypeOf<FeatureCreateResult["feature"]>().toEqualTypeOf<FeatureDefinition>()
     expectTypeOf<FeatureArchiveResult["feature"]>().toEqualTypeOf<FeatureRef>()
     expectTypeOf<CustomerFeaturesResult["features"][number]>().toEqualTypeOf<CustomerFeature>()
+    expectTypeOf<
+      Extract<CustomerFeature, { kind: "event" }>["evidence"]["coverage"]
+    >().toEqualTypeOf<"complete" | "partial" | "unavailable">()
+    expectTypeOf<
+      Extract<CustomerFeature, { kind: "metered" }>["unit"]
+    >().toEqualTypeOf<"provider_defined">()
   })
 
   test("infers activatedAt on typed customer list and get client results", async () => {
@@ -429,84 +447,58 @@ describe("tool contracts", () => {
     )
   })
 
-  test("exposes customer credit input and derived output types", () => {
-    const contract = getPublicToolContract("outlit_get_customer")
-    const inputProperties = contract.inputSchema.properties as Record<string, unknown>
-    const outputProperties = (contract.outputSchema as { properties: Record<string, unknown> })
-      .properties
-
-    expect(customerIncludeSections).toContain("featureBalances")
-    expect(inputProperties.include).toEqual(
-      expect.objectContaining({
-        items: expect.objectContaining({ enum: expect.arrayContaining(["featureBalances"]) }),
-      }),
-    )
-    expect(outputProperties.featureBalances).toEqual(expect.objectContaining({ type: "object" }))
-    expectTypeOf<
-      NonNullable<
-        CustomerDetailResult["featureBalances"]
-      >["accounts"][number]["balances"][number]["quantityKind"]
-    >().toEqualTypeOf<"provider_defined">()
-    expectTypeOf<
-      NonNullable<CustomerDetailResult["featureBalances"]>["coverage"]["entityBalancesIncluded"]
-    >().toEqualTypeOf<false>()
-  })
-
-  test("validates derived credit summaries while keeping balances backward compatible", () => {
-    const contract = getPublicToolContract("outlit_get_customer")
-    const balanceSchema =
-      contract.outputSchema.properties.featureBalances.properties.accounts.items.properties.balances
-        .items
-    const creditsSchema = balanceSchema.properties.credits
-    type Credits = NonNullable<
-      NonNullable<
-        CustomerDetailResult["featureBalances"]
-      >["accounts"][number]["balances"][number]["credits"]
-    >
-    const credits = {
-      rate: 120,
-      scope: "customer_balance",
-      change: 20,
-      days: 5,
-      depletion: "2026-09-17T00:00:00.000Z",
+  test("validates the dedicated customer credits contract and result aliases", () => {
+    const contract = getPublicToolContract("outlit_get_customer_credits")
+    const credit = {
+      id: "credit_1",
+      name: "API credits",
+      source: {
+        provider: "autumn",
+        connection: "connection_1",
+        account: "account_1",
+        environment: "live",
+      },
+      observed: "2026-09-12T00:00:00.000Z",
+      stale: false,
+      scope: "customer",
+      granted: 1000,
+      remaining: 600,
+      unlimited: false,
+      overage: false,
+      reset: "2026-10-01T00:00:00.000Z",
+      burn: {
+        rate: 120,
+        scope: "customer_balance",
+        change: 20,
+        days: 5,
+        depletion: "2026-09-17T00:00:00.000Z",
+        status: "available",
+        window: { start: "2026-09-05", end: "2026-09-12" },
+        trend: [{ date: "2026-09-11", usage: 140, rate: 120 }],
+      },
+    } satisfies CustomerCredit
+    const result = {
+      customer: { id: "customer_1", name: "Acme" },
       status: "available",
-      window: { start: "2026-09-05", end: "2026-09-12" },
-      trend: [{ date: "2026-09-11", usage: 140, rate: 120 }],
-    } satisfies Credits
+      credits: [credit],
+      truncated: false,
+    } satisfies CustomerCreditsResult
 
-    expectTypeOf<Credits["rate"]>().toEqualTypeOf<number | null>()
-    expectTypeOf<Credits["scope"]>().toEqualTypeOf<"customer_balance" | "account">()
-    expectTypeOf<Credits["trend"][number]["date"]>().toEqualTypeOf<string>()
-    expectTypeOf<Credits["trend"][number]["usage"]>().toEqualTypeOf<number | null>()
-    expectTypeOf<Credits["trend"][number]["rate"]>().toEqualTypeOf<number | null>()
-    expect(balanceSchema.required).not.toContain("credits")
-    expect(matchesGeneratedJsonSchema(credits, creditsSchema)).toBe(true)
+    expect(contract.commandId).toBe("customer.credits.get")
+    expect(contract.inputSchema.required).toEqual(["customer"])
+    expect(customerIncludeSections).not.toContain("featureBalances")
+    expectTypeOf<CustomerCredit["burn"]["rate"]>().toEqualTypeOf<number | null>()
+    expectTypeOf<CustomerCredit["scope"]>().toEqualTypeOf<"customer">()
+    expect(matchesGeneratedJsonSchema(result, contract.outputSchema)).toBe(true)
+    expect(
+      matchesGeneratedJsonSchema({ ...result, status: "invented" }, contract.outputSchema),
+    ).toBe(false)
     expect(
       matchesGeneratedJsonSchema(
-        {
-          ...credits,
-          rate: null,
-          change: null,
-          days: null,
-          depletion: null,
-          status: "incomplete",
-          window: { start: null, end: null },
-          trend: [{ date: "2026-09-11", usage: null, rate: null }],
-        },
-        creditsSchema,
-      ),
-    ).toBe(true)
-    expect(matchesGeneratedJsonSchema({ ...credits, rate: -1 }, creditsSchema)).toBe(false)
-    expect(matchesGeneratedJsonSchema({ ...credits, status: "invented" }, creditsSchema)).toBe(
-      false,
-    )
-    expect(
-      matchesGeneratedJsonSchema(
-        { ...credits, trend: Array(15).fill(credits.trend[0]) },
-        creditsSchema,
+        { ...result, credits: [{ ...credit, scope: "account" }] },
+        contract.outputSchema,
       ),
     ).toBe(false)
-    expect(matchesGeneratedJsonSchema({ rate: credits.rate }, creditsSchema)).toBe(false)
   })
 
   test("accepts Autumn direct API-key setup through the generated public contract", () => {

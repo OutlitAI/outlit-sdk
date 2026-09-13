@@ -1,9 +1,9 @@
-import { customerTimeframes, publicToolContracts } from "@outlit/tools"
+import { customerIncludeSections, customerTimeframes, publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
-import { customerSections, parseCustomerSections } from "../../args/customer-sections"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
+import { splitCsv } from "../../lib/config"
 
 export default defineCommand({
   meta: {
@@ -18,14 +18,13 @@ export default defineCommand({
       "",
       'The primary record is returned under "customer". --include users adds "users".',
       "",
-      `Available include sections: ${customerSections.join(", ")}`,
+      `Available include sections: ${customerIncludeSections.join(", ")}`,
       `Timeframes: ${customerTimeframes.join(", ")}`,
       "",
       "Examples:",
       "  outlit customers get acme.com",
       "  outlit customers get acme.com --include users,revenue",
-      "  outlit customers get acme.com --include balances",
-      "  outlit customers get acme.com --include users,revenue,activity --timeframe 90d",
+      "  outlit customers get acme.com --include users,revenue,recentTimeline --timeframe 90d",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -42,8 +41,8 @@ export default defineCommand({
       type: "string",
       description: [
         "Comma-separated sections to include in response.",
-        `Available: ${customerSections.join(", ")}`,
-        "Balances include credits and metered feature allowances. JSON retains API response keys.",
+        `Available: ${customerIncludeSections.join(", ")}`,
+        'Included sections use their contract keys, such as "users" and "revenue".',
       ].join("\n"),
     },
     timeframe: {
@@ -62,7 +61,7 @@ export default defineCommand({
     }
 
     if (args.include) {
-      params.include = parseCustomerSections(args.include)
+      params.include = splitCsv(args.include)
     }
 
     return runTool(client, publicToolContracts.outlit_get_customer.toolName, params, json)

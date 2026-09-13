@@ -85,6 +85,8 @@ export type FeatureArchiveResult = PublicToolResult<"outlit_archive_feature">
 export type FeatureRef = FeatureArchiveResult["feature"]
 export type CustomerFeaturesResult = PublicToolResult<"outlit_get_customer_features">
 export type CustomerFeature = CustomerFeaturesResult["features"][number]
+export type CustomerCreditsResult = PublicToolResult<"outlit_get_customer_credits">
+export type CustomerCredit = CustomerCreditsResult["credits"][number]
 
 export interface CustomerAnalyticsRow {
   activated_at: string | null

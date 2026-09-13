@@ -1,5 +1,5 @@
+import { customerIncludeSections } from "@outlit/tools"
 import { defineCommand } from "citty"
-import { customerSections } from "../args/customer-sections"
 import { outputError } from "../lib/output"
 
 // ── Data model ──────────────────────────────────────────────────────────────
@@ -71,7 +71,7 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "Get customer by ID or domain",
         flags: [
           ...COMMON,
-          { name: "--include", desc: `Sections: ${customerSections.join(", ")}` },
+          { name: "--include", desc: `Sections: ${customerIncludeSections.join(", ")}` },
           { name: "--timeframe", desc: "Metrics timeframe" },
         ],
       },
@@ -100,13 +100,14 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "merge-status", desc: "Read an admitted merge operation", flags: [...COMMON] },
       {
         name: "features",
-        desc: "Get exact Feature usage for a customer",
+        desc: "Get event and metered Feature usage for a customer",
         flags: [
           ...COMMON,
           { name: "--weeks", desc: "Historical usage window (1-53 weeks)" },
           { name: "--weekly", desc: "Include ordered weekly usage" },
         ],
       },
+      { name: "credits", desc: "Get imported credit pools and burn summaries", flags: [...COMMON] },
       {
         name: "timeline",
         desc: "Show activity timeline",

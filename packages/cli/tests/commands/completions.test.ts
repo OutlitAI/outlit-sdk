@@ -32,15 +32,14 @@ function fishFlagsFor(out: string, commandPath: string): string[] {
 }
 
 describe("completions command", () => {
-  test("describes customer includes with simple section names", async () => {
+  test("describes customer includes with established contract names", async () => {
     const out = await captureCompletions("fish")
     const include = out
       .split("\n")
       .find((line) => line.includes("customers get") && line.includes("-l include"))
-    expect(include).toContain("balances")
-    expect(include).toContain("activity")
-    expect(include).toContain("metrics")
-    expect(include).not.toContain("featureBalances")
+    expect(include).toContain("recentTimeline")
+    expect(include).toContain("behaviorMetrics")
+    expect(include).not.toContain("balances")
   })
 
   test("bash — top-level commands", async () => {
@@ -71,7 +70,7 @@ describe("completions command", () => {
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "ws-users" ]]`)
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "customers" ]]`)
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "list get relationship identity merge merge-status features timeline owner grant revoke" -- "$cur"))',
+      'COMPREPLY=($(compgen -W "list get relationship identity merge merge-status features credits timeline owner grant revoke" -- "$cur"))',
     )
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "attention" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "list get" -- "$cur"))')
@@ -283,6 +282,7 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd features archive' -l revision")
     expect(out).toContain("-n '__outlit_using_cmd customers features' -l weeks")
     expect(out).toContain("-n '__outlit_using_cmd customers features' -l weekly")
+    expect(out).toContain("-n '__outlit_using_cmd customers credits' -l json")
     expect(out).not.toContain("__outlit_using_cmd metrics")
     expect(out).not.toContain("-n '__outlit_using_cmd settings report update'")
     expect(out).not.toContain("settings notifications")
