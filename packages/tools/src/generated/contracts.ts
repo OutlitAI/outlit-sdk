@@ -847,7 +847,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Optionally include users, revenue, recent activity, engagement metrics, or company enrichment. Use outlit_get_customer_features for product usage and outlit_get_customer_credits for credit pools and burn rate.",
+    "description": "Get full details for a single customer. Optionally include users, revenue, recent activity, engagement metrics, or company enrichment.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -15083,4 +15083,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "450018d45b6b0097493018deead720c1727716483b16232ea8702bedf5771737" as const
+export const sdkConsumerContractHash = "d441ea7ac3274ff45a61912b7470487d9cf1e5de0490f7fd21f3f56f6a576805" as const
