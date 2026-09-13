@@ -846,7 +846,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Use this when you already know which customer you want to inspect. Optionally include related data (users, revenue, recent activity, engagement metrics, company enrichment).",
+    "description": "Get full details for a single customer. Optionally include users, revenue, recent activity, engagement metrics, company enrichment, or featureBalances for provider balances, remaining credits, reset dates, and deterministic burn-rate, runway, and trend metrics.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1923,6 +1923,170 @@ export const publicToolContracts = {
                           ],
                           "additionalProperties": false,
                           "description": "Daily provider-reported usage for the whole provider customer account, including entity usage aggregated by the provider. Omitted days are unknown rather than zero.",
+                        },
+                        "credits": {
+                          "description": "Deterministic credit-pool metrics calculated by Outlit from this stored balance and history. Present only for credit pools; use these values rather than recalculating a forecast from account-wide usage.",
+                          "type": "object",
+                          "properties": {
+                            "rate": {
+                              "anyOf": [
+                                {
+                                  "type": "number",
+                                  "minimum": 0,
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                              "description": "Average daily usage over the last seven complete UTC days. See scope before interpreting this as pool deductions.",
+                            },
+                            "scope": {
+                              "type": "string",
+                              "enum": [
+                                "customer_balance",
+                                "account",
+                              ],
+                            },
+                            "change": {
+                              "anyOf": [
+                                {
+                                  "type": "number",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                              "description": "Percentage change in customer-balance burn rate versus the preceding seven complete days. Null when either window is incomplete or the prior rate is zero.",
+                            },
+                            "days": {
+                              "anyOf": [
+                                {
+                                  "type": "number",
+                                  "minimum": 0,
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                              "description": "Estimated days until exhaustion. Null when an estimate is unavailable or the allowance resets first.",
+                            },
+                            "depletion": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": [
+                                "available",
+                                "stale",
+                                "incomplete",
+                                "unknown_scope",
+                                "no_usage",
+                                "unlimited",
+                                "reset_due",
+                                "exhausted",
+                                "beyond_range",
+                                "through_reset",
+                              ],
+                            },
+                            "window": {
+                              "type": "object",
+                              "properties": {
+                                "start": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "format": "date",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                },
+                                "end": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "format": "date",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                },
+                              },
+                              "required": [
+                                "start",
+                                "end",
+                              ],
+                              "additionalProperties": false,
+                              "description": "UTC dates for the seven-day rate window; end is exclusive.",
+                            },
+                            "trend": {
+                              "maxItems": 14,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "date": {
+                                    "type": "string",
+                                    "format": "date",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                                  },
+                                  "usage": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number",
+                                        "minimum": 0,
+                                      },
+                                      {
+                                        "type": "null",
+                                      },
+                                    ],
+                                  },
+                                  "rate": {
+                                    "anyOf": [
+                                      {
+                                        "type": "number",
+                                        "minimum": 0,
+                                      },
+                                      {
+                                        "type": "null",
+                                      },
+                                    ],
+                                  },
+                                },
+                                "required": [
+                                  "date",
+                                  "usage",
+                                  "rate",
+                                ],
+                                "additionalProperties": false,
+                              },
+                              "description": "Daily customer-balance deductions and seven-day rolling rates. Missing observations remain null.",
+                            },
+                          },
+                          "required": [
+                            "rate",
+                            "scope",
+                            "change",
+                            "days",
+                            "depletion",
+                            "status",
+                            "window",
+                            "trend",
+                          ],
+                          "additionalProperties": false,
                         },
                       },
                       "required": [
@@ -14299,4 +14463,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "849edd923a90b3cd921bdc03a0e5dff0ddc7c7303c2a1b13bd53af6b9d6b8d44" as const
+export const sdkConsumerContractHash = "6d58745535decec5e9808d604207c0e6cd5904266e652a4d5f1517b5bc4998d8" as const

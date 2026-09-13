@@ -111,7 +111,7 @@ Traditional tools capture one slice of the customer relationship:
 | CRM | Deal stages and contacts | Actual product usage |
 | Billing | Payment events | Everything before payment |
 
-Outlit's graph connects all of these — and goes further with **facts**. Instead of just showing raw data, a query like `outlit customers get acme.com --include users,revenue,recentTimeline` plus `outlit facts list acme.com` shows the complete story *with reasoning*: which pages Acme's team viewed before signing up, how they used the product after onboarding, what support tickets or calls changed the relationship, what their billing trajectory looks like, and what it all means — churn risk signals, expansion opportunities, champion changes, and competitive context.
+Outlit's graph connects all of these — and goes further with **facts**. Instead of just showing raw data, a query like `outlit customers get acme.com --include users,revenue,activity` plus `outlit facts list acme.com` shows the complete story *with reasoning*: which pages Acme's team viewed before signing up, how they used the product after onboarding, what support tickets or calls changed the relationship, what their billing trajectory looks like, and what it all means — churn risk signals, expansion opportunities, champion changes, and competitive context.
 
 ## How do facts work?
 

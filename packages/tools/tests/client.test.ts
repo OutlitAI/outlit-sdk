@@ -452,6 +452,63 @@ describe("tool contracts", () => {
     >().toEqualTypeOf<false>()
   })
 
+  test("validates derived credit summaries while keeping balances backward compatible", () => {
+    const contract = getPublicToolContract("outlit_get_customer")
+    const balanceSchema =
+      contract.outputSchema.properties.featureBalances.properties.accounts.items.properties.balances
+        .items
+    const creditsSchema = balanceSchema.properties.credits
+    type Credits = NonNullable<
+      NonNullable<
+        CustomerDetailResult["featureBalances"]
+      >["accounts"][number]["balances"][number]["credits"]
+    >
+    const credits = {
+      rate: 120,
+      scope: "customer_balance",
+      change: 20,
+      days: 5,
+      depletion: "2026-09-17T00:00:00.000Z",
+      status: "available",
+      window: { start: "2026-09-05", end: "2026-09-12" },
+      trend: [{ date: "2026-09-11", usage: 140, rate: 120 }],
+    } satisfies Credits
+
+    expectTypeOf<Credits["rate"]>().toEqualTypeOf<number | null>()
+    expectTypeOf<Credits["scope"]>().toEqualTypeOf<"customer_balance" | "account">()
+    expectTypeOf<Credits["trend"][number]["date"]>().toEqualTypeOf<string>()
+    expectTypeOf<Credits["trend"][number]["usage"]>().toEqualTypeOf<number | null>()
+    expectTypeOf<Credits["trend"][number]["rate"]>().toEqualTypeOf<number | null>()
+    expect(balanceSchema.required).not.toContain("credits")
+    expect(matchesGeneratedJsonSchema(credits, creditsSchema)).toBe(true)
+    expect(
+      matchesGeneratedJsonSchema(
+        {
+          ...credits,
+          rate: null,
+          change: null,
+          days: null,
+          depletion: null,
+          status: "incomplete",
+          window: { start: null, end: null },
+          trend: [{ date: "2026-09-11", usage: null, rate: null }],
+        },
+        creditsSchema,
+      ),
+    ).toBe(true)
+    expect(matchesGeneratedJsonSchema({ ...credits, rate: -1 }, creditsSchema)).toBe(false)
+    expect(matchesGeneratedJsonSchema({ ...credits, status: "invented" }, creditsSchema)).toBe(
+      false,
+    )
+    expect(
+      matchesGeneratedJsonSchema(
+        { ...credits, trend: Array(15).fill(credits.trend[0]) },
+        creditsSchema,
+      ),
+    ).toBe(false)
+    expect(matchesGeneratedJsonSchema({ rate: credits.rate }, creditsSchema)).toBe(false)
+  })
+
   test("accepts Autumn direct API-key setup through the generated public contract", () => {
     const contract = getPublicToolContract("outlit_setup_integration")
 

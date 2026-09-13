@@ -32,6 +32,17 @@ function fishFlagsFor(out: string, commandPath: string): string[] {
 }
 
 describe("completions command", () => {
+  test("describes customer includes with simple section names", async () => {
+    const out = await captureCompletions("fish")
+    const include = out
+      .split("\n")
+      .find((line) => line.includes("customers get") && line.includes("-l include"))
+    expect(include).toContain("balances")
+    expect(include).toContain("activity")
+    expect(include).toContain("metrics")
+    expect(include).not.toContain("featureBalances")
+  })
+
   test("bash — top-level commands", async () => {
     const out = await captureCompletions("bash")
     expect(out).toContain("complete -F _outlit_completions outlit")

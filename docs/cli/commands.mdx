@@ -199,8 +199,23 @@ outlit customers get <customer> [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--include` | string | — | Comma-separated sections: `users`, `revenue`, `recentTimeline`, `behaviorMetrics` |
-| `--timeframe` | string | `30d` | Lookback window for included sections: `7d`, `14d`, `30d`, `90d` |
+| `--include` | string | — | Comma-separated sections: `users`, `revenue`, `activity`, `metrics`, `enrichment`, `balances` |
+| `--timeframe` | string | `30d` | Activity and metrics lookback: `7d`, `14d`, `30d`, `90d`. Does not change imported balance history. |
+
+`activity`, `metrics`, and `balances` select the API sections `recentTimeline`, `behaviorMetrics`, and `featureBalances`. JSON output keeps those API keys. The previous camelCase include values remain accepted for existing scripts; new commands should use the simple names above.
+
+When Autumn credit-pool data is available, `--include balances` returns remaining credits and the provider reset date along with a `credits` summary under each credit balance in `featureBalances.accounts[].balances[]`. The summary is calculated by Outlit from stored data; CLI consumers do not need to recreate the forecast math.
+
+| Credit summary field | Meaning |
+|---|---|
+| `rate`, `scope` | Average usage per day over seven complete UTC days. `customer_balance` means pool deductions; `account` means account-wide usage and cannot support a pool forecast. |
+| `change` | Percentage change in pool burn rate versus the prior seven-day window; `null` when comparison is unavailable. |
+| `days`, `depletion` | Estimated days remaining and exhaustion timestamp; `null` when unavailable or reset happens first. |
+| `status` | Explains the forecast result, including `available`, `incomplete`, `stale`, `unknown_scope`, and `through_reset`. |
+| `window` | UTC dates `start` and exclusive `end` used for the rate. |
+| `trend` | Up to 14 points with `date`, daily `usage`, and rolling seven-day `rate`. Missing observations remain `null`, not zero. |
+
+The `credits` summary is optional for compatibility and is present only for credit pools. Existing balance fields and JSON keys are unchanged.
 
 ### Examples
 
@@ -208,8 +223,11 @@ outlit customers get <customer> [flags]
 # Basic profile
 outlit customers get acme.com
 
-# Full profile with all sections
-outlit customers get acme.com --include users,revenue,recentTimeline --timeframe 90d
+# Profile with people, revenue, and activity
+outlit customers get acme.com --include users,revenue,activity --timeframe 90d
+
+# Credit pools and metered feature balances
+outlit customers get acme.com --include balances --json
 
 # By UUID
 outlit customers get 550e8400-e29b-41d4-a716-446655440000

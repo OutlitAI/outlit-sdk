@@ -1,4 +1,5 @@
 import { defineCommand } from "citty"
+import { customerSections } from "../args/customer-sections"
 import { outputError } from "../lib/output"
 
 // ── Data model ──────────────────────────────────────────────────────────────
@@ -70,7 +71,7 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "Get customer by ID or domain",
         flags: [
           ...COMMON,
-          { name: "--include", desc: "Sections to include" },
+          { name: "--include", desc: `Sections: ${customerSections.join(", ")}` },
           { name: "--timeframe", desc: "Metrics timeframe" },
         ],
       },
