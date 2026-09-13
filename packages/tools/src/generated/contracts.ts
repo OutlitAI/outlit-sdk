@@ -10295,6 +10295,14 @@ export const publicToolContracts = {
           ],
           "additionalProperties": false,
         },
+        "events": {
+          "type": "string",
+          "enum": [
+            "available",
+            "unavailable",
+          ],
+          "description": "Whether configured event features could be enumerated and their evidence reads attempted. Individual event coverage may still be unavailable. If unavailable, event features are omitted and stored provider features remain independently readable.",
+        },
         "features": {
           "maxItems": 4100,
           "type": "array",
@@ -11412,6 +11420,7 @@ export const publicToolContracts = {
       },
       "required": [
         "customer",
+        "events",
         "features",
         "sources",
       ],
@@ -15083,4 +15092,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "d441ea7ac3274ff45a61912b7470487d9cf1e5de0490f7fd21f3f56f6a576805" as const
+export const sdkConsumerContractHash = "75e02bc3470803a20bb414f4a3b7b86e0a7ac11f7a754823553be9ba5a8fb89b" as const

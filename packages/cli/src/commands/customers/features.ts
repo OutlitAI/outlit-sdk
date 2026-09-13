@@ -35,7 +35,7 @@ export default defineCommand({
     weeks: { type: "string", description: "Historical usage window in weeks (1-53, default: 12)" },
     weekly: {
       type: "boolean",
-      description: "Include ordered weekly event counts and active days",
+      description: "Include weekly event counts, metered quantities, and active days",
       default: false,
     },
   },

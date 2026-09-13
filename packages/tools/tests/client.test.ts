@@ -272,7 +272,12 @@ describe("tool contracts", () => {
     expect(archive.inputSchema.properties).not.toHaveProperty("restore")
     expect(customerUsage.commandId).toBe("customer_feature_usage.get")
     expect(customerUsage.inputSchema.required).toEqual(["customer"])
-    expect(customerUsage.outputSchema.required).toEqual(["customer", "features", "sources"])
+    expect(customerUsage.outputSchema.required).toEqual([
+      "customer",
+      "events",
+      "features",
+      "sources",
+    ])
     expect(customerUsage.outputSchema.properties.features.items.oneOf).toEqual([
       expect.objectContaining({
         properties: expect.objectContaining({ kind: { type: "string", const: "event" } }),
@@ -305,12 +310,33 @@ describe("tool contracts", () => {
     expectTypeOf<FeatureCreateResult["feature"]>().toEqualTypeOf<FeatureDefinition>()
     expectTypeOf<FeatureArchiveResult["feature"]>().toEqualTypeOf<FeatureRef>()
     expectTypeOf<CustomerFeaturesResult["features"][number]>().toEqualTypeOf<CustomerFeature>()
+    expectTypeOf<CustomerFeaturesResult["events"]>().toEqualTypeOf<"available" | "unavailable">()
     expectTypeOf<
       Extract<CustomerFeature, { kind: "event" }>["evidence"]["coverage"]
     >().toEqualTypeOf<"complete" | "partial" | "unavailable">()
     expectTypeOf<
       Extract<CustomerFeature, { kind: "metered" }>["unit"]
     >().toEqualTypeOf<"provider_defined">()
+  })
+
+  test("distinguishes empty event results from unavailable event reads", () => {
+    const contract = getPublicToolContract("outlit_get_customer_features")
+    const result = {
+      customer: { id: "customer_1", name: "Acme" },
+      events: "available",
+      features: [],
+      sources: [{ provider: "autumn", status: "not_connected", truncated: false }],
+    } satisfies CustomerFeaturesResult
+
+    expect(matchesGeneratedJsonSchema(result, contract.outputSchema)).toBe(true)
+    expect(
+      matchesGeneratedJsonSchema({ ...result, events: "unavailable" }, contract.outputSchema),
+    ).toBe(true)
+    expect(
+      matchesGeneratedJsonSchema({ ...result, events: "unknown" }, contract.outputSchema),
+    ).toBe(false)
+    const { events: _events, ...missingEvents } = result
+    expect(matchesGeneratedJsonSchema(missingEvents, contract.outputSchema)).toBe(false)
   })
 
   test("infers activatedAt on typed customer list and get client results", async () => {

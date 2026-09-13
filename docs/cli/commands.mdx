@@ -382,7 +382,8 @@ reports historical evidence from its configured Outlit event rule. A `metered` i
 provider-defined quantities imported from Autumn and may link to an event Feature. These values
 use different units and must not be added together. The response also lists source status so a
 missing provider connection, unavailable source, and an available source with no matches remain
-distinct.
+distinct. Top-level `events` is `available` or `unavailable`; if the event source cannot be
+read, imported metered Features can still be returned.
 
 Complete, partial, and unavailable evidence remain distinct; unavailable evidence is never
 rendered as zero usage. Add `--weekly` to include ordered weekly buckets. Event Features report
