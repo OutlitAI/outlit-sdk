@@ -2346,7 +2346,7 @@ export const publicToolContracts = {
           },
         },
         "factTypes": {
-          "description": "Optional customer-memory fact type filters, such as SUCCESS_CRITERION, CHURN_RISK, EXPANSION, SENTIMENT, or BUDGET. Anomaly detector fact types are not supported.",
+          "description": "Optional customer-memory fact type filters; omit to retrieve across types. Choose types relevant to the question. Anomaly detector fact types are not supported.\nCUSTOM: A custom customer fact whose meaning is given by its content and supporting evidence.\nCOMPANY_CHANGE: Changes to the customer company, such as leadership, staffing, structure, or office location.\nFUNDING_REVENUE: The customer company's funding, revenue, financial health, or burn rate.\nTECHNOLOGY: Changes to the customer's technology stack, including migrations, adoption, or deprecation.\nSTRATEGY: The customer company's strategic direction, pivots, markets, or business priorities.\nCOMPETITIVE: The customer's consideration of competing products, including evaluations, switching intent, or RFPs.\nSENTIMENT: The customer's expressed satisfaction, frustration, praise, or complaints about the product.\nEXPANSION: Potential growth in the customer's use or purchase of the product through new use cases, users, or departments.\nCHURN_RISK: The customer reducing or ending use of the organization's product; exclude the customer's own customers churning, generic complaints without reduction intent, unrelated budget changes, and unrelated vendor notices\nTIMELINE: Stated dates or deadlines for customer decisions, launches, renewals, or other milestones.\nBUDGET: The customer's budget, spending approval status, or procurement process.\nDECISION_MAKER: Who influences or approves the customer's purchasing or implementation decisions.\nREQUIREMENTS: Specific product capabilities, features, or integrations the customer requests or requires.\nBLOCKER: An obstacle preventing the customer's launch, renewal, expansion, implementation, integration, or successful product use.\nCOMMITMENT: A promise, obligation, agreed next step, approval, or decision by the customer or vendor.\nSUCCESS_CRITERION: An explicitly customer-stated desired outcome or condition for getting value from the product, including qualitative outcomes without invented metrics or deadlines.\nPRODUCT_USAGE: How the customer uses, adopts, abandons, or works around specific product capabilities.\nCONTACT_INFO: A customer contact's title, professional responsibilities, team membership, or reporting chain.\nCONTACT_PREFERENCE: A customer contact's communication preferences, availability, timezone, or meeting style.\nCONTACT_DEPARTURE: A known customer contact explicitly left or is leaving the customer's company; exclude vacation, parental or medical leave, ordinary out-of-office notices, candidates, and people discussed as part of the customer's own business\nCONTACT_POSITION_CHANGE: A known customer contact changed title, department, team, or professional responsibility; do not use this for an Outlit relationship role change, and use CONTACT_DEPARTURE when the person left the company\nCONTACT_DISENGAGEMENT: A known customer contact explicitly stopped participating, organizing, responding, or owning the initiative; a single unanswered message, scheduling friction, or an out-of-office notice is insufficient\nCHAMPION_RISK: Historical broad relationship-risk fact retained for existing rows and occurrences; new extraction uses specific contact-transition Fact types",
           "type": "array",
           "items": {
             "type": "string",
@@ -2358,13 +2358,14 @@ export const publicToolContracts = {
               "STRATEGY",
               "COMPETITIVE",
               "SENTIMENT",
-              "CHAMPION_RISK",
               "EXPANSION",
               "CHURN_RISK",
               "TIMELINE",
               "BUDGET",
               "DECISION_MAKER",
               "REQUIREMENTS",
+              "BLOCKER",
+              "COMMITMENT",
               "SUCCESS_CRITERION",
               "PRODUCT_USAGE",
               "CONTACT_INFO",
@@ -2372,6 +2373,7 @@ export const publicToolContracts = {
               "CONTACT_DEPARTURE",
               "CONTACT_POSITION_CHANGE",
               "CONTACT_DISENGAGEMENT",
+              "CHAMPION_RISK",
             ],
           },
         },
@@ -14958,13 +14960,14 @@ export const customerFactTypes = [
   "STRATEGY",
   "COMPETITIVE",
   "SENTIMENT",
-  "CHAMPION_RISK",
   "EXPANSION",
   "CHURN_RISK",
   "TIMELINE",
   "BUDGET",
   "DECISION_MAKER",
   "REQUIREMENTS",
+  "BLOCKER",
+  "COMMITMENT",
   "SUCCESS_CRITERION",
   "PRODUCT_USAGE",
   "CONTACT_INFO",
@@ -14972,6 +14975,7 @@ export const customerFactTypes = [
   "CONTACT_DEPARTURE",
   "CONTACT_POSITION_CHANGE",
   "CONTACT_DISENGAGEMENT",
+  "CHAMPION_RISK",
 ] as const
 
 export const unsupportedCustomerFactTypes = [
@@ -15094,4 +15098,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "2388613bec396c0837be93eface3613c2da91a548ad0d410d5ae99aec6bd5cac" as const
+export const sdkConsumerContractHash = "fde371d78659c30461027e749e4425949797a6e5e19f9755de525ccbd9c84d85" as const

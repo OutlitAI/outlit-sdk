@@ -2,4 +2,4 @@
 "@outlit/tools": minor
 ---
 
-Support SUCCESS_CRITERION in customer fact filters for explicitly stated customer outcomes.
+Support SUCCESS_CRITERION, BLOCKER, and COMMITMENT in customer fact filters and document each supported fact type so agents can select relevant customer evidence.
