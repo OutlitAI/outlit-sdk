@@ -2346,7 +2346,7 @@ export const publicToolContracts = {
           },
         },
         "factTypes": {
-          "description": "Optional customer-memory fact type filters, such as CHURN_RISK, EXPANSION, SENTIMENT, or BUDGET. Anomaly detector fact types are not supported.",
+          "description": "Optional customer-memory fact type filters, such as SUCCESS_CRITERION, CHURN_RISK, EXPANSION, SENTIMENT, or BUDGET. Anomaly detector fact types are not supported.",
           "type": "array",
           "items": {
             "type": "string",
@@ -2365,6 +2365,7 @@ export const publicToolContracts = {
               "BUDGET",
               "DECISION_MAKER",
               "REQUIREMENTS",
+              "SUCCESS_CRITERION",
               "PRODUCT_USAGE",
               "CONTACT_INFO",
               "CONTACT_PREFERENCE",
@@ -14964,6 +14965,7 @@ export const customerFactTypes = [
   "BUDGET",
   "DECISION_MAKER",
   "REQUIREMENTS",
+  "SUCCESS_CRITERION",
   "PRODUCT_USAGE",
   "CONTACT_INFO",
   "CONTACT_PREFERENCE",
@@ -15092,4 +15094,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "75e02bc3470803a20bb414f4a3b7b86e0a7ac11f7a754823553be9ba5a8fb89b" as const
+export const sdkConsumerContractHash = "2388613bec396c0837be93eface3613c2da91a548ad0d410d5ae99aec6bd5cac" as const
