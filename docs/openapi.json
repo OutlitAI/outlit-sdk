@@ -13730,6 +13730,24 @@
                     "trend"
                   ],
                   "additionalProperties": false
+                },
+                "signalKind": {
+                  "type": "string",
+                  "enum": [
+                    "expansion_risk",
+                    "trial_conversion",
+                    "none",
+                    "unknown_plan"
+                  ],
+                  "description": "Plan-aware routing for the credit signal. unknown_plan means the provider snapshot carried no product list, so the plan could not be classified."
+                },
+                "configurationNotes": {
+                  "maxItems": 20,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
                 }
               },
               "required": [
@@ -15319,5 +15337,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "fde371d78659c30461027e749e4425949797a6e5e19f9755de525ccbd9c84d85"
+  "x-outlit-contract-hash": "b2bc7e86d4e524f2799b4b676f6ee94c2f8184d572771ed51311f79139a261d5"
 }
