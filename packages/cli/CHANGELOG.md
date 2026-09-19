@@ -1,5 +1,22 @@
 # @outlit/cli
 
+## 3.2.0
+
+### Minor Changes
+
+- [#209](https://github.com/OutlitAI/outlit-sdk/pull/209) [`485f4f0`](https://github.com/OutlitAI/outlit-sdk/commit/485f4f0c8f686100ab64414733e56b8a2e267041) Thanks [@leo-paz](https://github.com/leo-paz)! - Add the shared customer identity diagnostic, saved suggestion review, and exact customer merge contracts. Preserve merge safety annotations in generated contracts. Add CLI commands for identity reads, suggestion list/reject, merge preview or explicit execution, and operation status. Merging requires the matching Core deployment and an explicitly granted credential.
+
+### Patch Changes
+
+- [#211](https://github.com/OutlitAI/outlit-sdk/pull/211) [`13a605f`](https://github.com/OutlitAI/outlit-sdk/commit/13a605fdfd241e583635218276eb306ba493b894) Thanks [@leo-paz](https://github.com/leo-paz)! - Add optional customer provider feature balance output, Autumn and Ergo API-key setup contracts, and interactive CLI credential prompts. Stable publication requires the matching Core Autumn integration to be deployed and verified first.
+
+- [#214](https://github.com/OutlitAI/outlit-sdk/pull/214) [`591f4fc`](https://github.com/OutlitAI/outlit-sdk/commit/591f4fc5df40858e9b5c0aeea94cd39549cf711a) Thanks [@leo-paz](https://github.com/leo-paz)! - Add `outlit customers credits <customer>` and its public tool `outlit_get_customer_credits`, and sync the generated contract with Core. The command returns imported customer credit pools, observation state, reset timing, and deterministic burn summaries. Stable publication requires the matching Core change to be deployed and verified first.
+
+  Expand `outlit customers features` and `outlit_get_customer_features` to return event and imported metered usage with source availability, coverage, and optional weekly history. Credit pools belong to the dedicated Credits command; remove the unreleased `featureBalances` section from customer-get includes. Existing `recentTimeline` and `behaviorMetrics` includes remain unchanged.
+
+- Updated dependencies [[`13a605f`](https://github.com/OutlitAI/outlit-sdk/commit/13a605fdfd241e583635218276eb306ba493b894), [`cb26b4c`](https://github.com/OutlitAI/outlit-sdk/commit/cb26b4c221318005393c6ae2c76f232a17ee2d39), [`591f4fc`](https://github.com/OutlitAI/outlit-sdk/commit/591f4fc5df40858e9b5c0aeea94cd39549cf711a), [`3c7c0d0`](https://github.com/OutlitAI/outlit-sdk/commit/3c7c0d069fa491261f71ba4b6e1a961a33783b8b), [`485f4f0`](https://github.com/OutlitAI/outlit-sdk/commit/485f4f0c8f686100ab64414733e56b8a2e267041), [`1fd4bd2`](https://github.com/OutlitAI/outlit-sdk/commit/1fd4bd209560a8218cb91985a7c0d5895effd565)]:
+  - @outlit/tools@2.2.0
+
 ## 3.1.3
 
 ### Patch Changes
