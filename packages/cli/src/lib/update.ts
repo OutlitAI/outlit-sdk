@@ -149,8 +149,8 @@ function readCommandOutput(command: string, args: string[]): string | null {
  * Returns true when the running artifact is a standalone compiled binary
  * (`bun build --compile`) rather than a script launched by node/bun.
  *
- * Compiled binaries expose the first CLI arg (e.g. the subcommand) or the
- * binary path itself as argv[1] — never a resolvable .js/.ts entrypoint.
+ * Bun compiled binaries expose a virtual /$bunfs/root/<binary-name>
+ * entrypoint as argv[1], rather than the original .js/.ts source path.
  * Standalone binaries cannot self-upgrade through a package manager.
  */
 export function isStandaloneInstall(argv = process.argv): boolean {

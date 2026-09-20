@@ -164,8 +164,9 @@ describe("update helpers", () => {
   })
 
   test("treats compiled-binary argv shapes as standalone installs", () => {
-    // In `bun build --compile` artifacts argv[1] is the first CLI arg (e.g. the
-    // subcommand) or the binary path itself — never a package script path.
+    // Bun embeds the compiled outfile basename in its virtual filesystem.
+    expect(isStandaloneInstall(["bun", "/$bunfs/root/outlit-linux-x64", "upgrade"])).toBe(true)
+    expect(isStandaloneInstall(["bun", "/$bunfs/root/outlit-windows-x64.exe"])).toBe(true)
     expect(isStandaloneInstall(["outlit", "upgrade"])).toBe(true)
     expect(isStandaloneInstall(["/usr/local/bin/outlit", "upgrade"])).toBe(true)
     expect(isStandaloneInstall(["outlit"])).toBe(true)

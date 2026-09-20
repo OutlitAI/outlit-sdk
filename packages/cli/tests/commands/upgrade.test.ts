@@ -66,7 +66,7 @@ describe("upgrade command", () => {
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ version: CLI_VERSION }), { status: 200 }),
     )
-    process.argv[1] = "upgrade" // compiled binary argv shape: no script path
+    process.argv[1] = "/$bunfs/root/outlit-linux-x64" // Bun compiled virtual entrypoint
 
     const { default: upgradeCmd } = await import("../../src/commands/upgrade")
     let result: Record<string, unknown> = {}
@@ -112,8 +112,13 @@ describe("upgrade command", () => {
     expect(stderrOutput).toContain("package manager")
   })
 
-  test("gives standalone binaries manual-update guidance instead of a package-manager command", async () => {
-    process.argv[1] = "upgrade" // compiled binary argv shape
+  test.each([
+    undefined,
+    "npm/10.9.8 node/v22.23.1 linux x64",
+    "bun/1.3.9 npm/? node/v24.3.0 linux x64",
+  ])("gives standalone binaries manual guidance even with inherited installer environment %s", async (userAgent) => {
+    process.argv[1] = "/$bunfs/root/outlit-linux-x64"
+    if (userAgent) process.env.npm_config_user_agent = userAgent
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ version: "9.9.9" }), { status: 200 }),
     )
@@ -140,6 +145,7 @@ describe("upgrade command", () => {
     expect(stderrOutput).toContain("9.9.9")
     expect(stderrOutput).toContain("install.sh")
     expect(stderrOutput).not.toContain("npm install -g")
+    expect(mockSpawnSync).not.toHaveBeenCalled()
   })
 
   test("fails cleanly when the latest version check fails and no installer is detected", async () => {
