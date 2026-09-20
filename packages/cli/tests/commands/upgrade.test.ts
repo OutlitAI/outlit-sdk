@@ -1,43 +1,94 @@
-import { beforeEach, describe, expect, spyOn, test } from "bun:test"
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test"
 import { CLI_VERSION } from "../../src/lib/config"
 import {
   installChildProcessMock,
   mockSpawnSync,
   resetChildProcessMocks,
 } from "../child-process-mock"
-import { ExitError, mockExitThrow } from "../helpers"
+import {
+  captureStdout,
+  ExitError,
+  mockExitThrow,
+  setInteractive,
+  setNonInteractive,
+} from "../helpers"
 
 installChildProcessMock()
+
+const ORIGINAL_ARGV1 = process.argv[1]
+
+function restoreArgv1() {
+  if (ORIGINAL_ARGV1 === undefined) {
+    Reflect.deleteProperty(process.argv, "1")
+  } else {
+    process.argv[1] = ORIGINAL_ARGV1
+  }
+}
 
 describe("upgrade command", () => {
   beforeEach(() => {
     resetChildProcessMocks()
   })
 
-  test("does not run the installer when the CLI is already current", async () => {
+  afterEach(() => {
+    restoreArgv1()
+    Reflect.deleteProperty(process.env, "npm_config_user_agent")
+    Reflect.deleteProperty(process.env, "npm_config_prefix")
+  })
+
+  test("reports current version as structured output when already up to date", async () => {
     process.env.npm_config_user_agent = "bun/1.3.9 npm/? node/v22.0.0 darwin x64"
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ version: CLI_VERSION }), { status: 200 }),
     )
-    const consoleSpy = spyOn(console, "log").mockImplementation(() => {})
 
     const { default: upgradeCmd } = await import("../../src/commands/upgrade")
-    let logged = ""
-
+    let result: Record<string, unknown> = {}
     try {
-      await upgradeCmd.run!({ args: {} } as Parameters<NonNullable<typeof upgradeCmd.run>>[0])
-      logged = (consoleSpy.mock.calls[0]?.[0] as string) ?? ""
+      result = await captureStdout(() =>
+        upgradeCmd.run!({ args: { json: true } } as Parameters<
+          NonNullable<typeof upgradeCmd.run>
+        >[0]),
+      )
     } finally {
       fetchSpy.mockRestore()
-      consoleSpy.mockRestore()
-      Reflect.deleteProperty(process.env, "npm_config_user_agent")
     }
 
     expect(mockSpawnSync).not.toHaveBeenCalled()
-    expect(logged).toBe(`Outlit CLI is already up to date (v${CLI_VERSION})`)
+    expect(result).toEqual({
+      status: "current",
+      currentVersion: CLI_VERSION,
+      latestVersion: CLI_VERSION,
+    })
   })
 
-  test("fails when the installer cannot be inferred", async () => {
+  test("checks the registry before installer detection so standalone installs get an already-current answer", async () => {
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ version: CLI_VERSION }), { status: 200 }),
+    )
+    process.argv[1] = "/$bunfs/root/outlit-linux-x64" // Bun compiled virtual entrypoint
+
+    const { default: upgradeCmd } = await import("../../src/commands/upgrade")
+    let result: Record<string, unknown> = {}
+    try {
+      result = await captureStdout(() =>
+        upgradeCmd.run!({ args: { json: true } } as Parameters<
+          NonNullable<typeof upgradeCmd.run>
+        >[0]),
+      )
+    } finally {
+      fetchSpy.mockRestore()
+    }
+
+    expect(result.status).toBe("current")
+    expect(mockSpawnSync).not.toHaveBeenCalled()
+  })
+
+  test("fails with package-manager guidance when the installer cannot be inferred", async () => {
+    process.argv[1] = "/usr/local/lib/node_modules/@outlit/cli/dist/cli.js"
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ version: "9.9.9" }), { status: 200 }),
+    )
     const { default: upgradeCmd } = await import("../../src/commands/upgrade")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -50,17 +101,110 @@ describe("upgrade command", () => {
       thrown = error
       stderrOutput = stderrSpy.mock.calls.map((call) => String(call[0])).join("")
     } finally {
+      fetchSpy.mockRestore()
       exitSpy.mockRestore()
       stderrSpy.mockRestore()
     }
 
     expect(thrown).toBeInstanceOf(ExitError)
     expect((thrown as ExitError).code).toBe(1)
-    expect(stderrOutput).toContain("Could not determine how Outlit CLI was installed")
+    expect(stderrOutput).toContain("unknown_installer")
+    expect(stderrOutput).toContain("package manager")
+  })
+
+  test.each([
+    undefined,
+    "npm/10.9.8 node/v22.23.1 linux x64",
+    "bun/1.3.9 npm/? node/v24.3.0 linux x64",
+  ])("gives standalone binaries manual guidance even with inherited installer environment %s", async (userAgent) => {
+    process.argv[1] = "/$bunfs/root/outlit-linux-x64"
+    if (userAgent) process.env.npm_config_user_agent = userAgent
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ version: "9.9.9" }), { status: 200 }),
+    )
+    const { default: upgradeCmd } = await import("../../src/commands/upgrade")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    let stderrOutput = ""
+    try {
+      await upgradeCmd.run!({ args: {} } as Parameters<NonNullable<typeof upgradeCmd.run>>[0])
+    } catch (error) {
+      thrown = error
+      stderrOutput = stderrSpy.mock.calls.map((call) => String(call[0])).join("")
+    } finally {
+      fetchSpy.mockRestore()
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+    }
+
+    expect(thrown).toBeInstanceOf(ExitError)
+    expect((thrown as ExitError).code).toBe(1)
+    expect(stderrOutput).toContain("manual_update_required")
+    expect(stderrOutput).toContain("9.9.9")
+    expect(stderrOutput).toContain("install.sh")
+    expect(stderrOutput).not.toContain("npm install -g")
+    expect(mockSpawnSync).not.toHaveBeenCalled()
+  })
+
+  test("fails cleanly when the latest version check fails and no installer is detected", async () => {
+    process.argv[1] = "upgrade"
+    const fetchSpy = spyOn(globalThis, "fetch").mockRejectedValue(new Error("network down"))
+    const { default: upgradeCmd } = await import("../../src/commands/upgrade")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    let stderrOutput = ""
+    try {
+      await upgradeCmd.run!({ args: {} } as Parameters<NonNullable<typeof upgradeCmd.run>>[0])
+    } catch (error) {
+      thrown = error
+      stderrOutput = stderrSpy.mock.calls.map((call) => String(call[0])).join("")
+    } finally {
+      fetchSpy.mockRestore()
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+    }
+
+    expect(thrown).toBeInstanceOf(ExitError)
+    expect((thrown as ExitError).code).toBe(1)
+    expect(stderrOutput).toContain("update_check_failed")
   })
 
   test("runs the inferred package manager command when a newer version exists", async () => {
     process.env.npm_config_user_agent = "bun/1.3.9 npm/? node/v22.0.0 darwin x64"
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ version: "9.9.9" }), { status: 200 }),
+    )
+
+    const { default: upgradeCmd } = await import("../../src/commands/upgrade")
+    let result: Record<string, unknown> = {}
+    try {
+      result = await captureStdout(() =>
+        upgradeCmd.run!({ args: { json: true } } as Parameters<
+          NonNullable<typeof upgradeCmd.run>
+        >[0]),
+      )
+    } finally {
+      fetchSpy.mockRestore()
+    }
+
+    expect(mockSpawnSync).toHaveBeenCalledWith("bun", ["add", "-g", "@outlit/cli"], {
+      stdio: ["ignore", process.stderr, process.stderr],
+    })
+    expect(result).toEqual({
+      status: "updated",
+      currentVersion: CLI_VERSION,
+      latestVersion: "9.9.9",
+      command: "bun add -g @outlit/cli",
+    })
+  })
+
+  test("keeps package-manager output on stdout in interactive mode", async () => {
+    process.env.npm_config_user_agent = "bun/1.3.9 npm/? node/v22.0.0 darwin x64"
+    setInteractive()
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ version: "9.9.9" }), { status: 200 }),
     )
@@ -71,7 +215,7 @@ describe("upgrade command", () => {
       await upgradeCmd.run!({ args: {} } as Parameters<NonNullable<typeof upgradeCmd.run>>[0])
     } finally {
       fetchSpy.mockRestore()
-      Reflect.deleteProperty(process.env, "npm_config_user_agent")
+      setNonInteractive()
     }
 
     expect(mockSpawnSync).toHaveBeenCalledWith("bun", ["add", "-g", "@outlit/cli"], {
@@ -102,8 +246,9 @@ describe("upgrade command", () => {
       Reflect.deleteProperty(process.env, "npm_config_prefix")
     }
 
+    // args:{} but non-TTY auto-enables JSON mode -> child output routed to stderr
     expect(mockSpawnSync).toHaveBeenCalledWith("npm", ["install", "-g", "@outlit/cli"], {
-      stdio: "inherit",
+      stdio: ["ignore", process.stderr, process.stderr],
     })
   })
 
