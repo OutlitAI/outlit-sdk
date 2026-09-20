@@ -12,6 +12,13 @@ const PACKAGE_NAME = "@outlit/cli"
 const LATEST_VERSION_URL = "https://registry.npmjs.org/@outlit%2Fcli/latest"
 export const INTERNAL_UPDATE_FLAG = "--internal-update-check"
 
+/**
+ * Manual-update guidance for standalone compiled binaries, which have no
+ * package manager that can replace them in place.
+ */
+export const STANDALONE_UPDATE_HINT =
+  "re-run your original install method (for example `curl -fsSL https://outlit.ai/install.sh | bash` or `brew upgrade outlitai/tap/outlit`), or download the latest release from https://github.com/OutlitAI/outlit-sdk/releases"
+
 export type Installer = "bun" | "npm" | "pnpm" | "yarn"
 
 export interface UpgradeCommand {
@@ -156,6 +163,8 @@ function readCommandOutput(command: string, args: string[]): string | null {
 export function isStandaloneInstall(argv = process.argv): boolean {
   const scriptPath = argv[1]
   if (!scriptPath) return true
+  // Bun's virtual entrypoint only exists inside the packed executable.
+  if (scriptPath.startsWith("/$bunfs/") || scriptPath.startsWith("~bunfs")) return true
   const resolved = safeRealPath(scriptPath) ?? scriptPath
   return !/\.(?:cjs|mjs|jsx?|tsx?)$/.test(resolved)
 }
@@ -190,8 +199,12 @@ function safeRealPath(filePath: string): string | null {
   }
 }
 
-export function formatUpdateCommand(installer = inferInstaller()): string {
-  switch (installer) {
+export function formatUpdateCommand(installer?: Installer | null, argv = process.argv): string {
+  // Standalone binaries have no package manager that can replace them, so a
+  // cached or inherited installer must not drive the guidance.
+  if (isStandaloneInstall(argv)) return STANDALONE_UPDATE_HINT
+  const resolved = installer === undefined ? inferInstaller() : installer
+  switch (resolved) {
     case "bun":
       return "bun add -g @outlit/cli"
     case "npm":
@@ -339,7 +352,10 @@ export async function runInternalUpdateCheck(opts?: {
   installer?: Installer | null
 }): Promise<void> {
   const fetchLatestVersion = opts?.fetchLatestVersion ?? fetchLatestCliVersion
-  const installer = opts?.installer ?? inferInstaller()
+  // Standalone children inherit npm_config_user_agent from the spawning shell;
+  // caching a package-manager installer would make later notices prescribe a
+  // package-manager upgrade the binary cannot use.
+  const installer = isStandaloneInstall() ? null : (opts?.installer ?? inferInstaller())
 
   try {
     const latestVersion = await fetchLatestVersion()

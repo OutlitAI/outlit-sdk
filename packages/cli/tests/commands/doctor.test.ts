@@ -240,6 +240,55 @@ describe("doctor command", () => {
     expect(versionCheck?.detail).toBe("Run `bun add -g @outlit/cli` to update")
   })
 
+  test("uses standalone update guidance in the CLI version warning", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+    const originalArgv1 = process.argv[1]
+    process.argv[1] = "/$bunfs/root/outlit-linux-x64"
+
+    const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async (input) => {
+      const url = String(input)
+      if (url === "https://registry.npmjs.org/@outlit%2Fcli/latest") {
+        return new Response(JSON.stringify({ version: "9.9.9" }), { status: 200 })
+      }
+      if (url === getValidateApiKeyUrl()) {
+        return new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: null,
+            authorization: { grants: ["integrations:manage"] },
+          }),
+          { status: 200 },
+        )
+      }
+      throw new Error(`Unexpected fetch URL: ${url}`)
+    }) as typeof fetch)
+
+    const { default: doctorCmd } = await import("../../src/commands/doctor")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const exitSpy = mockExitThrow()
+
+    let written = ""
+    try {
+      await doctorCmd.run!({
+        args: { json: true },
+      } as Parameters<NonNullable<typeof doctorCmd.run>>[0])
+    } finally {
+      written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
+      writeSpy.mockRestore()
+      fetchSpy.mockRestore()
+      exitSpy.mockRestore()
+      if (originalArgv1 === undefined) Reflect.deleteProperty(process.argv, "1")
+      else process.argv[1] = originalArgv1
+    }
+
+    const parsed = JSON.parse(written) as { checks: Array<Record<string, string>> }
+    const versionCheck = parsed.checks.find((check) => check.name === "CLI version")
+    expect(versionCheck?.status).toBe("warn")
+    expect(versionCheck?.detail).toContain("install.sh")
+    expect(versionCheck?.detail).not.toContain("package manager")
+  })
+
   test("warns cleanly when it cannot check for CLI updates", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 

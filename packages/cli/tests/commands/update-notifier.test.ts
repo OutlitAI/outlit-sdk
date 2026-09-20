@@ -100,9 +100,10 @@ describe("update notifier", () => {
     const spawn = mock(() => ({ unref: mock(() => {}) }))
     const notify = mock((_message: string) => {})
 
-    // Compiled-binary argv shape: real binary path + virtual $bunfs entrypoint.
+    // Real compiled-binary argv shape: literal "bun" runtime name + virtual
+    // $bunfs entrypoint; the real binary path comes from process.execPath.
     initializeUpdateNotifier({
-      argv: ["/home/u/.local/bin/outlit", "/$bunfs/root/outlit", "customers"],
+      argv: ["bun", "/$bunfs/root/outlit", "customers"],
       spawn,
       notify,
       execPath: "/home/u/.local/bin/outlit",
