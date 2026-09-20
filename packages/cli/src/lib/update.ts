@@ -1,4 +1,4 @@
-import { execFileSync, spawn, spawnSync } from "node:child_process"
+import { execFileSync, type StdioOptions, spawn, spawnSync } from "node:child_process"
 import { existsSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs"
 import { homedir } from "node:os"
 import { dirname, join } from "node:path"
@@ -143,6 +143,21 @@ function readCommandOutput(command: string, args: string[]): string | null {
   } catch {
     return null
   }
+}
+
+/**
+ * Returns true when the running artifact is a standalone compiled binary
+ * (`bun build --compile`) rather than a script launched by node/bun.
+ *
+ * Compiled binaries expose the first CLI arg (e.g. the subcommand) or the
+ * binary path itself as argv[1] — never a resolvable .js/.ts entrypoint.
+ * Standalone binaries cannot self-upgrade through a package manager.
+ */
+export function isStandaloneInstall(argv = process.argv): boolean {
+  const scriptPath = argv[1]
+  if (!scriptPath) return true
+  const resolved = safeRealPath(scriptPath) ?? scriptPath
+  return !/\.(?:cjs|mjs|jsx?|tsx?)$/.test(resolved)
 }
 
 export function inferInstaller(): Installer | null {
@@ -323,8 +338,16 @@ export async function runInternalUpdateCheck(opts?: {
   }
 }
 
-export function runUpgradeCommand(command: UpgradeCommand): void {
-  const result = spawnSync(command.command, command.args, { stdio: "inherit" })
+export function runUpgradeCommand(
+  command: UpgradeCommand,
+  opts?: { stdoutToStderr?: boolean },
+): void {
+  // In JSON/non-TTY mode the package manager's chatter would corrupt the
+  // structured result on stdout — route the child's stdout to our stderr.
+  const stdio: StdioOptions = opts?.stdoutToStderr
+    ? ["ignore", process.stderr, process.stderr]
+    : "inherit"
+  const result = spawnSync(command.command, command.args, { stdio })
 
   if (result.error) throw result.error
   if (result.status !== 0 || result.signal) {

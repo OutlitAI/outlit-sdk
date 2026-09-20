@@ -10,6 +10,7 @@ import {
   getUpdateCachePath,
   getUpgradeCommand,
   inferInstallerFromInstallation,
+  isStandaloneInstall,
   isUpdateCheckDue,
   shouldCheckForUpdates,
   writeCachedUpdateState,
@@ -160,5 +161,25 @@ describe("update helpers", () => {
     >
     expect(written.latestVersion).toBe("2.0.0")
     expect(written.installer).toBe("npm")
+  })
+
+  test("treats compiled-binary argv shapes as standalone installs", () => {
+    // In `bun build --compile` artifacts argv[1] is the first CLI arg (e.g. the
+    // subcommand) or the binary path itself — never a package script path.
+    expect(isStandaloneInstall(["outlit", "upgrade"])).toBe(true)
+    expect(isStandaloneInstall(["/usr/local/bin/outlit", "upgrade"])).toBe(true)
+    expect(isStandaloneInstall(["outlit"])).toBe(true)
+  })
+
+  test("treats script-based launches as non-standalone installs", () => {
+    expect(
+      isStandaloneInstall([
+        "node",
+        "/usr/local/lib/node_modules/@outlit/cli/dist/cli.js",
+        "upgrade",
+      ]),
+    ).toBe(false)
+    expect(isStandaloneInstall(["bun", "/repo/packages/cli/src/cli.ts", "upgrade"])).toBe(false)
+    expect(isStandaloneInstall(["bunx", "/x/dist/cli.mjs"])).toBe(false)
   })
 })
