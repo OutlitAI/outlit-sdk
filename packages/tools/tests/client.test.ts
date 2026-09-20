@@ -730,6 +730,32 @@ describe("createOutlitClient", () => {
     expect(error.envelope).toEqual(envelope)
   })
 
+  test("preserves non-retryable missing-resource feedback from Core", async () => {
+    const envelope = {
+      code: "TOOL_RESOURCE_NOT_FOUND",
+      message: "Resource not found",
+      retryable: false,
+      requestId: "request_missing_fact",
+    }
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify(envelope), { status: 404 }))
+    const client = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: fetchMock,
+    })
+
+    const error = await client
+      .callTool("outlit_get_fact", { factId: "10000000-0000-4000-8000-000000000001" })
+      .catch((value: unknown) => value)
+
+    expect(isOutlitToolsApiError(error)).toBe(true)
+    if (!isOutlitToolsApiError(error)) throw new Error("expected OutlitToolsApiError")
+    expect(error.status).toBe(404)
+    expect(error.envelope).toEqual(envelope)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
   test("rejects responses outside the generated gateway error schema", async () => {
     const invalidEnvelopes = [
       {

@@ -14057,6 +14057,7 @@ export const toolGatewayErrorCodes = [
   "TOOL_BINDING_MISSING",
   "TOOL_IMPLEMENTATION_ERROR",
   "TOOL_OUTPUT_INVALID",
+  "TOOL_RESOURCE_NOT_FOUND",
   "TOOL_RESULT_TOO_LARGE",
   "TOOL_GATEWAY_ERROR",
   "plan_api_limit_exceeded",
@@ -14078,6 +14079,7 @@ export const toolGatewayErrorSchema = {
         "TOOL_BINDING_MISSING",
         "TOOL_IMPLEMENTATION_ERROR",
         "TOOL_OUTPUT_INVALID",
+        "TOOL_RESOURCE_NOT_FOUND",
         "TOOL_RESULT_TOO_LARGE",
         "TOOL_GATEWAY_ERROR",
         "plan_api_limit_exceeded",
@@ -15116,4 +15118,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "b2bc7e86d4e524f2799b4b676f6ee94c2f8184d572771ed51311f79139a261d5" as const
+export const sdkConsumerContractHash = "5d54d7fe65dbe72e7dbc662e95f8b8aa3dbc146a37fa01d79aafa38e3ca380fb" as const
