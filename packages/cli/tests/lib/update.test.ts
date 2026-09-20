@@ -12,6 +12,9 @@ import {
   inferInstallerFromInstallation,
   isStandaloneInstall,
   isUpdateCheckDue,
+  readCachedUpdateState,
+  runInternalUpdateCheck,
+  STANDALONE_UPDATE_HINT,
   shouldCheckForUpdates,
   writeCachedUpdateState,
 } from "../../src/lib/update"
@@ -87,6 +90,55 @@ describe("update helpers", () => {
 
   test("returns a generic update hint when installer cannot be inferred", () => {
     expect(formatUpdateCommand()).toBe("update @outlit/cli with your package manager")
+  })
+
+  test("renders standalone guidance for compiled installs even with an inherited user agent", () => {
+    const originalArgv1 = process.argv[1]
+    process.argv[1] = "/$bunfs/root/outlit-linux-x64"
+    process.env.npm_config_user_agent = "bun/1.3.9 npm/? node/v22.0.0 darwin x64"
+    try {
+      expect(formatUpdateCommand()).toBe(STANDALONE_UPDATE_HINT)
+    } finally {
+      if (originalArgv1 === undefined) Reflect.deleteProperty(process.argv, "1")
+      else process.argv[1] = originalArgv1
+    }
+  })
+
+  test("ignores a cached package-manager installer for standalone installs", () => {
+    const originalArgv1 = process.argv[1]
+    process.argv[1] = "/$bunfs/root/outlit-linux-x64"
+    writeCachedUpdateState({
+      lastCheckedAt: Date.now(),
+      latestVersion: "9.9.9",
+      installer: "npm",
+    })
+    try {
+      expect(getCachedUpdateNotice()?.command).toBe(STANDALONE_UPDATE_HINT)
+    } finally {
+      if (originalArgv1 === undefined) Reflect.deleteProperty(process.argv, "1")
+      else process.argv[1] = originalArgv1
+    }
+  })
+
+  test("does not cache an inferred installer for standalone installs", async () => {
+    const originalArgv1 = process.argv[1]
+    process.argv[1] = "/$bunfs/root/outlit-linux-x64"
+    process.env.npm_config_user_agent = "bun/1.3.9 npm/? node/v22.0.0 darwin x64"
+    try {
+      await runInternalUpdateCheck({ fetchLatestVersion: async () => "9.9.9" })
+      const state = readCachedUpdateState()
+      expect(state?.latestVersion).toBe("9.9.9")
+      expect(state?.installer).toBeUndefined()
+    } finally {
+      if (originalArgv1 === undefined) Reflect.deleteProperty(process.argv, "1")
+      else process.argv[1] = originalArgv1
+    }
+  })
+
+  test("caches the inferred installer for script installs", async () => {
+    process.env.npm_config_user_agent = "bun/1.3.9 npm/? node/v22.0.0 darwin x64"
+    await runInternalUpdateCheck({ fetchLatestVersion: async () => "9.9.9" })
+    expect(readCachedUpdateState()?.installer).toBe("bun")
   })
 
   test("returns an executable upgrade command for bun", () => {
@@ -167,6 +219,8 @@ describe("update helpers", () => {
     // Bun embeds the compiled outfile basename in its virtual filesystem.
     expect(isStandaloneInstall(["bun", "/$bunfs/root/outlit-linux-x64", "upgrade"])).toBe(true)
     expect(isStandaloneInstall(["bun", "/$bunfs/root/outlit-windows-x64.exe"])).toBe(true)
+    // A virtual $bunfs entrypoint stays standalone even if it carries an extension.
+    expect(isStandaloneInstall(["bun", "/$bunfs/root/cli.ts", "upgrade"])).toBe(true)
     expect(isStandaloneInstall(["outlit", "upgrade"])).toBe(true)
     expect(isStandaloneInstall(["/usr/local/bin/outlit", "upgrade"])).toBe(true)
     expect(isStandaloneInstall(["outlit"])).toBe(true)

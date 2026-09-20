@@ -8,10 +8,8 @@ import {
   getUpgradeCommand,
   isStandaloneInstall,
   runUpgradeCommand,
+  STANDALONE_UPDATE_HINT,
 } from "../lib/update"
-
-const STANDALONE_UPDATE_HINT =
-  "re-run your original install method (for example `curl -fsSL https://outlit.ai/install.sh | bash` or `brew upgrade outlitai/tap/outlit`), or download the latest release from https://github.com/OutlitAI/outlit-sdk/releases"
 
 export default defineCommand({
   meta: {

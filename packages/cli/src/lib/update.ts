@@ -12,6 +12,13 @@ const PACKAGE_NAME = "@outlit/cli"
 const LATEST_VERSION_URL = "https://registry.npmjs.org/@outlit%2Fcli/latest"
 export const INTERNAL_UPDATE_FLAG = "--internal-update-check"
 
+/**
+ * Manual-update guidance for standalone compiled binaries, which have no
+ * package manager that can replace them in place.
+ */
+export const STANDALONE_UPDATE_HINT =
+  "re-run your original install method (for example `curl -fsSL https://outlit.ai/install.sh | bash` or `brew upgrade outlitai/tap/outlit`), or download the latest release from https://github.com/OutlitAI/outlit-sdk/releases"
+
 export type Installer = "bun" | "npm" | "pnpm" | "yarn"
 
 export interface UpgradeCommand {
@@ -156,6 +163,8 @@ function readCommandOutput(command: string, args: string[]): string | null {
 export function isStandaloneInstall(argv = process.argv): boolean {
   const scriptPath = argv[1]
   if (!scriptPath) return true
+  // Bun's virtual entrypoint only exists inside the packed executable.
+  if (scriptPath.startsWith("/$bunfs/") || scriptPath.startsWith("~bunfs")) return true
   const resolved = safeRealPath(scriptPath) ?? scriptPath
   return !/\.(?:cjs|mjs|jsx?|tsx?)$/.test(resolved)
 }
@@ -190,8 +199,12 @@ function safeRealPath(filePath: string): string | null {
   }
 }
 
-export function formatUpdateCommand(installer = inferInstaller()): string {
-  switch (installer) {
+export function formatUpdateCommand(installer?: Installer | null, argv = process.argv): string {
+  // Standalone binaries have no package manager that can replace them, so a
+  // cached or inherited installer must not drive the guidance.
+  if (isStandaloneInstall(argv)) return STANDALONE_UPDATE_HINT
+  const resolved = installer === undefined ? inferInstaller() : installer
+  switch (resolved) {
     case "bun":
       return "bun add -g @outlit/cli"
     case "npm":
@@ -271,7 +284,10 @@ export function printCachedUpdateNotice(
   return true
 }
 
-type SpawnProcess = { unref?: () => void }
+type SpawnProcess = {
+  unref?: () => void
+  on?: (event: string, listener: (error: Error) => void) => void
+}
 
 type SpawnFn = (
   command: string,
@@ -282,30 +298,45 @@ type SpawnFn = (
 export function scheduleBackgroundUpdateCheck(
   argv = process.argv,
   spawnProcess: SpawnFn = spawn,
+  execPath = process.execPath,
 ): boolean {
   if (!shouldShowUpdateNotice(argv)) return false
   if (!isUpdateCheckDue(readCachedUpdateState())) return false
 
-  const runtimePath = argv[0]
-  const scriptPath = argv[1]
-  if (!runtimePath || !scriptPath) return false
+  // Compiled binaries re-run their own executable: argv[1] is a virtual
+  // $bunfs path that does not exist outside the binary, and argv[0] can
+  // resolve to a bun runtime that may not be installed.
+  const standalone = isStandaloneInstall(argv)
+  const command = standalone ? execPath : argv[0]
+  const scriptPath = standalone ? null : argv[1]
+  if (!command || (!standalone && !scriptPath)) return false
 
-  const child = spawnProcess(runtimePath, [scriptPath, INTERNAL_UPDATE_FLAG], {
-    detached: true,
-    stdio: "ignore",
-  })
-  child.unref?.()
-  return true
+  try {
+    const child = spawnProcess(
+      command,
+      [...(scriptPath ? [scriptPath] : []), INTERNAL_UPDATE_FLAG],
+      { detached: true, stdio: "ignore" },
+    )
+    // The check is best-effort: swallow asynchronous spawn errors (for example
+    // ENOENT when the runtime is missing) so they never crash the foreground
+    // command.
+    child.on?.("error", () => {})
+    child.unref?.()
+    return true
+  } catch {
+    return false
+  }
 }
 
 export function initializeUpdateNotifier(opts?: {
   argv?: string[]
   spawn?: SpawnFn
   notify?: (message: string) => void
+  execPath?: string
 }): void {
   const argv = opts?.argv ?? process.argv
   printCachedUpdateNotice(argv, opts?.notify)
-  scheduleBackgroundUpdateCheck(argv, opts?.spawn)
+  scheduleBackgroundUpdateCheck(argv, opts?.spawn, opts?.execPath)
 }
 
 export async function fetchLatestCliVersion(): Promise<string> {
@@ -321,7 +352,10 @@ export async function runInternalUpdateCheck(opts?: {
   installer?: Installer | null
 }): Promise<void> {
   const fetchLatestVersion = opts?.fetchLatestVersion ?? fetchLatestCliVersion
-  const installer = opts?.installer ?? inferInstaller()
+  // Standalone children inherit npm_config_user_agent from the spawning shell;
+  // caching a package-manager installer would make later notices prescribe a
+  // package-manager upgrade the binary cannot use.
+  const installer = isStandaloneInstall() ? null : (opts?.installer ?? inferInstaller())
 
   try {
     const latestVersion = await fetchLatestVersion()

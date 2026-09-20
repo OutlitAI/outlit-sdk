@@ -83,7 +83,96 @@ describe("update notifier", () => {
 
     initializeUpdateNotifier({ argv: ["bun", "src/cli.ts", "customers", "list"], spawn, notify })
 
-    expect(spawn).toHaveBeenCalledTimes(1)
+    expect(spawn).toHaveBeenCalledWith("bun", ["src/cli.ts", "--internal-update-check"], {
+      detached: true,
+      stdio: "ignore",
+    })
+  })
+
+  test("respawns the standalone executable itself for background checks", () => {
+    setInteractive()
+    writeCachedUpdateState({
+      lastCheckedAt: Date.now() - 13 * 60 * 60 * 1000,
+      latestVersion: "9.9.9",
+      installer: "bun",
+    })
+
+    const spawn = mock(() => ({ unref: mock(() => {}) }))
+    const notify = mock((_message: string) => {})
+
+    // Real compiled-binary argv shape: literal "bun" runtime name + virtual
+    // $bunfs entrypoint; the real binary path comes from process.execPath.
+    initializeUpdateNotifier({
+      argv: ["bun", "/$bunfs/root/outlit", "customers"],
+      spawn,
+      notify,
+      execPath: "/home/u/.local/bin/outlit",
+    })
+
+    expect(spawn).toHaveBeenCalledWith("/home/u/.local/bin/outlit", ["--internal-update-check"], {
+      detached: true,
+      stdio: "ignore",
+    })
+  })
+
+  test("keeps the runtime-plus-script spawn for node script installs", () => {
+    setInteractive()
+    writeCachedUpdateState({
+      lastCheckedAt: Date.now() - 13 * 60 * 60 * 1000,
+      latestVersion: "9.9.9",
+      installer: "npm",
+    })
+
+    const spawn = mock(() => ({ unref: mock(() => {}) }))
+    const notify = mock((_message: string) => {})
+
+    initializeUpdateNotifier({
+      argv: ["/usr/bin/node", "/opt/outlit/dist/cli.js", "doctor"],
+      spawn,
+      notify,
+      execPath: "/usr/bin/node",
+    })
+
+    expect(spawn).toHaveBeenCalledWith(
+      "/usr/bin/node",
+      ["/opt/outlit/dist/cli.js", "--internal-update-check"],
+      { detached: true, stdio: "ignore" },
+    )
+  })
+
+  test("attaches an error listener so asynchronous spawn failures stay silent", () => {
+    setInteractive()
+    writeCachedUpdateState({
+      lastCheckedAt: Date.now() - 13 * 60 * 60 * 1000,
+      latestVersion: "9.9.9",
+    })
+
+    const child = {
+      unref: mock(() => {}),
+      on: mock((_event: string, _cb: (error: Error) => void) => {}),
+    }
+    const spawn = mock(() => child)
+
+    initializeUpdateNotifier({ argv: ["bun", "src/cli.ts", "doctor"], spawn })
+
+    expect(child.on).toHaveBeenCalledWith("error", expect.any(Function))
+    expect(child.unref).toHaveBeenCalled()
+  })
+
+  test("does not crash the foreground command when spawn throws synchronously", () => {
+    setInteractive()
+    writeCachedUpdateState({
+      lastCheckedAt: Date.now() - 13 * 60 * 60 * 1000,
+      latestVersion: "9.9.9",
+    })
+
+    const spawn = mock(() => {
+      throw new Error("spawn bun ENOENT")
+    })
+
+    expect(() =>
+      initializeUpdateNotifier({ argv: ["bun", "src/cli.ts", "doctor"], spawn }),
+    ).not.toThrow()
   })
 
   test("internal update checks refresh the cache without printing", async () => {
