@@ -1,5 +1,14 @@
 # @outlit/cli
 
+## 3.2.1
+
+### Patch Changes
+
+- [#217](https://github.com/OutlitAI/outlit-sdk/pull/217) [`848aa20`](https://github.com/OutlitAI/outlit-sdk/commit/848aa20f3db45423a06a351d8f2bb0cf01e2f006) Thanks [@leo-paz](https://github.com/leo-paz)! - Improve `outlit upgrade` for machine callers and standalone installs: check the registry before installer detection so already-current installs get a definitive answer, add `--json`/non-TTY structured output (`status`, `currentVersion`, `latestVersion`), route package-manager output to stderr in JSON mode so stdout stays valid, and give standalone compiled binaries manual-update guidance (install script, Homebrew, GitHub releases) instead of an unactionable `unknown_installer`.
+
+- Updated dependencies [[`848aa20`](https://github.com/OutlitAI/outlit-sdk/commit/848aa20f3db45423a06a351d8f2bb0cf01e2f006)]:
+  - @outlit/tools@2.2.1
+
 ## 3.2.0
 
 ### Minor Changes

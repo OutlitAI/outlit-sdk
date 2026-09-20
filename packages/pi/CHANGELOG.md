@@ -1,5 +1,14 @@
 # @outlit/pi
 
+## 2.1.5
+
+### Patch Changes
+
+- [#217](https://github.com/OutlitAI/outlit-sdk/pull/217) [`848aa20`](https://github.com/OutlitAI/outlit-sdk/commit/848aa20f3db45423a06a351d8f2bb0cf01e2f006) Thanks [@leo-paz](https://github.com/leo-paz)! - Recognize Core's non-retryable `TOOL_RESOURCE_NOT_FOUND` response for missing or unavailable resources, preserving its structured error details for CLI and SDK callers.
+
+- Updated dependencies [[`848aa20`](https://github.com/OutlitAI/outlit-sdk/commit/848aa20f3db45423a06a351d8f2bb0cf01e2f006)]:
+  - @outlit/tools@2.2.1
+
 ## 2.1.4
 
 ### Patch Changes
