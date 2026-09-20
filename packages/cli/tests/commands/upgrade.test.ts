@@ -141,7 +141,7 @@ describe("upgrade command", () => {
 
     expect(thrown).toBeInstanceOf(ExitError)
     expect((thrown as ExitError).code).toBe(1)
-    expect(stderrOutput).toContain("unknown_installer")
+    expect(stderrOutput).toContain("manual_update_required")
     expect(stderrOutput).toContain("9.9.9")
     expect(stderrOutput).toContain("install.sh")
     expect(stderrOutput).not.toContain("npm install -g")

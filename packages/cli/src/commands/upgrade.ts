@@ -57,7 +57,10 @@ export default defineCommand({
       const message = standalone
         ? `Outlit CLI v${latestVersion} is available. This standalone binary cannot update itself — ${STANDALONE_UPDATE_HINT}.`
         : `Outlit CLI v${latestVersion} is available. Could not determine how Outlit CLI was installed. Update it manually with your package manager, for example \`bun add -g @outlit/cli\` or \`npm install -g @outlit/cli\`.`
-      return outputError({ message, code: "unknown_installer" }, json)
+      return outputError(
+        { message, code: standalone ? "manual_update_required" : "unknown_installer" },
+        json,
+      )
     }
 
     try {
