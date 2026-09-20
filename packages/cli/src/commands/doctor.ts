@@ -40,12 +40,13 @@ export default defineCommand({
     description: [
       "Check CLI version, API key, connectivity, and agent detection.",
       "",
-      "Runs five checks in sequence:",
+      "Runs six checks in sequence:",
       "  1. CLI version -- compares against npm registry",
       "  2. API key -- checks presence and format (ok_ prefix)",
       "  3. API validation -- makes a live test call to verify the key works",
-      "  4. Permissions -- shows effective key grants and unavailable command families",
-      "  5. Agent detection -- detects supported coding agents and whether the Outlit skill is installed",
+      "  4. Permissions -- shows key grants and unavailable commands",
+      "  5. Integrations -- checks integration readiness or explains missing access",
+      "  6. Agent detection -- detects supported coding agents and whether the Outlit skill is installed",
       "",
       "Exit code: 0 if all checks pass or warn, 1 if any check fails.",
       "",
@@ -267,7 +268,7 @@ function checkPermissions(validation: ApiKeyValidationPayload): CheckResult {
   return {
     name: "Permissions",
     status: unavailable.length > 0 ? "warn" : "pass",
-    message: `${grants.length} effective grant${grants.length === 1 ? "" : "s"}`,
+    message: `${grants.length} key grant${grants.length === 1 ? "" : "s"}`,
     detail: detail || undefined,
   }
 }

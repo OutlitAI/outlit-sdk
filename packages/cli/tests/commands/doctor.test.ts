@@ -339,7 +339,7 @@ describe("doctor command", () => {
     )
   })
 
-  test("shows org, effective grants, and unavailable families for a scoped key", async () => {
+  test("shows org, key grants, and unavailable families for a scoped key", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
 
     const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async (input) => {
@@ -400,6 +400,7 @@ describe("doctor command", () => {
 
     const permissions = parsed.checks.find((check) => check.name === "Permissions")
     expect(permissions?.status).toBe("warn")
+    expect(permissions?.message).toBe("1 key grant")
     expect(permissions?.detail).toContain("customer_intelligence:read")
     expect(permissions?.detail).toContain("unavailable")
     expect(permissions?.detail).toContain("integrations")
