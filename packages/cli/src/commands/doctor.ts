@@ -204,7 +204,7 @@ const COMMAND_GRANTS: ReadonlyArray<{
   anyOf: readonly ApiKeyGrant[]
 }> = [
   {
-    commands: "customers, users, facts, sources, search, attention",
+    commands: "customers (read), users, facts, sources, search, attention",
     anyOf: ["customer_intelligence:read"],
   },
   { commands: "ws-users", anyOf: ["workspace_members:read"] },
@@ -215,14 +215,26 @@ const COMMAND_GRANTS: ReadonlyArray<{
     commands: "integrations",
     anyOf: ["integrations:manage", "integrations:connect_own"],
   },
-  { commands: "activation", anyOf: ["activation:read", "activation:manage"] },
-  {
-    commands: "settings",
-    anyOf: ["workspace_settings:read", "workspace_settings:manage"],
-  },
+  // Read and manage grants are independent: Core enforces them per operation,
+  // so a manage-only key still cannot use the read subcommands.
+  { commands: "activation get, preview", anyOf: ["activation:read"] },
+  { commands: "activation update, disable", anyOf: ["activation:manage"] },
+  { commands: "settings get", anyOf: ["workspace_settings:read"] },
+  { commands: "settings update", anyOf: ["workspace_settings:manage"] },
   { commands: "customers grant, revoke, owner", anyOf: ["customer_access:manage"] },
-  { commands: "identity", anyOf: ["customer_identity:review"] },
-  { commands: "customers merge", anyOf: ["customer_identity:merge"] },
+  {
+    commands: "identity suggestions list",
+    anyOf: ["customer_intelligence:read"],
+  },
+  {
+    commands: "identity suggestions reject",
+    anyOf: ["customer_identity:review"],
+  },
+  {
+    commands: "customers merge (preview), customers merge-status",
+    anyOf: ["customer_intelligence:read"],
+  },
+  { commands: "customers merge --execute", anyOf: ["customer_identity:merge"] },
 ]
 
 function grantUsable(

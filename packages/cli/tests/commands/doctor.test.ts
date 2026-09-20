@@ -406,12 +406,85 @@ describe("doctor command", () => {
     expect(permissions?.detail).toContain("destinations")
     expect(permissions?.detail).toContain("features")
 
+    // A read-only key still gets the identity/merge read surfaces; only the
+    // write operations are unavailable.
+    expect(permissions?.detail).not.toContain("identity suggestions list")
+    expect(permissions?.detail).not.toContain("merge-status")
+    expect(permissions?.detail).not.toContain("merge (preview)")
+    expect(permissions?.detail).toContain("identity suggestions reject")
+    expect(permissions?.detail).toContain("customers merge --execute")
+
     // Restricted key: integrations check explains the missing grant without a
     // guaranteed-denied API call.
     const integrations = parsed.checks.find((check) => check.name === "Integrations")
     expect(integrations?.status).toBe("warn")
     expect(integrations?.message).toContain("does not grant")
     expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("does not treat manage grants as implying read access", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async (input) => {
+      const url = String(input)
+      if (url === "https://registry.npmjs.org/@outlit%2Fcli/latest") {
+        return new Response(JSON.stringify({ version: "0.1.0" }), { status: 200 })
+      }
+      if (url === getValidateApiKeyUrl()) {
+        return new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: "user_1",
+            authorization: {
+              grants: [
+                "workspace_settings:manage",
+                "activation:manage",
+                "customer_access:manage",
+                "customer_identity:review",
+                "customer_identity:merge",
+              ],
+            },
+          }),
+          { status: 200 },
+        )
+      }
+      throw new Error(`Unexpected fetch URL: ${url}`)
+    }) as typeof fetch)
+
+    const { default: doctorCmd } = await import("../../src/commands/doctor")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const exitSpy = mockExitThrow()
+
+    let written = ""
+    try {
+      await doctorCmd.run!({
+        args: { json: true },
+      } as Parameters<NonNullable<typeof doctorCmd.run>>[0])
+    } finally {
+      written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
+      writeSpy.mockRestore()
+      fetchSpy.mockRestore()
+      exitSpy.mockRestore()
+    }
+
+    const parsed = JSON.parse(written) as { checks: Array<Record<string, string>> }
+    const permissions = parsed.checks.find((check) => check.name === "Permissions")
+    expect(permissions?.status).toBe("warn")
+
+    // Write operations are available to this key — they must not be listed.
+    expect(permissions?.detail).not.toContain("settings update")
+    expect(permissions?.detail).not.toContain("activation update")
+    expect(permissions?.detail).not.toContain("identity suggestions reject")
+    expect(permissions?.detail).not.toContain("customers merge --execute")
+    expect(permissions?.detail).not.toContain("customers grant")
+
+    // The matching read operations require read grants this key lacks.
+    expect(permissions?.detail).toContain("settings get")
+    expect(permissions?.detail).toContain("activation get, preview")
+    expect(permissions?.detail).toContain("identity suggestions list")
+    expect(permissions?.detail).toContain("customers merge (preview)")
+    expect(permissions?.detail).toContain("merge-status")
   })
 
   test("runs the integrations check when the key grants integrations access", async () => {
