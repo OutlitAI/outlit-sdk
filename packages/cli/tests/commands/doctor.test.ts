@@ -83,7 +83,7 @@ describe("doctor command", () => {
             valid: true,
             organizationId: "org_123",
             createdById: null,
-            authorization: { grants: [] },
+            authorization: { grants: ["integrations:manage"] },
           }),
           { status: 200 },
         )
@@ -288,6 +288,308 @@ describe("doctor command", () => {
     expect(versionCheck?.message).toBe(
       `v${(await import("../../src/lib/config")).CLI_VERSION} (could not check for updates)`,
     )
+  })
+
+  test("shows org, effective grants, and unavailable families for a scoped key", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async (input) => {
+      const url = String(input)
+      if (url === "https://registry.npmjs.org/@outlit%2Fcli/latest") {
+        return new Response(JSON.stringify({ version: "0.1.0" }), { status: 200 })
+      }
+      if (url === getValidateApiKeyUrl()) {
+        return new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            organization: { id: "org_123", name: "Acme", slug: "acme" },
+            createdById: "user_1",
+            apiKey: {
+              id: "key_1",
+              name: "dogfood",
+              prefix: "ok_aaaa",
+              keyType: "cli",
+              grants: ["customer_intelligence:read"],
+              createdAt: "2026-01-01T00:00:00Z",
+              lastUsedAt: null,
+              totalRequests: 0,
+            },
+            authorization: { grants: ["customer_intelligence:read"] },
+          }),
+          { status: 200 },
+        )
+      }
+      throw new Error(`Unexpected fetch URL: ${url}`)
+    }) as typeof fetch)
+
+    const { default: doctorCmd } = await import("../../src/commands/doctor")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const exitSpy = mockExitThrow()
+
+    let written = ""
+    let thrown: unknown
+    try {
+      await doctorCmd.run!({
+        args: { json: true },
+      } as Parameters<NonNullable<typeof doctorCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+    } finally {
+      written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
+      writeSpy.mockRestore()
+      fetchSpy.mockRestore()
+      exitSpy.mockRestore()
+    }
+
+    expect(thrown).toBeUndefined()
+    const parsed = JSON.parse(written) as { checks: Array<Record<string, string>> }
+
+    const validation = parsed.checks.find((check) => check.name === "API validation")
+    expect(validation?.status).toBe("pass")
+    expect(validation?.detail).toContain("Acme")
+
+    const permissions = parsed.checks.find((check) => check.name === "Permissions")
+    expect(permissions?.status).toBe("warn")
+    expect(permissions?.detail).toContain("customer_intelligence:read")
+    expect(permissions?.detail).toContain("unavailable")
+    expect(permissions?.detail).toContain("integrations")
+    expect(permissions?.detail).toContain("destinations")
+    expect(permissions?.detail).toContain("features")
+
+    // Restricted key: integrations check explains the missing grant without a
+    // guaranteed-denied API call.
+    const integrations = parsed.checks.find((check) => check.name === "Integrations")
+    expect(integrations?.status).toBe("warn")
+    expect(integrations?.message).toContain("does not grant")
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("runs the integrations check when the key grants integrations access", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async (input) => {
+      const url = String(input)
+      if (url === "https://registry.npmjs.org/@outlit%2Fcli/latest") {
+        return new Response(JSON.stringify({ version: "0.1.0" }), { status: 200 })
+      }
+      if (url === getValidateApiKeyUrl()) {
+        return new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: "user_1",
+            authorization: { grants: ["customer_intelligence:read", "integrations:manage"] },
+          }),
+          { status: 200 },
+        )
+      }
+      throw new Error(`Unexpected fetch URL: ${url}`)
+    }) as typeof fetch)
+
+    const { default: doctorCmd } = await import("../../src/commands/doctor")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const exitSpy = mockExitThrow()
+
+    let written = ""
+    try {
+      await doctorCmd.run!({
+        args: { json: true },
+      } as Parameters<NonNullable<typeof doctorCmd.run>>[0])
+    } finally {
+      written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
+      writeSpy.mockRestore()
+      fetchSpy.mockRestore()
+      exitSpy.mockRestore()
+    }
+
+    const parsed = JSON.parse(written) as { checks: Array<Record<string, string>> }
+    const integrations = parsed.checks.find((check) => check.name === "Integrations")
+    expect(integrations?.status).toBe("pass")
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_status", {})
+  })
+
+  test("treats connect_own keys without a creator as unable to read integrations", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async (input) => {
+      const url = String(input)
+      if (url === "https://registry.npmjs.org/@outlit%2Fcli/latest") {
+        return new Response(JSON.stringify({ version: "0.1.0" }), { status: 200 })
+      }
+      if (url === getValidateApiKeyUrl()) {
+        return new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: null,
+            authorization: { grants: ["integrations:connect_own"] },
+          }),
+          { status: 200 },
+        )
+      }
+      throw new Error(`Unexpected fetch URL: ${url}`)
+    }) as typeof fetch)
+
+    const { default: doctorCmd } = await import("../../src/commands/doctor")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const exitSpy = mockExitThrow()
+
+    let written = ""
+    try {
+      await doctorCmd.run!({
+        args: { json: true },
+      } as Parameters<NonNullable<typeof doctorCmd.run>>[0])
+    } finally {
+      written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
+      writeSpy.mockRestore()
+      fetchSpy.mockRestore()
+      exitSpy.mockRestore()
+    }
+
+    const parsed = JSON.parse(written) as { checks: Array<Record<string, string>> }
+    const integrations = parsed.checks.find((check) => check.name === "Integrations")
+    expect(integrations?.status).toBe("warn")
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("explains denied integrations access when the gateway returns forbidden", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+    const { OutlitToolsApiError } = await import("@outlit/tools")
+    mockCallTool.mockRejectedValueOnce(
+      new OutlitToolsApiError(403, "forbidden", {
+        code: "TOOL_CALL_FORBIDDEN",
+        message: "Integration command is not authorized.",
+        retryable: false,
+        requestId: "req_1",
+      }),
+    )
+
+    const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async (input) => {
+      const url = String(input)
+      if (url === "https://registry.npmjs.org/@outlit%2Fcli/latest") {
+        return new Response(JSON.stringify({ version: "0.1.0" }), { status: 200 })
+      }
+      if (url === getValidateApiKeyUrl()) {
+        return new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: "user_1",
+            authorization: { grants: ["integrations:manage"] },
+          }),
+          { status: 200 },
+        )
+      }
+      throw new Error(`Unexpected fetch URL: ${url}`)
+    }) as typeof fetch)
+
+    const { default: doctorCmd } = await import("../../src/commands/doctor")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const exitSpy = mockExitThrow()
+
+    let written = ""
+    try {
+      await doctorCmd.run!({
+        args: { json: true },
+      } as Parameters<NonNullable<typeof doctorCmd.run>>[0])
+    } finally {
+      written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
+      writeSpy.mockRestore()
+      fetchSpy.mockRestore()
+      exitSpy.mockRestore()
+    }
+
+    const parsed = JSON.parse(written) as { checks: Array<Record<string, string>> }
+    const integrations = parsed.checks.find((check) => check.name === "Integrations")
+    expect(integrations?.status).toBe("warn")
+    expect(integrations?.message).toContain("denied")
+  })
+
+  test("keeps permissions unknown when validation is unavailable", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async (input) => {
+      const url = String(input)
+      if (url === "https://registry.npmjs.org/@outlit%2Fcli/latest") {
+        return new Response(JSON.stringify({ version: "0.1.0" }), { status: 200 })
+      }
+      if (url === getValidateApiKeyUrl()) {
+        return new Response(JSON.stringify({ error: "temporarily unavailable" }), {
+          status: 503,
+        })
+      }
+      throw new Error(`Unexpected fetch URL: ${url}`)
+    }) as typeof fetch)
+
+    const { default: doctorCmd } = await import("../../src/commands/doctor")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const exitSpy = mockExitThrow()
+
+    let written = ""
+    try {
+      await doctorCmd.run!({
+        args: { json: true },
+      } as Parameters<NonNullable<typeof doctorCmd.run>>[0])
+    } finally {
+      written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
+      writeSpy.mockRestore()
+      fetchSpy.mockRestore()
+      exitSpy.mockRestore()
+    }
+
+    const parsed = JSON.parse(written) as { checks: Array<Record<string, string>> }
+    const validation = parsed.checks.find((check) => check.name === "API validation")
+    expect(validation?.status).toBe("warn")
+    // Unavailable validation means grants are unknown — no permission claims.
+    expect(parsed.checks.find((check) => check.name === "Permissions")).toBeUndefined()
+    // The integrations check still runs against the live API.
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_status", {})
+  })
+
+  test("reports all families available for a full-access key", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+
+    const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async (input) => {
+      const url = String(input)
+      if (url === "https://registry.npmjs.org/@outlit%2Fcli/latest") {
+        return new Response(JSON.stringify({ version: "0.1.0" }), { status: 200 })
+      }
+      if (url === getValidateApiKeyUrl()) {
+        const { apiKeyGrants } = await import("@outlit/tools")
+        return new Response(
+          JSON.stringify({
+            valid: true,
+            organizationId: "org_123",
+            createdById: "user_1",
+            authorization: { grants: [...apiKeyGrants] },
+          }),
+          { status: 200 },
+        )
+      }
+      throw new Error(`Unexpected fetch URL: ${url}`)
+    }) as typeof fetch)
+
+    const { default: doctorCmd } = await import("../../src/commands/doctor")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const exitSpy = mockExitThrow()
+
+    let written = ""
+    try {
+      await doctorCmd.run!({
+        args: { json: true },
+      } as Parameters<NonNullable<typeof doctorCmd.run>>[0])
+    } finally {
+      written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
+      writeSpy.mockRestore()
+      fetchSpy.mockRestore()
+      exitSpy.mockRestore()
+    }
+
+    const parsed = JSON.parse(written) as { checks: Array<Record<string, string>> }
+    const permissions = parsed.checks.find((check) => check.name === "Permissions")
+    expect(permissions?.status).toBe("pass")
+    expect(permissions?.detail ?? "").not.toContain("unavailable")
   })
 
   test("outputs JSON with ok: false when API key has invalid format", async () => {

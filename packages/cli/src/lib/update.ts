@@ -271,7 +271,10 @@ export function printCachedUpdateNotice(
   return true
 }
 
-type SpawnProcess = { unref?: () => void }
+type SpawnProcess = {
+  unref?: () => void
+  on?: (event: string, listener: (error: Error) => void) => void
+}
 
 type SpawnFn = (
   command: string,
@@ -282,30 +285,45 @@ type SpawnFn = (
 export function scheduleBackgroundUpdateCheck(
   argv = process.argv,
   spawnProcess: SpawnFn = spawn,
+  execPath = process.execPath,
 ): boolean {
   if (!shouldShowUpdateNotice(argv)) return false
   if (!isUpdateCheckDue(readCachedUpdateState())) return false
 
-  const runtimePath = argv[0]
-  const scriptPath = argv[1]
-  if (!runtimePath || !scriptPath) return false
+  // Compiled binaries re-run their own executable: argv[1] is a virtual
+  // $bunfs path that does not exist outside the binary, and argv[0] can
+  // resolve to a bun runtime that may not be installed.
+  const standalone = isStandaloneInstall(argv)
+  const command = standalone ? execPath : argv[0]
+  const scriptPath = standalone ? null : argv[1]
+  if (!command || (!standalone && !scriptPath)) return false
 
-  const child = spawnProcess(runtimePath, [scriptPath, INTERNAL_UPDATE_FLAG], {
-    detached: true,
-    stdio: "ignore",
-  })
-  child.unref?.()
-  return true
+  try {
+    const child = spawnProcess(
+      command,
+      [...(scriptPath ? [scriptPath] : []), INTERNAL_UPDATE_FLAG],
+      { detached: true, stdio: "ignore" },
+    )
+    // The check is best-effort: swallow asynchronous spawn errors (for example
+    // ENOENT when the runtime is missing) so they never crash the foreground
+    // command.
+    child.on?.("error", () => {})
+    child.unref?.()
+    return true
+  } catch {
+    return false
+  }
 }
 
 export function initializeUpdateNotifier(opts?: {
   argv?: string[]
   spawn?: SpawnFn
   notify?: (message: string) => void
+  execPath?: string
 }): void {
   const argv = opts?.argv ?? process.argv
   printCachedUpdateNotice(argv, opts?.notify)
-  scheduleBackgroundUpdateCheck(argv, opts?.spawn)
+  scheduleBackgroundUpdateCheck(argv, opts?.spawn, opts?.execPath)
 }
 
 export async function fetchLatestCliVersion(): Promise<string> {

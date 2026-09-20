@@ -1,10 +1,15 @@
 import { existsSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
+import { isOutlitToolsApiError } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { outputArgs } from "../args/output"
-import { isApiKeyValidationUnavailableError, pingApiKey } from "../lib/api"
+import {
+  type ApiKeyValidationPayload,
+  isApiKeyValidationUnavailableError,
+  pingApiKey,
+} from "../lib/api"
 import { createClient } from "../lib/client"
 import type { CredentialResult } from "../lib/config"
 import { CLI_VERSION, maskKey, OUTLIT_DASHBOARD_URL, resolveApiKey, TICK } from "../lib/config"
@@ -35,11 +40,12 @@ export default defineCommand({
     description: [
       "Check CLI version, API key, connectivity, and agent detection.",
       "",
-      "Runs four checks in sequence:",
+      "Runs five checks in sequence:",
       "  1. CLI version -- compares against npm registry",
       "  2. API key -- checks presence and format (ok_ prefix)",
       "  3. API validation -- makes a live test call to verify the key works",
-      "  4. Agent detection -- detects supported coding agents and whether the Outlit skill is installed",
+      "  4. Permissions -- shows effective key grants and unavailable command families",
+      "  5. Agent detection -- detects supported coding agents and whether the Outlit skill is installed",
       "",
       "Exit code: 0 if all checks pass or warn, 1 if any check fails.",
       "",
@@ -66,10 +72,13 @@ export default defineCommand({
 
     if (credential) {
       const apiCheck = await validateApiKey(credential.key)
-      checks.push(apiCheck)
+      checks.push(apiCheck.check)
 
-      if (apiCheck.status !== "fail") {
-        checks.push(await checkIntegrations(credential.key))
+      if (apiCheck.validation) {
+        checks.push(checkPermissions(apiCheck.validation))
+      }
+      if (apiCheck.check.status !== "fail") {
+        checks.push(await checkIntegrations(credential.key, apiCheck.validation))
       }
     } else {
       checks.push({
@@ -138,30 +147,142 @@ function checkApiKeyPresence(credential: CredentialResult | null): CheckResult {
   }
 }
 
-async function validateApiKey(apiKey: string): Promise<CheckResult> {
+async function validateApiKey(apiKey: string): Promise<{
+  check: CheckResult
+  validation: ApiKeyValidationPayload | null
+}> {
   try {
-    await pingApiKey(apiKey)
-    return { name: "API validation", status: "pass", message: "Key is valid" }
+    const validation = await pingApiKey(apiKey)
+    const org =
+      validation.organization?.name ?? validation.organization?.slug ?? validation.organizationId
+    const keyDetail = validation.apiKey
+      ? ` · key "${validation.apiKey.name}" (${validation.apiKey.keyType})`
+      : ""
+    return {
+      check: {
+        name: "API validation",
+        status: "pass",
+        message: "Key is valid",
+        detail: `Org: ${org}${keyDetail}`,
+      },
+      validation,
+    }
   } catch (err) {
     if (isApiKeyValidationUnavailableError(err)) {
       return {
-        name: "API validation",
-        status: "warn",
-        message: "API validation is temporarily unavailable",
-        detail: "Try again shortly",
+        check: {
+          name: "API validation",
+          status: "warn",
+          message: "API validation is temporarily unavailable",
+          detail: "Try again shortly",
+        },
+        validation: null,
       }
     }
 
     return {
-      name: "API validation",
-      status: "fail",
-      message: `API rejected key: ${errorMessage(err, "unknown error")}`,
-      detail: `Check your key at ${OUTLIT_DASHBOARD_URL}`,
+      check: {
+        name: "API validation",
+        status: "fail",
+        message: `API rejected key: ${errorMessage(err, "unknown error")}`,
+        detail: `Check your key at ${OUTLIT_DASHBOARD_URL}`,
+      },
+      validation: null,
     }
   }
 }
 
-async function checkIntegrations(apiKey: string): Promise<CheckResult> {
+type ApiKeyGrant = ApiKeyValidationPayload["authorization"]["grants"][number]
+
+/**
+ * CLI command families and the API key grants that permit them. Mirrors Core's
+ * enforcement (apiKeyHasGrant / requiredApiKeyGrant); informational only — the
+ * gateway remains the authority and runtime visibility may still differ.
+ */
+const COMMAND_GRANTS: ReadonlyArray<{
+  commands: string
+  anyOf: readonly ApiKeyGrant[]
+}> = [
+  {
+    commands: "customers, users, facts, sources, search, attention",
+    anyOf: ["customer_intelligence:read"],
+  },
+  { commands: "ws-users", anyOf: ["workspace_members:read"] },
+  { commands: "sql, schema", anyOf: ["analytics:read"] },
+  { commands: "destinations", anyOf: ["destinations:manage"] },
+  { commands: "features", anyOf: ["behavior_metrics:manage"] },
+  {
+    commands: "integrations",
+    anyOf: ["integrations:manage", "integrations:connect_own"],
+  },
+  { commands: "activation", anyOf: ["activation:read", "activation:manage"] },
+  {
+    commands: "settings",
+    anyOf: ["workspace_settings:read", "workspace_settings:manage"],
+  },
+  { commands: "customers grant, revoke, owner", anyOf: ["customer_access:manage"] },
+  { commands: "identity", anyOf: ["customer_identity:review"] },
+  { commands: "customers merge", anyOf: ["customer_identity:merge"] },
+]
+
+function grantUsable(
+  grant: ApiKeyGrant,
+  grants: readonly ApiKeyGrant[],
+  createdById: string | null,
+): boolean {
+  if (!grants.includes(grant)) return false
+  // Core scopes connect_own authority to keys bound to their creator.
+  if (grant === "integrations:connect_own" && !createdById) return false
+  return true
+}
+
+function checkPermissions(validation: ApiKeyValidationPayload): CheckResult {
+  const grants = validation.authorization.grants
+  const createdById = validation.createdById?.trim() || null
+  const unavailable = COMMAND_GRANTS.filter(
+    (family) => !family.anyOf.some((grant) => grantUsable(grant, grants, createdById)),
+  )
+
+  const detail = [
+    grants.length > 0 ? `grants: ${grants.join(", ")}` : null,
+    unavailable.length > 0
+      ? `unavailable to this key: ${unavailable.map((family) => family.commands).join("; ")}`
+      : null,
+  ]
+    .filter((part): part is string => part !== null)
+    .join(" · ")
+
+  return {
+    name: "Permissions",
+    status: unavailable.length > 0 ? "warn" : "pass",
+    message: `${grants.length} effective grant${grants.length === 1 ? "" : "s"}`,
+    detail: detail || undefined,
+  }
+}
+
+async function checkIntegrations(
+  apiKey: string,
+  validation: ApiKeyValidationPayload | null,
+): Promise<CheckResult> {
+  // When validation succeeded, skip the call entirely if the key provably
+  // lacks integrations access — a guaranteed denial adds no information.
+  const grants = validation?.authorization.grants
+  if (grants) {
+    const createdById = validation?.createdById?.trim() || null
+    const canRead =
+      grantUsable("integrations:manage", grants, createdById) ||
+      grantUsable("integrations:connect_own", grants, createdById)
+    if (!canRead) {
+      return {
+        name: "Integrations",
+        status: "warn",
+        message: "API key does not grant integrations access",
+        detail:
+          "Requires the integrations:manage grant, or integrations:connect_own on a user-created key",
+      }
+    }
+  }
+
   try {
     const client = await createClient(apiKey)
     const timeout = new Promise<never>((_, reject) =>
@@ -200,7 +321,16 @@ async function checkIntegrations(apiKey: string): Promise<CheckResult> {
       status: "pass",
       message: `${ready} integration(s) ready`,
     }
-  } catch {
+  } catch (err) {
+    if (isOutlitToolsApiError(err) && err.envelope?.code === "TOOL_CALL_FORBIDDEN") {
+      return {
+        name: "Integrations",
+        status: "warn",
+        message: "API key was denied integrations access",
+        detail:
+          "Requires the integrations:manage grant, or integrations:connect_own on a user-created key",
+      }
+    }
     return {
       name: "Integrations",
       status: "warn",
