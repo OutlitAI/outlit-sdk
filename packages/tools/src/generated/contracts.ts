@@ -13200,6 +13200,225 @@ export const publicToolContracts = {
                   },
                 ],
               },
+              "jevEvidence": {
+                "description": "Jev advisory model evidence scoped to this suggestion's customers. Uncalibrated and never part of eligibility, confidence, or recommended action.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "computedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      },
+                      "expiresAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      },
+                      "expired": {
+                        "type": "boolean",
+                      },
+                      "pairs": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "incoming": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 191,
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 500,
+                                },
+                                "domain": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 500,
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "COMPANY",
+                                    "INDIVIDUAL",
+                                  ],
+                                },
+                                "status": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "PROVISIONAL",
+                                        "ACTIVE",
+                                        "CHURNED",
+                                        "MERGED",
+                                      ],
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                },
+                                "identifierCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                },
+                                "contactCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                },
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "domain",
+                                "type",
+                                "status",
+                                "identifierCount",
+                                "contactCount",
+                              ],
+                              "additionalProperties": false,
+                            },
+                            "candidate": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 191,
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 500,
+                                },
+                                "domain": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 500,
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                },
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "COMPANY",
+                                    "INDIVIDUAL",
+                                  ],
+                                },
+                                "status": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "PROVISIONAL",
+                                        "ACTIVE",
+                                        "CHURNED",
+                                        "MERGED",
+                                      ],
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                },
+                                "identifierCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                },
+                                "contactCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                },
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "domain",
+                                "type",
+                                "status",
+                                "identifierCount",
+                                "contactCount",
+                              ],
+                              "additionalProperties": false,
+                            },
+                            "pSameEntity": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 1,
+                            },
+                            "relation": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 100,
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "relationProbability": {
+                              "anyOf": [
+                                {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 1,
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                          },
+                          "required": [
+                            "incoming",
+                            "candidate",
+                            "pSameEntity",
+                            "relation",
+                            "relationProbability",
+                          ],
+                          "additionalProperties": false,
+                        },
+                      },
+                    },
+                    "required": [
+                      "computedAt",
+                      "expiresAt",
+                      "expired",
+                      "pairs",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
               "canMerge": {
                 "type": "boolean",
               },
@@ -15118,4 +15337,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "5d54d7fe65dbe72e7dbc662e95f8b8aa3dbc146a37fa01d79aafa38e3ca380fb" as const
+export const sdkConsumerContractHash = "1f6c75f825fd1be8358b0d08201973cd8caa049c0db5d11426ddfb31bc54681f" as const
