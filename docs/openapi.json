@@ -37,9 +37,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_list_customers"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -53,9 +51,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_list_users"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -69,9 +65,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_list_workspace_users"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -85,9 +79,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_customer"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -101,9 +93,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_customer_relationship"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -117,9 +107,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_assign_customer_owner"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -133,9 +121,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_grant_customer_access"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -149,9 +135,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_update_customer_access"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -165,9 +149,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_revoke_customer_access"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -181,9 +163,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_timeline"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -197,9 +177,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_list_facts"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -213,9 +191,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_fact"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -229,9 +205,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_source"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -245,9 +219,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_list_sources"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -261,9 +233,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_search_customer_context"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -277,9 +247,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_query"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -293,9 +261,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_schema"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -309,9 +275,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_list_destinations"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -325,9 +289,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_destination"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -341,9 +303,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_create_destination"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -357,9 +317,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_update_destination"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -373,9 +331,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_enable_destination"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -389,9 +345,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_disable_destination"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -405,9 +359,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_archive_destination"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -421,9 +373,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_integration_capabilities"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -437,9 +387,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_begin_integration_setup"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -453,9 +401,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_integration_setup_status"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -469,9 +415,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_integration_status"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -485,9 +429,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_setup_integration"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -501,9 +443,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_customer_activation"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -517,9 +457,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_preview_customer_activation"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -533,9 +471,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_update_customer_activation"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -549,9 +485,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_workspace_settings"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -565,9 +499,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_update_workspace_settings"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -581,9 +513,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_list_features"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -597,9 +527,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_create_feature"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -613,9 +541,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_archive_feature"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -629,9 +555,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_customer_features"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -645,9 +569,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_customer_credits"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -661,9 +583,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_list_attention_items"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -677,9 +597,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_attention_item"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -693,9 +611,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_customer_identity"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -709,9 +625,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_list_identity_merge_suggestions"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -725,9 +639,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_reject_identity_merge_suggestion"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -741,9 +653,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_merge_customers"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   },
                   {
@@ -757,9 +667,7 @@
                         "$ref": "#/components/schemas/ToolInput_outlit_get_customer_merge_status"
                       }
                     },
-                    "required": [
-                      "tool"
-                    ],
+                    "required": ["tool"],
                     "additionalProperties": false
                   }
                 ],
@@ -1233,20 +1141,12 @@
                   "maxLength": 200
                 }
               },
-              "required": [
-                "code",
-                "path"
-              ],
+              "required": ["code", "path"],
               "additionalProperties": false
             }
           }
         },
-        "required": [
-          "code",
-          "message",
-          "retryable",
-          "requestId"
-        ],
+        "required": ["code", "message", "retryable", "requestId"],
         "additionalProperties": false
       },
       "ApiKeyValidationSuccess": {
@@ -1296,11 +1196,7 @@
                 ]
               }
             },
-            "required": [
-              "id",
-              "name",
-              "slug"
-            ],
+            "required": ["id", "name", "slug"],
             "additionalProperties": false
           },
           "createdBy": {
@@ -1325,11 +1221,7 @@
                     ]
                   }
                 },
-                "required": [
-                  "id",
-                  "email",
-                  "name"
-                ],
+                "required": ["id", "email", "name"],
                 "additionalProperties": false
               },
               {
@@ -1351,12 +1243,7 @@
               },
               "keyType": {
                 "type": "string",
-                "enum": [
-                  "api",
-                  "cli",
-                  "mcp",
-                  "ci"
-                ]
+                "enum": ["api", "cli", "mcp", "ci"]
               },
               "grants": {
                 "type": "array",
@@ -1441,18 +1328,11 @@
                 }
               }
             },
-            "required": [
-              "grants"
-            ],
+            "required": ["grants"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "valid",
-          "organizationId",
-          "createdById",
-          "authorization"
-        ],
+        "required": ["valid", "organizationId", "createdById", "authorization"],
         "additionalProperties": false
       },
       "ApiKeyValidationFailure": {
@@ -1466,10 +1346,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "valid",
-          "error"
-        ],
+        "required": ["valid", "error"],
         "additionalProperties": false
       },
       "IngestPayload": {
@@ -1487,11 +1364,7 @@
           "source": {
             "default": "client",
             "type": "string",
-            "enum": [
-              "client",
-              "server",
-              "integration"
-            ]
+            "enum": ["client", "server", "integration"]
           },
           "events": {
             "minItems": 1,
@@ -1577,12 +1450,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "type",
-                    "timestamp",
-                    "url",
-                    "path"
-                  ],
+                  "required": ["type", "timestamp", "url", "path"],
                   "additionalProperties": false
                 },
                 {
@@ -1672,12 +1540,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "type",
-                    "timestamp",
-                    "url",
-                    "path"
-                  ],
+                  "required": ["type", "timestamp", "url", "path"],
                   "additionalProperties": false
                 },
                 {
@@ -1790,12 +1653,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "type",
-                    "timestamp",
-                    "url",
-                    "path"
-                  ],
+                  "required": ["type", "timestamp", "url", "path"],
                   "additionalProperties": false
                 },
                 {
@@ -1896,13 +1754,7 @@
                       "additionalProperties": {}
                     }
                   },
-                  "required": [
-                    "type",
-                    "timestamp",
-                    "url",
-                    "path",
-                    "eventName"
-                  ],
+                  "required": ["type", "timestamp", "url", "path", "eventName"],
                   "additionalProperties": false
                 },
                 {
@@ -1981,11 +1833,7 @@
                     },
                     "provider": {
                       "type": "string",
-                      "enum": [
-                        "cal.com",
-                        "calendly",
-                        "unknown"
-                      ]
+                      "enum": ["cal.com", "calendly", "unknown"]
                     },
                     "eventType": {
                       "type": "string"
@@ -2011,13 +1859,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "type",
-                    "timestamp",
-                    "url",
-                    "path",
-                    "provider"
-                  ],
+                  "required": ["type", "timestamp", "url", "path", "provider"],
                   "additionalProperties": false
                 },
                 {
@@ -2199,9 +2041,7 @@
             "additionalProperties": false
           }
         },
-        "required": [
-          "events"
-        ]
+        "required": ["events"]
       },
       "IngestResponse": {
         "type": "object",
@@ -2228,18 +2068,12 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "index",
-                "message"
-              ],
+              "required": ["index", "message"],
               "additionalProperties": false
             }
           }
         },
-        "required": [
-          "success",
-          "processed"
-        ],
+        "required": ["success", "processed"],
         "additionalProperties": false
       },
       "ToolInput_outlit_list_customers": {
@@ -2254,33 +2088,17 @@
           "billingStatus": {
             "description": "Filter by billing status",
             "type": "string",
-            "enum": [
-              "NONE",
-              "TRIALING",
-              "PAYING",
-              "PAST_DUE",
-              "CHURNED"
-            ]
+            "enum": ["NONE", "TRIALING", "PAYING", "PAST_DUE", "CHURNED"]
           },
           "hasActivityInLast": {
             "description": "Filter customers with activity in the last N days",
             "type": "string",
-            "enum": [
-              "7d",
-              "14d",
-              "30d",
-              "90d"
-            ]
+            "enum": ["7d", "14d", "30d", "90d"]
           },
           "noActivityInLast": {
             "description": "Filter customers with NO activity in the last N days",
             "type": "string",
-            "enum": [
-              "7d",
-              "14d",
-              "30d",
-              "90d"
-            ]
+            "enum": ["7d", "14d", "30d", "90d"]
           },
           "mrrAbove": {
             "description": "Minimum MRR in cents (e.g., 10000 = $100)",
@@ -2348,21 +2166,13 @@
             "description": "Field to order results by",
             "default": "last_activity_at",
             "type": "string",
-            "enum": [
-              "last_activity_at",
-              "first_seen_at",
-              "name",
-              "mrr_cents"
-            ]
+            "enum": ["last_activity_at", "first_seen_at", "name", "mrr_cents"]
           },
           "orderDirection": {
             "description": "Sort direction",
             "default": "desc",
             "type": "string",
-            "enum": [
-              "asc",
-              "desc"
-            ]
+            "enum": ["asc", "desc"]
           }
         }
       },
@@ -2372,13 +2182,7 @@
           "journeyStage": {
             "description": "Filter by user journey stage",
             "type": "string",
-            "enum": [
-              "DISCOVERED",
-              "SIGNED_UP",
-              "ACTIVATED",
-              "ENGAGED",
-              "INACTIVE"
-            ]
+            "enum": ["DISCOVERED", "SIGNED_UP", "ACTIVATED", "ENGAGED", "INACTIVE"]
           },
           "customerId": {
             "description": "Filter users by customer ID",
@@ -2437,20 +2241,13 @@
             "description": "Field to order by",
             "default": "last_activity_at",
             "type": "string",
-            "enum": [
-              "last_activity_at",
-              "first_seen_at",
-              "email"
-            ]
+            "enum": ["last_activity_at", "first_seen_at", "email"]
           },
           "orderDirection": {
             "description": "Sort direction",
             "default": "desc",
             "type": "string",
-            "enum": [
-              "asc",
-              "desc"
-            ]
+            "enum": ["asc", "desc"]
           }
         }
       },
@@ -2491,20 +2288,13 @@
             "description": "Field to order workspace users by",
             "default": "owned_customer_count",
             "type": "string",
-            "enum": [
-              "name",
-              "email",
-              "owned_customer_count"
-            ]
+            "enum": ["name", "email", "owned_customer_count"]
           },
           "orderDirection": {
             "description": "Sort direction",
             "default": "desc",
             "type": "string",
-            "enum": [
-              "asc",
-              "desc"
-            ]
+            "enum": ["asc", "desc"]
           }
         }
       },
@@ -2522,30 +2312,17 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": [
-                "users",
-                "revenue",
-                "recentTimeline",
-                "behaviorMetrics",
-                "enrichment"
-              ]
+              "enum": ["users", "revenue", "recentTimeline", "behaviorMetrics", "enrichment"]
             }
           },
           "timeframe": {
             "description": "Timeframe for timeline and behavior metrics (default: 30d)",
             "default": "30d",
             "type": "string",
-            "enum": [
-              "7d",
-              "14d",
-              "30d",
-              "90d"
-            ]
+            "enum": ["7d", "14d", "30d", "90d"]
           }
         },
-        "required": [
-          "customer"
-        ]
+        "required": ["customer"]
       },
       "ToolInput_outlit_get_customer_relationship": {
         "type": "object",
@@ -2557,9 +2334,7 @@
             "description": "Customer ID, domain, or exact customer name to look up"
           }
         },
-        "required": [
-          "customer"
-        ],
+        "required": ["customer"],
         "additionalProperties": false
       },
       "ToolInput_outlit_assign_customer_owner": {
@@ -2576,10 +2351,7 @@
             "maxLength": 500
           }
         },
-        "required": [
-          "customerId",
-          "targetUserId"
-        ]
+        "required": ["customerId", "targetUserId"]
       },
       "ToolInput_outlit_grant_customer_access": {
         "type": "object",
@@ -2596,17 +2368,10 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "VIEWER",
-              "EDITOR"
-            ]
+            "enum": ["VIEWER", "EDITOR"]
           }
         },
-        "required": [
-          "customerId",
-          "targetUserId",
-          "role"
-        ]
+        "required": ["customerId", "targetUserId", "role"]
       },
       "ToolInput_outlit_update_customer_access": {
         "type": "object",
@@ -2623,17 +2388,10 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "VIEWER",
-              "EDITOR"
-            ]
+            "enum": ["VIEWER", "EDITOR"]
           }
         },
-        "required": [
-          "customerId",
-          "targetUserId",
-          "role"
-        ]
+        "required": ["customerId", "targetUserId", "role"]
       },
       "ToolInput_outlit_revoke_customer_access": {
         "type": "object",
@@ -2649,10 +2407,7 @@
             "maxLength": 500
           }
         },
-        "required": [
-          "customerId",
-          "targetUserId"
-        ]
+        "required": ["customerId", "targetUserId"]
       },
       "ToolInput_outlit_get_timeline": {
         "type": "object",
@@ -2691,13 +2446,7 @@
           "timeframe": {
             "description": "Relative time window (default: 30d). Cannot be used with startDate/endDate.",
             "type": "string",
-            "enum": [
-              "7d",
-              "14d",
-              "30d",
-              "90d",
-              "all"
-            ]
+            "enum": ["7d", "14d", "30d", "90d", "all"]
           },
           "startDate": {
             "description": "Start of time window, inclusive (ISO 8601 UTC, e.g. '2025-01-01T00:00:00.000Z'). Cannot be used with timeframe.",
@@ -2723,9 +2472,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "customer"
-        ]
+        "required": ["customer"]
       },
       "ToolInput_outlit_list_facts": {
         "type": "object",
@@ -2741,13 +2488,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": [
-                "ACTIVE",
-                "ACKNOWLEDGED",
-                "RESOLVED",
-                "SNOOZED",
-                "CANDIDATE"
-              ]
+              "enum": ["ACTIVE", "ACKNOWLEDGED", "RESOLVED", "SNOOZED", "CANDIDATE"]
             }
           },
           "sourceTypes": {
@@ -2805,11 +2546,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": [
-                "MEMORY",
-                "RELATIONSHIP",
-                "CUSTOM"
-              ]
+              "enum": ["MEMORY", "RELATIONSHIP", "CUSTOM"]
             }
           },
           "after": {
@@ -2836,9 +2573,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "customer"
-        ]
+        "required": ["customer"]
       },
       "ToolInput_outlit_get_fact": {
         "type": "object",
@@ -2859,9 +2594,7 @@
             }
           }
         },
-        "required": [
-          "factId"
-        ]
+        "required": ["factId"]
       },
       "ToolInput_outlit_get_source": {
         "type": "object",
@@ -2899,10 +2632,7 @@
             "maxLength": 2000
           }
         },
-        "required": [
-          "sourceType",
-          "sourceId"
-        ]
+        "required": ["sourceType", "sourceId"]
       },
       "ToolInput_outlit_list_sources": {
         "type": "object",
@@ -3031,9 +2761,7 @@
             }
           }
         },
-        "required": [
-          "query"
-        ],
+        "required": ["query"],
         "additionalProperties": false
       },
       "ToolInput_outlit_query": {
@@ -3053,9 +2781,7 @@
             "maximum": 10000
           }
         },
-        "required": [
-          "sql"
-        ]
+        "required": ["sql"]
       },
       "ToolInput_outlit_schema": {
         "type": "object",
@@ -3063,12 +2789,7 @@
           "table": {
             "description": "Specific analytics view to describe. Omit to list all views.",
             "type": "string",
-            "enum": [
-              "activity",
-              "customers",
-              "users",
-              "revenue"
-            ]
+            "enum": ["activity", "customers", "users", "revenue"]
           }
         }
       },
@@ -3086,9 +2807,7 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           }
         },
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "additionalProperties": false
       },
       "ToolInput_outlit_create_destination": {
@@ -3117,11 +2836,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "type",
-          "channelId",
-          "label"
-        ],
+        "required": ["type", "channelId", "label"],
         "additionalProperties": false
       },
       "ToolInput_outlit_update_destination": {
@@ -3146,10 +2861,7 @@
             "const": true
           }
         },
-        "required": [
-          "id",
-          "type"
-        ],
+        "required": ["id", "type"],
         "additionalProperties": false
       },
       "ToolInput_outlit_enable_destination": {
@@ -3161,9 +2873,7 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           }
         },
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "additionalProperties": false
       },
       "ToolInput_outlit_disable_destination": {
@@ -3175,9 +2885,7 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           }
         },
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "additionalProperties": false
       },
       "ToolInput_outlit_archive_destination": {
@@ -3189,9 +2897,7 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           }
         },
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "additionalProperties": false
       },
       "ToolInput_outlit_get_integration_capabilities": {
@@ -3214,9 +2920,7 @@
             "maxLength": 80
           }
         },
-        "required": [
-          "provider"
-        ],
+        "required": ["provider"],
         "additionalProperties": false
       },
       "ToolInput_outlit_get_integration_setup_status": {
@@ -3228,9 +2932,7 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           }
         },
-        "required": [
-          "sessionId"
-        ],
+        "required": ["sessionId"],
         "additionalProperties": false
       },
       "ToolInput_outlit_get_integration_status": {
@@ -3268,11 +2970,7 @@
             "properties": {
               "provider": {
                 "type": "string",
-                "enum": [
-                  "salesforce",
-                  "hubspot",
-                  "attio"
-                ]
+                "enum": ["salesforce", "hubspot", "attio"]
               },
               "configuration": {
                 "type": "object",
@@ -3301,13 +2999,7 @@
                             "properties": {
                               "outlitStage": {
                                 "type": "string",
-                                "enum": [
-                                  "Created",
-                                  "Quoting",
-                                  "Negotiation",
-                                  "Won",
-                                  "Lost"
-                                ]
+                                "enum": ["Created", "Quoting", "Negotiation", "Won", "Lost"]
                               },
                               "crmStages": {
                                 "type": "array",
@@ -3322,27 +3014,17 @@
                                       "type": "string"
                                     }
                                   },
-                                  "required": [
-                                    "id",
-                                    "name"
-                                  ],
+                                  "required": ["id", "name"],
                                   "additionalProperties": false
                                 }
                               }
                             },
-                            "required": [
-                              "outlitStage",
-                              "crmStages"
-                            ],
+                            "required": ["outlitStage", "crmStages"],
                             "additionalProperties": false
                           }
                         }
                       },
-                      "required": [
-                        "pipelineId",
-                        "pipelineName",
-                        "mappings"
-                      ],
+                      "required": ["pipelineId", "pipelineName", "mappings"],
                       "additionalProperties": false
                     }
                   },
@@ -3351,17 +3033,11 @@
                     "const": true
                   }
                 },
-                "required": [
-                  "kind",
-                  "mappings",
-                  "confirm"
-                ],
+                "required": ["kind", "mappings", "confirm"],
                 "additionalProperties": false
               }
             },
-            "required": [
-              "provider"
-            ],
+            "required": ["provider"],
             "additionalProperties": false
           },
           {
@@ -3369,17 +3045,10 @@
             "properties": {
               "provider": {
                 "type": "string",
-                "enum": [
-                  "slack",
-                  "google-calendar",
-                  "google-mail",
-                  "gong"
-                ]
+                "enum": ["slack", "google-calendar", "google-mail", "gong"]
               }
             },
-            "required": [
-              "provider"
-            ],
+            "required": ["provider"],
             "additionalProperties": false
           },
           {
@@ -3394,9 +3063,7 @@
                 "const": "oauth"
               }
             },
-            "required": [
-              "provider"
-            ],
+            "required": ["provider"],
             "additionalProperties": false
           },
           {
@@ -3419,16 +3086,11 @@
                     "pattern": "^rk_.*"
                   }
                 },
-                "required": [
-                  "apiKey"
-                ],
+                "required": ["apiKey"],
                 "additionalProperties": false
               }
             },
-            "required": [
-              "provider",
-              "connectionMode"
-            ],
+            "required": ["provider", "connectionMode"],
             "additionalProperties": false
           },
           {
@@ -3448,25 +3110,18 @@
                   "authScope": {
                     "default": "personal",
                     "type": "string",
-                    "enum": [
-                      "personal",
-                      "enterprise"
-                    ]
+                    "enum": ["personal", "enterprise"]
                   },
                   "enterpriseKeyAcknowledged": {
                     "default": false,
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "apiKey"
-                ],
+                "required": ["apiKey"],
                 "additionalProperties": false
               }
             },
-            "required": [
-              "provider"
-            ],
+            "required": ["provider"],
             "additionalProperties": false
           },
           {
@@ -3484,15 +3139,11 @@
                     "minLength": 1
                   }
                 },
-                "required": [
-                  "apiKey"
-                ],
+                "required": ["apiKey"],
                 "additionalProperties": false
               }
             },
-            "required": [
-              "provider"
-            ],
+            "required": ["provider"],
             "additionalProperties": false
           },
           {
@@ -3510,15 +3161,11 @@
                     "minLength": 1
                   }
                 },
-                "required": [
-                  "apiKey"
-                ],
+                "required": ["apiKey"],
                 "additionalProperties": false
               }
             },
-            "required": [
-              "provider"
-            ],
+            "required": ["provider"],
             "additionalProperties": false
           },
           {
@@ -3536,15 +3183,11 @@
                     "minLength": 1
                   }
                 },
-                "required": [
-                  "apiToken"
-                ],
+                "required": ["apiToken"],
                 "additionalProperties": false
               }
             },
-            "required": [
-              "provider"
-            ],
+            "required": ["provider"],
             "additionalProperties": false
           },
           {
@@ -3572,19 +3215,10 @@
                   },
                   "region": {
                     "type": "string",
-                    "enum": [
-                      "us",
-                      "eu",
-                      "in"
-                    ]
+                    "enum": ["us", "eu", "in"]
                   }
                 },
-                "required": [
-                  "username",
-                  "secret",
-                  "projectId",
-                  "region"
-                ],
+                "required": ["username", "secret", "projectId", "region"],
                 "additionalProperties": false
               },
               "configuration": {
@@ -3608,10 +3242,7 @@
                             "minLength": 1
                           }
                         },
-                        "required": [
-                          "mode",
-                          "groupKey"
-                        ],
+                        "required": ["mode", "groupKey"],
                         "additionalProperties": false
                       },
                       {
@@ -3626,10 +3257,7 @@
                             "minLength": 1
                           }
                         },
-                        "required": [
-                          "mode",
-                          "propertyName"
-                        ],
+                        "required": ["mode", "propertyName"],
                         "additionalProperties": false
                       },
                       {
@@ -3640,9 +3268,7 @@
                             "const": "email_domain"
                           }
                         },
-                        "required": [
-                          "mode"
-                        ],
+                        "required": ["mode"],
                         "additionalProperties": false
                       }
                     ]
@@ -3652,17 +3278,11 @@
                     "const": true
                   }
                 },
-                "required": [
-                  "kind",
-                  "mapping",
-                  "confirm"
-                ],
+                "required": ["kind", "mapping", "confirm"],
                 "additionalProperties": false
               }
             },
-            "required": [
-              "provider"
-            ],
+            "required": ["provider"],
             "additionalProperties": false
           },
           {
@@ -3682,10 +3302,7 @@
                   },
                   "region": {
                     "type": "string",
-                    "enum": [
-                      "us",
-                      "eu"
-                    ]
+                    "enum": ["us", "eu"]
                   },
                   "projectId": {
                     "type": "string",
@@ -3693,17 +3310,11 @@
                     "pattern": "^\\d+$"
                   }
                 },
-                "required": [
-                  "apiKey",
-                  "region",
-                  "projectId"
-                ],
+                "required": ["apiKey", "region", "projectId"],
                 "additionalProperties": false
               }
             },
-            "required": [
-              "provider"
-            ],
+            "required": ["provider"],
             "additionalProperties": false
           },
           {
@@ -3711,15 +3322,10 @@
             "properties": {
               "provider": {
                 "type": "string",
-                "enum": [
-                  "clerk",
-                  "supabase"
-                ]
+                "enum": ["clerk", "supabase"]
               }
             },
-            "required": [
-              "provider"
-            ],
+            "required": ["provider"],
             "additionalProperties": false
           },
           {
@@ -3737,15 +3343,11 @@
                     "minLength": 1
                   }
                 },
-                "required": [
-                  "apiKey"
-                ],
+                "required": ["apiKey"],
                 "additionalProperties": false
               }
             },
-            "required": [
-              "provider"
-            ],
+            "required": ["provider"],
             "additionalProperties": false
           }
         ]
@@ -3776,9 +3378,7 @@
             "maximum": 20
           }
         },
-        "required": [
-          "eventName"
-        ],
+        "required": ["eventName"],
         "additionalProperties": false
       },
       "ToolInput_outlit_update_customer_activation": {
@@ -3797,9 +3397,7 @@
             ]
           }
         },
-        "required": [
-          "eventName"
-        ],
+        "required": ["eventName"],
         "additionalProperties": false
       },
       "ToolInput_outlit_get_workspace_settings": {
@@ -3813,11 +3411,27 @@
           "defaultTimezone": {
             "type": "string",
             "minLength": 1
+          },
+          "customerOwnership": {
+            "type": "object",
+            "properties": {
+              "defaultOwnerUserId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": ["defaultOwnerUserId"],
+            "additionalProperties": false
           }
         },
-        "required": [
-          "defaultTimezone"
-        ],
         "additionalProperties": false
       },
       "ToolInput_outlit_list_features": {
@@ -3896,10 +3510,7 @@
                               "maxLength": 191
                             }
                           },
-                          "required": [
-                            "type",
-                            "value"
-                          ],
+                          "required": ["type", "value"],
                           "additionalProperties": false
                         },
                         {
@@ -3915,10 +3526,7 @@
                               "maximum": 9007199254740991
                             }
                           },
-                          "required": [
-                            "type",
-                            "value"
-                          ],
+                          "required": ["type", "value"],
                           "additionalProperties": false
                         },
                         {
@@ -3932,20 +3540,13 @@
                               "type": "boolean"
                             }
                           },
-                          "required": [
-                            "type",
-                            "value"
-                          ],
+                          "required": ["type", "value"],
                           "additionalProperties": false
                         }
                       ]
                     }
                   },
-                  "required": [
-                    "property",
-                    "operator",
-                    "value"
-                  ],
+                  "required": ["property", "operator", "value"],
                   "additionalProperties": false
                 },
                 {
@@ -3961,22 +3562,14 @@
                       "const": "exists"
                     }
                   },
-                  "required": [
-                    "property",
-                    "operator"
-                  ],
+                  "required": ["property", "operator"],
                   "additionalProperties": false
                 }
               ]
             }
           }
         },
-        "required": [
-          "sourceKey",
-          "eventName",
-          "featureKey",
-          "name"
-        ],
+        "required": ["sourceKey", "eventName", "featureKey", "name"],
         "additionalProperties": false
       },
       "ToolInput_outlit_archive_feature": {
@@ -3991,10 +3584,7 @@
             "pattern": "^value_feature_revision_v1_[a-f0-9]{32}$"
           }
         },
-        "required": [
-          "id",
-          "revision"
-        ],
+        "required": ["id", "revision"],
         "additionalProperties": false
       },
       "ToolInput_outlit_get_customer_features": {
@@ -4016,9 +3606,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "customer"
-        ],
+        "required": ["customer"],
         "additionalProperties": false
       },
       "ToolInput_outlit_get_customer_credits": {
@@ -4031,9 +3619,7 @@
             "description": "Customer ID, domain, or exact name"
           }
         },
-        "required": [
-          "customer"
-        ],
+        "required": ["customer"],
         "additionalProperties": false
       },
       "ToolInput_outlit_list_attention_items": {
@@ -4043,10 +3629,7 @@
             "description": "Attention lifecycle to list (default: open)",
             "default": "open",
             "type": "string",
-            "enum": [
-              "open",
-              "resolved"
-            ]
+            "enum": ["open", "resolved"]
           },
           "customerId": {
             "description": "Filter by exact customer ID",
@@ -4080,9 +3663,7 @@
             "description": "Exact Attention item ID"
           }
         },
-        "required": [
-          "id"
-        ],
+        "required": ["id"],
         "additionalProperties": false
       },
       "ToolInput_outlit_get_customer_identity": {
@@ -4094,9 +3675,7 @@
             "maxLength": 191
           }
         },
-        "required": [
-          "customerId"
-        ],
+        "required": ["customerId"],
         "additionalProperties": false
       },
       "ToolInput_outlit_list_identity_merge_suggestions": {
@@ -4119,20 +3698,11 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "suggested",
-              "processing",
-              "merged",
-              "rejected"
-            ]
+            "enum": ["suggested", "processing", "merged", "rejected"]
           },
           "confidence": {
             "type": "string",
-            "enum": [
-              "HIGH",
-              "MEDIUM",
-              "LOW"
-            ]
+            "enum": ["HIGH", "MEDIUM", "LOW"]
           },
           "limit": {
             "default": 50,
@@ -4156,9 +3726,7 @@
             "maxLength": 10000
           }
         },
-        "required": [
-          "suggestionId"
-        ],
+        "required": ["suggestionId"],
         "additionalProperties": false
       },
       "ToolInput_outlit_merge_customers": {
@@ -4199,10 +3767,7 @@
             "maxLength": 191
           }
         },
-        "required": [
-          "survivingCustomerId",
-          "duplicateCustomerId"
-        ],
+        "required": ["survivingCustomerId", "duplicateCustomerId"],
         "additionalProperties": false
       },
       "ToolInput_outlit_get_customer_merge_status": {
@@ -4214,9 +3779,7 @@
             "maxLength": 191
           }
         },
-        "required": [
-          "operationId"
-        ],
+        "required": ["operationId"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_list_customers": {
@@ -4252,13 +3815,7 @@
                 },
                 "billingStatus": {
                   "type": "string",
-                  "enum": [
-                    "NONE",
-                    "TRIALING",
-                    "PAYING",
-                    "PAST_DUE",
-                    "CHURNED"
-                  ]
+                  "enum": ["NONE", "TRIALING", "PAYING", "PAST_DUE", "CHURNED"]
                 },
                 "activatedAt": {
                   "anyOf": [
@@ -4307,11 +3864,7 @@
                 },
                 "mrrCalculationStatus": {
                   "type": "string",
-                  "enum": [
-                    "calculated",
-                    "mixed_currency",
-                    "unavailable"
-                  ]
+                  "enum": ["calculated", "mixed_currency", "unavailable"]
                 },
                 "owner": {
                   "anyOf": [
@@ -4328,11 +3881,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "id",
-                        "email",
-                        "name"
-                      ],
+                      "required": ["id", "email", "name"],
                       "additionalProperties": false
                     },
                     {
@@ -4392,18 +3941,11 @@
                 "maximum": 9007199254740991
               }
             },
-            "required": [
-              "hasMore",
-              "nextCursor",
-              "total"
-            ],
+            "required": ["hasMore", "nextCursor", "total"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_list_users": {
@@ -4462,13 +4004,7 @@
                 },
                 "journeyStage": {
                   "type": "string",
-                  "enum": [
-                    "DISCOVERED",
-                    "SIGNED_UP",
-                    "ACTIVATED",
-                    "ENGAGED",
-                    "INACTIVE"
-                  ]
+                  "enum": ["DISCOVERED", "SIGNED_UP", "ACTIVATED", "ENGAGED", "INACTIVE"]
                 },
                 "lastActivityAt": {
                   "anyOf": [
@@ -4574,18 +4110,11 @@
                 "maximum": 9007199254740991
               }
             },
-            "required": [
-              "hasMore",
-              "nextCursor",
-              "total"
-            ],
+            "required": ["hasMore", "nextCursor", "total"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_list_workspace_users": {
@@ -4697,18 +4226,11 @@
                 "maximum": 9007199254740991
               }
             },
-            "required": [
-              "hasMore",
-              "nextCursor",
-              "total"
-            ],
+            "required": ["hasMore", "nextCursor", "total"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_customer": {
@@ -4742,13 +4264,7 @@
               },
               "billingStatus": {
                 "type": "string",
-                "enum": [
-                  "NONE",
-                  "TRIALING",
-                  "PAYING",
-                  "PAST_DUE",
-                  "CHURNED"
-                ]
+                "enum": ["NONE", "TRIALING", "PAYING", "PAST_DUE", "CHURNED"]
               },
               "activatedAt": {
                 "anyOf": [
@@ -4795,11 +4311,7 @@
                         "type": "string"
                       }
                     },
-                    "required": [
-                      "id",
-                      "email",
-                      "name"
-                    ],
+                    "required": ["id", "email", "name"],
                     "additionalProperties": false
                   },
                   {
@@ -4850,13 +4362,7 @@
                 },
                 "journeyStage": {
                   "type": "string",
-                  "enum": [
-                    "DISCOVERED",
-                    "SIGNED_UP",
-                    "ACTIVATED",
-                    "ENGAGED",
-                    "INACTIVE"
-                  ]
+                  "enum": ["DISCOVERED", "SIGNED_UP", "ACTIVATED", "ENGAGED", "INACTIVE"]
                 },
                 "lastActivityAt": {
                   "anyOf": [
@@ -4939,11 +4445,7 @@
               },
               "mrrCalculationStatus": {
                 "type": "string",
-                "enum": [
-                  "calculated",
-                  "mixed_currency",
-                  "unavailable"
-                ]
+                "enum": ["calculated", "mixed_currency", "unavailable"]
               },
               "lifetimeRevenue": {
                 "type": "number"
@@ -4994,12 +4496,7 @@
                   "type": "string"
                 }
               },
-              "required": [
-                "type",
-                "title",
-                "contact",
-                "occurredAt"
-              ],
+              "required": ["type", "title", "contact", "occurredAt"],
               "additionalProperties": false
             }
           },
@@ -5037,12 +4534,7 @@
                 ]
               }
             },
-            "required": [
-              "activityCount",
-              "activeUsers",
-              "lastEmailAt",
-              "lastMeetingAt"
-            ],
+            "required": ["activityCount", "activeUsers", "lastEmailAt", "lastMeetingAt"],
             "additionalProperties": false
           },
           "enrichment": {
@@ -5050,14 +4542,7 @@
             "properties": {
               "status": {
                 "type": "string",
-                "enum": [
-                  "MISSING",
-                  "FRESH",
-                  "STALE",
-                  "FAILED",
-                  "NO_MATCH",
-                  "INPUT_CHANGED"
-                ]
+                "enum": ["MISSING", "FRESH", "STALE", "FAILED", "NO_MATCH", "INPUT_CHANGED"]
               },
               "provider": {
                 "anyOf": [
@@ -5310,10 +4795,7 @@
                                 }
                               }
                             },
-                            "required": [
-                              "openingsCount",
-                              "recentTitles"
-                            ],
+                            "required": ["openingsCount", "recentTitles"],
                             "additionalProperties": false
                           },
                           {
@@ -5355,10 +4837,7 @@
                                 }
                               }
                             },
-                            "required": [
-                              "count",
-                              "growth"
-                            ],
+                            "required": ["count", "growth"],
                             "additionalProperties": false
                           },
                           {
@@ -5433,10 +4912,7 @@
                         "type": "boolean"
                       }
                     },
-                    "required": [
-                      "class",
-                      "message"
-                    ],
+                    "required": ["class", "message"],
                     "additionalProperties": false
                   },
                   {
@@ -5459,9 +4935,7 @@
             "additionalProperties": false
           }
         },
-        "required": [
-          "customer"
-        ],
+        "required": ["customer"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_customer_relationship": {
@@ -5494,11 +4968,7 @@
                 ]
               }
             },
-            "required": [
-              "id",
-              "name",
-              "domain"
-            ],
+            "required": ["id", "name", "domain"],
             "additionalProperties": false
           },
           "relationship": {
@@ -5554,12 +5024,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "category",
-                    "statement",
-                    "observedAt",
-                    "sourceLabels"
-                  ],
+                  "required": ["category", "statement", "observedAt", "sourceLabels"],
                   "additionalProperties": false
                 }
               },
@@ -5576,18 +5041,11 @@
                 ]
               }
             },
-            "required": [
-              "summary",
-              "items",
-              "updatedAt"
-            ],
+            "required": ["summary", "items", "updatedAt"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "customer",
-          "relationship"
-        ],
+        "required": ["customer", "relationship"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_assign_customer_owner": {
@@ -5610,11 +5068,7 @@
             ]
           }
         },
-        "required": [
-          "customerId",
-          "ownerId",
-          "previousOwnerId"
-        ],
+        "required": ["customerId", "ownerId", "previousOwnerId"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_grant_customer_access": {
@@ -5631,10 +5085,7 @@
               },
               "role": {
                 "type": "string",
-                "enum": [
-                  "VIEWER",
-                  "EDITOR"
-                ]
+                "enum": ["VIEWER", "EDITOR"]
               },
               "grantedById": {
                 "anyOf": [
@@ -5647,18 +5098,11 @@
                 ]
               }
             },
-            "required": [
-              "customerId",
-              "userId",
-              "role",
-              "grantedById"
-            ],
+            "required": ["customerId", "userId", "role", "grantedById"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "access"
-        ],
+        "required": ["access"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_update_customer_access": {
@@ -5675,10 +5119,7 @@
               },
               "role": {
                 "type": "string",
-                "enum": [
-                  "VIEWER",
-                  "EDITOR"
-                ]
+                "enum": ["VIEWER", "EDITOR"]
               },
               "grantedById": {
                 "anyOf": [
@@ -5691,18 +5132,11 @@
                 ]
               }
             },
-            "required": [
-              "customerId",
-              "userId",
-              "role",
-              "grantedById"
-            ],
+            "required": ["customerId", "userId", "role", "grantedById"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "access"
-        ],
+        "required": ["access"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_revoke_customer_access": {
@@ -5715,10 +5149,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "customerId",
-          "userId"
-        ],
+        "required": ["customerId", "userId"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_timeline": {
@@ -5817,10 +5248,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "sourceType",
-                    "sourceId"
-                  ],
+                  "required": ["sourceType", "sourceId"],
                   "additionalProperties": false
                 },
                 "metadata": {
@@ -5864,17 +5292,11 @@
                 ]
               }
             },
-            "required": [
-              "hasMore",
-              "nextCursor"
-            ],
+            "required": ["hasMore", "nextCursor"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "events",
-          "pagination"
-        ],
+        "required": ["events", "pagination"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_list_facts": {
@@ -5907,11 +5329,7 @@
                 ]
               }
             },
-            "required": [
-              "id",
-              "name",
-              "domain"
-            ],
+            "required": ["id", "name", "domain"],
             "additionalProperties": false
           },
           "facts": {
@@ -5952,13 +5370,7 @@
                 },
                 "status": {
                   "type": "string",
-                  "enum": [
-                    "ACTIVE",
-                    "ACKNOWLEDGED",
-                    "RESOLVED",
-                    "SNOOZED",
-                    "CANDIDATE"
-                  ]
+                  "enum": ["ACTIVE", "ACKNOWLEDGED", "RESOLVED", "SNOOZED", "CANDIDATE"]
                 },
                 "confidence": {
                   "type": "number",
@@ -6056,12 +5468,7 @@
                           ]
                         }
                       },
-                      "required": [
-                        "sourceType",
-                        "sourceId",
-                        "occurredAt",
-                        "permalink"
-                      ],
+                      "required": ["sourceType", "sourceId", "occurredAt", "permalink"],
                       "additionalProperties": false
                     },
                     {
@@ -6341,13 +5748,7 @@
                             ]
                           }
                         },
-                        "required": [
-                          "id",
-                          "sourceType",
-                          "sourceId",
-                          "excerpt",
-                          "metadata"
-                        ],
+                        "required": ["id", "sourceType", "sourceId", "excerpt", "metadata"],
                         "additionalProperties": false
                       }
                     },
@@ -6403,18 +5804,11 @@
                 ]
               }
             },
-            "required": [
-              "hasMore",
-              "nextCursor"
-            ],
+            "required": ["hasMore", "nextCursor"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "customer",
-          "facts",
-          "pagination"
-        ],
+        "required": ["customer", "facts", "pagination"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_fact": {
@@ -6453,13 +5847,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "ACKNOWLEDGED",
-              "RESOLVED",
-              "SNOOZED",
-              "CANDIDATE"
-            ]
+            "enum": ["ACTIVE", "ACKNOWLEDGED", "RESOLVED", "SNOOZED", "CANDIDATE"]
           },
           "confidence": {
             "type": "number",
@@ -6557,12 +5945,7 @@
                     ]
                   }
                 },
-                "required": [
-                  "sourceType",
-                  "sourceId",
-                  "occurredAt",
-                  "permalink"
-                ],
+                "required": ["sourceType", "sourceId", "occurredAt", "permalink"],
                 "additionalProperties": false
               },
               {
@@ -6842,13 +6225,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "id",
-                    "sourceType",
-                    "sourceId",
-                    "excerpt",
-                    "metadata"
-                  ],
+                  "required": ["id", "sourceType", "sourceId", "excerpt", "metadata"],
                   "additionalProperties": false
                 }
               },
@@ -6983,11 +6360,7 @@
                     "maxLength": 500
                   }
                 },
-                "required": [
-                  "id",
-                  "name",
-                  "domain"
-                ],
+                "required": ["id", "name", "domain"],
                 "additionalProperties": false
               },
               {
@@ -7031,11 +6404,7 @@
                   "anyOf": [
                     {
                       "type": "string",
-                      "enum": [
-                        "internal",
-                        "external",
-                        "unknown"
-                      ]
+                      "enum": ["internal", "external", "unknown"]
                     },
                     {
                       "type": "null"
@@ -7054,13 +6423,7 @@
                   ]
                 }
               },
-              "required": [
-                "email",
-                "name",
-                "role",
-                "affiliation",
-                "resolvedUserId"
-              ],
+              "required": ["email", "name", "role", "affiliation", "resolvedUserId"],
               "additionalProperties": false
             }
           },
@@ -7093,12 +6456,7 @@
               },
               "contentKind": {
                 "type": "string",
-                "enum": [
-                  "email_body",
-                  "call_transcript",
-                  "support_thread",
-                  "slack_thread"
-                ]
+                "enum": ["email_body", "call_transcript", "support_thread", "slack_thread"]
               },
               "segments": {
                 "type": "array",
@@ -7123,10 +6481,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "id",
-                    "text"
-                  ],
+                  "required": ["id", "text"],
                   "additionalProperties": false
                 }
               },
@@ -7153,11 +6508,7 @@
                     ]
                   }
                 },
-                "required": [
-                  "returned",
-                  "hasMore",
-                  "nextCursor"
-                ],
+                "required": ["returned", "hasMore", "nextCursor"],
                 "additionalProperties": false
               },
               "completeness": {
@@ -7165,11 +6516,7 @@
                 "properties": {
                   "status": {
                     "type": "string",
-                    "enum": [
-                      "complete",
-                      "partial",
-                      "unavailable"
-                    ]
+                    "enum": ["complete", "partial", "unavailable"]
                   },
                   "reason": {
                     "type": "string",
@@ -7183,10 +6530,7 @@
                     }
                   }
                 },
-                "required": [
-                  "status",
-                  "omittedFields"
-                ],
+                "required": ["status", "omittedFields"],
                 "additionalProperties": false
               }
             },
@@ -7317,11 +6661,7 @@
                           "maxLength": 500
                         }
                       },
-                      "required": [
-                        "id",
-                        "name",
-                        "domain"
-                      ],
+                      "required": ["id", "name", "domain"],
                       "additionalProperties": false
                     },
                     {
@@ -7365,11 +6705,7 @@
                         "anyOf": [
                           {
                             "type": "string",
-                            "enum": [
-                              "internal",
-                              "external",
-                              "unknown"
-                            ]
+                            "enum": ["internal", "external", "unknown"]
                           },
                           {
                             "type": "null"
@@ -7388,13 +6724,7 @@
                         ]
                       }
                     },
-                    "required": [
-                      "email",
-                      "name",
-                      "role",
-                      "affiliation",
-                      "resolvedUserId"
-                    ],
+                    "required": ["email", "name", "role", "affiliation", "resolvedUserId"],
                     "additionalProperties": false
                   }
                 },
@@ -7427,12 +6757,7 @@
                     },
                     "contentKind": {
                       "type": "string",
-                      "enum": [
-                        "email_body",
-                        "call_transcript",
-                        "support_thread",
-                        "slack_thread"
-                      ]
+                      "enum": ["email_body", "call_transcript", "support_thread", "slack_thread"]
                     },
                     "segments": {
                       "type": "array",
@@ -7457,10 +6782,7 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "id",
-                          "text"
-                        ],
+                        "required": ["id", "text"],
                         "additionalProperties": false
                       }
                     },
@@ -7487,11 +6809,7 @@
                           ]
                         }
                       },
-                      "required": [
-                        "returned",
-                        "hasMore",
-                        "nextCursor"
-                      ],
+                      "required": ["returned", "hasMore", "nextCursor"],
                       "additionalProperties": false
                     },
                     "completeness": {
@@ -7499,11 +6817,7 @@
                       "properties": {
                         "status": {
                           "type": "string",
-                          "enum": [
-                            "complete",
-                            "partial",
-                            "unavailable"
-                          ]
+                          "enum": ["complete", "partial", "unavailable"]
                         },
                         "reason": {
                           "type": "string",
@@ -7517,10 +6831,7 @@
                           }
                         }
                       },
-                      "required": [
-                        "status",
-                        "omittedFields"
-                      ],
+                      "required": ["status", "omittedFields"],
                       "additionalProperties": false
                     }
                   },
@@ -7567,17 +6878,11 @@
                 ]
               }
             },
-            "required": [
-              "hasMore",
-              "nextCursor"
-            ],
+            "required": ["hasMore", "nextCursor"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_search_customer_context": {
@@ -7612,11 +6917,7 @@
                     ]
                   }
                 },
-                "required": [
-                  "id",
-                  "name",
-                  "domain"
-                ],
+                "required": ["id", "name", "domain"],
                 "additionalProperties": false
               },
               {
@@ -7658,9 +6959,7 @@
                             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                           }
                         },
-                        "required": [
-                          "text"
-                        ],
+                        "required": ["text"],
                         "additionalProperties": false
                       }
                     },
@@ -7700,13 +6999,7 @@
                         },
                         "status": {
                           "type": "string",
-                          "enum": [
-                            "ACTIVE",
-                            "ACKNOWLEDGED",
-                            "RESOLVED",
-                            "SNOOZED",
-                            "CANDIDATE"
-                          ]
+                          "enum": ["ACTIVE", "ACKNOWLEDGED", "RESOLVED", "SNOOZED", "CANDIDATE"]
                         },
                         "confidence": {
                           "type": "number",
@@ -7804,12 +7097,7 @@
                                   ]
                                 }
                               },
-                              "required": [
-                                "sourceType",
-                                "sourceId",
-                                "occurredAt",
-                                "permalink"
-                              ],
+                              "required": ["sourceType", "sourceId", "occurredAt", "permalink"],
                               "additionalProperties": false
                             },
                             {
@@ -8089,13 +7377,7 @@
                                     ]
                                   }
                                 },
-                                "required": [
-                                  "id",
-                                  "sourceType",
-                                  "sourceId",
-                                  "excerpt",
-                                  "metadata"
-                                ],
+                                "required": ["id", "sourceType", "sourceId", "excerpt", "metadata"],
                                 "additionalProperties": false
                               }
                             },
@@ -8134,13 +7416,7 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": [
-                    "kind",
-                    "score",
-                    "matchCount",
-                    "matches",
-                    "fact"
-                  ],
+                  "required": ["kind", "score", "matchCount", "matches", "fact"],
                   "additionalProperties": false
                 },
                 {
@@ -8220,9 +7496,7 @@
                             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                           }
                         },
-                        "required": [
-                          "text"
-                        ],
+                        "required": ["text"],
                         "additionalProperties": false
                       }
                     },
@@ -8243,17 +7517,11 @@
                               "type": "string"
                             }
                           },
-                          "required": [
-                            "sourceType",
-                            "sourceId"
-                          ],
+                          "required": ["sourceType", "sourceId"],
                           "additionalProperties": false
                         }
                       },
-                      "required": [
-                        "text",
-                        "sourceRef"
-                      ],
+                      "required": ["text", "sourceRef"],
                       "additionalProperties": false
                     }
                   },
@@ -8274,10 +7542,7 @@
             }
           }
         },
-        "required": [
-          "customer",
-          "results"
-        ],
+        "required": ["customer", "results"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_query": {
@@ -8313,19 +7578,11 @@
                 "type": "boolean"
               }
             },
-            "required": [
-              "rowsReturned",
-              "executionTimeMs",
-              "truncated"
-            ],
+            "required": ["rowsReturned", "executionTimeMs", "truncated"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "success",
-          "data",
-          "metadata"
-        ],
+        "required": ["success", "data", "metadata"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_schema": {
@@ -8335,12 +7592,7 @@
             "properties": {
               "name": {
                 "type": "string",
-                "enum": [
-                  "activity",
-                  "customers",
-                  "users",
-                  "revenue"
-                ]
+                "enum": ["activity", "customers", "users", "revenue"]
               },
               "description": {
                 "type": "string"
@@ -8360,11 +7612,7 @@
                       "type": "string"
                     }
                   },
-                  "required": [
-                    "name",
-                    "type",
-                    "description"
-                  ],
+                  "required": ["name", "type", "description"],
                   "additionalProperties": false
                 }
               },
@@ -8375,12 +7623,7 @@
                 }
               }
             },
-            "required": [
-              "name",
-              "description",
-              "columns",
-              "exampleQueries"
-            ],
+            "required": ["name", "description", "columns", "exampleQueries"],
             "additionalProperties": false
           },
           {
@@ -8393,12 +7636,7 @@
                   "properties": {
                     "name": {
                       "type": "string",
-                      "enum": [
-                        "activity",
-                        "customers",
-                        "users",
-                        "revenue"
-                      ]
+                      "enum": ["activity", "customers", "users", "revenue"]
                     },
                     "description": {
                       "type": "string"
@@ -8418,11 +7656,7 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "name",
-                          "type",
-                          "description"
-                        ],
+                        "required": ["name", "type", "description"],
                         "additionalProperties": false
                       }
                     },
@@ -8433,12 +7667,7 @@
                       }
                     }
                   },
-                  "required": [
-                    "name",
-                    "description",
-                    "columns",
-                    "exampleQueries"
-                  ],
+                  "required": ["name", "description", "columns", "exampleQueries"],
                   "additionalProperties": false
                 }
               },
@@ -8449,12 +7678,7 @@
                   "properties": {
                     "name": {
                       "type": "string",
-                      "enum": [
-                        "activity",
-                        "customers",
-                        "users",
-                        "revenue"
-                      ]
+                      "enum": ["activity", "customers", "users", "revenue"]
                     },
                     "description": {
                       "type": "string"
@@ -8474,11 +7698,7 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "name",
-                          "type",
-                          "description"
-                        ],
+                        "required": ["name", "type", "description"],
                         "additionalProperties": false
                       }
                     },
@@ -8489,20 +7709,12 @@
                       }
                     }
                   },
-                  "required": [
-                    "name",
-                    "description",
-                    "columns",
-                    "exampleQueries"
-                  ],
+                  "required": ["name", "description", "columns", "exampleQueries"],
                   "additionalProperties": false
                 }
               }
             },
-            "required": [
-              "views",
-              "tables"
-            ],
+            "required": ["views", "tables"],
             "additionalProperties": false
           }
         ]
@@ -8605,9 +7817,7 @@
                               "type": "string"
                             }
                           },
-                          "required": [
-                            "channelId"
-                          ],
+                          "required": ["channelId"],
                           "additionalProperties": false
                         },
                         {
@@ -8706,10 +7916,7 @@
                     },
                     "provider": {
                       "type": "string",
-                      "enum": [
-                        "OUTPOST",
-                        "WEBHOOK"
-                      ]
+                      "enum": ["OUTPOST", "WEBHOOK"]
                     },
                     "kind": {
                       "type": "string",
@@ -8822,10 +8029,7 @@
                           "properties": {
                             "recipientMode": {
                               "type": "string",
-                              "enum": [
-                                "org_admins",
-                                "explicit"
-                              ]
+                              "enum": ["org_admins", "explicit"]
                             },
                             "recipientCount": {
                               "type": "integer",
@@ -8833,10 +8037,7 @@
                               "maximum": 50
                             }
                           },
-                          "required": [
-                            "recipientMode",
-                            "recipientCount"
-                          ],
+                          "required": ["recipientMode", "recipientCount"],
                           "additionalProperties": false
                         },
                         {
@@ -8866,9 +8067,7 @@
             }
           }
         },
-        "required": [
-          "destinations"
-        ],
+        "required": ["destinations"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_destination": {
@@ -8967,9 +8166,7 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "channelId"
-                        ],
+                        "required": ["channelId"],
                         "additionalProperties": false
                       },
                       {
@@ -9068,10 +8265,7 @@
                   },
                   "provider": {
                     "type": "string",
-                    "enum": [
-                      "OUTPOST",
-                      "WEBHOOK"
-                    ]
+                    "enum": ["OUTPOST", "WEBHOOK"]
                   },
                   "kind": {
                     "type": "string",
@@ -9184,10 +8378,7 @@
                         "properties": {
                           "recipientMode": {
                             "type": "string",
-                            "enum": [
-                              "org_admins",
-                              "explicit"
-                            ]
+                            "enum": ["org_admins", "explicit"]
                           },
                           "recipientCount": {
                             "type": "integer",
@@ -9195,10 +8386,7 @@
                             "maximum": 50
                           }
                         },
-                        "required": [
-                          "recipientMode",
-                          "recipientCount"
-                        ],
+                        "required": ["recipientMode", "recipientCount"],
                         "additionalProperties": false
                       },
                       {
@@ -9227,9 +8415,7 @@
             ]
           }
         },
-        "required": [
-          "destination"
-        ],
+        "required": ["destination"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_create_destination": {
@@ -9328,9 +8514,7 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "channelId"
-                        ],
+                        "required": ["channelId"],
                         "additionalProperties": false
                       },
                       {
@@ -9429,10 +8613,7 @@
                   },
                   "provider": {
                     "type": "string",
-                    "enum": [
-                      "OUTPOST",
-                      "WEBHOOK"
-                    ]
+                    "enum": ["OUTPOST", "WEBHOOK"]
                   },
                   "kind": {
                     "type": "string",
@@ -9545,10 +8726,7 @@
                         "properties": {
                           "recipientMode": {
                             "type": "string",
-                            "enum": [
-                              "org_admins",
-                              "explicit"
-                            ]
+                            "enum": ["org_admins", "explicit"]
                           },
                           "recipientCount": {
                             "type": "integer",
@@ -9556,10 +8734,7 @@
                             "maximum": 50
                           }
                         },
-                        "required": [
-                          "recipientMode",
-                          "recipientCount"
-                        ],
+                        "required": ["recipientMode", "recipientCount"],
                         "additionalProperties": false
                       },
                       {
@@ -9588,9 +8763,7 @@
             ]
           }
         },
-        "required": [
-          "destination"
-        ],
+        "required": ["destination"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_update_destination": {
@@ -9689,9 +8862,7 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "channelId"
-                        ],
+                        "required": ["channelId"],
                         "additionalProperties": false
                       },
                       {
@@ -9790,10 +8961,7 @@
                   },
                   "provider": {
                     "type": "string",
-                    "enum": [
-                      "OUTPOST",
-                      "WEBHOOK"
-                    ]
+                    "enum": ["OUTPOST", "WEBHOOK"]
                   },
                   "kind": {
                     "type": "string",
@@ -9906,10 +9074,7 @@
                         "properties": {
                           "recipientMode": {
                             "type": "string",
-                            "enum": [
-                              "org_admins",
-                              "explicit"
-                            ]
+                            "enum": ["org_admins", "explicit"]
                           },
                           "recipientCount": {
                             "type": "integer",
@@ -9917,10 +9082,7 @@
                             "maximum": 50
                           }
                         },
-                        "required": [
-                          "recipientMode",
-                          "recipientCount"
-                        ],
+                        "required": ["recipientMode", "recipientCount"],
                         "additionalProperties": false
                       },
                       {
@@ -9949,9 +9111,7 @@
             ]
           }
         },
-        "required": [
-          "destination"
-        ],
+        "required": ["destination"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_enable_destination": {
@@ -10050,9 +9210,7 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "channelId"
-                        ],
+                        "required": ["channelId"],
                         "additionalProperties": false
                       },
                       {
@@ -10151,10 +9309,7 @@
                   },
                   "provider": {
                     "type": "string",
-                    "enum": [
-                      "OUTPOST",
-                      "WEBHOOK"
-                    ]
+                    "enum": ["OUTPOST", "WEBHOOK"]
                   },
                   "kind": {
                     "type": "string",
@@ -10267,10 +9422,7 @@
                         "properties": {
                           "recipientMode": {
                             "type": "string",
-                            "enum": [
-                              "org_admins",
-                              "explicit"
-                            ]
+                            "enum": ["org_admins", "explicit"]
                           },
                           "recipientCount": {
                             "type": "integer",
@@ -10278,10 +9430,7 @@
                             "maximum": 50
                           }
                         },
-                        "required": [
-                          "recipientMode",
-                          "recipientCount"
-                        ],
+                        "required": ["recipientMode", "recipientCount"],
                         "additionalProperties": false
                       },
                       {
@@ -10310,9 +9459,7 @@
             ]
           }
         },
-        "required": [
-          "destination"
-        ],
+        "required": ["destination"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_disable_destination": {
@@ -10411,9 +9558,7 @@
                             "type": "string"
                           }
                         },
-                        "required": [
-                          "channelId"
-                        ],
+                        "required": ["channelId"],
                         "additionalProperties": false
                       },
                       {
@@ -10512,10 +9657,7 @@
                   },
                   "provider": {
                     "type": "string",
-                    "enum": [
-                      "OUTPOST",
-                      "WEBHOOK"
-                    ]
+                    "enum": ["OUTPOST", "WEBHOOK"]
                   },
                   "kind": {
                     "type": "string",
@@ -10628,10 +9770,7 @@
                         "properties": {
                           "recipientMode": {
                             "type": "string",
-                            "enum": [
-                              "org_admins",
-                              "explicit"
-                            ]
+                            "enum": ["org_admins", "explicit"]
                           },
                           "recipientCount": {
                             "type": "integer",
@@ -10639,10 +9778,7 @@
                             "maximum": 50
                           }
                         },
-                        "required": [
-                          "recipientMode",
-                          "recipientCount"
-                        ],
+                        "required": ["recipientMode", "recipientCount"],
                         "additionalProperties": false
                       },
                       {
@@ -10671,9 +9807,7 @@
             ]
           }
         },
-        "required": [
-          "destination"
-        ],
+        "required": ["destination"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_archive_destination": {
@@ -10693,16 +9827,11 @@
                 "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
               }
             },
-            "required": [
-              "id",
-              "archivedAt"
-            ],
+            "required": ["id", "archivedAt"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "destination"
-        ],
+        "required": ["destination"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_integration_capabilities": {
@@ -10738,18 +9867,11 @@
                 },
                 "authType": {
                   "type": "string",
-                  "enum": [
-                    "oauth",
-                    "api_key",
-                    "basic_auth"
-                  ]
+                  "enum": ["oauth", "api_key", "basic_auth"]
                 },
                 "setupMode": {
                   "type": "string",
-                  "enum": [
-                    "browser_handoff",
-                    "human_controlled"
-                  ]
+                  "enum": ["browser_handoff", "human_controlled"]
                 },
                 "browserHandoffAvailable": {
                   "type": "boolean"
@@ -10771,9 +9893,7 @@
             "const": 1
           }
         },
-        "required": [
-          "providers"
-        ],
+        "required": ["providers"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_begin_integration_setup": {
@@ -10786,10 +9906,7 @@
           },
           "state": {
             "type": "string",
-            "enum": [
-              "handoff_ready",
-              "already_connected"
-            ]
+            "enum": ["handoff_ready", "already_connected"]
           },
           "sessionId": {
             "anyOf": [
@@ -10827,13 +9944,7 @@
             ]
           }
         },
-        "required": [
-          "provider",
-          "state",
-          "sessionId",
-          "connectUrl",
-          "expiresAt"
-        ],
+        "required": ["provider", "state", "sessionId", "connectUrl", "expiresAt"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_integration_setup_status": {
@@ -10853,18 +9964,10 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "expired",
-              "pending",
-              "connected",
-              "failed"
-            ]
+            "enum": ["expired", "pending", "connected", "failed"]
           }
         },
-        "required": [
-          "provider",
-          "status"
-        ],
+        "required": ["provider", "status"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_integration_status": {
@@ -10909,19 +10012,12 @@
                   ]
                 }
               },
-              "required": [
-                "provider",
-                "name",
-                "category",
-                "status"
-              ],
+              "required": ["provider", "name", "category", "status"],
               "additionalProperties": false
             }
           }
         },
-        "required": [
-          "integrations"
-        ],
+        "required": ["integrations"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_setup_integration": {
@@ -10990,11 +10086,7 @@
                       },
                       "purpose": {
                         "type": "string",
-                        "enum": [
-                          "authentication",
-                          "recovery",
-                          "external_setup"
-                        ]
+                        "enum": ["authentication", "recovery", "external_setup"]
                       },
                       "url": {
                         "type": "string",
@@ -11025,13 +10117,7 @@
                         ]
                       }
                     },
-                    "required": [
-                      "kind",
-                      "purpose",
-                      "url",
-                      "sessionId",
-                      "expiresAt"
-                    ],
+                    "required": ["kind", "purpose", "url", "sessionId", "expiresAt"],
                     "additionalProperties": false
                   },
                   {
@@ -11061,13 +10147,7 @@
                                 "properties": {
                                   "outlitStage": {
                                     "type": "string",
-                                    "enum": [
-                                      "Created",
-                                      "Quoting",
-                                      "Negotiation",
-                                      "Won",
-                                      "Lost"
-                                    ]
+                                    "enum": ["Created", "Quoting", "Negotiation", "Won", "Lost"]
                                   },
                                   "crmStages": {
                                     "type": "array",
@@ -11082,35 +10162,22 @@
                                           "type": "string"
                                         }
                                       },
-                                      "required": [
-                                        "id",
-                                        "name"
-                                      ],
+                                      "required": ["id", "name"],
                                       "additionalProperties": false
                                     }
                                   }
                                 },
-                                "required": [
-                                  "outlitStage",
-                                  "crmStages"
-                                ],
+                                "required": ["outlitStage", "crmStages"],
                                 "additionalProperties": false
                               }
                             }
                           },
-                          "required": [
-                            "pipelineId",
-                            "pipelineName",
-                            "mappings"
-                          ],
+                          "required": ["pipelineId", "pipelineName", "mappings"],
                           "additionalProperties": false
                         }
                       }
                     },
-                    "required": [
-                      "kind",
-                      "recommendation"
-                    ],
+                    "required": ["kind", "recommendation"],
                     "additionalProperties": false
                   },
                   {
@@ -11182,11 +10249,7 @@
                                   "maximum": 100
                                 }
                               },
-                              "required": [
-                                "key",
-                                "count",
-                                "coveragePct"
-                              ],
+                              "required": ["key", "count", "coveragePct"],
                               "additionalProperties": false
                             }
                           },
@@ -11209,10 +10272,7 @@
                                   "maximum": 9007199254740991
                                 }
                               },
-                              "required": [
-                                "reason",
-                                "count"
-                              ],
+                              "required": ["reason", "count"],
                               "additionalProperties": false
                             }
                           },
@@ -11239,10 +10299,7 @@
                         "additionalProperties": false
                       }
                     },
-                    "required": [
-                      "kind",
-                      "preview"
-                    ],
+                    "required": ["kind", "preview"],
                     "additionalProperties": false
                   }
                 ]
@@ -11277,11 +10334,7 @@
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "code",
-                  "message",
-                  "retryable"
-                ],
+                "required": ["code", "message", "retryable"],
                 "additionalProperties": false
               },
               {
@@ -11290,14 +10343,7 @@
             ]
           }
         },
-        "required": [
-          "provider",
-          "name",
-          "category",
-          "status",
-          "next",
-          "error"
-        ],
+        "required": ["provider", "name", "category", "status", "next", "error"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_customer_activation": {
@@ -11319,15 +10365,11 @@
                 ]
               }
             },
-            "required": [
-              "eventName"
-            ],
+            "required": ["eventName"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "activation"
-        ],
+        "required": ["activation"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_preview_customer_activation": {
@@ -11421,11 +10463,7 @@
                           "minLength": 1
                         }
                       },
-                      "required": [
-                        "id",
-                        "name",
-                        "domain"
-                      ],
+                      "required": ["id", "name", "domain"],
                       "additionalProperties": false
                     },
                     "activatedAt": {
@@ -11451,12 +10489,7 @@
                       "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                     }
                   },
-                  "required": [
-                    "customer",
-                    "activatedAt",
-                    "firstMatchedAt",
-                    "eventId"
-                  ],
+                  "required": ["customer", "activatedAt", "firstMatchedAt", "eventId"],
                   "additionalProperties": false
                 }
               }
@@ -11481,9 +10514,7 @@
             "additionalProperties": false
           }
         },
-        "required": [
-          "preview"
-        ],
+        "required": ["preview"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_update_customer_activation": {
@@ -11505,19 +10536,14 @@
                 ]
               }
             },
-            "required": [
-              "eventName"
-            ],
+            "required": ["eventName"],
             "additionalProperties": false
           },
           "changed": {
             "type": "boolean"
           }
         },
-        "required": [
-          "activation",
-          "changed"
-        ],
+        "required": ["activation", "changed"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_workspace_settings": {
@@ -11529,17 +10555,32 @@
               "defaultTimezone": {
                 "type": "string",
                 "minLength": 1
+              },
+              "customerOwnership": {
+                "type": "object",
+                "properties": {
+                  "defaultOwnerUserId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": ["defaultOwnerUserId"],
+                "additionalProperties": false
               }
             },
-            "required": [
-              "defaultTimezone"
-            ],
+            "required": ["defaultTimezone", "customerOwnership"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "settings"
-        ],
+        "required": ["settings"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_update_workspace_settings": {
@@ -11551,17 +10592,32 @@
               "defaultTimezone": {
                 "type": "string",
                 "minLength": 1
+              },
+              "customerOwnership": {
+                "type": "object",
+                "properties": {
+                  "defaultOwnerUserId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": ["defaultOwnerUserId"],
+                "additionalProperties": false
               }
             },
-            "required": [
-              "defaultTimezone"
-            ],
+            "required": ["defaultTimezone", "customerOwnership"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "settings"
-        ],
+        "required": ["settings"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_list_features": {
@@ -11578,11 +10634,7 @@
                 },
                 "provider": {
                   "type": "string",
-                  "enum": [
-                    "outlit_sdk",
-                    "posthog",
-                    "mixpanel"
-                  ]
+                  "enum": ["outlit_sdk", "posthog", "mixpanel"]
                 },
                 "label": {
                   "type": "string",
@@ -11591,19 +10643,10 @@
                 },
                 "readiness": {
                   "type": "string",
-                  "enum": [
-                    "READY",
-                    "WARMING",
-                    "BLOCKED"
-                  ]
+                  "enum": ["READY", "WARMING", "BLOCKED"]
                 }
               },
-              "required": [
-                "sourceKey",
-                "provider",
-                "label",
-                "readiness"
-              ],
+              "required": ["sourceKey", "provider", "label", "readiness"],
               "additionalProperties": false
             }
           },
@@ -11690,10 +10733,7 @@
                                         "maxLength": 191
                                       }
                                     },
-                                    "required": [
-                                      "type",
-                                      "value"
-                                    ],
+                                    "required": ["type", "value"],
                                     "additionalProperties": false
                                   },
                                   {
@@ -11709,10 +10749,7 @@
                                         "maximum": 9007199254740991
                                       }
                                     },
-                                    "required": [
-                                      "type",
-                                      "value"
-                                    ],
+                                    "required": ["type", "value"],
                                     "additionalProperties": false
                                   },
                                   {
@@ -11726,20 +10763,13 @@
                                         "type": "boolean"
                                       }
                                     },
-                                    "required": [
-                                      "type",
-                                      "value"
-                                    ],
+                                    "required": ["type", "value"],
                                     "additionalProperties": false
                                   }
                                 ]
                               }
                             },
-                            "required": [
-                              "property",
-                              "operator",
-                              "value"
-                            ],
+                            "required": ["property", "operator", "value"],
                             "additionalProperties": false
                           },
                           {
@@ -11755,20 +10785,14 @@
                                 "const": "exists"
                               }
                             },
-                            "required": [
-                              "property",
-                              "operator"
-                            ],
+                            "required": ["property", "operator"],
                             "additionalProperties": false
                           }
                         ]
                       }
                     }
                   },
-                  "required": [
-                    "eventName",
-                    "propertyFilters"
-                  ],
+                  "required": ["eventName", "propertyFilters"],
                   "additionalProperties": false
                 },
                 "evidence": {
@@ -11790,18 +10814,12 @@
                               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
                             }
                           },
-                          "required": [
-                            "startAt",
-                            "endAt"
-                          ],
+                          "required": ["startAt", "endAt"],
                           "additionalProperties": false
                         },
                         "coverage": {
                           "type": "string",
-                          "enum": [
-                            "complete",
-                            "partial"
-                          ]
+                          "enum": ["complete", "partial"]
                         },
                         "eventCount": {
                           "type": "integer",
@@ -11877,10 +10895,7 @@
                               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
                             }
                           },
-                          "required": [
-                            "startAt",
-                            "endAt"
-                          ],
+                          "required": ["startAt", "endAt"],
                           "additionalProperties": false
                         },
                         "coverage": {
@@ -11889,32 +10904,16 @@
                         },
                         "reason": {
                           "type": "string",
-                          "enum": [
-                            "SOURCE_BLOCKED",
-                            "SOURCE_NOT_READY",
-                            "QUERY_FAILED"
-                          ]
+                          "enum": ["SOURCE_BLOCKED", "SOURCE_NOT_READY", "QUERY_FAILED"]
                         }
                       },
-                      "required": [
-                        "window",
-                        "coverage",
-                        "reason"
-                      ],
+                      "required": ["window", "coverage", "reason"],
                       "additionalProperties": false
                     }
                   ]
                 }
               },
-              "required": [
-                "id",
-                "revision",
-                "sourceKey",
-                "featureKey",
-                "name",
-                "rule",
-                "evidence"
-              ],
+              "required": ["id", "revision", "sourceKey", "featureKey", "name", "rule", "evidence"],
               "additionalProperties": false
             }
           },
@@ -11977,11 +10976,7 @@
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "status",
-                  "items",
-                  "truncated"
-                ],
+                "required": ["status", "items", "truncated"],
                 "additionalProperties": false
               },
               {
@@ -12041,11 +11036,7 @@
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "status",
-                  "items",
-                  "truncated"
-                ],
+                "required": ["status", "items", "truncated"],
                 "additionalProperties": false
               },
               {
@@ -12057,17 +11048,10 @@
                   },
                   "reason": {
                     "type": "string",
-                    "enum": [
-                      "SOURCE_BLOCKED",
-                      "SOURCE_NOT_READY",
-                      "QUERY_FAILED"
-                    ]
+                    "enum": ["SOURCE_BLOCKED", "SOURCE_NOT_READY", "QUERY_FAILED"]
                   }
                 },
-                "required": [
-                  "status",
-                  "reason"
-                ],
+                "required": ["status", "reason"],
                 "additionalProperties": false
               }
             ]
@@ -12152,10 +11136,7 @@
                                       "maxLength": 191
                                     }
                                   },
-                                  "required": [
-                                    "type",
-                                    "value"
-                                  ],
+                                  "required": ["type", "value"],
                                   "additionalProperties": false
                                 },
                                 {
@@ -12171,10 +11152,7 @@
                                       "maximum": 9007199254740991
                                     }
                                   },
-                                  "required": [
-                                    "type",
-                                    "value"
-                                  ],
+                                  "required": ["type", "value"],
                                   "additionalProperties": false
                                 },
                                 {
@@ -12188,20 +11166,13 @@
                                       "type": "boolean"
                                     }
                                   },
-                                  "required": [
-                                    "type",
-                                    "value"
-                                  ],
+                                  "required": ["type", "value"],
                                   "additionalProperties": false
                                 }
                               ]
                             }
                           },
-                          "required": [
-                            "property",
-                            "operator",
-                            "value"
-                          ],
+                          "required": ["property", "operator", "value"],
                           "additionalProperties": false
                         },
                         {
@@ -12217,38 +11188,22 @@
                               "const": "exists"
                             }
                           },
-                          "required": [
-                            "property",
-                            "operator"
-                          ],
+                          "required": ["property", "operator"],
                           "additionalProperties": false
                         }
                       ]
                     }
                   }
                 },
-                "required": [
-                  "eventName",
-                  "propertyFilters"
-                ],
+                "required": ["eventName", "propertyFilters"],
                 "additionalProperties": false
               }
             },
-            "required": [
-              "id",
-              "revision",
-              "sourceKey",
-              "featureKey",
-              "name",
-              "rule"
-            ],
+            "required": ["id", "revision", "sourceKey", "featureKey", "name", "rule"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "created",
-          "feature"
-        ],
+        "required": ["created", "feature"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_archive_feature": {
@@ -12270,17 +11225,11 @@
                 "pattern": "^value_feature_revision_v1_[a-f0-9]{32}$"
               }
             },
-            "required": [
-              "id",
-              "revision"
-            ],
+            "required": ["id", "revision"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "archived",
-          "feature"
-        ],
+        "required": ["archived", "feature"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_customer_features": {
@@ -12300,18 +11249,12 @@
                 "maxLength": 255
               }
             },
-            "required": [
-              "id",
-              "name"
-            ],
+            "required": ["id", "name"],
             "additionalProperties": false
           },
           "events": {
             "type": "string",
-            "enum": [
-              "available",
-              "unavailable"
-            ],
+            "enum": ["available", "unavailable"],
             "description": "Whether configured event features could be enumerated and their evidence reads attempted. Individual event coverage may still be unavailable. If unavailable, event features are omitted and stored provider features remain independently readable."
           },
           "features": {
@@ -12343,11 +11286,7 @@
                       "properties": {
                         "provider": {
                           "type": "string",
-                          "enum": [
-                            "outlit_sdk",
-                            "posthog",
-                            "mixpanel"
-                          ]
+                          "enum": ["outlit_sdk", "posthog", "mixpanel"]
                         },
                         "connection": {
                           "anyOf": [
@@ -12373,12 +11312,7 @@
                           ]
                         }
                       },
-                      "required": [
-                        "provider",
-                        "connection",
-                        "scope",
-                        "label"
-                      ],
+                      "required": ["provider", "connection", "scope", "label"],
                       "additionalProperties": false
                     },
                     "featureKey": {
@@ -12430,10 +11364,7 @@
                                             "maxLength": 191
                                           }
                                         },
-                                        "required": [
-                                          "type",
-                                          "value"
-                                        ],
+                                        "required": ["type", "value"],
                                         "additionalProperties": false
                                       },
                                       {
@@ -12449,10 +11380,7 @@
                                             "maximum": 9007199254740991
                                           }
                                         },
-                                        "required": [
-                                          "type",
-                                          "value"
-                                        ],
+                                        "required": ["type", "value"],
                                         "additionalProperties": false
                                       },
                                       {
@@ -12466,20 +11394,13 @@
                                             "type": "boolean"
                                           }
                                         },
-                                        "required": [
-                                          "type",
-                                          "value"
-                                        ],
+                                        "required": ["type", "value"],
                                         "additionalProperties": false
                                       }
                                     ]
                                   }
                                 },
-                                "required": [
-                                  "property",
-                                  "operator",
-                                  "value"
-                                ],
+                                "required": ["property", "operator", "value"],
                                 "additionalProperties": false
                               },
                               {
@@ -12495,20 +11416,14 @@
                                     "const": "exists"
                                   }
                                 },
-                                "required": [
-                                  "property",
-                                  "operator"
-                                ],
+                                "required": ["property", "operator"],
                                 "additionalProperties": false
                               }
                             ]
                           }
                         }
                       },
-                      "required": [
-                        "eventName",
-                        "propertyFilters"
-                      ],
+                      "required": ["eventName", "propertyFilters"],
                       "additionalProperties": false
                     },
                     "evidence": {
@@ -12530,18 +11445,12 @@
                                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
                                 }
                               },
-                              "required": [
-                                "startAt",
-                                "endAt"
-                              ],
+                              "required": ["startAt", "endAt"],
                               "additionalProperties": false
                             },
                             "coverage": {
                               "type": "string",
-                              "enum": [
-                                "complete",
-                                "partial"
-                              ]
+                              "enum": ["complete", "partial"]
                             },
                             "eventCount": {
                               "type": "integer",
@@ -12597,10 +11506,7 @@
                                       },
                                       "coverage": {
                                         "type": "string",
-                                        "enum": [
-                                          "complete",
-                                          "partial"
-                                        ]
+                                        "enum": ["complete", "partial"]
                                       },
                                       "eventCount": {
                                         "type": "integer",
@@ -12634,10 +11540,7 @@
                                         "const": "unavailable"
                                       }
                                     },
-                                    "required": [
-                                      "weekStartAt",
-                                      "coverage"
-                                    ],
+                                    "required": ["weekStartAt", "coverage"],
                                     "additionalProperties": false
                                   }
                                 ]
@@ -12672,10 +11575,7 @@
                                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
                                 }
                               },
-                              "required": [
-                                "startAt",
-                                "endAt"
-                              ],
+                              "required": ["startAt", "endAt"],
                               "additionalProperties": false
                             },
                             "coverage": {
@@ -12684,18 +11584,10 @@
                             },
                             "reason": {
                               "type": "string",
-                              "enum": [
-                                "SOURCE_BLOCKED",
-                                "SOURCE_NOT_READY",
-                                "QUERY_FAILED"
-                              ]
+                              "enum": ["SOURCE_BLOCKED", "SOURCE_NOT_READY", "QUERY_FAILED"]
                             }
                           },
-                          "required": [
-                            "window",
-                            "coverage",
-                            "reason"
-                          ],
+                          "required": ["window", "coverage", "reason"],
                           "additionalProperties": false
                         }
                       ]
@@ -12753,10 +11645,7 @@
                         },
                         "environment": {
                           "type": "string",
-                          "enum": [
-                            "sandbox",
-                            "live"
-                          ]
+                          "enum": ["sandbox", "live"]
                         },
                         "observed": {
                           "type": "string",
@@ -12832,11 +11721,7 @@
                                     "properties": {
                                       "provider": {
                                         "type": "string",
-                                        "enum": [
-                                          "outlit_sdk",
-                                          "posthog",
-                                          "mixpanel"
-                                        ]
+                                        "enum": ["outlit_sdk", "posthog", "mixpanel"]
                                       },
                                       "connection": {
                                         "anyOf": [
@@ -12862,12 +11747,7 @@
                                         ]
                                       }
                                     },
-                                    "required": [
-                                      "provider",
-                                      "connection",
-                                      "scope",
-                                      "label"
-                                    ],
+                                    "required": ["provider", "connection", "scope", "label"],
                                     "additionalProperties": false
                                   },
                                   "featureKey": {
@@ -12919,10 +11799,7 @@
                                                           "maxLength": 191
                                                         }
                                                       },
-                                                      "required": [
-                                                        "type",
-                                                        "value"
-                                                      ],
+                                                      "required": ["type", "value"],
                                                       "additionalProperties": false
                                                     },
                                                     {
@@ -12938,10 +11815,7 @@
                                                           "maximum": 9007199254740991
                                                         }
                                                       },
-                                                      "required": [
-                                                        "type",
-                                                        "value"
-                                                      ],
+                                                      "required": ["type", "value"],
                                                       "additionalProperties": false
                                                     },
                                                     {
@@ -12955,20 +11829,13 @@
                                                           "type": "boolean"
                                                         }
                                                       },
-                                                      "required": [
-                                                        "type",
-                                                        "value"
-                                                      ],
+                                                      "required": ["type", "value"],
                                                       "additionalProperties": false
                                                     }
                                                   ]
                                                 }
                                               },
-                                              "required": [
-                                                "property",
-                                                "operator",
-                                                "value"
-                                              ],
+                                              "required": ["property", "operator", "value"],
                                               "additionalProperties": false
                                             },
                                             {
@@ -12984,20 +11851,14 @@
                                                   "const": "exists"
                                                 }
                                               },
-                                              "required": [
-                                                "property",
-                                                "operator"
-                                              ],
+                                              "required": ["property", "operator"],
                                               "additionalProperties": false
                                             }
                                           ]
                                         }
                                       }
                                     },
-                                    "required": [
-                                      "eventName",
-                                      "propertyFilters"
-                                    ],
+                                    "required": ["eventName", "propertyFilters"],
                                     "additionalProperties": false
                                   },
                                   "evidence": {
@@ -13019,18 +11880,12 @@
                                                 "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
                                               }
                                             },
-                                            "required": [
-                                              "startAt",
-                                              "endAt"
-                                            ],
+                                            "required": ["startAt", "endAt"],
                                             "additionalProperties": false
                                           },
                                           "coverage": {
                                             "type": "string",
-                                            "enum": [
-                                              "complete",
-                                              "partial"
-                                            ]
+                                            "enum": ["complete", "partial"]
                                           },
                                           "eventCount": {
                                             "type": "integer",
@@ -13086,10 +11941,7 @@
                                                     },
                                                     "coverage": {
                                                       "type": "string",
-                                                      "enum": [
-                                                        "complete",
-                                                        "partial"
-                                                      ]
+                                                      "enum": ["complete", "partial"]
                                                     },
                                                     "eventCount": {
                                                       "type": "integer",
@@ -13123,10 +11975,7 @@
                                                       "const": "unavailable"
                                                     }
                                                   },
-                                                  "required": [
-                                                    "weekStartAt",
-                                                    "coverage"
-                                                  ],
+                                                  "required": ["weekStartAt", "coverage"],
                                                   "additionalProperties": false
                                                 }
                                               ]
@@ -13161,10 +12010,7 @@
                                                 "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
                                               }
                                             },
-                                            "required": [
-                                              "startAt",
-                                              "endAt"
-                                            ],
+                                            "required": ["startAt", "endAt"],
                                             "additionalProperties": false
                                           },
                                           "coverage": {
@@ -13180,11 +12026,7 @@
                                             ]
                                           }
                                         },
-                                        "required": [
-                                          "window",
-                                          "coverage",
-                                          "reason"
-                                        ],
+                                        "required": ["window", "coverage", "reason"],
                                         "additionalProperties": false
                                       }
                                     ]
@@ -13210,11 +12052,7 @@
                             "description": "Linked Outlit definition and event evidence, or null when unavailable. Never added to provider quantities."
                           }
                         },
-                        "required": [
-                          "id",
-                          "source",
-                          "feature"
-                        ],
+                        "required": ["id", "source", "feature"],
                         "additionalProperties": false
                       }
                     },
@@ -13235,19 +12073,12 @@
                               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
                             }
                           },
-                          "required": [
-                            "startAt",
-                            "endAt"
-                          ],
+                          "required": ["startAt", "endAt"],
                           "additionalProperties": false
                         },
                         "coverage": {
                           "type": "string",
-                          "enum": [
-                            "complete",
-                            "partial",
-                            "unavailable"
-                          ]
+                          "enum": ["complete", "partial", "unavailable"]
                         },
                         "quantity": {
                           "anyOf": [
@@ -13325,10 +12156,7 @@
                                   },
                                   "coverage": {
                                     "type": "string",
-                                    "enum": [
-                                      "complete",
-                                      "partial"
-                                    ]
+                                    "enum": ["complete", "partial"]
                                   },
                                   "quantity": {
                                     "type": "number",
@@ -13340,12 +12168,7 @@
                                     "maximum": 7
                                   }
                                 },
-                                "required": [
-                                  "start",
-                                  "coverage",
-                                  "quantity",
-                                  "days"
-                                ],
+                                "required": ["start", "coverage", "quantity", "days"],
                                 "additionalProperties": false
                               },
                               {
@@ -13361,10 +12184,7 @@
                                     "const": "unavailable"
                                   }
                                 },
-                                "required": [
-                                  "start",
-                                  "coverage"
-                                ],
+                                "required": ["start", "coverage"],
                                 "additionalProperties": false
                               }
                             ]
@@ -13409,32 +12229,18 @@
                 },
                 "status": {
                   "type": "string",
-                  "enum": [
-                    "not_connected",
-                    "unavailable",
-                    "no_match",
-                    "available"
-                  ]
+                  "enum": ["not_connected", "unavailable", "no_match", "available"]
                 },
                 "truncated": {
                   "type": "boolean"
                 }
               },
-              "required": [
-                "provider",
-                "status",
-                "truncated"
-              ],
+              "required": ["provider", "status", "truncated"],
               "additionalProperties": false
             }
           }
         },
-        "required": [
-          "customer",
-          "events",
-          "features",
-          "sources"
-        ],
+        "required": ["customer", "events", "features", "sources"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_customer_credits": {
@@ -13452,20 +12258,12 @@
                 "minLength": 1
               }
             },
-            "required": [
-              "id",
-              "name"
-            ],
+            "required": ["id", "name"],
             "additionalProperties": false
           },
           "status": {
             "type": "string",
-            "enum": [
-              "not_connected",
-              "unavailable",
-              "no_match",
-              "available"
-            ]
+            "enum": ["not_connected", "unavailable", "no_match", "available"]
           },
           "credits": {
             "maxItems": 4000,
@@ -13504,18 +12302,10 @@
                     },
                     "environment": {
                       "type": "string",
-                      "enum": [
-                        "sandbox",
-                        "live"
-                      ]
+                      "enum": ["sandbox", "live"]
                     }
                   },
-                  "required": [
-                    "provider",
-                    "connection",
-                    "account",
-                    "environment"
-                  ],
+                  "required": ["provider", "connection", "account", "environment"],
                   "additionalProperties": false
                 },
                 "observed": {
@@ -13586,10 +12376,7 @@
                     },
                     "scope": {
                       "type": "string",
-                      "enum": [
-                        "customer_balance",
-                        "account"
-                      ]
+                      "enum": ["customer_balance", "account"]
                     },
                     "change": {
                       "anyOf": [
@@ -13669,10 +12456,7 @@
                           ]
                         }
                       },
-                      "required": [
-                        "start",
-                        "end"
-                      ],
+                      "required": ["start", "end"],
                       "additionalProperties": false,
                       "description": "UTC dates for the seven-day rate window; end is exclusive."
                     },
@@ -13710,11 +12494,7 @@
                             ]
                           }
                         },
-                        "required": [
-                          "date",
-                          "usage",
-                          "rate"
-                        ],
+                        "required": ["date", "usage", "rate"],
                         "additionalProperties": false
                       },
                       "description": "Daily customer-balance deductions and seven-day rolling rates. Missing observations remain null."
@@ -13734,12 +12514,7 @@
                 },
                 "signalKind": {
                   "type": "string",
-                  "enum": [
-                    "expansion_risk",
-                    "trial_conversion",
-                    "none",
-                    "unknown_plan"
-                  ],
+                  "enum": ["expansion_risk", "trial_conversion", "none", "unknown_plan"],
                   "description": "Plan-aware routing for the credit signal. unknown_plan means the provider snapshot carried no product list, so the plan could not be classified."
                 },
                 "configurationNotes": {
@@ -13772,12 +12547,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "customer",
-          "status",
-          "credits",
-          "truncated"
-        ],
+        "required": ["customer", "status", "credits", "truncated"],
         "additionalProperties": false,
         "description": "Credit pools read from stored provider snapshots. An available empty list means no credit pools were found in the matched snapshots. No provider refresh is triggered."
       },
@@ -13825,12 +12595,7 @@
                       ]
                     }
                   },
-                  "required": [
-                    "id",
-                    "name",
-                    "domain",
-                    "ownerName"
-                  ],
+                  "required": ["id", "name", "domain", "ownerName"],
                   "additionalProperties": false
                 },
                 "title": {
@@ -13840,11 +12605,7 @@
                 },
                 "priority": {
                   "type": "string",
-                  "enum": [
-                    "NORMAL",
-                    "HIGH",
-                    "URGENT"
-                  ]
+                  "enum": ["NORMAL", "HIGH", "URGENT"]
                 },
                 "evidenceCount": {
                   "type": "integer",
@@ -13856,10 +12617,7 @@
                   "properties": {
                     "status": {
                       "type": "string",
-                      "enum": [
-                        "open",
-                        "resolved"
-                      ]
+                      "enum": ["open", "resolved"]
                     },
                     "customerVisibleAt": {
                       "type": "string",
@@ -14044,18 +12802,11 @@
                 "maximum": 9007199254740991
               }
             },
-            "required": [
-              "hasMore",
-              "nextCursor",
-              "total"
-            ],
+            "required": ["hasMore", "nextCursor", "total"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "items",
-          "pagination"
-        ],
+        "required": ["items", "pagination"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_attention_item": {
@@ -14096,12 +12847,7 @@
                 ]
               }
             },
-            "required": [
-              "id",
-              "name",
-              "domain",
-              "ownerName"
-            ],
+            "required": ["id", "name", "domain", "ownerName"],
             "additionalProperties": false
           },
           "title": {
@@ -14111,11 +12857,7 @@
           },
           "priority": {
             "type": "string",
-            "enum": [
-              "NORMAL",
-              "HIGH",
-              "URGENT"
-            ]
+            "enum": ["NORMAL", "HIGH", "URGENT"]
           },
           "evidenceCount": {
             "type": "integer",
@@ -14127,10 +12869,7 @@
             "properties": {
               "status": {
                 "type": "string",
-                "enum": [
-                  "open",
-                  "resolved"
-                ]
+                "enum": ["open", "resolved"]
               },
               "customerVisibleAt": {
                 "type": "string",
@@ -14326,11 +13065,7 @@
                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                 }
               },
-              "required": [
-                "title",
-                "explanation",
-                "observedAt"
-              ],
+              "required": ["title", "explanation", "observedAt"],
               "additionalProperties": false
             }
           },
@@ -14342,20 +13077,11 @@
               "properties": {
                 "role": {
                   "type": "string",
-                  "enum": [
-                    "supporting",
-                    "contradictory",
-                    "context"
-                  ]
+                  "enum": ["supporting", "contradictory", "context"]
                 },
                 "kind": {
                   "type": "string",
-                  "enum": [
-                    "metric",
-                    "communication",
-                    "record",
-                    "event"
-                  ]
+                  "enum": ["metric", "communication", "record", "event"]
                 },
                 "title": {
                   "type": "string",
@@ -14390,10 +13116,7 @@
                           "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                         }
                       },
-                      "required": [
-                        "start",
-                        "end"
-                      ],
+                      "required": ["start", "end"],
                       "additionalProperties": false
                     },
                     {
@@ -14407,14 +13130,7 @@
                   "maxLength": 240
                 }
               },
-              "required": [
-                "role",
-                "kind",
-                "title",
-                "observedAt",
-                "window",
-                "sourceLabel"
-              ],
+              "required": ["role", "kind", "title", "observedAt", "window", "sourceLabel"],
               "additionalProperties": false
             }
           },
@@ -14434,10 +13150,7 @@
                     "maxLength": 8000
                   }
                 },
-                "required": [
-                  "updatedAt",
-                  "summary"
-                ],
+                "required": ["updatedAt", "summary"],
                 "additionalProperties": false
               },
               {
@@ -14501,10 +13214,7 @@
                 "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
               }
             },
-            "required": [
-              "after",
-              "before"
-            ],
+            "required": ["after", "before"],
             "additionalProperties": false
           },
           "coverage": {
@@ -14512,10 +13222,7 @@
             "properties": {
               "status": {
                 "type": "string",
-                "enum": [
-                  "complete_within_bounds",
-                  "incomplete"
-                ]
+                "enum": ["complete_within_bounds", "incomplete"]
               },
               "reasons": {
                 "maxItems": 20,
@@ -14527,10 +13234,7 @@
                 }
               }
             },
-            "required": [
-              "status",
-              "reasons"
-            ],
+            "required": ["status", "reasons"],
             "additionalProperties": false
           },
           "limits": {
@@ -14552,11 +13256,7 @@
                 "maximum": 9007199254740991
               }
             },
-            "required": [
-              "calls",
-              "domains",
-              "candidates"
-            ],
+            "required": ["calls", "domains", "candidates"],
             "additionalProperties": false
           },
           "candidates": {
@@ -14580,10 +13280,7 @@
                 },
                 "type": {
                   "type": "string",
-                  "enum": [
-                    "COMPANY",
-                    "INDIVIDUAL"
-                  ]
+                  "enum": ["COMPANY", "INDIVIDUAL"]
                 },
                 "reasons": {
                   "maxItems": 50,
@@ -14613,36 +13310,17 @@
                         "const": "participants.email"
                       }
                     },
-                    "required": [
-                      "kind",
-                      "domain",
-                      "sourceType",
-                      "sourceId",
-                      "field"
-                    ],
+                    "required": ["kind", "domain", "sourceType", "sourceId", "field"],
                     "additionalProperties": false
                   }
                 }
               },
-              "required": [
-                "id",
-                "name",
-                "domain",
-                "type",
-                "reasons"
-              ],
+              "required": ["id", "name", "domain", "type", "reasons"],
               "additionalProperties": false
             }
           }
         },
-        "required": [
-          "customerId",
-          "checkedAt",
-          "window",
-          "coverage",
-          "limits",
-          "candidates"
-        ],
+        "required": ["customerId", "checkedAt", "window", "coverage", "limits", "candidates"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_list_identity_merge_suggestions": {
@@ -14660,30 +13338,15 @@
                 },
                 "status": {
                   "type": "string",
-                  "enum": [
-                    "suggested",
-                    "processing",
-                    "merged",
-                    "rejected"
-                  ]
+                  "enum": ["suggested", "processing", "merged", "rejected"]
                 },
                 "proposalStatus": {
                   "type": "string",
-                  "enum": [
-                    "PROPOSED",
-                    "STAGED",
-                    "STALE",
-                    "REJECTED",
-                    "APPLIED"
-                  ]
+                  "enum": ["PROPOSED", "STAGED", "STALE", "REJECTED", "APPLIED"]
                 },
                 "confidence": {
                   "type": "string",
-                  "enum": [
-                    "HIGH",
-                    "MEDIUM",
-                    "LOW"
-                  ]
+                  "enum": ["HIGH", "MEDIUM", "LOW"]
                 },
                 "survivor": {
                   "type": "object",
@@ -14712,21 +13375,13 @@
                     },
                     "type": {
                       "type": "string",
-                      "enum": [
-                        "COMPANY",
-                        "INDIVIDUAL"
-                      ]
+                      "enum": ["COMPANY", "INDIVIDUAL"]
                     },
                     "status": {
                       "anyOf": [
                         {
                           "type": "string",
-                          "enum": [
-                            "PROVISIONAL",
-                            "ACTIVE",
-                            "CHURNED",
-                            "MERGED"
-                          ]
+                          "enum": ["PROVISIONAL", "ACTIVE", "CHURNED", "MERGED"]
                         },
                         {
                           "type": "null"
@@ -14782,21 +13437,13 @@
                     },
                     "type": {
                       "type": "string",
-                      "enum": [
-                        "COMPANY",
-                        "INDIVIDUAL"
-                      ]
+                      "enum": ["COMPANY", "INDIVIDUAL"]
                     },
                     "status": {
                       "anyOf": [
                         {
                           "type": "string",
-                          "enum": [
-                            "PROVISIONAL",
-                            "ACTIVE",
-                            "CHURNED",
-                            "MERGED"
-                          ]
+                          "enum": ["PROVISIONAL", "ACTIVE", "CHURNED", "MERGED"]
                         },
                         {
                           "type": "null"
@@ -14996,12 +13643,7 @@
                         },
                         "status": {
                           "type": "string",
-                          "enum": [
-                            "QUEUED",
-                            "RUNNING",
-                            "COMPLETED",
-                            "FAILED"
-                          ]
+                          "enum": ["QUEUED", "RUNNING", "COMPLETED", "FAILED"]
                         },
                         "createdAt": {
                           "type": "string",
@@ -15014,13 +13656,7 @@
                           "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                         }
                       },
-                      "required": [
-                        "id",
-                        "operationId",
-                        "status",
-                        "createdAt",
-                        "updatedAt"
-                      ],
+                      "required": ["id", "operationId", "status", "createdAt", "updatedAt"],
                       "additionalProperties": false
                     },
                     {
@@ -15080,21 +13716,13 @@
                                   },
                                   "type": {
                                     "type": "string",
-                                    "enum": [
-                                      "COMPANY",
-                                      "INDIVIDUAL"
-                                    ]
+                                    "enum": ["COMPANY", "INDIVIDUAL"]
                                   },
                                   "status": {
                                     "anyOf": [
                                       {
                                         "type": "string",
-                                        "enum": [
-                                          "PROVISIONAL",
-                                          "ACTIVE",
-                                          "CHURNED",
-                                          "MERGED"
-                                        ]
+                                        "enum": ["PROVISIONAL", "ACTIVE", "CHURNED", "MERGED"]
                                       },
                                       {
                                         "type": "null"
@@ -15150,21 +13778,13 @@
                                   },
                                   "type": {
                                     "type": "string",
-                                    "enum": [
-                                      "COMPANY",
-                                      "INDIVIDUAL"
-                                    ]
+                                    "enum": ["COMPANY", "INDIVIDUAL"]
                                   },
                                   "status": {
                                     "anyOf": [
                                       {
                                         "type": "string",
-                                        "enum": [
-                                          "PROVISIONAL",
-                                          "ACTIVE",
-                                          "CHURNED",
-                                          "MERGED"
-                                        ]
+                                        "enum": ["PROVISIONAL", "ACTIVE", "CHURNED", "MERGED"]
                                       },
                                       {
                                         "type": "null"
@@ -15234,12 +13854,7 @@
                           }
                         }
                       },
-                      "required": [
-                        "computedAt",
-                        "expiresAt",
-                        "expired",
-                        "pairs"
-                      ],
+                      "required": ["computedAt", "expiresAt", "expired", "pairs"],
                       "additionalProperties": false
                     },
                     {
@@ -15293,11 +13908,7 @@
             ]
           }
         },
-        "required": [
-          "suggestions",
-          "canManageIdentityMerges",
-          "nextCursor"
-        ],
+        "required": ["suggestions", "canManageIdentityMerges", "nextCursor"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_reject_identity_merge_suggestion": {
@@ -15313,10 +13924,7 @@
             "const": "REJECTED"
           }
         },
-        "required": [
-          "suggestionId",
-          "status"
-        ],
+        "required": ["suggestionId", "status"],
         "additionalProperties": false
       },
       "ToolOutput_outlit_merge_customers": {
@@ -15377,13 +13985,7 @@
                     "maximum": 9007199254740991
                   }
                 },
-                "required": [
-                  "identifiers",
-                  "contacts",
-                  "facts",
-                  "communications",
-                  "accessEntries"
-                ],
+                "required": ["identifiers", "contacts", "facts", "communications", "accessEntries"],
                 "additionalProperties": false
               },
               "warnings": {
@@ -15402,10 +14004,7 @@
                       "maxLength": 1000
                     }
                   },
-                  "required": [
-                    "code",
-                    "message"
-                  ],
+                  "required": ["code", "message"],
                   "additionalProperties": false
                 }
               }
@@ -15445,12 +14044,7 @@
               },
               "status": {
                 "type": "string",
-                "enum": [
-                  "queued",
-                  "running",
-                  "completed",
-                  "failed"
-                ]
+                "enum": ["queued", "running", "completed", "failed"]
               },
               "phase": {
                 "type": "string",
@@ -15470,10 +14064,7 @@
                     "maxLength": 1000
                   }
                 },
-                "required": [
-                  "code",
-                  "message"
-                ],
+                "required": ["code", "message"],
                 "additionalProperties": false
               }
             },
@@ -15513,12 +14104,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "queued",
-              "running",
-              "completed",
-              "failed"
-            ]
+            "enum": ["queued", "running", "completed", "failed"]
           },
           "phase": {
             "type": "string",
@@ -15538,10 +14124,7 @@
                 "maxLength": 1000
               }
             },
-            "required": [
-              "code",
-              "message"
-            ],
+            "required": ["code", "message"],
             "additionalProperties": false
           }
         },
@@ -15557,5 +14140,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "1f6c75f825fd1be8358b0d08201973cd8caa049c0db5d11426ddfb31bc54681f"
+  "x-outlit-contract-hash": "f41b9b1b1071d8326b0c4e6e760bc698db8e4c228fc318fad7baf7d07c9a3080"
 }
