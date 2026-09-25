@@ -2241,7 +2241,7 @@ export const publicToolContracts = {
                 ],
               },
               "sourceRef": {
-                "description": "Canonical source handle for this event; always preserved so outlit_get_source can retrieve the underlying record.",
+                "description": "Canonical source handle for this event, emitted only when outlit_get_source can retrieve the underlying record; omitted when the event is marked unreadable.",
                 "type": "object",
                 "properties": {
                   "sourceType": {
@@ -15590,4 +15590,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "12931c05a6770b6362c70b60230703561bb7944b2b8caa276d3a6e6b3180fe41" as const
+export const sdkConsumerContractHash = "5d97f6f1cab684c8d1184d95a8c2bc214e4b00f4bc19084020999c5fbeb96123" as const
