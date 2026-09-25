@@ -36,7 +36,11 @@ class MockIntegrationAuthError extends Error {
 mock.module("../../../src/lib/tty", () => ({
   isUnicodeSupported: true,
   isInteractive: () => Boolean(process.stdin.isTTY && process.stdout.isTTY),
-  isCiEnvironment: () => false,
+  // mock.module() registrations are visible process-wide when bun runs sibling
+  // test files in one invocation, so CI detection must stay env-faithful —
+  // a hardcoded false here redirects other suites into the browser-auth flow.
+  isCiEnvironment: () =>
+    process.env.CI === "true" || process.env.CI === "1" || Boolean(process.env.GITHUB_ACTIONS),
   openBrowser: mockOpenBrowser,
   promptInput: async () => "",
 }))
