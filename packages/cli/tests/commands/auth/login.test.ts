@@ -192,6 +192,11 @@ describe("auth login", () => {
     const { default: loginCmd } = await import("../../../src/commands/auth/login")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    // Fail fast instead of hanging on a real network call if this test is ever
+    // diverted into the browser-auth flow again (e.g. by a leaked module mock).
+    const fetchSpy = spyOn(globalThis, "fetch").mockRejectedValue(
+      new Error("unexpected fetch in CI-mode login test"),
+    )
     const previousCi = process.env.CI
     process.env.CI = "true"
 
@@ -210,6 +215,7 @@ describe("auth login", () => {
       } else {
         process.env.CI = previousCi
       }
+      fetchSpy.mockRestore()
       exitSpy.mockRestore()
       stderrSpy.mockRestore()
     }
