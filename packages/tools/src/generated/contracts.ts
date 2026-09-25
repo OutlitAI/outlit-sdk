@@ -2312,7 +2312,7 @@ export const publicToolContracts = {
           "additionalProperties": false,
         },
         "product": {
-          "description": "Present when the request's channels include PRODUCT. Weekly product usage aggregate for the requested window: value-feature event counts and distinct active users per UTC week, plus the window's top value-feature event names. Individual product events appear in `events` only when productDetail is \"material\" or \"raw\".",
+          "description": "Present when the request's channels include PRODUCT. Weekly product usage aggregate for the requested window: per UTC week, totalEvents (all product-analytics events), valueFeatureEvents (configured value-feature events only; events is a deprecated alias), and activeUsers (distinct users), plus the window's top value-feature event names. Individual product events appear in `events` only when productDetail is \"material\" or \"raw\".",
           "type": "object",
           "properties": {
             "windowStartAt": {
@@ -2327,6 +2327,10 @@ export const publicToolContracts = {
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
               "description": "End of the aggregate coverage window (the request end bound)",
             },
+            "eventUniverse": {
+              "type": "string",
+              "description": "Describes which events each aggregate count field covers",
+            },
             "weeklyBuckets": {
               "type": "array",
               "items": {
@@ -2338,11 +2342,23 @@ export const publicToolContracts = {
                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                     "description": "Start of the bucket's UTC week (Monday 00:00:00Z)",
                   },
-                  "events": {
+                  "totalEvents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "All product-analytics events recorded for the customer in this week",
+                  },
+                  "valueFeatureEvents": {
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 9007199254740991,
                     "description": "Events in this week matching the organization's configured value features",
+                  },
+                  "events": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Deprecated alias of valueFeatureEvents, kept for one release. Use valueFeatureEvents.",
                   },
                   "activeUsers": {
                     "type": "integer",
@@ -2353,6 +2369,8 @@ export const publicToolContracts = {
                 },
                 "required": [
                   "weekStartAt",
+                  "totalEvents",
+                  "valueFeatureEvents",
                   "events",
                   "activeUsers",
                 ],
@@ -2386,6 +2404,7 @@ export const publicToolContracts = {
           "required": [
             "windowStartAt",
             "windowEndAt",
+            "eventUniverse",
             "weeklyBuckets",
             "topEventNames",
           ],
@@ -3610,7 +3629,7 @@ export const publicToolContracts = {
           "maxLength": 500,
         },
         "limit": {
-          "description": "Exact content segments per page (default 10, maximum 100).",
+          "description": "Exact content segments per page (maximum 100). When omitted, the page is sized to fit the hosted result byte limit.",
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
@@ -10427,7 +10446,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "value_features",
     "title": "Get Customer Features",
-    "description": "Read Outlit event evidence and stored non-credit Autumn feature quantities, frequency, recency, weekly coverage, and explicit links for one authorized customer. Provider totals and linked event counts remain separate.",
+    "description": "Read Outlit event evidence and stored non-credit Autumn feature quantities, frequency, recency, weekly coverage, and explicit links for one authorized customer. Provider totals and linked event counts remain separate. Features with no usage in the window are omitted by default; pass includeZero:true to list them, and see truncation for any omissions the hosted size cap forced.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -10445,6 +10464,11 @@ export const publicToolContracts = {
         },
         "includeWeeklyUsage": {
           "default": false,
+          "type": "boolean",
+        },
+        "includeZero": {
+          "default": false,
+          "description": "Include features that show no usage in the window (zero event count and zero provider quantity). Default false omits them so the response stays compact; the count of omitted features is reported in truncation.zeroFeatureCount.",
           "type": "boolean",
         },
       },
@@ -10476,6 +10500,40 @@ export const publicToolContracts = {
             "name",
           ],
           "additionalProperties": false,
+        },
+        "windowStartAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+          "description": "Start of the aggregate coverage window (the UTC week containing the requested range start).",
+        },
+        "windowEndAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+          "description": "End of the aggregate coverage window",
+        },
+        "eventUniverse": {
+          "type": "string",
+          "description": "Describes which events each aggregate count field covers: totalEvents counts all product-analytics events for the customer; valueFeatureEvents counts only events matching the organization's configured value features (events is a deprecated alias of valueFeatureEvents); activeUsers counts distinct users across all product-analytics events. The counts cover different universes: a week can legitimately show zero valueFeatureEvents with positive totalEvents or activeUsers.",
+        },
+        "valueFeatureEvents": {
+          "description": "Total events matching the organization's configured value features across the window. Omitted when event evidence is unavailable.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+        },
+        "totalEvents": {
+          "description": "All product-analytics events recorded for the customer across the window. Omitted when the product-activity read is unavailable.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+        },
+        "activeUsers": {
+          "description": "Distinct users across all product-analytics events in the window. Omitted when the product-activity read is unavailable.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
         },
         "events": {
           "type": "string",
@@ -11569,6 +11627,34 @@ export const publicToolContracts = {
             ],
           },
         },
+        "truncation": {
+          "description": "Present when the response was compacted: zero-usage features omitted by default and/or entries dropped to satisfy the hosted result size cap.",
+          "type": "object",
+          "properties": {
+            "zeroFeatureCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "Configured features omitted because they show no usage in the window. Pass includeZero:true to include them.",
+            },
+            "featuresDroppedForSize": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "Features omitted from the end of the list to keep the response under the hosted result size cap.",
+            },
+            "weeklyUsageDropped": {
+              "type": "boolean",
+              "description": "True when per-week usage arrays were stripped to keep the response under the hosted result size cap. Re-request with includeWeeklyUsage:false or includeZero:false for details.",
+            },
+          },
+          "required": [
+            "zeroFeatureCount",
+            "featuresDroppedForSize",
+            "weeklyUsageDropped",
+          ],
+          "additionalProperties": false,
+        },
         "sources": {
           "type": "array",
           "items": {
@@ -11602,6 +11688,9 @@ export const publicToolContracts = {
       },
       "required": [
         "customer",
+        "windowStartAt",
+        "windowEndAt",
+        "eventUniverse",
         "events",
         "features",
         "sources",
@@ -15581,4 +15670,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "6785a11b35cc5d66ef98e9d59edc008be9e15dc97423045e817099cc5ce530a1" as const
+export const sdkConsumerContractHash = "8b35a95a60bf37a5d4e467b4db91928a6f08bb55a28b8c8c212c0e3700d88fda" as const
