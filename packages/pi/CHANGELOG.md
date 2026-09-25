@@ -1,5 +1,24 @@
 # @outlit/pi
 
+## 2.1.6
+
+### Patch Changes
+
+- [#224](https://github.com/OutlitAI/outlit-sdk/pull/224) [`b7ce7ea`](https://github.com/OutlitAI/outlit-sdk/commit/b7ce7ea37c088f8cf2a7e96226a55eb3a5e57ae5) Thanks [@leo-paz](https://github.com/leo-paz)! - Add `rateBasis`, `paceSinceReset`, `periodStart` and `changeDays` to the customer credit summary contract; the forecast rate is now a trailing 28-day average (7-day floor) with since-reset pace as context only.
+
+- [#223](https://github.com/OutlitAI/outlit-sdk/pull/223) [`f2c90ed`](https://github.com/OutlitAI/outlit-sdk/commit/f2c90ed50a7cfb54a9103bb4ed2f6379f0197b34) Thanks [@leo-paz](https://github.com/leo-paz)! - Add `customerOwnership` (`{ defaultOwnerUserId: string | null }`) to the workspace settings read/write contracts.
+
+- [#221](https://github.com/OutlitAI/outlit-sdk/pull/221) [`3f5ef44`](https://github.com/OutlitAI/outlit-sdk/commit/3f5ef44f72182595675b6057f66f2228f1c05ca5) Thanks [@leo-paz](https://github.com/leo-paz)! - Add optional, nullable `jevEvidence` advisory evidence to the `outlit_list_identity_merge_suggestions` output contract.
+
+- [#230](https://github.com/OutlitAI/outlit-sdk/pull/230) [`456d5b5`](https://github.com/OutlitAI/outlit-sdk/commit/456d5b56fbd369e873578026c7812b3d8120f09a) Thanks [@leo-paz](https://github.com/leo-paz)! - Update the `outlit_get_timeline` contract with the additive `unreadable`/`unreadableReason` output fields, present only when an event's underlying source record cannot be retrieved via `outlit_get_source` — models should not retry source lookups on those rows.
+
+- [#226](https://github.com/OutlitAI/outlit-sdk/pull/226) [`14575fa`](https://github.com/OutlitAI/outlit-sdk/commit/14575fa0d2c762caf860e186b026161b929342c3) Thanks [@leo-paz](https://github.com/leo-paz)! - Update the `outlit_get_timeline` contract for compact-by-default reads: optional `includeMetadata` and `productDetail` ("none" | "material" | "raw") inputs, optional `product` weekly usage aggregate in the output, required `pagination.effectiveLimit`, and `metadata` now optional on timeline events. Companion to Core#2285.
+
+- [#229](https://github.com/OutlitAI/outlit-sdk/pull/229) [`a1f01e5`](https://github.com/OutlitAI/outlit-sdk/commit/a1f01e55a974e8ffa60b97da6dbc4edd4247a20c) Thanks [@leo-paz](https://github.com/leo-paz)! - Update the `outlit_get_timeline` contract with the additive `productUnavailable` output field, present only when the weekly product usage aggregate cannot be computed; also clarifies that `productDetail:"material"` returns no product rows when the organization has no configured value features while the `product` aggregate still comes back.
+
+- Updated dependencies [[`b7ce7ea`](https://github.com/OutlitAI/outlit-sdk/commit/b7ce7ea37c088f8cf2a7e96226a55eb3a5e57ae5), [`f2c90ed`](https://github.com/OutlitAI/outlit-sdk/commit/f2c90ed50a7cfb54a9103bb4ed2f6379f0197b34), [`3f5ef44`](https://github.com/OutlitAI/outlit-sdk/commit/3f5ef44f72182595675b6057f66f2228f1c05ca5), [`456d5b5`](https://github.com/OutlitAI/outlit-sdk/commit/456d5b56fbd369e873578026c7812b3d8120f09a), [`14575fa`](https://github.com/OutlitAI/outlit-sdk/commit/14575fa0d2c762caf860e186b026161b929342c3), [`a1f01e5`](https://github.com/OutlitAI/outlit-sdk/commit/a1f01e55a974e8ffa60b97da6dbc4edd4247a20c)]:
+  - @outlit/tools@2.2.2
+
 ## 2.1.5
 
 ### Patch Changes
