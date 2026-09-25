@@ -2241,7 +2241,7 @@ export const publicToolContracts = {
                 ],
               },
               "sourceRef": {
-                "description": "Canonical source handle for this event, emitted only when outlit_get_source can retrieve the underlying record; omitted when the event is marked unreadable.",
+                "description": "Canonical source handle for this event; always preserved so outlit_get_source can retrieve the underlying record.",
                 "type": "object",
                 "properties": {
                   "sourceType": {
@@ -2256,15 +2256,6 @@ export const publicToolContracts = {
                   "sourceId",
                 ],
                 "additionalProperties": false,
-              },
-              "unreadable": {
-                "description": "Present only when the event's underlying source record cannot be retrieved via outlit_get_source. Do not retry source lookups for this event.",
-                "type": "boolean",
-                "const": true,
-              },
-              "unreadableReason": {
-                "description": "Why the event's source is unreadable, e.g. unresolved_source or ambiguous_source.",
-                "type": "string",
               },
               "metadata": {
                 "description": "Raw event properties. Present only when the request set includeMetadata:true.",
@@ -4395,10 +4386,17 @@ export const publicToolContracts = {
                 },
               ],
             },
+            "effectiveLimit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "description": "The maximum number of sources a page of this response can contain. Responses can hold fewer items than requested when hosted response-size limits apply; callers should rely on pagination.hasMore/nextCursor rather than item count to detect truncation.",
+            },
           },
           "required": [
             "hasMore",
             "nextCursor",
+            "effectiveLimit",
           ],
           "additionalProperties": false,
         },
@@ -15590,4 +15588,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "5d97f6f1cab684c8d1184d95a8c2bc214e4b00f4bc19084020999c5fbeb96123" as const
+export const sdkConsumerContractHash = "9919b8e5909b0fe577c8e4f8adc9a3070211c4d42d26e876baf20da591199c8f" as const
