@@ -2063,7 +2063,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customer-context",
     "title": "Get Customer Timeline",
-    "description": "Get the chronological activity timeline for a customer. Use this to see what happened and when — emails, calls, Slack messages, billing events, etc. Supports channel and date filtering.",
+    "description": "Get the chronological activity timeline for a customer — compact event entries by default, so unfiltered calls stay small. When channels is omitted the response covers the relationship chronology (communication, meetings, support, CRM, billing). Pass channels:[\"PRODUCT\"] to add a weekly product-usage aggregate; set productDetail to \"material\" or \"raw\" to also return individual product events. Set includeMetadata:true only when a specific event metadata field is needed; pass sourceType/sourceId or sourceRef to outlit_get_source to read a full underlying record.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2075,7 +2075,7 @@ export const publicToolContracts = {
           "description": "Customer ID or domain",
         },
         "channels": {
-          "description": "Filter by event channel. Use values such as PRODUCT, COMMUNICATION, MEETING, CRM, BILLING, SUPPORT, IDENTITY, DOCUMENT, or SYSTEM.",
+          "description": "Filter by event channel. When omitted, defaults to the relationship channels COMMUNICATION, MEETING, SUPPORT, CRM, and BILLING. PRODUCT, IDENTITY, DOCUMENT, and SYSTEM are included only when listed here. Pass channels:[\"PRODUCT\"] to read the weekly product usage aggregate, and combine with productDetail to also return individual product events.",
           "type": "array",
           "items": {
             "type": "string",
@@ -2091,6 +2091,19 @@ export const publicToolContracts = {
               "SYSTEM",
             ],
           },
+        },
+        "productDetail": {
+          "description": "Controls whether PRODUCT-channel rows appear in `events` when channels includes PRODUCT. \"none\" (default): product activity is returned only as the `product` weekly usage aggregate — no product telemetry rows. \"material\": also include individual product events that match the organization's configured value-feature event names (each keeps an `id` usable for citations). \"raw\": include every product event, including autocapture, pageview, feature-flag, and identity telemetry — large; request only when the aggregate and material events are insufficient.",
+          "type": "string",
+          "enum": [
+            "none",
+            "material",
+            "raw",
+          ],
+        },
+        "includeMetadata": {
+          "description": "Include each event's raw metadata/properties payload. Default false: events return compact fields only, keeping the response small. Pass true only when a specific metadata field is needed.",
+          "type": "boolean",
         },
         "eventTypes": {
           "description": "Filter by event type",
@@ -2149,6 +2162,7 @@ export const publicToolContracts = {
             "properties": {
               "id": {
                 "type": "string",
+                "description": "Stable event identifier. Pass as timeline_event eventId when citing this event.",
               },
               "eventType": {
                 "type": "string",
@@ -2189,6 +2203,7 @@ export const publicToolContracts = {
                     "type": "null",
                   },
                 ],
+                "description": "Bounded display summary, truncated past roughly 2 KB. Use outlit_get_source on sourceType/sourceId for the full underlying content.",
               },
               "occurredAt": {
                 "type": "string",
@@ -2226,6 +2241,7 @@ export const publicToolContracts = {
                 ],
               },
               "sourceRef": {
+                "description": "Canonical source handle for this event; always preserved so outlit_get_source can retrieve the underlying record.",
                 "type": "object",
                 "properties": {
                   "sourceType": {
@@ -2242,6 +2258,7 @@ export const publicToolContracts = {
                 "additionalProperties": false,
               },
               "metadata": {
+                "description": "Raw event properties. Present only when the request set includeMetadata:true.",
                 "type": "object",
                 "propertyNames": {
                   "type": "string",
@@ -2260,7 +2277,6 @@ export const publicToolContracts = {
               "contact",
               "sourceType",
               "sourceId",
-              "metadata",
             ],
             "additionalProperties": false,
           },
@@ -2281,10 +2297,97 @@ export const publicToolContracts = {
                 },
               ],
             },
+            "effectiveLimit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "description": "The maximum number of events a page of this response can contain. Responses can hold fewer events than requested when hosted response-size limits apply; callers should rely on pagination.hasMore/nextCursor rather than event count to detect truncation.",
+            },
           },
           "required": [
             "hasMore",
             "nextCursor",
+            "effectiveLimit",
+          ],
+          "additionalProperties": false,
+        },
+        "product": {
+          "description": "Present when the request's channels include PRODUCT. Weekly product usage aggregate for the requested window: value-feature event counts and distinct active users per UTC week, plus the window's top value-feature event names. Individual product events appear in `events` only when productDetail is \"material\" or \"raw\".",
+          "type": "object",
+          "properties": {
+            "windowStartAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+              "description": "Start of the aggregate coverage window: the UTC week containing the requested start (or the earliest retained week).",
+            },
+            "windowEndAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+              "description": "End of the aggregate coverage window (the request end bound)",
+            },
+            "weeklyBuckets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "weekStartAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                    "description": "Start of the bucket's UTC week (Monday 00:00:00Z)",
+                  },
+                  "events": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Events in this week matching the organization's configured value features",
+                  },
+                  "activeUsers": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "description": "Distinct users with product activity this week",
+                  },
+                },
+                "required": [
+                  "weekStartAt",
+                  "events",
+                  "activeUsers",
+                ],
+                "additionalProperties": false,
+              },
+              "description": "UTC week buckets covering the requested window, oldest first",
+            },
+            "topEventNames": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "eventName": {
+                    "type": "string",
+                  },
+                  "events": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                },
+                "required": [
+                  "eventName",
+                  "events",
+                ],
+                "additionalProperties": false,
+              },
+              "description": "Most frequent configured value-feature event names across the window",
+            },
+          },
+          "required": [
+            "windowStartAt",
+            "windowEndAt",
+            "weeklyBuckets",
+            "topEventNames",
           ],
           "additionalProperties": false,
         },
@@ -15464,4 +15567,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "70afd58dc5b155c38c77fe53682f39fa37a42bca55f8e741e790d2849a47d862" as const
+export const sdkConsumerContractHash = "f87b94bc83b6298055fa35bb96e560696070c74c7a255751598340cd6c788788" as const
