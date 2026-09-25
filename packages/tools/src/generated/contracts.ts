@@ -2257,6 +2257,15 @@ export const publicToolContracts = {
                 ],
                 "additionalProperties": false,
               },
+              "unreadable": {
+                "description": "Present only when the event's underlying source record cannot be retrieved via outlit_get_source. Do not retry source lookups for this event.",
+                "type": "boolean",
+                "const": true,
+              },
+              "unreadableReason": {
+                "description": "Why the event's source is unreadable, e.g. unresolved_source or ambiguous_source.",
+                "type": "string",
+              },
               "metadata": {
                 "description": "Raw event properties. Present only when the request set includeMetadata:true.",
                 "type": "object",
@@ -15581,4 +15590,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "6785a11b35cc5d66ef98e9d59edc008be9e15dc97423045e817099cc5ce530a1" as const
+export const sdkConsumerContractHash = "12931c05a6770b6362c70b60230703561bb7944b2b8caa276d3a6e6b3180fe41" as const
