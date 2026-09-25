@@ -4,6 +4,7 @@ import {
   customerFactCategories,
   customerFactTypes,
   customerSourceTypes,
+  publicToolNames,
   timelineChannels,
 } from "../../packages/tools/src/generated/contracts"
 import { piToolNames } from "../../packages/tools/src/toolsets"
@@ -25,12 +26,31 @@ const contactTransitionFactTypes = [
   "CONTACT_DISENGAGEMENT",
 ] as const
 
+const identityTools = [
+  "outlit_get_customer_identity",
+  "outlit_list_identity_merge_suggestions",
+  "outlit_reject_identity_merge_suggestion",
+  "outlit_merge_customers",
+  "outlit_get_customer_merge_status",
+] as const
+
+const customerReadTools = [
+  "outlit_get_customer_relationship",
+  "outlit_list_attention_items",
+  "outlit_get_attention_item",
+] as const
+
 describe("customer-surface documentation", () => {
   test("documents customer collaboration tools in API and MCP references", () => {
     const apiDocs = readDoc("docs/api-reference/tools.mdx")
     const mcpDocs = readDoc("docs/ai-integrations/mcp.mdx")
 
     for (const toolName of collaborationTools) {
+      expect(apiDocs).toContain(`| \`${toolName}\` |`)
+      expect(mcpDocs).toContain(`| \`${toolName}\` |`)
+    }
+
+    for (const toolName of customerReadTools) {
       expect(apiDocs).toContain(`| \`${toolName}\` |`)
       expect(mcpDocs).toContain(`| \`${toolName}\` |`)
     }
@@ -51,6 +71,33 @@ describe("customer-surface documentation", () => {
     expect(piExamples).toContain("toolNames: piToolNames")
     expect(piExamples).not.toContain("allPublicToolNames")
     expect(readDoc("docs/api-reference/tools.mdx")).toContain("`piToolNames`")
+  })
+
+  test("documents public identity tools and their Pi policy", () => {
+    const publicTools = new Set<string>(publicToolNames)
+    const piTools = new Set<string>(piToolNames)
+    const apiDocs = readDoc("docs/api-reference/tools.mdx")
+    const mcpDocs = readDoc("docs/ai-integrations/mcp.mdx")
+
+    for (const toolName of identityTools) {
+      expect(publicTools.has(toolName)).toBe(true)
+      expect(piTools.has(toolName)).toBe(true)
+      expect(apiDocs).toContain(`| \`${toolName}\` |`)
+      expect(mcpDocs).toContain(`| \`${toolName}\` |`)
+    }
+
+    for (const source of [
+      mcpDocs,
+      readDoc("docs/ai-integrations/pi.mdx"),
+      readDoc("packages/pi/README.md"),
+    ]) {
+      expect(source).toContain("customer identity review and merge")
+      expect(source).toContain("Customer merge execution has no supported undo")
+      expect(source).toContain(
+        "Execution retries must reuse the stable request ID and identical request inputs",
+      )
+    }
+    expect(mcpDocs).not.toContain("identity-merge")
   })
 
   test("documents contact-transition fact types without recommending category filters", () => {

@@ -76,6 +76,7 @@ Headless clients that cannot complete OAuth may send an Outlit API key as their 
 | `outlit_list_users` | Filter users by journey stage, activity, customer, and exact trait values | "Find all signed-up users at Acme Corp with `role=admin` who went inactive this week" |
 | `outlit_list_workspace_users` | Browse internal workspace users such as CSMs, managers, account owners, and admins | "List workspace users who own customers in the enterprise segment" |
 | `outlit_get_customer` | Get a complete customer profile with users, revenue, timeline, and metrics | "Get the full profile for acme.com including their users and revenue" |
+| `outlit_get_customer_relationship` | Get the bounded, evidence-backed relationship shown on a customer page | "Summarize Acme's current relationship with us" |
 | `outlit_assign_customer_owner` | Assign a customer's primary owner | "Make Alex the primary owner of Acme" |
 | `outlit_grant_customer_access` | Share a customer with a workspace member as Viewer or Editor | "Give Alex Editor access to Acme" |
 | `outlit_update_customer_access` | Change an existing collaborator between Viewer and Editor | "Change Alex's access to Acme to Viewer" |
@@ -92,7 +93,14 @@ Headless clients that cannot complete OAuth may send an Outlit API key as their 
 | `outlit_create_feature` | Create one Feature from an exact product-event rule | "Create a Feature for the `report_exported` event" |
 | `outlit_archive_feature` | Archive a non-final Feature using its current opaque revision | "Archive this Feature after confirming another active feature remains" |
 | `outlit_get_customer_features` | Read exact Feature usage for one authorized customer | "Which Features has Acme used in the last 12 weeks?" |
+| `outlit_list_attention_items` | List authorized open or resolved Attention items | "Show my open high-priority Attention items" |
+| `outlit_get_attention_item` | Get one Attention item with its assessment, timeline, and evidence summaries | "Open Attention item `attention_123`" |
+| `outlit_get_customer_identity` | Inspect identity coverage and possible split records for one exact customer ID | "Inspect identity coverage for customer `cust_123`" |
+| `outlit_list_identity_merge_suggestions` | List saved identity merge suggestions and their review history | "List suggested customer merges awaiting review" |
+| `outlit_reject_identity_merge_suggestion` | Reject one saved suggestion while keeping both records separate | "Reject suggestion `suggestion_123` because these are different companies" |
+| `outlit_merge_customers` | Preview or explicitly execute a reviewed customer merge into the chosen survivor | "Preview merging `cust_456` into `cust_123`" |
+| `outlit_get_customer_merge_status` | Read the current status of an admitted merge operation | "Check merge operation `merge_123`" |
 
 <Note>
-  MCP registers the entire public catalog, including customer ownership/access, Features, and the safe destination, integration setup/status, activation, and workspace-settings capabilities described in [Platform Capabilities](/ai-integrations/platform-actions). Feature creation and archive still require the underlying workspace permission and feature availability. Generic agent, automation, signal, identity-merge, notification-send, credential, and destructive integration operations are not public tools.
+  MCP registers the entire public catalog, including customer ownership/access, Features, customer identity review and merge, and the safe destination, integration setup/status, activation, and workspace-settings capabilities described in [Platform Capabilities](/ai-integrations/platform-actions). Feature creation and archive still require the underlying workspace permission and feature availability. Customer merge execution has no supported undo and requires a reviewed preview plus explicit `customer_identity:merge` permission. Execution retries must reuse the stable request ID and identical request inputs. Generic agent, automation, signal, notification-send, credential, and destructive integration operations are not public tools.
 </Note>
