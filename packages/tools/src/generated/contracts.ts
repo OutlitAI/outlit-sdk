@@ -2093,7 +2093,7 @@ export const publicToolContracts = {
           },
         },
         "productDetail": {
-          "description": "Controls whether PRODUCT-channel rows appear in `events` when channels includes PRODUCT. \"none\" (default): product activity is returned only as the `product` weekly usage aggregate — no product telemetry rows. \"material\": also include individual product events that match the organization's configured value-feature event names (each keeps an `id` usable for citations). \"raw\": include every product event, including autocapture, pageview, feature-flag, and identity telemetry — large; request only when the aggregate and material events are insufficient.",
+          "description": "Controls whether PRODUCT-channel rows appear in `events` when channels includes PRODUCT. \"none\" (default): product activity is returned only as the `product` weekly usage aggregate — no product telemetry rows. \"material\": also include individual product events that match the organization's configured value-feature event names (each keeps an `id` usable for citations); when the organization has no configured value features this returns no product rows, but the `product` aggregate is still returned. \"raw\": include every product event, including autocapture, pageview, feature-flag, and identity telemetry — large; request only when the aggregate and material events are insufficient.",
           "type": "string",
           "enum": [
             "none",
@@ -2388,6 +2388,20 @@ export const publicToolContracts = {
             "windowEndAt",
             "weeklyBuckets",
             "topEventNames",
+          ],
+          "additionalProperties": false,
+        },
+        "productUnavailable": {
+          "description": "Present only when channels included PRODUCT but the weekly usage aggregate could not be computed. Report product usage as unavailable — never as zero or absent usage. When configured value-feature names are still known, material product events are returned in `events` instead of the aggregate.",
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string",
+              "description": "Machine-readable reason the usage aggregate could not be computed",
+            },
+          },
+          "required": [
+            "reason",
           ],
           "additionalProperties": false,
         },
@@ -15567,4 +15581,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "f87b94bc83b6298055fa35bb96e560696070c74c7a255751598340cd6c788788" as const
+export const sdkConsumerContractHash = "6785a11b35cc5d66ef98e9d59edc008be9e15dc97423045e817099cc5ce530a1" as const
