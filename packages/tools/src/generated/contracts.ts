@@ -60,6 +60,10 @@ export const publicToolContracts = {
     "ownerDomain": "customers",
     "title": "List Customers",
     "description": "Browse and filter customers. Use this to find customers by billing status, activity recency, revenue, or name. Returns a paginated list with summary info (MRR, last activity, status).",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -381,6 +385,10 @@ export const publicToolContracts = {
     "ownerDomain": "users",
     "title": "List Users",
     "description": "Browse and filter users. Use this to find users by journey stage, activity recency, customer, or email/name. Returns a paginated list with activity info.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -661,6 +669,10 @@ export const publicToolContracts = {
     "ownerDomain": "users",
     "title": "List Workspace Users",
     "description": "List active workspace members who resolve to local Outlit users. Use this to discover exact user IDs for customer ownership and access commands or to browse account ownership.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -848,6 +860,10 @@ export const publicToolContracts = {
     "ownerDomain": "customers",
     "title": "Get Customer",
     "description": "Get full details for a single customer. Optionally include users, revenue, recent activity, engagement metrics, or company enrichment.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1650,6 +1666,10 @@ export const publicToolContracts = {
     "ownerDomain": "customers",
     "title": "Get Customer Relationship",
     "description": "Get the bounded, evidence-backed relationship shown on a customer page. Returns a summary, categorized current statements with ISO observed-at timestamps when supported, source labels, and the compiled summary timestamp when available without raw facts, quotes, or internal status.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1801,6 +1821,10 @@ export const publicToolContracts = {
     "ownerDomain": "customers",
     "title": "Assign Customer Owner",
     "description": "Assign an active workspace member as this customer’s primary owner. The former owner keeps Editor access.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1857,6 +1881,10 @@ export const publicToolContracts = {
     "ownerDomain": "customers",
     "title": "Grant Customer Access",
     "description": "Share a customer with an active workspace member as a Viewer or Editor. The customer ID must be exact.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -1938,6 +1966,10 @@ export const publicToolContracts = {
     "ownerDomain": "customers",
     "title": "Update Customer Access",
     "description": "Change an existing customer collaborator between Viewer and Editor.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2019,6 +2051,10 @@ export const publicToolContracts = {
     "ownerDomain": "customers",
     "title": "Revoke Customer Access",
     "description": "Remove a collaborator’s explicit access to a customer.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2064,6 +2100,10 @@ export const publicToolContracts = {
     "ownerDomain": "customer-context",
     "title": "Get Customer Timeline",
     "description": "Get the chronological activity timeline for a customer — compact event entries by default, so unfiltered calls stay small. When channels is omitted the response covers the relationship chronology (communication, meetings, support, CRM, billing). Pass channels:[\"PRODUCT\"] to add a weekly product-usage aggregate; set productDetail to \"material\" or \"raw\" to also return individual product events. Set includeMetadata:true only when a specific event metadata field is needed; pass sourceType/sourceId or sourceRef to outlit_get_source to read a full underlying record.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -2429,6 +2469,10 @@ export const publicToolContracts = {
     "ownerDomain": "customer-context",
     "title": "List Customer Facts",
     "description": "List structured facts known about a customer. Use filters like status, sourceTypes, factTypes, factCategories, and date bounds to narrow the result set. For topic-specific retrieval, use outlit_search_customer_context instead.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3092,6 +3136,10 @@ export const publicToolContracts = {
     "ownerDomain": "customer-context",
     "title": "Get Customer Fact",
     "description": "Get one exact fact by ID. Returns the canonical fact shape and optionally expands requested related data such as evidence.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3594,6 +3642,10 @@ export const publicToolContracts = {
     "ownerDomain": "customer-context",
     "title": "Get Source",
     "description": "Get one exact source record by generic sourceType and sourceId. Use this when you already know the concrete underlying source you want to inspect.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -3974,6 +4026,10 @@ export const publicToolContracts = {
     "ownerDomain": "customer-context",
     "title": "List Sources",
     "description": "List concrete source records deterministically. Use this instead of semantic search when you need enumerated calls, emails, calendar events, support tickets, Slack conversations, or opportunities.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4417,6 +4473,10 @@ export const publicToolContracts = {
     "ownerDomain": "customer-context",
     "title": "Search Customer Context",
     "description": "Search across all known customer context using a natural-language query. Returns ranked artifact-level discovery previews with at most two matching excerpts per source or fact. Use outlit_get_source with a returned sourceType and sourceId when you need the canonical source contents. Omit customer to search across all customers in the organization.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -5191,6 +5251,10 @@ export const publicToolContracts = {
     "ownerDomain": "analytics",
     "title": "Run SQL Query",
     "description": "Execute read-only SQL queries against your analytics views.\n\nAvailable views:\n- activity: Customer activity events (event_name, event_type, event_channel, customer_id, occurred_at, properties, ...)\n- customers: Customer attributes (customer_id, domain, name, billing_status, plan, mrr_cents, traits, ...)\n- users: User attributes (user_id, email, name, customer_id, traits, ...)\n- revenue: Revenue snapshots over time (customer_id, snapshot_date, mrr_cents, ...)\n\nAll queries are automatically filtered to your organization's data.\nOnly SELECT queries are allowed.\nProperties and traits are JSON strings; inspect schemas and examples before filtering nested values.\n\nExample queries:\n- SELECT event_name, count(*) FROM activity GROUP BY 1 ORDER BY 2 DESC LIMIT 10\n- SELECT billing_status, sum(mrr_cents)/100 as mrr FROM customers GROUP BY 1\n- SELECT * FROM activity WHERE customer_id = 'cust_123' ORDER BY occurred_at DESC LIMIT 50",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -5270,6 +5334,10 @@ export const publicToolContracts = {
     "ownerDomain": "analytics",
     "title": "Get SQL Schema",
     "description": "Get schemas for available analytics views.\n\nUse this to discover column names, types, and descriptions before writing SQL queries.\nReturns column definitions and example queries for each view.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -5474,6 +5542,10 @@ export const publicToolContracts = {
     "ownerDomain": "destinations",
     "title": "List Destinations",
     "description": "List configured destinations using safe status fields and masked configuration only.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -5853,6 +5925,10 @@ export const publicToolContracts = {
     "ownerDomain": "destinations",
     "title": "Get Destination",
     "description": "Get one destination using safe status fields and masked configuration only.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -6238,6 +6314,10 @@ export const publicToolContracts = {
     "ownerDomain": "destinations",
     "title": "Create Destination",
     "description": "Create a Slack channel destination from an available channel.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -6642,6 +6722,10 @@ export const publicToolContracts = {
     "ownerDomain": "destinations",
     "title": "Update Destination",
     "description": "Update ordinary destination metadata. Use the dedicated enable or disable tool for lifecycle state.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -7041,6 +7125,10 @@ export const publicToolContracts = {
     "ownerDomain": "destinations",
     "title": "Enable Destination",
     "description": "Enable an ordinary destination that is ready for delivery.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -7426,6 +7514,10 @@ export const publicToolContracts = {
     "ownerDomain": "destinations",
     "title": "Disable Destination",
     "description": "Disable an ordinary non-default destination.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -7811,6 +7903,10 @@ export const publicToolContracts = {
     "ownerDomain": "destinations",
     "title": "Archive Destination",
     "description": "Archive an ordinary destination.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -7864,6 +7960,10 @@ export const publicToolContracts = {
     "ownerDomain": "integrations",
     "title": "Get Integration Capabilities",
     "description": "Describe safe integration setup modes without exposing credential fields or provider configuration.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -7956,6 +8056,10 @@ export const publicToolContracts = {
     "ownerDomain": "integrations",
     "title": "Begin Integration Setup",
     "description": "Begin a short-lived browser handoff for an integration that supports browser authentication.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -8040,6 +8144,10 @@ export const publicToolContracts = {
     "ownerDomain": "integrations",
     "title": "Get Integration Setup Status",
     "description": "Check a browser setup handoff owned by the current actor.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -8095,6 +8203,10 @@ export const publicToolContracts = {
     "ownerDomain": "integrations",
     "title": "Get Integration Status",
     "description": "Get the configuration-readiness status for one integration or the public integration catalog.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -8190,6 +8302,10 @@ export const publicToolContracts = {
     "ownerDomain": "integrations",
     "title": "Set Up Integration",
     "description": "Continue integration setup through validated credentials, safe configuration, or a trusted browser handoff.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "anyOf": [
@@ -9065,6 +9181,10 @@ export const publicToolContracts = {
     "ownerDomain": "customer_activation",
     "title": "Get Customer Activation",
     "description": "Get the product event currently configured to activate customers and users.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -9110,6 +9230,10 @@ export const publicToolContracts = {
     "ownerDomain": "customer_activation",
     "title": "Preview Customer Activation",
     "description": "Preview the bounded recent impact of choosing a product event for customer activation without changing configuration.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -9302,6 +9426,10 @@ export const publicToolContracts = {
     "ownerDomain": "customer_activation",
     "title": "Update Customer Activation",
     "description": "Set the product event used for future customer activation, or disable event-based activation with null. This does not backfill history.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -9367,6 +9495,10 @@ export const publicToolContracts = {
     "ownerDomain": "settings",
     "title": "Get Workspace Settings",
     "description": "Get the workspace default timezone and the default customer owner used as the lowest-ranked ownership source.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -9426,6 +9558,10 @@ export const publicToolContracts = {
     "ownerDomain": "settings",
     "title": "Update Workspace Settings",
     "description": "Update the workspace default timezone (a valid IANA timezone) and/or the default customer owner (an active workspace member, or null to clear).",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -9511,6 +9647,10 @@ export const publicToolContracts = {
     "ownerDomain": "value_features",
     "title": "List Features",
     "description": "List configured features, exact historical usage, eligible sources, and observed event candidates.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -10061,6 +10201,10 @@ export const publicToolContracts = {
     "ownerDomain": "value_features",
     "title": "Create Feature",
     "description": "Create or idempotently return one customer-value Feature observed by one event rule.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -10377,6 +10521,10 @@ export const publicToolContracts = {
     "ownerDomain": "value_features",
     "title": "Archive Feature",
     "description": "Archive a Feature when at least one other active Feature remains.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -10437,6 +10585,10 @@ export const publicToolContracts = {
     "ownerDomain": "value_features",
     "title": "Get Customer Features",
     "description": "Read Outlit event evidence and stored non-credit Autumn feature quantities, frequency, recency, weekly coverage, and explicit links for one authorized customer. Provider totals and linked event counts remain separate.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -11625,6 +11777,10 @@ export const publicToolContracts = {
     "ownerDomain": "customers",
     "title": "Get Customer Credits",
     "description": "Read a customer's credit pools, remaining credits, provider reset dates, and deterministic daily burn rate, rate change, runway, and trend from stored data. Missing or stale evidence is explicit; no live provider calls. For individual product feature usage use outlit_get_customer_features.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -12059,6 +12215,10 @@ export const publicToolContracts = {
     "ownerDomain": "attention",
     "title": "List Attention Items",
     "description": "List authorized open or resolved Attention items. Returns bounded customer identity, current priority, ARR importance, lifecycle timestamps, and a prepared-action URL without evidence bodies or internal agent state.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -12380,6 +12540,10 @@ export const publicToolContracts = {
     "ownerDomain": "attention",
     "title": "Get Attention Item",
     "description": "Get one authorized Attention item with its bounded current assessment, timeline, evidence summaries, and prepared-action URL. Does not return evidence IDs, quotes, email drafts, or internal agent state.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -15590,4 +15754,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "5d97f6f1cab684c8d1184d95a8c2bc214e4b00f4bc19084020999c5fbeb96123" as const
+export const sdkConsumerContractHash = "24332f09ea58a978df71e394ae0b7abe9b7d9c740c6eb2464bc7043a71934725" as const
