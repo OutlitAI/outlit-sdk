@@ -116,7 +116,7 @@ When calls or other communications exist but product usage is absent, use `outli
 
 Merging is dangerous and has no supported undo. Only execute when the user authorized it and the records are certainly the same customer. Similar names, related domains, shared participants, a suggested match, or parent/subsidiary relationships are insufficient. The merge command defaults to preview; execution requires explicit permission, the reviewed preview token, and a stable request ID. Any pair involving an `INDIVIDUAL` requires an eligible saved suggestion.
 
-Read [the identity and merge workflow](https://raw.githubusercontent.com/OutlitAI/skills/4a3045c9a1eefff79fb1d83bb7c9673467358dce/skills/outlit/references/identity.md) before previewing, rejecting, executing, retrying, or tracking a merge. It includes the five tool contracts, CLI examples, and asynchronous status handling.
+Read [the identity and merge workflow](https://raw.githubusercontent.com/OutlitAI/skills/e111a4e7c94c5e513e7c77a7e17a003c70d3bba9/skills/outlit/references/identity.md) before previewing, rejecting, executing, retrying, or tracking a merge. It includes the five tool contracts, CLI examples, and asynchronous status handling.
 
 Outlit-owned Churn and Renewal agents receive only the identity diagnostic for their assigned customer. Outlit-owned agents, including the Slack assistant acting for an admin, cannot reject suggestions or execute merges. Do not switch to CLI, API keys, or another identity to bypass an agent's tool policy or permissions. Customer-controlled agents may use the public tools within their granted authority.
 
@@ -159,7 +159,7 @@ Call schema before writing SQL.
 - Inspect JSON or trait column shapes before filtering nested values.
 - Keep SQL read-only.
 
-For ClickHouse syntax and query patterns, read [references/sql-reference.md](https://raw.githubusercontent.com/OutlitAI/skills/4a3045c9a1eefff79fb1d83bb7c9673467358dce/skills/outlit/references/sql-reference.md).
+For ClickHouse syntax and query patterns, read [references/sql-reference.md](https://raw.githubusercontent.com/OutlitAI/skills/e111a4e7c94c5e513e7c77a7e17a003c70d3bba9/skills/outlit/references/sql-reference.md).
 
 ## CLI Setup
 
@@ -251,17 +251,7 @@ Disconnect integrations through the Outlit web app. The CLI does not expose dest
 
 ## Docs
 
-- Docs home: https://docs.outlit.ai/
-- CLI overview: https://docs.outlit.ai/cli/overview
-- CLI commands: https://docs.outlit.ai/cli/commands
-- CLI integrations: https://docs.outlit.ai/cli/integrations
-- AI agent setup: https://docs.outlit.ai/cli/ai-agents
-- Agent skills: https://docs.outlit.ai/ai-integrations/skills
-- MCP integration: https://docs.outlit.ai/ai-integrations/mcp
-- Pi agents: https://docs.outlit.ai/ai-integrations/pi
-- Public tools API: https://docs.outlit.ai/api-reference/tools
-- API key validation: https://docs.outlit.ai/api-reference/validation
-- Customer context graph: https://docs.outlit.ai/concepts/customer-context-graph
+Start with the [documentation index](https://docs.outlit.ai/llms.txt), then read the relevant pages for your task. The [Outlit docs](https://docs.outlit.ai/) cover the product, CLI, MCP, API, and Outlit SDKs.
 
 ## Common Prompts
 
