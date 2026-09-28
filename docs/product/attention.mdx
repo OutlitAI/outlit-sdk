@@ -1,0 +1,79 @@
+---
+title: "Attention"
+description: "The queue of customer work that needs a person — how items arrive, how to filter and triage them, and what resolving means."
+---
+
+**Attention** — the app's home page — is the daily handoff from Outlit to your team. Everything here is a specific customer situation that monitoring has already investigated and flagged for a human: churn cases and renewal items in one queue.
+
+The rule of the page is *only work that requires human attention*. Routine monitoring output, healthy customers, and informational signals don't appear here — they live on the customer profile and the responsibilities pages.
+
+## The queue
+
+The queue defaults to **Open** items. Each card shows the customer, the kind of item (**Churn risk** or **Renewal**), a priority (**Urgent** / **High** / **Normal**), a plain-language title, account context (ARR and revenue percentile when billing data exists, renewal date for renewal items), approach progress, and the account owner.
+
+### Finding the right items
+
+| Control | Options |
+|---|---|
+| Search | Customer name, domain, or item title |
+| Priority | Urgent / High / Normal |
+| Responsibility | Churn / Renewal |
+| Owners | Filter to a specific teammate, or unassigned |
+| Approach status | All approaches / No approach / Awaiting review / In progress / Steps complete |
+| Sort | Recommended (default), Highest ARR, Recently updated |
+
+Filters combine, so "Churn + Awaiting review + Highest ARR" is a quick daily pass for the most expensive unworked risks.
+
+A kanban-style board view of the queue is in limited availability — your workspace may show a list only.
+
+## The lifecycle
+
+Items have two states:
+
+- **Open** — the default queue. Everything that still needs a person.
+- **Resolved** — the archive at `?status=resolved`. Resolving is never destructive; resolved items keep their full history and can be **reopened** from the detail page.
+
+"Steps complete" is progress on an approach, not resolution — an item stays open until a person marks it resolved.
+
+## The evidence model
+
+Findings inside an item are backed by **evidence**: captured excerpts and details from source records — a Slack thread, a support ticket, an email, a call transcript, a usage series, a CRM field. Each piece of evidence carries its source type and when it was observed, and links out to the record in the source system where a link exists. A citation without a link still shows what was captured; the source record may not be directly readable from here.
+
+The distinction that matters:
+
+- **Source evidence** is something a connected tool recorded — "the customer's admin posted this message on Tuesday."
+- **Inference** is what Outlit concluded from evidence — "engagement is declining." Assessments cite the evidence they rest on; when evidence is thin or a source record can't be read back, the item says so rather than papering over it.
+
+When a recommendation looks surprising, read the evidence behind it before acting — it's the fastest way to calibrate how much weight to give the assessment.
+
+## What items become
+
+An item is where review happens, not where work ends:
+
+- **Approach** — you pick the plan (or none). Approaches carry steps; some steps are recommendations for your team, some are executable actions Outlit performs after approval. See [Actions and approvals](/product/actions-and-approvals).
+- **Resolution** — when the situation is handled, **Mark resolved** moves it to the archive. For renewal items, resolving closes the attention item. Record **Renewed** or **Not renewed** separately on the renewal cycle.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="The queue is empty but I expected items">
+    Rule out the view first: the queue defaults to **Open** (check the Resolved view), and an active filter or search produces a "No items match these filters" state. Members also only see items on customers they own or that are shared with them. Then check the empty-state message — it distinguishes "nothing needs attention" from missing data — and **Responsibilities → Churn** for the monitoring status card.
+  </Accordion>
+  <Accordion title="An item references evidence I can't open">
+    Evidence links point at source systems your workspace connected. If a link fails, the underlying record may have been deleted, or your access in the source tool doesn't cover it — the citation can show captured evidence and available source metadata. Quotes, timestamps, and links appear only when available and permitted by your access.
+  </Accordion>
+  <Accordion title="Items arrive for accounts that aren't customers yet">
+    Churn monitoring scopes to paying and past-due customers; renewal items require a renewal cycle. If you're seeing items for accounts you don't consider customers, the billing or CRM mapping is the thing to check.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Customers" icon="address-book" href="/product/customers">
+    The profiles behind every item
+  </Card>
+  <Card title="Actions and approvals" icon="circle-check" href="/product/actions-and-approvals">
+    What Outlit can execute, and what always waits for you
+  </Card>
+</CardGroup>

@@ -1,22 +1,14 @@
 ---
-title: "Call Tool"
-description: "Call customer intelligence tools through the public tool gateway"
-api: "POST /api/tools/call"
+title: "Call a tool"
+description: "Call customer intelligence tools through the public tool gateway."
+openapi: "openapi.json POST /api/tools/call"
 ---
-
-## Endpoint
-
-```http
-POST https://app.outlit.ai/api/tools/call
-```
 
 ## Authentication
 
-<ParamField header="Authorization" type="string" required>
-  Outlit API key using the `Bearer ok_...` format.
-</ParamField>
+Pass an Outlit API key in the `Authorization` header as `Bearer ok_...`.
 
-## Request Body
+## Request body
 
 ```json
 {
@@ -28,48 +20,101 @@ POST https://app.outlit.ai/api/tools/call
 }
 ```
 
-<ParamField body="tool" type="string" required>
-  Customer intelligence tool name. Must be one of the supported tool names below.
-</ParamField>
+`tool` is a public tool name. The table below lists the main tools; [Integration tools](/api-reference/integrations)
+also documents two compatibility handoff tools. `input` is the tool-specific object, validated
+against the shared `@outlit/tools` contract before the tool runs.
 
-<ParamField body="input" type="object" default="{}">
-  Tool-specific input object. The input is validated against the shared `@outlit/tools` contract before the tool runs.
-</ParamField>
+## Supported tools
 
-## Supported Tools
+### Customers and people
 
 | Tool | Purpose |
-|------|---------|
+|---|---|
 | `outlit_list_customers` | Browse and filter customers by billing status, activity recency, revenue, traits, or name |
 | `outlit_list_users` | Browse and filter users by journey stage, activity recency, customer, traits, email, or name |
-| `outlit_list_workspace_users` | Browse internal workspace users such as CSMs, managers, account owners, and admins |
 | `outlit_get_customer` | Get full details for one customer, with optional related sections |
+| `outlit_get_customer_relationship` | Bounded relationship read model: categorized statements with source labels (no raw fact IDs or quotes) |
+| `outlit_get_customer_credits` | Read imported credit pools, remaining credits, burn rate, and runway for one customer |
+
+### Identity
+
+| Tool | Purpose |
+|---|---|
+| `outlit_get_customer_identity` | Read a customer's identity coverage and bounded possible-split records |
+| `outlit_list_identity_merge_suggestions` | Browse saved identity merge suggestions and history |
+| `outlit_reject_identity_merge_suggestion` | Reject one saved suggestion by exact ID |
+| `outlit_merge_customers` | Preview then execute a two-phase customer merge by exact UUIDs |
+| `outlit_get_customer_merge_status` | Track a merge operation by its operation ID |
+
+### Attention
+
+| Tool | Purpose |
+|---|---|
+| `outlit_list_attention_items` | List authorized open or resolved attention items (bounded fields, `preparedActionUrl`) |
+| `outlit_get_attention_item` | Retrieve one attention item by exact UUID |
+
+### Access
+
+| Tool | Purpose |
+|---|---|
+| `outlit_list_workspace_users` | Browse internal workspace users such as CSMs, managers, account owners, and admins |
 | `outlit_assign_customer_owner` | Assign an active workspace member as the customer's primary owner |
 | `outlit_grant_customer_access` | Share a customer with an active workspace member as a Viewer or Editor |
 | `outlit_update_customer_access` | Change an existing customer collaborator between Viewer and Editor |
 | `outlit_revoke_customer_access` | Remove a collaborator's explicit access to a customer |
+
+### Timeline and sources
+
+| Tool | Purpose |
+|---|---|
 | `outlit_get_timeline` | Get chronological customer activity across product, billing, support, and conversation channels |
 | `outlit_list_facts` | Browse stored customer facts and evidence |
 | `outlit_get_fact` | Retrieve one exact customer fact |
 | `outlit_get_source` | Retrieve one exact source record behind a fact or search result |
 | `outlit_list_sources` | List concrete source records such as calls, emails, calendar events, support tickets, Slack conversations, or opportunities |
 | `outlit_search_customer_context` | Search customer context semantically |
+
+### Analytics
+
+| Tool | Purpose |
+|---|---|
 | `outlit_query` | Run SQL against customer intelligence views |
 | `outlit_schema` | Inspect available analytics views |
-| `outlit_list_destinations` through `outlit_archive_destination` | Manage the safe destination lifecycle with masked configuration |
-| `outlit_get_integration_capabilities` through `outlit_setup_integration` | Negotiate and perform bounded integration setup, and read canonical configuration readiness |
-| `outlit_get_customer_activation` through `outlit_update_customer_activation` | Inspect, preview, and configure the ordinary activation event |
-| `outlit_get_workspace_settings`, `outlit_update_workspace_settings` | Read and update safe workspace settings |
+
+### Features
+
+| Tool | Purpose |
+|---|---|
 | `outlit_list_features` | Read configured Features, exact historical usage, eligible sources, and ready, partial, or unavailable candidate discovery |
 | `outlit_create_feature` | Create or idempotently return one Feature observed by one event rule |
 | `outlit_archive_feature` | Archive a Feature using its opaque id and current revision when another active feature remains |
 | `outlit_get_customer_features` | Read exact historical Feature usage for one authorized customer |
 
-<Info>
-  Tool input schemas are published by `@outlit/tools` as `publicToolContracts`. Use that package when building schema-driven clients or model tool definitions.
-</Info>
+### Configuration
 
-## TypeScript Client
+| Tool | Purpose |
+|---|---|
+| `outlit_list_destinations` | List destinations with masked configuration |
+| `outlit_get_destination` | Read one destination with masked configuration |
+| `outlit_create_destination` | Create a delivery destination |
+| `outlit_update_destination` | Update a destination |
+| `outlit_enable_destination` | Enable a destination |
+| `outlit_disable_destination` | Disable a destination |
+| `outlit_archive_destination` | Archive a destination |
+| `outlit_get_integration_capabilities` | Check supported setup steps without sending credentials |
+| `outlit_setup_integration` | Complete a supported credential, mapping, or browser handoff step |
+| `outlit_get_integration_status` | Read whether an integration is configured and ready |
+| `outlit_begin_integration_setup` | Start an older browser handoff without sending credentials |
+| `outlit_get_integration_setup_status` | Check the status of an older authentication handoff |
+| `outlit_get_customer_activation` | Read the configured activation event |
+| `outlit_preview_customer_activation` | Preview an event against past activity without changing activation |
+| `outlit_update_customer_activation` | Set the ordinary activation event |
+| `outlit_get_workspace_settings` | Read supported workspace settings |
+| `outlit_update_workspace_settings` | Update a supported workspace setting |
+
+For schema-driven clients, `@outlit/tools` publishes tool input schemas as `publicToolContracts`.
+
+## TypeScript client
 
 Use `@outlit/tools` when you want the same tool names and input contracts that power the CLI, Pi package, and public tool gateway:
 
@@ -95,11 +140,11 @@ const result = await outlit.callTool(
 )
 ```
 
-The package also exports `publicToolContracts`, `publicToolNames`, Core-owned `consumerToolPolicies`, `defaultToolNames`, `analyticalToolNames`, `piToolNames`, `cliToolNames`, `allPublicToolNames`, `publicOpenApiTransports`, `toolGatewayTransport`, `apiKeyValidationTransport`, `toolGatewayErrorCodes`, `toolGatewayErrorSchema`, `ingestTransport`, and enum lists such as `customerSourceTypes`. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases.
+The package also exports `publicToolContracts`, `publicToolNames`, server-defined `consumerToolPolicies`, `defaultToolNames`, `analyticalToolNames`, `piToolNames`, `cliToolNames`, `allPublicToolNames`, `publicOpenApiTransports`, `toolGatewayTransport`, `apiKeyValidationTransport`, `toolGatewayErrorCodes`, `toolGatewayErrorSchema`, `ingestTransport`, and enum lists such as `customerSourceTypes`. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases.
 
 ## Examples
 
-### List Paying Customers
+### List paying customers
 
 ```bash
 curl -X POST https://app.outlit.ai/api/tools/call \
@@ -114,7 +159,7 @@ curl -X POST https://app.outlit.ai/api/tools/call \
   }'
 ```
 
-### Get Customer Details
+### Get customer details
 
 ```json
 {
@@ -127,7 +172,7 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 }
 ```
 
-### Search Customer Context
+### Search customer context
 
 ```json
 {
@@ -142,7 +187,7 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 }
 ```
 
-### List Active Contact Transition Facts
+### List active contact transition facts
 
 ```json
 {
@@ -158,7 +203,7 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 }
 ```
 
-### Open One Source Record
+### Open one source record
 
 ```json
 {
@@ -170,7 +215,7 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 }
 ```
 
-### Read Exact Source Content
+### Read exact source content
 
 Exact lookup can include a `contentPage` with bounded content segments. The default
 page size is 10 segments, with a maximum of 100. Pass the returned
@@ -214,7 +259,7 @@ Example response with complete content:
 }
 ```
 
-### Follow Person Profile Evidence
+### Follow person profile evidence
 
 When a fact or search result references a `PERSON_PROFILE` source, use its source ID
 for exact lookup. Replace the example ID with the ID from that reference.
@@ -229,7 +274,7 @@ for exact lookup. Replace the example ID with the ID from that reference.
 }
 ```
 
-### Read Customer Features
+### Read customer features
 
 ```json
 {
@@ -243,7 +288,7 @@ for exact lookup. Replace the example ID with the ID from that reference.
 
 Feature usage is factual historical evidence. A feature can report complete or partial counts,
 no matches in the requested window, or unavailable source evidence. Unavailable evidence is not
-converted to zero. Archive is the only self-service lifecycle action in the MVP.
+converted to zero. Archive is the available self-service lifecycle action.
 Creating a Feature also creates the supporting weekly event-count and active-days metrics inside
 Outlit; those metrics are not separate public resources.
 
@@ -279,7 +324,7 @@ Example list response:
 }
 ```
 
-## Error Responses
+## Error responses
 
 Invalid JSON, unknown tool names, or invalid tool inputs return `400`:
 

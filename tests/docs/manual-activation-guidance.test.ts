@@ -6,13 +6,11 @@ function read(path: string): string {
 }
 
 describe("manual activation migration guidance", () => {
-  test("describes activation as tracking the configured meaningful event", () => {
+  test("describes activation as tracking an ordinary event after a successful milestone", () => {
     const nuxtGuide = read("docs/tracking/browser/nuxt.mdx")
 
     expect(nuxtGuide).not.toContain("Mark activation after")
-    expect(nuxtGuide).toContain(
-      "Track the configured meaningful event after the user completes the milestone:",
-    )
+    expect(nuxtGuide).toContain("Track your value milestone as an ordinary event once it succeeds:")
   })
 
   test("documents the Rust 0.2 to 0.3 migration", () => {

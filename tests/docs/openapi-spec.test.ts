@@ -63,17 +63,52 @@ function collectRefs(value: unknown): string[] {
 }
 
 describe("Core-generated OpenAPI spec", () => {
-  test("is registered at the docs root", () => {
+  test("maps each public operation to one canonical API page without generated duplicates", () => {
     expect(existsSync("docs/openapi.json")).toBe(true)
     expect(readSpec().openapi).toMatch(/^3\./)
 
     const docsConfig = JSON.parse(readFileSync("docs/docs.json", "utf8")) as {
       contextual?: { options?: string[] }
-      navigation?: { tabs?: Array<{ tab?: string; openapi?: string }> }
+      redirects?: Array<{ source: string; destination: string }>
+      navigation?: {
+        tabs?: Array<{
+          tab?: string
+          openapi?: string
+          groups?: Array<{ pages?: string[]; openapi?: string }>
+        }>
+      }
     }
-    expect(docsConfig.navigation?.tabs?.find((tab) => tab.tab === "API Reference")?.openapi).toBe(
-      "openapi.json",
-    )
+    const apiTab = docsConfig.navigation?.tabs?.find((tab) => tab.tab === "API reference")
+    expect(apiTab?.openapi).toBeUndefined()
+    expect(apiTab?.groups?.every((group) => group.openapi === undefined)).toBe(true)
+
+    const pages = apiTab?.groups?.flatMap((group) => group.pages ?? []) ?? []
+    const canonicalOperations = [
+      { page: "api-reference/validation", method: "POST", path: "/api/validate-api-key" },
+      { page: "api-reference/tools", method: "POST", path: "/api/tools/call" },
+      { page: "api-reference/ingest", method: "POST", path: "/api/i/v1/{publicKey}/events" },
+    ]
+    expect(pages).toEqual([
+      "api-reference/introduction",
+      "api-reference/validation",
+      "api-reference/tools",
+      "api-reference/integrations",
+      "api-reference/ingest",
+    ])
+    for (const { page, method, path } of canonicalOperations) {
+      expect(pages.filter((entry) => entry === page)).toHaveLength(1)
+      expect(readFileSync(`docs/${page}.mdx`, "utf8")).toContain(
+        `openapi: "openapi.json ${method} ${path}"`,
+      )
+      expect(readSpec().paths?.[path]?.[method.toLowerCase()]).toBeDefined()
+    }
+    for (const [source, destination] of [
+      ["/api-reference/call-an-outlit-capability", "/api-reference/tools"],
+      ["/api-reference/validate-an-outlit-api-key", "/api-reference/validation"],
+      ["/api-reference/ingest-customer-activity-events", "/api-reference/ingest"],
+    ]) {
+      expect(docsConfig.redirects).toContainEqual({ source, destination })
+    }
     expect(docsConfig.contextual?.options).toContain("download-spec")
   })
 
@@ -108,6 +143,69 @@ describe("Core-generated OpenAPI spec", () => {
     expect(Object.keys(schemas).filter((name) => name.startsWith("ToolInput_"))).toHaveLength(
       publicToolNames.length,
     )
+  })
+
+  test("adds presentation labels for every gateway request and response choice", () => {
+    const overlay = JSON.parse(readFileSync("docs/public-api.overlay.json", "utf8")) as {
+      overlay: string
+      extends: string
+      actions: Array<{ target: string; update: Record<string, string> }>
+    }
+    expect(overlay.overlay).toBe("1.1.0")
+    expect(overlay.extends).toBe("./openapi.json")
+
+    const choiceActions = overlay.actions.filter((action) =>
+      action.target.startsWith(
+        "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?",
+      ),
+    )
+    const toolNames = choiceActions.map((action) => {
+      expect(Object.keys(action.update)).toEqual(["title"])
+      expect(action.update.title).toMatch(/^[A-Z][a-zA-Z ]+$/)
+      return action.target.match(/@\.properties\.tool\.const == '([^']+)'/)?.[1]
+    })
+    expect(toolNames.sort()).toEqual([...publicToolNames].sort())
+
+    const responseActions = overlay.actions.filter((action) =>
+      action.target.startsWith("$.components.schemas['ToolOutput_"),
+    )
+    const responseNames = responseActions.map((action) => {
+      expect(Object.keys(action.update)).toEqual(["title"])
+      expect(action.update.title).toMatch(/^[A-Z][a-zA-Z ]+$/)
+      return action.target.match(/ToolOutput_([^']+)'\]$/)?.[1]
+    })
+    expect(responseNames.sort()).toEqual([...publicToolNames].sort())
+
+    const eventActions = overlay.actions.filter((action) =>
+      action.target.includes(".events.items.oneOf[?"),
+    )
+    expect(eventActions).toEqual(
+      ["pageview", "custom", "form", "identify", "engagement", "calendar"].map((eventType) => ({
+        target: `$.components.schemas['IngestPayload'].properties.events.items.oneOf[?(@.properties.type.const == '${eventType}')]`,
+        update: { title: `${eventType[0].toUpperCase()}${eventType.slice(1)} event` },
+      })),
+    )
+
+    const summaryActions = overlay.actions.filter(
+      (action) =>
+        !action.target.includes(".oneOf[?") &&
+        !action.target.startsWith("$.components.schemas['ToolOutput_"),
+    )
+    expect(summaryActions).toEqual([
+      {
+        target: "$.paths['/api/tools/call'].post",
+        update: { summary: "Call a tool" },
+      },
+      {
+        target: "$.paths['/api/validate-api-key'].post",
+        update: { summary: "Validate an API key" },
+      },
+      {
+        target: "$.paths['/api/i/v1/{publicKey}/events'].post",
+        update: { summary: "Ingest events" },
+      },
+    ])
+    expect(overlay.actions).toHaveLength(publicToolNames.length * 2 + 6 + 3)
   })
 
   test("documents Feature creation without a public Behavior Metric resource", () => {

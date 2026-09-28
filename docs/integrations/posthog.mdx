@@ -1,0 +1,40 @@
+---
+title: "PostHog"
+description: "Connect product analytics: API key, project, and account mapping."
+---
+
+The Outlit PostHog integration imports product activity into customer profiles — usage signals for inactivity detection, trend watches, and case evidence.
+
+Add the [Outlit Browser SDK](/tracking/browser/script) to see how someone first arrived and browsed your website before signup. It records the landing page, referrer, available UTM parameters, and anonymous site activity. Browser identification links that history to the contact, connecting discovery with later product activity and conversion.
+
+## Connect
+
+From **Integrations → PostHog**, the setup form asks for:
+
+| Field | What it is |
+|---|---|
+| **API key** | A PostHog API key (`phx_…`) with scopes `project:read`, `query:read`, and `hog_function:write` — the write scope backs Outlit's managed realtime destination |
+| **PostHog region** | **US** or **EU** — pick whichever hosts your PostHog Cloud project |
+| **Project ID** | The numeric project holding your product events |
+
+After credentials, confirm the account property that joins PostHog events to customers before import starts. Choose the domain or account ID property your project uses. A wrong mapping can leave product activity unattributed. After the first sync, check a customer profile to confirm the events attached to the right account.
+
+## After connecting
+
+- Event history imports; product-activity evidence starts appearing on customer profiles and in case assessments.
+- Churn monitoring's coverage improves — "no product source" clears once PostHog is healthy.
+- Distinct users and usage patterns feed the inactivity and trend signals.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Connected but profiles show no activity">
+    Check the **account property** first — events can arrive without appearing on a customer profile. Then confirm the project ID matches the project your product actually reports to.
+  </Accordion>
+  <Accordion title="The connection errors on connect">
+    Verify the API key has the required scopes (`project:read`, `query:read`, `hog_function:write`) for that project and the region matches where your PostHog Cloud project lives — the flow supports the US and EU cloud regions.
+  </Accordion>
+  <Accordion title="Activity stops arriving">
+    The connection may have gone stale — check Integrations for the error state. A rotated PostHog key needs re-entering in Outlit.
+  </Accordion>
+</AccordionGroup>

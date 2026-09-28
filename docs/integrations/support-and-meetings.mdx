@@ -1,0 +1,69 @@
+---
+title: "Support and meetings"
+description: "Pylon, Gong, Fireflies, Granola, Google Calendar — tickets and call evidence."
+---
+
+Support tickets and recorded conversations carry some of the strongest churn and expansion evidence — escalations, commitments, sentiment, competitor mentions. Each source connects differently.
+
+## Pylon — support tickets
+
+| Detail | Description |
+|---|---|
+| **Credentials** | API token from your Pylon workspace |
+| **Extra step** | Webhook setup so new/updated tickets stream in — the connection detail shows the webhook state |
+| **What it unlocks** | Open/unresolved ticket signals, escalation evidence on churn cases and renewal briefs |
+
+Paste the token in **Integrations → Pylon**, then finish the webhook step if prompted — without it, tickets don't arrive in real time.
+
+## Gong — call recordings
+
+| Detail | Description |
+|---|---|
+| **Credentials** | OAuth |
+| **Extra step** | Webhook configuration for recording delivery |
+| **What it unlocks** | Call transcripts and metadata as evidence — sentiment, commitments, competitive context |
+
+OAuth from **Integrations → Gong**, then complete the webhook step shown in the connection detail.
+
+## Fireflies — meeting notes
+
+| Detail | Description |
+|---|---|
+| **Credentials** | API key from Fireflies |
+| **What it unlocks** | Meeting transcripts as conversation evidence |
+
+Paste the key in **Integrations → Fireflies**. No mapping step.
+
+## Granola — meeting notes
+
+| Detail | Description |
+|---|---|
+| **Credentials** | Personal API key **or** Granola Enterprise API key |
+| **Scope** | Personal keys are per-teammate; an Enterprise key covers the team space |
+| **What it unlocks** | Meeting notes as evidence — including private notes when each teammate connects their own key |
+
+Personal Granola keys connect per person (like Gmail). If your team uses Granola Enterprise, one admin connection covers the workspace.
+
+## Google Calendar
+
+| Detail | Description |
+|---|---|
+| **Credentials** | OAuth |
+| **Scope** | Per teammate |
+| **What it unlocks** | Meeting cadence and upcoming customer meetings as context |
+
+Covered alongside Gmail — see [Gmail and Google Calendar](/integrations/gmail).
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Calls or tickets aren't appearing as evidence">
+    For Gong and Pylon, check the webhook step — OAuth/token connect and webhook delivery are separate, and both show their state on the connection detail. For Granola personal keys, the teammate who took the notes must connect their own key.
+  </Accordion>
+  <Accordion title="Tickets are stale">
+    Pylon's webhook may have lapsed — the connection detail shows webhook health. Re-saving the token doesn't restore webhooks; finish the webhook step.
+  </Accordion>
+  <Accordion title="A call didn't attach to the right customer">
+    Meeting evidence attaches by participant/domain matching. If participants aren't recognized contacts yet, confirm the customer's domain and contacts are set — see [Customers](/product/customers).
+  </Accordion>
+</AccordionGroup>

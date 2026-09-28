@@ -1,7 +1,9 @@
 ---
-title: "NPM Package"
-description: "Full control over tracking with the npm package"
+title: "npm package"
+description: "Install the Outlit Browser SDK with npm for explicit tracking configuration."
 ---
+
+The Outlit Browser SDK records landing URLs, browser referrers, UTM parameters, and anonymous site activity. Identify the same browser visitor with an email when it becomes available to connect that history to later product events and conversions.
 
 ## Installation
 
@@ -40,10 +42,10 @@ outlit.init({
 })
 ```
 
-### Configuration Options
+### Configuration options
 
 <ParamField path="publicKey" type="string" required>
-  Your organization's public key from [Settings → Website Tracking](https://app.outlit.ai/settings/workspace/tracking).
+  Your organization's public key from [**Settings → Website Visitors**](https://app.outlit.ai/settings/workspace/website-visitors).
 </ParamField>
 
 <ParamField path="apiHost" type="string" default="https://app.outlit.ai">
@@ -71,7 +73,7 @@ outlit.init({
 </ParamField>
 
 <ParamField path="autoIdentify" type="boolean" default="true">
-  Automatically identify users when they submit forms containing an email field. Extracts email and name using field name heuristics. Set to `false` to call `identify()` manually. See [Auto-Identify](/concepts/identity-resolution#auto-identify) for details.
+  Automatically identify users when they submit forms containing an email field. Extracts email and name using field name heuristics. Set to `false` to call `identify()` manually. See [Auto-identify](/concepts/identity-resolution#auto-identify) for details.
 </ParamField>
 
 <ParamField path="trackEngagement" type="boolean" default="true">
@@ -86,7 +88,7 @@ outlit.init({
   Track booking events from calendar embeds (Cal.com, Calendly). Fires a calendar event when bookings are detected.
 </ParamField>
 
-## Consent Management
+## Consent management
 
 If you need to wait for user consent before tracking:
 
@@ -110,7 +112,7 @@ function onConsentDeclined() {
 }
 ```
 
-### Check Tracking Status
+### Check tracking status
 
 ```typescript
 import { isTrackingEnabled } from '@outlit/browser'
@@ -120,7 +122,7 @@ if (isTrackingEnabled()) {
 }
 ```
 
-## API Reference
+## API reference
 
 ### `outlit.init(options)`
 
@@ -225,15 +227,13 @@ outlit.clearUser()
 
 ### Activation event
 
-Track the ordinary event selected as your activation event after the milestone succeeds:
+Track your value milestone as an ordinary event once it succeeds:
 
 ```typescript
 outlit.track('onboarding_completed', { flow: 'onboarding', step: 'completed' })
 ```
 
-<Info>
-  Configure this exact event as your activation event. Outlit Core applies its first match to eligible contacts and their resolved company. Billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
-</Info>
+Choose this event as your activation event in Outlit. The first matching event records activation once for each eligible resolved person and company, independently. Billing status comes from verified integrations such as Stripe. See [Customer journey](/concepts/customer-journey).
 
 ### `outlit.getInstance()`
 
@@ -281,7 +281,7 @@ if (isTrackingEnabled()) {
 }
 ```
 
-## TypeScript Support
+## TypeScript support
 
 The package is written in TypeScript and includes full type definitions:
 
@@ -306,7 +306,7 @@ outlit.track('purchase_completed', {
 })
 ```
 
-## Framework Examples
+## Framework examples
 
 ### Next.js (App Router)
 
@@ -384,9 +384,9 @@ function handleClick() {
 </script>
 ```
 
-## Advanced Usage
+## Advanced usage
 
-### Manual Flush
+### Manual flush
 
 Force immediate sending of queued events:
 
@@ -396,13 +396,13 @@ await outlit.getInstance().flush()
 
 ### Shutdown
 
-Gracefully shutdown the tracker (flushes remaining events):
+Shut down gracefully the tracker (flushes remaining events):
 
 ```typescript
 await outlit.getInstance().shutdown()
 ```
 
-### Access Visitor ID
+### Access visitor ID
 
 Get the current visitor's ID for server-side correlation:
 
@@ -415,17 +415,17 @@ fetch('/api/correlate', {
 })
 ```
 
-## Engagement Tracking
+## Engagement tracking
 
 Engagement tracking captures how long users actively spend on each page. It's enabled by default and works automatically.
 
-### How It Works
+### How it works
 
 - **Active time** is tracked when the page is visible and the user is interacting (mouse movement, clicks, scrolling, typing)
 - **Idle detection** pauses active time after 30 seconds of no interaction (configurable via `idleTimeout`)
 - **Engagement events** are automatically sent when the user navigates to a new page or leaves the site
 
-### Engagement Data
+### Engagement data
 
 Each engagement event includes:
 
@@ -435,7 +435,7 @@ Each engagement event includes:
 | `totalTimeMs` | Total wall-clock time on the page |
 | `sessionId` | Session ID for grouping page views |
 
-### Disabling Engagement Tracking
+### Disabling engagement tracking
 
 ```typescript
 outlit.init({
@@ -444,13 +444,13 @@ outlit.init({
 })
 ```
 
-## Next Steps
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="React Integration" icon="react" href="/tracking/browser/react">
+  <Card title="React integration" icon="react" href="/tracking/browser/react">
     Use the React provider and hooks
   </Card>
-  <Card title="Server-Side" icon="server" href="/tracking/server/nodejs">
+  <Card title="Server-side tracking" icon="server" href="/tracking/server/nodejs">
     Track events from your backend
   </Card>
 </CardGroup>

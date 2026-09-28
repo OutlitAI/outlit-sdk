@@ -1,64 +1,128 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Outlit Docs",
+  "name": "Outlit",
+  "description": "Outlit continuously monitors long-tail customers, surfaces churn risk and expansion opportunities with evidence, and completes approved customer work. These docs cover the product, the customer context interfaces, and the API.",
   "colors": {
-    "primary": "#255577",
-    "light": "#3a7799",
-    "dark": "#1a3d55"
+    "primary": "#0F172A",
+    "light": "#F8FAFC",
+    "dark": "#16161A"
   },
   "background": {
     "color": {
-      "dark": "#000000"
+      "light": "#FCF7F1",
+      "dark": "#16161A"
     }
   },
   "appearance": {
-    "default": "dark",
+    "default": "light",
     "strict": false
   },
-  "favicon": "/favicon.svg",
+  "fonts": {
+    "heading": {
+      "family": "Google Sans",
+      "source": "/fonts/google-sans-latin-v70.woff2",
+      "format": "woff2",
+      "weight": 400
+    },
+    "body": {
+      "family": "Google Sans",
+      "source": "/fonts/google-sans-latin-v70.woff2",
+      "format": "woff2",
+      "weight": 400
+    }
+  },
+  "styling": {
+    "eyebrows": "breadcrumbs"
+  },
+  "favicon": {
+    "light": "/favicon-dark.svg",
+    "dark": "/favicon.svg"
+  },
   "contextual": {
-    "options": ["copy", "download-spec", "chatgpt", "claude"]
+    "options": ["copy", "view", "download-spec", "chatgpt", "claude", "mcp"]
   },
   "settings": {
     "customScripts": ["/outlit.js"]
   },
+  "search": {
+    "prompt": "Search Outlit docs"
+  },
+  "seo": {
+    "indexing": "navigable",
+    "organization": {
+      "id": "https://www.outlit.ai/#organization",
+      "name": "Outlit",
+      "legalName": "Outlit Labs Inc.",
+      "url": "https://www.outlit.ai",
+      "logo": "https://www.outlit.ai/images/logos/outlit-logo-square.png",
+      "sameAs": [
+        "https://x.com/Outlit_ai",
+        "https://github.com/OutlitAI",
+        "https://www.linkedin.com/company/outlitai/"
+      ]
+    }
+  },
+  "markdown": {
+    "instructions": "Outlit is the product that monitors customers and completes approved customer work. The customer context interfaces are the API, CLI, MCP server, and skills. Canonical references on this site: /api-reference/introduction for API concepts and authentication, /openapi.json for the public API contract, /cli/overview for the CLI, /ai-integrations/mcp for MCP. Prefer the `outlit` CLI or MCP tools for agent tasks; cite page sources when answering."
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Documentation",
+        "tab": "Product",
         "groups": [
           {
-            "group": "Getting Started",
-            "pages": ["index", "tracking/quickstart", "tracking/how-it-works"]
-          },
-          {
-            "group": "Concepts",
+            "group": "Get started",
             "pages": [
-              "concepts/customer-context-graph",
-              "concepts/customer-journey",
-              "concepts/identity-resolution",
-              "concepts/website-visitors"
+              "index",
+              "getting-started/overview",
+              "getting-started/connect-data",
+              "getting-started/first-attention-item"
             ]
           },
           {
-            "group": "Browser SDKs",
+            "group": "Product",
             "pages": [
-              "tracking/browser/script",
-              "tracking/browser/npm",
-              "tracking/browser/react",
-              "tracking/browser/vue",
-              "tracking/browser/nextjs",
-              "tracking/browser/nuxt",
-              "tracking/browser/sveltekit",
-              "tracking/browser/astro",
-              "tracking/browser/angular",
-              "tracking/browser/calendar-embeds"
+              "product/attention",
+              "product/customers",
+              "product/actions-and-approvals",
+              "product/responsibilities",
+              "product/workspace-access",
+              "concepts/customer-context-graph"
             ]
           },
           {
-            "group": "Server SDKs",
-            "pages": ["tracking/server/nodejs", "tracking/server/rust"]
+            "group": "Guides",
+            "pages": ["guides/churn", "guides/expansion", "guides/renewals"]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/overview",
+              "integrations/stripe",
+              "integrations/posthog",
+              "integrations/slack",
+              "integrations/gmail",
+              "integrations/crm",
+              "integrations/support-and-meetings"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developers & agents",
+        "groups": [
+          {
+            "group": "Agents",
+            "pages": [
+              "ai-integrations/overview",
+              "ai-integrations/mcp",
+              "ai-integrations/skills",
+              "ai-integrations/pi",
+              "ai-integrations/platform-actions",
+              "ai-integrations/customer-workflows",
+              "ai-integrations/troubleshooting"
+            ]
           },
           {
             "group": "CLI",
@@ -71,23 +135,47 @@
             ]
           },
           {
-            "group": "AI Integrations",
+            "group": "Concepts",
             "pages": [
-              "ai-integrations/mcp",
-              "ai-integrations/platform-actions",
-              "ai-integrations/skills",
-              "ai-integrations/pi"
+              "concepts/customer-journey",
+              "concepts/identity-resolution",
+              "concepts/website-visitors"
             ]
           },
           {
-            "group": "Use Cases",
+            "group": "Outlit SDKs",
+            "pages": [
+              "tracking/quickstart",
+              "tracking/how-it-works",
+              {
+                "group": "Browser",
+                "pages": [
+                  "tracking/browser/script",
+                  "tracking/browser/npm",
+                  "tracking/browser/react",
+                  "tracking/browser/vue",
+                  "tracking/browser/nextjs",
+                  "tracking/browser/nuxt",
+                  "tracking/browser/sveltekit",
+                  "tracking/browser/astro",
+                  "tracking/browser/angular",
+                  "tracking/browser/calendar-embeds"
+                ]
+              },
+              {
+                "group": "Server",
+                "pages": ["tracking/server/nodejs", "tracking/server/rust"]
+              }
+            ]
+          },
+          {
+            "group": "Examples",
             "pages": ["use-cases/openclaw"]
           }
         ]
       },
       {
-        "tab": "API Reference",
-        "openapi": "openapi.json",
+        "tab": "API reference",
         "groups": [
           {
             "group": "Overview",
@@ -107,20 +195,11 @@
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "GitHub",
-          "href": "https://github.com/OutlitAI",
-          "icon": "github"
-        }
-      ]
-    }
+    ]
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/wordmark.png",
+    "dark": "/logo/wordmark.png"
   },
   "navbar": {
     "links": [
@@ -131,12 +210,12 @@
       },
       {
         "label": "Support",
-        "href": "mailto:leo@outlit.ai"
+        "href": "https://www.outlit.ai/support"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
+      "label": "Open app",
       "href": "https://app.outlit.ai"
     }
   },
@@ -144,13 +223,26 @@
     {
       "source": "/concepts/anonymous-tracking",
       "destination": "/concepts/website-visitors"
+    },
+    {
+      "source": "/api-reference/call-an-outlit-capability",
+      "destination": "/api-reference/tools"
+    },
+    {
+      "source": "/api-reference/validate-an-outlit-api-key",
+      "destination": "/api-reference/validation"
+    },
+    {
+      "source": "/api-reference/ingest-customer-activity-events",
+      "destination": "/api-reference/ingest"
     }
   ],
   "footer": {
     "socials": {
       "x": "https://x.com/Outlit_ai",
       "github": "https://github.com/OutlitAI",
-      "linkedin": "https://linkedin.com/company/outlit"
+      "linkedin": "https://linkedin.com/company/outlit",
+      "website": "https://www.outlit.ai"
     }
   }
 }

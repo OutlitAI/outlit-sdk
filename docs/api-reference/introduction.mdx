@@ -1,6 +1,6 @@
 ---
-title: "API Overview"
-description: "Direct API access for custom integrations"
+title: "API overview"
+description: "Direct API access for custom integrations."
 ---
 
 ## Base URL
@@ -24,16 +24,16 @@ Platform API routes use an Outlit API key in the `Authorization` header:
 Authorization: Bearer ok_...
 ```
 
-Use the public tool gateway for every model-safe capability and the validation route for API-key checks:
+Use the public tool gateway for supported customer and workspace actions and the validation route for API-key checks:
 
 ```http
 POST /api/tools/call
 POST /api/validate-api-key
 ```
 
-The public tool gateway exposes the same exact catalog used by the CLI and agent integrations: customer intelligence, destinations, safe integration handoffs and status, activation configuration, workspace settings, and read-only SQL.
+The public tool gateway publishes the full catalog: customer intelligence, destinations, integration setup and status, activation configuration, workspace settings, and read-only SQL. CLI and agent integrations can expose selected subsets of these tools.
 
-[Platform Configuration](/ai-integrations/platform-actions) exposes destination and selected workspace-setting routes that are also available through the CLI.
+[Workspace configuration](/ai-integrations/platform-actions) explains destination and workspace-setting tools that are also available through the CLI.
 
 ### Ingest API
 
@@ -43,33 +43,29 @@ The Ingest API uses your **public key** in the URL path. No additional authentic
 POST /api/i/v1/{publicKey}/events
 ```
 
-<Warning>
+<Info>
   Your public key is **not secret** and is safe to include in client-side code. It's designed to be visible in your website's source code.
-</Warning>
+</Info>
 
-## Rate Limits
+## Limits
 
 ### Ingest API
 
-| Limit | Value |
-|-------|-------|
-| Requests per second | 100 |
-| Events per request | 100 |
-| Request body size | 1 MB |
+The verified contract limit is **100 events per request** — larger batches are rejected by schema validation. Send events in batches of 100 or fewer.
 
-Rate limit headers are included in responses:
+Handle responses by status class, not by a promise of specific headers:
 
-```
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1699999999
-```
+- `4xx` other than `429` (validation `400`, auth `401`/`403`, invalid public key or domain) — **do not retry**; these are permanent until the request or credentials change
+- `207` (ingest partial success) — inspect the body's `processed` count and per-event errors; correct the failed events before retrying them, and never resubmit the batch blindly
+- network failures, `429`, and `5xx` — retryable; use bounded exponential backoff
+
+Per-key rate-limit headers are not part of the documented contract; don't build on their presence.
 
 ### Platform API
 
-Capability calls are authenticated with your Outlit API key and may count toward your plan's API-call allowance.
+Capability calls are authenticated with your Outlit API key and may count toward your plan's API-call allowance. Plan-limit failures surface through the tool gateway's error envelope (see below) rather than through ingest-style tracking responses.
 
-## Error Responses
+## Error responses
 
 Ingest API errors use the tracking response format:
 
@@ -97,20 +93,23 @@ The tool gateway uses one stable redacted error envelope:
 }
 ```
 
-### HTTP Status Codes
+### HTTP status codes
 
 | Code | Description |
 |------|-------------|
 | 200 | Success |
+| 207 | Some ingest events succeeded; inspect per-event errors |
 | 400 | Invalid request body or parameters |
 | 401 | Invalid or missing API key |
+| 402 | Plan or API-call allowance exceeded, where enforced |
 | 403 | Invalid public key, unauthorized domain, or plan connection limit |
-| 429 | Rate limit exceeded |
+| 429 | Platform limit applied (where enforced) — retry with backoff |
 | 500 | Internal server error |
+| 503 | Service unavailable; retry with backoff |
 
 ## CORS
 
-The Ingest API supports CORS for browser requests. Allowed origins are configured in your tracking settings ([Settings -> Website Tracking](https://app.outlit.ai/settings/workspace/tracking) -> Enabled Domains).
+The Ingest API supports CORS for browser requests. Allowed origins are configured in your tracking settings [**Settings → Website Visitors → Enabled Domains**](https://app.outlit.ai/settings/workspace/website-visitors).
 
 ```
 Access-Control-Allow-Origin: https://your-domain.com
@@ -118,24 +117,19 @@ Access-Control-Allow-Methods: POST, OPTIONS
 Access-Control-Allow-Headers: Content-Type
 ```
 
-## Available Endpoints
+## Available endpoints
 
-<Card title="POST /api/validate-api-key" icon="key" href="/api-reference/validation">
-  Verify that an Outlit API key can authenticate Platform API requests
-</Card>
-
-<Card title="POST /api/tools/call" icon="terminal" href="/api-reference/tools">
-  Call customer intelligence tools through the public tool gateway
-</Card>
-
-<Card title="Integration tools" icon="plug" href="/api-reference/integrations">
-  Negotiate bounded setup and inspect canonical configuration readiness through the gateway
-</Card>
-
-<Card title="Platform capabilities" icon="sliders" href="/ai-integrations/platform-actions">
-  Manage masked destinations, activation, and selected workspace settings through the gateway
-</Card>
-
-<Card title="POST /events" icon="arrow-right" href="/api-reference/ingest">
-  Send tracking events (pageviews, custom events, identify, engagement, and calendar events)
-</Card>
+<CardGroup cols={2}>
+  <Card title="Validate an API key" icon="key" href="/api-reference/validation">
+    Check whether a key can authenticate API requests.
+  </Card>
+  <Card title="Call a tool" icon="terminal" href="/api-reference/tools">
+    Read customer context or perform an authorized action.
+  </Card>
+  <Card title="Integration tools" icon="plug" href="/api-reference/integrations">
+    Set up a provider and check configuration readiness.
+  </Card>
+  <Card title="Ingest events" icon="arrow-right" href="/api-reference/ingest">
+    Send browser or server tracking events.
+  </Card>
+</CardGroup>

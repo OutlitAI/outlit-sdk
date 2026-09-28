@@ -1,0 +1,64 @@
+---
+title: "Actions and approvals"
+description: "How Outlit proposes approaches, what you approve, and what actually executes."
+---
+
+Outlit investigates customer situations and prepares approaches. You choose a plan and approve each outbound email before it sends. An **approach** contains **steps** for your team or actions Outlit can carry out after approval.
+
+## Approaches: picking the plan
+
+When a churn case or renewal item is assessed, Outlit may propose a **primary approach** — sometimes with alternatives — each a short plan of steps. Not every item carries a proposal: where none is proposed yet, the item says so and the assessment and evidence still stand on their own.
+
+On the item's detail page you:
+
+- **Choose an approach** to start work (or pick an alternative), or
+- Take **no approach** — the item stays open without a plan.
+
+Once an approach is selected, its steps run as tracked work — the card in Attention shows the next step and progress (*3 of 5 steps*). When all steps complete the item shows **Steps complete**; it stays open until you resolve it.
+
+Approaches can be replaced. If a later assessment supports a different plan — for example after a new customer call — you can switch; the history keeps the full record of what was tried.
+
+## Steps: recommendations vs executable actions
+
+Each step in an approach is one of two kinds, labeled on the step:
+
+| Kind | What it is |
+|---|---|
+| **Recommendation** | A suggested action for a person — "call the economic buyer," "offer a quarterly plan." Outlit tracks it; a human does it. |
+| **Action** | An executable step Outlit can perform — but only after explicit approval of the prepared draft. |
+
+## Review and send email
+
+The available action is a reviewed customer email. The **Take action** control opens the customer workspace with follow-up context; it does not send anything.
+
+| Action | What happens | Approval |
+|---|---|---|
+| **Send customer email** | Outlit prepares a Gmail draft (subject, body, recipient from the customer's known contacts). You review it on a dedicated review screen, edit it if needed, and approve. Only then is it sent through your connected Gmail. | Required |
+
+Outlit sends email only after you review and approve its draft. It does not write to your CRM or change subscriptions through an approach. Prepared actions can expire, so an old draft does not send late.
+
+### The email review flow
+
+1. The drafted email appears on the attention item — and in Slack/email notifications where configured — with a **Review email** link.
+2. The review screen shows the prepared draft and the evidence it was based on. You can edit subject, body, and recipient.
+3. Approving sends it via your Gmail connection; the intent is recorded with its outcome on the item.
+
+## Resolving work
+
+- **Churn cases** — **Mark resolved** closes the case (with a confirm), **Reopen** restores it. A case can also carry a billing-recovery callout when the risk is a failed payment.
+- **Renewal items** — resolving records the attention disposition; the cycle itself closes when an outcome (renewed / not renewed) is recorded. See [Work a renewal](/guides/renewals).
+
+## Permissions
+
+Approving approaches and executable actions requires customer-management permission — in practice, workspace **admins** and members granted that scope. Members with read access see items and evidence without the action controls. See [Workspace access](/product/workspace-access).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Attention" icon="bolt" href="/product/attention">
+    Where approvals land and how items flow
+  </Card>
+  <Card title="Churn guide" icon="shield" href="/guides/churn">
+    A case from signal to resolved
+  </Card>
+</CardGroup>

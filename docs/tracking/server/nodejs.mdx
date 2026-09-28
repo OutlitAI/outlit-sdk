@@ -1,20 +1,16 @@
 ---
-title: "Node.js SDK"
-description: "Server-side tracking for backend applications"
+title: "Outlit Node.js SDK"
+description: "Server-side tracking for backend applications."
 ---
 
-## Overview
-
-The Node.js SDK is designed for server-side tracking where you have user identity. It supports:
+The Outlit Node.js SDK records backend product activity when you have user identity or an account ID. It supports:
 
 - **Identified tracking** - Use `email` or `userId` for user-scoped resolution
 - **Customer attribution** - Add `customerId` for account/workspace context, even before a user is known
 - **Efficient batching** - Events are queued and sent in batches
 - **Device tracking** - Use `fingerprint` for desktop/mobile apps ([learn more](/concepts/website-visitors#device-tracking-non-browser))
 
-<Info>
-  Use server-side tracking for events that happen in your backend: subscription changes, feature usage from APIs, background jobs, etc.
-</Info>
+Use it for product events that happen in your backend: feature usage from APIs, completed report exports, and background jobs. For the visitor's first landing page, referrer, UTM data, and anonymous website activity, use the [Outlit Browser SDK](/tracking/browser/script) and identify that browser visitor when their email becomes available. An email-only server identify cannot link an otherwise anonymous browser visitor. Billing status comes from a verified integration such as Stripe.
 
 ## Installation
 
@@ -36,7 +32,7 @@ bun add @outlit/node
 ```
 </CodeGroup>
 
-## Quick Start
+## Quick start
 
 ```typescript
 import { Outlit } from '@outlit/node'
@@ -94,7 +90,7 @@ const outlit = new Outlit({
   HTTP request timeout in milliseconds.
 </ParamField>
 
-## API Reference
+## API reference
 
 ### `outlit.track(options)`
 
@@ -143,9 +139,7 @@ outlit.track({
   Unix timestamp in milliseconds. Defaults to current time.
 </ParamField>
 
-<Info>
-  At least one of `email`, `userId`, `fingerprint`, or `customerId` is required for `track()`. `customerId`-only events are valid immediately and can later link to a resolved customer when `identify()` uses the same `customerId` with an email.
-</Info>
+At least one of `email`, `userId`, `fingerprint`, or `customerId` is required for `track()`. `customerId`-only events are valid immediately and can later link to a resolved customer when `identify()` uses the same `customerId` with an email.
 
 ### `outlit.identify(options)`
 
@@ -191,9 +185,7 @@ outlit.identify({
   Properties to update on the customer profile.
 </ParamField>
 
-<Info>
-  At least one of `email` or `userId` is required for `identify()`. Customer fields are optional additions.
-</Info>
+At least one of `email` or `userId` is required for `identify()`. Customer fields are optional additions.
 
 ### Lifecycle and billing
 
@@ -207,9 +199,7 @@ outlit.track({
 })
 ```
 
-<Info>
-  Outlit Core derives activation from the customer-selected ordinary event and derives engagement and inactivity from activity. Billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
-</Info>
+Choose this event as your activation event in Outlit. The first matching event records activation once for each eligible resolved person and company, independently. Billing status comes from verified integrations such as Stripe. See [Customer journey](/concepts/customer-journey).
 
 ### `outlit.flush()`
 
@@ -221,7 +211,7 @@ await outlit.flush()
 
 ### `outlit.shutdown()`
 
-Gracefully shutdown: flushes remaining events and stops the timer.
+Shut down gracefully: flushes remaining events and stops the timer.
 
 ```typescript
 await outlit.shutdown()
@@ -235,7 +225,7 @@ Get the number of events waiting to be sent.
 console.log(`Pending events: ${outlit.queueSize}`)
 ```
 
-## Framework Examples
+## Framework examples
 
 ### Express.js
 
@@ -275,7 +265,7 @@ process.on('SIGTERM', async () => {
 })
 ```
 
-### Next.js API Routes
+### Next.js API routes
 
 ```typescript
 // app/api/subscription/upgrade/route.ts
@@ -305,7 +295,7 @@ export async function POST(request: Request) {
 }
 ```
 
-### Serverless Functions (AWS Lambda, Vercel)
+### Serverless functions (AWS Lambda, Vercel)
 
 <Warning>
   In serverless environments, **always call `flush()` before returning**. The function may be terminated before the background flush runs.
@@ -332,13 +322,11 @@ export async function handler(event) {
 }
 ```
 
-### Stripe Webhooks
+### Stripe webhooks
 
-<Info>
-  Connect Stripe as a verified Outlit integration. Subscription state then updates account billing status automatically; do not translate Stripe webhooks into authoritative SDK billing commands.
-</Info>
+Connect Stripe as a verified Outlit integration. Subscription state then updates account billing status automatically; do not translate Stripe webhooks into SDK events.
 
-### Background Jobs (Bull, Agenda)
+### Background jobs (Bull, Agenda)
 
 ```typescript
 import { Queue, Worker } from 'bullmq'
@@ -364,24 +352,19 @@ const worker = new Worker('emails', async (job) => {
 // No need to flush per job unless critical
 ```
 
-## Common Events to Track
+## Common events to track
 
 Here are recommended server-side events:
 
 | Event | When | Properties |
 |-------|------|------------|
-| `subscription_created` | New subscription | `plan`, `price`, `interval` |
-| `subscription_upgraded` | Plan upgrade | `fromPlan`, `toPlan`, `mrr` |
-| `subscription_cancelled` | Cancellation | `reason`, `mrr_lost` |
-| `payment_succeeded` | Payment received | `amount`, `currency` |
-| `payment_failed` | Payment failed | `amount`, `error_code` |
 | `feature_used` | Feature usage | `feature`, `count` |
 | `api_key_created` | API key created | `keyName`, `permissions` |
 | `export_completed` | Data export | `format`, `rowCount`, `size` |
-| `invite_sent` | Team invite | `inviteeEmail`, `role` |
+| `invite_sent` | Team invite | `role` |
 | `user_role_changed` | Permission change | `fromRole`, `toRole` |
 
-## Error Handling
+## Error handling
 
 The SDK silently handles errors to not disrupt your application. For debugging:
 
@@ -397,7 +380,7 @@ if (outlit.queueSize > 500) {
 }
 ```
 
-## TypeScript Support
+## TypeScript support
 
 Full TypeScript support is included:
 
@@ -426,13 +409,13 @@ const trackOptions: ServerTrackOptions = {
 outlit.track(trackOptions)
 ```
 
-## Next Steps
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
-    Learn how profiles are merged across sources
+  <Card title="Identity resolution" icon="fingerprint" href="/concepts/identity-resolution">
+    Learn how activity links across sources
   </Card>
-  <Card title="Customer Journey" icon="route" href="/concepts/customer-journey">
+  <Card title="Customer journey" icon="route" href="/concepts/customer-journey">
     Understand contact stages and account billing
   </Card>
 </CardGroup>

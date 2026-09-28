@@ -1,22 +1,12 @@
 ---
-title: "Ingest Events"
-description: "Send tracking events to Outlit"
-api: "POST /api/i/v1/{publicKey}/events"
+title: "Ingest events"
+description: "Send tracking events to Outlit."
+openapi: "openapi.json POST /api/i/v1/{publicKey}/events"
 ---
 
-## Endpoint
+Use your organization's `pk_` public key in the URL path. Ingest requests do not use a bearer API key.
 
-```
-POST https://app.outlit.ai/api/i/v1/{publicKey}/events
-```
-
-## Path Parameters
-
-<ParamField path="publicKey" type="string" required>
-  Your organization's public key. Starts with `pk_`.
-</ParamField>
-
-## Request Body
+## Request body
 
 ```json
 {
@@ -35,40 +25,15 @@ POST https://app.outlit.ai/api/i/v1/{publicKey}/events
 }
 ```
 
-### Body Parameters
+For browser (`client`) tracking, send a UUID `visitorId`; server events can omit it when an event
+provides `email`, `userId`, `fingerprint`, or `customerId` for identity or account attribution.
+`source` defaults to `client` and also accepts `server` or `integration`. Send 1–100 events per request.
 
-<ParamField body="visitorId" type="string">
-  Unique identifier for the visitor (UUID format). Required for browser (`client`) tracking. For server-side tracking (`server` source), this can be omitted; identity or attribution is derived from `email`, `userId`, `fingerprint`, or `customerId` in the events.
-</ParamField>
+When a browser user is logged in, `userIdentity` can provide `email`, a system-owned `userId`, and
+user `traits` for immediate resolution. `customerIdentity` can provide a system-owned `customerId`
+and `customerTraits` for account attribution across the whole batch.
 
-<ParamField body="source" type="string" default="client">
-  Event source. One of: `client` (browser), `server`, `integration`.
-</ParamField>
-
-<ParamField body="events" type="array" required>
-  Array of event objects to ingest (max 100 per request).
-</ParamField>
-
-<ParamField body="userIdentity" type="object">
-  Optional user identity for immediate resolution. Used by browser SDK when user is logged in (via `setUser()`). Allows direct identity resolution instead of anonymous visitor flow.
-  
-  | Property | Type | Description |
-  |----------|------|-------------|
-  | `email` | string | User's email address |
-  | `userId` | string | Your system-owned user/contact ID |
-  | `traits` | object | User/contact traits |
-</ParamField>
-
-<ParamField body="customerIdentity" type="object">
-  Optional customer/account attribution for the whole batch. Used by browser SDK when the current user carries account/workspace context.
-
-  | Property | Type | Description |
-  |----------|------|-------------|
-  | `customerId` | string | Your system-owned customer/account/workspace ID |
-  | `customerTraits` | object | Customer/account traits |
-</ParamField>
-
-## Event Types
+## Event types
 
 All events share these common fields:
 
@@ -81,7 +46,7 @@ All events share these common fields:
 | `referrer` | string | No | Referrer URL |
 | `utm` | object | No | UTM parameters (see below) |
 
-### UTM Parameters
+### UTM parameters
 
 ```json
 {
@@ -95,9 +60,7 @@ All events share these common fields:
 }
 ```
 
----
-
-### Pageview Event
+### Pageview event
 
 Track a page view.
 
@@ -117,17 +80,9 @@ Track a page view.
 }
 ```
 
-<ParamField body="type" type="string" required>
-  Must be `"pageview"`.
-</ParamField>
+Set `type` to `pageview`. `title` is the page title when available.
 
-<ParamField body="title" type="string">
-  Page title.
-</ParamField>
-
----
-
-### Custom Event
+### Custom event
 
 Track any custom event.
 
@@ -146,21 +101,10 @@ Track any custom event.
 }
 ```
 
-<ParamField body="type" type="string" required>
-  Must be `"custom"`.
-</ParamField>
+Set `type` to `custom` and provide an `eventName`. The optional `properties` map accepts string,
+number, boolean, and null values.
 
-<ParamField body="eventName" type="string" required>
-  Name of the custom event.
-</ParamField>
-
-<ParamField body="properties" type="object">
-  Key-value pairs of event properties. Values can be string, number, boolean, or null.
-</ParamField>
-
----
-
-### Form Event
+### Form event
 
 Track a form submission.
 
@@ -180,25 +124,13 @@ Track a form submission.
 }
 ```
 
-<ParamField body="type" type="string" required>
-  Must be `"form"`.
-</ParamField>
-
-<ParamField body="formId" type="string">
-  Identifier for the form (ID attribute or name).
-</ParamField>
-
-<ParamField body="formFields" type="object">
-  Key-value pairs of form field values.
-</ParamField>
+Set `type` to `form`. `formId` is the form's ID or name; `formFields` holds field names and values.
 
 <Warning>
-  Sensitive fields (password, credit_card, ssn, etc.) are automatically stripped on the server. Don't send them.
+  Do not send passwords, payment details, or national identifiers. Outlit filters `formFields` using a field denylist and sensitive-value checks; these safeguards do not replace filtering at the source.
 </Warning>
 
----
-
-### Identify Event
+### Identify event
 
 Identify the visitor with their email/userId.
 
@@ -224,35 +156,13 @@ Identify the visitor with their email/userId.
 }
 ```
 
-<ParamField body="type" type="string" required>
-  Must be `"identify"`.
-</ParamField>
+Set `type` to `identify` and provide at least one of `email` or your system-owned `userId`.
+`traits` updates the user profile. Send your system-owned `customerId` to link that external
+account or workspace to the resolved contact; `customerTraits` updates its profile.
 
-<ParamField body="email" type="string">
-  User's email address. At least one of `email` or `userId` required.
-</ParamField>
+### Engagement event
 
-<ParamField body="userId" type="string">
-  Your system-owned user/contact ID.
-</ParamField>
-
-<ParamField body="traits" type="object">
-  Properties to set on the user profile.
-</ParamField>
-
-<ParamField body="customerId" type="string">
-  Your system-owned customer/account/workspace ID. Send it with an identify event when you want that external account/workspace to link to the contact resolved from email or userId.
-</ParamField>
-
-<ParamField body="customerTraits" type="object">
-  Properties to set on the customer profile.
-</ParamField>
-
----
-
-### Engagement Event
-
-Track active time on a page. Automatically sent by the browser SDK.
+Track active time on a page. Automatically sent by the Outlit Browser SDK.
 
 ```json
 {
@@ -266,25 +176,11 @@ Track active time on a page. Automatically sent by the browser SDK.
 }
 ```
 
-<ParamField body="type" type="string" required>
-  Must be `"engagement"`.
-</ParamField>
+Set `type` to `engagement`. Send `activeTimeMs` for visible-tab interaction time and `totalTimeMs`
+for total wall-clock time on the page. `sessionId` is a UUID that groups engagement events and
+resets after 30 minutes of inactivity or when the tab closes.
 
-<ParamField body="activeTimeMs" type="number" required>
-  Time in milliseconds the user was actively engaged (visible tab + user interactions).
-</ParamField>
-
-<ParamField body="totalTimeMs" type="number" required>
-  Total wall-clock time in milliseconds on the page.
-</ParamField>
-
-<ParamField body="sessionId" type="string" required>
-  Session ID (UUID) for grouping engagement events. Resets after 30 min of inactivity or tab close.
-</ParamField>
-
----
-
-### Calendar Event
+### Calendar event
 
 Track calendar booking from embedded widgets (Cal.com, Calendly).
 
@@ -303,47 +199,14 @@ Track calendar booking from embedded widgets (Cal.com, Calendly).
 }
 ```
 
-<ParamField body="type" type="string" required>
-  Must be `"calendar"`.
-</ParamField>
-
-<ParamField body="provider" type="string" required>
-  Calendar provider: `"cal.com"`, `"calendly"`, or `"unknown"`.
-</ParamField>
-
-<ParamField body="eventType" type="string">
-  Meeting type name (e.g., "30 Minute Demo").
-</ParamField>
-
-<ParamField body="startTime" type="string">
-  Scheduled start time (ISO 8601 format).
-</ParamField>
-
-<ParamField body="endTime" type="string">
-  Scheduled end time (ISO 8601 format).
-</ParamField>
-
-<ParamField body="duration" type="number">
-  Duration in minutes.
-</ParamField>
-
-<ParamField body="isRecurring" type="boolean">
-  Whether this is a recurring meeting.
-</ParamField>
-
-<ParamField body="inviteeEmail" type="string">
-  Invitee's email (only available via server-side webhooks).
-</ParamField>
-
-<ParamField body="inviteeName" type="string">
-  Invitee's name (only available via server-side webhooks).
-</ParamField>
-
----
+Set `type` to `calendar` and `provider` to `cal.com`, `calendly`, or `unknown`.
+`eventType` names the meeting; `startTime` and `endTime` use ISO 8601, `duration` is in minutes,
+and `isRecurring` indicates a recurring meeting. `inviteeEmail` and `inviteeName` are available
+only through server-side webhooks.
 
 ## Response
 
-### Success Response
+### Success response
 
 ```json
 {
@@ -352,19 +215,9 @@ Track calendar booking from embedded widgets (Cal.com, Calendly).
 }
 ```
 
-<ResponseField name="success" type="boolean">
-  Whether the request was successful.
-</ResponseField>
+`processed` counts the successfully processed events. Inspect `errors` when `success` is false.
 
-<ResponseField name="processed" type="number">
-  Number of events successfully processed.
-</ResponseField>
-
-<ResponseField name="errors" type="array">
-  Array of processing errors (only present if some events failed).
-</ResponseField>
-
-### Partial Success Response (HTTP 207)
+### Partial success response (HTTP 207)
 
 When some events succeed and others fail:
 
@@ -381,7 +234,7 @@ When some events succeed and others fail:
 }
 ```
 
-### Error Response
+### Error response
 
 ```json
 {
@@ -398,7 +251,7 @@ When some events succeed and others fail:
 
 ## Examples
 
-### cURL - Browser Events
+### cURL - browser events
 
 ```bash
 curl -X POST "https://app.outlit.ai/api/i/v1/pk_your_key/events" \
@@ -418,7 +271,7 @@ curl -X POST "https://app.outlit.ai/api/i/v1/pk_your_key/events" \
   }'
 ```
 
-### cURL - Server Events
+### cURL - server events
 
 ```bash
 curl -X POST "https://app.outlit.ai/api/i/v1/pk_your_key/events" \
@@ -514,7 +367,7 @@ response = requests.post(
 print(response.json())
 ```
 
-## Server-Side Events
+## Server-side events
 
 For server-side tracking, the `visitorId` field can be omitted. Identity is resolved from the event data, including customer-only attribution when `customerId` is provided:
 
@@ -546,7 +399,7 @@ For server-side tracking, the `visitorId` field can be omitted. Identity is reso
   Server events require identity or account attribution. Custom events need at least one of `email`, `userId`, `fingerprint`, or `customerId`; identify events need `email` or `userId`.
 </Warning>
 
-## Batching Best Practices
+## Batching best practices
 
 For high-volume tracking:
 

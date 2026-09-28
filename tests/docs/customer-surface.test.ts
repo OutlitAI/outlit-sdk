@@ -106,7 +106,7 @@ describe("customer-surface documentation", () => {
     expect(cliDocs).toContain(
       "Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`",
     )
-    expect(cliDocs).toContain("### List Sources")
+    expect(cliDocs).toContain("### List sources")
     expect(cliDocs).toContain("outlit sources list [flags]")
     expect(cliDocs).toContain(
       "List enumerated calls, emails, calendar events, support tickets, Slack conversations, or opportunities.",

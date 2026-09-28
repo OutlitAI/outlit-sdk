@@ -1,0 +1,91 @@
+---
+title: "Catch churn early"
+description: "End-to-end: from connected sources to a resolved churn case, with a worked example."
+---
+
+This guide walks the full loop: the data churn monitoring needs, what fires a case, and how a risk goes from detected to resolved. The example uses a fictional customer to show the steps you take when Outlit opens a churn case.
+
+## What churn monitoring needs
+
+Churn cases only exist where Outlit can see enough to judge risk. Three inputs do the heavy lifting:
+
+| Input | Source | Powers |
+|---|---|---|
+| **Billing status** | Stripe | Which accounts are in scope — monitoring covers **paying** and **past-due** customers |
+| **Product activity** | PostHog, Mixpanel, or Outlit SDKs | Inactivity, usage drops, metric deviations from baseline |
+| **Conversations & support** | Gmail, Slack, Granola/Gong/Fireflies, Pylon | Churn language, escalations, stakeholder changes, call sentiment |
+
+A Slack destination is optional but recommended; a shared channel helps the team triage cases.
+
+<Steps>
+  <Step title="Connect the inputs">
+    At minimum: Stripe plus one product-usage source. See [Connect your data](/getting-started/connect-data) and the [Stripe](/integrations/stripe) and [PostHog](/integrations/posthog) guides.
+  </Step>
+  <Step title="Confirm monitoring is active">
+    Open **Responsibilities → Churn**. The status card should read **Monitoring is active** with a customer count. "Reduced coverage" lists exactly what's missing and links to the fix.
+  </Step>
+  <Step title="Optionally set a Slack destination">
+    **Settings → Destinations** → add a Slack channel (requires the Slack connection) and set it as default. Skip this and notifications arrive by email instead — the workspace admin, or the customer owner for case delivery when an owner is set.
+  </Step>
+</Steps>
+
+## What a case looks like
+
+A fictional-but-typical case, for a customer we'll call **Fernline** (`fernline.example`, paying, ~$24k ARR):
+
+1. Fernline's admin user stops logging in — a 14-day inactivity signal fires, then their only champion's email replies slow.
+2. The Churn responsibility investigates: pulls usage, recent tickets, email history, billing state.
+3. A case opens in **Attention**: priority **High**, title like *"Engagement dropped after champion went quiet."*
+4. The case story shows what changed, with evidence linked to the actual usage series and email thread.
+
+## Working the case
+
+<Steps>
+  <Step title="Open the case from Attention">
+    Read the assessment top to bottom. Findings carry evidence — excerpts and, where a link exists, a path back to the source (the Slack thread, the ticket, the usage chart). Check it before trusting a surprising conclusion.
+  </Step>
+  <Step title="Choose the approach">
+    Where Outlit proposes one, you'll see a primary approach — for Fernline, something like *re-engage the champion and loop in the admin's manager* — possibly with alternatives. Select the one that fits what you know, or take no approach. Each approach is a set of steps: recommendations for you, and any executable actions.
+  </Step>
+  <Step title="Review the follow-up email">
+    If the plan includes outreach, Outlit drafts the Gmail follow-up. Open **Review email**, edit the draft, approve — only then does it send. Nothing goes out unreviewed.
+  </Step>
+  <Step title="Track steps to completion">
+    The card in Attention shows approach progress (*2 of 4 steps*). Steps are marked off as work lands.
+  </Step>
+  <Step title="Mark resolved — or not">
+    When the situation's handled, **Mark resolved**. If Fernline was only under a watch, that watch can close when the concern passes. Resolve the case when your team has handled it.
+  </Step>
+</Steps>
+
+## What churn watches are
+
+Under **Responsibilities → Churn → Overview**, the **Watching** list shows customers Outlit flagged for a reason — declining usage trend, unresolved ticket — but that haven't crossed into a case. Each entry shows the reason and a confidence level. Think of watches as the layer between "fine" and "a case": where monitoring keeps checking before it asks for a person.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="No cases ever appear">
+    Check the monitoring status card first — "not running yet" means no paying/past-due customers are in scope (usually billing hasn't synced). Then confirm a product-activity source is connected: billing alone finds billing problems, not usage declines.
+  </Accordion>
+  <Accordion title="Cases arrive without notification">
+    Check **Settings → Destinations** for a default Slack channel. Without one, notifications go by email to the workspace admin — or the customer owner for case delivery when the account has an owner set. If neither path reaches you, tell your Outlit contact.
+  </Accordion>
+  <Accordion title="A case fired on a healthy account">
+    That happens — monitoring trades on evidence, not certainty. Resolve it with a note; the resolution teaches future review. If it keeps happening on a segment, tell your Outlit contact — signal sensitivity is tuned with you, not self-serve.
+  </Accordion>
+  <Accordion title="The evidence link is dead">
+    The source record may have been deleted, or your source-tool access may not cover it. Review the captured evidence and available source metadata in Outlit; a quote or timestamp is shown only when present and accessible.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Attention" icon="bolt" href="/product/attention">
+    Queue mechanics and the evidence model
+  </Card>
+  <Card title="Find expansion opportunities" icon="arrow-trend-up" href="/guides/expansion">
+    The flip side: growth inside your base
+  </Card>
+</CardGroup>

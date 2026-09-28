@@ -1,6 +1,6 @@
 ---
-title: "Vue Integration"
-description: "First-class Vue 3 support with plugin and composables"
+title: "Vue"
+description: "First-class Vue 3 support with plugin and composables."
 ---
 
 ## Installation
@@ -23,12 +23,12 @@ bun add @outlit/browser
 ```
 </CodeGroup>
 
-## Quick Start
+## Quick start
 
 Install the `OutlitPlugin` in your app's entry point and use composables in components.
 
 <Tabs>
-  <Tab title="With Authentication (Recommended)">
+  <Tab title="With authentication (recommended)">
 If your app has user authentication, use the `useOutlitUser` composable to automatically sync user identity. This is the recommended approach as it automatically handles login/logout transitions.
 
 ```typescript
@@ -78,7 +78,7 @@ useOutlitUser(outlitUser)
 </template>
 ```
   </Tab>
-  <Tab title="Anonymous Only">
+  <Tab title="Anonymous only">
 For marketing sites without authentication, just install the plugin:
 
 ```typescript
@@ -99,14 +99,12 @@ app.mount('#app')
   </Tab>
 </Tabs>
 
-<Tip>
-  Set your public key in `.env`:
-  ```
-  VITE_OUTLIT_KEY=pk_your_public_key_here
-  ```
-</Tip>
+Set your public key in `.env`:
+```
+VITE_OUTLIT_KEY=pk_your_public_key_here
+```
 
-### Using the Composable
+### Using the composable
 
 Track custom events with the `useOutlit` composable:
 
@@ -128,7 +126,7 @@ function handlePricingClick() {
 </template>
 ```
 
-## Plugin Configuration
+## Plugin configuration
 
 ### OutlitPlugin
 
@@ -193,7 +191,7 @@ app.use(OutlitPlugin, {
   Track booking events from calendar embeds (Cal.com, Calendly).
 </ParamField>
 
-## User Identity Patterns
+## User identity patterns
 
 The `useOutlitUser` composable is the **recommended** way to handle user identity. It's simpler and more reliable than manual `identify()` calls because:
 
@@ -201,7 +199,7 @@ The `useOutlitUser` composable is the **recommended** way to handle user identit
 - **Reactive**: Uses Vue's reactivity system to sync with your auth state
 - **Cleaner code**: No need for watchers with manual `setUser()` calls
 
-### Pattern 1: With Pinia Store
+### Pattern 1: with Pinia store
 
 ```vue
 <!-- App.vue or a top-level component -->
@@ -229,7 +227,7 @@ useOutlitUser(outlitUser)
 </script>
 ```
 
-### Pattern 2: With Composable Auth
+### Pattern 2: with composable auth
 
 ```vue
 <script setup>
@@ -411,7 +409,7 @@ function onLogout() {
 </script>
 ```
 
-## Consent Management
+## Consent management
 
 If you need to wait for user consent before tracking:
 
@@ -453,7 +451,7 @@ function acceptTracking() {
 
 ## Activation event
 
-Track user progression through your product lifecycle:
+Track your value milestone as an ordinary event once it succeeds:
 
 ```vue
 <script setup>
@@ -461,23 +459,16 @@ import { useOutlit } from '@outlit/browser/vue'
 
 const { track } = useOutlit()
 
-function handleOnboardingComplete() {
+// Call this from your app's confirmed onboarding success callback.
+function onOnboardingCompleted() {
   track('onboarding_completed', { flow: 'onboarding', step: 'completed' })
 }
 </script>
-
-<template>
-  <button @click="handleOnboardingComplete">
-    Complete Setup
-  </button>
-</template>
 ```
 
-<Info>
-  Configure this exact event as your activation event. For each eligible contact and resolved company independently, Outlit Core sets `activatedAt` on the first match only when that subject's timestamp is null. Billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
-</Info>
+Choose this event as your activation event in Outlit. The first matching event records activation once for each eligible resolved person and company, independently. Billing status comes from verified integrations such as Stripe. See [Customer journey](/concepts/customer-journey).
 
-## Vue Router Integration
+## Vue Router integration
 
 Track pageviews automatically with Vue Router:
 
@@ -497,7 +488,7 @@ export default router
   If you set `trackPageviews: true` during plugin install (default), pageviews are tracked automatically. Vue Router's History API changes are detected by the SDK.
 </Info>
 
-## Pinia Integration
+## Pinia integration
 
 Track state changes with Pinia:
 
@@ -525,7 +516,7 @@ export const useUserStore = defineStore('user', {
 })
 ```
 
-## TypeScript Support
+## TypeScript support
 
 Full TypeScript support is included:
 
@@ -557,19 +548,19 @@ const user: UserIdentity = {
 
 For Nuxt applications, see the dedicated [Nuxt integration guide](/tracking/browser/nuxt).
 
-## Next Steps
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Nuxt Integration" icon="layer-group" href="/tracking/browser/nuxt">
+  <Card title="Nuxt integration" icon="layer-group" href="/tracking/browser/nuxt">
     Use Outlit with Nuxt 3
   </Card>
-  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+  <Card title="Server-side tracking" icon="server" href="/tracking/server/nodejs">
     Track events from your backend
   </Card>
-  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
-    Learn how profiles are merged
+  <Card title="Identity resolution" icon="fingerprint" href="/concepts/identity-resolution">
+    Learn how visits and events link to people
   </Card>
-  <Card title="NPM Package" icon="npm" href="/tracking/browser/npm">
+  <Card title="npm package" icon="npm" href="/tracking/browser/npm">
     Full API reference
   </Card>
 </CardGroup>

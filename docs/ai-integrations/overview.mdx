@@ -1,0 +1,87 @@
+---
+title: "Agents and AI overview"
+description: "How external agents and developers consume Outlit customer context: CLI, MCP, the tool gateway API, skills, and Pi."
+---
+
+Outlit is the product that monitors customers and completes approved customer work — its own opinionated agents produce the churn and renewal attention items your team reviews (including billing-risk evidence), and surface expansion insights inside customer context. The CLI, MCP server, and API let your coding agents and applications read authorized customer context and perform supported workspace actions.
+
+## Choose your interface
+
+| Surface | Best for | Auth | Reference |
+|---------|----------|------|-----------|
+| `outlit` CLI | Coding agents, scripts, terminal work | `ok_` API key (`--api-key`, `OUTLIT_API_KEY`, or stored credentials) | [CLI](/cli/overview) |
+| Remote MCP | MCP clients (Cursor, VS Code, Claude, custom clients) | OAuth (member permissions) or scoped API key (key grants) | [MCP](/ai-integrations/mcp) |
+| Tool gateway API | HTTP integrations, serverless, non-JS runtimes | `Authorization: Bearer ok_...` | [Tools](/api-reference/tools) |
+| Agent skills | Teaching agents workflows on top of CLI/MCP | Inherits the CLI/MCP credential | [Skills](/ai-integrations/skills) |
+| `@outlit/pi` | Pi agents with embedded Outlit tools | `OUTLIT_API_KEY` | [Pi](/ai-integrations/pi) |
+| Tracking SDKs | Emitting events into Outlit (not querying) | `pk_` public key in the URL path | [Tracking](/tracking/quickstart) |
+
+CLI, MCP, and the gateway share **one underlying tool catalog and authorization model** — but names and input shapes differ per surface. The CLI wraps tools in kebab-case commands/flags (`outlit customers list --billing-status PAYING`), while MCP and the API use tool names and camelCase schema fields (`outlit_list_customers`, `billingStatus`). Pick whichever host fits; capabilities and permissions are the same.
+
+## How an agent answers a customer question
+
+This is the evidence-first pattern the interfaces are designed around:
+
+<Steps>
+  <Step title="Discover">
+    `outlit schema` lists analytics views and columns. `outlit customers list` / `outlit users list` filter by billing status, journey stage, activity recency, and traits.
+  </Step>
+  <Step title="Get context">
+    `outlit customers get <customer> --include users,revenue,recentTimeline` returns a bounded profile. `outlit customers timeline` filters activity by channel and event type.
+  </Step>
+  <Step title="Find evidence">
+    `outlit facts list` returns structured facts with provenance (`sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, `permalink` when available). `outlit search "<natural language>"` returns grouped artifact-level `source` and `fact` results — not raw vector chunks.
+  </Step>
+  <Step title="Open the source">
+    `outlit sources get --source-type CALL --source-id <id>` returns the exact record. When a source offers `contentPage`, check `contentPage.completeness` before treating the content as complete — partial pages mean more content exists beyond what was returned.
+  </Step>
+  <Step title="Answer with evidence">
+    Cite the sources and facts you actually retrieved. An absent permalink or empty result set is **unavailable evidence**, not negative evidence — say so instead of inferring.
+  </Step>
+</Steps>
+
+## Read vs. write controls
+
+Most of the catalog is read-only customer intelligence. Writes are bounded and each requires an explicit grant:
+
+| Write family | Examples | Notes |
+|--------------|----------|-------|
+| Customer collaboration | `customers owner set`, `customers grant`, `customers revoke` | Requires `customer_access:manage`; writes need **exact UUIDs** — the CLI never fuzzy-matches names, domains, or emails for mutations |
+| Destinations | `destinations create/update/enable/disable/archive` | Configuration is masked in reads; secrets are never returned |
+| Features | `features create`, `features archive` | Create maps one product event to a Feature; archive requires the current opaque revision |
+| Workspace config | `activation update`, `settings update` | Narrow, enumerated settings — not arbitrary config |
+| Identity resolution | `customers merge`, `identity merge` | Exact IDs only; merges are auditable and reportable via `merge-status` |
+| Attention items | — | **Read-only.** `attention list`/`get` expose reviewable items and a `preparedActionUrl`; there is no public resolve/send/act tool |
+
+Outlit manages its monitoring rules and schedules. Public tools do not configure agents or signals, store or reveal credentials, disconnect integrations, or send arbitrary notifications.
+
+## Authorization model
+
+- **API keys are independent workspace principals.** A key's grants are its own; they do not inherit the creator's human permissions or customer access.
+- **OAuth (MCP) runs as the signed-in member**, so that member's workspace permissions apply directly.
+- **Read presets ≠ write presets.** Read-only keys get discovery but not mutation; `workspace_members:read` and `customer_access:manage` are separate grants, and the discover-then-mutate flow needs both.
+- **CLI output is script-friendly.** See [Output behavior](/cli/configuration#output-behavior) for the exact JSON-mode rules.
+
+## Distinguish the MCP servers
+
+- **Product MCP** — `https://mcp.outlit.ai/w/<workspace-slug>/mcp`: customer intelligence tools described here.
+- **Docs search MCP** — the documentation-site search endpoint Mintlify hosts for this docs site. It searches these docs only; it has no customer data and no product tools.
+
+Do not point customer-intelligence workloads at the docs endpoint, and do not expect product tools there.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Customer workflows" icon="route" href="/ai-integrations/customer-workflows">
+    Copy-paste task recipes: churn review, renewal prep, expansion, evidence trails
+  </Card>
+  <Card title="Troubleshooting" icon="wrench" href="/ai-integrations/troubleshooting">
+    Auth, permissions, empty results, identity, JSON, MCP, and SDK delivery issues
+  </Card>
+  <Card title="Tool gateway API" icon="terminal" href="/api-reference/tools">
+    The shared HTTP contract behind CLI and MCP
+  </Card>
+  <Card title="CLI commands" icon="square-terminal" href="/cli/commands">
+    Every command, flag, and output schema
+  </Card>
+</CardGroup>

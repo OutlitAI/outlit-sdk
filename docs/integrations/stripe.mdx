@@ -1,0 +1,50 @@
+---
+title: "Stripe"
+description: "Connect billing: OAuth or a restricted key, plus webhook setup."
+---
+
+Stripe is the billing source that defines which customers Outlit monitors — churn monitoring covers **paying** and **past-due** customers, and Stripe supplies MRR, subscription state, and billing-confirmed renewal outcomes.
+
+## Connect
+
+Outlit supports two Stripe connection methods. The setup form shows the method enabled for your workspace:
+
+| Method | Best for | What happens |
+|---|---|---|
+| **OAuth** (Stripe App) | Most workspaces | Redirect to Stripe, approve access, return to Outlit |
+| **Restricted key** | Environments where the OAuth app isn't available | Paste a key starting with `rk_` |
+
+Use a restricted key, not a secret key — it scopes Outlit to read access on customers, subscriptions, invoices, and the related objects it needs. Keep the key rotatable; if you revoke it in Stripe, the connection shows an error until you reconnect.
+
+If you need another method, ask your Outlit contact.
+
+## After connecting
+
+1. **Historical sync runs in the background.** Customers, subscriptions, and invoices import; MRR appears on profiles as data lands.
+2. **Finish webhook setup if prompted.** Credential connect and event webhooks can be separate steps — the connection's detail panel shows whether webhooks are live.
+3. **Billing customers match to your accounts** — see [identity notes](#customers-that-dont-match) below if a Stripe customer lands on the wrong profile.
+
+## What billing enables
+
+- The monitored customer set (paying + past-due) for the Churn responsibility
+- MRR and plan context on customer profiles and Attention cards
+- Billing signals — delinquency, subscription changes — inside churn cases
+- Billing-confirmed outcomes on renewal cycles
+
+## Customers that don't match
+
+Stripe customers are matched to Outlit customers by domain, email, and stored identifiers. Where a match is ambiguous, the link waits for confirmation rather than guessing — unmatched or mismatched billing customers surface on the customer's **Coverage** tab or as an identity issue. Confirming a match is a deliberate click; see [Customers](/product/customers).
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Monitoring shows 'no billing source'">
+    The Stripe connection errored or never finished — open Integrations and check its status. Reconnect, then check **Responsibilities → Churn** for current coverage.
+  </Accordion>
+  <Accordion title="Some customers show no MRR">
+    The Stripe customer isn't matched to the Outlit customer yet — check the Coverage tab for a pending or suggested match.
+  </Accordion>
+  <Accordion title="Webhooks show inactive">
+    Webhook setup is separate from credentials. Finish it from the Stripe connection detail, or ask your Outlit contact if the workspace was provisioned with guided setup.
+  </Accordion>
+</AccordionGroup>

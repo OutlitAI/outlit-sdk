@@ -1,6 +1,6 @@
 ---
-title: "SvelteKit Integration"
-description: "Integrate Outlit tracking with SvelteKit applications"
+title: "SvelteKit"
+description: "Integrate Outlit tracking with SvelteKit applications."
 ---
 
 ## Installation
@@ -23,7 +23,7 @@ bun add @outlit/browser
 ```
 </CodeGroup>
 
-## Quick Start
+## Quick start
 
 Initialize Outlit in your root layout:
 
@@ -44,14 +44,12 @@ export const prerender = true
 export const ssr = false
 ```
 
-<Tip>
-  Add your public key to `.env`:
-  ```
-  PUBLIC_OUTLIT_KEY=pk_your_public_key_here
-  ```
-</Tip>
+Add your public key to `.env`:
+```
+PUBLIC_OUTLIT_KEY=pk_your_public_key_here
+```
 
-## Alternative: Layout Component
+## Alternative: layout component
 
 Initialize in the layout component:
 
@@ -76,7 +74,7 @@ Initialize in the layout component:
 <slot />
 ```
 
-## Tracking Events
+## Tracking events
 
 Track events in your components:
 
@@ -98,7 +96,7 @@ Track events in your components:
 </button>
 ```
 
-## Identifying Users
+## Identifying users
 
 Identify users after authentication:
 
@@ -140,7 +138,7 @@ Identify users after authentication:
 </form>
 ```
 
-## Navigation Tracking
+## Navigation tracking
 
 Track navigation with SvelteKit's stores:
 
@@ -174,7 +172,7 @@ Track navigation with SvelteKit's stores:
 <slot />
 ```
 
-## Load Function Integration
+## Load function integration
 
 Track events from load functions:
 
@@ -200,7 +198,7 @@ export const load: PageLoad = async ({ params, fetch }) => {
 }
 ```
 
-## Server-Side Tracking
+## Server-side tracking
 
 Track events from API routes:
 
@@ -232,11 +230,9 @@ export const POST: RequestHandler = async ({ request }) => {
 }
 ```
 
-<Info>
-  For server-side tracking, see the [Node.js integration guide](/tracking/server/nodejs).
-</Info>
+For server-side tracking, see the [Node.js integration guide](/tracking/server/nodejs).
 
-## Auth Integration
+## Auth integration
 
 ### With Lucia
 
@@ -275,26 +271,22 @@ export const POST: RequestHandler = async ({ request }) => {
 
 ## Activation event
 
-Track activation after the user completes your product milestone:
+Track your value milestone as an ordinary event once it succeeds:
 
 ```svelte
 <script>
   import outlit from '@outlit/browser'
-  function handleEngagementMilestone() {
+
+  // Call this after the project creation request succeeds.
+  function onProjectCreated() {
     outlit.track('first_project_created', { flow: 'onboarding' })
   }
 </script>
-
-<button on:click={handleEngagementMilestone}>
-  Complete First Project
-</button>
 ```
 
-<Info>
-  Configure `first_project_created` as your ordinary activation event if it represents the value milestone. Outlit Core derives lifecycle stages; billing comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
-</Info>
+Choose this event as your activation event in Outlit if it represents the value milestone. The first matching event records activation once for each eligible resolved person and company, independently. Billing status comes from verified integrations such as Stripe. See [Customer journey](/concepts/customer-journey).
 
-## Consent Management
+## Consent management
 
 Handle user consent:
 
@@ -345,7 +337,7 @@ if (browser) {
 }
 ```
 
-## Stores Integration
+## Stores integration
 
 Create a store for Outlit:
 
@@ -394,7 +386,7 @@ Use in components:
 </button>
 ```
 
-## Environment Variables
+## Environment variables
 
 Configure environment variables:
 
@@ -412,7 +404,7 @@ OUTLIT_KEY=pk_your_public_key_here
   Keep server environment variables out of client-side code. Only use `OUTLIT_KEY` in server-side API routes.
 </Warning>
 
-## TypeScript Support
+## TypeScript support
 
 Full TypeScript support is included:
 
@@ -428,19 +420,19 @@ const options: OutlitOptions = {
 outlit.init(options)
 ```
 
-## Next Steps
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+  <Card title="Server-side tracking" icon="server" href="/tracking/server/nodejs">
     Track events from your backend
   </Card>
-  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
-    Learn how profiles are merged
+  <Card title="Identity resolution" icon="fingerprint" href="/concepts/identity-resolution">
+    Learn how visits and events link to people
   </Card>
-  <Card title="NPM Package" icon="npm" href="/tracking/browser/npm">
+  <Card title="npm package" icon="npm" href="/tracking/browser/npm">
     Full API reference
   </Card>
-  <Card title="React Integration" icon="react" href="/tracking/browser/react">
+  <Card title="React integration" icon="react" href="/tracking/browser/react">
     Use Outlit with React
   </Card>
 </CardGroup>

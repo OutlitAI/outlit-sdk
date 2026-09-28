@@ -1,225 +1,45 @@
 ---
-title: "How It Works"
-description: "How Outlit connects customer systems, resolves identities, structures customer context, and makes it queryable"
+title: "How tracking works"
+description: "Follow a customer from first website visit through identity, product use, and conversion."
 ---
 
-Outlit builds a [customer context graph](/concepts/customer-context-graph) from every customer interaction: website visits, product usage, billing, support tickets, calls, emails, Slack conversations, and more. Raw source data becomes complete customer profiles your team and agents can query before they act.
+The Outlit Browser SDK records how a visitor discovers and lands on your site: the first page URL, referrer, and available UTM parameters. It follows anonymous pageviews and site events until the person identifies. Outlit then joins that earlier history to the contact, so you can follow their journey from first visit through conversion and later product use. The [customer context graph](/concepts/customer-context-graph) connects this activity with billing, CRM, conversations, and support.
 
-## 1. Connect
+## Capture activity
 
-Data enters Outlit from multiple sources:
+Use the [Outlit Browser SDK](/tracking/browser/script) for pageviews, form submissions, engagement, and custom events on your site. Use the [Outlit Node.js SDK](/tracking/server/nodejs) or [Outlit Rust SDK](/tracking/server/rust) for backend or native actions such as a completed export or API operation. These Outlit server SDKs can record identified or fingerprint-linked product events, but cannot observe a visitor's browser landing page or link an unknown browser visit by themselves. Identify the browser visitor with their email when it becomes available; an email-only server identify does not link an otherwise anonymous browser visitor.
 
-```mermaid
-%%{init: {'theme': 'dark', 'flowchart': {'nodeSpacing': 40, 'rankSpacing': 50, 'curve': 'basis', 'padding': 15}}}%%
-flowchart LR
-    subgraph SDKs
-        A([Browser SDK])
-        B([Server SDK])
-    end
+[PostHog](/integrations/posthog) and Mixpanel integrations import product activity into Outlit. The Outlit Browser SDK gives Outlit its own record of the anonymous website journey and links it to the contact when the browser identifies them.
 
-    subgraph Integrations
-        C([Stripe])
-        E([PostHog])
-        F([Slack])
-        G([Gmail])
-        H([Fireflies.ai])
-        I([Google Calendar])
-        L([Pylon])
-        M([Granola])
-    end
+Billing status comes from a verified integration such as [Stripe](/integrations/stripe). CRM, conversations, and support integrations add account records and evidence. Start with [Connect your data](/getting-started/connect-data) to see which sources your workspace needs.
 
-    subgraph Auth
-        J([Supabase Auth])
-        K([Clerk])
-    end
+## Link activity to people and customers
 
-    A -->|pageviews, forms, engagement| D([Customer Context Graph])
-    B -->|backend events| D
-    C -->|billing events| D
-    E -->|product usage| D
-    F -->|messages, reactions| D
-    G -->|email threads| D
-    H -->|call transcripts| D
-    I -->|meetings, attendees| D
-    L -->|support tickets| D
-    M -->|meeting notes| D
-    J -->|identity, auth events| D
-    K -->|profiles, login activity| D
-```
+The Outlit Browser SDK gives an anonymous visitor an ID. When someone submits an email, signs up, or logs in, browser `identify()` or `setUser()` links that visitor's earlier activity to a known person. Outlit can then associate that person with a customer through a company email domain, explicit `customerId`, or connected source data. Personal-email addresses remain separate unless another source links them. See [Identity resolution](/concepts/identity-resolution) for the matching rules and review steps.
 
-### Outlit SDKs (recommended)
+A tracking call needs consent where your site requires it. The script and npm guides show how to start with tracking disabled and enable it after consent. A persisted opt-out continues across visits until tracking is enabled again.
 
-**Browser SDK** — The primary data source for most teams. Once installed, it automatically captures pageviews, form submissions, engagement time, UTM attribution, and company enrichment via IP lookup. No additional code needed for these basics. This is the only way to get [website visitor tracking](/concepts/website-visitors) — anonymous visit capture, auto-identification from forms, and pre-signup journey attribution.
+## Read the customer timeline
 
-**Server SDK** — For backend events where users are already authenticated: subscription lifecycle events, API usage, report generation, and anything that happens outside the browser.
+Customer profiles show activity from connected sources in chronological order. Product events, billing changes, support tickets, messages, and meetings appear with their source context where available. Facts and assessments build on that evidence; check the source and timestamp before treating a finding as current. [Customers](/product/customers) explains profile sections and source coverage.
 
-### Integrations
+Each person's journey stage and the customer's billing status are separate. Outlit derives engagement and inactivity from product activity. If you choose an ordinary event as the activation event, its first match records activation once for each eligible resolved person and company, independently. SDK events do not change billing status. See [Customer journey](/concepts/customer-journey) for all stages, including **Past due**.
 
-**Stripe** — Billing events sync automatically. Subscription status changes (trialing, active, canceled) update account billing status in real time.
+## Use the context
 
-**PostHog** — Product usage sessions feed into the graph, contributing to automatic engagement and inactivity detection. If you already use PostHog for product analytics, this is a great complement to the Outlit browser SDK. However, PostHog alone won't give you website visitor tracking — you need the Outlit browser SDK for anonymous visit capture, form auto-identification, and pre-signup attribution.
+Your team reviews churn and renewal situations in **Attention**. Developers and agents can also read authorized customer context through the [CLI](/cli/overview), [MCP](/ai-integrations/mcp), or [public tool gateway](/api-reference/tools). Use the [Ingest API](/api-reference/ingest) for custom event ingestion.
 
-**Slack** — Messages, reactions, and thread context from customer-facing channels.
+## Privacy and delivery
 
-**Gmail** — Email threads, sender history, and attachment context.
+The Outlit Browser SDK strips recognized sensitive form fields before sending them. Configure enabled domains under **Settings → Website Visitors**; the public tracking key is visible in browser code by design. If your site needs consent, use the [consent controls](/tracking/browser/script#consent-management) before collecting activity. For retention or deletion requests, ask your Outlit contact about your workspace policy.
 
-**Fireflies.ai** — Call transcripts, action items, and meeting summaries.
-
-**Granola** — Meeting notes and customer-call summaries.
-
-**Google Calendar** — Meetings, attendees, and scheduling patterns.
-
-**Pylon** — Support tickets, escalations, and customer requests.
-
-**Supabase Auth / Clerk** — User identity, sign-up source, org membership, and auth events. These complement the browser SDK's auto-identification with server-side identity signals.
-
-<Info>
-  Browse all available integrations and connect them from your dashboard at [app.outlit.ai/integrations](https://app.outlit.ai/integrations).
-</Info>
-
-## 2. Resolve
-
-Most visitors browse your site anonymously before identifying themselves. [Identity resolution](/concepts/identity-resolution) bridges that gap:
-
-1. **Anonymous phase** — Outlit generates a visitor ID and tracks behavior from the first pageview
-2. **Identification trigger** — A visitor submits a form with their email, signs up, or logs in
-3. **Profile linking** — The anonymous visitor's entire history is connected to their contact profile
-4. **Cross-device merging** — When the same person identifies on multiple devices, profiles merge automatically
-
-This happens without code when forms contain an email field (auto-identify). For JavaScript-based auth, call `identify()` after login.
-
-<Info>
-  For details on the anonymous phase — what's captured, how visitor IDs work, and company enrichment — see [Website Visitors](/concepts/website-visitors).
-</Info>
-
-## 3. Structure
-
-As data flows in and identities resolve, Outlit structures it into three layers your team and agents can query:
-
-### Complete customer profiles and relationships
-
-- **Visitors** — Anonymous browsing sessions, identified by visitor ID or device fingerprint
-- **Contacts** — Known people, identified by email and/or user ID
-- **Accounts** — Companies, identified by domain, with billing status from Stripe
-
-Visitors link to contacts via identity resolution. Contacts link to accounts through organizational email domains, explicit `customerId` attribution, and connected sources such as billing and auth systems. Common personal email providers are treated as personal contacts unless another source links them to an account. All activity flows into unified customer profiles and timelines per contact and account.
-
-### Activity timeline
-
-Every interaction from every source is stored chronologically: pageviews, form submissions, SDK events, Stripe charges, Slack messages, email threads, call transcripts, support tickets, and calendar events. The timeline shows *what happened* with full detail and original timestamps.
-
-### Facts
-
-Facts are temporal assertions that Outlit maintains about each customer. While the activity timeline captures *what happened*, facts capture *what it means* — the reasoning layer that makes the graph intelligent.
-
-Outlit generates facts from three sources:
-
-- **Behavioral facts** — Automatically detected from activity patterns. When a customer's core usage drops, an activation rate changes, or an expected activity pattern breaks, Outlit surfaces it as a fact with severity and context.
-- **Extracted facts** — Parsed from unstructured sources like Slack messages, support tickets, email threads, and call transcripts. Outlit identifies signals like churn risk, expansion opportunities, competitive evaluations, champion changes, and timeline commitments.
-- **Synthesized facts** — Derived by correlating multiple observations. For example, a key contact going quiet + a competitor mention in Slack + declining product usage = a churn risk fact with full reasoning.
-
-Every fact carries **temporal context**. Public fact results expose `occurredAt` for when the supporting signal happened or was detected, plus `status` and provenance fields such as `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink` when available. When evaluating freshness, agents should use source time, status, and evidence rather than read facts as self-updating claims.
-
-### Journey stages
-
-Journey stages are properties maintained on graph entities:
-- Contacts carry a journey stage: Discovered → Signed Up → Activated → Engaged → Inactive
-- Accounts carry a billing status: None → Trialing → Paying → Churned
-
-The Outlit browser SDK auto-detects **Discovered** (email known, no userId) and **Signed Up** (both email and userId provided). **Engaged** and **Inactive** are derived from tracked product activity. For **Activated**, select the ordinary product event that represents your value milestone; Outlit Core derives activation when that event arrives through `track()` or a verified product integration. Billing statuses update from verified integrations such as Stripe.
-
-<Info>
-  For the full breakdown of journey stages and billing statuses, see [Customer Journey](/concepts/customer-journey).
-</Info>
-
-## 4. Query
-
-The structured customer context is accessible through three interfaces:
-
-### CLI
-
-```bash
-# List paying customers inactive for 30 days
-outlit customers list --billing-status PAYING --no-activity-in 30d
-
-# Get a customer profile with timeline
-outlit customers get acme.com --include users,revenue,recentTimeline
-
-# Natural language search
-outlit search "customers who signed up from Google Ads last month"
-
-# SQL
-outlit sql "SELECT domain, mrr_cents FROM customers WHERE billing_status = 'PAYING'"
-```
-
-### AI Agents
-
-For coding agents, install the `outlit` skill directly:
-
-```bash
-outlit setup --yes
-```
-
-Then in Claude Code, Codex, or Gemini CLI, your agent can ask questions about customers, get timelines, search context, and run SQL from the same graph.
-
-For MCP clients, use the workspace MCP URL from [MCP Integration](/ai-integrations/mcp).
-
-### REST API
-
-For custom integrations, the [Ingest API](/api-reference/ingest) accepts events from any source, and the [public tool gateway](/api-reference/tools) exposes customer profiles, timelines, facts, sources, search, and read-only SQL programmatically.
-
----
-
-## Privacy and Security
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Form Sanitization" icon="shield">
-    Sensitive fields (password, SSN, credit card) are automatically stripped from form submissions.
+  <Card title="Track your first event" icon="bolt" href="/tracking/quickstart">
+    Install the Outlit Browser SDK and check a customer timeline.
   </Card>
-  <Card title="Domain Allowlist" icon="lock">
-    Configure which domains can send events to prevent unauthorized tracking.
-  </Card>
-  <Card title="No PII in URLs" icon="eye-slash">
-    Query parameters with sensitive patterns are automatically redacted.
-  </Card>
-  <Card title="GDPR Ready" icon="scale-balanced">
-    Built-in support for consent management, data deletion, and export requests.
-  </Card>
-</CardGroup>
-
----
-
-## Frequently Asked Questions
-
-<AccordionGroup>
-  <Accordion title="What does Outlit track automatically vs what do I need to instrument?">
-    The browser SDK automatically captures pageviews, form submissions, engagement time, UTM attribution, and company enrichment. Identity is auto-detected from forms with email fields. You only need to manually call `identify()` for JavaScript-based auth (OAuth, magic links) and `track()` for meaningful product events, including the ordinary event selected as your activation event.
-  </Accordion>
-
-  <Accordion title="How long before data appears in the graph?">
-    Browser and server SDK events appear within seconds. Stripe webhooks process within minutes. PostHog syncs run on a configurable schedule.
-  </Accordion>
-
-  <Accordion title="Can I use Outlit without Stripe or PostHog?">
-    Yes. The browser SDK alone gives you website tracking, identity resolution, and journey stages. Each integration adds more signal but none are required.
-  </Accordion>
-</AccordionGroup>
-
----
-
-## Next Steps
-
-<CardGroup cols={2}>
-  <Card title="Quick Start" icon="rocket" href="/tracking/quickstart">
-    Install the CLI and add tracking in 5 minutes
-  </Card>
-  <Card title="Customer Context Graph" icon="circle-nodes" href="/concepts/customer-context-graph">
-    Deep dive into the unified data model
-  </Card>
-  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
-    How profiles are linked across devices and sources
-  </Card>
-  <Card title="Customer Journey" icon="route" href="/concepts/customer-journey">
-    Journey stages and billing statuses explained
+  <Card title="Customer context graph" icon="circle-nodes" href="/concepts/customer-context-graph">
+    See how tracking and integrations feed customer profiles.
   </Card>
 </CardGroup>

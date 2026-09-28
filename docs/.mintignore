@@ -1,0 +1,16 @@
+# Internal maintainer material: excluded from the published docs site.
+# (.mintignore uses .gitignore syntax. README.md is ignored by default.)
+
+# Planning and release artifacts
+superpowers/
+release-coordination.md
+skill-source.json
+
+# Unused helper scripts and their assets
+copy-sound.js
+sounds/
+
+# Legacy template hero images (not referenced by any page)
+images/hero-light.png
+images/hero-dark.png
+images/checks-passed.png

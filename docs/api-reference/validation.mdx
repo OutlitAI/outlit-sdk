@@ -1,22 +1,14 @@
 ---
-title: "Validate API Key"
-description: "Verify that an Outlit API key can authenticate Platform API requests"
-api: "POST /api/validate-api-key"
+title: "Validate an API key"
+description: "Verify that an Outlit API key can authenticate Platform API requests."
+openapi: "openapi.json POST /api/validate-api-key"
 ---
-
-## Endpoint
-
-```http
-POST https://app.outlit.ai/api/validate-api-key
-```
 
 ## Authentication
 
-<ParamField header="Authorization" type="string" required>
-  Outlit API key using the `Bearer ok_...` format.
-</ParamField>
+Pass an Outlit API key in the `Authorization` header as `Bearer ok_...`.
 
-## Request Body
+## Request body
 
 No request body is required when validating the API key from the `Authorization` header.
 
@@ -27,7 +19,7 @@ curl -X POST https://app.outlit.ai/api/validate-api-key \
   -H "Authorization: Bearer ok_your_api_key"
 ```
 
-## Success Response
+## Success response
 
 ```json
 {
@@ -40,24 +32,10 @@ curl -X POST https://app.outlit.ai/api/validate-api-key \
 }
 ```
 
-<ResponseField name="valid" type="boolean">
-  Whether the supplied API key is active and accepted.
-</ResponseField>
+`authorization.grants` lists the key's current capabilities. Only offer commands whose required
+authority appears in this list. `createdById` is null when the creator is unavailable.
 
-<ResponseField name="organizationId" type="string">
-  Organization associated with the API key.
-</ResponseField>
-
-<ResponseField name="createdById" type="string | null">
-  User that created the API key, when available.
-</ResponseField>
-
-<ResponseField name="authorization.grants" type="string[]">
-  Current capabilities granted to this API key. A consumer must only offer commands whose
-  required authority appears in this list.
-</ResponseField>
-
-## Error Responses
+## Error responses
 
 Invalid or disabled keys return `401`:
 

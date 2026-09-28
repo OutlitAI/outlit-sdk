@@ -1,0 +1,40 @@
+---
+title: "Slack"
+description: "Connect Slack for conversation signals and notification destinations."
+---
+
+Slack does double duty in Outlit: shared channels with customers (or internal customer threads) become conversation evidence, and Slack is where attention notifications deliver.
+
+## Connect
+
+From **Integrations → Slack**, OAuth takes you through Slack's approval screen and back. After connecting, the setup asks you to **choose which channels Outlit can see** — connect the channels where customer work happens (shared channels, account channels), not the whole workspace by default.
+
+## Notifications
+
+Slack is the primary notification destination for the Churn responsibility:
+
+1. Open **Settings → Destinations**.
+2. Add a Slack channel from the connected workspace.
+3. Set it as the **default destination** — new churn cases notify there.
+
+Without a Slack destination, notifications fall back to **email** — to the workspace admin or the customer owner — so a destination isn't strictly required, but a shared channel is where cases get triaged fastest.
+
+## What Slack evidence looks like
+
+Channel messages tied to a customer appear as evidence in case assessments and profile activity — with links back to the thread. Churn language, unresolved complaints, and stakeholder changes in those channels can help explain a risk.
+
+Only connected channels are visible to Outlit. If a customer's shared channel exists but produces no evidence, it probably wasn't selected during setup — revisit the Slack connection's channel list.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="No notifications arrive">
+    Check **Settings → Destinations** — is a Slack destination added and set as default? Also check whether the case actually generated a notification (some case activity notifies; quiet status updates don't spam the channel).
+  </Accordion>
+  <Accordion title="A customer channel shows no activity">
+    The channel wasn't selected in the Slack connection's channel list, or the channel was created after you connected Slack — re-open the Slack connection and extend channel access.
+  </Accordion>
+  <Accordion title="Slack connect fails or expires">
+    Reconnect from Integrations. Workspace admin approval in Slack may be required depending on your Slack admin settings.
+  </Accordion>
+</AccordionGroup>

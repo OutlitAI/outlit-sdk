@@ -1,81 +1,60 @@
 ---
-title: "Customer Journey"
-description: "How Outlit separates contact journeys, company activation, and account billing in the customer context graph"
+title: "Customer journey"
+description: "How Outlit separates contact journeys, company activation, and account billing in the customer context graph."
 ---
 
-Outlit tracks separate dimensions of your customer relationships as part of the [customer context graph](/concepts/customer-context-graph): **contact journey** (how engaged each person is), **company activation** (whether an account reached its configured value milestone), and **account billing** (the commercial relationship). A contact can be highly engaged while their company has not activated or paid, and a company can remain activated while a specific contact becomes inactive.
+Outlit tracks separate dimensions of your customer relationships as part of the [customer context graph](/concepts/customer-context-graph): **contact journey** (how engaged each person is), **company activation** (whether an account reached its configured value milestone), and **account billing** (the commercial relationship). The Outlit Browser SDK can preserve the earlier website path — landing page, referrer, UTM data, and anonymous activity — before browser identification links it to a contact. Product events and billing then show what happened through conversion and the later lifecycle. A contact can be highly engaged while their company has not activated or paid, and a company can remain activated while a specific contact becomes inactive.
 
-## How does Outlit model the customer journey?
+## Three parts of the customer journey
 
 Outlit tracks contacts and accounts separately:
 
-### Contact Journey (per person)
+### Contact journey (per person)
 
-```mermaid
-%%{init: {'theme': 'dark', 'flowchart': {'nodeSpacing': 50, 'rankSpacing': 60, 'curve': 'basis', 'padding': 15}}}%%
-flowchart LR
-    A([Discovered]) --> B([Signed Up])
-    B --> C([Activated])
-    C --> D([Engaged])
-    D -.->|no activity| E([Inactive])
-    E -.->|meets engagement threshold| D
-```
+Contacts progress from **Discovered → Signed Up → Activated → Engaged**. With no qualifying activity they become **Inactive**; when activity again meets the engagement threshold, they return to **Engaged**.
 
-### Account Billing (per company)
+### Account billing (per company)
 
-```mermaid
-%%{init: {'theme': 'dark', 'flowchart': {'nodeSpacing': 50, 'rankSpacing': 60, 'curve': 'basis', 'padding': 15}}}%%
-flowchart LR
-    F([None]) --> G([Trialing])
-    G --> H([Paying])
-    H -.-> I([Churned])
-    I -.->|re-subscribes| H
-```
+Account billing can be **None**, **Trialing**, **Paying**, **Past due**, or **Churned**. A churned account returns to **Paying** if it re-subscribes.
 
-### Company Activation (per company)
+### Company activation (per company)
 
 A company activates once when the configured exact ordinary product event first occurs
-for that resolved company. The same event activates eligible contacts. Core writes each
-subject's activation timestamp only when it is null, so later matches are no-ops.
+for that resolved company. The same event activates eligible contacts. Outlit writes each
+person's or company's activation timestamp only once; later matches leave it unchanged.
 
 Use `outlit activation preview --event <name>` to evaluate historical exact-event matches
-without changing configuration or materializing activation. Its separate contact and company
-counts show how many subjects already activated and how many would activate, without returning
+without changing configuration or recording activation. Its separate contact and company
+counts show how many people and companies already activated and how many would activate, without returning
 contact identities. Use
 `outlit activation update --event <name>` only after review. Disabling future matching
 preserves existing contact and company activation timestamps.
 
 Company activation remains an account milestone, while a contact's `ACTIVATED` value
-remains a per-person journey stage. They share one configured event but are materialized
+remains a per-person journey stage. They share one configured event but are recorded
 independently when the event resolves the corresponding identity.
 
----
-
-## What are the contact journey stages?
+## Contact journey stages
 
 Each person (contact) progresses through stages based on their product engagement:
 
-| Stage | Meaning | How It's Set |
+| Stage | Meaning | How it is set |
 |-------|---------|--------------|
-| **Discovered** | Email known, hasn't signed up yet | Auto-detected by browser SDK when email is provided without userId |
-| **Signed Up** | Created an account | Auto-detected by browser SDK when both email and userId are provided |
-| **Activated** | Completed onboarding or key milestone | Derived by Core from your selected ordinary activation event |
-| **Engaged** | Actively using the product | Auto-inferred from product activity via PostHog or your SDK (browser/server) |
-| **Inactive** | No activity for extended period | Auto-inferred when no activity detected for 30+ days |
+| **Discovered** | Email known, hasn't signed up yet | Auto-detected by the Outlit Browser SDK when email is provided without userId |
+| **Signed Up** | Created an account | Auto-detected by the Outlit Browser SDK when both email and userId are provided |
+| **Activated** | Completed onboarding or key milestone | Derived by Outlit from your selected ordinary activation event |
+| **Engaged** | Actively using the product | Auto-inferred from product activity via PostHog or Outlit SDKs |
+| **Inactive** | No activity for extended period | Auto-inferred when no qualifying activity is detected for the configured inactivity period |
 
-<Info>
-  Contact stages track **product engagement**, not billing. A contact can be Engaged even if their company hasn't paid, or Inactive even if their company is actively paying.
-</Info>
+Contact stages track **product engagement**, not billing. A contact can be Engaged even if their company hasn't paid, or Inactive even if their company is actively paying.
 
 ### How stages progress
 
-Contacts move forward through Discovered, Signed Up, Activated, and Engaged. They can never move backwards—an Engaged contact can't become Activated again. The one exception is Inactive: contacts return to Engaged when their activity again meets the configured engagement threshold.
+Contacts move forward through Discovered, Signed Up, Activated, and Engaged. The exception is the Engaged ↔ Inactive cycle: a contact returns to Engaged when activity again meets the configured threshold.
 
----
+## How stages are detected
 
-## How does Outlit detect stages automatically?
-
-### Discovered vs Signed Up
+### Discovered vs signed up
 
 The difference is determined by the identifiers you provide:
 
@@ -107,21 +86,15 @@ The difference is determined by the identifiers you provide:
   </Tab>
 </Tabs>
 
-<Tip>
-  If a Discovered contact later provides a userId (e.g., they sign up after submitting a lead form), they automatically advance to Signed Up.
-</Tip>
+If a Discovered contact later provides a userId (e.g., they sign up after submitting a lead form), they automatically advance to Signed Up.
 
 ### Automatic engagement and inactivity
 
-Outlit derives Engaged and Inactive from tracked product activity. Activity signals can come from the browser SDK, server SDK, and connected product integrations. Engagement is based on consistent activity in a configured rolling window; inactivity is based on no qualifying activity for the configured inactivity period.
+Outlit derives Engaged and Inactive from tracked product activity. Activity signals can come from the Outlit Browser SDK, Outlit server SDKs, and connected product integrations. Engagement is based on consistent activity in a configured rolling window; inactivity is based on no qualifying activity for the configured inactivity period.
 
----
+## How contact activation works
 
-## How is contact activation derived?
-
-<Info>
-  Identify the user and send the same ordinary activation event consistently from the browser SDK, server SDK, or a verified product integration.
-</Info>
+Identify the user and send the same ordinary activation event consistently from the Outlit Browser SDK, an Outlit server SDK, or a verified product integration.
 
 ### Track the selected activation event
 
@@ -134,47 +107,33 @@ outlit.track('onboarding_completed', {
 })
 ```
 
-Configure `onboarding_completed` (or your equivalent event) as the activation event in Outlit. Core derives Activated from that ordinary event. It also derives Engaged and Inactive from the broader stream of tracked product activity.
+Configure `onboarding_completed` (or your equivalent event) as the activation event in Outlit. Outlit derives Activated from that ordinary event. It also derives Engaged and Inactive from the broader stream of tracked product activity.
 
----
-
-## What are the account billing statuses?
+## Account billing statuses
 
 Each account (company) has a billing status that's separate from individual contact journeys:
 
-| Status | Meaning | How It's Set |
+| Status | Meaning | How it is set |
 |--------|---------|--------------|
 | **None** | Never had a subscription | Default |
 | **Trialing** | Active trial period | Verified billing integration |
 | **Paying** | Active paid subscription | Verified billing integration |
+| **Past due** | Payment failing or overdue | Verified billing integration |
 | **Churned** | Had subscription, now cancelled | Verified billing integration |
 
----
-
-## How does Stripe integration work?
+## Billing from Stripe
 
 If you've connected Stripe to Outlit, billing status is handled automatically:
 
-| Stripe Subscription Status | Account Billing Status |
-|---------------------------|------------------------|
-| `trialing` | Trialing |
-| `active` | Paying |
-| `canceled` | Churned |
-| `unpaid` | Churned |
+Stripe subscription states map onto the billing statuses above — trialing maps to Trialing, active to Paying, delinquent states to Past due, and cancellation to Churned.
 
-When a subscription status changes in Stripe, Outlit automatically updates the matching account's billing status. Individual contact journey stages are not affected.
+When a subscription status changes in Stripe, Outlit updates the matching account's billing status. Individual contact journey stages are not affected.
 
-<Info>
-  Stripe integration links accounts through synced customer and contact identity. Company-domain accounts and personal-email customers are handled differently, so billing status should be read as account context, not as a contact journey stage.
-</Info>
+Stripe integration links accounts through synced customer and contact identity. Company-domain accounts and personal-email customers are handled differently, so billing status should be read as account context, not as a contact journey stage.
 
----
+## Track meaningful events
 
-## Best practices
-
-**Send facts, not authoritative state.** Discovered and Signed Up are auto-detected from identity. Activated is derived by Core from the customer-selected ordinary activation event. Engaged and Inactive are derived from tracked product activity captured by the browser SDK, server SDK, and verified product integrations. Verified billing integrations provide billing status.
-
-**Understand the separation.** Contact journey, company activation, and account billing are independent. Jane can be Engaged while her company has not activated, or Inactive after her company has activated and paid. Jane's journey can change independently from the company's monotonic activation timestamp and billing status.
+**Send product events.** Discovered and Signed Up are auto-detected from identity. Activated is derived by Outlit from the customer-selected ordinary activation event. Engaged and Inactive are derived from tracked product activity captured by the Outlit Browser SDK, Outlit server SDKs, and verified product integrations. Verified billing integrations provide billing status.
 
 **Configure one ordinary activation event.** Continue tracking ordinary product events or
 ingesting them through connected analytics sources. Select the exact event name with the
@@ -184,9 +143,7 @@ activation CLI; do not add a synthetic activation event or client-side lifecycle
 
 **Include useful properties.** Properties help you analyze stage transitions. Include context like which onboarding flow was completed, time-to-activate, and which steps were skipped.
 
----
-
-## Frequently Asked Questions
+## Frequently asked questions
 
 <AccordionGroup>
   <Accordion title="What's the difference between contact journey and account billing?">
@@ -194,33 +151,31 @@ activation CLI; do not add a synthetic activation event or client-side lifecycle
   </Accordion>
 
   <Accordion title="What's the difference between contact and company activation?">
-    Contact activation is a per-person journey stage, while company activation is a separate, monotonic account milestone exposed as `activatedAt`. Core derives both from the same configured exact ordinary product event and independently activates whichever contact or company identity the event resolves.
+    Contact activation is a per-person journey stage, while company activation is a separate account milestone exposed as `activatedAt`. Outlit derives both from the same configured exact ordinary product event and independently activates whichever contact or company identity the event resolves.
   </Accordion>
 
   <Accordion title="Which stages require manual instrumentation?">
-    No journey stage is set through an authoritative SDK command. Discovered and Signed Up are derived from identity, Activated is derived from your selected ordinary activation event, and Engaged and Inactive are derived from tracked product activity. Billing statuses sync from verified billing integrations.
+    None are set directly. Discovered and Signed Up are derived from identity, Activated is derived from your selected ordinary activation event, and Engaged and Inactive are derived from tracked product activity. Billing statuses sync from verified billing integrations.
   </Accordion>
 
   <Accordion title="Can contacts move backward in journey stages?">
-    Contacts generally progress forward through Discovered, Signed Up, Activated, and Engaged. The only cycle is Engaged ↔ Inactive, which is driven by activity and inactivity.
+    Contacts progress forward through Discovered, Signed Up, Activated, and Engaged. The only cycle is Engaged ↔ Inactive, which is driven by activity and inactivity.
   </Accordion>
 </AccordionGroup>
 
----
-
-## Next Steps
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
+  <Card title="Identity resolution" icon="fingerprint" href="/concepts/identity-resolution">
     How Outlit connects anonymous visitors to known contacts
   </Card>
-  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+  <Card title="Server-side tracking" icon="server" href="/tracking/server/nodejs">
     Track ordinary product events from your backend
   </Card>
-  <Card title="Browser Integration" icon="browser" href="/tracking/browser/script">
+  <Card title="Browser integration" icon="browser" href="/tracking/browser/script">
     Set up browser tracking
   </Card>
-  <Card title="API Reference" icon="code" href="/api-reference/ingest">
+  <Card title="API reference" icon="code" href="/api-reference/ingest">
     Direct API for identify and product events
   </Card>
 </CardGroup>

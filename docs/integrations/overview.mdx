@@ -1,0 +1,89 @@
+---
+title: "Integrations overview"
+description: "What to connect, who connects it, and how monitoring readiness reflects coverage."
+---
+
+Integrations are how Outlit sees your customers. Connect sources once — Outlit continuously monitors them and surfaces churn and renewal items in Attention. Expansion evidence appears on customer profiles and renewal briefs. The Outlit Browser SDK adds the website journey before a person becomes a known contact; product analytics integrations import product activity into Outlit.
+
+Open **Integrations** in the sidebar to browse the catalog, connect, and check each connection's status.
+
+## What to connect, roughly in order
+
+| Source | Connects | Unlocks |
+|---|---|---|
+| **Stripe** | Billing status, MRR, subscriptions | The set of monitored customers; billing signals |
+| **PostHog / Mixpanel / Outlit SDKs** | Product activity | Inactivity and usage-trend signals |
+| **Outlit Browser SDK** | First landing page, referrer and UTM data, anonymous site visits | Connect the path to signup with later activity after browser identification |
+| **Salesforce / HubSpot / Attio** | Accounts, opportunities, contacts, renewals | Ownership, renewal cycles, commercial context |
+| **Gmail / Google Calendar** | Your team's mailboxes and calendars | Relationship evidence, stakeholder changes |
+| **Slack** | Channels | Conversation signals + a destination for notifications |
+| **Pylon** | Support tickets | Escalation and unresolved-issue signals |
+| **Gong / Fireflies / Granola** | Call recordings and notes | Sentiment, commitments, competitive mentions |
+| **Clerk / Supabase Auth** | Auth users | Sign-in activity and identity matching |
+| **Autumn** | Feature/credit usage | Entitlement and consumption evidence |
+
+A billing source and a product-activity source provide important monitoring inputs — but whether monitoring reports **active** depends on coverage *and* the responsibility being enabled on your workspace. The Churn status card is the source of truth for readiness and what's still missing.
+
+## Who connects what
+
+- **Admins** connect workspace-wide sources — billing, CRM, Slack, product analytics, support.
+- **Members** can connect their own accounts — Gmail and personal Granola keys are per-person by design.
+- Each teammate connecting Gmail adds coverage: Outlit only sees the mailboxes actually connected.
+
+## Connection methods
+
+| Method | Used by | What it looks like |
+|---|---|---|
+| **OAuth** | Stripe, CRMs, Gmail, Google Calendar, Slack, Gong | Redirect to the provider, approve scopes, return |
+| **API key or service account** | PostHog, Mixpanel (service-account credentials), Fireflies, Granola, Pylon, Autumn, Clerk, Supabase, Stripe (restricted key) | Paste credentials in the setup form |
+| **SDK install** | Outlit Browser SDK and Outlit server SDKs | An engineer adds the browser snippet or server package — see [Tracking](/tracking/quickstart) |
+
+## Setup tasks
+
+Some sources aren't done after credentials — the connect flow asks for mapping:
+
+- **CRM integrations** — map the pipeline: which open stages are renewal deals, which closed stages count as won/lost outcomes, and which deal field carries the renewal date.
+- **Mixpanel** — confirm the account-property mapping that joins events to customer accounts before import starts.
+- **Stripe** — webhook setup may be a separate step from credentials.
+- **Slack** — choose channels and set a notification destination (Settings → Destinations).
+
+## Status and troubleshooting
+
+The Integrations page shows each connection's state — connected, syncing, error, or stale. If a connection errors or goes stale, it shows up in churn monitoring's **Reduced coverage** with a link back here.
+
+<AccordionGroup>
+  <Accordion title="Connected but no data appears">
+    Historical imports run in the background after connection, and completion time varies by source and history. When data is missing, check the connection's sync status on the Integrations page and the customer's Coverage tab.
+  </Accordion>
+  <Accordion title="A connection shows an error">
+    Usually an expired token or revoked key. Reconnect the source — Outlit asks you to reconnect, and reconnecting doesn't lose previously imported data.
+  </Accordion>
+  <Accordion title="I don't see the option to connect">
+    Workspace-wide sources need an admin. Members see the catalog but can only connect personal-scope accounts.
+  </Accordion>
+</AccordionGroup>
+
+## Source guides
+
+<CardGroup cols={2}>
+  <Card title="Stripe" icon="credit-card" href="/integrations/stripe">
+    Billing — OAuth or restricted key
+  </Card>
+  <Card title="PostHog" icon="chart-line" href="/integrations/posthog">
+    Product analytics — API key + project mapping
+  </Card>
+  <Card title="Slack" icon="slack" href="/integrations/slack">
+    Conversation signals + notification destination
+  </Card>
+  <Card title="Gmail" icon="envelope" href="/integrations/gmail">
+    Per-teammate email connection
+  </Card>
+  <Card title="CRM" icon="building" href="/integrations/crm">
+    Salesforce, HubSpot, Attio — accounts, deals, renewals
+  </Card>
+  <Card title="Support and meetings" icon="headset" href="/integrations/support-and-meetings">
+    Pylon, Gong, Fireflies, Granola, Google Calendar
+  </Card>
+</CardGroup>
+
+Other catalog entries (Mixpanel, Autumn, Clerk, Supabase Auth) use their setup flow — paste credentials or start OAuth, then finish any mapping the form asks for. [Outlit SDKs](/tracking/how-it-works) are installed in your code.

@@ -1,6 +1,6 @@
 ---
-title: "Next.js Integration"
-description: "Integrate Outlit tracking with Next.js App Router and Pages Router"
+title: "Next.js"
+description: "Integrate Outlit tracking with Next.js App Router and Pages Router."
 ---
 
 ## Installation
@@ -23,7 +23,7 @@ bun add @outlit/browser
 ```
 </CodeGroup>
 
-## Quick Start
+## Quick start
 
 <Tabs>
   <Tab title="App Router">
@@ -90,14 +90,12 @@ export default function App({ Component, pageProps }: AppProps) {
   </Tab>
 </Tabs>
 
-<Tip>
-  Add your public key to `.env.local`:
-  ```
-  NEXT_PUBLIC_OUTLIT_KEY=pk_your_public_key_here
-  ```
-</Tip>
+Add your public key to `.env.local`:
+```
+NEXT_PUBLIC_OUTLIT_KEY=pk_your_public_key_here
+```
 
-## Using the React Provider (Recommended)
+## Using the React provider (recommended)
 
 For a better experience with React hooks, use the React provider:
 
@@ -136,7 +134,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 See the [React integration guide](/tracking/browser/react) for full React provider documentation.
 
-## Tracking Events
+## Tracking events
 
 Track custom events in client components:
 
@@ -168,7 +166,7 @@ export default function Dashboard() {
 }
 ```
 
-### With React Provider
+### With React provider
 
 ```tsx
 'use client'
@@ -186,7 +184,11 @@ export default function PricingButton() {
 }
 ```
 
-## Identifying Users
+### Activation event
+
+Track your value milestone as an ordinary event once it succeeds. For example, after your export action confirms completion, call `outlit.track('report_exported', { format: 'csv' })` from the client component. Choose that event as your activation event in Outlit. The first matching event records activation once for each eligible resolved person and company, independently. Billing status comes from verified integrations such as Stripe. See [Customer journey](/concepts/customer-journey).
+
+## Identifying users
 
 Identify users after authentication:
 
@@ -240,7 +242,7 @@ export default function LoginPage() {
 }
 ```
 
-## Server-Side Auth Integration
+## Server-side auth integration
 
 ### With NextAuth
 
@@ -352,7 +354,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
-## Server Actions
+## Server actions
 
 Track events from server actions:
 
@@ -370,9 +372,9 @@ export async function trackServerEvent(userId: string) {
   outlit.track({
     userId,
     eventName: 'server_action_completed',
+    timestamp: Date.now(),
     properties: {
-      action: 'data_export',
-      timestamp: new Date().toISOString()
+      action: 'data_export'
     }
   })
 
@@ -380,11 +382,9 @@ export async function trackServerEvent(userId: string) {
 }
 ```
 
-<Info>
-  For server-side tracking, see the [Node.js integration guide](/tracking/server/nodejs).
-</Info>
+For server-side tracking, see the [Node.js integration guide](/tracking/server/nodejs).
 
-## API Routes
+## API routes
 
 Track events from API routes:
 
@@ -412,26 +412,11 @@ export async function POST(request: Request) {
 }
 ```
 
-## Middleware Tracking
+## Middleware
 
-Track pageviews from middleware:
+Don't track in middleware: it cannot reliably respect the visitor's consent choice or guarantee delivery, and it can double-count pageviews the Outlit Browser SDK already sends. Use browser pageview tracking for page activity and `@outlit/node` in Server Actions or Route Handlers for server events, where you can `await outlit.flush()` (see the [Outlit Node.js SDK guide](/tracking/server/nodejs#outlit-flush)).
 
-```typescript
-// middleware.ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next()
-
-  // Add tracking headers
-  response.headers.set('X-Outlit-Track', 'pageview')
-
-  return response
-}
-```
-
-## Environment Variables
+## Environment variables
 
 Set up your environment variables:
 
@@ -449,7 +434,7 @@ OUTLIT_KEY=pk_your_public_key_here
   Keep server environment variables out of client-side code. Only use `OUTLIT_KEY` in server components, API routes, or server actions.
 </Warning>
 
-## TypeScript Support
+## TypeScript support
 
 Full TypeScript support is included:
 
@@ -465,19 +450,19 @@ const options: OutlitOptions = {
 outlit.init(options)
 ```
 
-## Next Steps
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="React Provider" icon="react" href="/tracking/browser/react">
+  <Card title="React provider" icon="react" href="/tracking/browser/react">
     Full React integration guide
   </Card>
-  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+  <Card title="Server-side tracking" icon="server" href="/tracking/server/nodejs">
     Track events from your backend
   </Card>
-  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
-    Learn how profiles are merged
+  <Card title="Identity resolution" icon="fingerprint" href="/concepts/identity-resolution">
+    Learn how visits and events link to people
   </Card>
-  <Card title="NPM Package" icon="npm" href="/tracking/browser/npm">
+  <Card title="npm package" icon="npm" href="/tracking/browser/npm">
     Full API reference
   </Card>
 </CardGroup>

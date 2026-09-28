@@ -1,6 +1,6 @@
 ---
-title: "Nuxt Integration"
-description: "Integrate Outlit tracking with Nuxt 3 applications"
+title: "Nuxt"
+description: "Integrate Outlit tracking with Nuxt 3 applications."
 ---
 
 ## Installation
@@ -23,7 +23,7 @@ bun add @outlit/browser
 ```
 </CodeGroup>
 
-## Quick Start
+## Quick start
 
 Create a Nuxt plugin to initialize Outlit:
 
@@ -60,14 +60,12 @@ export default defineNuxtConfig({
 })
 ```
 
-<Tip>
-  Add your public key to `.env`:
-  ```
-  NUXT_PUBLIC_OUTLIT_KEY=pk_your_public_key_here
-  ```
-</Tip>
+Add your public key to `.env`:
+```
+NUXT_PUBLIC_OUTLIT_KEY=pk_your_public_key_here
+```
 
-## Tracking Events
+## Tracking events
 
 Track events using the provided instance:
 
@@ -90,9 +88,9 @@ function handleClick() {
 </template>
 ```
 
-## Creating a Composable
+## Creating a composable
 
-Create a reusable composable for better DX:
+Create a reusable composable for a shorter setup:
 
 ```typescript
 // composables/useOutlit.ts
@@ -143,7 +141,7 @@ function handleFeatureClick() {
 </template>
 ```
 
-## Identifying Users
+## Identifying users
 
 Identify users after authentication:
 
@@ -172,7 +170,7 @@ async function handleLogin(email: string, password: string) {
 </script>
 ```
 
-## Auth Integration
+## Auth integration
 
 ### With Nuxt Auth
 
@@ -255,7 +253,7 @@ export default defineNuxtPlugin(async () => {
 })
 ```
 
-## Router Integration
+## Router integration
 
 Track route changes:
 
@@ -288,7 +286,7 @@ export default defineNuxtPlugin(() => {
 })
 ```
 
-## Server-Side Tracking
+## Server-side tracking
 
 Track events from server API routes:
 
@@ -318,13 +316,11 @@ export default defineEventHandler(async (event) => {
 })
 ```
 
-<Info>
-  For server-side tracking, see the [Node.js integration guide](/tracking/server/nodejs).
-</Info>
+For server-side tracking, see the [Node.js integration guide](/tracking/server/nodejs).
 
 ## Activation event
 
-Track the configured meaningful event after the user completes the milestone:
+Track your value milestone as an ordinary event once it succeeds:
 
 ```vue
 <script setup>
@@ -336,11 +332,9 @@ function handleOnboardingComplete() {
 </script>
 ```
 
-<Info>
-  Configure this exact ordinary event as your activation event. Outlit Core applies its first match to eligible contacts and their resolved company; billing comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
-</Info>
+Choose this event as your activation event in Outlit. The first matching event records activation once for each eligible resolved person and company, independently. Billing status comes from verified integrations such as Stripe. See [Customer journey](/concepts/customer-journey).
 
-## Consent Management
+## Consent management
 
 Handle user consent:
 
@@ -391,7 +385,7 @@ export default defineNuxtPlugin(() => {
 })
 ```
 
-## Environment Variables
+## Environment variables
 
 Configure environment variables:
 
@@ -409,7 +403,7 @@ OUTLIT_KEY=pk_your_public_key_here
   Keep server environment variables out of client-side code. Only use `OUTLIT_KEY` in server API routes.
 </Warning>
 
-## TypeScript Support
+## TypeScript support
 
 Full TypeScript support is included:
 
@@ -434,19 +428,19 @@ export default defineNuxtPlugin(() => {
 })
 ```
 
-## Next Steps
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Vue Integration" icon="vuejs" href="/tracking/browser/vue">
+  <Card title="Vue integration" icon="vuejs" href="/tracking/browser/vue">
     Use Outlit with Vue 3
   </Card>
-  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+  <Card title="Server-side tracking" icon="server" href="/tracking/server/nodejs">
     Track events from your backend
   </Card>
-  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
-    Learn how profiles are merged
+  <Card title="Identity resolution" icon="fingerprint" href="/concepts/identity-resolution">
+    Learn how visits and events link to people
   </Card>
-  <Card title="NPM Package" icon="npm" href="/tracking/browser/npm">
+  <Card title="npm package" icon="npm" href="/tracking/browser/npm">
     Full API reference
   </Card>
 </CardGroup>

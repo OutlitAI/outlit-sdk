@@ -1,6 +1,6 @@
 ---
-title: "React Integration"
-description: "First-class React support with Provider and hooks"
+title: "React"
+description: "First-class React support with Provider and hooks."
 ---
 
 ## Installation
@@ -23,12 +23,12 @@ bun add @outlit/browser
 ```
 </CodeGroup>
 
-## Quick Start
+## Quick start
 
 Wrap your app with `OutlitProvider` and use the `useOutlit` hook in components.
 
 <Tabs>
-  <Tab title="With Authentication (Recommended)">
+  <Tab title="With authentication (recommended)">
 If your app has user authentication, pass the user identity via the `user` prop. This is the recommended approach as it automatically handles login/logout transitions.
 
 ```tsx
@@ -77,20 +77,33 @@ export default function RootLayout({ children }) {
 }
 ```
   </Tab>
-  <Tab title="Anonymous Only">
-For marketing sites without authentication, just add the provider:
+  <Tab title="Anonymous only">
+For marketing sites without authentication, add the provider via a client component:
 
 ```tsx
-// app/layout.tsx (Next.js App Router)
+// app/providers.tsx (Next.js App Router)
+'use client'
+
 import { OutlitProvider } from '@outlit/browser/react'
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <OutlitProvider publicKey="pk_your_key" trackPageviews>
+      {children}
+    </OutlitProvider>
+  )
+}
+```
+
+```tsx
+// app/layout.tsx
+import { Providers } from './providers'
 
 export default function RootLayout({ children }) {
   return (
     <html>
       <body>
-        <OutlitProvider publicKey="pk_your_key" trackPageviews>
-          {children}
-        </OutlitProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )
@@ -99,7 +112,7 @@ export default function RootLayout({ children }) {
   </Tab>
 </Tabs>
 
-### Using the Hook
+### Using the hook
 
 Track custom events with the `useOutlit` hook:
 
@@ -120,7 +133,7 @@ export function PricingButton() {
 }
 ```
 
-## Provider Configuration
+## Provider configuration
 
 ### OutlitProvider
 
@@ -172,7 +185,7 @@ import { OutlitProvider } from '@outlit/browser/react'
 </ParamField>
 
 <ParamField path="autoIdentify" type="boolean" default="true">
-  Automatically identify users when they submit forms containing an email field. Extracts email and name (first name, last name, full name) using field name heuristics. Set to `false` to disable and call `identify()` manually. See [Auto-Identify](/concepts/identity-resolution#auto-identify) for details.
+  Automatically identify users when they submit forms containing an email field. Extracts email and name (first name, last name, full name) using field name heuristics. Set to `false` to disable and call `identify()` manually. See [Auto-identify](/concepts/identity-resolution#auto-identify) for details.
 </ParamField>
 
 <ParamField path="trackEngagement" type="boolean" default="true">
@@ -195,7 +208,7 @@ import { OutlitProvider } from '@outlit/browser/react'
   An existing `Outlit` instance to use instead of creating one internally. When provided, config props (`publicKey`, `apiHost`, etc.) are ignored and `shutdown()` is **not** called on unmount — the caller owns the instance lifecycle. Useful for sharing a single instance between imperative usage and React context.
 </ParamField>
 
-### Client Mode
+### Client mode
 
 If you need to use the same Outlit instance both imperatively and via React context, pass an existing instance with the `client` prop:
 
@@ -217,11 +230,9 @@ function App() {
 }
 ```
 
-<Info>
-  When using `client`, the provider does not call `shutdown()` on unmount — you own the instance lifecycle. Config props like `publicKey` and `trackPageviews` are ignored.
-</Info>
+When using `client`, the provider does not call `shutdown()` on unmount — you own the instance lifecycle. Config props like `publicKey` and `trackPageviews` are ignored.
 
-## User Identity Patterns
+## User identity patterns
 
 The `user` prop is the **recommended** way to handle user identity. It's simpler and more reliable than manual `identify()` calls because:
 
@@ -229,7 +240,7 @@ The `user` prop is the **recommended** way to handle user identity. It's simpler
 - **No timing issues**: Identity is set before any events are tracked
 - **Cleaner code**: No need for useEffect + identify() synchronization
 
-### Pattern 1: Client-Side Auth (Clerk, Auth0, etc.)
+### Pattern 1: client-side auth (Clerk, Auth0, etc.)
 
 For auth libraries that provide React hooks:
 
@@ -257,13 +268,35 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
-### Pattern 2: Server-Side Auth (NextAuth, Lucia, etc.)
+### Pattern 2: server-side auth (NextAuth, Lucia, etc.)
 
-For auth systems where session is available server-side:
+For auth systems where session is available server-side, read the session in the Server Component and pass the resolved user into a client wrapper — `OutlitProvider` itself must render inside a client component (the package does not ship a `'use client'` entry).
+
+```tsx
+// app/providers.tsx (Client Component)
+'use client'
+
+import { OutlitProvider } from '@outlit/browser/react'
+import type { UserIdentity } from '@outlit/browser'
+
+export function Providers({
+  children,
+  user,
+}: {
+  children: React.ReactNode
+  user: UserIdentity | null
+}) {
+  return (
+    <OutlitProvider publicKey={process.env.NEXT_PUBLIC_OUTLIT_KEY!} user={user}>
+      {children}
+    </OutlitProvider>
+  )
+}
+```
 
 ```tsx
 // app/layout.tsx (Server Component)
-import { OutlitProvider } from '@outlit/browser/react'
+import { Providers } from './providers'
 import { auth } from '@/auth' // Your auth library
 
 export default async function RootLayout({ children }) {
@@ -272,8 +305,7 @@ export default async function RootLayout({ children }) {
   return (
     <html>
       <body>
-        <OutlitProvider 
-          publicKey={process.env.NEXT_PUBLIC_OUTLIT_KEY!}
+        <Providers
           user={session?.user ? {
             email: session.user.email,
             userId: session.user.id,
@@ -281,27 +313,23 @@ export default async function RootLayout({ children }) {
           } : null}
         >
           {children}
-        </OutlitProvider>
+        </Providers>
       </body>
     </html>
   )
 }
 ```
 
-<Tip>
-  **Which pattern should I use?**
-  
-  - **Client-side auth hooks** (Clerk, Auth0): Use Pattern 1 with a client providers component
-  - **Server-side sessions** (NextAuth, Lucia, custom JWT): Use Pattern 2 directly in the layout
-  
-  Both patterns work equally well - choose based on how your auth library provides user data.
-</Tip>
+**Which pattern should I use?**
 
-<Info>
-  When the `user` prop changes (login/logout), the provider automatically calls `setUser()` or `clearUser()` internally. You don't need to call these methods manually.
-</Info>
+- **Client-side auth hooks** (Clerk, Auth0): Use Pattern 1 with a client providers component
+- **Server-side sessions** (NextAuth, Lucia, custom JWT): Use Pattern 2 — resolve the session in the server layout, pass `user` into a client `Providers` wrapper
 
-## Consent Management
+Both patterns work equally well - choose based on how your auth library provides user data. In the App Router, `OutlitProvider` (and `useOutlit`) must always render inside a component with `'use client'`.
+
+When the `user` prop changes (login/logout), the provider automatically calls `setUser()` or `clearUser()` internally. You don't need to call these methods manually.
+
+## Consent management
 
 If you need to wait for user consent before tracking:
 
@@ -352,7 +380,7 @@ export function CookieBanner() {
 }
 ```
 
-### With Third-Party CMPs
+### With third-party CMPs
 
 <Tabs>
   <Tab title="Cookiebot">
@@ -546,7 +574,7 @@ function LoginForm() {
 
 ## Activation event
 
-Track the ordinary event selected as your activation event after the milestone succeeds:
+Track your value milestone as an ordinary event once it succeeds:
 
 ```tsx
 'use client'
@@ -564,28 +592,39 @@ function OnboardingComplete() {
 }
 ```
 
-<Info>
-  Configure this exact event as your activation event. Outlit Core applies its first match to eligible contacts and their resolved company, while billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
-</Info>
+Choose this event as your activation event in Outlit. The first matching event records activation once for each eligible resolved person and company, independently. Billing status comes from verified integrations such as Stripe. See [Customer journey](/concepts/customer-journey).
 
-## Framework Examples
+## Framework examples
 
 ### Next.js App Router
 
 ```tsx
-// app/layout.tsx
+// app/providers.tsx
+'use client'
+
 import { OutlitProvider } from '@outlit/browser/react'
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <OutlitProvider
+      publicKey={process.env.NEXT_PUBLIC_OUTLIT_KEY!}
+      trackPageviews
+    >
+      {children}
+    </OutlitProvider>
+  )
+}
+```
+
+```tsx
+// app/layout.tsx
+import { Providers } from './providers'
 
 export default function RootLayout({ children }) {
   return (
     <html>
       <body>
-        <OutlitProvider 
-          publicKey={process.env.NEXT_PUBLIC_OUTLIT_KEY!}
-          trackPageviews
-        >
-          {children}
-        </OutlitProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )
@@ -610,7 +649,7 @@ export default function Dashboard() {
 }
 ```
 
-### Next.js Pages Router
+### Next.js pages router
 
 ```tsx
 // pages/_app.tsx
@@ -627,15 +666,18 @@ export default function App({ Component, pageProps }) {
 
 ### Remix
 
+Remix renders the root component in the browser, so the provider can live directly in `root.tsx` (Remix has no server-only component boundary like the Next.js App Router). Use a `VITE_`-prefixed env var for the public key:
+
 ```tsx
 // app/root.tsx
+import { Outlet } from 'react-router'
 import { OutlitProvider } from '@outlit/browser/react'
 
 export default function App() {
   return (
     <html>
       <body>
-        <OutlitProvider publicKey={window.ENV.OUTLIT_KEY}>
+        <OutlitProvider publicKey={import.meta.env.VITE_OUTLIT_KEY}>
           <Outlet />
         </OutlitProvider>
       </body>
@@ -644,9 +686,9 @@ export default function App() {
 }
 ```
 
-## Common Patterns
+## Common patterns
 
-### Track on Mount
+### Track on mount
 
 Track when a component mounts (e.g., page viewed):
 
@@ -665,7 +707,7 @@ function ProductPage({ productId }) {
 }
 ```
 
-### Track Form Submission
+### Track form submission
 
 Track custom form events:
 
@@ -704,11 +746,9 @@ function ContactForm() {
 }
 ```
 
-### Identify After Auth
+### Identify after auth
 
-<Warning>
-  **Prefer the `user` prop instead.** The pattern below works, but using the `user` prop on `OutlitProvider` is cleaner and handles the lifecycle automatically. See [User Identity Patterns](#user-identity-patterns) above.
-</Warning>
+**Prefer the `user` prop instead.** The pattern below works, but using the `user` prop on `OutlitProvider` is cleaner and handles the lifecycle automatically. See [User identity patterns](#user-identity-patterns) above.
 
 If you can't use the `user` prop (e.g., the provider is in a different part of the tree), you can sync manually:
 
@@ -768,13 +808,13 @@ const user: UserIdentity = {
 }
 ```
 
-## Next Steps
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+  <Card title="Server-side tracking" icon="server" href="/tracking/server/nodejs">
     Track events from your backend
   </Card>
-  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
-    Learn how profiles are merged
+  <Card title="Identity resolution" icon="fingerprint" href="/concepts/identity-resolution">
+    Learn how visits and events link to people
   </Card>
 </CardGroup>

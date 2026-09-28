@@ -1,0 +1,109 @@
+---
+title: "Work a renewal"
+description: "The renewal portfolio, agent-prepared briefs, and working a cycle from tracked date to recorded outcome."
+---
+
+Outlit's Renewals responsibility tracks every renewal cycle it can see — from CRM opportunities or manual entries — prepares an evidence-backed brief before each date, and refreshes that brief as new customer activity arrives. Your work is reviewing briefs, steering the approach, and recording outcomes.
+
+If **Renewals** is missing from your sidebar, see [Responsibilities](/product/responsibilities) for workspace availability. Customer profiles can still show renewal dates.
+
+## Prepare renewal data
+
+| Prerequisite | Why |
+|---|---|
+| **CRM connected** (Salesforce, HubSpot, or Attio) with pipeline mapping finished | Renewal opportunities become cycles automatically — deduplicated against the CRM record; the mapping covers renewal stages, won/lost outcomes, and the field carrying the renewal date |
+| **Billing connected** (Stripe) | Billing status on the account; billing-confirmed outcomes |
+| **Conversations connected** (Gmail, Slack, call recorders) | Stakeholder, sentiment, and procurement evidence in the brief |
+| *or* **manual cycles** | No CRM? Create cycles directly on the customer — see controls below |
+
+## The portfolio
+
+**Responsibilities → Renewals** lists upcoming and overdue cycles — the planning view for the whole renewal book: dates, values, readiness (**On track**, **Needs attention**, **At risk**, **Unknown**), and brief state. Renewals that need a person — a brief awaiting review, a milestone reached, an unresolved risk — also appear in **Attention**, which is where day-to-day review happens.
+
+## A renewal, start to finish
+
+Fictional example — **Northwind Retail** (`northwindretail.example`), $36k ARR, renewing in 40 days:
+
+<Steps>
+  <Step title="The cycle appears">
+    A renewal opportunity in your CRM becomes a cycle in the portfolio — or you create it manually. A cycle carries a renewal date (CRM-sourced dates stay distinguishable from manual overrides), an optional **notice deadline** — the last day to cancel without auto-renewing — and an outcome once it resolves.
+  </Step>
+  <Step title="The brief is prepared">
+    Before the date, Outlit investigates the account and prepares a renewal brief — checked by Outlit before it's published as the cycle's **current approved brief**. When a new brief is approved, it supersedes the previous one; earlier versions stay under **Previous assessments** so you can see how the read has moved.
+  </Step>
+  <Step title="An attention item arrives">
+    When the renewal needs a person — a milestone reached or new risk — it lands in **Attention** as a **Renewal** item with the date front and center.
+
+    <Frame caption="A renewal card puts the due date and priority up front. Fictional demo data.">
+      <img src="/images/product/renewal-item.png" alt="A renewal attention item" />
+    </Frame>
+
+  </Step>
+  <Step title="Read the brief">
+    Open the renewal — from Attention or the portfolio — for the full workspace. The approved brief covers:
+
+    - *Executive synthesis* — the renewal in a paragraph
+    - *Value and adoption* — usage and value evidence
+    - *Stakeholders and sentiment* — who's involved and how they lean
+    - *Commercial and procurement* — contract, terms, and buying-process context
+    - *Risks*, *Opportunities*, *Unknowns* — keyed findings with evidence
+    - *Key evidence* — the source records the brief rests on, with provenance
+
+    For Northwind, the brief might flag that the champion changed roles in September and procurement started a security review — findings carry their supporting evidence. A linked churn case appears alongside when the account has one open, and a **prior-deal comparison** shows how this renewal compares to the customer's previous deal where history exists.
+  </Step>
+  <Step title="Choose the approach">
+    Below the brief, check what Outlit proposes — for example, *reconfirm the new budget owner before the notice deadline* — with steps marked as recommendations or actions, where a proposal exists. Pick it, pick an alternative, or switch later if the next call changes the picture.
+
+    The page also shows **freshness** — when a brief is scheduled, being prepared, may be stale, or delayed — and you can force a refresh with **Request brief now**.
+  </Step>
+  <Step title="Review outbound work">
+    Any email in the plan is drafted for your review — edit and approve before it sends via Gmail. See [Actions and approvals](/product/actions-and-approvals).
+  </Step>
+  <Step title="Record the outcome">
+    When the deal resolves: link the closing CRM opportunity, or set **Renewed** / **Not renewed** manually. Outcome sources — CRM, manual, or billing-confirmed — are kept distinct so the record shows how you know.
+  </Step>
+</Steps>
+
+## The controls you have mid-cycle
+
+Workspace members with customer-management permission can:
+
+- **Request brief now** — refresh the brief on demand (the freshness label shows when the last one was prepared)
+- **Set the notice deadline** — the auto-renew cutoff, separately from the renewal date
+- **Override the renewal date** — correct a CRM date in Outlit without touching the CRM; the source date stays visible and your override wins for planning and milestones
+- **Create or edit a manual cycle** — for renewals that never lived in the CRM
+- **Void a cycle** — for a renewal that isn't real (duplicate, cancelled contract); voided cycles are excluded, not deleted
+- **Resolve attention** — close the item with a note when no further work is needed
+
+New customer calls trigger a fresh look at the approach automatically — one recheck after each new call, no request needed. After a call syncs (Granola, Gong, Fireflies, or a logged meeting), review the updated approach before you approve any outbound step.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="My renewals list is empty">
+    Confirm a CRM is connected and its pipeline mapping is finished — renewal stages, won/lost outcomes, and the renewal-date field. If mapping is done and the list is still empty, check that the deals actually carry valid dates in the mapped field. Or create a manual cycle on any customer to prove the loop end to end.
+  </Accordion>
+  <Accordion title="A specific renewal isn't tracked">
+    For CRM renewals, the opportunity must exist in the synced CRM, map to a renewal stage, and carry a valid value in the mapped renewal-date field — check the CRM connection's pipeline mapping. For anything outside the CRM, create a manual cycle on the customer.
+  </Accordion>
+  <Accordion title="The date is wrong">
+    Use the renewal date override on the cycle — the CRM source date stays visible, and your override wins for planning and milestones.
+  </Accordion>
+  <Accordion title="The brief looks stale or thin">
+    Check the freshness label at the top of the detail page, then **Request brief now**. Thin briefs usually mean thin sources — the customer's **Coverage** tab shows which systems this account actually has data from.
+  </Accordion>
+  <Accordion title="A renewal closed but still shows open">
+    Check whether the CRM opportunity's closed stage maps correctly, then link the outcome opportunity or set the outcome manually.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Actions and approvals" icon="circle-check" href="/product/actions-and-approvals">
+    Approaches, approvals, and what executes
+  </Card>
+  <Card title="Find expansion opportunities" icon="arrow-trend-up" href="/guides/expansion">
+    Growth signals inside renewal work
+  </Card>
+</CardGroup>

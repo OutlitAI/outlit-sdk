@@ -87,6 +87,9 @@ jobs:
       - name: Docs contract tests
         run: bunx vitest run tests/docs
 
+      - name: Check pinned docs skill artifact
+        run: node scripts/sync-outlit-skill.mjs --check
+
       - name: Detect changed packages
         id: changes
         env:

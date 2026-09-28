@@ -1,0 +1,616 @@
+{
+  "overlay": "1.1.0",
+  "info": {
+    "title": "Outlit API documentation labels",
+    "version": "1.0.0"
+  },
+  "extends": "./openapi.json",
+  "actions": [
+    {
+      "target": "$.paths['/api/tools/call'].post",
+      "update": {
+        "summary": "Call a tool"
+      }
+    },
+    {
+      "target": "$.paths['/api/validate-api-key'].post",
+      "update": {
+        "summary": "Validate an API key"
+      }
+    },
+    {
+      "target": "$.paths['/api/i/v1/{publicKey}/events'].post",
+      "update": {
+        "summary": "Ingest events"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_customers')]",
+      "update": {
+        "title": "List customers"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_users')]",
+      "update": {
+        "title": "List users"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_workspace_users')]",
+      "update": {
+        "title": "List workspace users"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer')]",
+      "update": {
+        "title": "Get customer"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_relationship')]",
+      "update": {
+        "title": "Get customer relationship"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_assign_customer_owner')]",
+      "update": {
+        "title": "Assign customer owner"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_grant_customer_access')]",
+      "update": {
+        "title": "Grant customer access"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_update_customer_access')]",
+      "update": {
+        "title": "Update customer access"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_revoke_customer_access')]",
+      "update": {
+        "title": "Revoke customer access"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_timeline')]",
+      "update": {
+        "title": "Get timeline"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_facts')]",
+      "update": {
+        "title": "List facts"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_fact')]",
+      "update": {
+        "title": "Get fact"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_source')]",
+      "update": {
+        "title": "Get source"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_sources')]",
+      "update": {
+        "title": "List sources"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_search_customer_context')]",
+      "update": {
+        "title": "Search customer context"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_query')]",
+      "update": {
+        "title": "Query analytics"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_schema')]",
+      "update": {
+        "title": "Inspect analytics schema"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_destinations')]",
+      "update": {
+        "title": "List destinations"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_destination')]",
+      "update": {
+        "title": "Get destination"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_create_destination')]",
+      "update": {
+        "title": "Create destination"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_update_destination')]",
+      "update": {
+        "title": "Update destination"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_enable_destination')]",
+      "update": {
+        "title": "Enable destination"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_disable_destination')]",
+      "update": {
+        "title": "Disable destination"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_archive_destination')]",
+      "update": {
+        "title": "Archive destination"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_integration_capabilities')]",
+      "update": {
+        "title": "Get integration capabilities"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_begin_integration_setup')]",
+      "update": {
+        "title": "Begin integration setup"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_integration_setup_status')]",
+      "update": {
+        "title": "Get integration setup status"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_integration_status')]",
+      "update": {
+        "title": "Get integration status"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_setup_integration')]",
+      "update": {
+        "title": "Set up integration"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_activation')]",
+      "update": {
+        "title": "Get customer activation"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_preview_customer_activation')]",
+      "update": {
+        "title": "Preview customer activation"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_update_customer_activation')]",
+      "update": {
+        "title": "Update customer activation"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_workspace_settings')]",
+      "update": {
+        "title": "Get workspace settings"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_update_workspace_settings')]",
+      "update": {
+        "title": "Update workspace settings"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_features')]",
+      "update": {
+        "title": "List features"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_create_feature')]",
+      "update": {
+        "title": "Create feature"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_archive_feature')]",
+      "update": {
+        "title": "Archive feature"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_features')]",
+      "update": {
+        "title": "Get customer features"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_credits')]",
+      "update": {
+        "title": "Get customer credits"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_attention_items')]",
+      "update": {
+        "title": "List attention items"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_attention_item')]",
+      "update": {
+        "title": "Get attention item"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_identity')]",
+      "update": {
+        "title": "Get customer identity"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_identity_merge_suggestions')]",
+      "update": {
+        "title": "List identity merge suggestions"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_reject_identity_merge_suggestion')]",
+      "update": {
+        "title": "Reject identity merge suggestion"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_merge_customers')]",
+      "update": {
+        "title": "Merge customers"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_merge_status')]",
+      "update": {
+        "title": "Get customer merge status"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_customers']",
+      "update": {
+        "title": "List customers"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_users']",
+      "update": {
+        "title": "List users"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_workspace_users']",
+      "update": {
+        "title": "List workspace users"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_customer']",
+      "update": {
+        "title": "Get customer"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_customer_relationship']",
+      "update": {
+        "title": "Get customer relationship"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_assign_customer_owner']",
+      "update": {
+        "title": "Assign customer owner"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_grant_customer_access']",
+      "update": {
+        "title": "Grant customer access"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_update_customer_access']",
+      "update": {
+        "title": "Update customer access"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_revoke_customer_access']",
+      "update": {
+        "title": "Revoke customer access"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_timeline']",
+      "update": {
+        "title": "Get timeline"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_facts']",
+      "update": {
+        "title": "List facts"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_fact']",
+      "update": {
+        "title": "Get fact"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_source']",
+      "update": {
+        "title": "Get source"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_sources']",
+      "update": {
+        "title": "List sources"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_search_customer_context']",
+      "update": {
+        "title": "Search customer context"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_query']",
+      "update": {
+        "title": "Query analytics"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_schema']",
+      "update": {
+        "title": "Inspect analytics schema"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_destinations']",
+      "update": {
+        "title": "List destinations"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_destination']",
+      "update": {
+        "title": "Get destination"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_create_destination']",
+      "update": {
+        "title": "Create destination"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_update_destination']",
+      "update": {
+        "title": "Update destination"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_enable_destination']",
+      "update": {
+        "title": "Enable destination"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_disable_destination']",
+      "update": {
+        "title": "Disable destination"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_archive_destination']",
+      "update": {
+        "title": "Archive destination"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_integration_capabilities']",
+      "update": {
+        "title": "Get integration capabilities"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_begin_integration_setup']",
+      "update": {
+        "title": "Begin integration setup"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_integration_setup_status']",
+      "update": {
+        "title": "Get integration setup status"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_integration_status']",
+      "update": {
+        "title": "Get integration status"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_setup_integration']",
+      "update": {
+        "title": "Set up integration"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_customer_activation']",
+      "update": {
+        "title": "Get customer activation"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_preview_customer_activation']",
+      "update": {
+        "title": "Preview customer activation"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_update_customer_activation']",
+      "update": {
+        "title": "Update customer activation"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_workspace_settings']",
+      "update": {
+        "title": "Get workspace settings"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_update_workspace_settings']",
+      "update": {
+        "title": "Update workspace settings"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_features']",
+      "update": {
+        "title": "List features"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_create_feature']",
+      "update": {
+        "title": "Create feature"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_archive_feature']",
+      "update": {
+        "title": "Archive feature"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_customer_features']",
+      "update": {
+        "title": "Get customer features"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_customer_credits']",
+      "update": {
+        "title": "Get customer credits"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_attention_items']",
+      "update": {
+        "title": "List attention items"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_attention_item']",
+      "update": {
+        "title": "Get attention item"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_customer_identity']",
+      "update": {
+        "title": "Get customer identity"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_identity_merge_suggestions']",
+      "update": {
+        "title": "List identity merge suggestions"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_reject_identity_merge_suggestion']",
+      "update": {
+        "title": "Reject identity merge suggestion"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_merge_customers']",
+      "update": {
+        "title": "Merge customers"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_customer_merge_status']",
+      "update": {
+        "title": "Get customer merge status"
+      }
+    },
+    {
+      "target": "$.components.schemas['IngestPayload'].properties.events.items.oneOf[?(@.properties.type.const == 'pageview')]",
+      "update": {
+        "title": "Pageview event"
+      }
+    },
+    {
+      "target": "$.components.schemas['IngestPayload'].properties.events.items.oneOf[?(@.properties.type.const == 'custom')]",
+      "update": {
+        "title": "Custom event"
+      }
+    },
+    {
+      "target": "$.components.schemas['IngestPayload'].properties.events.items.oneOf[?(@.properties.type.const == 'form')]",
+      "update": {
+        "title": "Form event"
+      }
+    },
+    {
+      "target": "$.components.schemas['IngestPayload'].properties.events.items.oneOf[?(@.properties.type.const == 'identify')]",
+      "update": {
+        "title": "Identify event"
+      }
+    },
+    {
+      "target": "$.components.schemas['IngestPayload'].properties.events.items.oneOf[?(@.properties.type.const == 'engagement')]",
+      "update": {
+        "title": "Engagement event"
+      }
+    },
+    {
+      "target": "$.components.schemas['IngestPayload'].properties.events.items.oneOf[?(@.properties.type.const == 'calendar')]",
+      "update": {
+        "title": "Calendar event"
+      }
+    }
+  ]
+}
