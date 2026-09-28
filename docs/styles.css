@@ -2,12 +2,12 @@ html { background-color: #fcf7f1; }
 html.dark { background-color: #16161a; }
 
 /* Exact marketing wordmark and responsive nav size (marketing/src/components/nav.tsx). */
-.nav-logo[src="/logo/wordmark.png"] {
+.nav-logo[src*="/logo/wordmark.png"] {
   width: clamp(6rem, 10vw, 7rem);
   height: auto;
   filter: invert(1);
 }
-.dark .nav-logo[src="/logo/wordmark.png"] {
+.dark .nav-logo[src*="/logo/wordmark.png"] {
   filter: none;
 }
 
