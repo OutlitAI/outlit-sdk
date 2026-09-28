@@ -1,15 +1,15 @@
 ---
-title: "AI Agent Setup"
-description: "Install Outlit skills for Claude Code, Codex, Gemini CLI, Droid, OpenCode, Pi, OpenClaw, and other coding agents"
+title: "Set up coding agents"
+description: "Install Outlit skills for Claude Code, Codex, Gemini CLI, Droid, OpenCode, Pi, OpenClaw, and other coding agents."
 ---
 
 The `outlit onboard` command is the first command for coding agents. It bootstraps CLI auth, installs the `outlit` skill for the selected agent, checks integration setup readiness, and prints next actions.
 
 `outlit setup` remains available when you only want to install skills. It does not configure MCP clients.
 
-If you want Cursor, VS Code, Claude, or another MCP client, use the direct [MCP Integration](/ai-integrations/mcp) guide instead.
+If you want Cursor, VS Code, Claude, or another MCP client, use the direct [MCP integration](/ai-integrations/mcp) guide instead.
 
-## Supported Agents
+## Supported agents
 
 Run `onboard` for the agent you use, or run `outlit setup --yes` to detect installed agents automatically when you only need skills.
 
@@ -32,11 +32,9 @@ outlit onboard --agent codex --json
 
 If no API key is available, `onboard` starts the browser approval flow outside CI and stores the approved CLI key. It then validates the key, installs the Outlit skill, reads canonical integration status, and returns next commands such as `outlit integrations setup <provider> --json`.
 
-`onboard` does not connect third-party integrations by itself. Use `outlit integrations setup <provider> --json`, then `outlit integrations status <provider> --json`. Setup first negotiates capabilities without credentials. Interactive mode can prompt securely after Core requests a credential or open a safe browser handoff; automation must opt into strict stdin JSON with `--config-stdin`.
+`onboard` does not connect third-party integrations. Run `outlit integrations setup <provider> --json` and check `outlit integrations status <provider> --json` afterward. See [Integration setup (CLI)](/cli/integrations) for credentials, browser handoffs, CRM mapping, and headless mode.
 
-For headless CRM setup, add `--accept-recommended` to submit the exact recommendation returned by Core. It conflicts only with a custom CRM mapping supplied through `--config-stdin`.
-
-## Auto-Setup
+## Automatic setup
 
 Detect installed coding agents and install `outlit` for all of them:
 
@@ -46,7 +44,7 @@ outlit setup --yes
 
 Without `--yes`, the CLI lists detected agents before installing.
 
-### JSON Output
+### JSON output
 
 ```json
 {
@@ -57,7 +55,7 @@ Without `--yes`, the CLI lists detected agents before installing.
 }
 ```
 
-## Interactive Skills Installer
+## Interactive skills installer
 
 Use this when you want to pick agents manually or optionally add `outlit-sdk`:
 
@@ -75,7 +73,7 @@ The `doctor` command checks your CLI auth plus coding-agent skill installs:
 outlit doctor
 ```
 
-### Checks Performed
+### Checks performed
 
 | Check | What it verifies |
 |-------|-----------------|
@@ -85,7 +83,7 @@ outlit doctor
 | Integrations | Whether Outlit can read integration status |
 | Per-agent checks | Whether detected coding agents already have the `outlit` skill |
 
-### Example Output
+### Example output
 
 ```
   Outlit Doctor
@@ -99,7 +97,7 @@ outlit doctor
   Everything works, 1 suggestion(s).
 ```
 
-### JSON Output
+### JSON output
 
 ```bash
 outlit doctor --json
@@ -123,7 +121,7 @@ Filter for failures:
 outlit doctor --json | jq '.checks[] | select(.status == "fail")'
 ```
 
-### Exit Code
+### Exit code
 
 `doctor` exits with code `1` if any check fails, which makes it useful in CI:
 

@@ -1,0 +1,87 @@
+---
+title: "Workspace access"
+description: "Roles, invites, personal vs workspace connections, and which settings each role sees."
+---
+
+Your Outlit workspace is shared by your team, with two roles and a mix of workspace-wide and per-person connections.
+
+## Roles
+
+| Capability | **Admin** | **Member** |
+|---|---|---|
+| See customers | All | Owned or shared with them |
+| Review attention items and evidence | Yes | On owned or shared customers |
+| Choose approaches, approve actions, resolve items | Yes | With customer-management permission |
+| Connect workspace-wide sources (Stripe, CRM, Slack, PostHog…) | Yes | — |
+| Connect own accounts (Gmail, Granola personal key) | Yes | Yes |
+| Manage members and invitations | Yes | — |
+| Manage destinations, API keys, tracking settings | Yes | — |
+
+"Member" is the default role for invited teammates. Admins get every permission; members get read access plus the ability to connect their own work accounts, unless they are also granted customer-management permission.
+
+The customer-scope split is finer than the role names suggest: members see customers they **own** or that are **shared with them explicitly**, while admin permissions cover the whole book. Sharing a specific customer is the least-privilege way to widen a member's view — no role change needed.
+
+## Inviting teammates
+
+- During onboarding, admins get an **invite** step — paste emails, they arrive as members.
+- Anytime after, use **Settings → Members** to invite, change roles, or remove people.
+- Invited members land on sign-in and then the connect step of onboarding — personal sources like Gmail connect per person.
+
+## Personal vs workspace connections
+
+Some sources are per-person by design:
+
+| Connection | Scope | Why |
+|---|---|---|
+| **Gmail** | Each user connects their own mailbox | Coverage grows as teammates connect; drafts send from the approver's connection |
+| **Google Calendar** | Each user connects their own calendar account | Adds evidence from the connected calendars |
+| **Granola** | Personal API key per teammate, or an Enterprise key covering the team space | Connection scope determines which notes can be imported |
+| Everything else | Connected once for the workspace | Stripe, CRMs, Slack, PostHog, support tools |
+
+Connection ownership and evidence visibility are separate. Access to customer records and source content determines what a teammate can read.
+
+See [Gmail and Google Calendar](/integrations/gmail) for how personal mailbox connections affect evidence coverage.
+
+## Settings map
+
+**Settings** splits into **Workspace** and **Account**:
+
+| Page | Access and management | What it holds |
+|---|---|---|
+| General | Everyone | Workspace name and profile |
+| Members | Everyone can view; admins manage | Invites, roles, removal |
+| Destinations | Admins | Slack channels and the default destination notifications deliver to |
+| Website Visitors | Everyone | Browser tracking toggle, public key, enabled-domain allowlist, link to the Visitors page |
+| Activation | Everyone | The product event that marks a customer activated |
+| Product usage | Admins | Feature/credit usage configuration |
+| API keys | Admins | `ok_*` keys for the CLI/MCP — workspace principals with their own grants, one-time reveal, revoke/regenerate |
+| CLI & MCP | Everyone | Workspace MCP URL (`https://mcp.outlit.ai/w/{your-workspace}/mcp`) and CLI auth |
+| Plan usage, Billing | Everyone | Usage and billing for your Outlit subscription |
+| Account → Profile, Security | Everyone | Personal profile and sign-in security |
+
+API keys are workspace principals, not personal credentials — they carry only the grants in the preset you pick and don't inherit the creator's permissions. Create them in **Settings → API keys**; the full key is shown once.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="A teammate can't see a customer">
+    Members see customers they own or that are shared with them. Share the specific customer with them for the least-privilege fix, set them as the owner on the customer profile, or grant an admin role if they should see the whole book.
+  </Accordion>
+  <Accordion title="A teammate can't connect an integration">
+    Workspace-wide sources need an admin. Members can only connect personal-scope sources (Gmail, Granola personal keys).
+  </Accordion>
+  <Accordion title="API keys isn't in my settings">
+    The API keys page is admin-only. Ask a workspace admin to create the key.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Connect your data" icon="plug" href="/getting-started/connect-data">
+    Connect sources once roles are clear
+  </Card>
+  <Card title="Integrations" icon="blocks" href="/integrations/overview">
+    What each source needs and who can connect it
+  </Card>
+</CardGroup>

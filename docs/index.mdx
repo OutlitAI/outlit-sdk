@@ -1,77 +1,72 @@
 ---
-title: "Welcome to Outlit"
-description: "Outlit is infrastructure for customer context. It unifies product, billing, support, and conversation data into complete customer profiles your agents can query before they act"
+title: "Know which customers need attention"
+sidebarTitle: "Welcome"
+description: "Connect your customer data. Review churn risks, renewals, and expansion opportunities with the evidence to act."
+mode: "wide"
 ---
 
-## Customer Context Infrastructure
+<div className="docs-home title-hero-actions">
+      <a className="title-hero-cta" href="/getting-started/overview">Get started</a>
+      <a
+        className="title-hero-cta-secondary"
+        href="https://cal.com/josh-earle/30-min"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Book a walkthrough
+      </a>
+</div>
 
-Outlit connects website activity, product usage, billing, support tickets, and conversations into a single [customer context graph](/concepts/customer-context-graph). Under the hood, that graph powers complete customer profiles, timelines, and facts your team can query from the CLI, through AI agents, or via API.
-
-<Card
-  title="Get Started"
-  icon="rocket"
-  href="/tracking/quickstart"
-  horizontal
->
-  Install the CLI and connect your first source in minutes.
-</Card>
-
-## How It Works
+## How Outlit works
 
 <Steps>
-  <Step title="Connect">
-    Add the Outlit browser or server SDK, then connect systems like Stripe, PostHog, Slack, Gmail, and more to bring your customer data into one place.
+  <Step title="Connect your tools">
+    Connect the systems that hold your customer context: CRM, billing, product usage, support, and
+    conversations. The Outlit team helps you set up your workspace and monitoring.
   </Step>
-  <Step title="Resolve">
-    Identity resolution automatically links anonymous visitors, known contacts, and accounts across forms, auth systems, emails, and devices.
+  <Step title="Review your first attention items">
+    Outlit connects records into customer profiles and surfaces the accounts that need
+    attention now, with the evidence behind each finding.
   </Step>
-  <Step title="Structure">
-    Raw events, conversations, support tickets, and billing signals are normalized into complete customer profiles, timelines, facts, journey stages, and billing states.
-  </Step>
-  <Step title="Query">
-    Use the CLI, AI agents (via MCP), or the API to query complete customer context wherever your team already works.
+  <Step title="Review the next step">
+    An item may include a proposed approach. Choose how to proceed, and review any email draft
+    before Outlit sends it. See [actions and approvals](/product/actions-and-approvals).
   </Step>
 </Steps>
 
-## Why Outlit?
-
-<Columns cols={2}>
-  <Card title="Unified Context" icon="circle-nodes">
-    One graph connecting product, billing, support, and conversation data — instead of siloed tools that each show a fragment.
-  </Card>
-  <Card title="Identity Resolution" icon="fingerprint">
-    Automatically merge customer profiles across devices, emails, and auth providers into a single contact.
-  </Card>
-  <Card title="Agent-First" icon="robot">
-    Query structured customer context from the CLI or through AI agents via MCP — run SQL, search with natural language, and get full context without leaving your workflow.
-  </Card>
-  <Card title="Journey Intelligence" icon="sparkles">
-    Outlit turns raw events, tickets, and conversations into timelines, facts, and lifecycle signals your agents can actually act on.
-  </Card>
-</Columns>
-
-## Explore
+## For customer success teams
 
 <CardGroup cols={3}>
-  <Card title="CLI" icon="terminal" href="/cli/overview">
-    Query customer data from the terminal
+  <Card title="Get started" icon="rocket" href="/getting-started/overview">
+    Connect data and see your first attention items.
   </Card>
-  <Card title="MCP Integration" icon="robot" href="/ai-integrations/mcp">
-    Query context from AI agents
+  <Card title="Attention" icon="bell" href="/product/attention">
+    What Outlit flags, and the evidence behind each item.
   </Card>
-  <Card title="Pi Agents" icon="sparkles" href="/ai-integrations/pi">
-    Build custom customer intelligence agents
+  <Card title="Actions and approvals" icon="check" href="/product/actions-and-approvals">
+    Review proposed approaches and approve email drafts before they send.
   </Card>
-  <Card title="Browser SDKs" icon="browser" href="/tracking/browser/script">
-    Add tracking to your website
+  <Card title="Catch churn early" icon="triangle-exclamation" href="/guides/churn">
+    Spot declining usage and quiet champions before renewal.
   </Card>
-  <Card title="Server SDKs" icon="server" href="/tracking/server/nodejs">
-    Track events from your backend
+  <Card title="Find expansion opportunities" icon="arrow-trend-up" href="/guides/expansion">
+    Surface accounts that are ready to grow.
   </Card>
-  <Card title="REST API" icon="code" href="/api-reference/introduction">
-    Programmatic access
+  <Card title="Work a renewal" icon="calendar-check" href="/guides/renewals">
+    Review renewal dates, account evidence, and next steps.
   </Card>
-  <Card title="Concepts" icon="book" href="/concepts/customer-context-graph">
-    Understand the data model
+</CardGroup>
+
+## For developers and agents
+
+<CardGroup cols={3}>
+  <Card title="Use Outlit with agents" icon="robot" href="/ai-integrations/overview">
+    Connect through the CLI, MCP server, or agent skills.
+  </Card>
+  <Card title="Track your first event" icon="code" href="/tracking/quickstart">
+    Trace first visits through conversion with the Outlit Browser SDK, then add product events.
+  </Card>
+  <Card title="API reference" icon="code" href="/api-reference/introduction">
+    REST endpoints and the canonical OpenAPI contract.
   </Card>
 </CardGroup>

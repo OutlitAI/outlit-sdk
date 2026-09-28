@@ -1,0 +1,58 @@
+---
+title: "Salesforce, HubSpot and Attio"
+description: "Connect your CRM for accounts, contacts, opportunities, and renewal cycles — including stage mapping."
+---
+
+Your CRM supplies the commercial spine: accounts, contacts, opportunities, owners — and when the Renewals responsibility is enabled, the renewal opportunities that become tracked renewal cycles.
+
+## Connect
+
+From **Integrations**, pick your CRM — **Salesforce**, **HubSpot**, or **Attio**. All three connect through OAuth: approve access, return to Outlit, and the initial import begins.
+
+| CRM | Notes |
+|---|---|
+| **Salesforce** | Use your existing pipeline configuration; map its renewal stages below. |
+| **HubSpot** | Map pipelines and deal stages after connecting. |
+| **Attio** | Lists and objects map to accounts and opportunities. |
+
+Connecting the CRM is an admin task. OAuth scopes are read-oriented — Outlit reads accounts, opportunities, and contacts; it does not write records back to your CRM.
+
+## Map your renewal pipeline
+
+After OAuth completes, the connect flow asks you to configure each pipeline:
+
+- which **open stages** represent renewal deals,
+- which closed stages count as **won** vs **lost** renewal outcomes,
+- the **renewal date field** on the deal — the field Outlit reads as the cycle's date.
+
+This mapping is what turns CRM opportunities into tracked renewal cycles with correct dates and outcomes. Skipping it — or mapping a field that holds no valid dates — leaves the CRM connected but renewals untracked, a common reason the Renewals portfolio is empty.
+
+## What flows in
+
+| Data | Where it appears |
+|---|---|
+| Accounts | Customer profiles; merged with billing/product identities |
+| Contacts | Customer → People tab; stakeholders in renewal briefs |
+| Opportunities | Renewal cycles; prior-deal comparison on renewal detail |
+| Owners | Customer ownership (drives who members see and who gets notified) |
+
+## Renewal outcomes
+
+When a renewal closes, the outcome can be linked to the CRM opportunity that closed it — the renewal detail keeps the outcome source distinct (CRM-linked vs manual vs billing-confirmed). Closed-stage mapping is what lets won/lost opportunities resolve cycles cleanly.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Renewals is empty after connecting">
+    Check the CRM connection's pipeline mapping — renewal stages, won/lost outcomes, and the renewal-date field all need to be set. If they're set and still empty, the deals may be missing or carrying invalid values in the mapped date field.
+  </Accordion>
+  <Accordion title="CRM accounts don't match existing customers">
+    Accounts match by domain and identifiers; ambiguous matches wait for confirmation rather than auto-merging. Check the customer's **Coverage** tab for pending matches or identity issues.
+  </Accordion>
+  <Accordion title="Ownership looks wrong">
+    Ownership typically syncs from the CRM owner field. Fix it in your CRM, or adjust the customer owner directly in Outlit — local owner changes are supported.
+  </Accordion>
+  <Accordion title="Duplicate or missing deals">
+    Stale or non-renewal opportunities can surface during initial mapping. Refine the stage mapping; renewal cycles can also be voided manually if a non-real cycle slipped in.
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,82 @@
+---
+title: "Connect your data"
+description: "Link the systems that hold your customer data so Outlit can start monitoring."
+---
+
+Outlit monitors what it can see. Every source you connect — billing, product usage, CRM, conversations, support — sharpens customer profiles and widens what monitoring can catch. You connect sources once from **Integrations** in the app, and Outlit keeps them in sync. The [Outlit Browser SDK](/tracking/quickstart) adds the website visits that precede those customer records.
+
+## Before you start
+
+- **Workspace access.** You have signed in at [app.outlit.ai](https://app.outlit.ai) to a workspace provisioned with Outlit.
+- **Who can connect what.** Admins can connect any source. Members can connect their own accounts where the source is per-person (Gmail, Granola personal keys) — see [roles and access](/product/workspace-access).
+- **Admin rights at the source.** Some connections need privileges on the other side: Salesforce requires a Salesforce admin, and API-key sources need a key you can create in that tool.
+
+## Connect a source
+
+<Steps>
+  <Step title="Open Integrations">
+    In the app sidebar, open **Integrations** — or finish the connect step of onboarding, which shows the same catalog grouped by what each source adds: revenue, customer records, conversations, and product usage.
+  </Step>
+  <Step title="Choose a source and connect">
+    Click **Connect** on a card. Depending on the source you'll either authorize Outlit in a popup (OAuth — Stripe, Salesforce, HubSpot, Attio, Slack, Google, Gong) or paste a key you create in that tool (PostHog, Pylon, Fireflies, Granola, Autumn, Supabase Auth, Clerk). Mixpanel uses a service-account username and secret, project ID, and region. See the [integrations guides](/integrations/overview) for exactly what each one asks for.
+  </Step>
+  <Step title="Finish required setup">
+    Some sources need one more step before their data counts: CRM connections ask you to map the pipeline — renewal stages, won/lost outcomes, and the renewal-date field; Gong and Pylon need a webhook; Slack asks which channels to include; and Mixpanel needs its account-property mapping confirmed. The app flags these on the source and in onboarding's **Setup** step.
+  </Step>
+  <Step title="Wait for the first sync">
+    First-sync time varies by source and how much history it holds. The **Attention** page tells you where you stand — see below.
+  </Step>
+</Steps>
+
+## How you know it's working
+
+The Attention page reflects your data state until the first item arrives:
+
+| Attention empty state | What it means | What to do |
+|---|---|---|
+| **Connect a data source** | Nothing connected yet | Connect your first source |
+| **Finish integration setup** | A source is connected but has a required step left (mapping, webhook, channel pick) | Open **Integrations** and complete the flagged step |
+| **An integration needs attention** | A connection broke (expired auth, revoked token, provider error) | Review the flagged integration |
+| **Your data is synchronizing** | Connected, first import still running | Check back; large CRMs and email history take longer |
+
+Once imports land, customers appear in **Customers**, and the first attention items start arriving as monitoring sees enough signal to say something.
+
+## Which sources matter most
+
+Monitoring is only as good as its inputs. For churn and renewal coverage, these do the most work:
+
+| Source | Powers |
+|---|---|
+| **Stripe** | Billing status (trialing, paying, past due, churned), MRR, subscription changes — required for a customer to enter churn-monitoring scope |
+| **PostHog, Mixpanel, or Outlit SDKs** | Product activity per account — feeds engagement, inactivity, and usage-drop signals |
+| **Outlit Browser SDK** | First landing page, referrer and UTM data, and anonymous website activity linked after browser identification |
+| **Salesforce / HubSpot / Attio** | Accounts, contacts, deals — the source for renewal cycles and deal-linked outcomes |
+| **Gmail / Slack / Granola / Gong / Fireflies** | Conversations, meetings, and calls — stakeholder context and risk language |
+| **Pylon** | Support tickets — volume spikes and escalations |
+
+If you can only connect two things first, connect **Stripe** and a **product-usage source** — they cover the inputs churn monitoring checks. Whether monitoring is actually active depends on coverage *and* your workspace's responsibilities being enabled: open **Responsibilities → Churn** and the status card shows readiness plus anything still missing. Add a CRM to get renewals, conversations for evidence quality, and the Outlit Browser SDK for the journey from first visit to conversion.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Customers exist but no attention items yet">
+    Monitoring needs eligible accounts (paying or past-due customers for churn) plus enough signal to justify an item. Check **Responsibilities → Churn** for the monitoring status card — it lists reduced-coverage reasons like a missing billing source, missing product source, or missing notification destination.
+  </Accordion>
+  <Accordion title="A source shows 'needs attention'">
+    Open **Integrations** and review the flagged card — usually re-authorization or a missing webhook. See the [integrations overview](/integrations/overview) for per-source specifics.
+  </Accordion>
+  <Accordion title="Personal Gmail vs shared sources">
+    Gmail connects per teammate — each person syncs their own mailbox, so shared coverage grows as teammates connect. Most other sources connect once for the whole workspace.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Review your first attention item" icon="bolt" href="/getting-started/first-attention-item">
+    What lands when monitoring finds something
+  </Card>
+  <Card title="Integration guides" icon="plug" href="/integrations/overview">
+    Per-source connect steps and requirements
+  </Card>
+</CardGroup>

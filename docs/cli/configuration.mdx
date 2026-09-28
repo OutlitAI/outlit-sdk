@@ -1,9 +1,9 @@
 ---
 title: "Configuration"
-description: "Environment variables, output behavior, and file paths for the Outlit CLI"
+description: "Environment variables, output behavior, and file paths for the Outlit CLI."
 ---
 
-## Environment Variables
+## Environment variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -12,9 +12,9 @@ description: "Environment variables, output behavior, and file paths for the Out
 | `XDG_CONFIG_HOME` | Override the config directory (Unix) | `~/.config` |
 | `CI` | Triggers JSON output mode when equal to exactly `"true"` or `"1"` | — |
 | `GITHUB_ACTIONS` | Triggers JSON output mode when set | — |
-| `TERM` | When set to `dumb`, disables ANSI colors | — |
+| `TERM` | When set to `dumb`, switches output to JSON | — |
 
-## Config Directory
+## Config directory
 
 The CLI stores configuration in a platform-specific directory:
 
@@ -38,7 +38,7 @@ The credentials file has `0600` permissions (readable by owner only) and contain
 }
 ```
 
-## Update Checks
+## Update checks
 
 In interactive terminals, the CLI periodically checks npm for the latest `@outlit/cli` version and caches the result in `update-check.json`. Cached notices are printed to stderr and never affect JSON output.
 
@@ -48,7 +48,7 @@ OUTLIT_NO_UPDATE_NOTIFIER=1 outlit customers list
 
 Use `outlit upgrade` to update with the same package manager that installed the CLI when it can be inferred.
 
-## Shell Completions
+## Shell completions
 
 Generate completion scripts for your shell:
 
@@ -72,9 +72,9 @@ Generate completion scripts for your shell:
   </Tab>
 </Tabs>
 
-## Output Behavior
+## Output behavior
 
-### TTY Mode (Interactive)
+### TTY mode (interactive)
 
 When running in an interactive terminal, the CLI outputs:
 
@@ -95,7 +95,7 @@ Example:
 Showing 20 of 150 total. Next page: --cursor cursor_abc123
 ```
 
-### JSON Mode
+### JSON mode
 
 When JSON mode is active, all output is pretty-printed JSON on stdout:
 
@@ -125,7 +125,7 @@ Errors are also JSON, written to stderr:
 }
 ```
 
-### When JSON Mode Activates
+### When JSON mode activates
 
 JSON mode activates automatically in any of these conditions:
 
@@ -141,7 +141,7 @@ JSON mode activates automatically in any of these conditions:
   This means AI agents (Claude Code, Cursor, etc.) automatically get JSON output when they run CLI commands as subprocesses — no extra configuration needed.
 </Info>
 
-## Error Handling
+## Error handling
 
 All errors exit with code `1`. The error format depends on the output mode:
 
@@ -158,23 +158,38 @@ Error: Not authenticated. Run `outlit auth login` or pass --api-key.
 }
 ```
 
-### Error Codes
+### Error codes
 
 | Code | Description |
 |------|-------------|
 | `not_authenticated` | No API key found in any source |
+| `auth_required` | Client creation failed (authentication error) |
+| `auth_request_failed` | Browser/device auth request failed |
+| `auth_timeout` | Timed out waiting for browser authentication |
 | `invalid_key_format` | API key doesn't match expected format (`ok_` prefix) |
 | `invalid_key` | API key rejected by the server |
 | `validation_failed` | Key failed server verification during `auth login` |
-| `auth_required` | Client creation failed (authentication error) |
 | `missing_key` | `--key` flag required but not provided (non-interactive `auth login`) |
 | `missing_input` | Required argument not provided |
+| `invalid_input` | Argument failed validation |
 | `api_error` | API request failed (includes HTTP status) |
+| `api_unavailable` | API unreachable (network/DNS failure) |
+| `unsupported_core_version` | The workspace does not support this command yet |
+| `file_error` | Failed reading or writing a file |
 | `write_error` | Failed to write a config file |
 | `unlink_error` | Failed to delete credentials file during `auth logout` |
-| `exec_error` | Subprocess execution failed (setup commands) |
+| `unknown_agent` | `--agent` value isn't a supported agent alias |
+| `unknown_provider` | Provider isn't a supported integration |
+| `unknown_shell` | Shell isn't supported by `completions` |
+| `agent_required` | Command requires `--agent` (non-interactive) |
+| `runner_not_found` | Agent runtime binary not found on PATH |
+| `skills_install_error` | Skill installation failed |
+| `update_check_failed` | Version update check failed |
+| `upgrade_failed` | Self-upgrade failed |
 
-## Data Formatting
+Commands that call Outlit can return the server’s `code`, `message`, `retryable`, and `requestId` fields. See [Error responses](/api-reference/tools#error-responses).
+
+## Data formatting
 
 The CLI formats values for readability in TTY mode:
 
@@ -185,7 +200,7 @@ The CLI formats values for readability in TTY mode:
 | Long names | `Very Long Customer Name Inc` | `Very Long Custo...` |
 | Missing values | `null` / `undefined` | `--` |
 
-### Relative Date Format
+### Relative date format
 
 | Time elapsed | Display |
 |-------------|---------|
@@ -196,9 +211,9 @@ The CLI formats values for readability in TTY mode:
 | Under 1 year | `2mo ago` |
 | 1 year or more | `1y ago` |
 
-## Scripting Examples
+## Scripting examples
 
-### Export All Customers
+### Export all customers
 
 ```bash
 #!/bin/bash
@@ -228,14 +243,14 @@ outlit customers list --limit 100 --json \
   | jq -r '.items[] | [.domain, .billingStatus, .currentMrr] | @csv'
 ```
 
-### CI Health Check
+### CI health check
 
 ```bash
 # Validate API key and agent setup in CI
 outlit doctor --json | jq -e '.ok' > /dev/null || exit 1
 ```
 
-### Filter Inactive Users
+### Filter inactive users
 
 ```bash
 outlit users list --journey-stage INACTIVE --no-activity-in 30d --json \

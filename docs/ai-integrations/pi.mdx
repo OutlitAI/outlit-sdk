@@ -1,6 +1,6 @@
 ---
-title: "Pi Agents"
-description: "Build Pi agents with Outlit customer intelligence tools, skills, and examples"
+title: "Pi agents"
+description: "Build Pi agents with Outlit customer intelligence tools, skills, and examples."
 ---
 
 `@outlit/pi` registers Outlit customer intelligence tools inside [Pi](https://github.com/mariozechner/pi-coding-agent). Use it when you want a Pi agent to query complete customer profiles, timelines, facts, sources, and customer-context search results through Outlit's public tool gateway.
@@ -18,9 +18,9 @@ export OUTLIT_API_KEY=ok_your_api_key
 pi
 ```
 
-## Default Tools
+## Default tools
 
-The default Pi extension exposes the customer intelligence tools that are safe for most agents:
+The default Pi extension exposes the customer intelligence tools that are read-only:
 
 | Tool | What it does |
 |------|--------------|
@@ -36,7 +36,7 @@ The default Pi extension exposes the customer intelligence tools that are safe f
 
 SQL tools are available through `@outlit/tools`, but they are not enabled by default in `@outlit/pi`. Use them only for agents that should run read-only SQL.
 
-## Minimal Extension
+## Minimal extension
 
 If you only need the Outlit tools and the bundled `outlit` Pi skill, the package default is enough:
 
@@ -48,7 +48,7 @@ export default createOutlitPiExtension()
 
 The extension reads `OUTLIT_API_KEY` from the environment and uses `https://app.outlit.ai` by default.
 
-## Custom Toolsets
+## Custom toolsets
 
 Pass `toolNames` when you want a narrower or broader toolset:
 
@@ -60,9 +60,9 @@ export default createOutlitPiExtension({
 })
 ```
 
-`piToolNames` includes SQL, customer relationship and Attention reads, customer ownership and access actions, and the broader Pi-supported Platform surface. The default membership comes directly from Core's `default` consumer policy and contains only the nine read-only customer intelligence tools above; import `analyticalToolNames` for that same policy plus `outlit_schema` and `outlit_query`. The broader Pi policy also includes the product-facing Feature list, create, archive, and customer-usage tools. The default and analytical policies remain unchanged.
+Use the default policy for nine read-only customer tools. Use `analyticalToolNames` when the agent also needs `outlit_schema` and read-only `outlit_query` (11 tools total). `piToolNames` is broader: it includes SQL, customer relationship and Attention reads, customer ownership and access actions, Feature tools, and workspace configuration. Choose the smallest set your Pi agent needs.
 
-## Growth Agent Examples
+## Growth agent examples
 
 The [`examples/pi-agents`](https://github.com/OutlitAI/outlit-sdk/tree/main/examples/pi-agents) package shows four Pi agents built on `@outlit/pi` for revenue and retention work. It includes:
 
@@ -82,8 +82,6 @@ pi install -l .
 pi
 ```
 
-The example package currently uses the `canary` dist-tag for `@outlit/pi` and `@outlit/tools` so fresh installs include the latest public tool contracts before the next stable release is promoted.
-
 Then ask:
 
 ```text
@@ -97,10 +95,10 @@ Which paying customers are active enough to be expansion candidates but blocked 
 ```
 
 <CardGroup cols={2}>
-  <Card title="Public Tool Gateway" icon="terminal" href="/api-reference/tools">
+  <Card title="Public tool gateway" icon="terminal" href="/api-reference/tools">
     See the HTTP route and shared `@outlit/tools` contracts
   </Card>
-  <Card title="Agent Skills" icon="book" href="/ai-integrations/skills">
+  <Card title="Agent skills" icon="book" href="/ai-integrations/skills">
     Install Outlit guidance for coding agents
   </Card>
 </CardGroup>

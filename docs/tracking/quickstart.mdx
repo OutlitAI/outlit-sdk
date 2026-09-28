@@ -1,80 +1,76 @@
 ---
-title: "Quick Start"
-description: "Install the Outlit CLI, connect customer data, and query customer context in minutes"
+title: "Track your first event"
+description: "Add the Outlit Browser SDK, identify a visitor, and check that an event reaches Outlit."
 ---
 
-## What is Outlit?
+Use the Outlit Browser SDK script to capture the first visit and send a product event from your site. You need a public tracking key from **Settings → Website Visitors** in the Outlit app and an enabled domain for the site where you test. If your workspace is still being set up, start with [Connect your data](/getting-started/connect-data).
 
-Outlit is infrastructure for customer context. It connects product usage, billing, support, and conversation data, then structures it into customer profiles your team and agents can query from the CLI, MCP, or API.
+## Add the tracker
 
-## Step 1: Install the CLI
+Place this tag before the closing `</body>` tag and replace the example key. The public key is designed to appear in browser code; the enabled-domain list controls which sites can send events with it.
 
-```bash
-curl -fsSL https://outlit.ai/install.sh | bash
+```html
+<script
+  id="outlit-script"
+  src="https://cdn.outlit.ai/stable/outlit.js"
+  data-public-key="pk_your_public_key"
+  async
+></script>
 ```
 
-<Tip>
-  Need another install method? See the [CLI overview](/cli/overview#installation).
-</Tip>
+Pageviews and form submissions are tracked automatically. Pageview events include the landing URL, browser referrer, and available UTM parameters, preserving how a visitor arrived before they identify. Because the script loads asynchronously, use this helper for the calls below. Put it after the script tag; it waits for the script when needed.
 
-## Step 2: Authenticate
-
-Create an API key from [Settings > API Keys](https://app.outlit.ai/settings/workspace/api-keys), then pass it to the CLI:
-
-```bash
-outlit auth login --key ok_your_api_key
+```javascript
+function withOutlit(callback) {
+  if (window.outlit?.track) return callback()
+  document.getElementById('outlit-script').addEventListener('load', callback, { once: true })
+}
 ```
 
-## Step 3: Connect Customer Data
+If your site requires consent before tracking, set `data-auto-track="false"` on the tag and call `window.outlit.enableTracking()` only after the visitor accepts. A saved opt-out persists across visits until tracking is enabled again. See [Consent management](/tracking/browser/script#consent-management) for the complete pattern.
 
-Start by connecting the systems where customer context already lives. Open the [integrations dashboard](https://app.outlit.ai/integrations), then connect the source that best matches your first use case.
+## Identify a visitor
+
+After someone signs in or gives you their email, identify the same browser visitor with that email to link earlier website activity to a known contact. Include `userId` when your app has one; a call without either an `email` or `userId` has no effect.
+
+```javascript
+withOutlit(() => window.outlit.identify({
+  email: 'jane@example.com',
+  userId: 'usr_12345'
+}))
+```
+
+Use real identity values from your app. If you wait for consent, call `identify()` after tracking is enabled. For identity that must be queued before consent, use [the script tag's `setUser()` pattern](/tracking/browser/script#set-user-identity).
+
+## Send a product event
+
+Call `track()` when a meaningful action succeeds and tracking is allowed:
+
+```javascript
+withOutlit(() => window.outlit.track('report_exported', {
+  format: 'csv'
+}))
+```
+
+An ordinary event does not change billing status. If this is the value milestone you want to use for activation, select it as your activation event in Outlit. The first matching event records activation once for each eligible resolved person and company, independently. See [Customer journey](/concepts/customer-journey).
+
+## Check the result
+
+Open the identified customer's profile in **Customers** and look for the event in its activity timeline. If nothing appears, confirm the test domain is enabled under **Settings → Website Visitors**, tracking consent is active, and the identity call included `email` or `userId`. The [script tag troubleshooting guide](/tracking/browser/script#troubleshooting) covers delivery and loading problems.
+
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Revenue and billing" icon="credit-card" href="https://app.outlit.ai/integrations">
-    Stripe subscriptions, invoices, billing status, and MRR
+  <Card title="Script tag options" icon="code" href="/tracking/browser/script">
+    Configure automatic tracking, consent, and identity.
   </Card>
-  <Card title="Product usage" icon="chart-line" href="https://app.outlit.ai/integrations">
-    PostHog activity, sessions, and product engagement
+  <Card title="npm package" icon="box" href="/tracking/browser/npm">
+    Add tracking to a JavaScript app with explicit configuration.
   </Card>
-  <Card title="Conversations and meetings" icon="comments" href="https://app.outlit.ai/integrations">
-    Gmail, Google Calendar, Granola, Fireflies.ai, and Slack
+  <Card title="Outlit Node.js SDK" icon="server" href="/tracking/server/nodejs">
+    Send events from a backend or background job.
   </Card>
-  <Card title="Support and identity" icon="id-card" href="https://app.outlit.ai/integrations">
-    Pylon tickets, Clerk users, and Supabase Auth users
-  </Card>
-</CardGroup>
-
-## Step 4: Ask an Agent
-
-Once at least one source has synced, ask your coding agent something like:
-
-```text
-Use the Outlit CLI to review our connected customer data.
-
-Which accounts need attention this week? Look for billing issues, open support problems, stalled conversations, or drops in product usage. Return the top accounts with evidence and recommended next steps.
-```
-
-To connect Outlit to Claude Code, Codex, Gemini CLI, or OpenClaw, see [AI agent setup](/cli/ai-agents). For direct terminal usage, see the [CLI command reference](/cli/commands).
-
-## Next Steps
-
-<CardGroup cols={2}>
-  <Card title="Integrations" icon="plug" href="https://app.outlit.ai/integrations">
-    Connect customer data sources from the Outlit dashboard
-  </Card>
-  <Card title="OpenClaw + Outlit" icon="lobster" href="/use-cases/openclaw">
-    Automated customer intelligence with cron jobs and heartbeat monitoring
-  </Card>
-  <Card title="How It Works" icon="circle-info" href="/tracking/how-it-works">
-    Understand how Outlit collects, resolves, and connects customer data
-  </Card>
-  <Card title="Customer Context Graph" icon="circle-nodes" href="/concepts/customer-context-graph">
-    Learn about the unified data model behind Outlit
-  </Card>
-  <Card title="CLI Commands" icon="terminal" href="/cli/commands">
-    Full reference for querying customer data
-  </Card>
-  <Card title="Pi Agents" icon="sparkles" href="/ai-integrations/pi">
-    Build custom agents with Outlit customer intelligence tools
+  <Card title="How tracking works" icon="circle-info" href="/tracking/how-it-works">
+    See how events join customer profiles and timelines.
   </Card>
 </CardGroup>

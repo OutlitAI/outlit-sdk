@@ -1,0 +1,388 @@
+html { background-color: #fcf7f1; }
+html.dark { background-color: #16161a; }
+
+/* Exact marketing wordmark and responsive nav size (marketing/src/components/nav.tsx). */
+.nav-logo[src="/logo/wordmark.png"] {
+  width: clamp(6rem, 10vw, 7rem);
+  height: auto;
+  filter: invert(1);
+}
+.dark .nav-logo[src="/logo/wordmark.png"] {
+  filter: none;
+}
+
+/* Same variable families as marketing's src/lib/fonts.ts. */
+@font-face {
+  font-family: "Google Sans";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/google-sans-latin-v70.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Google Sans Code";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/google-sans-code-latin-v20.woff2") format("woff2");
+}
+
+/* Docs use the shared marketing t-h1/t-h2/t-h3 and copy roles. */
+#navbar, #sidebar, #content-area {
+  font-family: "Google Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+#header h1 {
+  font-family: "Google Sans", ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1.875rem, 2.5vw + 1rem, 2.5rem);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -.015em;
+}
+
+#header p, #header .prose {
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+.mdx-content {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+:is(.mdx-content, .mdx-content [data-component-part="tab-content"],
+  .mdx-content [data-component-part="accordion-content"]) > :is(p, span[data-as="p"], ul, ol) {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.mdx-content strong {
+  font-weight: 500;
+}
+
+.mdx-content [data-component-part="step-content"],
+.mdx-content [data-component-part="step-content"] span[data-as="p"] {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.mdx-content .card span[data-as="p"],
+.mdx-content .callout [data-component-part="callout-content"],
+.mdx-content .callout span[data-as="p"] {
+  font-size: .875rem;
+  line-height: 1.55;
+}
+
+:is(.mdx-content, .mdx-content [data-component-part="tab-content"],
+  .mdx-content [data-component-part="accordion-content"]) > h2 {
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -.01em;
+}
+
+:is(.mdx-content, .mdx-content [data-component-part="tab-content"],
+  .mdx-content [data-component-part="accordion-content"]) > h3 {
+  font-size: 1.125rem;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -.015em;
+}
+
+:is(.mdx-content, .mdx-content [data-component-part="tab-content"],
+  .mdx-content [data-component-part="accordion-content"]) > h4 {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -.01em;
+}
+
+/* Mintlify component titles are controls, not article section headings. */
+.mdx-content .card :is(h2, h3), .mdx-content [data-component-part="step-title"] {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: normal;
+}
+
+#navbar .nav-tabs-item, #navbar a[href^="https://"] {
+  font-size: .9375rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+:is(code, pre, kbd, samp) {
+  font-family: "Google Sans Code", ui-monospace, monospace;
+}
+
+/* Outlit docs: ivory, slate, and the marketing resources-page painted texture. */
+
+/* Navigation group labels lead; page links remain quieter and easy to scan. */
+.sidebar-group-header .sidebar-title {
+  color: #0f172a;
+  font-weight: 600;
+}
+.sidebar-group a:not([aria-current="page"]) {
+  color: #475569;
+}
+.sidebar-group a:not([aria-current="page"]):hover {
+  color: #0f172a;
+}
+.dark .sidebar-group-header .sidebar-title {
+  color: #f1f5f9;
+}
+.dark .sidebar-group a:not([aria-current="page"]) {
+  color: #94a3b8;
+}
+.dark .sidebar-group a:not([aria-current="page"]):hover {
+  color: #f1f5f9;
+}
+
+/* Routine guidance shares one quiet treatment. Warnings retain their emphasis. */
+.callout {
+  border-radius: 12px;
+}
+
+.callout:is([data-callout-type="info"], [data-callout-type="note"], [data-callout-type="tip"]) {
+  --outlit-note-ink: #475569;
+  background-color: #f5f0e9;
+  border-color: #ded8d0;
+}
+
+.dark .callout:is([data-callout-type="info"], [data-callout-type="note"], [data-callout-type="tip"]) {
+  --outlit-note-ink: #cbd5e1;
+  background-color: #202025;
+  border-color: #393940;
+}
+
+.callout:is([data-callout-type="info"], [data-callout-type="note"], [data-callout-type="tip"])
+  :is([data-component-part="callout-content"], [data-component-part="callout-icon"] svg) {
+  color: var(--outlit-note-ink);
+}
+
+a[href*="mintlify.com?utm_campaign=poweredBy"] {
+  color: #64748b;
+}
+
+.dark a[href*="mintlify.com?utm_campaign=poweredBy"] {
+  color: #94a3b8;
+}
+
+/* Static diagrams keep their text at intrinsic size on narrow screens. */
+.docs-diagram {
+  container: docs-diagram / inline-size;
+  width: 100%;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+}
+
+.docs-diagram:focus-visible {
+  outline: 2px solid #475569;
+  outline-offset: 3px;
+  border-radius: 16px;
+}
+
+.dark .docs-diagram:focus-visible {
+  outline-color: #c5d0dc;
+}
+
+.docs-diagram-scroll-hint {
+  display: none;
+}
+
+.docs-diagram img {
+  display: none;
+  margin-block: 0;
+  max-width: none;
+  height: auto;
+  border-radius: 16px;
+}
+
+.docs-diagram .docs-diagram-desktop.docs-diagram-light {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+}
+
+.dark .docs-diagram .docs-diagram-desktop.docs-diagram-light {
+  display: none;
+}
+
+.dark .docs-diagram .docs-diagram-desktop.docs-diagram-dark {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+}
+
+@container docs-diagram (max-width: 599px) {
+  .docs-diagram .docs-diagram-desktop.docs-diagram-light,
+  .dark .docs-diagram .docs-diagram-desktop.docs-diagram-dark {
+    display: none;
+  }
+
+  .docs-diagram .docs-diagram-mobile.docs-diagram-light {
+    display: block;
+    width: 350px;
+    margin-inline: auto;
+  }
+
+  .dark .docs-diagram .docs-diagram-mobile.docs-diagram-light {
+    display: none;
+  }
+
+  .dark .docs-diagram .docs-diagram-mobile.docs-diagram-dark {
+    display: block;
+    width: 350px;
+    margin-inline: auto;
+  }
+}
+
+@container docs-diagram (max-width: 349px) {
+  .docs-diagram-scroll-hint {
+    position: sticky;
+    left: 0;
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    padding: 0 0 0.5rem;
+    color: #615d5b;
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .dark .docs-diagram-scroll-hint {
+    color: #bbb5b2;
+  }
+}
+
+/* The home page uses its native page heading as the single textured title. */
+#content-area:has(.docs-home) #header {
+  padding: 2rem;
+  border-radius: 16px;
+  background: linear-gradient(rgba(15, 23, 42, .55), rgba(15, 23, 42, .55)), url("/images/title-hero-ivory.webp") center 58% / cover;
+}
+#content-area:has(.docs-home) #header :is(h1, p, .breadcrumb-item) {
+  color: #fff;
+}
+#content-area:has(.docs-home) #header h1 {
+  font-weight: 400;
+  line-height: 1.1;
+}
+#content-area:has(.docs-home) #header #page-context-menu {
+  display: none;
+}
+.docs-home.title-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin: -0.5rem 0 2rem;
+}
+.docs-home :is(.title-hero-cta, .title-hero-cta-secondary) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  padding: 0 .625rem;
+  border: 1px solid #64748b;
+  border-radius: 8px;
+  font-size: .8125rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-decoration: none;
+  color: #334155;
+}
+.docs-home :is(.title-hero-cta, .title-hero-cta-secondary) span[data-as="p"] {
+  font-weight: inherit;
+}
+.docs-home .title-hero-cta {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+.dark .docs-home .title-hero-cta-secondary {
+  color: #e2e8f0;
+}
+.docs-home a:hover { opacity: .85; }
+@media (max-width: 768px) {
+  #content-area:has(.docs-home) #header { padding: 1.5rem; }
+}
+
+.dark .docs-home .title-hero-cta {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #f1f5f9;
+}
+
+#content-area:has(.docs-home) #header nav[aria-label="Breadcrumb"] { display: none; }
+.dark #navbar a[href="https://app.outlit.ai"][target="_blank"] {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border-radius: .5rem;
+}
+.dark #navbar a[href="https://app.outlit.ai"][target="_blank"] :is(span, svg) { color: #0f172a; }
+
+.dark #navbar a[href="https://app.outlit.ai"][target="_blank"] > span.absolute {
+  background-color: #f1f5f9;
+}
+
+/* Keep legacy section links clear of the sticky navigation. */
+.docs-anchor { display: block; scroll-margin-top: 8rem; }
+
+/* Core Button default: 32px high, 13px medium type, 10px horizontal padding. */
+#navbar a[href="https://app.outlit.ai"],
+#search-bar-entry,
+#page-context-menu button,
+button.tryit-button,
+button[data-testid="optional-fields-toggle"],
+button[data-testid="optional-fields-row"] {
+  height: 2rem;
+  padding-block: 0;
+  padding-inline: .625rem;
+  font-size: .8125rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+#navbar a[href="https://app.outlit.ai"],
+#navbar a[href="https://app.outlit.ai"] > span.absolute,
+#search-bar-entry,
+button.tryit-button,
+button[data-testid="optional-fields-toggle"] {
+  border-radius: .5rem;
+}
+#page-context-menu button > div {
+  font-size: inherit;
+}
+#page-context-menu button:first-child {
+  border-radius: .5rem 0 0 .5rem;
+}
+#page-context-menu button:last-child {
+  width: 2rem;
+  padding-inline: 0;
+  border-radius: 0 .5rem .5rem 0;
+}
+#navbar a[href="https://app.outlit.ai"] svg,
+#page-context-menu button svg {
+  width: 1rem;
+  height: 1rem;
+}
+button.tryit-button {
+  background-color: #0f172a;
+  color: #fff;
+}
+.dark button.tryit-button {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+button.tryit-button [data-component-part="icon-svg"] {
+  background-color: currentColor;
+}
+button[aria-label="Select language"] {
+  height: 2rem;
+  padding-block: 0;
+}
+.zoom-image-chrome-pull-hide button {
+  width: 2rem;
+  height: 2rem;
+  border-radius: .5rem;
+}

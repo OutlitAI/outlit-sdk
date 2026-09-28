@@ -1,0 +1,78 @@
+---
+title: "Responsibilities"
+description: "The work Outlit owns for you — Churn monitoring and Renewals — and how to read its status."
+---
+
+A **responsibility** is customer work Outlit monitors continuously. Your Outlit team enables each responsibility during onboarding:
+
+| Responsibility | What it does |
+|---|---|
+| **Churn** | Watches every eligible customer for retention risk — billing failures, usage drops, support escalations, stakeholder changes — and opens a case in Attention when something needs a person |
+| **Renewals** | Tracks renewal cycles from your CRM (or manual entries), prepares evidence-backed renewal briefs ahead of each date, and keeps them current as calls and signals arrive |
+
+If **Responsibilities** or **Renewals** is missing from your sidebar, ask your Outlit contact about your workspace setup.
+
+## Churn monitoring
+
+**Responsibilities → Churn** has two tabs, **Overview** and **Signals**.
+
+### Overview
+
+- **Monitoring status** — the top card reports the health of the whole loop:
+  - *Monitoring is active* — with the count of customers in scope and when the last investigation completed.
+  - *Monitoring is active with reduced coverage* — something's partially degraded. Each reason links to the fix: connect a billing source, connect product analytics or the Outlit SDK, set a Slack destination for notifications, or review an integration that errored or went stale.
+  - *Monitoring is not running yet* — no paying or past-due customers are in scope (usually billing hasn't synced), or the service is temporarily unavailable.
+- **Open cases** — churn cases awaiting review, with priority and a one-line summary.
+- **Watching** — customers under an active watch: not yet a case, but Outlit has noted a reason to keep checking, with a confidence level. Watches can escalate into cases or close quietly when the concern passes.
+
+### Signals
+
+The **Signals** tab shows what the Churn responsibility listens to — billing delinquency and subscription changes, product inactivity and usage drops, support escalations, technology-stack changes, competitor and vendor mentions, plus external signals like funding events, hiring, and launches. For each, the tab shows whether that coverage is ready or still needs a source connected — ticket signals need Pylon, for example, and external signals are in limited availability.
+
+### What makes a customer eligible
+
+Churn monitoring covers customers whose billing status is **Paying** or **Past due** — which means a connected billing source (Stripe) is what puts accounts in scope. Prospects, free users, and churned accounts don't get cases.
+
+### Where notifications go
+
+Case notifications deliver to the Slack destination you configure in **Settings → Destinations**. When no Slack destination is set, notifications fall back to email automatically — to the workspace admin or the customer owner. The reduced-coverage warning also points here when no destination exists.
+
+## Renewals
+
+**Responsibilities → Renewals** is the renewal portfolio: every upcoming and overdue renewal cycle Outlit is tracking, with dates, values, readiness, and brief status. Renewal cycles come from your CRM's renewal opportunities, or from cycles you create manually. The renewal workspace — briefs, evidence, milestones, and controls — is covered in [Work a renewal](/guides/renewals).
+
+A renewal becomes an attention item when it needs a person: a milestone, an approach decision, or a new risk. Work those items from **Attention**; use the Renewals portfolio to plan ahead.
+
+## Responsibility vs attention
+
+These two views serve different jobs:
+
+- A **responsibility** is ongoing coverage — the watching, tracking, and drafting Outlit does continuously.
+- An **attention item** is the handoff — the moment coverage produces something a person must decide.
+
+You can read responsibilities pages to understand what Outlit is doing; you only *need* to visit when something lands in Attention or coverage degrades.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Monitoring says 'reduced coverage'">
+    The status card lists the specific reason and a link to fix it — most often a disconnected billing or product source, or no notification destination.
+  </Accordion>
+  <Accordion title="Renewals is missing from Responsibilities">
+    Ask your Outlit contact to check whether Renewals is enabled for your workspace.
+  </Accordion>
+  <Accordion title="A customer I expected to be monitored isn't">
+    Confirm their billing status is Paying or Past due on the customer profile, and that your billing source is syncing — eligibility is driven by billing status, not CRM stage.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Churn guide" icon="shield" href="/guides/churn">
+    End-to-end: from connected data to a resolved churn case
+  </Card>
+  <Card title="Work a renewal" icon="arrows-rotate" href="/guides/renewals">
+    Portfolios, briefs, and renewal controls
+  </Card>
+</CardGroup>

@@ -1,11 +1,11 @@
 ---
-title: "Platform Capabilities"
-description: "Manage safe destinations, activation, workspace settings, and Features through the tool gateway"
+title: "Workspace configuration"
+description: "Manage safe destinations, activation, workspace settings, and Features through the tool gateway."
 ---
 
-Outlit exposes model-safe platform configuration through `POST /api/tools/call`. The Core capability catalog owns the tool names, descriptions, schemas, and consumer memberships used by `@outlit/tools`, the CLI, and Pi.
+Use `POST /api/tools/call` or the CLI to manage delivery destinations, the activation event, selected workspace settings, Features, and integration setup. Each action requires the matching API-key grant or member permission.
 
-## Current capability families
+## What you can configure
 
 | Area | Tools |
 |------|-------|
@@ -13,11 +13,11 @@ Outlit exposes model-safe platform configuration through `POST /api/tools/call`.
 | Activation | Get, preview, and update the ordinary customer activation event |
 | Workspace settings | Get and update the workspace timezone |
 | Features | List, create, and archive product capabilities observed through exact event rules |
-| Integrations | List, negotiate and perform bounded setup, and inspect configuration readiness |
+| Integrations | List integrations, complete supported setup steps, and check readiness |
 
-Destination results expose masked configuration. Integration setup accepts only the generated provider-specific credential and configuration shapes and never returns submitted credentials. The public surface does not include destination option discovery, report settings, integration disconnect, secret reveal/rotation, arbitrary notification sending, or generic agent/automation/signal administration.
+Destination results mask configuration values. Integration setup accepts provider-specific credential and configuration shapes and does not return submitted credentials. See [Agents and AI overview](/ai-integrations/overview#read-vs-write-controls) for public tool boundaries.
 
-Authored CLI commands preserve a resource-oriented experience while all retained commands call the same gateway:
+For example, use these CLI commands to perform the same actions:
 
 ```bash
 outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --default --json

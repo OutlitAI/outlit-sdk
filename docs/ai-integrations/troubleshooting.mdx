@@ -1,0 +1,72 @@
+---
+title: "Troubleshoot agents and the API"
+description: "Auth, permissions, identity, JSON output, MCP, and SDK delivery failure modes for the CLI, MCP, and API."
+---
+
+## Authentication
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `not_authenticated` / `auth_required` | No key found | Provide a key via `--api-key`, `OUTLIT_API_KEY`, or stored credentials (`outlit auth login`) — precedence is flag → env → stored config |
+| `invalid_key_format` | Key doesn't start with `ok_` | Re-copy the key from [**Settings → API keys**](https://app.outlit.ai/settings/workspace/api-keys) |
+| `invalid_key` / `validation_failed` | Server rejected the key | Verify with `outlit auth status`; rotate the key if revoked |
+| `401` on the tool gateway | Missing/expired bearer | `POST /api/validate-api-key` confirms whether the key authenticates at all |
+| MCP client never prompts to sign in | OAuth flow didn't start | Re-add the workspace URL `https://mcp.outlit.ai/w/<slug>/mcp`; headless clients must send an API key as bearer instead |
+| `unsupported_core_version` | Workspace runs an older Outlit server | Upgrade the CLI; if the workspace is still behind, the capability isn't available there yet |
+
+## Permissions and authorization
+
+- **`TOOL_CALL_FORBIDDEN` with `retryable: false`** — the key or member lacks the underlying grant. Add the grant on the key (or use an OAuth session with permission); retrying the identical call won't help.
+- **`ws-users list` works but `owner set`/`grant` fails** — discovery needs `workspace_members:read`; collaboration writes need `customer_access:manage`. They are separate grants and the full flow needs both.
+- **A key can't see what its creator sees** — API keys are independent principals and do not inherit the creator's permissions or customer access.
+- **Writes reject names/domains** — mutations take exact UUIDs (`customers owner set <uuid> --target-user-id user_…`). Resolve IDs with `customers get` / `ws-users list` first.
+
+## Empty or partial results
+
+| Symptom | Check |
+|---------|-------|
+| Customer has no activity | `outlit integrations status <provider>` reports configuration readiness only — `ready` doesn't prove data synced. Enumerate real records with `sources list`; check sync/backfill freshness in the app's integration settings. Never report "inactive" for a source you can't confirm synced |
+| `customers features` empty | The response distinguishes *unavailable source evidence* from *no matches* — check which one applies |
+| `customers credits` empty | Same: unavailable/stale observations are distinct from a zero balance |
+| Search returns nothing | Try `sources list --customer <id>` for deterministic enumeration; search is artifact-level (`source` + `fact` groups), not raw chunks |
+| Fact has no permalink | Normal — cite `sourceType`/`sourceId`/`sourceOccurredAt`/`sourceQuote` instead |
+| `contentPage` looks truncated | Check `contentPage.completeness`; partial means more content exists — don't summarize as if complete |
+
+## CLI output and scripting
+
+- **Expected JSON but got a table** — pass `--json` explicitly, or ensure one auto-trigger: piped stdout, `CI`/`GITHUB_ACTIONS` set, or `TERM=dumb`.
+- **`outlit` in a cron/CI job exits non-zero** — JSON errors go to stderr as `{"error": …, "code": …}`; all failures exit `1`. See the [error-code table](/cli/configuration#error-codes).
+- **`doctor` reports a missing skill** — run `outlit setup <agent>` (e.g. `openclaw`, `claude-code`, `codex`, `gemini`, `droid`, `opencode`, `pi`, `skills`).
+
+## MCP setup
+
+- **Wrong URL shape** — it is workspace-scoped: `https://mcp.outlit.ai/w/<workspace-slug>/mcp`, copied from Settings → CLI & MCP. A bare `mcp.outlit.ai` URL is not valid.
+- **Tools visible but calls forbidden** — OAuth runs as the signed-in member; API-key calls use the key's grants. The catalog is identical either way; authorization is not.
+- **This is not the docs search MCP** — the docs site hosts a separate search-only MCP endpoint. It has no customer tools; use the workspace URL above for product data.
+
+## Tracking and ingest
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `403` from `/api/i/v1/…/events` | Domain not enabled | Add the origin in Settings → Website Visitors → Enabled Domains (public key auth is by design, the allowlist is the boundary) |
+| Some events land, some don't | Partial success | Responses can be `207` per-event — inspect per-event errors instead of assuming all-or-nothing |
+| Events >100 per request | Batch cap | Split payloads; the schema caps `events` at 100 |
+| Server events lost on exit | Queue not flushed | Call `await outlit.flush()` / `shutdown()` — `@outlit/node` batches (default 10s flush) |
+| Returning visitors not tracked | Persisted opt-out | `disableTracking()` writes `outlit_consent` (localStorage + cookie, 1 year). Re-enable with `enableTracking()` |
+| `data-*` attr ignored | Not in the loader's set | The script tag reads only `data-public-key`, `data-api-host`, `data-track-pageviews`, `data-track-forms`, `data-auto-track`, `data-auto-identify`, `data-track-calendar-embeds` — `trackEngagement`/`idleTimeout` need the [npm package](/tracking/browser/npm) |
+| `identify()` not linking | Missing identity | Requires `email` or `userId`; Outlit server SDK `track()` additionally accepts `fingerprint`/`customerId` (customer-only events resolve later when identified) |
+
+## Identity mismatches
+
+- **Duplicate customers appearing** — check `outlit identity suggestions list`; reject wrong pairs with `suggestions reject <id>`, merge real duplicates with `customers merge` (preview first).
+- **User events attributed to the wrong account** — Outlit Browser SDK and Outlit server SDK `identify()` accept `customerId` for explicit account attribution; Outlit server SDK `track()` does too.
+- **Personal-email domains** — `user@gmail.com` resolves to an individual customer keyed on the full address, not a `gmail.com` company; expect separate customers per personal email.
+
+<CardGroup cols={2}>
+  <Card title="Customer workflows" icon="route" href="/ai-integrations/customer-workflows">
+    Working workflows to compare against
+  </Card>
+  <Card title="MCP integration" icon="plug" href="/ai-integrations/mcp">
+    Connection and auth detail
+  </Card>
+</CardGroup>

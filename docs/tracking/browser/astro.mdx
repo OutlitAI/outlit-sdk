@@ -1,6 +1,6 @@
 ---
-title: "Astro Integration"
-description: "Integrate Outlit tracking with Astro applications"
+title: "Astro"
+description: "Integrate Outlit tracking with Astro applications."
 ---
 
 ## Installation
@@ -23,7 +23,7 @@ bun add @outlit/browser
 ```
 </CodeGroup>
 
-## Quick Start
+## Quick start
 
 Add Outlit to your base layout:
 
@@ -55,21 +55,17 @@ const PUBLIC_OUTLIT_KEY = import.meta.env.PUBLIC_OUTLIT_KEY
 </html>
 ```
 
-<Tip>
-  Add your public key to `.env`:
-  ```
-  PUBLIC_OUTLIT_KEY=pk_your_public_key_here
-  ```
-</Tip>
+Add your public key to `.env`:
+```
+PUBLIC_OUTLIT_KEY=pk_your_public_key_here
+```
 
-## Alternative: Inline Script
+## Alternative: inline script
 
-Use an inline script for better performance:
+Use an inline script if you prefer an inline setup:
 
 ```astro
----
 // src/layouts/BaseLayout.astro
----
 
 <!DOCTYPE html>
 <html lang="en">
@@ -93,14 +89,12 @@ Use an inline script for better performance:
 </html>
 ```
 
-## Tracking Events
+## Tracking events
 
 Track events in Astro components:
 
 ```astro
----
 // src/components/PricingButton.astro
----
 
 <button id="pricing-btn" data-plan="pro">
   View Pricing
@@ -118,15 +112,13 @@ Track events in Astro components:
 </script>
 ```
 
-### With Client Directives
+### With client directives
 
 Use client directives for interactive components:
 
 ```astro
----
 // src/pages/index.astro
 import PricingButton from '../components/PricingButton.jsx'
----
 
 <html>
   <body>
@@ -135,9 +127,9 @@ import PricingButton from '../components/PricingButton.jsx'
 </html>
 ```
 
-## Framework Islands
+## Framework islands
 
-### React Island
+### React island
 
 ```jsx
 // src/components/PricingButton.jsx
@@ -157,7 +149,7 @@ export default function PricingButton() {
 }
 ```
 
-### Vue Island
+### Vue island
 
 ```vue
 <!-- src/components/PricingButton.vue -->
@@ -176,7 +168,7 @@ function handleClick() {
 </template>
 ```
 
-### Svelte Island
+### Svelte island
 
 ```svelte
 <!-- src/components/PricingButton.svelte -->
@@ -193,14 +185,12 @@ function handleClick() {
 </button>
 ```
 
-## Identifying Users
+## Identifying users
 
 Identify users after authentication:
 
 ```astro
----
 // src/components/LoginForm.astro
----
 
 <form id="login-form">
   <input type="email" name="email" placeholder="Email" />
@@ -242,14 +232,12 @@ Identify users after authentication:
 </script>
 ```
 
-## Auth State Management
+## Auth state management
 
 For apps with authentication, use `setUser()` and `clearUser()` to sync user identity:
 
 ```astro
----
 // src/components/AuthObserver.astro
----
 
 <script>
   import outlit from '@outlit/browser'
@@ -288,19 +276,15 @@ For apps with authentication, use `setUser()` and `clearUser()` to sync user ide
 </script>
 ```
 
-<Info>
-  Using `setUser()` ensures the user identity persists across page navigations and is properly set when users return to your site already logged in.
-</Info>
+Using `setUser()` ensures the user identity persists across page navigations and is properly set when users return to your site already logged in.
 
-## View Transitions
+## View transitions
 
 Track navigation with Astro's View Transitions:
 
 ```astro
----
 // src/layouts/BaseLayout.astro
 import { ViewTransitions } from 'astro:transitions'
----
 
 <!DOCTYPE html>
 <html lang="en">
@@ -329,7 +313,7 @@ import { ViewTransitions } from 'astro:transitions'
 </html>
 ```
 
-## API Routes
+## API routes
 
 Track events from API endpoints:
 
@@ -363,22 +347,18 @@ export const POST: APIRoute = async ({ request }) => {
 }
 ```
 
-<Info>
-  For server-side tracking, see the [Node.js integration guide](/tracking/server/nodejs).
-</Info>
+For server-side tracking, see the [Node.js integration guide](/tracking/server/nodejs).
 
-## SSR Pages
+## SSR pages
 
 For SSR pages, ensure tracking runs client-side:
 
 ```astro
----
 // src/pages/products/[id].astro
 export const prerender = false // SSR mode
 
 const { id } = Astro.params
 const product = await fetchProduct(id)
----
 
 <html>
   <body>
@@ -398,17 +378,15 @@ const product = await fetchProduct(id)
 </html>
 ```
 
-## Content Collections
+## Content collections
 
 Track interactions with content:
 
 ```astro
----
 // src/pages/blog/[...slug].astro
 import { getEntry } from 'astro:content'
 
 const entry = await getEntry('blog', Astro.params.slug)
----
 
 <article>
   <h1>{entry.data.title}</h1>
@@ -429,36 +407,28 @@ const entry = await getEntry('blog', Astro.params.slug)
 
 ## Activation event
 
-Track activation after the user completes your product milestone:
+Track your value milestone as an ordinary event once it succeeds:
 
 ```astro
----
 // src/components/OnboardingComplete.astro
----
-
-<button id="complete-onboarding">Complete Setup</button>
-
 <script>
   import outlit from '@outlit/browser'
 
-  document.getElementById('complete-onboarding')?.addEventListener('click', () => {
+  // Call this from your app's confirmed onboarding success callback.
+  function onOnboardingCompleted() {
     outlit.track('onboarding_completed', { flow: 'onboarding', step: 'completed' })
-  })
+  }
 </script>
 ```
 
-<Info>
-  Configure this exact ordinary event as your activation event. Outlit Core applies its first match to eligible contacts and their resolved company; billing comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
-</Info>
+Choose this event as your activation event in Outlit. The first matching event records activation once for each eligible resolved person and company, independently. Billing status comes from verified integrations such as Stripe. See [Customer journey](/concepts/customer-journey).
 
-## Consent Management
+## Consent management
 
 Handle user consent:
 
 ```astro
----
 // src/components/CookieBanner.astro
----
 
 <div id="cookie-banner" style="display: none;">
   <p>We use cookies to improve your experience.</p>
@@ -504,7 +474,7 @@ Handle user consent:
 </style>
 ```
 
-## Environment Variables
+## Environment variables
 
 Configure environment variables:
 
@@ -522,7 +492,7 @@ OUTLIT_KEY=pk_your_public_key_here
   Keep server environment variables out of client-side code. Only use `OUTLIT_KEY` in API routes.
 </Warning>
 
-## TypeScript Support
+## TypeScript support
 
 Full TypeScript support is included:
 
@@ -538,19 +508,19 @@ const options: OutlitOptions = {
 outlit.init(options)
 ```
 
-## Next Steps
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Server-Side Tracking" icon="server" href="/tracking/server/nodejs">
+  <Card title="Server-side tracking" icon="server" href="/tracking/server/nodejs">
     Track events from your backend
   </Card>
-  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
-    Learn how profiles are merged
+  <Card title="Identity resolution" icon="fingerprint" href="/concepts/identity-resolution">
+    Learn how visits and events link to people
   </Card>
-  <Card title="NPM Package" icon="npm" href="/tracking/browser/npm">
+  <Card title="npm package" icon="npm" href="/tracking/browser/npm">
     Full API reference
   </Card>
-  <Card title="React Integration" icon="react" href="/tracking/browser/react">
+  <Card title="React integration" icon="react" href="/tracking/browser/react">
     Use Outlit with React
   </Card>
 </CardGroup>

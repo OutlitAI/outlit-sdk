@@ -1,187 +1,65 @@
 ---
-title: "Customer Context Graph"
-description: "How Outlit unifies customer data from every source into a single queryable graph of entities, relationships, and signals"
+title: "Customer context graph"
+description: "See how connected sources become customer profiles, evidence, and attention items."
 ---
 
-The customer context graph is Outlit's unified data model. It connects every customer interaction — website visits, product usage, billing events, support tickets, calls, emails, and Slack conversations — into a structured graph of entities, relationships, timelines, and facts. Instead of customer data scattered across Stripe, PostHog, your app database, support tools, and email, the graph gives you and your AI agents one place to query the complete customer profile.
+Outlit connects customer data from billing, product usage, CRM, conversations, and support. It links people to customers and keeps a timeline of what happened and where each piece of evidence came from. Your team can review that context in **Customers** and **Attention**; authorized agents can query it through the CLI, MCP, and API.
 
-## What is the customer context graph?
+## From sources to customer work
 
-The customer context graph is a structured representation of everything Outlit knows about your customers. It has four layers:
+<div className="docs-diagram" tabIndex={0} role="region" aria-label="Customer context graph diagram">
+  <span className="docs-diagram-scroll-hint">Scroll sideways or use arrow keys.</span>
+  <img className="docs-diagram-desktop docs-diagram-light" src="/images/diagrams/context-graph-light.svg" alt="Connected SDKs, integrations, and conversations feed a graph of visitors, contacts, accounts, relationships, activity, and facts; customer profiles and developer interfaces use that context." noZoom />
+  <img className="docs-diagram-desktop docs-diagram-dark" src="/images/diagrams/context-graph-dark.svg" alt="Connected SDKs, integrations, and conversations feed a graph of visitors, contacts, accounts, relationships, activity, and facts; customer profiles and developer interfaces use that context." noZoom />
+  <img className="docs-diagram-mobile docs-diagram-light" src="/images/diagrams/context-graph-mobile-light.svg" alt="Connected SDKs, integrations, and conversations feed a graph of visitors, contacts, accounts, relationships, activity, and facts; customer profiles and developer interfaces use that context." noZoom />
+  <img className="docs-diagram-mobile docs-diagram-dark" src="/images/diagrams/context-graph-mobile-dark.svg" alt="Connected SDKs, integrations, and conversations feed a graph of visitors, contacts, accounts, relationships, activity, and facts; customer profiles and developer interfaces use that context." noZoom />
+</div>
 
-1. **Entities** — The people and companies you do business with: anonymous visitors, known contacts, customer accounts, and devices
-2. **Relationships** — How entities connect: identity resolution links, account membership, cross-device associations
-3. **Activity timeline** — A chronological log of every interaction from every source: pageviews, form submissions, Stripe charges, support tickets, Slack messages, email threads, calls, and calendar events
-4. **Facts** — Temporal assertions about each customer that capture *what it means*, not just what happened: churn risk signals, expansion opportunities, support escalations, competitive evaluations, champion changes, and more
+The diagram shows how connected sources feed customer profiles. Outlit uses those profiles and their evidence when it prepares churn cases and renewal briefs.
 
-```mermaid
-%%{init: {'theme': 'dark', 'flowchart': {'nodeSpacing': 40, 'rankSpacing': 50, 'curve': 'basis', 'padding': 15}}}%%
-flowchart TD
-    subgraph Sources
-        S1([Browser SDK])
-        S2([Server SDK])
-        S3([Stripe])
-        S4([PostHog])
-    end
+| Source | What it adds |
+|---|---|
+| Outlit Browser SDK and Outlit server SDKs | Website visits, identified people, and product events you instrument |
+| PostHog or Mixpanel integrations | Product activity and usage trends imported into Outlit |
+| Stripe | Subscription state, billing status, and revenue |
+| Salesforce, HubSpot, or Attio | Account records, contacts, owners, deals, and renewal dates |
+| Gmail, Slack, Granola, Gong, Fireflies, or Google Calendar | Conversations and meetings |
+| Pylon | Support tickets and escalations |
+| Clerk or Supabase Auth | User identity and sign-in activity |
 
-    subgraph Graph["Customer Context Graph"]
-        E1([Visitors])
-        E2([Contacts])
-        E3([Accounts])
-        E4([Timeline])
-    end
+Connect sources in the [Outlit app](/integrations/overview). Churn monitoring needs billing and product activity for useful coverage; the Outlit Browser SDK adds the landing page, referrer, UTM data, and anonymous website visits before signup. Identifying the browser visitor links that history to later customer activity. Check **Responsibilities → Churn** for your workspace's actual monitoring status.
 
-    subgraph Consume
-        C1([CLI])
-        C2([MCP / AI Agents])
-        C3([API])
-    end
+## How records become a profile
 
-    S1 --> E1
-    S1 --> E2
-    S2 --> E2
-    S3 --> E3
-    S4 --> E2
+[Identity resolution](/concepts/identity-resolution) links an anonymous visitor to a known person after they identify. A company email domain, explicit `customerId`, or connected account records can link that person to a customer. Ambiguous matches wait for review rather than being merged automatically. A customer's **Coverage** tab shows which sources support its profile.
 
-    E1 -.->|identity resolution| E2
-    E2 -.->|membership| E3
-    E2 --> E4
-    E3 --> E4
+The activity timeline records events in time order. Each source can also support a **fact**, such as declining usage, a support escalation, a competitor mention, or a change in a key contact. Public fact results include `occurredAt`, `status`, and available provenance fields such as `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink`. Read the source time and status before relying on an older finding.
 
-    E4 --> C1
-    E4 --> C2
-    E4 --> C3
-```
+## Customer journey and billing
 
-## How does Outlit build the graph?
+A person's product journey can be **Discovered**, **Signed Up**, **Activated**, **Engaged**, or **Inactive**. A customer's billing status can be **None**, **Trialing**, **Paying**, **Past due**, or **Churned**. These describe different parts of the relationship. Billing comes from a verified integration such as Stripe.
 
-Outlit builds the customer context graph in four stages:
+You choose an ordinary product event for activation. The first matching event records activation once for each eligible resolved person and company, independently; later matches leave the recorded timestamp unchanged. SDKs and analytics integrations send ordinary events, and Outlit derives activation from the configured event. See [Customer journey](/concepts/customer-journey) for the exact stages and setup.
 
-### 1. Collect
+## Where to use the context
 
-Data flows in from multiple sources:
+- **Customers** shows profiles, people, coverage, timelines, and facts.
+- **Attention** shows churn and renewal situations that need a person, with evidence and an approach when available.
+- The [CLI](/cli/overview), [MCP](/ai-integrations/mcp), and [API](/api-reference/tools) let authorized agents and applications query customer context. Their access follows the same customer and workspace permissions.
 
-| Source | What it captures | How to connect |
-|--------|-----------------|----------------|
-| **Browser SDK** | Pageviews, form submissions, engagement time, UTM attribution, company enrichment | Add the Outlit script or npm package to your site |
-| **Server SDK** | Backend events (API calls, exports, notifications) | Use the Node.js or Rust SDK |
-| **Stripe** | Subscriptions, charges, billing status changes | Connect via [dashboard](https://app.outlit.ai/integrations) |
-| **PostHog** | Product usage sessions and feature engagement | Connect via [dashboard](https://app.outlit.ai/integrations) |
-| **Slack** | Messages, reactions, thread context | Connect via [dashboard](https://app.outlit.ai/integrations) |
-| **Gmail** | Email threads, sender history | Connect via [dashboard](https://app.outlit.ai/integrations) |
-| **Fireflies.ai** | Call transcripts, action items, summaries | Connect via [dashboard](https://app.outlit.ai/integrations) |
-| **Granola** | Meeting notes and customer-call summaries | Connect via [dashboard](https://app.outlit.ai/integrations) |
-| **Google Calendar** | Meetings, attendees, scheduling patterns | Connect via [dashboard](https://app.outlit.ai/integrations) |
-| **Pylon** | Support tickets, escalations, and customer requests | Connect via [dashboard](https://app.outlit.ai/integrations) |
-| **Supabase Auth / Clerk** | User identity, sign-up source, auth events | Connect via [dashboard](https://app.outlit.ai/integrations) |
-
-<Info>
-  We recommend the Outlit browser SDK as your primary data source — it's the only way to get [website visitor tracking](/concepts/website-visitors) (anonymous visits, form auto-identification, and pre-signup attribution). PostHog is a great complement for product usage data, but it won't capture the anonymous visitor journey.
-</Info>
-
-### 2. Resolve
-
-[Identity resolution](/concepts/identity-resolution) links activity to real people. When a visitor submits a form, signs up, or logs in, Outlit connects their anonymous browsing history to their profile. The same person on different devices gets merged into one contact.
-
-### 3. Connect
-
-Entities form relationships:
-- **Visitors → Contacts**: Via identity resolution (email, userId, device fingerprint)
-- **Contacts → Accounts**: Via organizational email domains, explicit `customerId` attribution, and connected source data
-- **Accounts → Billing**: Via verified billing integrations such as Stripe
-
-Each contact carries a [journey stage](/concepts/customer-journey) (Discovered → Signed Up → Activated → Engaged → Inactive) and each account carries a billing status (None → Trialing → Paying → Churned).
-
-### 4. Query
-
-The graph is queryable through multiple interfaces:
-
-- **[CLI](/cli/overview)** — `outlit customers list`, `outlit search "..."`, `outlit sql "..."`
-- **[MCP](/ai-integrations/mcp)** — AI agents query customer context directly in Cursor, Claude Code, VS Code
-- **[API](/api-reference/introduction)** — Programmatic access for custom integrations
-
-## What makes this different from a CRM or analytics tool?
-
-Traditional tools capture one slice of the customer relationship:
-
-| Tool type | What it knows | What it misses |
-|-----------|--------------|----------------|
-| Web analytics | Anonymous pageviews | Who the visitor becomes |
-| Product analytics | Authenticated user sessions | Pre-signup journey |
-| CRM | Deal stages and contacts | Actual product usage |
-| Billing | Payment events | Everything before payment |
-
-Outlit's graph connects all of these — and goes further with **facts**. Instead of just showing raw data, a query like `outlit customers get acme.com --include users,revenue,recentTimeline` plus `outlit facts list acme.com` shows the complete story *with reasoning*: which pages Acme's team viewed before signing up, how they used the product after onboarding, what support tickets or calls changed the relationship, what their billing trajectory looks like, and what it all means — churn risk signals, expansion opportunities, champion changes, and competitive context.
-
-## How do facts work?
-
-Facts are temporal assertions that Outlit maintains about each customer. While the activity timeline records *what happened*, facts capture *what it means* — the reasoning layer that makes the graph intelligent.
-
-Outlit generates facts from three sources:
-
-| Source | What it captures | Example |
-|--------|-----------------|---------|
-| **Behavioral** | Automatically detected from activity patterns | "Core feature usage declined 40% over 14 days" |
-| **Extracted** | Parsed from support tickets, Slack, email, and call transcripts | "Customer mentioned evaluating a competitor in #support channel" |
-| **Synthesized** | Correlated from multiple observations | "Key contact went quiet + competitor mention + declining usage = churn risk" |
-
-Every fact carries **temporal context**. Public fact results expose `occurredAt` for when the supporting signal happened or was detected, plus `status` and provenance fields such as `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink` when available. Outlit uses source time, status, and evidence to help agents distinguish current signals from historical context; newer evidence can supersede older context, but facts should still be read with their source and status rather than as self-updating claims.
-
-Facts are queryable through the same interfaces as the rest of the graph — CLI, MCP, and API.
-
-## How do journey stages fit into the graph?
-
-Journey stages are properties on graph nodes — structured labels that Outlit maintains as contacts and accounts progress:
-
-- **Contact journey stages** (Discovered, Signed Up, Activated, Engaged, Inactive) describe where each person is in their product engagement
-- **Company activation** (`activatedAt`) is a monotonic account milestone derived by Core from the configured exact ordinary product event
-- **Account billing statuses** (None, Trialing, Paying, Churned) describe the commercial relationship
-
-Some contact stages are inferred automatically from integrations. The Outlit browser SDK auto-detects Discovered and Signed Up based on the identifiers provided. Engaged and Inactive are derived from tracked product activity.
-
-One configured exact ordinary product event activates eligible contacts and their resolved company. Core writes each subject's activation timestamp once, and contact/company materialization remains independent. SDKs and connected analytics sources continue emitting ordinary product events; they do not authoritatively mutate activation.
-
-Billing statuses update automatically when Stripe is connected.
-
-For full details, see [Customer Journey](/concepts/customer-journey).
-
----
-
-## Frequently Asked Questions
-
-<AccordionGroup>
-  <Accordion title="Do I need all the integrations to use Outlit?">
-    No. The browser SDK alone gives you website visitor tracking, identity resolution, and journey stages. Each additional integration (Stripe, PostHog, server SDK) adds more signal to the graph, but none are required to get started.
-  </Accordion>
-
-  <Accordion title="How is the graph different from a data warehouse?">
-    A data warehouse stores raw events. The customer context graph is entity-resolved and relationship-mapped — it knows that visitor abc-123, user jane@acme.com, and Stripe customer cus_456 are linked parts of the same customer profile when the source evidence supports that relationship. Organizational domains, personal email providers, and explicit customer IDs are handled differently so the graph does not turn every email domain into a company account.
-  </Accordion>
-
-  <Accordion title="Can AI agents access the full graph?">
-    Yes. The [MCP integration](/ai-integrations/mcp) exposes the graph to remote MCP clients such as Cursor, VS Code, and other supported environments. For coding agents that run local commands, install [Agent Skills](/ai-integrations/skills). Agents can list customers, get timelines, search context, inspect facts and sources, and run SQL queries.
-  </Accordion>
-
-  <Accordion title="How quickly does new data appear in the graph?">
-    Browser and server SDK events appear within seconds. Stripe webhook events appear within minutes. PostHog syncs run on a configurable schedule.
-  </Accordion>
-</AccordionGroup>
-
----
-
-## Next Steps
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Quick Start" icon="rocket" href="/tracking/quickstart">
-    Install the CLI and start building your graph in 5 minutes
+  <Card title="Customers" icon="address-book" href="/product/customers">
+    Review profiles and source coverage.
   </Card>
-  <Card title="Customer Journey" icon="route" href="/concepts/customer-journey">
-    Understand journey stages and billing statuses
+  <Card title="Customer journey" icon="route" href="/concepts/customer-journey">
+    Understand activation, engagement, and billing.
   </Card>
-  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
-    How Outlit links visitors to known contacts
+  <Card title="Identity resolution" icon="fingerprint" href="/concepts/identity-resolution">
+    See how visits and events link to people.
   </Card>
-  <Card title="Website Visitors" icon="globe" href="/concepts/website-visitors">
-    What Outlit captures before visitors identify themselves
+  <Card title="Connect your data" icon="plug" href="/getting-started/connect-data">
+    Add the sources Outlit uses for monitoring.
   </Card>
 </CardGroup>

@@ -1,37 +1,37 @@
 ---
-title: "Agent Skills"
-description: "Give coding agents better guidance for customer queries and Outlit SDK work"
+title: "Agent skills"
+description: "Give coding agents better guidance for customer queries and Outlit SDK work."
 ---
 
 Agent skills teach coding agents how to work with Outlit. The `outlit` skill covers customer intelligence workflows. The optional `outlit-sdk` skill covers tracking and instrumentation work.
 
 Skills are open source at [github.com/OutlitAI/outlit-agent-skills](https://github.com/OutlitAI/outlit-agent-skills).
 
-Use skills when the agent runs local commands or needs workflow guidance. Use [MCP Integration](/ai-integrations/mcp) for remote MCP clients, and use [Pi Agents](/ai-integrations/pi) when you are packaging a Pi extension with Outlit tools, prompts, or custom skills.
+Use skills when the agent runs local commands or needs workflow guidance. Use [MCP integration](/ai-integrations/mcp) for remote MCP clients, and use [Pi agents](/ai-integrations/pi) when you are packaging a Pi extension with Outlit tools, prompts, or custom skills.
 
 ## Install
 
-Launch the interactive installer:
+Install the `outlit` skill for detected local agents:
 
 ```bash
-outlit setup skills
+outlit setup --yes
 ```
 
-This opens `skills add` against the Outlit skills repo and lets you choose:
-- `outlit`
-- `outlit-sdk`
+To choose agents manually or add the optional `outlit-sdk` skill, run `outlit setup skills`. For a specific agent, use `outlit setup <agent>`; [Set up coding agents](/cli/ai-agents#supported-agents) lists the supported names.
 
-You can also install directly with `skills`:
+<Accordion title="Install directly with the skills installer">
 
 ```bash
 npx -y skills add https://github.com/OutlitAI/outlit-agent-skills -g
 ```
 
-For a targeted install, pass the agent and skill explicitly:
+To select a skill and agent explicitly:
 
 ```bash
 npx -y skills add https://github.com/OutlitAI/outlit-agent-skills --skill outlit --agent claude-code --agent opencode -y -g
 ```
+
+</Accordion>
 
 ## Verify
 
@@ -45,35 +45,9 @@ Look for a per-agent check such as:
 ✓ Claude Code: Outlit skill installed
 ```
 
-## Available Skills
+## Available skills
 
 | Skill | What it teaches |
 |-------|-----------------|
 | **outlit** | Customer queries, timelines, search, facts, SQL, and when to use CLI vs MCP |
-| **outlit-sdk** | Tracking integration work: detection, consent, auth, billing, and event instrumentation |
-
-## Recommended Setup
-
-For coding agents you already use locally:
-
-```bash
-outlit setup --yes
-```
-
-Popular agent aliases:
-
-```bash
-outlit setup claude-code
-outlit setup codex
-outlit setup gemini
-outlit setup droid
-outlit setup opencode
-outlit setup pi
-outlit setup openclaw
-```
-
-For manual selection or optional `outlit-sdk` installation:
-
-```bash
-outlit setup skills
-```
+| **outlit-sdk** | Tracking integration work: detection, consent, authentication, billing-integration guidance, and event instrumentation |

@@ -1,6 +1,6 @@
 ---
-title: "Command Reference"
-description: "Complete reference for all Outlit CLI data commands"
+title: "Command reference"
+description: "Complete reference for all Outlit CLI data commands."
 ---
 
 Most commands in this reference share these common flags:
@@ -13,13 +13,12 @@ Most commands in this reference share these common flags:
 
 ## Activation
 
-Inspect, historically preview, and explicitly configure the exact ordinary product event
+Inspect, preview against past events, and explicitly configure the exact ordinary product event
 Outlit uses for activation. The first matching event activates eligible contacts and their
-resolved company. Core sets each subject's activation timestamp only when it is null, so
-activation is monotonic.
+resolved company. Outlit records activation for each eligible person and resolved company only once. Later matching events leave those timestamps unchanged.
 
 Applications and connected analytics sources keep sending ordinary product events. They do
-not send a synthetic activation event or authoritatively mutate lifecycle state.
+not send a synthetic activation event or change lifecycle state directly.
 
 ### Get
 
@@ -27,8 +26,7 @@ not send a synthetic activation event or authoritatively mutate lifecycle state.
 outlit activation get --json
 ```
 
-The command returns the configured `eventName`. The fixed behavior remains simple: the first
-matching product event activates the eligible contact and resolved company.
+The command returns the configured `eventName`.
 
 ### Preview
 
@@ -43,8 +41,8 @@ outlit activation preview \
 ```
 
 Preview is always read-only. It never saves the event setting, changes `activatedAt`, or
-materializes activation. The response reports separate contact and company totals:
-matching subjects, subjects already activated, and subjects that would activate if this
+records activation. The response reports separate contact and company totals:
+matching people and companies, those already activated, and those that would activate if this
 event were configured. `evaluatedContactOccurrenceCount` counts matching contact-event
 occurrences, while `evaluatedEventCount` counts matching events attributed to resolved
 companies. Contact identities are not returned as preview examples.
@@ -57,8 +55,8 @@ examples, so it does not by itself make aggregate totals a lower bound.
 | Flag | Required | Description |
 |------|----------|-------------|
 | `--event` | Yes | Exact ordinary product event name, from 1–191 characters |
-| `--lookback-days` | No | Historical lookback from 1–90 (Core default: 30) |
-| `--example-limit` | No | Customer examples from 1–20 (Core default: 10) |
+| `--lookback-days` | No | Historical lookback from 1–90 (server default: 30) |
+| `--example-limit` | No | Customer examples from 1–20 (server default: 10) |
 
 ### Update
 
@@ -83,11 +81,11 @@ outlit activation disable --json
 
 Disabling preserves existing contact and company activation timestamps.
 
-All four commands return the catalog-projected result in `--json` and piped output. Local
+All four commands return the public tool result in `--json` and piped output. Local
 validation errors use the CLI's `missing_input` or `invalid_input` shape; gateway failures
-retain Core's stable `code`, `message`, `retryable`, and `requestId` envelope.
+retain Outlit's stable `code`, `message`, `retryable`, and `requestId` envelope.
 
-## Customers List
+## Customers list
 
 List and filter customers with pagination.
 
@@ -134,7 +132,7 @@ outlit customers list --activated-since 2026-07-01T00:00:00Z
 outlit customers list --json | jq '.items[] | {domain, activatedAt}'
 ```
 
-### JSON Response
+### JSON response
 
 ```json
 {
@@ -181,7 +179,7 @@ In interactive mode, the CLI shows a hint after the table:
 Showing 20 of 150 total. Next page: --cursor cursor_abc123
 ```
 
-## Customers Get
+## Customers get
 
 Get a detailed customer profile with optional sections.
 
@@ -215,7 +213,7 @@ outlit customers get acme.com --include users,revenue,recentTimeline --timeframe
 outlit customers get 550e8400-e29b-41d4-a716-446655440000
 ```
 
-### JSON Response
+### JSON response
 
 ```json
 {
@@ -260,15 +258,14 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
 ```
 
 <Info>
-  `customer.activatedAt` is an ISO-8601 timestamp when Core has materialized company
-  activation, and `null` otherwise. Contact journey stages remain separate under
+  `customer.activatedAt` is an ISO-8601 timestamp when Outlit has recorded company activation, and `null` otherwise. Contact journey stages remain separate under
   `users`.
 </Info>
 
-## Customers Relationship
+## Customers relationship
 
-Get the bounded relationship read model used for customer detail, without adding it to the
-compact `customers get` response or replacing the chronological activity timeline.
+Get the relationship summary used for customer detail, without adding it to the
+`customers get` response or replacing the chronological activity timeline.
 
 ```text
 outlit customers relationship <customer>
@@ -285,7 +282,7 @@ unrestricted fact IDs, or unbounded source records.
 outlit customers relationship acme.com --json
 ```
 
-### JSON Response
+### JSON response
 
 ```json
 {
@@ -348,9 +345,9 @@ outlit customers merge-status "<operationId>" --json
 
 A saved suggestion's `latestJob.operationId`, when present, can be passed to `customers merge-status`. A null value means that job has no public operation ID attached.
 
-Queued or running status does not mean merged. Status reads the admitted operation without repeating execution, including after a partial failure. These commands require the matching Core deployment. Updating the CLI does not enable backend access or grant permission.
+A queued or running merge has not finished. Reading status does not run the merge again, including after a partial failure. The workspace must support these commands, and the API key needs the required permission.
 
-## Customers Credits
+## Customers credits
 
 Read imported credit pools and burn summaries for one authorized customer.
 
@@ -368,7 +365,7 @@ provider observations remain distinct from a zero balance.
 outlit customers credits acme.com --json
 ```
 
-## Customers Features
+## Customers features
 
 Read event-based and imported metered Feature usage for one authorized customer.
 
@@ -409,7 +406,7 @@ outlit features archive <id> --revision <revision>
 `features list` returns eligible product-event sources, the selected source, active
 features with exact historical evidence, and candidate discovery. Candidate discovery is a
 discriminated result: `ready` and `partial` contain `items` and `truncated`, while `unavailable`
-contains a reason. Core auto-selects a source only when exactly one is eligible.
+contains a reason. Outlit auto-selects a source only when exactly one is eligible.
 
 | Workspace flag | Default | Description |
 |----------------|---------|-------------|
@@ -432,7 +429,7 @@ Use `--property-filters` with a JSON array of generated exact or exists filter o
 event alone is too broad. Event names are preserved exactly; use the candidate returned by the
 workspace command.
 
-Archive requires both opaque values returned by Core:
+Archive requires both opaque values returned by Outlit:
 
 ```bash
 outlit features archive \
@@ -444,9 +441,7 @@ outlit features archive \
 Creating a Feature atomically creates its internal weekly event-count and active-days metrics.
 Those metrics are implementation details rather than separate CLI resources.
 
-Archive is intentionally limited in the MVP. Core rejects stale revisions and prevents archiving
-the final active feature. Historical usage remains retained, and archive is the only self-service
-lifecycle action in this release.
+Outlit rejects stale revisions and prevents archiving the final active Feature. Historical usage remains available. Archive is the available self-service lifecycle action.
 
 ## Attention
 
@@ -459,9 +454,9 @@ outlit attention get <id> [flags]
 ```
 
 `attention list` defaults to open items. It accepts optional `--customer-id`, `--limit`
-(1–100; Core default 25), and an opaque `--cursor` returned with the same filters. Use
+(1–100; server default 25), and an opaque `--cursor` returned with the same filters. Use
 `--status resolved` for resolved items. Each returned item includes its current priority;
-priority filtering is not part of V1.
+the command does not filter by priority.
 
 ```bash
 outlit attention list --status resolved --customer-id 550e8400-e29b-41d4-a716-446655440000 --json
@@ -470,7 +465,7 @@ outlit attention get 550e8400-e29b-41d4-a716-446655440000 --json
 
 List rows contain bounded customer identity, current priority, evidence count, lifecycle times,
 and account importance. Detail adds the current assessment, timeline, evidence summaries, and
-latest visible update. `accountImportance.arrCents` is calculated by Core from stored monthly
+latest visible update. `accountImportance.arrCents` is calculated by Outlit from stored monthly
 revenue; clients must not multiply it again. `arrShareWithinCurrency` and
 `arrPercentileWithinCurrency` compare only customers in the same currency; neither implies FX
 conversion or an all-currency organization total.
@@ -480,7 +475,7 @@ action IDs, action lifecycle or execution state, email drafts, recipients, evide
 URLs, internal responsibility-agent configuration, or billing-recovery details. The commands are
 read-only: there is no resolve, reopen, send, or review operation.
 
-### JSON Response
+### JSON response
 
 ```json
 {
@@ -523,7 +518,7 @@ read-only: there is no resolve, reopen, send, or review operation.
 }
 ```
 
-## Customer Ownership and Access
+## Customer ownership and access
 
 Assign a primary owner or manage a workspace member's explicit Viewer or Editor access.
 These write commands require exact IDs and never resolve customer names, domains, or user
@@ -532,10 +527,10 @@ emails on your behalf.
 For API keys, workspace-member discovery and customer mutations are independent capabilities.
 `outlit ws-users list` requires `workspace_members:read`; setting an owner, granting or changing
 access, and revoking access require `customer_access:manage`. The complete discover-then-mutate
-flow needs both grants, while automation that already knows exact IDs may use
+flow needs both grants, while scripts and agents that already know exact IDs may use
 `customer_access:manage` alone. API keys are independent workspace principals and do not inherit
-their creator's human permissions or customer access. Read only includes discovery but not
-mutation, Full workspace access includes both grants, and Custom includes only the grants you
+their creator's human permissions or customer access. **Read only** includes discovery but not
+mutation, **Full workspace access** includes both grants, and **Custom** includes only the grants you
 select; there is no separate customer-collaboration preset.
 
 First discover the customer UUID. Use JSON output because the interactive table is optimized
@@ -558,7 +553,7 @@ you intentionally want to restrict discovery to current owners.
 Copy the exact workspace-user `items[].id` as `--target-user-id`. Review multiple matches before
 writing; the ownership and access commands intentionally do not perform fuzzy name matching.
 
-### Set Owner
+### Set owner
 
 ```bash
 outlit customers owner set \
@@ -570,7 +565,7 @@ outlit customers owner set \
 The target must be an active workspace member. When ownership changes, the former owner keeps
 Editor access.
 
-### Grant or Change Access
+### Grant or change access
 
 ```bash
 outlit customers grant \
@@ -583,7 +578,7 @@ outlit customers grant \
 Run the same `grant` command again with the other role to change an existing collaborator
 between Viewer and Editor.
 
-### Revoke Access
+### Revoke access
 
 ```bash
 outlit customers revoke \
@@ -594,10 +589,10 @@ outlit customers revoke \
 
 `--role` accepts only `VIEWER` or `EDITOR`; `OWNER` is represented by the separate primary-owner
 assignment. Malformed customer IDs, missing or oversized target-user IDs, and invalid roles fail
-locally without sending a request. Permission, conflict, and other gateway failures retain Core's
+locally without sending a request. Permission, conflict, and other gateway failures retain Outlit's
 structured `code`, `message`, `retryable`, and `requestId` fields in JSON output.
 
-## Customers Timeline
+## Customers timeline
 
 View the activity timeline for a customer, filtered by channel and event type.
 
@@ -623,15 +618,11 @@ outlit customers timeline <customer> [flags]
 | `--limit` | number | `20` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor |
 
-<Note>
-  When `--start-date` or `--end-date` is provided, `--timeframe` is ignored.
-</Note>
+When `--start-date` or `--end-date` is provided, `--timeframe` is ignored.
 
-<Note>
-  The CLI also accepts and normalizes these legacy aliases: `SDK` → `PRODUCT`, `EMAIL` →
-  `COMMUNICATION`, `SLACK` → `COMMUNICATION`, `CALL` → `MEETING`, `CALENDAR` → `MEETING`, and
-  `INTERNAL` → `SYSTEM`.
-</Note>
+The CLI also accepts and normalizes these legacy aliases: `SDK` → `PRODUCT`, `EMAIL` →
+`COMMUNICATION`, `SLACK` → `COMMUNICATION`, `CALL` → `MEETING`, `CALENDAR` → `MEETING`, and
+`INTERNAL` → `SYSTEM`.
 
 ### Examples
 
@@ -649,7 +640,7 @@ outlit customers timeline acme.com --start-date 2025-01-01T00:00:00Z --end-date 
 outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50
 ```
 
-### JSON Response
+### JSON response
 
 ```json
 {
@@ -679,7 +670,9 @@ outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50
 }
 ```
 
-## Users List
+Older CLI and tool versions may omit `pagination.effectiveLimit`, per-event `unreadable`/`unreadableReason`, and the `product` weekly usage aggregate (`channels:"PRODUCT"`). Check for their presence before using them.
+
+## Users list
 
 List and filter users across your customer base.
 
@@ -718,7 +711,7 @@ outlit users list --trait "role=admin,onboarded=true"
 outlit users list --search "alice" --order-by last_activity_at
 ```
 
-### JSON Response
+### JSON response
 
 ```json
 {
@@ -749,20 +742,20 @@ outlit users list --search "alice" --order-by last_activity_at
 
 ## Facts
 
-Retrieve AI-generated facts, signals, and insights for a customer.
+Retrieve AI-generated facts and insights for a customer.
 
 ```text
 outlit facts list <customer> [flags]
 outlit facts get --fact-id <id> [flags]
 ```
 
-### `facts list` Arguments
+### `facts list` arguments
 
 | Argument | Required | Description |
 |----------|----------|-------------|
 | `customer` | Yes | Customer domain or UUID |
 
-### `facts list` Flags
+### `facts list` flags
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
@@ -775,7 +768,7 @@ outlit facts get --fact-id <id> [flags]
 | `--limit` | number | `20` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor |
 
-### `facts get` Flags
+### `facts get` flags
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
@@ -801,7 +794,7 @@ outlit facts list acme.com --json | jq '.facts[] | select(.severity == "HIGH")'
 outlit facts get --fact-id fact_123 --include evidence
 ```
 
-### JSON Response
+### JSON response
 
 ```json
 {
@@ -858,9 +851,7 @@ outlit facts get --fact-id fact_123 --include evidence
 }
 ```
 
-<Note>
-  `facts get` returns the same canonical fact shape as `facts list`. Passing `--include evidence` requests a best-effort evidence expansion; unsupported include values are ignored.
-</Note>
+`facts get` returns the same canonical fact shape as `facts list`. Passing `--include evidence` requests a best-effort evidence expansion; unsupported include values are ignored.
 
 ## Search
 
@@ -896,7 +887,7 @@ outlit search "pricing objections"
 outlit search "budget concerns" --customer acme.com
 
 # Time-bounded
-outlit search "expansion signals" --after 2025-01-01T00:00:00Z --before 2025-03-31T23:59:59Z
+outlit search "expansion opportunities" --after 2025-01-01T00:00:00Z --before 2025-03-31T23:59:59Z
 
 # Filter by source type
 outlit search "renewal opportunities" --source-types CALL,OPPORTUNITY
@@ -905,7 +896,7 @@ outlit search "renewal opportunities" --source-types CALL,OPPORTUNITY
 outlit search "churn risk" --top-k 50 --json
 ```
 
-### JSON Response
+### JSON response
 
 ```json
 {
@@ -934,15 +925,13 @@ outlit search "churn risk" --top-k 50 --json
 }
 ```
 
-<Note>
-  Search returns both matching `source` and `fact` artifacts when both are relevant. Multiple chunk hits from the same source are grouped into one source result.
-</Note>
+Search returns both matching `source` and `fact` artifacts when both are relevant. Multiple chunk hits from the same source are grouped into one source result.
 
 ## Sources
 
 List concrete source records deterministically or fetch one exact source by generic `sourceType` and `sourceId`.
 
-### List Sources
+### List sources
 
 List enumerated calls, emails, calendar events, support tickets, Slack conversations, or opportunities. Use this command when you need deterministic source records; use [`outlit search`](#search) for semantic ranking. Results are paginated.
 
@@ -975,7 +964,7 @@ outlit sources list --source-type SLACK --customer acme.com --limit 25 --json
 outlit sources list --after 2026-01-01T00:00:00Z --limit 25
 ```
 
-### Get a Source
+### Get a source
 
 ```text
 outlit sources get --source-type <type> --source-id <id> [--limit <count>] [--cursor <cursor>]
@@ -1018,7 +1007,7 @@ outlit sources get --source-type PERSON_PROFILE --source-id "$SOURCE_ID" --json
 
 ## Destinations
 
-Inspect and manage configured automation destinations with masked configuration only.
+Inspect and manage configured delivery destinations (for example Slack channels) with masked configuration only.
 
 ```text
 outlit destinations list [flags]
@@ -1046,7 +1035,7 @@ Destination creation and update are Slack-channel backed. Use `--default` on `de
 
 ## Settings
 
-Inspect and configure the model-safe workspace timezone. Delivery and report configuration remains in the authored web UI.
+Read and update the workspace timezone. Configure delivery and reports in the Outlit app.
 
 ```text
 outlit settings get [flags]
@@ -1098,7 +1087,7 @@ outlit sql --query-file ./queries/monthly-activity.sql
 outlit sql "SELECT domain, mrr_cents FROM customers ORDER BY mrr_cents DESC LIMIT 10" | jq
 ```
 
-### JSON Response
+### JSON response
 
 ```json
 {
@@ -1115,7 +1104,7 @@ outlit sql "SELECT domain, mrr_cents FROM customers ORDER BY mrr_cents DESC LIMI
 }
 ```
 
-### Available Views
+### Available views
 
 Use `outlit schema` to discover all views and their columns. Common views:
 
@@ -1156,7 +1145,7 @@ outlit schema customers --json
 The public `customers` analytics view exposes company activation as
 `activated_at Nullable(DateTime64(3))`. Contact journey stages remain separate on users.
 
-### JSON Response
+### JSON response
 
 ```json
 {

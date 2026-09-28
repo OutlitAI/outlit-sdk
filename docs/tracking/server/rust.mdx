@@ -1,20 +1,15 @@
 ---
-title: "Rust SDK"
-description: "Native tracking for desktop apps, CLI tools, and embedded systems"
+title: "Outlit Rust SDK"
+description: "Track product events from Rust desktop apps, CLI tools, and backend services."
 ---
 
-## Overview
-
-The Rust SDK is designed for native applications where you need tracking outside of a browser context:
+The Outlit Rust SDK records product activity in native applications and backend services:
 
 - **Desktop apps** - Tauri, native GUI applications
 - **CLI tools** - Command-line applications
-- **Embedded systems** - IoT devices, kiosks
 - **Backend services** - Rust-based APIs
 
-<Info>
-  For anonymous tracking before user sign-in, use `fingerprint`. See [Device Tracking](/concepts/website-visitors#device-tracking-non-browser) for details.
-</Info>
+For anonymous tracking before user sign-in, use `fingerprint`. See [Device Tracking](/concepts/website-visitors#device-tracking-non-browser) for details. To capture how someone first arrived and browsed your website, use the [Outlit Browser SDK](/tracking/browser/script) and identify that browser visitor when their email becomes available. An email-only server identify cannot link an otherwise anonymous browser visit.
 
 ## Installation
 
@@ -22,11 +17,9 @@ The Rust SDK is designed for native applications where you need tracking outside
 cargo add outlit
 ```
 
-<Info>
-  The SDK is async and requires a tokio runtime. Most async frameworks (Tauri, Axum, Actix) already include tokio.
-</Info>
+The SDK is async and requires a tokio runtime. Most async frameworks (Tauri, Axum, Actix) already include tokio.
 
-## Quick Start
+## Quick start
 
 ```rust
 use outlit::{Outlit, email, fingerprint};
@@ -82,7 +75,7 @@ let client = Outlit::builder("pk_xxx")
   HTTP request timeout.
 </ParamField>
 
-## API Reference
+## API reference
 
 ### `client.track(event_name, identity)`
 
@@ -110,7 +103,7 @@ client.track_by_fingerprint("app_opened", fingerprint("device_abc123"))
     .await?;
 ```
 
-#### Builder Methods
+#### Builder methods
 
 <ParamField path=".email()" type="&str">
   Add email to the event (if not primary identity).
@@ -160,7 +153,7 @@ client.identify(email("user@example.com"))
 
 ### Lifecycle and billing
 
-Track the ordinary event selected as your activation event after the milestone succeeds:
+Track your value milestone as an ordinary event once it succeeds:
 
 ```rust
 client.track("onboarding_completed", email("user@example.com"))
@@ -169,7 +162,7 @@ client.track("onboarding_completed", email("user@example.com"))
     .await?;
 ```
 
-Configure this exact event as your activation event. For each eligible contact and resolved company independently, Outlit Core sets `activatedAt` on the first match only when that subject's timestamp is null. Billing status comes from verified integrations such as Stripe. See [Customer Journey](/concepts/customer-journey).
+Choose this event as your activation event in Outlit. The first matching event records activation once for each eligible resolved person and company, independently. Billing status comes from verified integrations such as Stripe. See [Customer journey](/concepts/customer-journey).
 
 ### `client.flush()`
 
@@ -181,7 +174,7 @@ client.flush().await?;
 
 ### `client.shutdown()`
 
-Gracefully shutdown: flushes remaining events and stops the timer.
+Shut down gracefully: flushes remaining events and stops the timer.
 
 ```rust
 client.shutdown().await?;
@@ -191,13 +184,11 @@ client.shutdown().await?;
   Always call `shutdown()` or `flush()` before your application exits to ensure all events are sent.
 </Warning>
 
-## Tauri Integration
+## Tauri integration
 
 For Tauri desktop apps, initialize the client in your Rust backend.
 
-<Note>
-  This example uses the `uuid` crate for generating device IDs. Add it with `cargo add uuid --features v4`.
-</Note>
+This example uses the `uuid` crate for generating device IDs. Add it with `cargo add uuid --features v4`.
 
 ```rust
 use outlit::{Outlit, email, fingerprint};
@@ -271,26 +262,29 @@ fn main() {
 }
 ```
 
-## Error Handling
+## Error handling
 
 The SDK returns `Result<(), outlit::Error>` for operations that can fail:
 
 ```rust
 match client.track("event", email("user@test.com")).send().await {
     Ok(()) => println!("Event tracked"),
-    Err(outlit::Error::Network(e)) => eprintln!("Network error: {}", e),
+    Err(outlit::Error::Http(e)) => eprintln!("HTTP request failed: {}", e),
+    Err(outlit::Error::Api { status, message }) => {
+        eprintln!("API error (status {}): {}", status, message)
+    }
     Err(outlit::Error::Shutdown) => eprintln!("Client was shutdown"),
     Err(e) => eprintln!("Error: {}", e),
 }
 ```
 
-## Next Steps
+## Next steps
 
 <CardGroup cols={2}>
-  <Card title="Device Tracking" icon="mobile" href="/concepts/website-visitors#device-tracking-non-browser">
+  <Card title="Device tracking" icon="mobile" href="/concepts/website-visitors#device-tracking-non-browser">
     Anonymous tracking before user identification
   </Card>
-  <Card title="Identity Resolution" icon="fingerprint" href="/concepts/identity-resolution">
-    How profiles are merged across identifiers
+  <Card title="Identity resolution" icon="fingerprint" href="/concepts/identity-resolution">
+    How activity links across identifiers
   </Card>
 </CardGroup>

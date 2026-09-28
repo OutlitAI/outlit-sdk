@@ -1,0 +1,155 @@
+---
+title: "Customer workflows"
+description: "Evidence-first workflows for churn, renewals, expansion, and customer collaboration using the Outlit CLI or MCP tools."
+---
+
+These recipes are written for agents and automation scripts. The CLI, MCP, and `POST /api/tools/call` expose **corresponding capabilities** — but not identical names or shapes. `outlit sql` maps to `outlit_query`, `customers owner set` maps to `outlit_assign_customer_owner`, and kebab-case flags map to camelCase schema fields (`--billing-status` → `billingStatus`). MCP/API readers should follow tool names and input schemas, not CLI spellings.
+
+**Evidence rules that apply to every recipe:** cite what you retrieved, check `contentPage.completeness` before treating source content as complete, and treat missing fields, empty results, and absent permalinks as *unavailable evidence* — never as negative evidence.
+
+## Recipe: weekly churn-risk review
+
+Find paying customers that went quiet, then rank by revenue exposure.
+
+```bash
+# 1. Paying customers with no activity in 30 days, highest MRR first
+outlit customers list --billing-status PAYING --no-activity-in 30d --order-by mrr_cents --json
+
+# 2. Full profile for each account worth a look
+outlit customers get acme.com --include users,revenue,recentTimeline --json
+
+# 3. What changed? Recent activity across all channels
+outlit customers timeline acme.com --timeframe 90d --json
+
+# 4. Active facts — current findings to check for risk
+outlit facts list acme.com --status ACTIVE --json
+```
+
+**Then:** open the sources behind facts (`outlit sources get --source-type CALL --source-id <id>`) and check `outlit attention list --customer-id <uuid>` for review items Outlit already prepared.
+
+## Recipe: renewal preparation
+
+Assemble the account's current state and evidence before a renewal conversation.
+
+```bash
+# Bounded relationship summary: categorized statements with source labels
+outlit customers relationship acme.com --json
+
+# Billing position
+outlit customers get acme.com --include revenue --json
+
+# Renewal-relevant evidence
+outlit search "renewal" --customer acme.com --json
+outlit facts list acme.com --status ACTIVE --json
+
+# Who owns the account, and who else can see it
+outlit customers get acme.com --json
+```
+
+`customers relationship` returns categorized current statements — not raw fact IDs or source quotes. Use `facts list` / `sources get` when you need the underlying records.
+
+## Recipe: expansion candidates
+
+Accounts that are healthy enough to expand.
+
+```bash
+# Active paying customers, sorted by MRR
+outlit customers list --billing-status PAYING --has-activity-in 7d --order-by mrr_cents --json
+
+# Feature adoption for one account (1-53 weeks, optional weekly breakdown)
+outlit customers features acme.com --weeks 12 --weekly --json
+
+# Seat-by-seat engagement inside the account
+outlit users list --customer-id '<uuid>' --journey-stage ENGAGED --json
+```
+
+An `unavailable` state means a source did not report; it does not mean usage is zero.
+
+## Recipe: investigate attention items
+
+Read the review queue Outlit's agents produced.
+
+```bash
+outlit attention list --json
+outlit attention list --status resolved --customer-id '<uuid>' --json
+outlit attention get '<attention-item-uuid>' --json
+```
+
+Items can include a `preparedActionUrl` for review in the app. The public surface is **read-only** — no resolve, send, or act tool exists; review happens in the product.
+
+## Recipe: hand a customer to a teammate
+
+Exact-ID writes; discover the IDs first.
+
+```bash
+# 1. Find the member's user ID (requires workspace_members:read)
+outlit ws-users list --search alex --json
+
+# 2. Assign ownership (requires customer_access:manage)
+outlit customers owner set '<customer-uuid>' --target-user-id user_123 --json
+
+# Or share without transferring ownership
+outlit customers grant '<customer-uuid>' --target-user-id user_123 --role VIEWER --json
+```
+
+Write commands accept **exact identifiers only**: a customer UUID and a `user_*` workspace-member ID. The CLI does not fuzzy-match names, emails, or domains for mutations. Discovering members requires `workspace_members:read`; changing customer access requires `customer_access:manage`.
+
+## Recipe: merge a duplicate customer
+
+Two-phase and auditable — preview first, then execute with the returned token.
+
+```bash
+# 1. Preview the merge (no mutation yet)
+outlit customers merge '<survivor-uuid>' '<duplicate-uuid>' --json
+
+# 2. Execute — requires BOTH the preview token and a stable request ID
+outlit customers merge '<survivor-uuid>' '<duplicate-uuid>' --execute --preview-token '<token>' --request-id merge-acme-001 --json
+
+# 3. Check progress (status reads never re-execute)
+outlit customers merge-status '<operationId>' --json
+```
+
+Reuse the same `--request-id` for an identical retry — it makes the execution idempotent. A different request ID on the same pair is a new execution attempt.
+
+## Recipe: SQL analytics
+
+Four read-only views: `activity`, `customers`, `users`, `revenue`. Check the schema before querying:
+
+```bash
+outlit schema customers --json
+outlit sql "SELECT billing_status, sum(mrr_cents)/100 AS mrr FROM customers GROUP BY 1" --json
+outlit sql "SELECT event_name, count(*) FROM activity GROUP BY 1 ORDER BY 2 DESC LIMIT 10" --json
+```
+
+SELECT only. `properties`/`traits` columns are JSON strings — inspect with `outlit schema <view>` before filtering nested values.
+
+## Recipe: check source coverage before trusting empty answers
+
+`integrations status` reports **configuration readiness** (`not_connected`, `awaiting_auth`, `setup_required`, `ready`, `requires_intervention`) — `ready` proves the connection is configured, not that data has synced or is fresh. Use it to rule out a broken setup, then enumerate actual records:
+
+```bash
+outlit integrations status stripe --json   # setup/config readiness only
+outlit sources list --customer acme.com --json   # what records actually exist
+```
+
+If you can't confirm a source ever synced, leave the absence inconclusive — report the coverage gap instead of a customer-health conclusion. Sync/backfill freshness is visible in the app's integration settings, not in this command.
+
+## Customer identity touchpoints
+
+| Task | Command | Identity argument |
+|------|---------|-------------------|
+| Inspect resolved identifiers | `outlit customers identity <uuid>` | Exact UUID only |
+| Review merge suggestions | `outlit identity suggestions list` | Optional `--customer-id`, `--status`, `--confidence` filters |
+| Reject a suggestion | `outlit identity suggestions reject <suggestion-id>` | Exact suggestion ID (positional) |
+| Merge duplicate customers | `outlit customers merge <survivorId> <duplicateId>` | Exact UUIDs, two-phase (see recipe above) |
+
+Reads (`customers get`, `relationship`, `timeline`, `facts`, `credits`, `features`) accept a domain, UUID, or exact name. **Writes accept exact IDs.** When in doubt, resolve the UUID with `customers get` first, then feed it to the write command.
+
+<CardGroup cols={2}>
+  <Card title="Troubleshooting" icon="wrench" href="/ai-integrations/troubleshooting">
+    Auth, permission, identity, and empty-result failure modes
+  </Card>
+  <Card title="CLI reference" icon="terminal" href="/cli/commands">
+    Full flag and schema detail for every command
+  </Card>
+</CardGroup>

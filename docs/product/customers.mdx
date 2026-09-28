@@ -1,0 +1,76 @@
+---
+title: "Customers"
+description: "How Outlit builds customer profiles — the list, the profile tabs, and where the data comes from."
+---
+
+**Customers** is the table of accounts Outlit has resolved from your connected sources. Open any row for the full profile: what the account is worth, what's happening, who the people are, and which sources back what's shown.
+
+## The customer list
+
+Columns: **Customer** (name and domain), **ARR**, **Attention** (open items at that account), **Renewal date**, **Owner**, **Last activity**, **Billing Status**. Filters and column choices persist in the URL, so a filtered view is shareable by link.
+
+Billing status comes from your billing source (Stripe): None, Trialing, Paying, Past due, or Churned. "Last activity" reflects the most recent interaction Outlit has seen across connected sources.
+
+## The customer profile
+
+Three tabs:
+
+<Tabs>
+  <Tab title="Overview">
+    The account at a glance:
+
+    - **Stakes strip** — owner, MRR, how long they've been a customer, and the next renewal date.
+    - **Active attention** — any open item at this account, so the profile keeps account context next to urgent work.
+    - **Relationship summary** — Outlit's current read of the account, assembled from evidence across sources.
+    - **Active watches** — churn watches monitoring this account, with the reason for each.
+    - **Recent activity** — the latest signals and interactions across sources.
+    - **Billing and feature usage** — subscription state, credit/feature balances where a billing source like Stripe or Autumn provides them.
+  </Tab>
+  <Tab title="Coverage">
+    Which connected systems this customer appears in — CRM record, billing account, product analytics, conversation sources — and any **identity issue** Outlit has flagged (for example, sources that don't cleanly resolve to one account). Coverage is where you verify that an account is actually wired to the data monitoring needs.
+  </Tab>
+  <Tab title="People">
+    The contact roster at this account: names, emails, roles, and last activity. Admins and members with customer-management permission can edit a contact's relationship role, job title, and department — useful for marking champions, economic buyers, and detractors so assessments and renewal briefs weight them correctly.
+  </Tab>
+</Tabs>
+
+## How customers are formed
+
+Outlit groups people into accounts primarily by **email domain**: everyone at `@acme.example` resolves into one Acme customer record. Personal email providers (gmail.com, outlook.com, and similar) are handled differently — each address becomes its own customer rather than merging strangers into a shared "gmail.com" account. Billing IDs, CRM account IDs, and workspace identifiers also link activity to accounts.
+
+Most merges happen automatically as evidence accumulates. Suggested merges can be reviewed in the app where enabled; the CLI exposes `outlit customers merge` for deliberate consolidation. See [Identity resolution](/concepts/identity-resolution) for the matching rules and edge cases.
+
+## Evidence and provenance on profiles
+
+Facts on a profile aren't free-floating claims. They carry provenance — the source type, when the signal was observed, and the underlying quote or record where available — so "customer asked about annual pricing" points back to the email it came from where a link was captured. Where source material can't be read back (a deleted message, a restricted record), entries are marked rather than silently dropped.
+
+## What profiles feed
+
+- **Churn monitoring** uses billing status plus activity and conversation signals to decide which accounts are in scope and when a case is warranted.
+- **Renewals** use CRM deals and billing dates to build renewal cycles and briefs.
+- **Attention items** link back here — the profile is the permanent record an item refers to.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="A known customer is missing">
+    Check whether their only presence is a personal email — personal addresses become individual customers, not part of a domain account. Otherwise the source that knows them (CRM, billing, product analytics) may not have synced them yet; check the customer's Coverage tab and the integration's sync status.
+  </Accordion>
+  <Accordion title="Duplicate accounts for one company">
+    Usually a second domain or an unmatched billing record. Merge suggestions surface in the app where the identity review feature is enabled, and deliberate merges are available through the CLI. Identity edge cases are covered in [Identity resolution](/concepts/identity-resolution).
+  </Accordion>
+  <Accordion title="Billing status looks wrong">
+    Billing status mirrors your billing source. If it lags, check the Stripe connection's sync health on **Integrations**.
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Attention" icon="bolt" href="/product/attention">
+    How account issues surface for review
+  </Card>
+  <Card title="Identity resolution" icon="fingerprint" href="/concepts/identity-resolution">
+    How people and accounts get matched
+  </Card>
+</CardGroup>

@@ -1,6 +1,8 @@
 # Outlit SDK
 
-Outlit is the real-time understanding of every customer, the infrastructure agents use to automate customer operations.
+Outlit helps customer-success teams protect and grow long-tail revenue. It connects customer data, monitors for churn risk and expansion opportunities, and brings attention items with supporting evidence to your team.
+
+Start with the [product guides](https://docs.outlit.ai/getting-started/overview) for guided setup and your first attention item. For programmatic access, use the [developer and agent guide](https://docs.outlit.ai/ai-integrations/overview).
 
 This repository contains the public SDK and developer integration packages for Outlit: browser, server, CLI, tool contract, and Pi packages for sending customer signals to Outlit and querying customer context from agent workflows. It is not the hosted remote MCP server implementation; use the canonical Outlit-owned discovery endpoints below for MCP, API, and agent metadata.
 
@@ -21,7 +23,7 @@ Use these canonical resources for citations, schema-driven clients, and agent se
 
 | Surface | Canonical URL | Purpose |
 |---------|---------------|---------|
-| Developer docs | <https://docs.outlit.ai> | SDK, CLI, API, MCP, and customer context documentation |
+| Documentation | <https://docs.outlit.ai> | Product guides plus SDK, CLI, API, MCP, and customer context documentation |
 | Docs index for agents | <https://docs.outlit.ai/llms.txt> | Machine-readable map of documentation pages |
 | Product resource index | <https://www.outlit.ai/llms.txt> | Agent-facing map of SDK packages, docs, API contracts, MCP, CLI, Pi, and skills |
 | OpenAPI spec | <https://docs.outlit.ai/openapi.json> | Canonical OpenAPI contract for public API and ingest surfaces |

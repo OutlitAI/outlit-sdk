@@ -198,13 +198,13 @@ describe("public documentation examples", () => {
   test("keeps tool-gateway request examples aligned with generated input schemas", () => {
     const file = "docs/api-reference/tools.mdx"
     const cases = [
-      ["Get Customer Details", "outlit_get_customer"],
-      ["Search Customer Context", "outlit_search_customer_context"],
-      ["List Active Contact Transition Facts", "outlit_list_facts"],
-      ["Open One Source Record", "outlit_get_source"],
-      ["Read Exact Source Content", "outlit_get_source"],
-      ["Follow Person Profile Evidence", "outlit_get_source"],
-      ["Read Customer Features", "outlit_get_customer_features"],
+      ["Get customer details", "outlit_get_customer"],
+      ["Search customer context", "outlit_search_customer_context"],
+      ["List active contact transition facts", "outlit_list_facts"],
+      ["Open one source record", "outlit_get_source"],
+      ["Read exact source content", "outlit_get_source"],
+      ["Follow person profile evidence", "outlit_get_source"],
+      ["Read customer features", "outlit_get_customer_features"],
     ] as const
     const failures: string[] = []
 
@@ -229,7 +229,7 @@ describe("public documentation examples", () => {
 
   test("validates the documented exact-source content response against its generated schema", () => {
     const file = "docs/api-reference/tools.mdx"
-    const response = findFencedBlockInSection(file, "Read Exact Source Content", 3, "json", 1)
+    const response = findFencedBlockInSection(file, "Read exact source content", 3, "json", 1)
 
     expect(response).toBeDefined()
     const output = JSON.parse(response?.code ?? "null")
@@ -242,12 +242,12 @@ describe("public documentation examples", () => {
   test("keeps CLI JSON response examples aligned with generated output schemas", () => {
     const file = "docs/cli/commands.mdx"
     const cases = [
-      ["Customers List", "outlit_list_customers"],
-      ["Customers Get", "outlit_get_customer"],
-      ["Customers Relationship", "outlit_get_customer_relationship"],
+      ["Customers list", "outlit_list_customers"],
+      ["Customers get", "outlit_get_customer"],
+      ["Customers relationship", "outlit_get_customer_relationship"],
       ["Attention", "outlit_list_attention_items"],
-      ["Customers Timeline", "outlit_get_timeline"],
-      ["Users List", "outlit_list_users"],
+      ["Customers timeline", "outlit_get_timeline"],
+      ["Users list", "outlit_list_users"],
       ["Facts", "outlit_list_facts"],
       ["Search", "outlit_search_customer_context"],
       ["SQL", "outlit_query"],
