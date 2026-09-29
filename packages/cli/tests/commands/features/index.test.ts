@@ -4,7 +4,7 @@ async function runHelp(...args: string[]) {
   const proc = Bun.spawn(
     [process.execPath, `${import.meta.dir}/../../../src/cli.ts`, ...args, "--help"],
     {
-      env: { ...process.env, OUTLIT_NO_UPDATE_NOTIFIER: "1" },
+      env: { ...process.env, OUTLIT_NO_UPDATE_NOTIFIER: "1", NO_COLOR: "1" },
       stdout: "pipe",
       stderr: "pipe",
     },
