@@ -8,6 +8,12 @@ import {
 import type { ActivationPreviewInput, ActivationUpdateInput } from "./activation"
 import { DEFAULT_API_URL, OUTLIT_DASHBOARD_URL, resolveApiKey } from "./config"
 
+export type SubmitFeedbackInput = {
+  body: string
+  area?: string
+  context?: Record<string, unknown>
+}
+
 export type OutlitToolParams<TToolName extends CliToolName> =
   TToolName extends "outlit_get_customer_activation"
     ? Record<string, never>
@@ -15,7 +21,9 @@ export type OutlitToolParams<TToolName extends CliToolName> =
       ? ActivationPreviewInput
       : TToolName extends "outlit_update_customer_activation"
         ? ActivationUpdateInput
-        : Record<string, unknown>
+        : TToolName extends "outlit_submit_feedback"
+          ? SubmitFeedbackInput
+          : Record<string, unknown>
 
 export interface OutlitClient {
   key: string

@@ -1168,3 +1168,58 @@ The public `customers` analytics view exposes company activation as
   ]
 }
 ```
+
+## Feedback
+
+Submit product feedback to the Outlit team: bug reports, feature ideas, or friction you hit
+while working with Outlit. Feedback is product intake — it is not a support ticket and does
+not guarantee a reply.
+
+```text
+outlit feedback --body <text> [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--body` | string | — | Feedback text (required unless `--body-file`); trimmed, non-empty, at most 20,000 characters |
+| `--body-file` | string | — | Read the feedback body from a UTF-8 text file |
+| `--area` | string | — | Optional product area label such as `cli`, `mcp`, or `integrations`; trimmed, non-empty, at most 100 characters |
+| `--context` | string | — | Optional JSON object with diagnostic context; at most 16 KiB serialized |
+| `--context-file` | string | — | Read the JSON context object from a file instead of `--context` |
+
+`--body` and `--body-file` are mutually exclusive, as are `--context` and `--context-file`.
+Use `context` for diagnostics such as the surface, command, or client version — never for
+secrets or unnecessary customer data.
+
+Submitting feedback requires an authenticated API key and is rate limited separately from
+customer-intelligence reads. It does not consume paid usage quota.
+
+### Examples
+
+```bash
+# Report a bug
+outlit feedback --body 'The customers merge preview did not list the losing record traits' --area customers
+
+# Suggest a feature
+outlit feedback --body 'Add a way to export attention items' --area attention --json
+
+# Include diagnostic context
+outlit feedback \
+  --body 'The SQL tool rejected a valid LIMIT clause' \
+  --context '{"surface":"cli","command":"sql"}' \
+  --json
+
+# Long-form feedback from files
+outlit feedback --body-file report.md --context-file diagnostics.json
+```
+
+### JSON response
+
+```json
+{
+  "id": "10000000-0000-4000-8000-000000000004",
+  "createdAt": "2026-09-28T12:00:00.000Z"
+}
+```

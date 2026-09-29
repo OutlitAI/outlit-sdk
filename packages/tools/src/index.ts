@@ -88,6 +88,7 @@ export type {
   FeatureDefinition,
   FeatureListResult,
   FeatureRef,
+  FeedbackSubmitResult,
   JsonSchemaValue,
   PublicToolResult,
 } from "./results.js"

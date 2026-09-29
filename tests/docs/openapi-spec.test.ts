@@ -62,6 +62,18 @@ function collectRefs(value: unknown): string[] {
   ]
 }
 
+function resolveJsonPointer(document: unknown, ref: string): unknown {
+  return ref
+    .slice(1)
+    .split("/")
+    .filter((segment) => segment.length > 0)
+    .map((segment) => segment.replaceAll("~1", "/").replaceAll("~0", "~"))
+    .reduce<unknown>((current, segment) => {
+      if (typeof current !== "object" || current === null) return undefined
+      return (current as Record<string, unknown>)[segment]
+    }, document)
+}
+
 describe("Core-generated OpenAPI spec", () => {
   test("maps each public operation to one canonical API page without generated duplicates", () => {
     expect(existsSync("docs/openapi.json")).toBe(true)
@@ -86,6 +98,7 @@ describe("Core-generated OpenAPI spec", () => {
     const canonicalOperations = [
       { page: "api-reference/validation", method: "POST", path: "/api/validate-api-key" },
       { page: "api-reference/tools", method: "POST", path: "/api/tools/call" },
+      { page: "api-reference/feedback", method: "POST", path: "/api/feedback" },
       { page: "api-reference/ingest", method: "POST", path: "/api/i/v1/{publicKey}/events" },
     ]
     expect(pages).toEqual([
@@ -93,6 +106,7 @@ describe("Core-generated OpenAPI spec", () => {
       "api-reference/validation",
       "api-reference/tools",
       "api-reference/integrations",
+      "api-reference/feedback",
       "api-reference/ingest",
     ])
     for (const { page, method, path } of canonicalOperations) {
@@ -106,6 +120,7 @@ describe("Core-generated OpenAPI spec", () => {
       ["/api-reference/call-an-outlit-capability", "/api-reference/tools"],
       ["/api-reference/validate-an-outlit-api-key", "/api-reference/validation"],
       ["/api-reference/ingest-customer-activity-events", "/api-reference/ingest"],
+      ["/api-reference/submit-product-feedback", "/api-reference/feedback"],
     ]) {
       expect(docsConfig.redirects).toContainEqual({ source, destination })
     }
@@ -204,8 +219,12 @@ describe("Core-generated OpenAPI spec", () => {
         target: "$.paths['/api/i/v1/{publicKey}/events'].post",
         update: { summary: "Ingest events" },
       },
+      {
+        target: "$.paths['/api/feedback'].post",
+        update: { summary: "Submit feedback" },
+      },
     ])
-    expect(overlay.actions).toHaveLength(publicToolNames.length * 2 + 6 + 3)
+    expect(overlay.actions).toHaveLength(publicToolNames.length * 2 + 6 + 4)
   })
 
   test("documents Feature creation without a public Behavior Metric resource", () => {
@@ -274,5 +293,12 @@ describe("Core-generated OpenAPI spec", () => {
     const refs = collectRefs(readSpec())
     expect(refs.length).toBeGreaterThan(0)
     expect(refs.every((ref) => ref.startsWith("#/"))).toBe(true)
+  })
+
+  test("resolves every local JSON pointer reference", () => {
+    const spec = readSpec()
+    const refs = collectRefs(spec)
+    const unresolved = refs.filter((ref) => resolveJsonPointer(spec, ref) === undefined)
+    expect(unresolved).toEqual([])
   })
 })

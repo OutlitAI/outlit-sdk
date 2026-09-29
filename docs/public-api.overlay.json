@@ -25,6 +25,12 @@
       }
     },
     {
+      "target": "$.paths['/api/feedback'].post",
+      "update": {
+        "summary": "Submit feedback"
+      }
+    },
+    {
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_customers')]",
       "update": {
         "title": "List customers"
@@ -301,6 +307,12 @@
       }
     },
     {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_submit_feedback')]",
+      "update": {
+        "title": "Submit feedback"
+      }
+    },
+    {
       "target": "$.components.schemas['ToolOutput_outlit_list_customers']",
       "update": {
         "title": "List customers"
@@ -574,6 +586,12 @@
       "target": "$.components.schemas['ToolOutput_outlit_get_customer_merge_status']",
       "update": {
         "title": "Get customer merge status"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_submit_feedback']",
+      "update": {
+        "title": "Submit feedback"
       }
     },
     {

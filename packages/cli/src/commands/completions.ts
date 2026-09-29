@@ -317,6 +317,18 @@ const COMMANDS: readonly CmdDef[] = [
     ],
   },
   {
+    name: "feedback",
+    desc: "Submit product feedback",
+    flags: [
+      ...COMMON,
+      { name: "--body", desc: "Feedback text (max 20000 chars)" },
+      { name: "--body-file", desc: "Read feedback text from a file" },
+      { name: "--area", desc: "Optional product area label" },
+      { name: "--context", desc: "Optional JSON context object (max 16 KiB)" },
+      { name: "--context-file", desc: "Read JSON context object from a file" },
+    ],
+  },
+  {
     name: "search",
     desc: "Search customer context",
     flags: [

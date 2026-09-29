@@ -120,4 +120,17 @@ For coding agents that run local commands, see [Agent skills](/ai-integrations/s
 | `outlit_archive_feature` | Archive a non-final Feature using its current opaque revision |
 | `outlit_get_customer_features` | Read exact Feature usage for one authorized customer |
 
+### Feedback
+
+| Tool | What it does |
+|---|---|
+| `outlit_submit_feedback` | Submit product feedback — bugs, ideas, or agent friction — to the Outlit team |
+
+`outlit_submit_feedback` takes `body` (required, at most 20,000 characters), optional `area`
+(at most 100 characters), and optional `context` (a JSON object of at most 16 KiB for
+diagnostics — never secrets or unnecessary customer data). It returns `{ id, createdAt }`.
+Submissions are authenticated and rate limited under a dedicated quota that does not consume
+paid plan API-call quota. Feedback is product intake, not a support ticket, and does not
+guarantee a reply.
+
 MCP registers the entire public catalog, including customer ownership/access, Features, and the safe destination, integration setup/status, activation, and workspace-settings capabilities described in [Workspace configuration](/ai-integrations/platform-actions). Feature creation and archive still require the underlying workspace permission and feature availability. See [Agents and AI overview](/ai-integrations/overview#read-vs-write-controls) for the public tool boundaries.

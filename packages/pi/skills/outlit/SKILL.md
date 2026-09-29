@@ -26,6 +26,7 @@ Do not invent customer state when Outlit can answer it. Call out sparse or messy
 - Use `outlit_list_features` to inspect the confirmed workspace taxonomy, historical evidence, eligible sources, and event candidates.
 - Use `outlit_create_feature` only when the user explicitly asks to configure one confirmed product capability from one exact event rule. Outlit creates the supporting usage metrics internally.
 - Use `outlit_archive_feature` only when the user explicitly asks to archive a feature and supplies the current opaque id and revision. The MVP has no restore operation and rejects archiving the final active feature.
+- Use `outlit_submit_feedback` when the user wants to report an Outlit product bug, idea, or friction. Feedback is product intake, not a support ticket or a guaranteed reply. Put diagnostics in `context`, never secrets or unnecessary customer data.
 
 Use customer lookups before SQL. SQL is for aggregates, joins, cohorts, time-series analysis, and custom reporting.
 

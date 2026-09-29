@@ -51,6 +51,7 @@ Most of the catalog is read-only customer intelligence. Writes are bounded and e
 | Features | `features create`, `features archive` | Create maps one product event to a Feature; archive requires the current opaque revision |
 | Workspace config | `activation update`, `settings update` | Narrow, enumerated settings — not arbitrary config |
 | Identity resolution | `customers merge`, `identity merge` | Exact IDs only; merges are auditable and reportable via `merge-status` |
+| Product feedback | `feedback`, `outlit_submit_feedback` | One-way product intake for bugs, ideas, and agent friction; authenticated with a dedicated rate limit, no paid quota, and no support-ticket or reply guarantee |
 | Attention items | — | **Read-only.** `attention list`/`get` expose reviewable items and a `preparedActionUrl`; there is no public resolve/send/act tool |
 
 Outlit manages its monitoring rules and schedules. Public tools do not configure agents or signals, store or reveal credentials, disconnect integrations, or send arbitrary notifications.
