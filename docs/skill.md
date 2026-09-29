@@ -90,6 +90,7 @@ Use customer lookups before SQL. SQL is for aggregates, cohorts, joins, time-ser
 - Request only the fields or include sections needed.
 - Treat write operations as changes to the user's workspace. Assign owners, change access, configure integrations, reject merge suggestions, merge customer records, or mutate destinations, activation, settings, and Features only when the user explicitly asks.
 - Do not treat integration `ready` status as proof that a sync or backfill finished or that customer data is current.
+- When the user wants to share Outlit product feedback, use `outlit_submit_feedback` when available with `body` and optional `area`/`context`, or `outlit feedback --body "..." --json`. Feedback does not open a support ticket.
 
 ## Facts, Search, Sources, and Timeline
 
@@ -116,7 +117,7 @@ When calls or other communications exist but product usage is absent, use `outli
 
 Merging is dangerous and has no supported undo. Only execute when the user authorized it and the records are certainly the same customer. Similar names, related domains, shared participants, a suggested match, or parent/subsidiary relationships are insufficient. The merge command defaults to preview; execution requires explicit permission, the reviewed preview token, and a stable request ID. Any pair involving an `INDIVIDUAL` requires an eligible saved suggestion.
 
-Read [the identity and merge workflow](https://raw.githubusercontent.com/OutlitAI/skills/e111a4e7c94c5e513e7c77a7e17a003c70d3bba9/skills/outlit/references/identity.md) before previewing, rejecting, executing, retrying, or tracking a merge. It includes the five tool contracts, CLI examples, and asynchronous status handling.
+Read [the identity and merge workflow](https://raw.githubusercontent.com/OutlitAI/skills/4d4013f22c7d497dd0f5cbbf9f4ca1257d0355ed/skills/outlit/references/identity.md) before previewing, rejecting, executing, retrying, or tracking a merge. It includes the five tool contracts, CLI examples, and asynchronous status handling.
 
 Outlit-owned Churn and Renewal agents receive only the identity diagnostic for their assigned customer. Outlit-owned agents, including the Slack assistant acting for an admin, cannot reject suggestions or execute merges. Do not switch to CLI, API keys, or another identity to bypass an agent's tool policy or permissions. Customer-controlled agents may use the public tools within their granted authority.
 
@@ -159,7 +160,7 @@ Call schema before writing SQL.
 - Inspect JSON or trait column shapes before filtering nested values.
 - Keep SQL read-only.
 
-For ClickHouse syntax and query patterns, read [references/sql-reference.md](https://raw.githubusercontent.com/OutlitAI/skills/e111a4e7c94c5e513e7c77a7e17a003c70d3bba9/skills/outlit/references/sql-reference.md).
+For ClickHouse syntax and query patterns, read [references/sql-reference.md](https://raw.githubusercontent.com/OutlitAI/skills/4d4013f22c7d497dd0f5cbbf9f4ca1257d0355ed/skills/outlit/references/sql-reference.md).
 
 ## CLI Setup
 
