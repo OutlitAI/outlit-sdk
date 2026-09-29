@@ -87,6 +87,7 @@ export type CustomerFeaturesResult = PublicToolResult<"outlit_get_customer_featu
 export type CustomerFeature = CustomerFeaturesResult["features"][number]
 export type CustomerCreditsResult = PublicToolResult<"outlit_get_customer_credits">
 export type CustomerCredit = CustomerCreditsResult["credits"][number]
+export type FeedbackSubmitResult = PublicToolResult<"outlit_submit_feedback">
 
 export interface CustomerAnalyticsRow {
   activated_at: string | null

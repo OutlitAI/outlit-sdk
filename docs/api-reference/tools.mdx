@@ -112,6 +112,22 @@ against the shared `@outlit/tools` contract before the tool runs.
 | `outlit_get_workspace_settings` | Read supported workspace settings |
 | `outlit_update_workspace_settings` | Update a supported workspace setting |
 
+### Feedback
+
+| Tool | Purpose |
+|---|---|
+| `outlit_submit_feedback` | Submit product feedback — bugs, ideas, or agent friction — to the Outlit team |
+
+`outlit_submit_feedback` accepts `body` (required, trimmed, non-empty, at most 20,000
+characters), optional `area` (trimmed, non-empty, at most 100 characters), and optional
+`context` (a JSON object of at most 16 KiB serialized, for diagnostics such as the surface
+or client version — never secrets or unnecessary customer data). It returns the recorded
+feedback `id` and `createdAt` timestamp.
+
+Submissions require authentication and are rate limited under a dedicated quota; they do not
+consume paid plan API-call quota. Feedback is product intake, not a support ticket, and does
+not guarantee a reply.
+
 For schema-driven clients, `@outlit/tools` publishes tool input schemas as `publicToolContracts`.
 
 ## TypeScript client
@@ -291,6 +307,22 @@ no matches in the requested window, or unavailable source evidence. Unavailable 
 converted to zero. Archive is the available self-service lifecycle action.
 Creating a Feature also creates the supporting weekly event-count and active-days metrics inside
 Outlit; those metrics are not separate public resources.
+
+### Submit product feedback
+
+```json
+{
+  "tool": "outlit_submit_feedback",
+  "input": {
+    "body": "The merge preview did not list the losing record's traits.",
+    "area": "customers",
+    "context": { "surface": "cli", "command": "customers merge" }
+  }
+}
+```
+
+Returns `{ "id": "10000000-0000-4000-8000-000000000004", "createdAt": "2026-09-28T12:00:00.000Z" }`. See
+[Feedback](#feedback) for input limits. Feedback is product intake, not a support ticket.
 
 ## Response
 

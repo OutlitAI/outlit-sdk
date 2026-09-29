@@ -1,0 +1,53 @@
+---
+title: "Submit feedback"
+description: "Submit product feedback to the Outlit team through the public API."
+openapi: "openapi.json POST /api/feedback"
+---
+
+## Authentication
+
+Pass an Outlit API key in the `Authorization` header as `Bearer ok_...`. Feedback attribution
+comes from the authenticated caller — the request body cannot set a source, user, or
+organization.
+
+Submissions are rate limited under a dedicated per-organization feedback quota. They do not
+consume paid plan API-call quota. The request body as a whole is capped at 256 KiB
+(`413` above that), comfortably above the per-field limits below.
+
+Feedback is product intake — bug reports, feature ideas, and agent friction — not a support
+ticket, and it does not guarantee a reply.
+
+## Request body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `body` | string | Yes | Feedback text: trimmed, non-empty, at most 20,000 characters |
+| `area` | string | No | Product area label such as `cli`, `mcp`, or `integrations`: trimmed, non-empty, at most 100 characters |
+| `context` | object | No | JSON object with diagnostic context, at most 16 KiB serialized. Never include secrets or unnecessary customer data |
+
+## Example
+
+```bash
+curl -X POST https://app.outlit.ai/api/feedback \
+  -H "Authorization: Bearer ok_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "body": "The customers merge preview did not list the losing record traits",
+    "area": "customers",
+    "context": { "surface": "cli", "command": "customers merge" }
+  }'
+```
+
+## Response
+
+`201 Created`:
+
+```json
+{
+  "id": "10000000-0000-4000-8000-000000000004",
+  "createdAt": "2026-09-28T12:00:00.000Z"
+}
+```
+
+The same intake is available as the `outlit_submit_feedback` tool through
+[`POST /api/tools/call`](/api-reference/tools) and the `outlit feedback` CLI command.

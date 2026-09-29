@@ -101,6 +101,7 @@ describe("toolsets", () => {
       "outlit_enable_destination",
       "outlit_disable_destination",
       "outlit_archive_destination",
+      "outlit_submit_feedback",
       "outlit_get_integration_capabilities",
       "outlit_begin_integration_setup",
       "outlit_get_integration_setup_status",
@@ -124,7 +125,7 @@ describe("toolsets", () => {
       "outlit_merge_customers",
       "outlit_get_customer_merge_status",
     ])
-    expect(allPublicToolNames).toHaveLength(46)
+    expect(allPublicToolNames).toHaveLength(47)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -183,8 +184,13 @@ describe("tool contracts", () => {
   })
 
   test("exports Core-owned transport and error contracts", () => {
-    expect(publicOpenApiTransports).toHaveLength(3)
-    expect(new Set(publicOpenApiTransports.map((transport) => transport.openApiPath)).size).toBe(3)
+    expect(publicOpenApiTransports).toHaveLength(4)
+    expect(new Set(publicOpenApiTransports.map((transport) => transport.openApiPath)).size).toBe(4)
+    expect(
+      publicOpenApiTransports.some(
+        (transport) => transport.openApiPath === "/api/feedback" && transport.method === "POST",
+      ),
+    ).toBe(true)
     expect(apiKeyValidationTransport).toEqual({
       method: "POST",
       path: "/api/validate-api-key",

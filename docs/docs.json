@@ -186,7 +186,8 @@
             "pages": [
               "api-reference/validation",
               "api-reference/tools",
-              "api-reference/integrations"
+              "api-reference/integrations",
+              "api-reference/feedback"
             ]
           },
           {
@@ -235,6 +236,10 @@
     {
       "source": "/api-reference/ingest-customer-activity-events",
       "destination": "/api-reference/ingest"
+    },
+    {
+      "source": "/api-reference/submit-product-feedback",
+      "destination": "/api-reference/feedback"
     }
   ],
   "footer": {

@@ -28,6 +28,7 @@ export const publicToolNames = [
   "outlit_enable_destination",
   "outlit_disable_destination",
   "outlit_archive_destination",
+  "outlit_submit_feedback",
   "outlit_get_integration_capabilities",
   "outlit_begin_integration_setup",
   "outlit_get_integration_setup_status",
@@ -7953,6 +7954,64 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
+  "outlit_submit_feedback": {
+    "toolName": "outlit_submit_feedback",
+    "commandId": "feedback.submit",
+    "commandVersion": 1,
+    "ownerDomain": "feedback",
+    "title": "Submit Product Feedback",
+    "description": "Submit product feedback to Outlit. This does not open a support ticket or promise a reply.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20000,
+        },
+        "area": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+        },
+        "context": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+          },
+          "additionalProperties": {},
+        },
+      },
+      "required": [
+        "body",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+        },
+      },
+      "required": [
+        "id",
+        "createdAt",
+      ],
+      "additionalProperties": false,
+    },
+  },
   "outlit_get_integration_capabilities": {
     "toolName": "outlit_get_integration_capabilities",
     "commandId": "integration.capabilities.get",
@@ -14267,6 +14326,11 @@ export const publicToolContracts = {
 
 export const publicOpenApiTransports = [
   {
+    "openApiPath": "/api/feedback",
+    "method": "POST",
+    "openApiOperation": "submit_feedback",
+  },
+  {
     "openApiPath": "/api/tools/call",
     "method": "POST",
     "openApiOperation": "call_tool",
@@ -14333,6 +14397,7 @@ export const consumerToolPolicies = {
     "outlit_enable_destination",
     "outlit_disable_destination",
     "outlit_archive_destination",
+    "outlit_submit_feedback",
     "outlit_get_integration_capabilities",
     "outlit_begin_integration_setup",
     "outlit_get_integration_setup_status",
@@ -14381,6 +14446,7 @@ export const consumerToolPolicies = {
     "outlit_enable_destination",
     "outlit_disable_destination",
     "outlit_archive_destination",
+    "outlit_submit_feedback",
     "outlit_get_integration_capabilities",
     "outlit_begin_integration_setup",
     "outlit_get_integration_setup_status",
@@ -15754,4 +15820,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "24332f09ea58a978df71e394ae0b7abe9b7d9c740c6eb2464bc7043a71934725" as const
+export const sdkConsumerContractHash = "ef50db53b08b67d02c0b6b17e7e5a0181e6a078f2a3ab3f09ca1b807765e149c" as const

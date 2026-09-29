@@ -1,8 +1,8 @@
 {
   "repository": "https://github.com/OutlitAI/skills",
-  "revision": "e111a4e7c94c5e513e7c77a7e17a003c70d3bba9",
+  "revision": "4d4013f22c7d497dd0f5cbbf9f4ca1257d0355ed",
   "files": {
-    "skills/outlit/SKILL.md": "1a9813d4bd44989bffaa86240f4bbdff4cb74a676fd9d1edee6a13ebebd09e81",
+    "skills/outlit/SKILL.md": "333ff5f3738b908c645a64b5dd3a77f0c2af629ca91ae9728d230442be0643c7",
     "skills/outlit/references/identity.md": "781a2a4e5591566e223b4eee138e9bdb94b6ec8635ae4f32c93a06322fe977f3",
     "skills/outlit/references/sql-reference.md": "245d77c95730e5af01fdd9ddb2cd642e921ba01e00060edf306538ffc9998c35"
   }

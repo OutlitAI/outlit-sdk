@@ -179,7 +179,7 @@ describe("sources list", () => {
     const proc = Bun.spawn(
       ["bun", `${import.meta.dir}/../../src/cli.ts`, "sources", "list", "--help"],
       {
-        env: { ...process.env, OUTLIT_NO_UPDATE_NOTIFIER: "1" },
+        env: { ...process.env, OUTLIT_NO_UPDATE_NOTIFIER: "1", NO_COLOR: "1" },
         stdout: "pipe",
         stderr: "pipe",
       },
