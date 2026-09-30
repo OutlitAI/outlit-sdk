@@ -1,5 +1,28 @@
 # @outlit/pi
 
+## 2.1.6
+
+### Patch Changes
+
+- [#224](https://github.com/OutlitAI/outlit-sdk/pull/224) [`b7ce7ea`](https://github.com/OutlitAI/outlit-sdk/commit/b7ce7ea37c088f8cf2a7e96226a55eb3a5e57ae5) Thanks [@leo-paz](https://github.com/leo-paz)! - Add `rateBasis`, `paceSinceReset`, `periodStart` and `changeDays` to the customer credit summary contract; the forecast rate is now a trailing 28-day average (7-day floor) with since-reset pace as context only.
+
+- [#223](https://github.com/OutlitAI/outlit-sdk/pull/223) [`f2c90ed`](https://github.com/OutlitAI/outlit-sdk/commit/f2c90ed50a7cfb54a9103bb4ed2f6379f0197b34) Thanks [@leo-paz](https://github.com/leo-paz)! - Add `customerOwnership` (`{ defaultOwnerUserId: string | null }`) to the workspace settings read/write contracts.
+
+- [#236](https://github.com/OutlitAI/outlit-sdk/pull/236) [`a24208d`](https://github.com/OutlitAI/outlit-sdk/commit/a24208da4280715c61168b95349fcef099f7d519) Thanks [@leo-paz](https://github.com/leo-paz)! - Add the `outlit_submit_feedback` tool contract and a matching `outlit feedback` CLI command for authenticated product feedback intake (`body`, optional `area` and `context`). Feedback is product intake — it is rate limited under a dedicated quota, does not consume paid plan API-call quota, and does not open a support ticket or guarantee a reply.
+
+- [#221](https://github.com/OutlitAI/outlit-sdk/pull/221) [`3f5ef44`](https://github.com/OutlitAI/outlit-sdk/commit/3f5ef44f72182595675b6057f66f2228f1c05ca5) Thanks [@leo-paz](https://github.com/leo-paz)! - Add optional, nullable `jevEvidence` advisory evidence to the `outlit_list_identity_merge_suggestions` output contract.
+
+- [#230](https://github.com/OutlitAI/outlit-sdk/pull/230) [`456d5b5`](https://github.com/OutlitAI/outlit-sdk/commit/456d5b56fbd369e873578026c7812b3d8120f09a) Thanks [@leo-paz](https://github.com/leo-paz)! - Update the `outlit_get_timeline` contract with the additive `unreadable`/`unreadableReason` output fields, present only when an event's underlying source record cannot be retrieved via `outlit_get_source` — models should not retry source lookups on those rows.
+
+- [#226](https://github.com/OutlitAI/outlit-sdk/pull/226) [`14575fa`](https://github.com/OutlitAI/outlit-sdk/commit/14575fa0d2c762caf860e186b026161b929342c3) Thanks [@leo-paz](https://github.com/leo-paz)! - Update the `outlit_get_timeline` contract for compact-by-default reads: optional `includeMetadata` and `productDetail` ("none" | "material" | "raw") inputs, optional `product` weekly usage aggregate in the output, required `pagination.effectiveLimit`, and `metadata` now optional on timeline events. Companion to Core#2285.
+
+- [#229](https://github.com/OutlitAI/outlit-sdk/pull/229) [`a1f01e5`](https://github.com/OutlitAI/outlit-sdk/commit/a1f01e55a974e8ffa60b97da6dbc4edd4247a20c) Thanks [@leo-paz](https://github.com/leo-paz)! - Update the `outlit_get_timeline` contract with the additive `productUnavailable` output field, present only when the weekly product usage aggregate cannot be computed; also clarifies that `productDetail:"material"` returns no product rows when the organization has no configured value features while the `product` aggregate still comes back.
+
+- [#233](https://github.com/OutlitAI/outlit-sdk/pull/233) [`fe951fa`](https://github.com/OutlitAI/outlit-sdk/commit/fe951fa8249f97ab631c16e961e597bc114d7f11) Thanks [@leo-paz](https://github.com/leo-paz)! - Regenerate tool contracts with `annotations.readOnlyHint`/`annotations.destructiveHint` on every public tool. Read-only commands declare `readOnlyHint: true`; merge/archive/revoke-style commands declare `destructiveHint: true`. Companion to OutlitAI/Core#2341.
+
+- Updated dependencies [[`b7ce7ea`](https://github.com/OutlitAI/outlit-sdk/commit/b7ce7ea37c088f8cf2a7e96226a55eb3a5e57ae5), [`f2c90ed`](https://github.com/OutlitAI/outlit-sdk/commit/f2c90ed50a7cfb54a9103bb4ed2f6379f0197b34), [`a24208d`](https://github.com/OutlitAI/outlit-sdk/commit/a24208da4280715c61168b95349fcef099f7d519), [`3f5ef44`](https://github.com/OutlitAI/outlit-sdk/commit/3f5ef44f72182595675b6057f66f2228f1c05ca5), [`456d5b5`](https://github.com/OutlitAI/outlit-sdk/commit/456d5b56fbd369e873578026c7812b3d8120f09a), [`14575fa`](https://github.com/OutlitAI/outlit-sdk/commit/14575fa0d2c762caf860e186b026161b929342c3), [`a1f01e5`](https://github.com/OutlitAI/outlit-sdk/commit/a1f01e55a974e8ffa60b97da6dbc4edd4247a20c), [`fe951fa`](https://github.com/OutlitAI/outlit-sdk/commit/fe951fa8249f97ab631c16e961e597bc114d7f11)]:
+  - @outlit/tools@2.2.2
+
 ## 2.1.5
 
 ### Patch Changes
