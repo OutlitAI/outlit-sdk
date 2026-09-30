@@ -4193,7 +4193,7 @@
             "type": "string",
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-            "description": "Exact Attention item ID"
+            "description": "Exact Attention item ID: a churn case ID or a renewal ID"
           }
         },
         "required": [
@@ -14151,6 +14151,79 @@
                   "minLength": 1,
                   "maxLength": 500
                 },
+                "responsibility": {
+                  "type": "string",
+                  "enum": [
+                    "churn",
+                    "renewal"
+                  ],
+                  "description": "What the item is about: churn (a churn case) or renewal (an upcoming renewal, whose ID is the renewal's ID)"
+                },
+                "renewal": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "cycleId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 191,
+                          "description": "The renewal's ID; read the renewal with outlit_get_renewal and this ID"
+                        },
+                        "renewalDate": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                        },
+                        "daysRemaining": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Days until the renewal date; negative when overdue"
+                        },
+                        "overdue": {
+                          "type": "boolean"
+                        },
+                        "readiness": {
+                          "type": "string",
+                          "enum": [
+                            "ON_TRACK",
+                            "NEEDS_ATTENTION",
+                            "AT_RISK",
+                            "UNKNOWN"
+                          ]
+                        },
+                        "outcome": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "RENEWED",
+                                "NOT_RENEWED"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "cycleId",
+                        "renewalDate",
+                        "daysRemaining",
+                        "overdue",
+                        "readiness",
+                        "outcome"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The renewal this item is about; null for a churn item"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "customer": {
                   "type": "object",
                   "properties": {
@@ -14361,17 +14434,30 @@
                       "type": "null"
                     }
                   ]
+                },
+                "approachStatus": {
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "review",
+                    "active",
+                    "complete"
+                  ],
+                  "description": "The item's approach: none selected, a suggestion awaiting review, active, or its steps complete"
                 }
               },
               "required": [
                 "id",
+                "responsibility",
+                "renewal",
                 "customer",
                 "title",
                 "priority",
                 "evidenceCount",
                 "lifecycle",
                 "accountImportance",
-                "preparedActionUrl"
+                "preparedActionUrl",
+                "approachStatus"
               ],
               "additionalProperties": false
             }
@@ -14421,6 +14507,79 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 500
+          },
+          "responsibility": {
+            "type": "string",
+            "enum": [
+              "churn",
+              "renewal"
+            ],
+            "description": "What the item is about: churn (a churn case) or renewal (an upcoming renewal, whose ID is the renewal's ID)"
+          },
+          "renewal": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "cycleId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                    "description": "The renewal's ID; read the renewal with outlit_get_renewal and this ID"
+                  },
+                  "renewalDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                  },
+                  "daysRemaining": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "description": "Days until the renewal date; negative when overdue"
+                  },
+                  "overdue": {
+                    "type": "boolean"
+                  },
+                  "readiness": {
+                    "type": "string",
+                    "enum": [
+                      "ON_TRACK",
+                      "NEEDS_ATTENTION",
+                      "AT_RISK",
+                      "UNKNOWN"
+                    ]
+                  },
+                  "outcome": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "RENEWED",
+                          "NOT_RENEWED"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "cycleId",
+                  "renewalDate",
+                  "daysRemaining",
+                  "overdue",
+                  "readiness",
+                  "outcome"
+                ],
+                "additionalProperties": false,
+                "description": "The renewal this item is about; null for a churn item"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "customer": {
             "type": "object",
@@ -14804,6 +14963,8 @@
         },
         "required": [
           "id",
+          "responsibility",
+          "renewal",
           "customer",
           "title",
           "priority",
@@ -15913,5 +16074,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "ef50db53b08b67d02c0b6b17e7e5a0181e6a078f2a3ab3f09ca1b807765e149c"
+  "x-outlit-contract-hash": "9d4460b686b7f6c0a99968b875251bd71a88b32647ed2332d6d37b43cc9db6c5"
 }

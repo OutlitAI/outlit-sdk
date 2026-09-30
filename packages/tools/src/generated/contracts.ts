@@ -12270,10 +12270,10 @@ export const publicToolContracts = {
   "outlit_list_attention_items": {
     "toolName": "outlit_list_attention_items",
     "commandId": "attention.list",
-    "commandVersion": 1,
+    "commandVersion": 2,
     "ownerDomain": "attention",
     "title": "List Attention Items",
-    "description": "List authorized open or resolved Attention items. Returns bounded customer identity, current priority, ARR importance, lifecycle timestamps, and a prepared-action URL without evidence bodies or internal agent state.",
+    "description": "List authorized open or resolved Attention items, the same items, order and total as the Attention page: churn cases and, when Renewals is on, renewals that need attention. Each item says whether it is about churn or a renewal (with the renewal's date, days remaining, readiness and outcome) and its approach status. Returns bounded customer identity, current priority, ARR importance, lifecycle timestamps, and a prepared-action URL without evidence bodies or internal agent state.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -12327,6 +12327,79 @@ export const publicToolContracts = {
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 500,
+              },
+              "responsibility": {
+                "type": "string",
+                "enum": [
+                  "churn",
+                  "renewal",
+                ],
+                "description": "What the item is about: churn (a churn case) or renewal (an upcoming renewal, whose ID is the renewal's ID)",
+              },
+              "renewal": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "cycleId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191,
+                        "description": "The renewal's ID; read the renewal with outlit_get_renewal and this ID",
+                      },
+                      "renewalDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      },
+                      "daysRemaining": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "description": "Days until the renewal date; negative when overdue",
+                      },
+                      "overdue": {
+                        "type": "boolean",
+                      },
+                      "readiness": {
+                        "type": "string",
+                        "enum": [
+                          "ON_TRACK",
+                          "NEEDS_ATTENTION",
+                          "AT_RISK",
+                          "UNKNOWN",
+                        ],
+                      },
+                      "outcome": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "RENEWED",
+                              "NOT_RENEWED",
+                            ],
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                    },
+                    "required": [
+                      "cycleId",
+                      "renewalDate",
+                      "daysRemaining",
+                      "overdue",
+                      "readiness",
+                      "outcome",
+                    ],
+                    "additionalProperties": false,
+                    "description": "The renewal this item is about; null for a churn item",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
               },
               "customer": {
                 "type": "object",
@@ -12539,9 +12612,21 @@ export const publicToolContracts = {
                   },
                 ],
               },
+              "approachStatus": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "review",
+                  "active",
+                  "complete",
+                ],
+                "description": "The item's approach: none selected, a suggestion awaiting review, active, or its steps complete",
+              },
             },
             "required": [
               "id",
+              "responsibility",
+              "renewal",
               "customer",
               "title",
               "priority",
@@ -12549,6 +12634,7 @@ export const publicToolContracts = {
               "lifecycle",
               "accountImportance",
               "preparedActionUrl",
+              "approachStatus",
             ],
             "additionalProperties": false,
           },
@@ -12595,10 +12681,10 @@ export const publicToolContracts = {
   "outlit_get_attention_item": {
     "toolName": "outlit_get_attention_item",
     "commandId": "attention.get",
-    "commandVersion": 1,
+    "commandVersion": 2,
     "ownerDomain": "attention",
     "title": "Get Attention Item",
-    "description": "Get one authorized Attention item with its bounded current assessment, timeline, evidence summaries, and prepared-action URL. Does not return evidence IDs, quotes, email drafts, or internal agent state.",
+    "description": "Get one authorized Attention item, a churn case or a renewal, with its bounded current assessment, timeline, evidence summaries, and prepared-action URL. For a renewal item the assessment is its current approved brief. Does not return evidence IDs, quotes, email drafts, or internal agent state.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -12611,7 +12697,7 @@ export const publicToolContracts = {
           "type": "string",
           "format": "uuid",
           "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-          "description": "Exact Attention item ID",
+          "description": "Exact Attention item ID: a churn case ID or a renewal ID",
         },
       },
       "required": [
@@ -12627,6 +12713,79 @@ export const publicToolContracts = {
           "type": "string",
           "minLength": 1,
           "maxLength": 500,
+        },
+        "responsibility": {
+          "type": "string",
+          "enum": [
+            "churn",
+            "renewal",
+          ],
+          "description": "What the item is about: churn (a churn case) or renewal (an upcoming renewal, whose ID is the renewal's ID)",
+        },
+        "renewal": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "cycleId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 191,
+                  "description": "The renewal's ID; read the renewal with outlit_get_renewal and this ID",
+                },
+                "renewalDate": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                },
+                "daysRemaining": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Days until the renewal date; negative when overdue",
+                },
+                "overdue": {
+                  "type": "boolean",
+                },
+                "readiness": {
+                  "type": "string",
+                  "enum": [
+                    "ON_TRACK",
+                    "NEEDS_ATTENTION",
+                    "AT_RISK",
+                    "UNKNOWN",
+                  ],
+                },
+                "outcome": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "RENEWED",
+                        "NOT_RENEWED",
+                      ],
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "required": [
+                "cycleId",
+                "renewalDate",
+                "daysRemaining",
+                "overdue",
+                "readiness",
+                "outcome",
+              ],
+              "additionalProperties": false,
+              "description": "The renewal this item is about; null for a churn item",
+            },
+            {
+              "type": "null",
+            },
+          ],
         },
         "customer": {
           "type": "object",
@@ -13010,6 +13169,8 @@ export const publicToolContracts = {
       },
       "required": [
         "id",
+        "responsibility",
+        "renewal",
         "customer",
         "title",
         "priority",
@@ -15820,4 +15981,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "ef50db53b08b67d02c0b6b17e7e5a0181e6a078f2a3ab3f09ca1b807765e149c" as const
+export const sdkConsumerContractHash = "9d4460b686b7f6c0a99968b875251bd71a88b32647ed2332d6d37b43cc9db6c5" as const
