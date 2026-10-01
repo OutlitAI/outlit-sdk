@@ -51,6 +51,10 @@ export const publicToolNames = [
   "outlit_reject_identity_merge_suggestion",
   "outlit_merge_customers",
   "outlit_get_customer_merge_status",
+  "outlit_list_scoped_repairs",
+  "outlit_preview_scoped_repair",
+  "outlit_execute_scoped_repair",
+  "outlit_verify_scoped_repair",
 ] as const
 
 export const publicToolContracts = {
@@ -13470,6 +13474,16 @@ export const publicToolContracts = {
                       },
                     ],
                   },
+                  "billingStatus": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
                   "identifierCount": {
                     "type": "integer",
                     "minimum": 0,
@@ -13534,6 +13548,16 @@ export const publicToolContracts = {
                           "CHURNED",
                           "MERGED",
                         ],
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
+                  "billingStatus": {
+                    "anyOf": [
+                      {
+                        "type": "string",
                       },
                       {
                         "type": "null",
@@ -13692,6 +13716,19 @@ export const publicToolContracts = {
                     "minimum": 0,
                     "maximum": 9007199254740991,
                   },
+                  "analyticsAvailable": {
+                    "type": "boolean",
+                  },
+                  "opportunities": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  "revenueSnapshots": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
                 },
                 "required": [
                   "identifiers",
@@ -13707,6 +13744,368 @@ export const publicToolContracts = {
                   "analyticsDimensions",
                 ],
                 "additionalProperties": false,
+              },
+              "scope": {
+                "type": "object",
+                "properties": {
+                  "survivor": {
+                    "type": "object",
+                    "properties": {
+                      "shape": {
+                        "type": "string",
+                        "enum": [
+                          "provisional",
+                          "established",
+                          "unknown",
+                        ],
+                      },
+                      "billingStatus": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "hasIndependentCrmIdentity": {
+                        "type": "boolean",
+                      },
+                      "hasIndependentStripeIdentity": {
+                        "type": "boolean",
+                      },
+                    },
+                    "required": [
+                      "shape",
+                      "billingStatus",
+                      "hasIndependentCrmIdentity",
+                      "hasIndependentStripeIdentity",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  "duplicate": {
+                    "type": "object",
+                    "properties": {
+                      "shape": {
+                        "type": "string",
+                        "enum": [
+                          "provisional",
+                          "established",
+                          "unknown",
+                        ],
+                      },
+                      "billingStatus": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "hasIndependentCrmIdentity": {
+                        "type": "boolean",
+                      },
+                      "hasIndependentStripeIdentity": {
+                        "type": "boolean",
+                      },
+                    },
+                    "required": [
+                      "shape",
+                      "billingStatus",
+                      "hasIndependentCrmIdentity",
+                      "hasIndependentStripeIdentity",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  "payingAccountsAffected": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
+                  "availability": {
+                    "type": "object",
+                    "properties": {
+                      "currentCounts": {
+                        "type": "boolean",
+                      },
+                      "analytics": {
+                        "type": "boolean",
+                      },
+                    },
+                    "required": [
+                      "currentCounts",
+                      "analytics",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  "moves": {
+                    "type": "object",
+                    "properties": {
+                      "contacts": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      "analyticsEvents": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "analyticsDimensions": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "billingEvents": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      "revenueSnapshots": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "calls": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      "facts": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                      "opportunities": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "tickets": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
+                    },
+                    "required": [
+                      "contacts",
+                      "analyticsEvents",
+                      "analyticsDimensions",
+                      "billingEvents",
+                      "revenueSnapshots",
+                      "calls",
+                      "facts",
+                      "opportunities",
+                      "tickets",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  "conflicts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                        },
+                        "message": {
+                          "type": "string",
+                        },
+                        "scope": {
+                          "type": "string",
+                        },
+                        "sourceIdentities": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                          },
+                        },
+                        "survivorIdentities": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                          },
+                        },
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "scope",
+                        "sourceIdentities",
+                        "survivorIdentities",
+                      ],
+                      "additionalProperties": false,
+                    },
+                  },
+                  "supportingEvidence": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                    },
+                  },
+                },
+                "required": [
+                  "survivor",
+                  "duplicate",
+                  "payingAccountsAffected",
+                  "availability",
+                  "moves",
+                  "conflicts",
+                  "supportingEvidence",
+                ],
+                "additionalProperties": false,
+              },
+              "mergeBlockedReason": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "reviewedPairOptions": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "string",
+                    },
+                    {
+                      "type": "string",
+                    },
+                  ],
+                },
+              },
+              "candidateCustomers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191,
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500,
+                    },
+                    "domain": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500,
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "COMPANY",
+                        "INDIVIDUAL",
+                      ],
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PROVISIONAL",
+                            "ACTIVE",
+                            "CHURNED",
+                            "MERGED",
+                          ],
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "billingStatus": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "identifierCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                    },
+                    "contactCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                    },
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "domain",
+                    "type",
+                    "status",
+                    "identifierCount",
+                    "contactCount",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "impactScope": {
+                "type": "string",
+                "enum": [
+                  "single_source",
+                  "cluster_sources",
+                ],
               },
               "latestJob": {
                 "anyOf": [
@@ -13838,6 +14237,16 @@ export const publicToolContracts = {
                                     },
                                   ],
                                 },
+                                "billingStatus": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                },
                                 "identifierCount": {
                                   "type": "integer",
                                   "minimum": 0,
@@ -13902,6 +14311,16 @@ export const publicToolContracts = {
                                         "CHURNED",
                                         "MERGED",
                                       ],
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                },
+                                "billingStatus": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
                                     },
                                     {
                                       "type": "null",
@@ -14411,6 +14830,806 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
+  "outlit_list_scoped_repairs": {
+    "toolName": "outlit_list_scoped_repairs",
+    "commandId": "integrity.scoped_repair.list",
+    "commandVersion": 1,
+    "ownerDomain": "identity",
+    "title": "List scoped repair findings",
+    "description": "Read a bounded page of integrity findings visible to this caller, including finding IDs, fingerprints, compact source/target/evidence summaries, hasSavedCandidate, and plan state. The default page is 10 findings; maximum 20. Scan successive cursors until hasMore is false; one page is not complete discovery. When hasSavedCandidate is true and state is not blocked, call preview with findingId and expectedFingerprint and omit candidate to use the saved exact manifest. A blocked finding cannot be previewed; follow its reason. If no saved exact candidate exists, the finding is manual. Candidate manifests must be source-backed and exact: contact moves pin contactId/fromCustomerId/toCustomerId/expectedEmail/expectedUpdatedAt; Stripe pins identifierId/identifierValue/sourceScopeKey/preserveContacts; CRM and corpus require their domain-produced exact source manifests. Do not invent a manifest from a finding summary.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "limit": {
+          "default": 10,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+        },
+        "cursor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+      },
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "items": {
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "findingId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191,
+              },
+              "fingerprint": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191,
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "manual",
+                  "ready",
+                  "admitted",
+                  "pending_verification",
+                  "recovery_needed",
+                  "blocked",
+                  "verified",
+                ],
+              },
+              "action": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "rehome_contact",
+                      "rehome_crm_account",
+                      "reattribute_stripe_customer",
+                      "rehome_source_corpus",
+                    ],
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "sourceCustomerId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "targetCustomerId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "evidenceRef": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "hasSavedCandidate": {
+                "type": "boolean",
+              },
+              "planDigest": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "manualReason": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 300,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "nextStep": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+            },
+            "required": [
+              "findingId",
+              "fingerprint",
+              "state",
+              "action",
+              "sourceCustomerId",
+              "targetCustomerId",
+              "evidenceRef",
+              "hasSavedCandidate",
+              "planDigest",
+              "manualReason",
+              "nextStep",
+            ],
+            "additionalProperties": false,
+          },
+        },
+        "scannedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+        },
+        "hasMore": {
+          "type": "boolean",
+        },
+        "nextCursor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "items",
+        "scannedCount",
+        "hasMore",
+        "nextCursor",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_preview_scoped_repair": {
+    "toolName": "outlit_preview_scoped_repair",
+    "commandId": "integrity.scoped_repair.preview",
+    "commandVersion": 1,
+    "ownerDomain": "identity",
+    "title": "Preview scoped identity repair",
+    "description": "Preview and save one exact source-backed repair against a finding fingerprint. Obtain findingId and fingerprint from outlit_list_scoped_repairs. Supply an exact candidate manifest, or omit it when hasSavedCandidate is true to use the saved exact candidate server-side. If discovery reports no saved candidate, a domain-produced source manifest is required; a finding summary is insufficient. Requires identity write authority and access to every finding member and protected customer.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "findingId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "expectedFingerprint": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "candidate": {
+          "type": "object",
+          "properties": {
+            "version": {
+              "type": "number",
+              "const": 1,
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "rehome_contact",
+                "rehome_crm_account",
+                "reattribute_stripe_customer",
+                "rehome_source_corpus",
+              ],
+            },
+            "organizationId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "sourceCustomerId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "targetCustomerId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "evidenceRef": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "provenance": {
+              "type": "string",
+              "const": "exact_source_manifest",
+            },
+            "manifest": {},
+          },
+          "required": [
+            "version",
+            "action",
+            "organizationId",
+            "sourceCustomerId",
+            "targetCustomerId",
+            "evidenceRef",
+            "provenance",
+            "manifest",
+          ],
+          "additionalProperties": false,
+        },
+      },
+      "required": [
+        "findingId",
+        "expectedFingerprint",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "findingId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "fingerprint": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "state": {
+          "type": "string",
+          "const": "ready",
+        },
+        "planDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "rehome_contact",
+            "rehome_crm_account",
+            "reattribute_stripe_customer",
+            "rehome_source_corpus",
+          ],
+        },
+        "sourceCustomerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "targetCustomerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "impact": {
+          "type": "object",
+          "properties": {
+            "movedCounts": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+              },
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+              },
+            },
+            "protectedCustomerIds": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191,
+              },
+            },
+            "conflictingProviderIdentities": {
+              "type": "array",
+              "items": {
+                "type": "string",
+              },
+            },
+            "baselineContext": {
+              "type": "object",
+              "properties": {
+                "v1MissingFacts": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                "v1MissingSources": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                "v2MissingFacts": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                "v2MissingSources": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+              },
+              "required": [
+                "v1MissingFacts",
+                "v1MissingSources",
+                "v2MissingFacts",
+                "v2MissingSources",
+              ],
+              "additionalProperties": false,
+            },
+          },
+          "required": [
+            "movedCounts",
+            "protectedCustomerIds",
+            "conflictingProviderIdentities",
+          ],
+          "additionalProperties": false,
+        },
+      },
+      "required": [
+        "findingId",
+        "fingerprint",
+        "state",
+        "planDigest",
+        "action",
+        "sourceCustomerId",
+        "targetCustomerId",
+        "impact",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_execute_scoped_repair": {
+    "toolName": "outlit_execute_scoped_repair",
+    "commandId": "integrity.scoped_repair.execute",
+    "commandVersion": 1,
+    "ownerDomain": "identity",
+    "title": "Execute scoped identity repair",
+    "description": "Execute only the saved exact plan identified by its digest. Requires identity write authority for a human or the customer_identity:merge API key grant, plus current access to every protected customer. Use resume:true only for the same admitted Stripe operation with a proven committed admission receipt, the same actor, and the same surface; it never reexecutes the SQL move. A pending or recovery_needed result is not verified. Outlit-hosted agents and internal apps cannot execute.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "findingId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "planDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 2000,
+        },
+        "resume": {
+          "default": false,
+          "type": "boolean",
+        },
+      },
+      "required": [
+        "findingId",
+        "planDigest",
+        "reason",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "findingId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "admitted",
+            "pending_verification",
+            "recovery_needed",
+            "manual_required",
+            "blocked",
+            "verified",
+          ],
+        },
+        "operationId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "summary": {
+          "type": "string",
+        },
+        "nextStep": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 200,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "receipt": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "disposition": {
+                  "type": "string",
+                  "enum": [
+                    "moved",
+                    "resumed",
+                    "noop",
+                    "partial",
+                    "refused",
+                    "failed",
+                  ],
+                },
+                "followThroughComplete": {
+                  "type": "boolean",
+                },
+                "admissionAuditIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                },
+                "completionAuditIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                },
+                "movedIds": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                  },
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191,
+                    },
+                  },
+                },
+                "refusals": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                  },
+                },
+                "informationalObservations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                  },
+                },
+              },
+              "required": [
+                "disposition",
+                "followThroughComplete",
+                "admissionAuditIds",
+                "completionAuditIds",
+                "movedIds",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "findingId",
+        "state",
+        "operationId",
+        "summary",
+        "nextStep",
+        "receipt",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_verify_scoped_repair": {
+    "toolName": "outlit_verify_scoped_repair",
+    "commandId": "integrity.scoped_repair.verify",
+    "commandVersion": 1,
+    "ownerDomain": "identity",
+    "title": "Verify scoped identity repair",
+    "description": "Read the current saved command progress and, after a completed receipt, run live ownership, audit, billing and index verification. Queued, admitted, blocked and pending verification are not complete. Requires current access to every protected customer.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "findingId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+      },
+      "required": [
+        "findingId",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "findingId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "admitted",
+            "pending_verification",
+            "recovery_needed",
+            "manual_required",
+            "blocked",
+            "verified",
+          ],
+        },
+        "operationId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "summary": {
+          "type": "string",
+        },
+        "nextStep": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 200,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "receipt": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "disposition": {
+                  "type": "string",
+                  "enum": [
+                    "moved",
+                    "resumed",
+                    "noop",
+                    "partial",
+                    "refused",
+                    "failed",
+                  ],
+                },
+                "followThroughComplete": {
+                  "type": "boolean",
+                },
+                "admissionAuditIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                },
+                "completionAuditIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                },
+                "movedIds": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                  },
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191,
+                    },
+                  },
+                },
+                "refusals": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                  },
+                },
+                "informationalObservations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                  },
+                },
+              },
+              "required": [
+                "disposition",
+                "followThroughComplete",
+                "admissionAuditIds",
+                "completionAuditIds",
+                "movedIds",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "verification": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "outcome": {
+                  "type": "string",
+                  "enum": [
+                    "verified",
+                    "inconclusive",
+                  ],
+                },
+                "ownership": {
+                  "type": "boolean",
+                },
+                "derived": {
+                  "type": "boolean",
+                },
+                "indexed": {
+                  "type": "boolean",
+                },
+                "reconstruction": {
+                  "type": "string",
+                  "enum": [
+                    "complete",
+                    "pending",
+                    "baseline_gap",
+                  ],
+                },
+                "warnings": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                  },
+                },
+                "informationalObservations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                  },
+                },
+              },
+              "required": [
+                "outcome",
+                "ownership",
+                "derived",
+                "indexed",
+                "reconstruction",
+                "warnings",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "findingId",
+        "state",
+        "operationId",
+        "summary",
+        "nextStep",
+        "receipt",
+        "verification",
+      ],
+      "additionalProperties": false,
+    },
+  },
 } as const
 
 export const publicOpenApiTransports = [
@@ -14509,6 +15728,10 @@ export const consumerToolPolicies = {
     "outlit_reject_identity_merge_suggestion",
     "outlit_merge_customers",
     "outlit_get_customer_merge_status",
+    "outlit_list_scoped_repairs",
+    "outlit_preview_scoped_repair",
+    "outlit_execute_scoped_repair",
+    "outlit_verify_scoped_repair",
   ],
   "cli": [
     "outlit_list_customers",
@@ -14558,6 +15781,10 @@ export const consumerToolPolicies = {
     "outlit_reject_identity_merge_suggestion",
     "outlit_merge_customers",
     "outlit_get_customer_merge_status",
+    "outlit_list_scoped_repairs",
+    "outlit_preview_scoped_repair",
+    "outlit_execute_scoped_repair",
+    "outlit_verify_scoped_repair",
   ],
 } as const
 
@@ -15909,4 +17136,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "dc00a0ca2933e89c21ccb47528cba3d3ed55fe8be9e315f302528245b263fce4" as const
+export const sdkConsumerContractHash = "4487d082473e65e51514b2a491210e1aab16dc7b0045412e4c11e6d89bc4ab5a" as const

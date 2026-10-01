@@ -38,6 +38,7 @@ import {
   isOutlitToolsApiError,
   matchesGeneratedJsonSchema,
   normalizeCustomerSourceType,
+  type PublicToolResult,
   piToolNames,
   publicOpenApiTransports,
   resolveCustomerContextSearchInput,
@@ -124,8 +125,12 @@ describe("toolsets", () => {
       "outlit_reject_identity_merge_suggestion",
       "outlit_merge_customers",
       "outlit_get_customer_merge_status",
+      "outlit_list_scoped_repairs",
+      "outlit_preview_scoped_repair",
+      "outlit_execute_scoped_repair",
+      "outlit_verify_scoped_repair",
     ])
-    expect(allPublicToolNames).toHaveLength(47)
+    expect(allPublicToolNames).toHaveLength(51)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -152,6 +157,17 @@ describe("toolsets", () => {
       expect(cliToolNames).toContain(toolName)
     }
     for (const toolName of [
+      "outlit_list_scoped_repairs",
+      "outlit_preview_scoped_repair",
+      "outlit_execute_scoped_repair",
+      "outlit_verify_scoped_repair",
+    ] as const) {
+      expect(defaultToolNames).not.toContain(toolName)
+      expect(analyticalToolNames).not.toContain(toolName)
+      expect(piToolNames).toContain(toolName)
+      expect(cliToolNames).toContain(toolName)
+    }
+    for (const toolName of [
       "outlit_list_features",
       "outlit_create_feature",
       "outlit_archive_feature",
@@ -171,6 +187,87 @@ describe("toolsets", () => {
 })
 
 describe("tool contracts", () => {
+  test("requires a saved plan digest and reason before scoped repair execution", () => {
+    const list = getPublicToolContract("outlit_list_scoped_repairs")
+    const preview = getPublicToolContract("outlit_preview_scoped_repair")
+    const execute = getPublicToolContract("outlit_execute_scoped_repair")
+    const verify = getPublicToolContract("outlit_verify_scoped_repair")
+    const digest = "a".repeat(64)
+
+    expect(matchesGeneratedJsonSchema({ limit: 20 }, list.inputSchema)).toBe(true)
+    expect(matchesGeneratedJsonSchema({ limit: 21 }, list.inputSchema)).toBe(false)
+    expect(
+      matchesGeneratedJsonSchema(
+        { findingId: "finding_1", expectedFingerprint: "fingerprint_1" },
+        preview.inputSchema,
+      ),
+    ).toBe(true)
+    expect(
+      matchesGeneratedJsonSchema(
+        { findingId: "finding_1", planDigest: digest, reason: "Reviewed exact source manifest" },
+        execute.inputSchema,
+      ),
+    ).toBe(true)
+    expect(
+      matchesGeneratedJsonSchema(
+        { findingId: "finding_1", planDigest: digest },
+        execute.inputSchema,
+      ),
+    ).toBe(false)
+    expect(
+      matchesGeneratedJsonSchema(
+        { findingId: "finding_1", planDigest: "bad", reason: "Reviewed exact source manifest" },
+        execute.inputSchema,
+      ),
+    ).toBe(false)
+    expect(matchesGeneratedJsonSchema({ findingId: "finding_1" }, verify.inputSchema)).toBe(true)
+    expect(execute.annotations.destructiveHint).toBe(true)
+  })
+
+  test("types the scoped repair list and verification outcomes", () => {
+    type ListResult = PublicToolResult<"outlit_list_scoped_repairs">
+    type VerifyResult = PublicToolResult<"outlit_verify_scoped_repair">
+
+    expectTypeOf<ListResult["items"][number]["hasSavedCandidate"]>().toEqualTypeOf<boolean>()
+    expectTypeOf<ListResult["nextCursor"]>().toEqualTypeOf<string | null>()
+    expectTypeOf<VerifyResult["state"]>().toEqualTypeOf<
+      | "ready"
+      | "admitted"
+      | "pending_verification"
+      | "recovery_needed"
+      | "manual_required"
+      | "blocked"
+      | "verified"
+    >()
+    expectTypeOf<VerifyResult["verification"]>().toEqualTypeOf<{
+      readonly outcome: "verified" | "inconclusive"
+      readonly ownership: boolean
+      readonly derived: boolean
+      readonly indexed: boolean
+      readonly reconstruction: "complete" | "pending" | "baseline_gap"
+      readonly warnings: string[]
+      readonly informationalObservations?: string[]
+    } | null>()
+  })
+
+  test("exposes the Core merge impact scope without making unavailable counts mandatory", () => {
+    const suggestions = getPublicToolContract("outlit_list_identity_merge_suggestions")
+    const item = suggestions.outputSchema.properties.suggestions.items
+    const impact = item.properties.impact
+    const scope = item.properties.scope
+
+    expect(scope.properties.availability.required).toEqual(["currentCounts", "analytics"])
+    expect(scope.properties.payingAccountsAffected.anyOf).toEqual([
+      expect.objectContaining({ type: "integer" }),
+      { type: "null" },
+    ])
+    expect(scope.properties.moves.properties.analyticsEvents.anyOf).toEqual([
+      expect.objectContaining({ type: "integer" }),
+      { type: "null" },
+    ])
+    expect(impact.required).not.toContain("analyticsAvailable")
+  })
+
   test("keeps the Core-generated module data-only", () => {
     const generated = readFileSync(
       resolve(import.meta.dirname, "../src/generated/contracts.ts"),
@@ -657,12 +754,18 @@ describe("createOutlitClient", () => {
     )
   })
 
-  test("calls the generated gateway transport for every public capability", async () => {
+  test("forwards a scoped repair execution through the generated gateway transport", async () => {
+    const response = {
+      findingId: "finding_1",
+      state: "pending_verification",
+      operationId: "operation_1",
+      summary: "Follow-through pending",
+      nextStep: "Verify the operation",
+      receipt: null,
+    } as const
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(
-        new Response(JSON.stringify({ items: [{ id: "cust_123" }] }), { status: 200 }),
-      )
+      .mockResolvedValue(new Response(JSON.stringify(response), { status: 200 }))
 
     const client = createOutlitClient({
       apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
@@ -670,9 +773,15 @@ describe("createOutlitClient", () => {
       fetch: fetchMock,
     })
 
-    const result = await client.callTool("outlit_create_destination", { type: "WEBHOOK" })
+    const input = {
+      findingId: "finding_1",
+      planDigest: "a".repeat(64),
+      reason: "Reviewed the exact saved repair plan",
+    }
+    const result = await client.callTool("outlit_execute_scoped_repair", input)
 
-    expect(result).toEqual({ items: [{ id: "cust_123" }] })
+    expectTypeOf(result).toEqualTypeOf<PublicToolResult<"outlit_execute_scoped_repair">>()
+    expect(result).toEqual(response)
     expect(fetchMock).toHaveBeenCalledWith("https://example.outlit.test/api/tools/call", {
       method: "POST",
       headers: {
@@ -680,8 +789,8 @@ describe("createOutlitClient", () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        tool: "outlit_create_destination",
-        input: { type: "WEBHOOK" },
+        tool: "outlit_execute_scoped_repair",
+        input,
       }),
     })
   })
