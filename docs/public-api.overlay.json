@@ -307,6 +307,30 @@
       }
     },
     {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_scoped_repairs')]",
+      "update": {
+        "title": "List scoped repairs"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_preview_scoped_repair')]",
+      "update": {
+        "title": "Preview scoped repair"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_execute_scoped_repair')]",
+      "update": {
+        "title": "Execute scoped repair"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_verify_scoped_repair')]",
+      "update": {
+        "title": "Verify scoped repair"
+      }
+    },
+    {
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_submit_feedback')]",
       "update": {
         "title": "Submit feedback"
@@ -586,6 +610,30 @@
       "target": "$.components.schemas['ToolOutput_outlit_get_customer_merge_status']",
       "update": {
         "title": "Get customer merge status"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_scoped_repairs']",
+      "update": {
+        "title": "List scoped repairs"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_preview_scoped_repair']",
+      "update": {
+        "title": "Preview scoped repair"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_execute_scoped_repair']",
+      "update": {
+        "title": "Execute scoped repair"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_verify_scoped_repair']",
+      "update": {
+        "title": "Verify scoped repair"
       }
     },
     {
