@@ -60,7 +60,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "List Customers",
-    "description": "Browse and filter customers. Use this to find customers by billing status, activity recency, revenue, or name. Returns a paginated list with summary info (MRR, last activity, status). currentMrr is in the currency's minor units (cents): divide by 100, so 1234500 is $12,345 MRR. ARR is 12 × currentMrr.",
+    "description": "Browse and filter customers. Use this to find customers by billing status, activity recency, revenue, or name. Returns a paginated list with summary info (MRR, last activity, status). currentMrr is in the smallest unit of the customer's billing currency, which the result doesn't name: divide by 100 for two-decimal currencies such as USD (1234500 USD is $12,345 MRR), use it as is for JPY or KRW, and divide by 1000 for KWD or BHD. ARR is 12 × currentMrr.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -107,12 +107,12 @@ export const publicToolContracts = {
           ],
         },
         "mrrAbove": {
-          "description": "Minimum MRR in cents (e.g., 10000 = $100)",
+          "description": "Minimum MRR, in currentMrr's smallest currency units (10000 USD is $100)",
           "type": "number",
           "minimum": 0,
         },
         "mrrBelow": {
-          "description": "Maximum MRR in cents",
+          "description": "Maximum MRR, in currentMrr's smallest currency units",
           "type": "number",
           "minimum": 0,
         },
@@ -276,7 +276,7 @@ export const publicToolContracts = {
                     "type": "null",
                   },
                 ],
-                "description": "Monthly recurring revenue in the currency's minor units (cents); divide by 100, so 1234500 is $12,345. ARR is 12 × this value, in the same minor units. Null unless mrrCalculationStatus is calculated.",
+                "description": "Monthly recurring revenue in the smallest unit of the customer's billing currency, which this result doesn't name: divide by 100 for two-decimal currencies such as USD, EUR, GBP or CAD (1234500 USD is $12,345), use it as is for zero-decimal currencies such as JPY or KRW, and divide by 1000 for three-decimal currencies such as KWD or BHD. ARR is 12 × this value, in the same units. Null unless mrrCalculationStatus is calculated.",
               },
               "mrrCalculationStatus": {
                 "type": "string",
@@ -861,7 +861,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Optionally include users, revenue, recent activity, engagement metrics, or company enrichment. Revenue amounts (currentMrr, lifetimeRevenue) are in the currency's minor units (cents): divide each by 100, so 1234500 is $12,345. ARR is 12 × currentMrr.",
+    "description": "Get full details for a single customer. Optionally include users, revenue, recent activity, engagement metrics, or company enrichment. Revenue amounts (currentMrr, lifetimeRevenue) are in the smallest unit of the customer's billing currency, which the result doesn't name: divide by 100 for two-decimal currencies such as USD (1234500 USD is $12,345), use them as is for JPY or KRW, and divide by 1000 for KWD or BHD. ARR is 12 × currentMrr.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -1132,7 +1132,7 @@ export const publicToolContracts = {
                   "type": "null",
                 },
               ],
-              "description": "Monthly recurring revenue in the currency's minor units (cents); divide by 100, so 1234500 is $12,345. ARR is 12 × this value, in the same minor units. Null unless mrrCalculationStatus is calculated.",
+              "description": "Monthly recurring revenue in the smallest unit of the customer's billing currency, which this result doesn't name: divide by 100 for two-decimal currencies such as USD, EUR, GBP or CAD (1234500 USD is $12,345), use it as is for zero-decimal currencies such as JPY or KRW, and divide by 1000 for three-decimal currencies such as KWD or BHD. ARR is 12 × this value, in the same units. Null unless mrrCalculationStatus is calculated.",
             },
             "mrrCalculationStatus": {
               "type": "string",
@@ -1144,7 +1144,7 @@ export const publicToolContracts = {
             },
             "lifetimeRevenue": {
               "type": "number",
-              "description": "Lifetime revenue in the currency's minor units (cents); divide by 100.",
+              "description": "Lifetime revenue in the smallest unit of the currency it was billed in, with currentMrr's divisors: 100 for USD, EUR, GBP or CAD, 1 for JPY or KRW, 1000 for KWD or BHD.",
             },
             "activeSubscriptions": {
               "type": "integer",
@@ -12473,7 +12473,7 @@ export const publicToolContracts = {
                         "type": "null",
                       },
                     ],
-                    "description": "Annual recurring revenue in the currency's minor units (cents); divide by 100.",
+                    "description": "Annual recurring revenue (12 × billing MRR) in the smallest unit of the currency field: divide by 100 for two-decimal currencies such as USD, EUR, GBP or CAD (1234500 USD is $12,345), use it as is for zero-decimal currencies such as JPY or KRW, and divide by 1000 for three-decimal currencies such as KWD or BHD.",
                   },
                   "currency": {
                     "anyOf": [
@@ -12774,7 +12774,7 @@ export const publicToolContracts = {
                   "type": "null",
                 },
               ],
-              "description": "Annual recurring revenue in the currency's minor units (cents); divide by 100.",
+              "description": "Annual recurring revenue (12 × billing MRR) in the smallest unit of the currency field: divide by 100 for two-decimal currencies such as USD, EUR, GBP or CAD (1234500 USD is $12,345), use it as is for zero-decimal currencies such as JPY or KRW, and divide by 1000 for three-decimal currencies such as KWD or BHD.",
             },
             "currency": {
               "anyOf": [
@@ -15825,4 +15825,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "242598da2dfc35f144a632727cc3dba0fc833e06d87efe6c39f2567a52b49db7" as const
+export const sdkConsumerContractHash = "6cc2b01518aca19cd16859c467232932d80493f744eca9b1b539b4f5ca339570" as const

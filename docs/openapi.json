@@ -2342,12 +2342,12 @@
             ]
           },
           "mrrAbove": {
-            "description": "Minimum MRR in cents (e.g., 10000 = $100)",
+            "description": "Minimum MRR, in currentMrr's smallest currency units (10000 USD is $100)",
             "type": "number",
             "minimum": 0
           },
           "mrrBelow": {
-            "description": "Maximum MRR in cents",
+            "description": "Maximum MRR, in currentMrr's smallest currency units",
             "type": "number",
             "minimum": 0
           },
@@ -4420,7 +4420,7 @@
                       "type": "null"
                     }
                   ],
-                  "description": "Monthly recurring revenue in the currency's minor units (cents); divide by 100, so 1234500 is $12,345. ARR is 12 × this value, in the same minor units. Null unless mrrCalculationStatus is calculated."
+                  "description": "Monthly recurring revenue in the smallest unit of the customer's billing currency, which this result doesn't name: divide by 100 for two-decimal currencies such as USD, EUR, GBP or CAD (1234500 USD is $12,345), use it as is for zero-decimal currencies such as JPY or KRW, and divide by 1000 for three-decimal currencies such as KWD or BHD. ARR is 12 × this value, in the same units. Null unless mrrCalculationStatus is calculated."
                 },
                 "mrrCalculationStatus": {
                   "type": "string",
@@ -5053,7 +5053,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Monthly recurring revenue in the currency's minor units (cents); divide by 100, so 1234500 is $12,345. ARR is 12 × this value, in the same minor units. Null unless mrrCalculationStatus is calculated."
+                "description": "Monthly recurring revenue in the smallest unit of the customer's billing currency, which this result doesn't name: divide by 100 for two-decimal currencies such as USD, EUR, GBP or CAD (1234500 USD is $12,345), use it as is for zero-decimal currencies such as JPY or KRW, and divide by 1000 for three-decimal currencies such as KWD or BHD. ARR is 12 × this value, in the same units. Null unless mrrCalculationStatus is calculated."
               },
               "mrrCalculationStatus": {
                 "type": "string",
@@ -5065,7 +5065,7 @@
               },
               "lifetimeRevenue": {
                 "type": "number",
-                "description": "Lifetime revenue in the currency's minor units (cents); divide by 100."
+                "description": "Lifetime revenue in the smallest unit of the currency it was billed in, with currentMrr's divisors: 100 for USD, EUR, GBP or CAD, 1 for JPY or KRW, 1000 for KWD or BHD."
               },
               "activeSubscriptions": {
                 "type": "integer",
@@ -14296,7 +14296,7 @@
                           "type": "null"
                         }
                       ],
-                      "description": "Annual recurring revenue in the currency's minor units (cents); divide by 100."
+                      "description": "Annual recurring revenue (12 × billing MRR) in the smallest unit of the currency field: divide by 100 for two-decimal currencies such as USD, EUR, GBP or CAD (1234500 USD is $12,345), use it as is for zero-decimal currencies such as JPY or KRW, and divide by 1000 for three-decimal currencies such as KWD or BHD."
                     },
                     "currency": {
                       "anyOf": [
@@ -14568,7 +14568,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Annual recurring revenue in the currency's minor units (cents); divide by 100."
+                "description": "Annual recurring revenue (12 × billing MRR) in the smallest unit of the currency field: divide by 100 for two-decimal currencies such as USD, EUR, GBP or CAD (1234500 USD is $12,345), use it as is for zero-decimal currencies such as JPY or KRW, and divide by 1000 for three-decimal currencies such as KWD or BHD."
               },
               "currency": {
                 "anyOf": [
@@ -15918,5 +15918,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "242598da2dfc35f144a632727cc3dba0fc833e06d87efe6c39f2567a52b49db7"
+  "x-outlit-contract-hash": "6cc2b01518aca19cd16859c467232932d80493f744eca9b1b539b4f5ca339570"
 }

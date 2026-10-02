@@ -328,7 +328,7 @@ Returns `{ "id": "10000000-0000-4000-8000-000000000004", "createdAt": "2026-09-2
 
 The response is the selected tool's JSON result. List tools return paginated collections; exact lookup tools return the matched record or an error when the record cannot be found. Search returns grouped artifact-level `source` and `fact` results, not raw vector chunks. Fact results include provenance fields such as `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink` when available.
 
-Money amounts such as `currentMrr` and `lifetimeRevenue` are in the currency's minor units (cents): `"currentMrr": 25000` is $250 MRR, and ARR is 12 × `currentMrr`.
+Money amounts such as `currentMrr`, `lifetimeRevenue`, and `accountImportance.arrCents` are in the smallest unit of the billing currency, so the divisor depends on the currency: divide by 100 for two-decimal currencies such as USD, EUR, GBP, or CAD, use the value as is for zero-decimal currencies such as JPY or KRW, and divide by 1000 for three-decimal currencies such as KWD or BHD. Attention items return the currency alongside `arrCents`; customer results don't name it. ARR is 12 × `currentMrr`, in the same units. The example below is for a customer billed in USD, so `"currentMrr": 25000` is $250 MRR.
 
 Example list response:
 
