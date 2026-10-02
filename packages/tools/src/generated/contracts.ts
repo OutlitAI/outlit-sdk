@@ -60,7 +60,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "List Customers",
-    "description": "Browse and filter customers. Use this to find customers by billing status, activity recency, revenue, or name. Returns a paginated list with summary info (MRR, last activity, status). currentMrr is in the billing provider's units for the customer's currency, which the result doesn't name. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345 MRR, USD). Other currencies follow the provider's amount rules, so don't assume a divisor for them. ARR is 12 × currentMrr in the same units.",
+    "description": "Browse and filter customers. Use this to find customers by billing status, activity recency, revenue, or name. Returns a paginated list with summary info (MRR, last activity, status). currentMrr is in the billing provider's units for the customer's currency, which the result doesn't name. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345 MRR, USD). Other currencies follow the provider's amount rules. ARR is 12 × currentMrr in the same units.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -861,7 +861,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Optionally include users, revenue, recent activity, engagement metrics, or company enrichment. Revenue amounts (currentMrr, lifetimeRevenue) are in the billing provider's units for the customer's currency, which the result doesn't name. For USD, EUR, GBP and CAD these are cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules, so don't assume a divisor for them. ARR is 12 × currentMrr in the same units.",
+    "description": "Get full details for a single customer. Optionally include users, revenue, recent activity, engagement metrics, or company enrichment. Revenue amounts (currentMrr, lifetimeRevenue) are in the billing provider's units for the customer's currency, which the result doesn't name. For USD, EUR, GBP and CAD these are cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules. ARR is 12 × currentMrr in the same units.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -15825,4 +15825,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "b16eca9135895b27559672d4ebfe9a72efed2745d54de3a1f581b03b2dd0061c" as const
+export const sdkConsumerContractHash = "a6e643200a271e6808e2233bd3a9895bc0b1a44a8bc9bf82fe2578328957e44e" as const
