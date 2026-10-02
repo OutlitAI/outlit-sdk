@@ -90,7 +90,7 @@ Once the skill is installed, OpenClaw learns how to use the full `outlit` CLI. Y
 | "Which event types fire most often?" | `outlit sql "SELECT event_type, COUNT(*) FROM activity GROUP BY 1 ORDER BY 2 DESC LIMIT 10"` |
 | "Show me the available analytics views" | `outlit schema` |
 
-The Outlit skill guides OpenClaw through JSON responses, money values in cents, and pagination. Check its answer against the returned evidence.
+The Outlit skill guides OpenClaw through JSON responses, money values in the billing provider's units (cents for USD, EUR, GBP, and CAD), and pagination. Check its answer against the returned evidence.
 
 ## Scheduled customer digests
 
@@ -124,14 +124,14 @@ openclaw cron add \
 
 ### Revenue snapshot (weekly)
 
-Get a current MRR snapshot for your top accounts.
+Get a current MRR snapshot for your top accounts. The SQL views don't name a currency, so the prompt states it. `mrr_cents` is in the billing provider's units: cents for USD, EUR, GBP, and CAD. Change USD to the currency you bill in; for a currency outside those four, replace the divide-by-100 step with your provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)).
 
 ```bash
 openclaw cron add \
   --name "Revenue Snapshot" \
   --cron "0 9 * * 1" \
   --tz "America/New_York" \
-  --message "Run: outlit sql \"SELECT domain, mrr_cents FROM customers ORDER BY mrr_cents DESC LIMIT 15\". Format as a revenue snapshot table, convert cents to dollars, show rank, and note the total MRR across all listed accounts." \
+  --message "Run: outlit sql \"SELECT domain, mrr_cents FROM customers ORDER BY mrr_cents DESC LIMIT 15\". We bill in USD, so mrr_cents is cents: divide it by 100 for MRR in dollars. Format as a revenue snapshot table, show rank, and note the total MRR across all listed accounts." \
   --announce
 ```
 

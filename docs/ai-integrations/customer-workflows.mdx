@@ -117,11 +117,13 @@ Four read-only views: `activity`, `customers`, `users`, `revenue`. Check the sch
 
 ```bash
 outlit schema customers --json
-outlit sql "SELECT billing_status, sum(mrr_cents)/100 AS mrr FROM customers GROUP BY 1" --json
+outlit sql "SELECT billing_status, sum(mrr_cents)/100 AS mrr FROM customers WHERE mrr_status = 'calculated' GROUP BY 1" --json
 outlit sql "SELECT event_name, count(*) FROM activity GROUP BY 1 ORDER BY 2 DESC LIMIT 10" --json
 ```
 
 SELECT only. `properties`/`traits` columns are JSON strings — inspect with `outlit schema <view>` before filtering nested values.
+
+`mrr_cents` and `lifetime_revenue_cents` are in the billing provider's units: cents for USD, EUR, GBP, and CAD, so `/100` gives the amount in those currencies. Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). The `customers` view doesn't carry a currency, so the sum above is one amount only when every customer bills in the same currency.
 
 ## Recipe: check source coverage before trusting empty answers
 
