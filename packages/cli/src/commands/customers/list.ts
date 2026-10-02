@@ -83,11 +83,12 @@ export default defineCommand({
     },
     "mrr-above": {
       type: "string",
-      description: "Filter by MRR above threshold in cents (e.g. 10000 = $100/mo)",
+      description:
+        "Filter by MRR above threshold, in currentMrr's units: cents for USD, EUR, GBP and CAD (e.g. 10000 = $100/mo in USD)",
     },
     "mrr-below": {
       type: "string",
-      description: "Filter by MRR below threshold in cents",
+      description: "Filter by MRR below threshold, in currentMrr's units",
     },
     "owner-id": {
       type: "string",

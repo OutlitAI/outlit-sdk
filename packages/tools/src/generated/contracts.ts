@@ -60,7 +60,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "List Customers",
-    "description": "Browse and filter customers. Use this to find customers by billing status, activity recency, revenue, or name. Returns a paginated list with summary info (MRR, last activity, status).",
+    "description": "Browse and filter customers. Use this to find customers by billing status, activity recency, revenue, or name. Returns a paginated list with summary info (MRR, last activity, status). currentMrr is in the billing provider's units for the customer's currency, which the result doesn't name. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345 MRR, USD). Other currencies follow the provider's amount rules. ARR is 12 × currentMrr in the same units.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -107,12 +107,12 @@ export const publicToolContracts = {
           ],
         },
         "mrrAbove": {
-          "description": "Minimum MRR in cents (e.g., 10000 = $100)",
+          "description": "Minimum MRR, in currentMrr's units (10000 is $100 for a customer billed in USD)",
           "type": "number",
           "minimum": 0,
         },
         "mrrBelow": {
-          "description": "Maximum MRR in cents",
+          "description": "Maximum MRR, in currentMrr's units",
           "type": "number",
           "minimum": 0,
         },
@@ -276,6 +276,7 @@ export const publicToolContracts = {
                     "type": "null",
                   },
                 ],
+                "description": "Monthly recurring revenue as an integer amount in the billing provider's units for the customer's currency, which this result doesn't name. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. ARR is 12 × this value in the same units. Null unless mrrCalculationStatus is calculated.",
               },
               "mrrCalculationStatus": {
                 "type": "string",
@@ -860,7 +861,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Optionally include users, revenue, recent activity, engagement metrics, or company enrichment.",
+    "description": "Get full details for a single customer. Optionally include users, revenue, recent activity, engagement metrics, or company enrichment. Revenue amounts (currentMrr, lifetimeRevenue) are in the billing provider's units for the customer's currency, which the result doesn't name. For USD, EUR, GBP and CAD these are cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules. ARR is 12 × currentMrr in the same units.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -1131,6 +1132,7 @@ export const publicToolContracts = {
                   "type": "null",
                 },
               ],
+              "description": "Monthly recurring revenue as an integer amount in the billing provider's units for the customer's currency, which this result doesn't name. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. ARR is 12 × this value in the same units. Null unless mrrCalculationStatus is calculated.",
             },
             "mrrCalculationStatus": {
               "type": "string",
@@ -1142,6 +1144,7 @@ export const publicToolContracts = {
             },
             "lifetimeRevenue": {
               "type": "number",
+              "description": "Lifetime revenue in the billing provider's units for the currency it was billed in, like currentMrr: cents for USD, EUR, GBP and CAD, so divide by 100. Other currencies follow the provider's amount rules, so don't assume a divisor for them.",
             },
             "activeSubscriptions": {
               "type": "integer",
@@ -12470,6 +12473,7 @@ export const publicToolContracts = {
                         "type": "null",
                       },
                     ],
+                    "description": "Annual recurring revenue (12 × billing MRR) in the billing provider's units for the currency field. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). For other currencies, use the provider's amount rules for that currency (Stripe's currency docs) rather than assuming a divisor.",
                   },
                   "currency": {
                     "anyOf": [
@@ -12770,6 +12774,7 @@ export const publicToolContracts = {
                   "type": "null",
                 },
               ],
+              "description": "Annual recurring revenue (12 × billing MRR) in the billing provider's units for the currency field. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). For other currencies, use the provider's amount rules for that currency (Stripe's currency docs) rather than assuming a divisor.",
             },
             "currency": {
               "anyOf": [
@@ -15820,4 +15825,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "ef50db53b08b67d02c0b6b17e7e5a0181e6a078f2a3ab3f09ca1b807765e149c" as const
+export const sdkConsumerContractHash = "a6e643200a271e6808e2233bd3a9895bc0b1a44a8bc9bf82fe2578328957e44e" as const

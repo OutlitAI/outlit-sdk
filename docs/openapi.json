@@ -2342,12 +2342,12 @@
             ]
           },
           "mrrAbove": {
-            "description": "Minimum MRR in cents (e.g., 10000 = $100)",
+            "description": "Minimum MRR, in currentMrr's units (10000 is $100 for a customer billed in USD)",
             "type": "number",
             "minimum": 0
           },
           "mrrBelow": {
-            "description": "Maximum MRR in cents",
+            "description": "Maximum MRR, in currentMrr's units",
             "type": "number",
             "minimum": 0
           },
@@ -4419,7 +4419,8 @@
                     {
                       "type": "null"
                     }
-                  ]
+                  ],
+                  "description": "Monthly recurring revenue as an integer amount in the billing provider's units for the customer's currency, which this result doesn't name. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. ARR is 12 × this value in the same units. Null unless mrrCalculationStatus is calculated."
                 },
                 "mrrCalculationStatus": {
                   "type": "string",
@@ -5051,7 +5052,8 @@
                   {
                     "type": "null"
                   }
-                ]
+                ],
+                "description": "Monthly recurring revenue as an integer amount in the billing provider's units for the customer's currency, which this result doesn't name. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. ARR is 12 × this value in the same units. Null unless mrrCalculationStatus is calculated."
               },
               "mrrCalculationStatus": {
                 "type": "string",
@@ -5062,7 +5064,8 @@
                 ]
               },
               "lifetimeRevenue": {
-                "type": "number"
+                "type": "number",
+                "description": "Lifetime revenue in the billing provider's units for the currency it was billed in, like currentMrr: cents for USD, EUR, GBP and CAD, so divide by 100. Other currencies follow the provider's amount rules, so don't assume a divisor for them."
               },
               "activeSubscriptions": {
                 "type": "integer",
@@ -14292,7 +14295,8 @@
                         {
                           "type": "null"
                         }
-                      ]
+                      ],
+                      "description": "Annual recurring revenue (12 × billing MRR) in the billing provider's units for the currency field. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). For other currencies, use the provider's amount rules for that currency (Stripe's currency docs) rather than assuming a divisor."
                     },
                     "currency": {
                       "anyOf": [
@@ -14563,7 +14567,8 @@
                   {
                     "type": "null"
                   }
-                ]
+                ],
+                "description": "Annual recurring revenue (12 × billing MRR) in the billing provider's units for the currency field. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). For other currencies, use the provider's amount rules for that currency (Stripe's currency docs) rather than assuming a divisor."
               },
               "currency": {
                 "anyOf": [
@@ -15913,5 +15918,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "ef50db53b08b67d02c0b6b17e7e5a0181e6a078f2a3ab3f09ca1b807765e149c"
+  "x-outlit-contract-hash": "a6e643200a271e6808e2233bd3a9895bc0b1a44a8bc9bf82fe2578328957e44e"
 }

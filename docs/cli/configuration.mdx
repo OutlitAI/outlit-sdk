@@ -195,10 +195,12 @@ The CLI formats values for readability in TTY mode:
 
 | Type | Raw value | Displayed as |
 |------|-----------|-------------|
-| MRR (cents) | `500000` | `$5000.00` |
+| MRR | `500000` | `$5000.00` |
 | Date | `2025-02-10T15:30:00Z` | `2d ago` |
 | Long names | `Very Long Customer Name Inc` | `Very Long Custo...` |
 | Missing values | `null` / `undefined` | `--` |
+
+The MRR column always divides `currentMrr` by 100 and shows `$`, because the list result doesn't name the customer's currency. That is right for customers billed in USD. For EUR, GBP, and CAD the amount is right but the symbol isn't. Other currencies follow the billing provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)), so the amount can be wrong too: JPY has no minor unit, so `500000` is ¥500,000, not `$5000.00`. Use `--json` for the raw `currentMrr`.
 
 ### Relative date format
 
