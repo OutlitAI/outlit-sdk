@@ -123,7 +123,7 @@ outlit sql "SELECT event_name, count(*) FROM activity GROUP BY 1 ORDER BY 2 DESC
 
 SELECT only. `properties`/`traits` columns are JSON strings — inspect with `outlit schema <view>` before filtering nested values.
 
-`mrr_cents` and `lifetime_revenue_cents` are in the billing provider's units: cents for USD, EUR, GBP, and CAD, so `/100` gives the amount in those currencies. Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). The `customers` view doesn't carry a currency, so the sum above is one amount only when every customer bills in the same currency.
+`mrr_cents` and `lifetime_revenue_cents` are in the billing provider's units: cents for USD, EUR, GBP, and CAD, so `/100` gives the amount in those currencies. Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). The `customers` view doesn't carry a currency, so the sum above is one amount only when every customer bills in the same currency. The `revenue` view has a `currency` column on each snapshot; group by it to keep currencies apart.
 
 ## Recipe: check source coverage before trusting empty answers
 

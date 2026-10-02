@@ -124,7 +124,7 @@ openclaw cron add \
 
 ### Revenue snapshot (weekly)
 
-Get a current MRR snapshot for your top accounts. The SQL views don't name a currency, so the prompt states it. `mrr_cents` is in the billing provider's units: cents for USD, EUR, GBP, and CAD. Change USD to the currency you bill in; for a currency outside those four, replace the divide-by-100 step with your provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)).
+Get a current MRR snapshot for your top accounts. This recipe assumes every account bills in one currency: the `customers` view doesn't name a currency, so the prompt states it. `mrr_cents` is in the billing provider's units: cents for USD, EUR, GBP, and CAD. Change USD to the currency you bill in; for a currency outside those four, replace the divide-by-100 step with your provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). If your accounts bill in more than one currency, the ranking and the total would mix units. Use the `revenue` view instead, which has a `currency` column on each snapshot, and rank and total within each currency.
 
 ```bash
 openclaw cron add \
