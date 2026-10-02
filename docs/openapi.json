@@ -4419,7 +4419,8 @@
                     {
                       "type": "null"
                     }
-                  ]
+                  ],
+                  "description": "Monthly recurring revenue in the currency's minor units (cents); divide by 100, so 1234500 is $12,345. ARR is 12 × this value, in the same minor units. Null unless mrrCalculationStatus is calculated."
                 },
                 "mrrCalculationStatus": {
                   "type": "string",
@@ -5051,7 +5052,8 @@
                   {
                     "type": "null"
                   }
-                ]
+                ],
+                "description": "Monthly recurring revenue in the currency's minor units (cents); divide by 100, so 1234500 is $12,345. ARR is 12 × this value, in the same minor units. Null unless mrrCalculationStatus is calculated."
               },
               "mrrCalculationStatus": {
                 "type": "string",
@@ -5062,7 +5064,8 @@
                 ]
               },
               "lifetimeRevenue": {
-                "type": "number"
+                "type": "number",
+                "description": "Lifetime revenue in the currency's minor units (cents); divide by 100."
               },
               "activeSubscriptions": {
                 "type": "integer",
@@ -14292,7 +14295,8 @@
                         {
                           "type": "null"
                         }
-                      ]
+                      ],
+                      "description": "Annual recurring revenue in the currency's minor units (cents); divide by 100."
                     },
                     "currency": {
                       "anyOf": [
@@ -14563,7 +14567,8 @@
                   {
                     "type": "null"
                   }
-                ]
+                ],
+                "description": "Annual recurring revenue in the currency's minor units (cents); divide by 100."
               },
               "currency": {
                 "anyOf": [
@@ -15913,5 +15918,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "ef50db53b08b67d02c0b6b17e7e5a0181e6a078f2a3ab3f09ca1b807765e149c"
+  "x-outlit-contract-hash": "242598da2dfc35f144a632727cc3dba0fc833e06d87efe6c39f2567a52b49db7"
 }
