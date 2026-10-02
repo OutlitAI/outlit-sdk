@@ -143,6 +143,8 @@ The fingerprint must be:
 ```rust
 use outlit::{Outlit, fingerprint, email};
 
+let client = Outlit::builder("pk_your_public_key").build()?;
+
 // Get or generate device fingerprint (store in app data)
 let device_id = get_or_create_device_id();
 
@@ -163,6 +165,8 @@ client.identify(email("user@example.com"))
   <Tab title="Node.js (React native)">
 ```typescript
 import { Outlit } from '@outlit/node'
+
+const outlit = new Outlit({ publicKey: 'pk_your_public_key' })
 
 // Get or generate device fingerprint
 const deviceId = await getOrCreateDeviceId()
