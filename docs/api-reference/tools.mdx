@@ -328,6 +328,8 @@ Returns `{ "id": "10000000-0000-4000-8000-000000000004", "createdAt": "2026-09-2
 
 The response is the selected tool's JSON result. List tools return paginated collections; exact lookup tools return the matched record or an error when the record cannot be found. Search returns grouped artifact-level `source` and `fact` results, not raw vector chunks. Fact results include provenance fields such as `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink` when available.
 
+Money amounts such as `currentMrr` and `lifetimeRevenue` are in the currency's minor units (cents): `"currentMrr": 25000` is $250 MRR, and ARR is 12 × `currentMrr`.
+
 Example list response:
 
 ```json
@@ -342,7 +344,7 @@ Example list response:
       "firstSeenAt": "2025-12-02T17:05:00.000Z",
       "lastActivityAt": "2026-04-10T18:22:11.000Z",
       "contactCount": 42,
-      "currentMrr": 250,
+      "currentMrr": 25000,
       "mrrCalculationStatus": "calculated",
       "owner": null,
       "daysSinceActivity": 3
