@@ -203,6 +203,57 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 }
 ```
 
+Omit `customer` to search across all customers. The top-level `customer` is the
+customer you scoped to, or `null` for a search across customers. Each `source` and
+`fact` result also carries a `customer` (`id`, `name`, `domain`) naming the customer
+it belongs to. A result's `customer` is `null` when it can't be attributed to exactly
+one customer you can read. Servers that predate the field omit it, so treat a missing
+`customer` like `null`.
+
+```json
+{
+  "tool": "outlit_search_customer_context",
+  "input": {
+    "query": "Who raised security concerns?",
+    "topK": 5
+  }
+}
+```
+
+Example response with two source results:
+
+```json
+{
+  "customer": null,
+  "results": [
+    {
+      "kind": "source",
+      "score": 0.91,
+      "sourceType": "EMAIL",
+      "sourceId": "email_123",
+      "customer": { "id": "cust_123", "name": "Acme", "domain": "acme.com" },
+      "occurredAt": "2026-08-12T14:05:00Z",
+      "title": "Security review before renewal",
+      "permalink": null,
+      "matchCount": 1,
+      "matches": [{ "text": "Can you send your SOC 2 Type II report before we renew?" }]
+    },
+    {
+      "kind": "source",
+      "score": 0.87,
+      "sourceType": "CALL",
+      "sourceId": "call_456",
+      "customer": { "id": "cust_789", "name": "Globex", "domain": "globex.com" },
+      "occurredAt": "2026-08-20T16:00:00Z",
+      "title": "Q3 business review",
+      "permalink": null,
+      "matchCount": 2,
+      "matches": [{ "text": "Their CISO asked about data residency and SSO enforcement." }]
+    }
+  ]
+}
+```
+
 ### List active contact transition facts
 
 ```json

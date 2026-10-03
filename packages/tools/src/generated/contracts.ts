@@ -4605,6 +4605,48 @@ export const publicToolContracts = {
                   "score": {
                     "type": "number",
                   },
+                  "customer": {
+                    "description": "The customer this result belongs to. Null when it can't be attributed to exactly one customer the caller can read.",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                          },
+                          "name": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                          "domain": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "domain",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
                   "matchCount": {
                     "type": "integer",
                     "minimum": 0,
@@ -5134,6 +5176,48 @@ export const publicToolContracts = {
                   },
                   "sourceId": {
                     "type": "string",
+                  },
+                  "customer": {
+                    "description": "The customer this result belongs to. Null when it can't be attributed to exactly one customer the caller can read.",
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                          },
+                          "name": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                          "domain": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "domain",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
                   },
                   "occurredAt": {
                     "anyOf": [
@@ -15825,4 +15909,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "a6e643200a271e6808e2233bd3a9895bc0b1a44a8bc9bf82fe2578328957e44e" as const
+export const sdkConsumerContractHash = "dc00a0ca2933e89c21ccb47528cba3d3ed55fe8be9e315f302528245b263fce4" as const
