@@ -1,5 +1,15 @@
 # @outlit/tools
 
+## 2.2.3
+
+### Patch Changes
+
+- [#238](https://github.com/OutlitAI/outlit-sdk/pull/238) [`080062f`](https://github.com/OutlitAI/outlit-sdk/commit/080062f673e4f62d0440a46aaf6b7c23edee5a7a) Thanks [@leo-paz](https://github.com/leo-paz)! - Expose Core's four scoped identity repair tools and expanded customer merge impact contract through the generated SDK tool schemas and OpenAPI document, and release compatible CLI and Pi consumers.
+
+- [#242](https://github.com/OutlitAI/outlit-sdk/pull/242) [`157af7e`](https://github.com/OutlitAI/outlit-sdk/commit/157af7eb2c27cfdc4513cb85767fe1945cd58080) Thanks [@leo-paz](https://github.com/leo-paz)! - Regenerate tool contracts so each `outlit_search_customer_context` result can name its customer: `source` and `fact` results carry an optional `customer` (`id`, `name`, `domain`), which is `null` when the result can't be attributed to exactly one customer the caller can read. A search across customers now says whose source or fact matched. The field is additive and optional, so responses from servers that predate it still parse; treat a missing `customer` like `null`. The API reference and CLI docs show the field. Companion to OutlitAI/Core#2569.
+
+- [#239](https://github.com/OutlitAI/outlit-sdk/pull/239) [`b49f582`](https://github.com/OutlitAI/outlit-sdk/commit/b49f582fcef19b13faf43c52f971d183f49b9e05) Thanks [@leo-paz](https://github.com/leo-paz)! - Regenerate tool contracts with the unit on money fields: `currentMrr` and `lifetimeRevenue` (list and get customer) and `accountImportance.arrCents` (attention) are in the billing provider's units for the currency they were billed in. For USD, EUR, GBP and CAD these are cents, so divide by 100; other currencies follow the provider's amount rules, so the descriptions don't assume a divisor for them. ARR is 12 × `currentMrr` in the same units. The CLI's `--mrr-above`/`--mrr-below` help and shell completions now say the threshold is in `currentMrr`'s units rather than cents, and the CLI and agent docs state the same units. Descriptions only; no field shapes change. Companion to OutlitAI/Core#2557.
+
 ## 2.2.2
 
 ### Patch Changes
