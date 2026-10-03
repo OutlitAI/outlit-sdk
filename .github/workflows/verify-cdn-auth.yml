@@ -1,0 +1,55 @@
+name: Verify CDN Auth
+
+# Manual-only Workload Identity Federation check for the CDN deploy path.
+# Proves GitHub OIDC token exchange, service account impersonation, and read
+# access to the CDN bucket without publishing packages or writing any CDN
+# object. Safe to run from main before the legacy GCP_CREDENTIALS service
+# account key is retired.
+
+on:
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  verify-cdn-auth:
+    name: Verify WIF exchange and CDN read
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Required for Workload Identity Federation (google-github-actions/auth)
+    steps:
+      # Required before auth so the generated credentials file lands in the workspace.
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Show authenticated identity
+        run: gcloud auth list --filter=status:ACTIVE --format='value(account)'
+
+      # Exercises the full chain: OIDC -> sts -> iamcredentials.generateAccessToken.
+      # Fails without the workloadIdentityUser binding. The token is checked for
+      # presence but never written to logs or step output.
+      - name: Mint short-lived service account token (not printed)
+        run: |
+          TOKEN=$(gcloud auth print-access-token)
+          test -n "$TOKEN"
+          echo "Access token minted (${#TOKEN} chars; value not printed)"
+          unset TOKEN
+
+      - name: List CDN objects (read-only)
+        run: gcloud storage objects list gs://cdn.outlit.ai/ --limit=5 --format='value(name)'
+
+      - name: Read stable CDN object metadata (read-only)
+        run: |
+          gcloud storage objects describe gs://cdn.outlit.ai/stable/outlit.js \
+            --format='value(name,size,updated,cache_control,content_type)'

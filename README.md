@@ -286,7 +286,14 @@ For maintainers setting up the repository:
 | Secret | Description |
 |--------|-------------|
 | `NPM_TOKEN` | npm access token with publish permission for `@outlit` scope |
-| `GCP_CREDENTIALS` | Service account JSON key with Storage Object Admin on `cdn.outlit.ai` bucket |
+
+CDN deploys authenticate to Google Cloud via Workload Identity Federation instead of a stored
+service account key. Maintainers configure these repository **variables**:
+
+| Variable | Description |
+|----------|-------------|
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Full WIF provider resource name (`projects/<number>/locations/global/workloadIdentityPools/<pool>/providers/<provider>`) |
+| `GCP_SERVICE_ACCOUNT` | Deploy service account email with Storage Object Admin on `cdn.outlit.ai` bucket |
 
 #### Creating NPM_TOKEN
 
@@ -295,14 +302,17 @@ For maintainers setting up the repository:
 3. Set permissions: Read and write for `@outlit` packages
 4. Copy the token and add as `NPM_TOKEN` secret in GitHub
 
-#### Creating GCP_CREDENTIALS
+#### Creating the GCP Workload Identity setup
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Navigate to IAM & Admin → Service Accounts
-3. Create a new service account (e.g., `github-actions-deployer`)
+3. Use the deploy service account (`github-actions-cdn-deploy`)
 4. Grant "Storage Object Admin" role on the `cdn.outlit.ai` bucket
-5. Create a JSON key for the service account
-6. Copy the entire JSON content and add as `GCP_CREDENTIALS` secret in GitHub
+5. Create a dedicated Workload Identity Pool for this repo with an OIDC provider for GitHub (issuer `https://token.actions.githubusercontent.com`), restricted by attribute condition to this repository's immutable IDs and the `release`/`verify-cdn-auth` workflows on `refs/heads/main`
+6. Grant the pool's `attribute.repository_id` principalSet `roles/iam.workloadIdentityUser` on the service account
+7. Add `GCP_WORKLOAD_IDENTITY_PROVIDER` and `GCP_SERVICE_ACCOUNT` as repository variables
+
+No service account key JSON is created or stored in GitHub.
 
 ### CDN Deployment
 
