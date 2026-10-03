@@ -1,20 +1,30 @@
 name: Verify CDN Auth
 
 # Manual-only Workload Identity Federation check for the CDN deploy path.
-# Proves GitHub OIDC token exchange, service account impersonation, and read
-# access to the CDN bucket without publishing packages or writing any CDN
-# object. Safe to run from main before the legacy GCP_CREDENTIALS service
-# account key is retired.
+# Default run is read-only: OIDC token exchange, service account impersonation
+# (token mint), and bounded object list/read on gs://cdn.outlit.ai. Setting
+# verify_write=true additionally uploads one small non-secret text object to a
+# unique __compliance_checks/github-actions/ path, reads it back, compares the
+# content, and deletes only that object. No packages are published and no CDN
+# release path is touched. Safe to run from main before the legacy
+# GCP_CREDENTIALS service account key is retired.
 
 on:
   workflow_dispatch:
+    inputs:
+      verify_write:
+        description: "Also write a ~100-byte public test object at __compliance_checks/github-actions/<run_id>-<run_attempt>.txt, verify its content, then delete it. Off (default) runs read-only."
+        required: false
+        type: boolean
+        default: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  TEST_OBJECT: gs://cdn.outlit.ai/__compliance_checks/github-actions/${{ github.run_id }}-${{ github.run_attempt }}.txt
 
 jobs:
   verify-cdn-auth:
-    name: Verify WIF exchange and CDN read
+    name: Verify WIF exchange and CDN access
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,6 +35,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -40,6 +51,7 @@ jobs:
       # Fails without the workloadIdentityUser binding. The token is checked for
       # presence but never written to logs or step output.
       - name: Mint short-lived service account token (not printed)
+        id: mint
         run: |
           TOKEN=$(gcloud auth print-access-token)
           test -n "$TOKEN"
@@ -47,9 +59,78 @@ jobs:
           unset TOKEN
 
       - name: List CDN objects (read-only)
+        id: read_list
         run: gcloud storage objects list gs://cdn.outlit.ai/ --limit=5 --format='value(name)'
 
       - name: Read stable CDN object metadata (read-only)
+        id: read_describe
         run: |
           gcloud storage objects describe gs://cdn.outlit.ai/stable/outlit.js \
             --format='value(name,size,updated,cache_control,content_type)'
+
+      # verify_write path: uploads a tiny non-secret text object under a unique
+      # per-run key with if-generation-match=0 so it can never overwrite an
+      # existing object. The created generation is parsed from cp's
+      # --print-created-message version-specific URL (no describe, so it can
+      # never observe a replacement). Read-back and delete are pinned to that
+      # exact generation via URL#generation.
+      - name: Write unique test object
+        if: inputs.verify_write
+        id: write_test
+        run: |
+          printf 'outlit-sdk CDN auth write verification\nrun_id=%s\nrun_attempt=%s\nsha=%s\n' \
+            "${{ github.run_id }}" "${{ github.run_attempt }}" "${{ github.sha }}" \
+            > "$RUNNER_TEMP/cdn-auth-expected.txt"
+          if ! gcloud storage cp "$RUNNER_TEMP/cdn-auth-expected.txt" "${{ env.TEST_OBJECT }}" \
+              --if-generation-match=0 \
+              --content-type="text/plain" \
+              --cache-control="no-store" \
+              --print-created-message > "$RUNNER_TEMP/cdn-auth-upload.log" 2>&1; then
+            cat "$RUNNER_TEMP/cdn-auth-upload.log"
+            echo "::error::test object upload failed"
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/cdn-auth-upload.log"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+          URL_RE=$(printf '%s' "${{ env.TEST_OBJECT }}" | sed 's/\./\\./g')
+          GEN=$(grep -oE "${URL_RE}#[0-9]+" "$RUNNER_TEMP/cdn-auth-upload.log" | tail -n 1)
+          GEN=${GEN##*#}
+          case "$GEN" in
+            ''|*[!0-9]*) echo "::error::could not parse created generation for ${{ env.TEST_OBJECT }}"; exit 1 ;;
+          esac
+          echo "generation=$GEN" >> "$GITHUB_OUTPUT"
+          echo "Test object created (generation $GEN)"
+
+      - name: Read back and compare test object
+        if: inputs.verify_write && steps.write_test.outputs.created == 'true' && steps.write_test.outputs.generation != ''
+        id: read_back
+        run: |
+          gcloud storage cp "${{ env.TEST_OBJECT }}#${{ steps.write_test.outputs.generation }}" \
+            "$RUNNER_TEMP/cdn-auth-actual.txt"
+          cmp "$RUNNER_TEMP/cdn-auth-expected.txt" "$RUNNER_TEMP/cdn-auth-actual.txt" \
+            || { echo "::error::test object content mismatch"; exit 1; }
+          echo "Test object generation ${{ steps.write_test.outputs.generation }} verified byte-for-byte"
+
+      # Runs even when earlier verify_write steps fail, but only after the
+      # object was actually created. Deletes only the captured generation via
+      # URL#generation; refuses to run without a pinned generation.
+      - name: Delete test object
+        if: always() && inputs.verify_write && steps.write_test.outputs.created == 'true'
+        id: cleanup
+        run: |
+          GEN="${{ steps.write_test.outputs.generation }}"
+          test -n "$GEN" || { echo "::error::created object generation unknown - refusing to delete an unpinned generation; ${{ env.TEST_OBJECT }} may remain"; exit 1; }
+          gcloud storage rm "${{ env.TEST_OBJECT }}#${GEN}"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## CDN Auth Verification"
+            echo "Requested mode: $([ "${{ inputs.verify_write }}" = "true" ] && echo write-verify || echo read-only)"
+            echo "auth=${{ steps.auth.outcome }} mint=${{ steps.mint.outcome }} list=${{ steps.read_list.outcome }} describe=${{ steps.read_describe.outcome }}"
+            if [ "${{ inputs.verify_write }}" = "true" ]; then
+              echo "write=${{ steps.write_test.outcome }} readback=${{ steps.read_back.outcome }} delete=${{ steps.cleanup.outcome }}"
+              echo "test object: \`${{ env.TEST_OBJECT }}\` (non-secret run metadata only)"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
