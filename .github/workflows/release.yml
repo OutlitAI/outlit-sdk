@@ -104,6 +104,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+      id-token: write # Required for Workload Identity Federation (google-github-actions/auth)
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -166,7 +167,8 @@ jobs:
         if: steps.changesets.outputs.count != '0'
         uses: google-github-actions/auth@v3
         with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
       - name: Setup gcloud
         if: steps.changesets.outputs.count != '0'
@@ -209,6 +211,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write # Required for Workload Identity Federation (google-github-actions/auth)
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -240,7 +243,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
       - name: Setup gcloud
         uses: google-github-actions/setup-gcloud@v3
