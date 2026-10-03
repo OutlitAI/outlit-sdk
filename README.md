@@ -274,6 +274,7 @@ The changeset file will be committed with your PR and used to generate changelog
 
 - **CI** (`ci.yml`) - Runs on PRs: lint, typecheck, build, test
 - **Release** (`release.yml`) - Runs on main: publish canary to npm + CDN, create version PR or publish stable releases
+- **Verify CDN Auth** (`verify-cdn-auth.yml`) - Manual only: checks Workload Identity Federation exchange and CDN read access; the optional `verify_write` input writes then deletes one tiny test object under `__compliance_checks/`
 
 Stable releases are intentionally separate from SDK source merges. See
 [`docs/release-coordination.md`](docs/release-coordination.md) for the Version Packages checklist
