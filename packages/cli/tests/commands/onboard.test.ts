@@ -108,7 +108,10 @@ describe("onboard", () => {
     )
 
     const fetchInit = fetchSpy.mock.calls[0]?.[1] as RequestInit | undefined
-    expect(fetchInit?.headers).toEqual({ Authorization: `Bearer ${TEST_API_KEY}` })
+    expect(fetchInit?.headers).toEqual({
+      Authorization: `Bearer ${TEST_API_KEY}`,
+      "Outlit-Api-Key-Contract": "2",
+    })
     expect(fetchUrls(fetchSpy)).toEqual([
       "https://app.outlit.ai/api/validate-api-key",
       "https://app.outlit.ai/api/tools/call",

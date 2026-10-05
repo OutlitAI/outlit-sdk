@@ -115,6 +115,7 @@ describe("auth login", () => {
           method: "POST",
           headers: {
             Authorization: `Bearer ${TEST_API_KEY}`,
+            "Outlit-Api-Key-Contract": "2",
           },
         },
       ],

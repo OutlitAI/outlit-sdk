@@ -29,9 +29,11 @@ export {
   resolveCustomerContextSearchInput,
 } from "./contracts.js"
 export {
+  apiKeyContractHeader,
   apiKeyGrants,
   apiKeyValidationFailureSchema,
   apiKeyValidationSuccessSchema,
+  apiKeyValidationSuccessSchemaV2,
   apiKeyValidationTransport,
   consumerToolPolicies,
   contractVersion,
@@ -67,6 +69,7 @@ export {
 export type {
   ApiKeyValidationFailure,
   ApiKeyValidationSuccess,
+  ApiKeyValidationSuccessV2,
   AttentionItem,
   AttentionItemResult,
   AttentionItemSummary,

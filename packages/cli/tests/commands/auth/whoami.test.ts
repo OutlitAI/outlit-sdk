@@ -86,6 +86,7 @@ describe("auth whoami", () => {
         method: "POST",
         headers: {
           Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
+          "Outlit-Api-Key-Contract": "2",
         },
       })
 
@@ -150,6 +151,7 @@ describe("auth whoami", () => {
         method: "POST",
         headers: {
           Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
+          "Outlit-Api-Key-Contract": "2",
         },
       })
 
@@ -189,6 +191,7 @@ describe("auth whoami", () => {
         method: "POST",
         headers: {
           Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
+          "Outlit-Api-Key-Contract": "2",
         },
       })
       stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")

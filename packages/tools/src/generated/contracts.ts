@@ -16066,6 +16066,229 @@ export const apiKeyValidationFailureSchema = {
   "additionalProperties": false,
 } as const
 
+export const apiKeyContractHeader = "Outlit-Api-Key-Contract" as const
+
+export const apiKeyValidationSuccessSchemaV2 = {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "valid": {
+      "type": "boolean",
+      "const": true,
+    },
+    "organizationId": {
+      "type": "string",
+    },
+    "createdById": {
+      "anyOf": [
+        {
+          "type": "string",
+        },
+        {
+          "type": "null",
+        },
+      ],
+    },
+    "organization": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "slug": {
+          "anyOf": [
+            {
+              "type": "string",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "id",
+        "name",
+        "slug",
+      ],
+      "additionalProperties": false,
+    },
+    "createdBy": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+            },
+            "email": {
+              "type": "string",
+            },
+            "name": {
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+          },
+          "required": [
+            "id",
+            "email",
+            "name",
+          ],
+          "additionalProperties": false,
+        },
+        {
+          "type": "null",
+        },
+      ],
+    },
+    "apiKey": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+        },
+        "name": {
+          "type": "string",
+        },
+        "prefix": {
+          "type": "string",
+        },
+        "keyType": {
+          "type": "string",
+          "enum": [
+            "api",
+            "cli",
+            "mcp",
+            "ci",
+          ],
+        },
+        "grants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "customer_intelligence:read",
+              "workspace_members:read",
+              "analytics:read",
+              "destinations:manage",
+              "behavior_metrics:manage",
+              "integrations:connect_own",
+              "integrations:manage",
+              "activation:read",
+              "activation:manage",
+              "workspace_settings:read",
+              "workspace_settings:manage",
+              "customer_access:manage",
+              "customer_identity:review",
+              "customer_identity:merge",
+            ],
+          },
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+        },
+        "lastUsedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "totalRequests": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+        },
+        "expiresAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "id",
+        "name",
+        "prefix",
+        "keyType",
+        "grants",
+        "createdAt",
+        "lastUsedAt",
+        "totalRequests",
+        "expiresAt",
+      ],
+      "additionalProperties": false,
+    },
+    "authorization": {
+      "type": "object",
+      "properties": {
+        "grants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "customer_intelligence:read",
+              "workspace_members:read",
+              "analytics:read",
+              "destinations:manage",
+              "behavior_metrics:manage",
+              "integrations:connect_own",
+              "integrations:manage",
+              "activation:read",
+              "activation:manage",
+              "workspace_settings:read",
+              "workspace_settings:manage",
+              "customer_access:manage",
+              "customer_identity:review",
+              "customer_identity:merge",
+            ],
+          },
+        },
+      },
+      "required": [
+        "grants",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "required": [
+    "valid",
+    "organizationId",
+    "createdById",
+    "authorization",
+  ],
+  "additionalProperties": false,
+} as const
+
 export const toolGatewayErrorCodes = [
   "INVALID_JSON",
   "INVALID_TOOL_CALL",
@@ -17136,4 +17359,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "4487d082473e65e51514b2a491210e1aab16dc7b0045412e4c11e6d89bc4ab5a" as const
+export const sdkConsumerContractHash = "0bb35218a281339fd1668fe7e7b22eadde7abddc9dfd957d3d72aa8db0a1365a" as const

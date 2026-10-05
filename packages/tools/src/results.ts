@@ -2,6 +2,7 @@ import type { PublicToolName } from "./contracts.js"
 import {
   apiKeyValidationFailureSchema,
   apiKeyValidationSuccessSchema,
+  apiKeyValidationSuccessSchemaV2,
   publicToolContracts,
 } from "./generated/contracts.js"
 
@@ -65,6 +66,8 @@ export type PublicToolResult<TToolName extends PublicToolName> = JsonSchemaValue
 >
 
 export type ApiKeyValidationSuccess = JsonSchemaValue<typeof apiKeyValidationSuccessSchema>
+/** v2 adds `apiKey.expiresAt`; returned only to requests that send `apiKeyContractHeader: 2`. */
+export type ApiKeyValidationSuccessV2 = JsonSchemaValue<typeof apiKeyValidationSuccessSchemaV2>
 export type ApiKeyValidationFailure = JsonSchemaValue<typeof apiKeyValidationFailureSchema>
 
 export type CustomerListResult = PublicToolResult<"outlit_list_customers">

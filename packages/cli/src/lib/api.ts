@@ -1,7 +1,10 @@
 import {
   type ApiKeyValidationSuccess,
+  type ApiKeyValidationSuccessV2,
+  apiKeyContractHeader,
   apiKeyValidationFailureSchema,
   apiKeyValidationSuccessSchema,
+  apiKeyValidationSuccessSchemaV2,
   apiKeyValidationTransport,
   type CliToolName,
   isOutlitToolsApiError,
@@ -10,6 +13,7 @@ import {
 import type { OutlitClient, OutlitToolParams } from "./client"
 import { createClient } from "./client"
 import { DEFAULT_API_URL } from "./config"
+import { warnIfKeyExpiresSoon } from "./key-expiry"
 import { errorMessage, isJsonMode, outputError, outputResult } from "./output"
 import { createSpinner } from "./spinner"
 import { renderPaginationHint, renderTable } from "./table"
@@ -35,7 +39,8 @@ export interface RunToolOptions {
   transform?: (data: unknown) => unknown
 }
 
-export type ApiKeyValidationPayload = ApiKeyValidationSuccess
+/** v2 when the server knows the contract (it then says when the key expires), v1 otherwise. */
+export type ApiKeyValidationPayload = ApiKeyValidationSuccess | ApiKeyValidationSuccessV2
 
 export class ApiKeyValidationUnavailableError extends Error {
   readonly status = 503
@@ -79,6 +84,8 @@ export async function pingApiKey(apiKey: string): Promise<ApiKeyValidationPayloa
     method: apiKeyValidationTransport.method,
     headers: {
       Authorization: `Bearer ${apiKey}`,
+      // Ask for v2 (adds the key's expiry); a server that predates it answers v1.
+      [apiKeyContractHeader]: "2",
     },
   })
 
@@ -101,11 +108,12 @@ export async function pingApiKey(apiKey: string): Promise<ApiKeyValidationPayloa
     throw new ApiKeyValidationUnavailableError(message)
   }
 
-  if (
-    response.status === apiKeyValidationTransport.responseStatuses.success &&
-    matchesGeneratedJsonSchema(payload, apiKeyValidationSuccessSchema)
-  ) {
-    return payload
+  if (response.status === apiKeyValidationTransport.responseStatuses.success) {
+    if (matchesGeneratedJsonSchema(payload, apiKeyValidationSuccessSchemaV2)) {
+      warnIfKeyExpiresSoon(payload.apiKey?.expiresAt)
+      return payload
+    }
+    if (matchesGeneratedJsonSchema(payload, apiKeyValidationSuccessSchema)) return payload
   }
 
   const message = matchesGeneratedJsonSchema(payload, apiKeyValidationFailureSchema)
