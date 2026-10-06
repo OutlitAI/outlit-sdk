@@ -3,12 +3,16 @@ import { resolve } from "node:path"
 import { describe, expect, expectTypeOf, test, vi } from "vitest"
 
 import {
+  type ApiKeyValidationSuccessV2,
   type AttentionItemResult,
   type AttentionItemSummary,
   type AttentionListResult,
   allPublicToolNames,
   analyticalToolNames,
+  apiKeyContractHeader,
   apiKeyGrants,
+  apiKeyValidationSuccessSchema,
+  apiKeyValidationSuccessSchemaV2,
   apiKeyValidationTransport,
   type CustomerAnalyticsRow,
   type CustomerContextSearchInput,
@@ -300,6 +304,35 @@ describe("tool contracts", () => {
     expect(toolGatewayErrorSchema.properties.code.enum).toEqual(toolGatewayErrorCodes)
     expect(toolGatewayErrorSchema.required).toEqual(["code", "message", "retryable", "requestId"])
     expect(toolGatewayErrorSchema.additionalProperties).toBe(false)
+  })
+
+  test("exports the v2 API key validation contract beside an unchanged v1", () => {
+    const v1 = {
+      valid: true,
+      organizationId: "org_1",
+      createdById: "user_1",
+      apiKey: {
+        id: "key_1",
+        name: "Laptop",
+        prefix: "ok_abc",
+        keyType: "cli",
+        grants: ["customer_intelligence:read"],
+        createdAt: "2026-10-01T00:00:00.000Z",
+        lastUsedAt: null,
+        totalRequests: 3,
+      },
+      authorization: { grants: ["customer_intelligence:read"] },
+    }
+    const v2 = { ...v1, apiKey: { ...v1.apiKey, expiresAt: "2027-01-03T00:00:00.000Z" } }
+
+    expect(apiKeyContractHeader).toBe("Outlit-Api-Key-Contract")
+    expect(matchesGeneratedJsonSchema(v1, apiKeyValidationSuccessSchema)).toBe(true)
+    expect(matchesGeneratedJsonSchema(v2, apiKeyValidationSuccessSchema)).toBe(false)
+    expect(matchesGeneratedJsonSchema(v2, apiKeyValidationSuccessSchemaV2)).toBe(true)
+    expect(matchesGeneratedJsonSchema(v1, apiKeyValidationSuccessSchemaV2)).toBe(false)
+    expectTypeOf<NonNullable<ApiKeyValidationSuccessV2["apiKey"]>["expiresAt"]>().toEqualTypeOf<
+      string | null
+    >()
   })
 
   test("types nullable company activation on customer and analytics results", () => {
