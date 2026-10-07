@@ -192,7 +192,7 @@ outlit.identify({
 
 Ask your Outlit contact about the retention and deletion policies that apply to your workspace. A visitor ID is a pseudonymous identifier; successful identification can link the associated activity to a known customer.
 
-With the default `autoTrack: "auto"` mode, tracking stays off—and nothing is stored—for visitors in regions that require opt-in consent (EEA, UK, Switzerland, or unknown) until your consent tool calls `enableTracking()`; see [consent management](/tracking/browser/script#consent-management) for the setup. `disableTracking()` persists an opt-out for visitors who decline, and `enableTracking()` resumes collection when appropriate. To always wait for an explicit consent signal, initialize with `autoTrack: false`.
+With the default `autoTrack: "auto"` mode, tracking stays off—and nothing is stored—for visitors in regions that require opt-in consent (EEA, UK, Switzerland, or unknown) until your consent tool calls `enableTracking()`; see [consent management](/tracking/browser/script#consent-management) for the setup. `disableTracking()` persists an opt-out for visitors who decline, and `enableTracking()` resumes collection when appropriate. To wait for `enableTracking()` instead — unless a previous opt-in is stored — initialize with `autoTrack: false`.
 
 ## Next steps
 
