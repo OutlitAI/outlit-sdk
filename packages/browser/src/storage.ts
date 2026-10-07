@@ -153,33 +153,54 @@ function setCookie(name: string, value: string, days: number): void {
 
 const CONSENT_KEY = "outlit_consent"
 
+// Stored values for CONSENT_KEY:
+//   "0" — explicit opt-out
+//   "1" — legacy opt-in: SDK versions before the consent-value change wrote
+//         "1" automatically whenever tracking auto-enabled, so it does NOT
+//         prove the visitor made an explicit consent decision.
+//   "2" — explicit opt-in: written only when the site calls enableTracking().
+const CONSENT_OPTED_OUT = "0"
+const CONSENT_LEGACY_OPTED_IN = "1"
+const CONSENT_OPTED_IN = "2"
+
+/**
+ * Persisted consent decision.
+ * - `"opted-in"`: the site explicitly enabled tracking ("2")
+ * - `"legacy-opted-in"`: auto-written by an older SDK version ("1")
+ * - `"opted-out"`: the site/user explicitly disabled tracking ("0")
+ * - `null`: no decision recorded
+ */
+export type ConsentState = "opted-in" | "legacy-opted-in" | "opted-out" | null
+
+function readConsentValue(value: string | null): Exclude<ConsentState, null> | undefined {
+  if (value === CONSENT_OPTED_IN) return "opted-in"
+  if (value === CONSENT_LEGACY_OPTED_IN) return "legacy-opted-in"
+  if (value === CONSENT_OPTED_OUT) return "opted-out"
+  return undefined
+}
+
 /**
  * Get the persisted consent state.
- * Returns true (opted in), false (opted out), or null (no decision recorded).
  */
-export function getConsentState(): boolean | null {
+export function getConsentState(): ConsentState {
   // Try localStorage first
   try {
-    const stored = localStorage.getItem(CONSENT_KEY)
-    if (stored === "1") return true
-    if (stored === "0") return false
+    const stored = readConsentValue(localStorage.getItem(CONSENT_KEY))
+    if (stored !== undefined) return stored
   } catch {
     // localStorage not available
   }
 
   // Try cookie fallback
-  const cookieValue = getCookie(CONSENT_KEY)
-  if (cookieValue === "1") return true
-  if (cookieValue === "0") return false
-
-  return null
+  return readConsentValue(getCookie(CONSENT_KEY)) ?? null
 }
 
 /**
  * Persist consent state to both localStorage and cookie.
+ * Opt-in writes the explicit marker ("2"); opt-out writes "0".
  */
 export function setConsentState(granted: boolean): void {
-  const value = granted ? "1" : "0"
+  const value = granted ? CONSENT_OPTED_IN : CONSENT_OPTED_OUT
 
   try {
     localStorage.setItem(CONSENT_KEY, value)

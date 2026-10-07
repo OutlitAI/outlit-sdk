@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDK Test Page - Auto Mode</title>
+</head>
+<body>
+  <h1>SDK Test Page - Auto Mode</h1>
+  <p>This page loads the SDK with no autoTrack override (default: "auto").</p>
+
+  <button id="track-btn">Track Custom Event</button>
+  <button id="enable-btn">Enable Tracking</button>
+
+  <!-- Load the SDK using the recommended stub snippet, no auto param -->
+  <script>
+    !function(w,d,src,key,auto){
+      if(w.outlit&&w.outlit._loaded)return;
+      var o=w.outlit=w.outlit||{_q:[]};
+      function stub(target,prefix,methods){
+        for(var i=0;i<methods.length;i++){
+          var m=methods[i];
+          target[m]=target[m]||function(mm){
+            return function(){o._q.push([prefix?prefix+"."+mm:mm,[].slice.call(arguments)])};
+          }(m);
+        }
+      }
+      stub(o,"",["init","track","identify","enableTracking","disableTracking","isTrackingEnabled","getVisitorId","setUser","clearUser"]);
+      o.user=o.user||{};
+      stub(o.user,"user",["identify"]);
+      var s=d.createElement("script");s.async=1;s.src=src;
+      s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
+      (d.body||d.head).appendChild(s);
+    }(window,document,"/outlit.global.js","pk_test_key_12345");
+  </script>
+
+  <script>
+    document.getElementById('track-btn').addEventListener('click', function() {
+      window.outlit.track('button_clicked', { buttonId: 'track-btn' });
+    });
+    document.getElementById('enable-btn').addEventListener('click', function() {
+      window.outlit.enableTracking();
+    });
+  </script>
+</body>
+</html>

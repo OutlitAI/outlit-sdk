@@ -24,9 +24,9 @@
       o.user=o.user||{};
       stub(o.user,"user",["identify"]);
       var s=d.createElement("script");s.async=1;s.src=src;
-      s.dataset.publicKey=key;
+      s.dataset.publicKey=key;s.dataset.autoTrack="true";
       (d.body||d.head).appendChild(s);
-    }(window,document,"/outlit.global.js","pk_test_key_12345");
+    }(window,document,"/outlit.global.js","pk_test_key_12345",true);
   </script>
 </body>
 </html>

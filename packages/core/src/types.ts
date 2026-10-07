@@ -19,6 +19,17 @@ export type CalendarProvider = CalendarEvent["provider"]
 export type PayloadUserIdentity = NonNullable<IngestPayload["userIdentity"]>
 export type PayloadCustomerIdentity = NonNullable<IngestPayload["customerIdentity"]>
 
+/**
+ * Response from the bootstrap endpoint (GET /api/i/v1/{publicKey}/bootstrap).
+ * Hand-authored — not part of the generated ingest contract.
+ */
+export interface BootstrapResponse {
+  /** ISO 3166-1 alpha-2 country code detected at the edge, or null when unknown. */
+  country: string | null
+  /** Whether the visitor's region requires opt-in consent before tracking. */
+  consentRequired: boolean
+}
+
 // ============================================
 // UTM PARAMETERS
 // ============================================

@@ -31,6 +31,7 @@
  */
 
 import type { BrowserIdentifyOptions, BrowserTrackOptions } from "@outlit/core"
+import { parseDataAutoTrack } from "./script-config"
 import { Outlit, type OutlitOptions, type UserIdentity } from "./tracker"
 
 // ============================================
@@ -239,7 +240,8 @@ function autoInit(): void {
   const apiHost = script.getAttribute("data-api-host") ?? undefined
   const trackPageviews = script.getAttribute("data-track-pageviews") !== "false"
   const trackForms = script.getAttribute("data-track-forms") !== "false"
-  const autoTrack = script.getAttribute("data-auto-track") !== "false"
+  // Absent attribute => undefined => SDK default ("auto" region check)
+  const autoTrack = parseDataAutoTrack(script.getAttribute("data-auto-track"))
   const autoIdentify = script.getAttribute("data-auto-identify") !== "false"
   const trackCalendarEmbeds = script.getAttribute("data-track-calendar-embeds") !== "false"
 

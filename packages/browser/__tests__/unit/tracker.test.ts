@@ -78,7 +78,7 @@ describe("disableTracking", () => {
 
     outlit.enableTracking()
     expect(outlit.isEnabled()).toBe(true)
-    expect(localStorage.getItem("outlit_consent")).toBe("1")
+    expect(localStorage.getItem("outlit_consent")).toBe("2")
   })
 })
 
@@ -86,7 +86,7 @@ describe("enableTracking consent persistence", () => {
   it("persists opt-in decision", () => {
     const outlit = new Outlit({ publicKey: "pk_test", autoTrack: false })
     outlit.enableTracking()
-    expect(localStorage.getItem("outlit_consent")).toBe("1")
+    expect(localStorage.getItem("outlit_consent")).toBe("2")
   })
 })
 

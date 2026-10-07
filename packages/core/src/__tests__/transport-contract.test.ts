@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { buildIngestUrl, INGEST_EVENT_TYPES, INGEST_METHOD } from "../transport"
+import { buildBootstrapUrl, buildIngestUrl, INGEST_EVENT_TYPES, INGEST_METHOD } from "../transport"
 
 describe("Core-owned ingest transport", () => {
   test("builds the generated public-key endpoint", () => {
@@ -15,5 +15,16 @@ describe("Core-owned ingest transport", () => {
       "calendar",
       "engagement",
     ])
+  })
+})
+
+describe("Bootstrap transport", () => {
+  test("builds the public-key bootstrap endpoint", () => {
+    expect(buildBootstrapUrl("https://app.outlit.ai/", "pk_test/unsafe")).toBe(
+      "https://app.outlit.ai/api/i/v1/pk_test%2Funsafe/bootstrap",
+    )
+    expect(buildBootstrapUrl("https://app.outlit.ai", "pk_test")).toBe(
+      "https://app.outlit.ai/api/i/v1/pk_test/bootstrap",
+    )
   })
 })

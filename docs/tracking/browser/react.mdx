@@ -180,8 +180,8 @@ import { OutlitProvider } from '@outlit/browser/react'
   How often to flush queued events (ms).
 </ParamField>
 
-<ParamField path="autoTrack" type="boolean" default="true">
-  Whether to start tracking automatically. Set to `false` to wait for user consent. Use `enableTracking()` from the `useOutlit` hook after consent.
+<ParamField path="autoTrack" type='boolean | "auto"' default='"auto"'>
+  Controls when tracking starts. `"auto"` (default) asks the Outlit edge endpoint whether the visitor's region requires opt-in consent: tracking enables automatically outside the EEA, UK, and Switzerland, and stays off in those regions or when the region can't be determined. The check fails closed on errors. `true` enables immediately; `false` waits for `enableTracking()` from the `useOutlit` hook. `isTrackingEnabled` updates automatically when auto mode enables tracking asynchronously.
 </ParamField>
 
 <ParamField path="autoIdentify" type="boolean" default="true">
@@ -331,7 +331,9 @@ When the `user` prop changes (login/logout), the provider automatically calls `s
 
 ## Consent management
 
-If you need to wait for user consent before tracking:
+The default `autoTrack: "auto"` mode already keeps tracking off for visitors in regions that require opt-in consent (EEA, UK, Switzerland, or unknown). `enableTracking()` — typically wired to your consent banner's accept action — is what grants consent and is persisted for future sessions.
+
+To always wait for explicit consent instead:
 
 ```tsx
 // app/layout.tsx

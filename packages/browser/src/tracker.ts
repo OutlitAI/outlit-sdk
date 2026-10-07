@@ -1,6 +1,8 @@
 import {
+  type BootstrapResponse,
   type BrowserIdentifyOptions,
   type BrowserTrackOptions,
+  buildBootstrapUrl,
   buildCalendarEvent,
   buildCustomEvent,
   buildFormEvent,
@@ -28,14 +30,24 @@ import { getConsentState, getOrCreateVisitorId, setConsentState } from "./storag
 // OUTLIT CLIENT
 // ============================================
 
+const AUTO_MODE_TIMEOUT_MS = 3000
+const MAX_PENDING_CALLS = 100
+
 export interface OutlitOptions extends TrackerConfig {
   /**
    * Automatically start tracking on init.
-   * Set to false if you need to wait for user consent before tracking.
-   * Call enableTracking() to start tracking after consent is obtained.
-   * @default true
+   * - `true`: enable immediately on init.
+   * - `false`: stay off until enableTracking() is called (e.g. by a consent tool).
+   * - `"auto"` (default): ask the Outlit edge endpoint whether the visitor's
+   *   region requires opt-in consent. Tracking enables automatically where it
+   *   is not required and stays off where it is (EEA, UK, Switzerland, or an
+   *   unknown region) or when the check fails. Nothing is written to storage
+   *   until tracking is enabled.
+   *
+   * Persisted consent decisions take precedence in every mode.
+   * @default "auto"
    */
-  autoTrack?: boolean
+  autoTrack?: boolean | "auto"
   trackPageviews?: boolean
   trackForms?: boolean
   formFieldDenylist?: string[]
@@ -94,6 +106,10 @@ export class Outlit {
   private currentUser: UserIdentity | null = null
   private pendingUser: UserIdentity | null = null
   private exitCleanups: Array<() => void> = []
+  private autoModePending = false
+  private bootstrapController: AbortController | null = null
+  private pendingCalls: Array<() => void> = []
+  private trackingStateListeners = new Set<(enabled: boolean) => void>()
 
   constructor(options: OutlitOptions) {
     this.publicKey = options.publicKey
@@ -153,10 +169,23 @@ export class Outlit {
       ]
     }
 
-    // Check persisted consent state, falling back to autoTrack option
+    // Persisted explicit decisions win in every mode:
+    // - "opted-out" never enables and never fetches the bootstrap endpoint
+    // - "opted-in" enables immediately
+    // - "legacy-opted-in" (written by older SDK versions on auto-enable) counts
+    //   as consent for autoTrack true/false, but not for "auto"
+    const autoTrack = options.autoTrack ?? "auto"
     const consent = getConsentState()
-    if (consent === true || (consent === null && options.autoTrack !== false)) {
-      this.enableTracking()
+    if (consent === "opted-out") {
+      // Stay disabled — no bootstrap fetch
+    } else if (
+      consent === "opted-in" ||
+      (consent === "legacy-opted-in" && autoTrack !== "auto") ||
+      autoTrack === true
+    ) {
+      this.enableTrackingInternal(false)
+    } else if (autoTrack === "auto") {
+      this.startAutoMode()
     }
   }
 
@@ -170,10 +199,31 @@ export class Outlit {
    * - Generate/retrieve the visitor ID
    * - Start automatic pageview and form tracking (if configured)
    * - Begin sending events to the server
+   * - Persist the explicit opt-in decision for future sessions
    *
-   * If autoTrack is true (default), this is called automatically on init.
+   * This is the explicit-consent path: it also cancels any pending auto-mode
+   * region check and replays calls buffered while it was pending.
    */
   enableTracking(): void {
+    this.enableTrackingInternal(true)
+  }
+
+  /**
+   * Enable tracking without persisting a consent decision.
+   * Used for automatic enables (autoTrack: true, persisted consent, or an
+   * auto-mode "consent not required" verdict) — only an explicit public
+   * enableTracking() call records opt-in.
+   */
+  private enableTrackingInternal(persistConsent: boolean): void {
+    this.cancelAutoMode()
+
+    if (persistConsent) {
+      // Persist the explicit opt-in decision — even when tracking is already
+      // enabled (e.g. by an earlier automatic enable), the explicit call
+      // records consent
+      setConsentState(true)
+    }
+
     if (this.isTrackingEnabled) {
       return // Already enabled
     }
@@ -203,14 +253,19 @@ export class Outlit {
     }
 
     this.isTrackingEnabled = true
-
-    // Persist the opt-in decision
-    setConsentState(true)
+    this.notifyTrackingStateChange()
 
     // Apply any pending user identity that was set before tracking was enabled
     if (this.pendingUser) {
       this.applyUser(this.pendingUser)
       this.pendingUser = null
+    }
+
+    // Replay calls buffered while the auto-mode decision was pending
+    const pending = this.pendingCalls
+    this.pendingCalls = []
+    for (const call of pending) {
+      call()
     }
   }
 
@@ -224,6 +279,10 @@ export class Outlit {
    * The SDK instance remains usable — enableTracking() can be called again to re-enable.
    */
   async disableTracking(): Promise<void> {
+    // An explicit disable wins over a pending auto-mode decision
+    this.cancelAutoMode()
+    this.pendingCalls = []
+
     if (!this.isTrackingEnabled) {
       // Even if tracking isn't enabled, persist the opt-out decision
       setConsentState(false)
@@ -242,6 +301,7 @@ export class Outlit {
     this.sessionTracker = null
 
     this.isTrackingEnabled = false
+    this.notifyTrackingStateChange()
 
     // Persist the opt-out decision
     setConsentState(false)
@@ -255,10 +315,28 @@ export class Outlit {
   }
 
   /**
+   * Subscribe to tracking-state changes. The listener is called with the new
+   * enabled state whenever tracking is enabled or disabled — including when
+   * auto mode resolves asynchronously. Returns an unsubscribe function.
+   */
+  onTrackingStateChange(listener: (enabled: boolean) => void): () => void {
+    this.trackingStateListeners.add(listener)
+    return () => {
+      this.trackingStateListeners.delete(listener)
+    }
+  }
+
+  /**
    * Track a custom event.
    */
   track(eventName: string, properties?: BrowserTrackOptions["properties"]): void {
     if (!this.isTrackingEnabled) {
+      // Buffer in memory while the auto-mode region check is pending so early
+      // calls aren't lost — they're replayed on enable and discarded otherwise
+      if (this.autoModePending) {
+        this.bufferPendingCall(() => this.track(eventName, properties))
+        return
+      }
       console.warn("[Outlit] Tracking not enabled. Call enableTracking() first.")
       return
     }
@@ -278,6 +356,10 @@ export class Outlit {
    */
   identify(options: BrowserIdentifyOptions): void {
     if (!this.isTrackingEnabled) {
+      if (this.autoModePending) {
+        this.bufferPendingCall(() => this.identify(options))
+        return
+      }
       console.warn("[Outlit] Tracking not enabled. Call enableTracking() first.")
       return
     }
@@ -408,6 +490,8 @@ export class Outlit {
    * Shutdown the client.
    */
   async shutdown(): Promise<void> {
+    this.cancelAutoMode()
+    this.pendingCalls = []
     if (this.flushTimer) {
       clearInterval(this.flushTimer)
       this.flushTimer = null
@@ -433,6 +517,73 @@ export class Outlit {
   // ============================================
   // INTERNAL METHODS
   // ============================================
+
+  /**
+   * Auto mode: ask the edge bootstrap endpoint whether the visitor's region
+   * requires opt-in consent. Fails closed — tracking only turns on for an
+   * explicit `consentRequired: false` response; errors, timeouts, and
+   * "required" verdicts leave the SDK behaving like autoTrack: false.
+   */
+  private startAutoMode(): void {
+    // No fetch during SSR or where fetch doesn't exist — stay disabled
+    if (typeof window === "undefined" || typeof fetch !== "function") return
+
+    this.autoModePending = true
+
+    const controller = new AbortController()
+    this.bootstrapController = controller
+    const timeout = setTimeout(() => controller.abort(), AUTO_MODE_TIMEOUT_MS)
+
+    void (async () => {
+      try {
+        const response = await fetch(buildBootstrapUrl(this.apiHost, this.publicKey), {
+          credentials: "omit",
+          signal: controller.signal,
+        })
+        const body = response.ok ? ((await response.json()) as BootstrapResponse) : null
+        this.resolveAutoMode(body?.consentRequired === false)
+      } catch {
+        this.resolveAutoMode(false)
+      } finally {
+        clearTimeout(timeout)
+      }
+    })()
+  }
+
+  private resolveAutoMode(granted: boolean): void {
+    // An explicit enable/disable or shutdown during the pending window wins —
+    // a late bootstrap result must never override it
+    if (!this.autoModePending) return
+    this.autoModePending = false
+    this.bootstrapController = null
+
+    if (granted) {
+      this.enableTrackingInternal(false)
+    } else {
+      // Consent required or check failed — pre-consent calls are never sent
+      this.pendingCalls = []
+    }
+  }
+
+  private cancelAutoMode(): void {
+    if (!this.autoModePending) return
+    this.autoModePending = false
+    this.bootstrapController?.abort()
+    this.bootstrapController = null
+  }
+
+  private bufferPendingCall(call: () => void): void {
+    if (this.pendingCalls.length >= MAX_PENDING_CALLS) {
+      this.pendingCalls.shift()
+    }
+    this.pendingCalls.push(call)
+  }
+
+  private notifyTrackingStateChange(): void {
+    for (const listener of this.trackingStateListeners) {
+      listener(this.isTrackingEnabled)
+    }
+  }
 
   private initSessionTracking(): void {
     this.sessionTracker = initSessionTracking({
