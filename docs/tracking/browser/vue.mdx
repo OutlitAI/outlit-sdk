@@ -413,7 +413,7 @@ function onLogout() {
 
 The default `autoTrack: "auto"` mode already keeps tracking off for visitors in regions that require opt-in consent (EEA, UK, Switzerland, or unknown). `enableTracking()` — typically wired to your consent banner's accept action — is what grants consent and is persisted for future sessions.
 
-To always wait for explicit consent instead:
+To wait for `enableTracking()` instead — unless a previous opt-in is stored:
 
 ```typescript
 // main.ts

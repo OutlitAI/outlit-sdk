@@ -11,6 +11,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { createApp, defineComponent, h, nextTick, ref } from "vue"
+import { Outlit } from "../../src/tracker"
 import { OutlitPlugin, useIdentify, useOutlit, useOutlitUser, useTrack } from "../../src/vue"
 
 // Mock document.cookie for visitor ID storage
@@ -49,6 +50,7 @@ function mountWithPlugin(
 beforeEach(() => {
   // Clear localStorage to prevent consent state leaking between tests
   localStorage.clear()
+  sessionStorage.clear()
 
   // Store original values for restoration
   originalFetch = global.fetch
@@ -367,6 +369,43 @@ describe("OutlitPlugin", () => {
     expect(result!.isTrackingEnabled.value).toBe(false)
 
     unmount()
+  })
+
+  it("shuts down the plugin-owned client on unmount while auto mode is pending", async () => {
+    let resolveBootstrap: (value: Response | PromiseLike<Response>) => void = () => {}
+    vi.mocked(global.fetch).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveBootstrap = resolve
+        }),
+    )
+    const shutdownSpy = vi.spyOn(Outlit.prototype, "shutdown")
+
+    let result: ReturnType<typeof useOutlit> | null = null
+
+    const TestComponent = defineComponent({
+      setup() {
+        result = useOutlit()
+        return () => h("div")
+      },
+    })
+
+    const { unmount } = mountWithPlugin(TestComponent, { publicKey: "pk_test" })
+
+    unmount()
+    expect(shutdownSpy).toHaveBeenCalled()
+
+    // A late "not required" verdict must not enable the shut-down client
+    resolveBootstrap({
+      ok: true,
+      json: () => Promise.resolve({ country: "US", consentRequired: false }),
+    } as Response)
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    expect(result!.isTrackingEnabled.value).toBe(false)
+    expect(localStorage.getItem("outlit_visitor_id")).toBeNull()
+    expect(sessionStorage.length).toBe(0)
+    expect(Object.keys(mockCookies).filter((k) => k.startsWith("outlit"))).toEqual([])
   })
 })
 

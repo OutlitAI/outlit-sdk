@@ -145,6 +145,7 @@ export function OutlitProvider(props: OutlitProviderProps) {
   const outlitRef = useRef<Outlit | null>(null)
   const initializedRef = useRef(false)
   const isExternalClientRef = useRef(false)
+  const [outlit, setOutlit] = useState<Outlit | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   const [isTrackingEnabled, setIsTrackingEnabled] = useState(false)
 
@@ -211,18 +212,28 @@ export function OutlitProvider(props: OutlitProviderProps) {
     }
 
     initializedRef.current = true
+    setOutlit(outlitRef.current)
     setIsInitialized(true)
     setIsTrackingEnabled(outlitRef.current.isEnabled())
 
     // Keep tracking state in sync — auto mode can enable asynchronously
     const unsubscribeTrackingState = outlitRef.current.onTrackingStateChange(setIsTrackingEnabled)
 
-    // Cleanup on unmount — only shutdown instances we created
+    // Cleanup on unmount — symmetric with setup so React StrictMode's
+    // setup → cleanup → setup cycle leaves a working client:
+    // - an owned client is shut down and the refs reset so the next setup
+    //   creates a fresh instance (shutdown() removes the dev duplicate-key
+    //   marker synchronously, so no spurious multiple-instance warning)
+    // - an external client only loses the subscription; the next setup
+    //   re-subscribes and re-syncs isTrackingEnabled
     return () => {
       unsubscribeTrackingState()
+      initializedRef.current = false
       if (!isExternalClientRef.current) {
-        outlitRef.current?.shutdown()
+        void outlitRef.current?.shutdown()
       }
+      isExternalClientRef.current = false
+      outlitRef.current = null
     }
   }, [])
 
@@ -251,7 +262,7 @@ export function OutlitProvider(props: OutlitProviderProps) {
   return (
     <OutlitContext.Provider
       value={{
-        outlit: outlitRef.current,
+        outlit,
         isInitialized,
         isTrackingEnabled,
         enableTracking,

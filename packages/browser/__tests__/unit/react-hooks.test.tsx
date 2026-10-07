@@ -10,9 +10,9 @@
  */
 
 import { act, renderHook, waitFor } from "@testing-library/react"
-import type { ReactNode } from "react"
+import { type ReactNode, useContext } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { OutlitProvider, useOutlit } from "../../src/react"
+import { OutlitContext, OutlitProvider, useOutlit } from "../../src/react"
 import { Outlit } from "../../src/tracker"
 
 // Mock document.cookie for visitor ID storage
@@ -249,6 +249,81 @@ describe("OutlitProvider", () => {
     const { result } = renderHook(() => useOutlit(), { wrapper })
 
     expect(result.current.isTrackingEnabled).toBe(false)
+  })
+
+  it("enables tracking inside React.StrictMode after the bootstrap resolves (owned client)", async () => {
+    // StrictMode runs effect setup → cleanup → setup in dev; the provider must
+    // recreate the owned client on the second setup so auto mode still works
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ country: "US", consentRequired: false }),
+    } as Response)
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <OutlitProvider publicKey="pk_test">{children}</OutlitProvider>
+    )
+
+    const { result } = renderHook(() => useContext(OutlitContext), {
+      wrapper,
+      reactStrictMode: true,
+    })
+
+    await waitFor(() => expect(result.current.isTrackingEnabled).toBe(true))
+    // Two bootstrap fetches prove StrictMode mounted twice and the second
+    // setup created a fresh client (the first was shut down by its cleanup)
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+    // The context exposes the live (second) client, not the discarded first one
+    expect(result.current.outlit?.isEnabled()).toBe(true)
+    // shutdown() removes the dev instance marker — no spurious warning
+    expect(
+      warnSpy.mock.calls.filter(([msg]) => String(msg).includes("Multiple instances")),
+    ).toHaveLength(0)
+  })
+
+  it("keeps an external client's tracking state in sync across a StrictMode remount", async () => {
+    const client = new Outlit({ publicKey: "pk_test", autoTrack: true })
+    const shutdownSpy = vi.spyOn(client, "shutdown")
+
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <OutlitProvider client={client}>{children}</OutlitProvider>
+    )
+
+    const { result, unmount } = renderHook(() => useContext(OutlitContext), {
+      wrapper,
+      reactStrictMode: true,
+    })
+
+    expect(result.current.isTrackingEnabled).toBe(true)
+
+    // The re-established subscription still observes later state changes
+    await act(async () => {
+      await client.disableTracking()
+    })
+    expect(result.current.isTrackingEnabled).toBe(false)
+
+    unmount()
+    expect(shutdownSpy).not.toHaveBeenCalled()
+    await client.shutdown()
+  })
+
+  it("applies the user prop to the final client after a StrictMode remount", () => {
+    const setUserSpy = vi.spyOn(Outlit.prototype, "setUser")
+
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <OutlitProvider publicKey="pk_test" autoTrack={false} user={{ email: "u@example.com" }}>
+        {children}
+      </OutlitProvider>
+    )
+
+    const { result } = renderHook(() => useContext(OutlitContext), {
+      wrapper,
+      reactStrictMode: true,
+    })
+
+    expect(setUserSpy).toHaveBeenCalledWith({ email: "u@example.com" })
+    // The last setUser call landed on the client the context now exposes
+    expect(setUserSpy.mock.contexts.at(-1)).toBe(result.current.outlit)
   })
 })
 

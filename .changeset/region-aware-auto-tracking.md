@@ -1,5 +1,5 @@
 ---
-"@outlit/browser": minor
+"@outlit/browser": major
 "@outlit/core": minor
 ---
 
@@ -10,3 +10,5 @@ Consent storage now distinguishes explicit opt-in from legacy auto-written opt-i
 React `OutlitProvider` and the Vue plugin now subscribe to a new `Outlit.onTrackingStateChange()` listener (returns an unsubscribe function) so `isTrackingEnabled` updates when auto mode resolves asynchronously, and no longer force `autoTrack: true` by default. `data-auto-track` on the script tag accepts `"true"`/`"false"`/`"auto"`; absent means `"auto"`.
 
 `@outlit/core` adds `buildBootstrapUrl(apiHost, publicKey)` and the `BootstrapResponse` type.
+
+**Migration**: this is a breaking change — visitors in consent-required regions (EEA, UK, Switzerland, or unknown) are no longer tracked by default, and `getVisitorId()` returns `null` until auto mode resolves. Pass `autoTrack: true` to keep the previous always-on behavior, and read the visitor ID after tracking is enabled (for example via `onTrackingStateChange` or the `isTrackingEnabled` binding) instead of synchronously after init.
