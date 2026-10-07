@@ -88,7 +88,7 @@ export const OutlitPlugin = {
     isTrackingEnabled.value = outlitRef.value.isEnabled()
 
     // Keep tracking state in sync — auto mode can enable asynchronously
-    outlitRef.value.onTrackingStateChange((enabled) => {
+    const unsubscribeTrackingState = outlitRef.value.onTrackingStateChange((enabled) => {
       isTrackingEnabled.value = enabled
     })
 
@@ -105,7 +105,7 @@ export const OutlitPlugin = {
     }
 
     // Watch for user changes and auto-identify
-    watch(
+    const stopUserWatch = watch(
       currentUser,
       (user) => {
         if (!outlitRef.value) return
@@ -130,7 +130,18 @@ export const OutlitPlugin = {
       setUser,
     })
 
-    // Cleanup on app unmount
     app.config.globalProperties.$outlit = outlitRef.value
+
+    // Cleanup on app unmount — the plugin owns this client, so it shuts it
+    // down (cancelling any pending auto-mode check) and releases listeners.
+    // Vue's App.onUnmount requires Vue >= 3.5 while the plugin supports
+    // >= 3.0, so wrap app.unmount instead.
+    const originalUnmount = app.unmount.bind(app)
+    app.unmount = () => {
+      unsubscribeTrackingState()
+      stopUserWatch()
+      void outlitRef.value?.shutdown()
+      originalUnmount()
+    }
   },
 }

@@ -80,7 +80,7 @@ The script-tag loader reads only the attributes listed above. Engagement trackin
 
 The default `"auto"` behavior already keeps tracking off for visitors in regions that require opt-in consent (EEA, UK, Switzerland, or unknown) — no cookies or localStorage keys are written until tracking is enabled. When your consent management platform reports acceptance, call `window.outlit.enableTracking()`.
 
-If you want tracking to always wait for an explicit consent signal instead, pass `false` as the last parameter:
+If you want tracking to wait for `enableTracking()` instead — unless a previous opt-in is stored — pass `false` as the last parameter:
 
 ```html
 <script>

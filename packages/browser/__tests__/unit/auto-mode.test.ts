@@ -1,10 +1,25 @@
 // @vitest-environment jsdom
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { Outlit } from "../../src/tracker"
+import { Outlit, type OutlitOptions } from "../../src/tracker"
 
 const mockCookies: Record<string, string> = {}
 const mockLocalStorage: Record<string, string> = {}
+const mockSessionStorage: Record<string, string> = {}
+
+// Every storage write is recorded so tests can assert nothing is persisted
+// during the pending window or on any fail-closed path
+const cookieWrites: string[] = []
+const localWrites: Array<[string, string]> = []
+const sessionWrites: Array<[string, string]> = []
+
+const clients: Outlit[] = []
+
+function newOutlit(options: OutlitOptions): Outlit {
+  const client = new Outlit(options)
+  clients.push(client)
+  return client
+}
 
 const BOOTSTRAP_URL = "https://app.outlit.ai/api/i/v1/pk_test/bootstrap"
 
@@ -35,16 +50,31 @@ function outlitCookieKeys() {
   return Object.keys(mockCookies).filter((k) => k.startsWith("outlit"))
 }
 
+function outlitSessionKeys() {
+  return Object.keys(mockSessionStorage).filter((k) => k.startsWith("outlit"))
+}
+
 function eventPayloads() {
   return vi
     .mocked(global.fetch)
     .mock.calls.filter(([url]) => String(url).includes("/events"))
     .map(([, init]) => JSON.parse(String(init?.body))) as Array<{
-    events: Array<{ type: string; eventName?: string; email?: string }>
+    events: Array<{
+      type: string
+      eventName?: string
+      email?: string
+      url?: string
+      timestamp?: number
+      properties?: Record<string, unknown>
+    }>
+    userIdentity?: { email?: string; userId?: string }
   }>
 }
 
 beforeEach(() => {
+  cookieWrites.length = 0
+  localWrites.length = 0
+  sessionWrites.length = 0
   Object.defineProperty(globalThis, "localStorage", {
     value: {
       clear: () => {
@@ -57,12 +87,32 @@ beforeEach(() => {
         delete mockLocalStorage[key]
       },
       setItem: (key: string, value: string) => {
+        localWrites.push([key, value])
         mockLocalStorage[key] = value
       },
     },
     configurable: true,
   })
+  Object.defineProperty(globalThis, "sessionStorage", {
+    value: {
+      clear: () => {
+        for (const key of Object.keys(mockSessionStorage)) {
+          delete mockSessionStorage[key]
+        }
+      },
+      getItem: (key: string) => mockSessionStorage[key] ?? null,
+      removeItem: (key: string) => {
+        delete mockSessionStorage[key]
+      },
+      setItem: (key: string, value: string) => {
+        sessionWrites.push([key, value])
+        mockSessionStorage[key] = value
+      },
+    },
+    configurable: true,
+  })
   localStorage.clear()
+  sessionStorage.clear()
   for (const key of Object.keys(mockCookies)) {
     delete mockCookies[key]
   }
@@ -72,6 +122,7 @@ beforeEach(() => {
         .map(([k, v]) => `${k}=${v}`)
         .join("; "),
     set: (value: string) => {
+      cookieWrites.push(value)
       const [keyValue] = value.split(";")
       const [key, val] = keyValue!.split("=")
       if (key && val) {
@@ -82,7 +133,10 @@ beforeEach(() => {
   })
 })
 
-afterEach(() => {
+afterEach(async () => {
+  for (const client of clients.splice(0)) {
+    await client.shutdown()
+  }
   vi.restoreAllMocks()
 })
 
@@ -92,7 +146,7 @@ describe("autoTrack auto mode", () => {
       .fn()
       .mockResolvedValue(bootstrapResponse({ country: "US", consentRequired: false }))
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
 
     // Decision is pending — tracking is not enabled synchronously
     expect(outlit.isEnabled()).toBe(false)
@@ -115,7 +169,7 @@ describe("autoTrack auto mode", () => {
       .fn()
       .mockResolvedValue(bootstrapResponse({ country: null, consentRequired: true }))
 
-    const outlit = new Outlit({ publicKey: "pk_test", apiHost: "https://edge.example.com/" })
+    const outlit = newOutlit({ publicKey: "pk_test", apiHost: "https://edge.example.com/" })
 
     await vi.waitFor(() => expect(global.fetch).toHaveBeenCalled())
     expect(global.fetch).toHaveBeenCalledWith(
@@ -131,7 +185,7 @@ describe("autoTrack auto mode", () => {
       .fn()
       .mockResolvedValue(bootstrapResponse({ country: "DE", consentRequired: true }))
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
     await settleBootstrap()
 
     expect(outlit.isEnabled()).toBe(false)
@@ -143,7 +197,7 @@ describe("autoTrack auto mode", () => {
   it("stays disabled on non-2xx responses", async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500 })
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
     await settleBootstrap()
 
     expect(outlit.isEnabled()).toBe(false)
@@ -154,7 +208,7 @@ describe("autoTrack auto mode", () => {
   it("stays disabled on network errors", async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error("network down"))
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
     await settleBootstrap()
 
     expect(outlit.isEnabled()).toBe(false)
@@ -168,7 +222,7 @@ describe("autoTrack auto mode", () => {
       json: () => Promise.reject(new Error("invalid json")),
     })
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
     await settleBootstrap()
 
     expect(outlit.isEnabled()).toBe(false)
@@ -179,7 +233,7 @@ describe("autoTrack auto mode", () => {
     // @ts-expect-error - simulate environments without fetch
     global.fetch = undefined
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
     await settleBootstrap()
 
     expect(outlit.isEnabled()).toBe(false)
@@ -198,7 +252,7 @@ describe("autoTrack auto mode", () => {
           }),
       )
 
-      const outlit = new Outlit({ publicKey: "pk_test" })
+      const outlit = newOutlit({ publicKey: "pk_test" })
       expect(outlit.isEnabled()).toBe(false)
 
       await vi.advanceTimersByTimeAsync(4000)
@@ -215,7 +269,7 @@ describe("autoTrack auto mode", () => {
     global.fetch = vi.fn().mockResolvedValue(bootstrapResponse({ consentRequired: false }))
     localStorage.setItem("outlit_consent", "0")
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
     await settleBootstrap()
 
     expect(global.fetch).not.toHaveBeenCalled()
@@ -226,7 +280,7 @@ describe("autoTrack auto mode", () => {
     global.fetch = vi.fn().mockResolvedValue(bootstrapResponse({ consentRequired: true }))
     localStorage.setItem("outlit_consent", "2")
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
 
     expect(outlit.isEnabled()).toBe(true)
     await settleBootstrap()
@@ -239,7 +293,7 @@ describe("autoTrack auto mode", () => {
       .mockResolvedValue(bootstrapResponse({ country: "DE", consentRequired: true }))
     localStorage.setItem("outlit_consent", "1")
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
 
     // Legacy "1" is not a real consent decision in auto mode
     expect(outlit.isEnabled()).toBe(false)
@@ -254,7 +308,7 @@ describe("autoTrack auto mode", () => {
     global.fetch = vi.fn().mockResolvedValue(bootstrapResponse({ consentRequired: true }))
     localStorage.setItem("outlit_consent", "1")
 
-    const outlit = new Outlit({ publicKey: "pk_test", autoTrack: true })
+    const outlit = newOutlit({ publicKey: "pk_test", autoTrack: true })
 
     expect(outlit.isEnabled()).toBe(true)
     await settleBootstrap()
@@ -265,7 +319,7 @@ describe("autoTrack auto mode", () => {
     global.fetch = vi.fn().mockResolvedValue(bootstrapResponse({ consentRequired: true }))
     localStorage.setItem("outlit_consent", "1")
 
-    const outlit = new Outlit({ publicKey: "pk_test", autoTrack: false })
+    const outlit = newOutlit({ publicKey: "pk_test", autoTrack: false })
 
     expect(outlit.isEnabled()).toBe(true)
     await settleBootstrap()
@@ -276,7 +330,7 @@ describe("autoTrack auto mode", () => {
     const pending = deferred<unknown>()
     global.fetch = vi.fn().mockReturnValue(pending.promise)
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
     expect(outlit.isEnabled()).toBe(false)
 
     outlit.enableTracking()
@@ -294,7 +348,7 @@ describe("autoTrack auto mode", () => {
       .fn()
       .mockResolvedValue(bootstrapResponse({ country: "US", consentRequired: false }))
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
     await settleBootstrap()
 
     // Automatic enable persisted nothing
@@ -310,7 +364,7 @@ describe("autoTrack auto mode", () => {
     const pending = deferred<unknown>()
     global.fetch = vi.fn().mockReturnValue(pending.promise)
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
 
     await outlit.disableTracking()
     expect(localStorage.getItem("outlit_consent")).toBe("0")
@@ -326,7 +380,7 @@ describe("autoTrack auto mode", () => {
     const pending = deferred<unknown>()
     global.fetch = vi.fn().mockReturnValue(pending.promise)
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
     await outlit.shutdown()
 
     pending.resolve(bootstrapResponse({ country: "US", consentRequired: false }))
@@ -341,7 +395,7 @@ describe("autoTrack auto mode", () => {
     global.fetch = vi.fn().mockReturnValue(pending.promise)
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
 
-    const outlit = new Outlit({
+    const outlit = newOutlit({
       publicKey: "pk_test",
       trackPageviews: false,
       trackForms: false,
@@ -372,7 +426,7 @@ describe("autoTrack auto mode", () => {
     const pending = deferred<unknown>()
     global.fetch = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValue({ ok: true })
 
-    const outlit = new Outlit({
+    const outlit = newOutlit({
       publicKey: "pk_test",
       trackPageviews: false,
       trackForms: false,
@@ -401,7 +455,7 @@ describe("autoTrack auto mode", () => {
       .fn()
       .mockResolvedValue(bootstrapResponse({ country: "US", consentRequired: false }))
 
-    const outlit = new Outlit({ publicKey: "pk_test" })
+    const outlit = newOutlit({ publicKey: "pk_test" })
     const listener = vi.fn()
     const unsubscribe = outlit.onTrackingStateChange(listener)
 
@@ -415,10 +469,302 @@ describe("autoTrack auto mode", () => {
 
   it("still warns and drops track calls when autoTrack is false", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
-    const outlit = new Outlit({ publicKey: "pk_test", autoTrack: false })
+    const outlit = newOutlit({ publicKey: "pk_test", autoTrack: false })
 
     outlit.track("dropped_event")
 
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Tracking not enabled"))
+  })
+
+  it.each([
+    { label: "missing country", body: { consentRequired: false } },
+    { label: "non-string country", body: { country: 123, consentRequired: false } },
+    { label: "null body", body: null },
+    { label: "array body", body: [{ country: "US", consentRequired: false }] },
+    { label: "string body", body: "consent not required" },
+  ])("stays disabled on a malformed bootstrap body ($label)", async ({ body }) => {
+    global.fetch = vi.fn().mockResolvedValue(bootstrapResponse(body))
+
+    const outlit = newOutlit({ publicKey: "pk_test" })
+    await settleBootstrap()
+
+    expect(outlit.isEnabled()).toBe(false)
+    expect(outlit.getVisitorId()).toBeNull()
+    expect(outlitStorageKeys()).toEqual([])
+    expect(outlitCookieKeys()).toEqual([])
+    expect(outlitSessionKeys()).toEqual([])
+  })
+
+  it("enables when bootstrap returns a null country with consent not required", async () => {
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue(bootstrapResponse({ country: null, consentRequired: false }))
+
+    const outlit = newOutlit({ publicKey: "pk_test" })
+    await vi.waitFor(() => expect(outlit.isEnabled()).toBe(true))
+  })
+
+  it("stays disabled when an opt-out is persisted during the pending window", async () => {
+    const pending = deferred<unknown>()
+    global.fetch = vi.fn().mockReturnValue(pending.promise)
+
+    const outlit = newOutlit({
+      publicKey: "pk_test",
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+      trackCalendarEmbeds: false,
+    })
+    outlit.track("pre_verdict")
+
+    // Another tab/instance records an explicit opt-out while the check is in flight
+    localStorage.setItem("outlit_consent", "0")
+
+    pending.resolve(bootstrapResponse({ country: "US", consentRequired: false }))
+    await settleBootstrap()
+
+    expect(outlit.isEnabled()).toBe(false)
+    expect(outlit.getVisitorId()).toBeNull()
+
+    // The buffered call is dropped — a later explicit opt-in must not send it
+    outlit.enableTracking()
+    await outlit.flush()
+    const events = eventPayloads().flatMap((p) => p.events)
+    expect(events.some((e) => e.eventName === "pre_verdict")).toBe(false)
+  })
+
+  it("a throwing listener cannot abort enable replay or the disable opt-out write", async () => {
+    const pending = deferred<unknown>()
+    global.fetch = vi.fn().mockReturnValue(pending.promise)
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    const outlit = newOutlit({
+      publicKey: "pk_test",
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+      trackCalendarEmbeds: false,
+    })
+    const calls: boolean[] = []
+    outlit.onTrackingStateChange(() => {
+      throw new Error("listener boom")
+    })
+    outlit.onTrackingStateChange((enabled) => calls.push(enabled))
+
+    outlit.track("buffered_event")
+    pending.resolve(bootstrapResponse({ country: "US", consentRequired: false }))
+    await vi.waitFor(() => expect(outlit.isEnabled()).toBe(true))
+
+    // Later listeners still run and the throw is logged
+    expect(calls).toEqual([true])
+    expect(warn.mock.calls.some(([msg]) => String(msg).includes("listener threw"))).toBe(true)
+
+    // Buffer replay completed before listeners ran
+    await outlit.flush()
+    const events = eventPayloads().flatMap((p) => p.events)
+    expect(events.some((e) => e.eventName === "buffered_event")).toBe(true)
+
+    // Explicit enable still records opt-in
+    outlit.enableTracking()
+    expect(localStorage.getItem("outlit_consent")).toBe("2")
+
+    // The "0" write is not blocked by the throwing listener
+    await outlit.disableTracking()
+    expect(localStorage.getItem("outlit_consent")).toBe("0")
+    expect(calls).toEqual([true, false])
+  })
+
+  it("replays identify → clearUser → track in call order", async () => {
+    const pending = deferred<unknown>()
+    global.fetch = vi.fn().mockReturnValue(pending.promise)
+
+    const outlit = newOutlit({
+      publicKey: "pk_test",
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+      trackCalendarEmbeds: false,
+    })
+
+    outlit.identify({ email: "a@example.com" })
+    outlit.clearUser()
+    outlit.track("after_clear")
+
+    pending.resolve(bootstrapResponse({ country: "US", consentRequired: false }))
+    await vi.waitFor(() => expect(outlit.isEnabled()).toBe(true))
+    await outlit.flush()
+
+    const payloads = eventPayloads()
+    expect(payloads).toHaveLength(2)
+    // The identify went out attributed to A...
+    expect(payloads[0]?.events).toEqual([
+      expect.objectContaining({ type: "identify", email: "a@example.com" }),
+    ])
+    expect(payloads[0]?.userIdentity).toEqual({ email: "a@example.com" })
+    // ...then the clear landed, so the track event is attributed to nobody
+    expect(payloads[1]?.events).toEqual([
+      expect.objectContaining({ type: "custom", eventName: "after_clear" }),
+    ])
+    expect(payloads[1]?.userIdentity).toBeUndefined()
+  })
+
+  it("replays an earlier buffered identify before a later setUser", async () => {
+    const pending = deferred<unknown>()
+    global.fetch = vi.fn().mockReturnValue(pending.promise)
+
+    const outlit = newOutlit({
+      publicKey: "pk_test",
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+      trackCalendarEmbeds: false,
+    })
+
+    outlit.identify({ email: "a@example.com" })
+    outlit.setUser({ email: "b@example.com" })
+
+    pending.resolve(bootstrapResponse({ country: "US", consentRequired: false }))
+    await vi.waitFor(() => expect(outlit.isEnabled()).toBe(true))
+    await outlit.flush()
+
+    const payloads = eventPayloads()
+    expect(payloads).toHaveLength(2)
+    expect(payloads[0]?.events).toEqual([
+      expect.objectContaining({ type: "identify", email: "a@example.com" }),
+    ])
+    expect(payloads[0]?.userIdentity).toEqual({ email: "a@example.com" })
+    expect(payloads[1]?.events).toEqual([
+      expect.objectContaining({ type: "identify", email: "b@example.com" }),
+    ])
+    expect(payloads[1]?.userIdentity).toEqual({ email: "b@example.com" })
+  })
+
+  it("keeps the latest setUser identity on a consent-required verdict but drops track/identify", async () => {
+    const pending = deferred<unknown>()
+    global.fetch = vi.fn().mockReturnValue(pending.promise)
+
+    const outlit = newOutlit({
+      publicKey: "pk_test",
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+      trackCalendarEmbeds: false,
+    })
+
+    outlit.setUser({ email: "first@example.com" })
+    outlit.identify({ email: "other@example.com" })
+    outlit.track("dropped_event")
+    outlit.setUser({ email: "latest@example.com" })
+
+    pending.resolve(bootstrapResponse({ country: "DE", consentRequired: true }))
+    await settleBootstrap()
+    expect(outlit.isEnabled()).toBe(false)
+
+    // Only the latest setUser survives — like autoTrack: false pendingUser
+    outlit.enableTracking()
+    await outlit.flush()
+
+    const events = eventPayloads().flatMap((p) => p.events)
+    expect(events).toEqual([
+      expect.objectContaining({ type: "identify", email: "latest@example.com" }),
+    ])
+  })
+
+  it("replays buffered calls with their call-time url, timestamp, and properties", async () => {
+    window.history.pushState({}, "", "/pricing")
+    const pending = deferred<unknown>()
+    global.fetch = vi.fn().mockReturnValue(pending.promise)
+
+    const outlit = newOutlit({
+      publicKey: "pk_test",
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+      trackCalendarEmbeds: false,
+    })
+
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(1_700_000_000_000)
+    const properties: Record<string, string> = { plan: "pro" }
+    outlit.track("viewed_pricing", properties)
+    nowSpy.mockRestore()
+
+    window.history.pushState({}, "", "/checkout")
+    properties.plan = "enterprise"
+    properties.extra = "late"
+
+    pending.resolve(bootstrapResponse({ country: "US", consentRequired: false }))
+    await vi.waitFor(() => expect(outlit.isEnabled()).toBe(true))
+    await outlit.flush()
+    window.history.pushState({}, "", "/")
+
+    const event = eventPayloads()
+      .flatMap((p) => p.events)
+      .find((e) => e.type === "custom")
+    expect(event?.url).toBe("http://localhost:3000/pricing")
+    expect(event?.properties).toEqual({ plan: "pro" })
+    expect(event?.timestamp).toBe(1_700_000_000_000)
+  })
+
+  it("writes nothing while pending — even across navigation and form submits", async () => {
+    const pending = deferred<unknown>()
+    global.fetch = vi.fn().mockReturnValue(pending.promise)
+
+    const outlit = newOutlit({ publicKey: "pk_test" })
+
+    // Exercise a pageview navigation and a form submit during the pending window
+    window.history.pushState({}, "", "/checkout")
+    const form = document.createElement("form")
+    const input = document.createElement("input")
+    input.name = "email"
+    input.value = "pending@example.com"
+    form.appendChild(input)
+    document.body.appendChild(form)
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))
+    document.body.removeChild(form)
+    outlit.track("pending_call")
+
+    expect(localWrites).toEqual([])
+    expect(sessionWrites).toEqual([])
+    expect(cookieWrites).toEqual([])
+
+    pending.resolve(bootstrapResponse({ country: "DE", consentRequired: true }))
+    await settleBootstrap()
+    window.history.pushState({}, "", "/")
+
+    expect(outlit.isEnabled()).toBe(false)
+    expect(localWrites).toEqual([])
+    expect(sessionWrites).toEqual([])
+    expect(cookieWrites).toEqual([])
+    expect(eventPayloads()).toEqual([])
+  })
+
+  it("bounds the pending-call buffer at 100, dropping the oldest calls", async () => {
+    const pending = deferred<unknown>()
+    global.fetch = vi.fn().mockReturnValue(pending.promise)
+
+    const outlit = newOutlit({
+      publicKey: "pk_test",
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+      trackCalendarEmbeds: false,
+    })
+
+    for (let i = 0; i < 101; i++) {
+      outlit.track(`event_${i}`)
+    }
+
+    pending.resolve(bootstrapResponse({ country: "US", consentRequired: false }))
+    await vi.waitFor(() => expect(outlit.isEnabled()).toBe(true))
+    await outlit.flush()
+
+    const names = eventPayloads()
+      .flatMap((p) => p.events)
+      .filter((e) => e.type === "custom")
+      .map((e) => e.eventName)
+    expect(names).toHaveLength(100)
+    expect(names[0]).toBe("event_1")
+    expect(names.at(-1)).toBe("event_100")
+    expect(names).not.toContain("event_0")
   })
 })

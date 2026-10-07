@@ -33,6 +33,39 @@ import { getConsentState, getOrCreateVisitorId, setConsentState } from "./storag
 const AUTO_MODE_TIMEOUT_MS = 3000
 const MAX_PENDING_CALLS = 100
 
+/**
+ * Call-time context captured for buffered calls so a replayed event keeps the
+ * URL, referrer, and timestamp it was made with.
+ */
+interface EventContext {
+  url: string
+  referrer: string
+  timestamp: number
+}
+
+/**
+ * Accept the bootstrap verdict only for a well-formed "consent not required"
+ * response — anything else (missing or mistyped fields, non-objects, null)
+ * fails closed.
+ */
+function isConsentNotRequiredVerdict(body: unknown): boolean {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return false
+  const { country, consentRequired } = body as BootstrapResponse
+  return consentRequired === false && (country === null || typeof country === "string")
+}
+
+/**
+ * Shallow-copy identity options so later mutations by the caller can't leak
+ * into a buffered call.
+ */
+function snapshotIdentity(options: BrowserIdentifyOptions): BrowserIdentifyOptions {
+  return {
+    ...options,
+    traits: options.traits ? { ...options.traits } : undefined,
+    customerTraits: options.customerTraits ? { ...options.customerTraits } : undefined,
+  }
+}
+
 export interface OutlitOptions extends TrackerConfig {
   /**
    * Automatically start tracking on init.
@@ -253,20 +286,29 @@ export class Outlit {
     }
 
     this.isTrackingEnabled = true
-    this.notifyTrackingStateChange()
 
-    // Apply any pending user identity that was set before tracking was enabled
-    if (this.pendingUser) {
-      this.applyUser(this.pendingUser)
-      this.pendingUser = null
-    }
-
-    // Replay calls buffered while the auto-mode decision was pending
+    // Replay calls buffered while the auto-mode decision was pending — in
+    // call order, each with the context it was made with. Buffered
+    // setUser/clearUser calls keep pendingUser in sync as they run.
     const pending = this.pendingCalls
     this.pendingCalls = []
     for (const call of pending) {
       call()
     }
+
+    // Apply any pending user identity not covered by the replay — set while
+    // tracking was off (autoTrack: false, after a consent-required verdict)
+    // or buffered past the pending-call cap
+    if (this.pendingUser) {
+      const user = this.pendingUser
+      this.pendingUser = null
+      this.applyUser(user, this.snapshotContext())
+    }
+
+    // Notify listeners last — state, persistence, and replayed calls must all
+    // be in place before observers run, and a throwing listener can't abort
+    // the transition
+    this.notifyTrackingStateChange()
   }
 
   /**
@@ -283,9 +325,11 @@ export class Outlit {
     this.cancelAutoMode()
     this.pendingCalls = []
 
+    // Persist the opt-out first so a page unload during the flush below, or a
+    // throwing listener, can't lose the revocation
+    setConsentState(false)
+
     if (!this.isTrackingEnabled) {
-      // Even if tracking isn't enabled, persist the opt-out decision
-      setConsentState(false)
       return
     }
 
@@ -302,9 +346,6 @@ export class Outlit {
 
     this.isTrackingEnabled = false
     this.notifyTrackingStateChange()
-
-    // Persist the opt-out decision
-    setConsentState(false)
   }
 
   /**
@@ -334,16 +375,27 @@ export class Outlit {
       // Buffer in memory while the auto-mode region check is pending so early
       // calls aren't lost — they're replayed on enable and discarded otherwise
       if (this.autoModePending) {
-        this.bufferPendingCall(() => this.track(eventName, properties))
+        const ctx = this.snapshotContext()
+        const snapshot = properties ? { ...properties } : undefined
+        this.bufferPendingCall(() => this.recordTrack(eventName, snapshot, ctx))
         return
       }
       console.warn("[Outlit] Tracking not enabled. Call enableTracking() first.")
       return
     }
 
+    this.recordTrack(eventName, properties, this.snapshotContext())
+  }
+
+  private recordTrack(
+    eventName: string,
+    properties: BrowserTrackOptions["properties"] | undefined,
+    ctx: EventContext,
+  ): void {
     const event = buildCustomEvent({
-      url: window.location.href,
-      referrer: document.referrer,
+      url: ctx.url,
+      referrer: ctx.referrer,
+      timestamp: ctx.timestamp,
       eventName,
       properties,
     })
@@ -357,13 +409,19 @@ export class Outlit {
   identify(options: BrowserIdentifyOptions): void {
     if (!this.isTrackingEnabled) {
       if (this.autoModePending) {
-        this.bufferPendingCall(() => this.identify(options))
+        const ctx = this.snapshotContext()
+        const snapshot = snapshotIdentity(options)
+        this.bufferPendingCall(() => this.recordIdentify(snapshot, ctx))
         return
       }
       console.warn("[Outlit] Tracking not enabled. Call enableTracking() first.")
       return
     }
 
+    this.recordIdentify(options, this.snapshotContext())
+  }
+
+  private recordIdentify(options: BrowserIdentifyOptions, ctx: EventContext): void {
     if (!options.email && !options.userId) {
       console.warn("[Outlit] identify requires email or userId")
       return
@@ -386,8 +444,9 @@ export class Outlit {
     this.currentUser = nextUser
 
     const event = buildIdentifyEvent({
-      url: window.location.href,
-      referrer: document.referrer,
+      url: ctx.url,
+      referrer: ctx.referrer,
+      timestamp: ctx.timestamp,
       email: options.email,
       userId: options.userId,
       customerId: options.customerId,
@@ -414,11 +473,24 @@ export class Outlit {
     }
 
     if (!this.isTrackingEnabled) {
+      if (this.autoModePending) {
+        // Buffer the identify so it replays in call order alongside
+        // track/identify calls; pendingUser still records the latest identity
+        // so a consent-required verdict keeps it like autoTrack: false does
+        const snapshot = snapshotIdentity(identity)
+        this.pendingUser = snapshot
+        const ctx = this.snapshotContext()
+        this.bufferPendingCall(() => {
+          this.pendingUser = null
+          this.applyUser(snapshot, ctx)
+        })
+        return
+      }
       this.pendingUser = identity
       return
     }
 
-    this.applyUser(identity)
+    this.applyUser(identity, this.snapshotContext())
   }
 
   /**
@@ -426,6 +498,11 @@ export class Outlit {
    * Call this when the user logs out.
    */
   clearUser(): void {
+    if (this.autoModePending) {
+      // Replay in call order so the clear lands between the buffered calls it
+      // was made between; pendingUser still reflects the latest call
+      this.bufferPendingCall(() => this.clearUser())
+    }
     if (this.currentUser) {
       void this.flush()
     }
@@ -436,14 +513,25 @@ export class Outlit {
   /**
    * Apply user identity and send identify event.
    */
-  private applyUser(identity: UserIdentity): void {
-    this.identify({
-      email: identity.email,
-      userId: identity.userId,
-      traits: identity.traits,
-      customerId: identity.customerId,
-      customerTraits: identity.customerTraits,
-    })
+  private applyUser(identity: UserIdentity, ctx: EventContext): void {
+    this.recordIdentify(
+      {
+        email: identity.email,
+        userId: identity.userId,
+        traits: identity.traits,
+        customerId: identity.customerId,
+        customerTraits: identity.customerTraits,
+      },
+      ctx,
+    )
+  }
+
+  private snapshotContext(): EventContext {
+    return {
+      url: window.location.href,
+      referrer: document.referrer,
+      timestamp: Date.now(),
+    }
   }
 
   private hasAttributionChanged(nextUser: UserIdentity): boolean {
@@ -540,8 +628,8 @@ export class Outlit {
           credentials: "omit",
           signal: controller.signal,
         })
-        const body = response.ok ? ((await response.json()) as BootstrapResponse) : null
-        this.resolveAutoMode(body?.consentRequired === false)
+        const body: unknown = response.ok ? await response.json() : null
+        this.resolveAutoMode(isConsentNotRequiredVerdict(body))
       } catch {
         this.resolveAutoMode(false)
       } finally {
@@ -557,7 +645,10 @@ export class Outlit {
     this.autoModePending = false
     this.bootstrapController = null
 
-    if (granted) {
+    // Re-read persisted consent before enabling: another tab or instance may
+    // have recorded an explicit opt-out while the check was in flight, and an
+    // opt-out always wins over a "not required" verdict
+    if (granted && getConsentState() !== "opted-out") {
       this.enableTrackingInternal(false)
     } else {
       // Consent required or check failed — pre-consent calls are never sent
@@ -581,7 +672,11 @@ export class Outlit {
 
   private notifyTrackingStateChange(): void {
     for (const listener of this.trackingStateListeners) {
-      listener(this.isTrackingEnabled)
+      try {
+        listener(this.isTrackingEnabled)
+      } catch (error) {
+        console.warn("[Outlit] tracking-state listener threw:", error)
+      }
     }
   }
 
