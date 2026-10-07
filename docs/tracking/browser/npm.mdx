@@ -406,7 +406,7 @@ await outlit.getInstance().shutdown()
 
 ### Access visitor ID
 
-Get the current visitor's ID for server-side correlation:
+Get the current visitor's ID for server-side correlation (returns `null` until tracking is enabled):
 
 ```typescript
 const visitorId = outlit.getInstance().getVisitorId()

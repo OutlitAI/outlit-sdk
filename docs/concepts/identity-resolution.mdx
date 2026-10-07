@@ -157,15 +157,15 @@ Those events are attributable immediately to the account/workspace and can later
 
 ### Anonymous visitor ID
 
-Automatically generated for browser visitors:
+Generated for browser visitors once tracking is enabled:
 
 ```typescript
-// Generated and stored automatically
+// Generated and stored once tracking is enabled (null before then)
 const visitorId = outlit.getVisitorId()
 // "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 ```
 
-This ID is stored in localStorage and cookies, persists across sessions (same browser), and gets linked to contact after identify.
+This ID is stored in localStorage and cookies, persists across sessions (same browser), and gets linked to contact after identify. With the default `autoTrack: "auto"` mode, nothing is stored in regions that require opt-in consent (EEA, UK, Switzerland, or unknown) until `enableTracking()` runs.
 
 ### Fingerprint (device ID)
 
@@ -224,7 +224,7 @@ Earlier visitor events keep their original timestamps when they join a known con
   <Tab title="Browser tracking">
     **Anonymous visitors are supported**
 
-    - visitorId auto-generated
+    - visitorId generated once tracking is enabled
     - Events stored until identification
     - Later linked via identify() or setUser()
 

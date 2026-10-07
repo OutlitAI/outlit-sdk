@@ -15,9 +15,9 @@ Billing status comes from a verified integration such as [Stripe](/integrations/
 
 ## Link activity to people and customers
 
-The Outlit Browser SDK gives an anonymous visitor an ID. When someone submits an email, signs up, or logs in, browser `identify()` or `setUser()` links that visitor's earlier activity to a known person. Outlit can then associate that person with a customer through a company email domain, explicit `customerId`, or connected source data. Personal-email addresses remain separate unless another source links them. See [Identity resolution](/concepts/identity-resolution) for the matching rules and review steps.
+The Outlit Browser SDK gives an anonymous visitor an ID once tracking is enabled. When someone submits an email, signs up, or logs in, browser `identify()` or `setUser()` links that visitor's earlier activity to a known person. Outlit can then associate that person with a customer through a company email domain, explicit `customerId`, or connected source data. Personal-email addresses remain separate unless another source links them. See [Identity resolution](/concepts/identity-resolution) for the matching rules and review steps.
 
-A tracking call needs consent where your site requires it. The script and npm guides show how to start with tracking disabled and enable it after consent. A persisted opt-out continues across visits until tracking is enabled again.
+With the default `autoTrack: "auto"` mode, the browser SDK keeps tracking off—and stores nothing—in regions that require opt-in consent (EEA, UK, Switzerland, or unknown) until your site calls `enableTracking()`; `autoTrack: false` makes tracking always wait for an explicit consent signal. The script and npm guides show the consent pattern. A persisted opt-out continues across visits until tracking is enabled again.
 
 ## Read the customer timeline
 

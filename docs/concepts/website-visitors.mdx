@@ -1,15 +1,15 @@
 ---
 title: "Website visitors"
-description: "What Outlit captures when someone visits your website, from the first anonymous pageview through identification and company enrichment."
+description: "What Outlit captures when someone visits your website, from the first anonymous pageview through identification."
 ---
 
 ## Website activity
 
-Most visitors browse your site anonymously before signing up or logging in. The Outlit Browser SDK captures where they landed, how they arrived, and what they viewed. When the browser visitor identifies, Outlit connects that earlier history to their contact so the path from discovery to conversion joins the later [customer context graph](/concepts/customer-context-graph). Tracked visitors appear on the **Visitors** surface in the app, and enriched companies land in **Customers**.
+Most visitors browse your site anonymously before signing up or logging in. The Outlit Browser SDK captures where they landed, how they arrived, and what they viewed. When the browser visitor identifies, Outlit connects that earlier history to their contact so the path from discovery to conversion joins the later [customer context graph](/concepts/customer-context-graph). Tracked visitors appear on the **Visitors** surface in the app.
 
 ## The anonymous phase
 
-On a first visit, the Outlit Browser SDK assigns a visitor ID and records pageviews, the landing URL, the browser referrer, and any UTM parameters. When the browser visitor later identifies with an email, Outlit links that earlier activity to their profile while keeping its original timestamps. An email-only call from an Outlit server SDK cannot link an otherwise anonymous browser visit.
+On a first visit, the Outlit Browser SDK assigns a visitor ID and records pageviews, the landing URL, the browser referrer, and any UTM parameters—once tracking is enabled. With the default `autoTrack: "auto"` mode, tracking starts automatically where the visitor's region doesn't require opt-in consent; in the EEA, UK, and Switzerland—or when the region can't be determined—nothing is stored (no visitor ID, cookie, or localStorage key) until your site calls `enableTracking()` (see [consent management](/tracking/browser/script#consent-management)). When the browser visitor later identifies with an email, Outlit links that earlier activity to their profile while keeping its original timestamps. An email-only call from an Outlit server SDK cannot link an otherwise anonymous browser visit.
 
 <div className="docs-diagram" tabIndex={0} role="region" aria-label="Visitor identity sequence diagram">
   <span className="docs-diagram-scroll-hint">Scroll sideways or use arrow keys.</span>
@@ -32,7 +32,6 @@ On first visit, Outlit captures:
 | UTM Campaign | URL params | `utm_campaign=spring_2024` |
 | First Referrer | Browser `document.referrer` | `https://google.com` |
 | First Landing Page | URL | `/pricing?plan=pro` |
-| IP Address | Request | For company enrichment |
 
 ### Events stored
 
@@ -103,41 +102,6 @@ Anonymous tracking is per-browser. The same person on different devices has diff
 
 **Edge cases**: If visitors clear cookies, use incognito mode, or share browsers, they may generate new visitor IDs. Call `identify()` immediately after login—even for returning users—to ensure continuity and accurate tracking.
 
-## Company enrichment
-
-Company enrichment can add organization context to anonymous visits. Ask your Outlit contact whether this feature is enabled for your workspace.
-
-### How it works
-
-When a visitor lands on your site:
-
-1. **IP address is captured** with the first pageview
-2. **Company lookup runs** in the background using [IPinfo](https://ipinfo.io)
-3. **If a company is identified**, a new customer record appears in **Customers**
-4. **Browsing activity is linked** so you can see what pages they viewed
-
-### What you'll see
-
-When enrichment succeeds, you'll find a new customer under **Customers** with:
-
-- **Company name and domain** from the IP lookup
-- **First landing page** showing where they entered your site
-- **Attribution data** like referrer and UTM parameters
-
-### Privacy
-
-Company enrichment adds organization context only. It does not identify an individual person; a known contact appears only after identification through a form, signup, or login. Low-confidence networks such as residential ISPs, VPNs, and hosting providers are excluded.
-
-### When enrichment happens
-
-Not every visitor can be enriched. Outlit only creates a customer record when:
-
-- The IP address maps to a **business, education, or government network**
-- The match confidence is **high enough** to be reliable
-- The company has a **valid domain** Outlit can associate
-
-Visitors from residential ISPs, coffee shops, VPNs, or hosting providers are intentionally excluded to avoid false positives.
-
 ## Device tracking (non-browser)
 
 For native apps without browser storage (desktop apps, mobile apps, CLI tools), use `fingerprint` instead of `visitorId`. A fingerprint is a device identifier that you generate and manage.
@@ -155,7 +119,7 @@ For native apps without browser storage (desktop apps, mobile apps, CLI tools), 
 
 | | visitorId | fingerprint |
 |--|-----------|-------------|
-| Generated by | SDK (automatic) | You (manual) |
+| Generated by | SDK (once tracking is enabled) | You (manual) |
 | Stored in | localStorage + cookies | Your app (you decide) |
 | SDKs | Outlit Browser SDK | Outlit Rust SDK, Outlit Node.js SDK |
 
@@ -228,17 +192,7 @@ outlit.identify({
 
 Ask your Outlit contact about the retention and deletion policies that apply to your workspace. A visitor ID is a pseudonymous identifier; successful identification can link the associated activity to a known customer.
 
-Honor your site's consent choices before collecting activity. The Outlit Browser SDK's `disableTracking()` persists an opt-out, and `enableTracking()` resumes collection when appropriate. See [tracking controls](/tracking/browser/script).
-
-To respect opt-out preferences, check for consent before initializing:
-
-```typescript
-if (!hasTrackingConsent()) {
-  return // Don't initialize tracker
-}
-
-outlit.init({ publicKey: 'pk_xxx' })
-```
+With the default `autoTrack: "auto"` mode, tracking stays off—and nothing is stored—for visitors in regions that require opt-in consent (EEA, UK, Switzerland, or unknown) until your consent tool calls `enableTracking()`; see [consent management](/tracking/browser/script#consent-management) for the setup. `disableTracking()` persists an opt-out for visitors who decline, and `enableTracking()` resumes collection when appropriate. To always wait for an explicit consent signal, initialize with `autoTrack: false`.
 
 ## Next steps
 
