@@ -63,12 +63,6 @@ function isConsentNotRequiredVerdict(body: unknown): boolean {
 interface PendingCall {
   run: () => void
   identityTransition: boolean
-  /**
-   * The pendingUser this call implies if consent ends up required: the
-   * identity for setUser, null for clearUser, absent for track/identify
-   * (identify never seeds pendingUser — same as autoTrack: false).
-   */
-  pendingUser?: UserIdentity | null
 }
 
 /**
@@ -159,6 +153,10 @@ export class Outlit {
   private autoModePending = false
   private bootstrapController: AbortController | null = null
   private pendingCalls: PendingCall[] = []
+  // Latest setUser (identity) or clearUser (null) made while auto mode was
+  // pending, kept outside the bounded buffer so eviction can't lose it. It
+  // becomes pendingUser if the buffer is discarded, like autoTrack: false.
+  private pendingAutoIdentity: { user: UserIdentity | null } | null = null
   private trackingStateListeners = new Set<(enabled: boolean) => void>()
 
   constructor(options: OutlitOptions) {
@@ -308,6 +306,7 @@ export class Outlit {
     // call order, each with the context it was made with
     const pending = this.pendingCalls
     this.pendingCalls = []
+    this.pendingAutoIdentity = null
     for (const call of pending) {
       call.run()
     }
@@ -501,10 +500,10 @@ export class Outlit {
         // pendingUser picks up this identity only if consent ends up required
         const snapshot = snapshotIdentity(identity)
         const ctx = this.snapshotContext()
+        this.pendingAutoIdentity = { user: snapshot }
         this.bufferPendingCall({
           run: () => this.applyUser(snapshot, ctx),
           identityTransition: true,
-          pendingUser: snapshot,
         })
         return
       }
@@ -523,10 +522,10 @@ export class Outlit {
     if (this.autoModePending) {
       // Buffer so the clear replays between the calls it was made between; a
       // consent-required verdict keeps pendingUser: null like autoTrack: false
+      this.pendingAutoIdentity = { user: null }
       this.bufferPendingCall({
         run: () => this.clearUser(),
         identityTransition: true,
-        pendingUser: null,
       })
       return
     }
@@ -711,10 +710,9 @@ export class Outlit {
    * autoTrack: false where those calls were never buffered.
    */
   private discardPendingCalls(): void {
-    for (const call of this.pendingCalls) {
-      if (call.pendingUser !== undefined) {
-        this.pendingUser = call.pendingUser
-      }
+    if (this.pendingAutoIdentity) {
+      this.pendingUser = this.pendingAutoIdentity.user
+      this.pendingAutoIdentity = null
     }
     this.pendingCalls = []
   }
