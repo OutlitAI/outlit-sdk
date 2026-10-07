@@ -23,7 +23,7 @@ let originalCookieDescriptor: PropertyDescriptor | undefined
 // Helper to mount a component with the plugin
 function mountWithPlugin(
   component: ReturnType<typeof defineComponent>,
-  pluginOptions: { publicKey: string; autoTrack?: boolean } = {
+  pluginOptions: { publicKey: string; autoTrack?: boolean | "auto" } = {
     publicKey: "pk_test",
     autoTrack: false,
   },
@@ -302,7 +302,14 @@ describe("useOutlit composable", () => {
 })
 
 describe("OutlitPlugin", () => {
-  it("initializes with autoTrack=true by default", () => {
+  it("enables tracking asynchronously when auto mode resolves without consent requirement", async () => {
+    // Default is autoTrack="auto": the SDK checks the visitor's region and
+    // enables tracking only when opt-in consent is not required
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ country: "US", consentRequired: false }),
+    } as Response)
+
     let result: ReturnType<typeof useOutlit> | null = null
 
     const TestComponent = defineComponent({
@@ -312,10 +319,35 @@ describe("OutlitPlugin", () => {
       },
     })
 
-    // No autoTrack option = defaults to true
     const { unmount } = mountWithPlugin(TestComponent, { publicKey: "pk_test" })
 
-    expect(result!.isTrackingEnabled.value).toBe(true)
+    expect(result!.isTrackingEnabled.value).toBe(false)
+    await vi.waitFor(() => expect(result!.isTrackingEnabled.value).toBe(true))
+
+    unmount()
+  })
+
+  it("stays disabled when auto mode reports consent required", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ country: "DE", consentRequired: true }),
+    } as Response)
+
+    let result: ReturnType<typeof useOutlit> | null = null
+
+    const TestComponent = defineComponent({
+      setup() {
+        result = useOutlit()
+        return () => h("div")
+      },
+    })
+
+    const { unmount } = mountWithPlugin(TestComponent, { publicKey: "pk_test" })
+
+    await vi.waitFor(() => expect(global.fetch).toHaveBeenCalled())
+    // Give the bootstrap promise time to settle
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(result!.isTrackingEnabled.value).toBe(false)
 
     unmount()
   })

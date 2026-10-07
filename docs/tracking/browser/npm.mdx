@@ -68,8 +68,8 @@ outlit.init({
   How often to send batched events (in milliseconds).
 </ParamField>
 
-<ParamField path="autoTrack" type="boolean" default="true">
-  Whether to start tracking automatically on init. Set to `false` if you need to wait for user consent. Call `enableTracking()` after consent is obtained.
+<ParamField path="autoTrack" type='boolean | "auto"' default='"auto"'>
+  Controls when tracking starts. `"auto"` (default) asks the Outlit edge endpoint whether the visitor's region requires opt-in consent: tracking enables automatically outside the EEA, UK, and Switzerland, and stays off in those regions or when the region can't be determined. The check fails closed — on a network error or timeout, tracking stays off. `true` enables tracking immediately on init; `false` waits for `enableTracking()`. A persisted opt-in or opt-out decision always takes precedence, and nothing is written to cookies or localStorage until tracking is enabled.
 </ParamField>
 
 <ParamField path="autoIdentify" type="boolean" default="true">
@@ -90,12 +90,14 @@ outlit.init({
 
 ## Consent management
 
-If you need to wait for user consent before tracking:
+The default `autoTrack: "auto"` mode already keeps tracking off for visitors in the EEA, UK, and Switzerland (or when the region is unknown). Have your consent management platform call `enableTracking()` when the user accepts — that call is what records opt-in consent.
+
+To always wait for an explicit consent signal instead, initialize with `autoTrack: false`:
 
 ```typescript
 import outlit from '@outlit/browser'
 
-// Initialize without auto-tracking
+// Initialize with tracking off until consent
 outlit.init({
   publicKey: 'pk_your_public_key',
   autoTrack: false, // Don't track until consent
@@ -246,7 +248,7 @@ const visitorId = tracker.getVisitorId()
 
 ### `outlit.enableTracking()`
 
-Enable tracking after consent. Only needed if `autoTrack: false` was set during init.
+Enable tracking after consent. This is the call a consent tool makes to grant opt-in — it's only needed when `autoTrack: false` was set, or when `autoTrack: "auto"` resolved to a region that requires consent.
 
 ```typescript
 import outlit, { enableTracking } from '@outlit/browser'

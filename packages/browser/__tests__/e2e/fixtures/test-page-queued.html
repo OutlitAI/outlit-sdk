@@ -41,7 +41,7 @@
       var s=d.createElement("script");s.async=1;s.src=src;
       s.dataset.publicKey=key;if(auto!==undefined)s.dataset.autoTrack=auto;
       (d.body||d.head).appendChild(s);
-    }(window,document,"/outlit.global.js","pk_test_key_12345");
+    }(window,document,"/outlit.global.js","pk_test_key_12345",true);
 
     // Queue calls BEFORE SDK loads - these should be processed after init
     window.outlit.track('early_event_1', { queued: true, order: 1 });

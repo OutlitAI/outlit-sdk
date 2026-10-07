@@ -2,6 +2,7 @@
 
 // Re-export useful types from core
 export type {
+  BootstrapResponse,
   BrowserIdentifyOptions,
   BrowserTrackOptions,
   TrackerConfig,

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SDK Test Page - Auto Mode (explicit attribute)</title>
+</head>
+<body>
+  <h1>SDK Test Page - data-auto-track="auto"</h1>
+  <button id="track-btn">Track Custom Event</button>
+
+  <script
+    src="/outlit.global.js"
+    data-public-key="pk_test_key_12345"
+    data-auto-track="auto"
+    async
+  ></script>
+
+  <script>
+    document.getElementById('track-btn').addEventListener('click', function() {
+      window.outlit.track('button_clicked', { buttonId: 'track-btn' });
+    });
+  </script>
+</body>
+</html>

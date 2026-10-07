@@ -13,7 +13,7 @@ declare global {
   interface Window {
     outlit: {
       // Public API
-      init: (options: { publicKey: string; apiHost?: string }) => void
+      init: (options: { publicKey: string; apiHost?: string; autoTrack?: boolean | "auto" }) => void
       track: (eventName: string, properties?: Record<string, unknown>) => void
       identify: (options: {
         email?: string

@@ -9,7 +9,7 @@
  * Run with: bun run test:unit
  */
 
-import { act, renderHook } from "@testing-library/react"
+import { act, renderHook, waitFor } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { OutlitProvider, useOutlit } from "../../src/react"
@@ -201,15 +201,42 @@ describe("useOutlit hook", () => {
 })
 
 describe("OutlitProvider", () => {
-  it("initializes with autoTrack=true by default", () => {
+  it("enables tracking asynchronously when auto mode resolves without consent requirement", async () => {
+    // Default is autoTrack="auto": the SDK checks the visitor's region and
+    // enables tracking only when opt-in consent is not required
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ country: "US", consentRequired: false }),
+    } as Response)
+
     const wrapper = ({ children }: { children: ReactNode }) => (
       <OutlitProvider publicKey="pk_test">{children}</OutlitProvider>
     )
 
     const { result } = renderHook(() => useOutlit(), { wrapper })
 
-    // Default is autoTrack=true, so tracking should be enabled
-    expect(result.current.isTrackingEnabled).toBe(true)
+    expect(result.current.isTrackingEnabled).toBe(false)
+    await waitFor(() => expect(result.current.isTrackingEnabled).toBe(true))
+  })
+
+  it("stays disabled when auto mode reports consent required", async () => {
+    vi.mocked(global.fetch).mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ country: "DE", consentRequired: true }),
+    } as Response)
+
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <OutlitProvider publicKey="pk_test">{children}</OutlitProvider>
+    )
+
+    const { result } = renderHook(() => useOutlit(), { wrapper })
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled())
+    // Give the bootstrap promise time to settle
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 10))
+    })
+    expect(result.current.isTrackingEnabled).toBe(false)
   })
 
   it("does not initialize tracking when autoTrack=false", () => {

@@ -14,10 +14,13 @@ export interface OutlitPluginOptions extends Omit<OutlitOptions, "trackPageviews
   trackPageviews?: boolean
   /**
    * Whether to start tracking automatically.
-   * Set to false if you need to wait for user consent.
-   * @default true
+   * - `true`: enable immediately.
+   * - `false`: wait for user consent — call enableTracking().
+   * - `"auto"` (default): let the SDK check the visitor's region and enable
+   *   automatically where opt-in consent is not required.
+   * @default "auto"
    */
-  autoTrack?: boolean
+  autoTrack?: boolean | "auto"
 }
 
 export interface OutlitInstance {
@@ -68,7 +71,7 @@ export const OutlitPlugin = {
     const {
       trackPageviews = true,
       trackForms = true,
-      autoTrack = true,
+      autoTrack,
       autoIdentify = true,
       ...rest
     } = options
@@ -84,18 +87,17 @@ export const OutlitPlugin = {
     isInitialized.value = true
     isTrackingEnabled.value = outlitRef.value.isEnabled()
 
+    // Keep tracking state in sync — auto mode can enable asynchronously
+    outlitRef.value.onTrackingStateChange((enabled) => {
+      isTrackingEnabled.value = enabled
+    })
+
     const enableTracking = () => {
-      if (outlitRef.value) {
-        outlitRef.value.enableTracking()
-        isTrackingEnabled.value = true
-      }
+      outlitRef.value?.enableTracking()
     }
 
     const disableTracking = () => {
-      if (outlitRef.value) {
-        outlitRef.value.disableTracking()
-        isTrackingEnabled.value = false
-      }
+      void outlitRef.value?.disableTracking()
     }
 
     const setUser = (user: UserIdentity | null) => {

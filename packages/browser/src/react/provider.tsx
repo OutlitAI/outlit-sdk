@@ -96,11 +96,13 @@ interface OutlitProviderConfigProps
   trackPageviews?: boolean
   /**
    * Whether to start tracking automatically on mount.
-   * Set to false if you need to wait for user consent.
-   * Call enableTracking() (from useOutlit hook) after consent is obtained.
-   * @default true
+   * - `true`: enable immediately.
+   * - `false`: wait for consent — call enableTracking() (from useOutlit hook).
+   * - `"auto"` (default): let the SDK check the visitor's region and enable
+   *   automatically where opt-in consent is not required.
+   * @default "auto"
    */
-  autoTrack?: boolean
+  autoTrack?: boolean | "auto"
 }
 
 export type OutlitProviderProps = OutlitProviderClientProps | OutlitProviderConfigProps
@@ -187,7 +189,7 @@ export function OutlitProvider(props: OutlitProviderProps) {
         trackForms = true,
         formFieldDenylist,
         flushInterval,
-        autoTrack = true,
+        autoTrack,
         autoIdentify = true,
         trackCalendarEmbeds,
         trackEngagement,
@@ -212,8 +214,12 @@ export function OutlitProvider(props: OutlitProviderProps) {
     setIsInitialized(true)
     setIsTrackingEnabled(outlitRef.current.isEnabled())
 
+    // Keep tracking state in sync — auto mode can enable asynchronously
+    const unsubscribeTrackingState = outlitRef.current.onTrackingStateChange(setIsTrackingEnabled)
+
     // Cleanup on unmount — only shutdown instances we created
     return () => {
+      unsubscribeTrackingState()
       if (!isExternalClientRef.current) {
         outlitRef.current?.shutdown()
       }
@@ -233,18 +239,13 @@ export function OutlitProvider(props: OutlitProviderProps) {
     }
   }, [user])
 
+  // Tracking state is updated via the onTrackingStateChange subscription
   const enableTracking = useCallback(() => {
-    if (outlitRef.current) {
-      outlitRef.current.enableTracking()
-      setIsTrackingEnabled(true)
-    }
+    outlitRef.current?.enableTracking()
   }, [])
 
   const disableTracking = useCallback(() => {
-    if (outlitRef.current) {
-      outlitRef.current.disableTracking()
-      setIsTrackingEnabled(false)
-    }
+    void outlitRef.current?.disableTracking()
   }, [])
 
   return (
