@@ -10,7 +10,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { createApp, defineComponent, h, nextTick, ref } from "vue"
+import { createApp, defineComponent, h, nextTick, onUnmounted, ref } from "vue"
 import { Outlit } from "../../src/tracker"
 import { OutlitPlugin, useIdentify, useOutlit, useOutlitUser, useTrack } from "../../src/vue"
 
@@ -406,6 +406,23 @@ describe("OutlitPlugin", () => {
     expect(localStorage.getItem("outlit_visitor_id")).toBeNull()
     expect(sessionStorage.length).toBe(0)
     expect(Object.keys(mockCookies).filter((k) => k.startsWith("outlit"))).toEqual([])
+  })
+
+  it("sends events tracked from a component unmount hook", async () => {
+    const TestComponent = defineComponent({
+      setup() {
+        const track = useTrack()
+        onUnmounted(() => track("left_page"))
+        return () => h("div")
+      },
+    })
+
+    const { unmount } = mountWithPlugin(TestComponent, { publicKey: "pk_test", autoTrack: true })
+    unmount()
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    const bodies = vi.mocked(global.fetch).mock.calls.map(([, init]) => String(init?.body ?? ""))
+    expect(bodies.some((body) => body.includes("left_page"))).toBe(true)
   })
 })
 

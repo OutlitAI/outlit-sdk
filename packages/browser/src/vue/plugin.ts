@@ -134,14 +134,18 @@ export const OutlitPlugin = {
 
     // Cleanup on app unmount — the plugin owns this client, so it shuts it
     // down (cancelling any pending auto-mode check) and releases listeners.
-    // Vue's App.onUnmount requires Vue >= 3.5 while the plugin supports
-    // >= 3.0, so wrap app.unmount instead.
+    // Components unmount first so events tracked from their unmount hooks are
+    // queued before shutdown flushes. Vue's App.onUnmount requires Vue >= 3.5
+    // while the plugin supports >= 3.0, so wrap app.unmount instead.
     const originalUnmount = app.unmount.bind(app)
     app.unmount = () => {
-      unsubscribeTrackingState()
-      stopUserWatch()
-      void outlitRef.value?.shutdown()
-      originalUnmount()
+      try {
+        originalUnmount()
+      } finally {
+        unsubscribeTrackingState()
+        stopUserWatch()
+        void outlitRef.value?.shutdown()
+      }
     }
   },
 }
