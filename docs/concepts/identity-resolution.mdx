@@ -167,6 +167,8 @@ const visitorId = outlit.getVisitorId()
 
 This ID is stored in localStorage and cookies, persists across sessions (same browser), and gets linked to contact after identify. With the default `autoTrack: "auto"` mode, nothing is stored in regions that require opt-in consent (EEA, UK, Switzerland, or unknown) until `enableTracking()` runs.
 
+The visitor ID cookie is set on your root domain, so `example.com` and `app.example.com` share one ID. Install the Browser SDK on both your marketing site and your app, and identify users after login with `setUser()` or `identify()`. Their earlier marketing-site visits then link to the contact. Sites on different root domains don't share an ID.
+
 ### Fingerprint (device ID)
 
 For native apps without browser storage (desktop, mobile, CLI), use a fingerprint—a stable device identifier you generate and manage:
