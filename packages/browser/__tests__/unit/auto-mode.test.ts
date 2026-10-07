@@ -767,4 +767,120 @@ describe("autoTrack auto mode", () => {
     expect(names.at(-1)).toBe("event_100")
     expect(names).not.toContain("event_0")
   })
+
+  it("keeps the newest identity when the pending buffer overflows", async () => {
+    const pending = deferred<unknown>()
+    global.fetch = vi.fn().mockReturnValue(pending.promise)
+
+    const outlit = newOutlit({
+      publicKey: "pk_test",
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+      trackCalendarEmbeds: false,
+    })
+
+    // 102 calls: the cap must evict plain tracks, never the identity calls —
+    // a dropped setUser would otherwise resurrect a stale identity on replay
+    outlit.setUser({ email: "a@example.com" })
+    for (let i = 0; i < 99; i++) {
+      outlit.track(`filler_${i}`)
+    }
+    outlit.identify({ email: "b@example.com" })
+    outlit.track("last_call")
+
+    pending.resolve(bootstrapResponse({ country: "US", consentRequired: false }))
+    await vi.waitFor(() => expect(outlit.isEnabled()).toBe(true))
+    await outlit.flush()
+
+    const payloads = eventPayloads()
+    const events = payloads.flatMap((p) => p.events)
+    // filler_0 and filler_1 were evicted; both identity calls survived — a
+    // resurrected pendingUser would enqueue a third identify for A
+    expect(events).toHaveLength(100)
+    const names = events.filter((e) => e.type === "custom").map((e) => e.eventName)
+    expect(names).not.toContain("filler_0")
+    expect(names).not.toContain("filler_1")
+    expect(names[0]).toBe("filler_2")
+    expect(names.at(-1)).toBe("last_call")
+    expect(events.filter((e) => e.type === "identify").map((e) => e.email)).toEqual([
+      "a@example.com",
+      "b@example.com",
+    ])
+
+    // Events made after the replay attribute to B — the evicted setUser must
+    // not come back through the pendingUser fallback
+    outlit.track("after_enable")
+    await outlit.flush()
+    const lastPayload = eventPayloads().at(-1)
+    expect(lastPayload?.userIdentity).toEqual({ email: "b@example.com" })
+    expect(lastPayload?.events.filter((e) => e.type === "identify")).toEqual([])
+  })
+
+  it("a trailing buffered clearUser clears pendingUser on a consent-required verdict", async () => {
+    const pending = deferred<unknown>()
+    global.fetch = vi.fn().mockReturnValue(pending.promise)
+
+    const outlit = newOutlit({
+      publicKey: "pk_test",
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+      trackCalendarEmbeds: false,
+    })
+
+    outlit.setUser({ email: "a@example.com" })
+    outlit.clearUser()
+
+    pending.resolve(bootstrapResponse({ country: "DE", consentRequired: true }))
+    await settleBootstrap()
+    expect(outlit.isEnabled()).toBe(false)
+
+    // The clear wins over the earlier setUser — a later explicit opt-in sends
+    // no identify at all
+    outlit.enableTracking()
+    await outlit.flush()
+    expect(
+      eventPayloads()
+        .flatMap((p) => p.events)
+        .filter((e) => e.type === "identify"),
+    ).toEqual([])
+  })
+
+  it("shutting down a pending client leaves an enabled client's capture running", async () => {
+    const pending = deferred<Response>()
+    global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url
+      if (url.includes("/bootstrap")) return pending.promise
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ success: true }),
+      } as Response)
+    })
+
+    // The enabled client owns the shared capture hooks (pushState patch etc.)
+    const enabled = newOutlit({
+      publicKey: "pk_live",
+      autoTrack: true,
+      trackForms: false,
+      trackEngagement: false,
+      trackCalendarEmbeds: false,
+    })
+    // Still waiting on its auto-mode verdict — owns no shared resources
+    const pendingClient = newOutlit({ publicKey: "pk_pending" })
+
+    await pendingClient.shutdown()
+
+    // Pageview capture is delayed ~10ms after navigation for title updates
+    window.history.pushState({}, "", "/still-captured")
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    await enabled.flush()
+    window.history.pushState({}, "", "/")
+
+    const urls = eventPayloads()
+      .flatMap((p) => p.events)
+      .filter((e) => e.type === "pageview")
+      .map((e) => e.url)
+    expect(urls).toContain("http://localhost:3000/still-captured")
+  })
 })

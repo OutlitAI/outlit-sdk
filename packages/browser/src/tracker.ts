@@ -55,6 +55,23 @@ function isConsentNotRequiredVerdict(body: unknown): boolean {
 }
 
 /**
+ * A call buffered while the auto-mode region check is pending. Identity
+ * transitions (setUser/clearUser/identify) are tracked separately from plain
+ * events so a full buffer evicts an old event before an old identity — an
+ * evicted identity change would resurrect or lose the caller's intent.
+ */
+interface PendingCall {
+  run: () => void
+  identityTransition: boolean
+  /**
+   * The pendingUser this call implies if consent ends up required: the
+   * identity for setUser, null for clearUser, absent for track/identify
+   * (identify never seeds pendingUser — same as autoTrack: false).
+   */
+  pendingUser?: UserIdentity | null
+}
+
+/**
  * Shallow-copy identity options so later mutations by the caller can't leak
  * into a buffered call.
  */
@@ -141,7 +158,7 @@ export class Outlit {
   private exitCleanups: Array<() => void> = []
   private autoModePending = false
   private bootstrapController: AbortController | null = null
-  private pendingCalls: Array<() => void> = []
+  private pendingCalls: PendingCall[] = []
   private trackingStateListeners = new Set<(enabled: boolean) => void>()
 
   constructor(options: OutlitOptions) {
@@ -288,17 +305,17 @@ export class Outlit {
     this.isTrackingEnabled = true
 
     // Replay calls buffered while the auto-mode decision was pending — in
-    // call order, each with the context it was made with. Buffered
-    // setUser/clearUser calls keep pendingUser in sync as they run.
+    // call order, each with the context it was made with
     const pending = this.pendingCalls
     this.pendingCalls = []
     for (const call of pending) {
-      call()
+      call.run()
     }
 
-    // Apply any pending user identity not covered by the replay — set while
-    // tracking was off (autoTrack: false, after a consent-required verdict)
-    // or buffered past the pending-call cap
+    // Apply an identity that was set while tracking was off without going
+    // through the buffer (autoTrack: false, or the latest setUser kept after
+    // a consent-required verdict). Buffered calls never write pendingUser,
+    // so after a replay this is always null and the fallback is a no-op
     if (this.pendingUser) {
       const user = this.pendingUser
       this.pendingUser = null
@@ -323,7 +340,7 @@ export class Outlit {
   async disableTracking(): Promise<void> {
     // An explicit disable wins over a pending auto-mode decision
     this.cancelAutoMode()
-    this.pendingCalls = []
+    this.discardPendingCalls()
 
     // Persist the opt-out first so a page unload during the flush below, or a
     // throwing listener, can't lose the revocation
@@ -377,7 +394,10 @@ export class Outlit {
       if (this.autoModePending) {
         const ctx = this.snapshotContext()
         const snapshot = properties ? { ...properties } : undefined
-        this.bufferPendingCall(() => this.recordTrack(eventName, snapshot, ctx))
+        this.bufferPendingCall({
+          run: () => this.recordTrack(eventName, snapshot, ctx),
+          identityTransition: false,
+        })
         return
       }
       console.warn("[Outlit] Tracking not enabled. Call enableTracking() first.")
@@ -411,7 +431,10 @@ export class Outlit {
       if (this.autoModePending) {
         const ctx = this.snapshotContext()
         const snapshot = snapshotIdentity(options)
-        this.bufferPendingCall(() => this.recordIdentify(snapshot, ctx))
+        this.bufferPendingCall({
+          run: () => this.recordIdentify(snapshot, ctx),
+          identityTransition: true,
+        })
         return
       }
       console.warn("[Outlit] Tracking not enabled. Call enableTracking() first.")
@@ -474,15 +497,14 @@ export class Outlit {
 
     if (!this.isTrackingEnabled) {
       if (this.autoModePending) {
-        // Buffer the identify so it replays in call order alongside
-        // track/identify calls; pendingUser still records the latest identity
-        // so a consent-required verdict keeps it like autoTrack: false does
+        // Buffer so it replays in call order alongside track/identify calls;
+        // pendingUser picks up this identity only if consent ends up required
         const snapshot = snapshotIdentity(identity)
-        this.pendingUser = snapshot
         const ctx = this.snapshotContext()
-        this.bufferPendingCall(() => {
-          this.pendingUser = null
-          this.applyUser(snapshot, ctx)
+        this.bufferPendingCall({
+          run: () => this.applyUser(snapshot, ctx),
+          identityTransition: true,
+          pendingUser: snapshot,
         })
         return
       }
@@ -499,9 +521,14 @@ export class Outlit {
    */
   clearUser(): void {
     if (this.autoModePending) {
-      // Replay in call order so the clear lands between the buffered calls it
-      // was made between; pendingUser still reflects the latest call
-      this.bufferPendingCall(() => this.clearUser())
+      // Buffer so the clear replays between the calls it was made between; a
+      // consent-required verdict keeps pendingUser: null like autoTrack: false
+      this.bufferPendingCall({
+        run: () => this.clearUser(),
+        identityTransition: true,
+        pendingUser: null,
+      })
+      return
     }
     if (this.currentUser) {
       void this.flush()
@@ -580,14 +607,19 @@ export class Outlit {
   async shutdown(): Promise<void> {
     this.cancelAutoMode()
     this.pendingCalls = []
-    if (this.flushTimer) {
-      clearInterval(this.flushTimer)
-      this.flushTimer = null
+    // Only tear down shared capture when this instance started it — a pending
+    // or never-enabled client owns none of it, and stopping it would kill a
+    // different enabled client's tracking on the same page
+    if (this.isTrackingEnabled) {
+      if (this.flushTimer) {
+        clearInterval(this.flushTimer)
+        this.flushTimer = null
+      }
+      stopAutocapture()
+      stopCalendarTracking()
+      stopSessionTracking()
+      this.sessionTracker = null
     }
-    stopAutocapture()
-    stopCalendarTracking()
-    stopSessionTracking()
-    this.sessionTracker = null
     for (const cleanup of this.exitCleanups) {
       cleanup()
     }
@@ -652,7 +684,7 @@ export class Outlit {
       this.enableTrackingInternal(false)
     } else {
       // Consent required or check failed — pre-consent calls are never sent
-      this.pendingCalls = []
+      this.discardPendingCalls()
     }
   }
 
@@ -663,11 +695,28 @@ export class Outlit {
     this.bootstrapController = null
   }
 
-  private bufferPendingCall(call: () => void): void {
+  private bufferPendingCall(call: PendingCall): void {
     if (this.pendingCalls.length >= MAX_PENDING_CALLS) {
-      this.pendingCalls.shift()
+      // Evict the oldest plain call first — an identity transition is only
+      // dropped when nothing else remains
+      const evict = this.pendingCalls.findIndex((c) => !c.identityTransition)
+      this.pendingCalls.splice(evict === -1 ? 0 : evict, 1)
     }
     this.pendingCalls.push(call)
+  }
+
+  /**
+   * Drop the buffer on a denied verdict or explicit disable — the latest
+   * setUser identity (or clearUser's null) survives as pendingUser, matching
+   * autoTrack: false where those calls were never buffered.
+   */
+  private discardPendingCalls(): void {
+    for (const call of this.pendingCalls) {
+      if (call.pendingUser !== undefined) {
+        this.pendingUser = call.pendingUser
+      }
+    }
+    this.pendingCalls = []
   }
 
   private notifyTrackingStateChange(): void {
