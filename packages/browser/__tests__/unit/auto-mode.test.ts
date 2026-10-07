@@ -817,6 +817,39 @@ describe("autoTrack auto mode", () => {
     expect(lastPayload?.events.filter((e) => e.type === "identify")).toEqual([])
   })
 
+  it("keeps the latest setUser when identity-only overflow evicts it before a consent-required verdict", async () => {
+    const pending = deferred<unknown>()
+    global.fetch = vi.fn().mockReturnValue(pending.promise)
+
+    const outlit = newOutlit({
+      publicKey: "pk_test",
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+      trackCalendarEmbeds: false,
+    })
+
+    // Every buffered call is an identity transition, so the cap evicts the
+    // setUser itself — the latest setUser must still survive as pendingUser
+    outlit.setUser({ email: "known@example.com" })
+    for (let i = 0; i < 100; i++) {
+      outlit.identify({ email: `bulk_${i}@example.com` })
+    }
+
+    pending.resolve(bootstrapResponse({ country: "DE", consentRequired: true }))
+    await settleBootstrap()
+    expect(outlit.isEnabled()).toBe(false)
+
+    outlit.enableTracking()
+    await outlit.flush()
+    expect(
+      eventPayloads()
+        .flatMap((p) => p.events)
+        .filter((e) => e.type === "identify")
+        .map((e) => e.email),
+    ).toEqual(["known@example.com"])
+  })
+
   it("a trailing buffered clearUser clears pendingUser on a consent-required verdict", async () => {
     const pending = deferred<unknown>()
     global.fetch = vi.fn().mockReturnValue(pending.promise)
