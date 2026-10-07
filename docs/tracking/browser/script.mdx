@@ -303,7 +303,7 @@ Choose this event as your activation event in Outlit. The first matching event r
 
 ### Get visitor ID
 
-Access the current visitor's ID (useful for server-side correlation):
+Access the current visitor's ID (useful for server-side correlation). Returns `null` until tracking is enabled:
 
 ```javascript
 const visitorId = window.outlit.getVisitorId()

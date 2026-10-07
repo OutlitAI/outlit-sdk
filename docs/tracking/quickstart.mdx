@@ -27,7 +27,7 @@ function withOutlit(callback) {
 }
 ```
 
-If your site requires consent before tracking, set `data-auto-track="false"` on the tag and call `window.outlit.enableTracking()` only after the visitor accepts. A saved opt-out persists across visits until tracking is enabled again. See [Consent management](/tracking/browser/script#consent-management) for the complete pattern.
+The default `data-auto-track` behavior already keeps tracking off in regions that require opt-in consent (EEA, UK, Switzerland, or unknown). To always wait for an explicit consent signal, set `data-auto-track="false"` on the tag and call `window.outlit.enableTracking()` only after the visitor accepts. A saved opt-out persists across visits until tracking is enabled again. See [Consent management](/tracking/browser/script#consent-management) for the complete pattern.
 
 ## Identify a visitor
 
