@@ -144,6 +144,12 @@ function setCookie(name: string, value: string, days: number): void {
     cookie += `;domain=${rootDomain}`
   }
 
+  // Only send over HTTPS on secure pages; plain-HTTP pages (e.g. local dev)
+  // can't set Secure cookies
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    cookie += ";Secure"
+  }
+
   document.cookie = cookie
 }
 
