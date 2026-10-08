@@ -69,6 +69,22 @@ describe("consent state storage", () => {
     expect(getConsentState()).toBe("opted-in")
   })
 
+  it("doesn't mark cookies Secure on plain-HTTP pages", () => {
+    const writes: string[] = []
+    Object.defineProperty(document, "cookie", {
+      get: () => "",
+      set: (value: string) => {
+        writes.push(value)
+      },
+      configurable: true,
+    })
+
+    setConsentState(true)
+
+    expect(writes).toHaveLength(1)
+    expect(writes[0]).not.toContain("Secure")
+  })
+
   it("clears consent state from localStorage and cookie", () => {
     setConsentState(true)
     clearConsentState()
