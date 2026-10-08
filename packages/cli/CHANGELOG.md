@@ -1,5 +1,14 @@
 # @outlit/cli
 
+## 3.2.5
+
+### Patch Changes
+
+- [#245](https://github.com/OutlitAI/outlit-sdk/pull/245) [`24fdff7`](https://github.com/OutlitAI/outlit-sdk/commit/24fdff7b1af5e064cf2a304ff90ae2754c06ea4c) Thanks [@leo-paz](https://github.com/leo-paz)! - Sync the API key validation contract v2 from Core: `apiKeyContractHeader` and `apiKeyValidationSuccessSchemaV2` add `apiKey.expiresAt`, returned only when a client sends `Outlit-Api-Key-Contract: 2`. The CLI now asks for v2 when it validates a key, still accepts v1 responses, and warns on stderr (once per run) when the key expires within 14 days, suggesting `outlit login`.
+
+- Updated dependencies [[`24fdff7`](https://github.com/OutlitAI/outlit-sdk/commit/24fdff7b1af5e064cf2a304ff90ae2754c06ea4c)]:
+  - @outlit/tools@2.2.4
+
 ## 3.2.4
 
 ### Patch Changes
