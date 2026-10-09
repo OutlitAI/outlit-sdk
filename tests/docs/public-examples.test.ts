@@ -245,6 +245,10 @@ describe("public documentation examples", () => {
       ["Read exact source content", "outlit_get_source"],
       ["Follow person profile evidence", "outlit_get_source"],
       ["Read customer features", "outlit_get_customer_features"],
+      ["List scoped identity repairs", "outlit_list_scoped_repairs"],
+      ["Preview a scoped identity repair", "outlit_preview_scoped_repair"],
+      ["Execute a scoped identity repair", "outlit_execute_scoped_repair"],
+      ["Verify a scoped identity repair", "outlit_verify_scoped_repair"],
       ["Submit product feedback", "outlit_submit_feedback"],
     ] as const
     const failures: string[] = []
