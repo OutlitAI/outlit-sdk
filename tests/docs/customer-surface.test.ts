@@ -26,6 +26,13 @@ const contactTransitionFactTypes = [
   "CONTACT_DISENGAGEMENT",
 ] as const
 
+const scopedRepairTools = [
+  "outlit_list_scoped_repairs",
+  "outlit_preview_scoped_repair",
+  "outlit_execute_scoped_repair",
+  "outlit_verify_scoped_repair",
+] as const
+
 describe("customer-surface documentation", () => {
   test("lists every public tool in the API reference", () => {
     const apiDocs = readDoc("docs/api-reference/tools.mdx")
@@ -50,14 +57,33 @@ describe("customer-surface documentation", () => {
     const piExamples = readDoc("examples/pi-agents/README.md")
 
     for (const toolName of collaborationTools) expect(piTools.has(toolName)).toBe(true)
+    for (const toolName of scopedRepairTools) expect(piTools.has(toolName)).toBe(true)
 
     expect(piDocs).toContain("customer relationship and Attention reads")
     expect(piDocs).toContain("customer ownership and access actions")
+    expect(piDocs).toContain("identity review and scoped-repair tools")
     expect(piReadme).toContain("customer ownership and access actions")
+    expect(piReadme).toContain("identity review and scoped-repair tools")
     expect(piExamples).toContain("createOutlitPiExtension, piToolNames")
     expect(piExamples).toContain("toolNames: piToolNames")
     expect(piExamples).not.toContain("allPublicToolNames")
     expect(readDoc("docs/api-reference/tools.mdx")).toContain("`piToolNames`")
+  })
+
+  test("documents scoped identity repairs and their completion boundary", () => {
+    const apiDocs = readDoc("docs/api-reference/tools.mdx")
+    const mcpDocs = readDoc("docs/ai-integrations/mcp.mdx")
+
+    for (const toolName of scopedRepairTools) {
+      expect(apiDocs).toContain(`| \`${toolName}\` |`)
+      expect(mcpDocs).toContain(`| \`${toolName}\` |`)
+    }
+
+    for (const source of [apiDocs, mcpDocs]) {
+      expect(source).toContain("destructive")
+      expect(source).toContain("Outlit-hosted agents")
+      expect(source).toMatch(/inconclusive.*not completion|inconclusive results as incomplete/)
+    }
   })
 
   test("documents contact-transition fact types without recommending category filters", () => {
