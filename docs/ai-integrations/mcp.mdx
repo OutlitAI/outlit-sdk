@@ -92,8 +92,12 @@ For coding agents that run local commands, see [Agent skills](/ai-integrations/s
 | `outlit_verify_scoped_repair` | Verify live ownership, audit, billing, and index state after execution |
 
 Scoped repair execution is destructive and is not available to Outlit-hosted agents or internal
-apps. A customer-controlled agent must list the finding, preview the exact saved candidate, obtain
-explicit authorization, execute the reviewed digest, and verify the live result. Pending,
+apps. A customer-controlled agent must list the finding first. When `hasSavedCandidate` is true
+and the finding is not blocked, preview with its exact `findingId` and `fingerprint` while omitting
+`candidate` to use the saved manifest. When it is false, obtain an exact source-backed candidate
+manifest as described in the [tool gateway workflow](/api-reference/tools#preview-a-scoped-identity-repair)
+and supply that manifest to preview. Never construct one from the finding summary. After preview,
+obtain explicit authorization, execute the reviewed digest, and verify the live result. Pending,
 recovery-needed, or inconclusive verification is not completion.
 
 ### Attention and access
