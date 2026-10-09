@@ -45,6 +45,10 @@ against the shared `@outlit/tools` contract before the tool runs.
 | `outlit_reject_identity_merge_suggestion` | Reject one saved suggestion by exact ID |
 | `outlit_merge_customers` | Preview then execute a two-phase customer merge by exact UUIDs |
 | `outlit_get_customer_merge_status` | Track a merge operation by its operation ID |
+| `outlit_list_scoped_repairs` | List bounded identity-integrity findings and exact saved-candidate availability |
+| `outlit_preview_scoped_repair` | Preview and save one exact source-backed repair plan |
+| `outlit_execute_scoped_repair` | Execute only the saved plan identified by its digest |
+| `outlit_verify_scoped_repair` | Verify live ownership, audit, billing, and index state after execution |
 
 ### Attention
 
@@ -358,6 +362,67 @@ no matches in the requested window, or unavailable source evidence. Unavailable 
 converted to zero. Archive is the available self-service lifecycle action.
 Creating a Feature also creates the supporting weekly event-count and active-days metrics inside
 Outlit; those metrics are not separate public resources.
+
+### List scoped identity repairs
+
+List every page until `hasMore` is false. A finding summary is not an executable repair manifest.
+
+```json
+{
+  "tool": "outlit_list_scoped_repairs",
+  "input": {
+    "limit": 20
+  }
+}
+```
+
+### Preview a scoped identity repair
+
+Use the exact `findingId` and `fingerprint` returned by the list call. When
+`hasSavedCandidate` is true and the finding is not blocked, omit `candidate` to preview the
+server-saved exact manifest. If no saved candidate exists, obtain a source-backed manifest from
+the owning domain rather than constructing one from the summary.
+
+```json
+{
+  "tool": "outlit_preview_scoped_repair",
+  "input": {
+    "findingId": "finding_123",
+    "expectedFingerprint": "fingerprint_123"
+  }
+}
+```
+
+### Execute a scoped identity repair
+
+Execution is destructive. It requires explicit authorization, the exact saved `planDigest` from
+the reviewed preview, a reason, identity-write authority, and access to every protected customer.
+Outlit-hosted agents and internal apps cannot execute this operation.
+
+```json
+{
+  "tool": "outlit_execute_scoped_repair",
+  "input": {
+    "findingId": "finding_123",
+    "planDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "reason": "Reviewed the exact source-backed repair plan"
+  }
+}
+```
+
+### Verify a scoped identity repair
+
+Verification is a separate live read after execution. Treat queued, admitted, blocked,
+`pending_verification`, `recovery_needed`, and inconclusive results as incomplete.
+
+```json
+{
+  "tool": "outlit_verify_scoped_repair",
+  "input": {
+    "findingId": "finding_123"
+  }
+}
+```
 
 ### Submit product feedback
 
