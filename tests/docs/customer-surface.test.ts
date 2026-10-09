@@ -82,6 +82,8 @@ describe("customer-surface documentation", () => {
     for (const source of [apiDocs, mcpDocs]) {
       expect(source).toContain("destructive")
       expect(source).toContain("Outlit-hosted agents")
+      expect(source).toContain("hasSavedCandidate")
+      expect(source).toContain("source-backed")
       expect(source).toMatch(/inconclusive.*not completion|inconclusive results as incomplete/)
     }
   })
