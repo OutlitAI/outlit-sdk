@@ -250,7 +250,25 @@ describe("Core-generated OpenAPI spec", () => {
     const spec = readSpec()
     const gateway = spec.paths?.[toolGatewayTransport.path]?.post as GatewayOperation
     const callVariants = gateway.requestBody.content["application/json"].schema.oneOf
-    expect(callVariants.every((variant) => variant.required?.join() === "tool")).toBe(true)
+    // The gateway defaults an omitted `input` to `{}` before parsing the
+    // capability's input schema, so `input` is required unless the tool
+    // accepts `{}`. Core's contract test is the exhaustive oracle; here we
+    // pin the shape and representative cases.
+    expect(
+      callVariants.every(
+        (variant) =>
+          variant.required?.join() === "tool" || variant.required?.join() === "tool,input",
+      ),
+    ).toBe(true)
+    const requiredByTool = new Map(
+      callVariants.map((variant) => [variant.properties?.tool?.const, variant.required]),
+    )
+    expect(requiredByTool.get("outlit_list_customers")).toEqual(["tool"])
+    expect(requiredByTool.get("outlit_get_customer")).toEqual(["tool", "input"])
+    // Rejects {} through a refinement its emitted JSON schema cannot express.
+    expect(requiredByTool.get("outlit_update_workspace_settings")).toEqual(["tool", "input"])
+    // Every anyOf input branch requires a field, so input stays required.
+    expect(requiredByTool.get("outlit_setup_integration")).toEqual(["tool", "input"])
     expect(gateway.responses["200"].content["application/json"].schema).toHaveProperty("anyOf")
     expect(gateway.responses["200"].content["application/json"].schema).not.toHaveProperty("oneOf")
     expect(Object.keys(gateway.responses).map(Number)).toEqual([
@@ -284,7 +302,15 @@ describe("Core-generated OpenAPI spec", () => {
       (spec.paths?.[ingestTransport.pathTemplate]?.post as { security?: unknown })?.security,
     ).toEqual([])
 
-    const ingestJson = JSON.stringify(spec.components?.schemas?.IngestPayload)
+    // Runtime ingestion applies `source`'s "client" default before its
+    // visitorId refinement, so only an explicit "server" source waives it.
+    const ingestPayload = spec.components?.schemas?.IngestPayload
+    expect(ingestPayload?.anyOf).toEqual([
+      { required: ["visitorId"] },
+      { properties: { source: { const: "server" } }, required: ["source"] },
+    ])
+
+    const ingestJson = JSON.stringify(ingestPayload)
     for (const eventType of ingestTransport.eventTypes) expect(ingestJson).toContain(eventType)
     expect(ingestJson).not.toMatch(/"stage"|"billing"/)
   })

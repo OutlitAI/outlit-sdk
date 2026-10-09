@@ -126,7 +126,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -142,7 +143,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -158,7 +160,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -174,7 +177,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -190,7 +194,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -206,7 +211,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -222,7 +228,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -238,7 +245,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -254,7 +262,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -270,7 +279,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -302,7 +312,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -318,7 +329,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -366,7 +378,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -382,7 +395,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -398,7 +412,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -414,7 +429,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -430,7 +446,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -446,7 +463,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -462,7 +480,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -494,7 +513,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -510,7 +530,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -542,7 +563,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -574,7 +596,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -590,7 +613,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -622,7 +646,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -654,7 +679,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -670,7 +696,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -686,7 +713,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -702,7 +730,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -734,7 +763,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -750,7 +780,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -782,7 +813,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -798,7 +830,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -814,7 +847,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -846,7 +880,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -862,7 +897,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   },
@@ -878,7 +914,8 @@
                       }
                     },
                     "required": [
-                      "tool"
+                      "tool",
+                      "input"
                     ],
                     "additionalProperties": false
                   }
@@ -2336,6 +2373,23 @@
         },
         "required": [
           "events"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "visitorId"
+            ]
+          },
+          {
+            "properties": {
+              "source": {
+                "const": "server"
+              }
+            },
+            "required": [
+              "source"
+            ]
+          }
         ]
       },
       "IngestResponse": {
