@@ -578,7 +578,7 @@ export const publicToolContracts = {
                   "properties": {
                     "system": {
                       "type": "string",
-                      "description": "Lowercase id of the system, such as hubspot, salesforce, attio, pylon, posthog, slack, stripe, google-mail, google-calendar, ergo, fireflies, gong, product-analytics (a product-analytics provider Outlit did not record), linkedin (a public profile) or outlit (the Outlit SDK).",
+                      "description": "Lowercase id of the system, such as hubspot, salesforce, attio, pylon, posthog, slack, stripe, google-mail, google-calendar, ergo, fireflies, gong, mixpanel, outlit (the Outlit SDK) or product-analytics (a product-analytics provider Outlit did not record).",
                     },
                     "kind": {
                       "type": "string",
@@ -587,14 +587,13 @@ export const publicToolContracts = {
                         "product_user",
                         "chat_member",
                         "billing_customer",
-                        "profile",
                         "call",
                         "meeting",
                         "email",
                         "support_ticket",
                         "slack_thread",
                       ],
-                      "description": "Records: contact (a contact in a CRM or support tool), product_user (a user in product analytics or product sign-in), chat_member (a Slack member), billing_customer, profile (a public profile). Conversations the person took part in: call, meeting, email, support_ticket, slack_thread.",
+                      "description": "Records: contact (a contact in a CRM or support tool), product_user (a user in product analytics or product sign-in), chat_member (a Slack member), billing_customer. Conversations the person took part in: call, meeting, email, support_ticket, slack_thread.",
                     },
                     "count": {
                       "anyOf": [
@@ -1147,7 +1146,7 @@ export const publicToolContracts = {
                   "properties": {
                     "system": {
                       "type": "string",
-                      "description": "Lowercase id of the system, such as hubspot, salesforce, attio, pylon, posthog, slack, stripe, google-mail, google-calendar, ergo, fireflies, gong, product-analytics (a product-analytics provider Outlit did not record), linkedin (a public profile) or outlit (the Outlit SDK).",
+                      "description": "Lowercase id of the system, such as hubspot, salesforce, attio, pylon, posthog, slack, stripe, google-mail, google-calendar, ergo, fireflies, gong, mixpanel, outlit (the Outlit SDK) or product-analytics (a product-analytics provider Outlit did not record).",
                     },
                     "kind": {
                       "type": "string",
@@ -1156,14 +1155,13 @@ export const publicToolContracts = {
                         "product_user",
                         "chat_member",
                         "billing_customer",
-                        "profile",
                         "call",
                         "meeting",
                         "email",
                         "support_ticket",
                         "slack_thread",
                       ],
-                      "description": "Records: contact (a contact in a CRM or support tool), product_user (a user in product analytics or product sign-in), chat_member (a Slack member), billing_customer, profile (a public profile). Conversations the person took part in: call, meeting, email, support_ticket, slack_thread.",
+                      "description": "Records: contact (a contact in a CRM or support tool), product_user (a user in product analytics or product sign-in), chat_member (a Slack member), billing_customer. Conversations the person took part in: call, meeting, email, support_ticket, slack_thread.",
                     },
                     "count": {
                       "anyOf": [
@@ -17503,4 +17501,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "349c9f12f36c1558a921c55f3a65a153d2138a3377735d2866aa5eb70a9738a1" as const
+export const sdkConsumerContractHash = "2fa67b23109e55e6b48d9899d1cfd176784feadf1d052a30a218cb69a3b59cbb" as const
