@@ -390,7 +390,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "users",
     "title": "List Users",
-    "description": "Browse and filter users. Use this to find users by journey stage, activity recency, customer, or email/name. Returns a paginated list with activity info.",
+    "description": "Browse and filter users. Use this to find users by journey stage, activity recency, customer, or email/name. Returns a paginated list with activity info and each user's sources: where Outlit found them (CRM, support tool, product analytics, Slack) and the calls, meetings, emails, tickets and Slack threads they took part in.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -570,6 +570,77 @@ export const publicToolContracts = {
                     "type": "null",
                   },
                 ],
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "system": {
+                      "type": "string",
+                      "description": "Lowercase id of the system, such as hubspot, salesforce, attio, pylon, posthog, slack, stripe, google-mail, google-calendar, ergo, fireflies, gong, mixpanel, outlit (the Outlit SDK) or product-analytics (a product-analytics provider Outlit did not record).",
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "contact",
+                        "product_user",
+                        "chat_member",
+                        "billing_customer",
+                        "call",
+                        "meeting",
+                        "email",
+                        "support_ticket",
+                        "slack_thread",
+                      ],
+                      "description": "Records: contact (a contact in a CRM or support tool), product_user (a user in product analytics or product sign-in), chat_member (a Slack member), billing_customer. Conversations the person took part in: call, meeting, email, support_ticket, slack_thread.",
+                    },
+                    "count": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                      "description": "How many conversations of this kind; null for records.",
+                    },
+                    "firstSeenAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                      "description": "When the record was created in the system (or first linked to this person), or the first conversation.",
+                    },
+                    "lastSeenAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                      "description": "The latest conversation; null for records.",
+                    },
+                  },
+                  "required": [
+                    "system",
+                    "kind",
+                    "count",
+                    "firstSeenAt",
+                    "lastSeenAt",
+                  ],
+                  "additionalProperties": false,
+                },
+                "description": "Where Outlit found this person: the systems that hold a record of them and the conversations they took part in. Empty when Outlit has no source recorded; absent from servers that predate it.",
               },
               "relationshipRole": {
                 "anyOf": [
@@ -865,7 +936,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Optionally include users, revenue, recent activity, engagement metrics, or company enrichment. Revenue amounts (currentMrr, lifetimeRevenue) are in the billing provider's units for the customer's currency, which the result doesn't name. For USD, EUR, GBP and CAD these are cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules. ARR is 12 × currentMrr in the same units.",
+    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, or company enrichment. Revenue amounts (currentMrr, lifetimeRevenue) are in the billing provider's units for the customer's currency, which the result doesn't name. For USD, EUR, GBP and CAD these are cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules. ARR is 12 × currentMrr in the same units.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -1067,6 +1138,77 @@ export const publicToolContracts = {
                     "type": "null",
                   },
                 ],
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "system": {
+                      "type": "string",
+                      "description": "Lowercase id of the system, such as hubspot, salesforce, attio, pylon, posthog, slack, stripe, google-mail, google-calendar, ergo, fireflies, gong, mixpanel, outlit (the Outlit SDK) or product-analytics (a product-analytics provider Outlit did not record).",
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "contact",
+                        "product_user",
+                        "chat_member",
+                        "billing_customer",
+                        "call",
+                        "meeting",
+                        "email",
+                        "support_ticket",
+                        "slack_thread",
+                      ],
+                      "description": "Records: contact (a contact in a CRM or support tool), product_user (a user in product analytics or product sign-in), chat_member (a Slack member), billing_customer. Conversations the person took part in: call, meeting, email, support_ticket, slack_thread.",
+                    },
+                    "count": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                      "description": "How many conversations of this kind; null for records.",
+                    },
+                    "firstSeenAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                      "description": "When the record was created in the system (or first linked to this person), or the first conversation.",
+                    },
+                    "lastSeenAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                      "description": "The latest conversation; null for records.",
+                    },
+                  },
+                  "required": [
+                    "system",
+                    "kind",
+                    "count",
+                    "firstSeenAt",
+                    "lastSeenAt",
+                  ],
+                  "additionalProperties": false,
+                },
+                "description": "Where Outlit found this person: the systems that hold a record of them and the conversations they took part in. Empty when Outlit has no source recorded; absent from servers that predate it.",
               },
               "relationshipRole": {
                 "anyOf": [
@@ -17359,4 +17501,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "0bb35218a281339fd1668fe7e7b22eadde7abddc9dfd957d3d72aa8db0a1365a" as const
+export const sdkConsumerContractHash = "2fa67b23109e55e6b48d9899d1cfd176784feadf1d052a30a218cb69a3b59cbb" as const
