@@ -578,7 +578,7 @@ export const publicToolContracts = {
                   "properties": {
                     "system": {
                       "type": "string",
-                      "description": "Lowercase id of the system, such as hubspot, salesforce, attio, pylon, posthog, slack, stripe, google-mail, google-calendar, ergo, fireflies, gong, linkedin (a public profile) or outlit (the Outlit SDK).",
+                      "description": "Lowercase id of the system, such as hubspot, salesforce, attio, pylon, posthog, slack, stripe, google-mail, google-calendar, ergo, fireflies, gong, product-analytics (a product-analytics provider Outlit did not record), linkedin (a public profile) or outlit (the Outlit SDK).",
                     },
                     "kind": {
                       "type": "string",
@@ -1147,7 +1147,7 @@ export const publicToolContracts = {
                   "properties": {
                     "system": {
                       "type": "string",
-                      "description": "Lowercase id of the system, such as hubspot, salesforce, attio, pylon, posthog, slack, stripe, google-mail, google-calendar, ergo, fireflies, gong, linkedin (a public profile) or outlit (the Outlit SDK).",
+                      "description": "Lowercase id of the system, such as hubspot, salesforce, attio, pylon, posthog, slack, stripe, google-mail, google-calendar, ergo, fireflies, gong, product-analytics (a product-analytics provider Outlit did not record), linkedin (a public profile) or outlit (the Outlit SDK).",
                     },
                     "kind": {
                       "type": "string",
@@ -17503,4 +17503,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "189b3b41f76b1f989cd71fd2fb061bb64e55936724836f0e2aca2b012c499b74" as const
+export const sdkConsumerContractHash = "349c9f12f36c1558a921c55f3a65a153d2138a3377735d2866aa5eb70a9738a1" as const
