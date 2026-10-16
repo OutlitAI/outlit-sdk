@@ -15,7 +15,7 @@ describe("Mintlify Outlit tracking script", () => {
 
     expect(script).toContain('location.hostname !== "docs.outlit.ai"')
     expect(script).toContain("https://cdn.outlit.ai/stable/outlit.js")
-    expect(script).toContain("pk_K8WwRMwU8RoMCzcg3Dj25JNoIand-ifg")
+    expect(script).toContain("pk__0ftTm6V6-W5vSeWw92vv8VItR4mHJOp")
   })
 
   test("registers the script with Mintlify custom scripts", () => {
