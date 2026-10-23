@@ -8516,6 +8516,8 @@ export const publicToolContracts = {
             "gong",
             "fireflies",
             "ergo",
+            "circleback",
+            "pocket",
             "pylon",
             "stripe",
             "mixpanel",
@@ -8838,6 +8840,58 @@ export const publicToolContracts = {
           "properties": {
             "provider": {
               "type": "string",
+              "const": "circleback",
+            },
+            "credentials": {
+              "type": "object",
+              "properties": {
+                "apiKey": {
+                  "type": "string",
+                  "minLength": 1,
+                },
+              },
+              "required": [
+                "apiKey",
+              ],
+              "additionalProperties": false,
+            },
+          },
+          "required": [
+            "provider",
+          ],
+          "additionalProperties": false,
+        },
+        {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "const": "pocket",
+            },
+            "credentials": {
+              "type": "object",
+              "properties": {
+                "apiKey": {
+                  "type": "string",
+                  "minLength": 1,
+                },
+              },
+              "required": [
+                "apiKey",
+              ],
+              "additionalProperties": false,
+            },
+          },
+          "required": [
+            "provider",
+          ],
+          "additionalProperties": false,
+        },
+        {
+          "type": "object",
+          "properties": {
+            "provider": {
+              "type": "string",
               "const": "fireflies",
             },
             "credentials": {
@@ -9105,6 +9159,8 @@ export const publicToolContracts = {
             "gong",
             "fireflies",
             "ergo",
+            "circleback",
+            "pocket",
             "pylon",
             "stripe",
             "mixpanel",
@@ -17501,4 +17557,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "2fa67b23109e55e6b48d9899d1cfd176784feadf1d052a30a218cb69a3b59cbb" as const
+export const sdkConsumerContractHash = "89c1bc1604b88acbc86ec105e1bcf8d58355bd61ee951563e3f77765f891482a" as const
