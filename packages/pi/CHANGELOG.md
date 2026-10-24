@@ -1,5 +1,14 @@
 # @outlit/pi
 
+## 2.1.10
+
+### Patch Changes
+
+- [#254](https://github.com/OutlitAI/outlit-sdk/pull/254) [`ea43a1f`](https://github.com/OutlitAI/outlit-sdk/commit/ea43a1f25ef17126b374c6abbe53073bc91d1135) Thanks [@leo-paz](https://github.com/leo-paz)! - Add personal Circleback and Pocket API-key integration setup contracts.
+
+- Updated dependencies [[`ea43a1f`](https://github.com/OutlitAI/outlit-sdk/commit/ea43a1f25ef17126b374c6abbe53073bc91d1135)]:
+  - @outlit/tools@2.2.6
+
 ## 2.1.9
 
 ### Patch Changes
