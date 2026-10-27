@@ -6966,6 +6966,21 @@
                     }
                   ]
                 },
+                "owedBy": {
+                  "description": "Who owes a COMMITMENT fact: \"us\" (the organization's own team) or \"customer\". Null when it isn't known; omitted on other facts.",
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "us",
+                        "customer"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "evidence": {
                   "anyOf": [
                     {
@@ -7461,6 +7476,21 @@
               {
                 "type": "string",
                 "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "owedBy": {
+            "description": "Who owes a COMMITMENT fact: \"us\" (the organization's own team) or \"customer\". Null when it isn't known; omitted on other facts.",
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "us",
+                  "customer"
+                ]
               },
               {
                 "type": "null"
@@ -8750,6 +8780,21 @@
                             {
                               "type": "string",
                               "maxLength": 100
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "owedBy": {
+                          "description": "Who owes a COMMITMENT fact: \"us\" (the organization's own team) or \"customer\". Null when it isn't known; omitted on other facts.",
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "us",
+                                "customer"
+                              ]
                             },
                             {
                               "type": "null"
@@ -17489,5 +17534,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "89c1bc1604b88acbc86ec105e1bcf8d58355bd61ee951563e3f77765f891482a"
+  "x-outlit-contract-hash": "dc02e85e70d496c986a7bd172f3f841d94e06e9a3004f50ba59027dd00c26560"
 }

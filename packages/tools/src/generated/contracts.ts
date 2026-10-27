@@ -3135,6 +3135,21 @@ export const publicToolContracts = {
                   },
                 ],
               },
+              "owedBy": {
+                "description": "Who owes a COMMITMENT fact: \"us\" (the organization's own team) or \"customer\". Null when it isn't known; omitted on other facts.",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "us",
+                      "customer",
+                    ],
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
               "evidence": {
                 "anyOf": [
                   {
@@ -3667,6 +3682,21 @@ export const publicToolContracts = {
             {
               "type": "string",
               "maxLength": 100,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "owedBy": {
+          "description": "Who owes a COMMITMENT fact: \"us\" (the organization's own team) or \"customer\". Null when it isn't known; omitted on other facts.",
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "us",
+                "customer",
+              ],
             },
             {
               "type": "null",
@@ -5171,6 +5201,21 @@ export const publicToolContracts = {
                           {
                             "type": "string",
                             "maxLength": 100,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "owedBy": {
+                        "description": "Who owes a COMMITMENT fact: \"us\" (the organization's own team) or \"customer\". Null when it isn't known; omitted on other facts.",
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "us",
+                              "customer",
+                            ],
                           },
                           {
                             "type": "null",
@@ -17557,4 +17602,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "89c1bc1604b88acbc86ec105e1bcf8d58355bd61ee951563e3f77765f891482a" as const
+export const sdkConsumerContractHash = "dc02e85e70d496c986a7bd172f3f841d94e06e9a3004f50ba59027dd00c26560" as const
