@@ -778,6 +778,8 @@ describe("integrations setup", () => {
   test.each([
     ["autumn", "Autumn secret key", { apiKey: "synthetic-secret" }],
     ["ergo", "Ergo API key", { apiKey: "synthetic-secret" }],
+    ["circleback", "Circleback API key", { apiKey: "synthetic-secret" }],
+    ["pocket", "Pocket API key", { apiKey: "synthetic-secret" }],
   ] as const)("collects the %s credential through the secret prompt", async (provider, prompt, credentials) => {
     const { collectProviderCredentials } = await import(
       "../../../src/commands/integrations/setup-input"
@@ -793,6 +795,8 @@ describe("integrations setup", () => {
   test.each([
     "autumn",
     "ergo",
+    "circleback",
+    "pocket",
   ] as const)("cancels %s setup without producing credentials when its secret prompt is cancelled", async (provider) => {
     mockPassword.mockResolvedValueOnce(promptCancelled as never)
     const { collectProviderCredentials, SetupCancelledError } = await import(

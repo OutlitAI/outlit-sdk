@@ -317,6 +317,39 @@ describe("public documentation examples", () => {
     expect(failures).toEqual([])
   })
 
+  test("keeps API-key integration setup examples aligned with generated input schemas", () => {
+    const file = "docs/cli/integrations.mdx"
+    const blocks = extractFencedBlocks(file)
+    const failures: string[] = []
+
+    for (const provider of ["fireflies", "circleback", "pocket"]) {
+      const block = blocks.find(
+        (candidate) =>
+          candidate.language === "bash" &&
+          candidate.code.includes(`outlit integrations setup ${provider} --config-stdin --json`),
+      )
+      const configText = block?.code.match(/printf '%s\\n' '([^']+)'/)?.[1]
+
+      try {
+        const config = JSON.parse(configText ?? "null") as Record<string, unknown> | null
+        if (
+          !block ||
+          !config ||
+          !matchesGeneratedJsonSchema(
+            { provider, ...config },
+            publicToolContracts.outlit_setup_integration.inputSchema,
+          )
+        ) {
+          failures.push(provider)
+        }
+      } catch {
+        failures.push(provider)
+      }
+    }
+
+    expect(failures).toEqual([])
+  })
+
   test("keeps CLI timeline channel examples aligned with the generated contract", () => {
     const failures: string[] = []
     const allowedChannels = new Set<string>(timelineChannels)
