@@ -34,11 +34,23 @@ If setup repeats a credential, authentication, or mapping step, the CLI stops wi
 ### Automation and JSON mode
 
 Use `--config-stdin` to opt into reading exactly one strict JSON object from stdin. Its shape is
-provider-specific. For example, a Fireflies API key is supplied only through stdin:
+provider-specific. API-key providers can also prompt interactively, but automation must supply the
+key through stdin. These examples use the generated Fireflies, Circleback, and Pocket credential
+shapes:
 
 ```bash
 printf '%s\n' '{"credentials":{"apiKey":"<fireflies-api-key>"}}' \
   | outlit integrations setup fireflies --config-stdin --json
+```
+
+```bash
+printf '%s\n' '{"credentials":{"apiKey":"<circleback-api-key>"}}' \
+  | outlit integrations setup circleback --config-stdin --json
+```
+
+```bash
+printf '%s\n' '{"credentials":{"apiKey":"<pocket-api-key>"}}' \
+  | outlit integrations setup pocket --config-stdin --json
 ```
 
 An explicit HubSpot CRM mapping is likewise supplied as the generated CRM mapping shape:

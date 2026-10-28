@@ -33,6 +33,46 @@ type VueSfcCompiler = {
 
 const vueCompiler = vueSfcCompiler as unknown as VueSfcCompiler
 
+function compileTypeScriptSnippet(
+  source: string,
+  fileName: string,
+  paths: Record<string, string[]>,
+  jsx?: ts.JsxEmit,
+): string[] {
+  const virtualFile = join(process.cwd(), fileName)
+  const compilerOptions: ts.CompilerOptions = {
+    baseUrl: process.cwd(),
+    jsx,
+    module: ts.ModuleKind.NodeNext,
+    moduleResolution: ts.ModuleResolutionKind.NodeNext,
+    noEmit: true,
+    paths,
+    skipLibCheck: true,
+    strict: true,
+    target: ts.ScriptTarget.ES2022,
+  }
+  const compilerHost = ts.createCompilerHost(compilerOptions)
+  const getSourceFile = compilerHost.getSourceFile.bind(compilerHost)
+  compilerHost.fileExists = (candidate) => candidate === virtualFile || ts.sys.fileExists(candidate)
+  compilerHost.readFile = (candidate) =>
+    candidate === virtualFile ? source : ts.sys.readFile(candidate)
+  compilerHost.getSourceFile = (candidate, languageVersion, onError, shouldCreateNewSourceFile) =>
+    candidate === virtualFile
+      ? ts.createSourceFile(
+          candidate,
+          source,
+          languageVersion,
+          true,
+          fileName.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+        )
+      : getSourceFile(candidate, languageVersion, onError, shouldCreateNewSourceFile)
+
+  return ts
+    .getPreEmitDiagnostics(ts.createProgram([virtualFile], compilerOptions, compilerHost))
+    .filter((diagnostic) => !diagnostic.file || diagnostic.file.fileName === virtualFile)
+    .map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, " "))
+}
+
 function listPublicDocumentationFiles(): string[] {
   return execFileSync("git", ["ls-files", "-z", "*.md", "*.mdx"], {
     encoding: "utf8",
@@ -205,6 +245,11 @@ describe("public documentation examples", () => {
       ["Read exact source content", "outlit_get_source"],
       ["Follow person profile evidence", "outlit_get_source"],
       ["Read customer features", "outlit_get_customer_features"],
+      ["List scoped identity repairs", "outlit_list_scoped_repairs"],
+      ["Preview a scoped identity repair", "outlit_preview_scoped_repair"],
+      ["Execute a scoped identity repair", "outlit_execute_scoped_repair"],
+      ["Verify a scoped identity repair", "outlit_verify_scoped_repair"],
+      ["Submit product feedback", "outlit_submit_feedback"],
     ] as const
     const failures: string[] = []
 
@@ -266,6 +311,47 @@ describe("public documentation examples", () => {
         )
       ) {
         failures.push(`${heading}: ${toolName}`)
+      }
+    }
+
+    expect(failures).toEqual([])
+  })
+
+  test("keeps API-key integration setup examples aligned with generated input schemas", () => {
+    const file = "docs/cli/integrations.mdx"
+    const blocks = extractFencedBlocks(file)
+    const failures: string[] = []
+
+    for (const provider of ["fireflies", "circleback", "pocket"]) {
+      const block = blocks.find(
+        (candidate) =>
+          candidate.language === "bash" &&
+          candidate.code.includes(`outlit integrations setup ${provider} --config-stdin --json`),
+      )
+      const configText = block?.code.match(/printf '%s\\n' '([^']+)'/)?.[1]
+
+      try {
+        const config = JSON.parse(configText ?? "null") as Record<string, unknown> | null
+        const credentials =
+          typeof config?.credentials === "object" && config.credentials !== null
+            ? (config.credentials as { apiKey?: unknown })
+            : null
+        const hasApiKey =
+          typeof credentials?.apiKey === "string" && credentials.apiKey.trim().length > 0
+
+        if (
+          !block ||
+          !config ||
+          !hasApiKey ||
+          !matchesGeneratedJsonSchema(
+            { provider, ...config },
+            publicToolContracts.outlit_setup_integration.inputSchema,
+          )
+        ) {
+          failures.push(provider)
+        }
+      } catch {
+        failures.push(provider)
       }
     }
 
@@ -350,6 +436,48 @@ describe("public documentation examples", () => {
     }
 
     expect(failures).toEqual([])
+  })
+
+  test("keeps non-browser device tracking examples initialized", () => {
+    const file = "docs/concepts/website-visitors.mdx"
+    const blocks = extractFencedBlocks(file)
+    const nodeExample = blocks.find(
+      (block) => block.language === "typescript" && block.code.includes("getOrCreateDeviceId"),
+    )
+    const rustExample = blocks.find(
+      (block) => block.language === "rust" && block.code.includes("track_by_fingerprint"),
+    )
+
+    expect(nodeExample).toBeDefined()
+    expect(rustExample?.code).toMatch(
+      /let client = Outlit::builder\("pk_your_public_key"\)[\s\S]*client\.track_by_fingerprint\(/,
+    )
+    expect(
+      compileTypeScriptSnippet(
+        `declare function getOrCreateDeviceId(): Promise<string>\n${nodeExample?.code ?? ""}`,
+        "tests/docs/.device-tracking-doctest.mts",
+        { "@outlit/node": ["packages/node/dist/index.d.ts"] },
+      ),
+    ).toEqual([])
+  })
+
+  test("keeps the React form example type-safe", () => {
+    const example = findFencedBlockInSection(
+      "docs/tracking/browser/react.mdx",
+      "Track form submission",
+      3,
+      "tsx",
+    )
+
+    expect(example).toBeDefined()
+    expect(
+      compileTypeScriptSnippet(
+        example?.code ?? "",
+        "packages/browser/.contact-form-doctest.tsx",
+        { "@outlit/browser/react": ["packages/browser/dist/react/index.d.ts"] },
+        ts.JsxEmit.ReactJSX,
+      ),
+    ).toEqual([])
   })
 
   test("keeps embedded Astro and Svelte scripts syntactically valid", () => {

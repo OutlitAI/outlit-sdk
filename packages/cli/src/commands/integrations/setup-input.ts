@@ -98,6 +98,10 @@ export async function collectProviderCredentials(provider: string): Promise<Setu
       return { provider, credentials: { apiKey: await secret("Autumn secret key") } }
     case "ergo":
       return { provider, credentials: { apiKey: await secret("Ergo API key") } }
+    case "circleback":
+      return { provider, credentials: { apiKey: await secret("Circleback API key") } }
+    case "pocket":
+      return { provider, credentials: { apiKey: await secret("Pocket API key") } }
     case "pylon":
       return { provider, credentials: { apiToken: await secret("Pylon API token") } }
     case "mixpanel":

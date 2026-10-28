@@ -60,7 +60,7 @@ export default createOutlitPiExtension({
 })
 ```
 
-Use the default policy for nine read-only customer tools. Use `analyticalToolNames` when the agent also needs `outlit_schema` and read-only `outlit_query` (11 tools total). `piToolNames` is broader: it includes SQL, customer relationship and Attention reads, customer ownership and access actions, Feature tools, workspace configuration, and `outlit_submit_feedback` for product feedback intake. Choose the smallest set your Pi agent needs.
+Use the default policy for nine read-only customer tools. Use `analyticalToolNames` when the agent also needs `outlit_schema` and read-only `outlit_query` (11 tools total). `piToolNames` is broader: it includes SQL, customer relationship and Attention reads, customer ownership and access actions, identity review and scoped-repair tools, Feature tools, workspace configuration, and `outlit_submit_feedback` for product feedback intake. Choose the smallest set your Pi agent needs. Scoped repair execution is destructive, requires explicit authorization, and is unavailable to Outlit-hosted agents and internal apps.
 
 ## Growth agent examples
 
