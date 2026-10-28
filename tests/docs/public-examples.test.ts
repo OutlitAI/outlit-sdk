@@ -332,9 +332,17 @@ describe("public documentation examples", () => {
 
       try {
         const config = JSON.parse(configText ?? "null") as Record<string, unknown> | null
+        const credentials =
+          typeof config?.credentials === "object" && config.credentials !== null
+            ? (config.credentials as { apiKey?: unknown })
+            : null
+        const hasApiKey =
+          typeof credentials?.apiKey === "string" && credentials.apiKey.trim().length > 0
+
         if (
           !block ||
           !config ||
+          !hasApiKey ||
           !matchesGeneratedJsonSchema(
             { provider, ...config },
             publicToolContracts.outlit_setup_integration.inputSchema,
@@ -441,7 +449,9 @@ describe("public documentation examples", () => {
     )
 
     expect(nodeExample).toBeDefined()
-    expect(rustExample?.code).toContain('let client = Outlit::builder("pk_your_public_key")')
+    expect(rustExample?.code).toMatch(
+      /let client = Outlit::builder\("pk_your_public_key"\)[\s\S]*client\.track_by_fingerprint\(/,
+    )
     expect(
       compileTypeScriptSnippet(
         `declare function getOrCreateDeviceId(): Promise<string>\n${nodeExample?.code ?? ""}`,
