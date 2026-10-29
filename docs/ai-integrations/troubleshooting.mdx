@@ -28,7 +28,7 @@ description: "Auth, permissions, identity, JSON output, MCP, and SDK delivery fa
 | Customer has no activity | `outlit integrations status <provider>` reports configuration readiness only — `ready` doesn't prove data synced. Enumerate real records with `sources list`; check sync/backfill freshness in the app's integration settings. Never report "inactive" for a source you can't confirm synced |
 | `customers features` empty | The response distinguishes *unavailable source evidence* from *no matches* — check which one applies |
 | `customers credits` empty | Same: unavailable/stale observations are distinct from a zero balance |
-| Search returns nothing | Try `sources list --customer <id>` for deterministic enumeration; search is artifact-level (`source` + `fact` groups), not raw chunks |
+| Search returns nothing | Try `sources list --customer <domain|name|id>` for deterministic enumeration; search is artifact-level (`source` + `fact` groups), not raw chunks |
 | Fact has no permalink | Normal — cite `sourceType`/`sourceId`/`sourceOccurredAt`/`sourceQuote` instead |
 | `contentPage` looks truncated | Check `contentPage.completeness`; partial means more content exists — don't summarize as if complete |
 

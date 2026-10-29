@@ -11,6 +11,43 @@ Most commands in this reference share these common flags:
 | `--json` | Force JSON output (auto-enabled when piped) |
 | `--help` | Show help for the command |
 
+### Choosing a customer
+
+Every command that reads one customer takes `--customer <domain|name|id>`: a customer domain
+such as `acme.com`, an exact customer name, or the customer ID. Commands that already took the
+customer as a positional argument, such as `outlit customers get acme.com`, still do; the
+positional and `--customer` are interchangeable.
+
+`users list`, `attention list`, `identity suggestions list`, and `customers identity` call tools
+that take only a customer ID, so the CLI looks the customer up first. A domain or exact name that
+matches no customer fails with `customer_not_found`; a name shared by several customers fails
+with `ambiguous_customer` and lists them, so pass the domain or ID instead. Other commands pass the
+value to Outlit, which resolves it. The ownership and access commands (`customers owner set`,
+`customers grant`, `customers revoke`) and `customers merge` still take exact customer IDs.
+
+### Unknown flags and arguments
+
+The CLI fails instead of ignoring input it does not understand. An unknown flag, a misplaced or
+extra positional argument, a flag missing its value, or an unknown subcommand exits with status
+`1` before any request is made. The message names the bad input, suggests the closest valid
+flag, and lists the valid flags. With `--json` or piped output the error is JSON on stderr:
+
+```json
+{
+  "error": "`outlit sources list`: unknown flag --source-types (did you mean --source-type?); unexpected argument \"acme.com\" (did you mean --customer acme.com?). Valid flags: ...",
+  "code": "unknown_flag",
+  "command": "outlit sources list",
+  "invalid": [
+    { "argument": "--source-types", "reason": "unknown_flag", "suggestion": "--source-type" },
+    { "argument": "acme.com", "reason": "unexpected_argument", "suggestion": "--customer acme.com" }
+  ],
+  "validFlags": ["--api-key", "--json", "--source-type", "--customer", "..."]
+}
+```
+
+`code` is `unknown_flag`, `unexpected_argument`, `missing_input` (a flag without its value), or
+`unknown_command`. Put flags after the full command, for example `outlit customers list --json`.
+
 ## Activation
 
 Inspect, preview against past events, and explicitly configure the exact ordinary product event
@@ -193,12 +230,13 @@ outlit customers get <customer> [flags]
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `customer` | Yes | Customer domain (e.g. `acme.com`), UUID, or name |
+| `customer` | Yes, or `--customer` | Customer domain (e.g. `acme.com`), UUID, or name |
 
 ### Flags
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--customer` | string | — | Same as the `customer` argument |
 | `--include` | string | — | Comma-separated sections: `users`, `revenue`, `recentTimeline`, `behaviorMetrics`, `enrichment` |
 | `--timeframe` | string | `30d` | Lookback window for included sections: `7d`, `14d`, `30d`, `90d` |
 
@@ -291,7 +329,7 @@ Get the relationship summary used for customer detail, without adding it to the
 outlit customers relationship <customer>
 ```
 
-`<customer>` accepts a customer domain, UUID, or exact name. The relationship returns the stable
+`<customer>` (or `--customer`) accepts a customer domain, UUID, or exact name. The relationship returns the stable
 customer identity and a bounded `relationship` section (summary plus up to eight categorized
 current statements). Each statement carries an ISO `observedAt` timestamp when the authorized
 source supports one and bounded `sourceLabels`. `updatedAt` is the compiled summary timestamp when
@@ -328,18 +366,20 @@ outlit customers relationship acme.com --json
 
 ## Customer identity and merging
 
-Inspect a customer's identity coverage and possible split records using its exact customer ID:
+Inspect a customer's identity coverage and possible split records. The customer may be its
+domain, exact name, or ID; the CLI resolves it to the exact customer ID first:
 
 ```bash
-outlit customers identity "<customerId>" --json
+outlit customers identity acme.com --json
+outlit customers identity --customer "<customerId>" --json
 ```
 
 Candidate records are leads, not proof of common identity. An empty or incomplete search does not prove the account has zero usage. This read never creates a merge suggestion or combines customer activity.
 
-Saved suggestions and review history are a separate read. List returns complete details; use `--suggestion-id` to retrieve one exact record in the same collection response, or `--customer-id` to scope the list. Follow `nextCursor` using `--cursor`.
+Saved suggestions and review history are a separate read. List returns complete details; use `--suggestion-id` to retrieve one exact record in the same collection response, or `--customer` to scope the list. Follow `nextCursor` using `--cursor`.
 
 ```bash
-outlit identity suggestions list --customer-id "<customerId>" --limit 20 --json
+outlit identity suggestions list --customer acme.com --limit 20 --json
 outlit identity suggestions list --suggestion-id "<suggestionId>" --json
 outlit identity suggestions reject "<suggestionId>" --review-notes "Different companies" --json
 ```
@@ -375,7 +415,7 @@ Read imported credit pools and burn summaries for one authorized customer.
 outlit customers credits <customer>
 ```
 
-`<customer>` accepts a customer domain, UUID, or exact name. The command returns the same JSON
+`<customer>` (or `--customer`) accepts a customer domain, UUID, or exact name. The command returns the same JSON
 schema as `outlit_get_customer_credits`: the resolved customer, overall availability status,
 credit pools, and a `truncated` marker. Each credit pool keeps its provider source, observation
 time, staleness, granted and remaining amounts, reset date, and burn summary. Missing or stale
@@ -393,7 +433,7 @@ Read event-based and imported metered Feature usage for one authorized customer.
 outlit customers features <customer> [--weeks 1-53] [--weekly]
 ```
 
-`<customer>` accepts a customer domain, UUID, or exact name. The default window is 12 weeks.
+`<customer>` (or `--customer`) accepts a customer domain, UUID, or exact name. The default window is 12 weeks.
 The response is a flat `features` array. Every item has a `kind` discriminator. An `event` item
 reports historical evidence from its configured Outlit event rule. A `metered` item reports
 provider-defined quantities imported from Autumn and may link to an event Feature. These values
@@ -473,13 +513,13 @@ outlit attention list [flags]
 outlit attention get <id> [flags]
 ```
 
-`attention list` defaults to open items. It accepts optional `--customer-id`, `--limit`
+`attention list` defaults to open items. It accepts optional `--customer`, `--limit`
 (1–100; server default 25), and an opaque `--cursor` returned with the same filters. Use
 `--status resolved` for resolved items. Each returned item includes its current priority;
 the command does not filter by priority.
 
 ```bash
-outlit attention list --status resolved --customer-id 550e8400-e29b-41d4-a716-446655440000 --json
+outlit attention list --status resolved --customer acme.com --json
 outlit attention get 550e8400-e29b-41d4-a716-446655440000 --json
 ```
 
@@ -626,12 +666,13 @@ outlit customers timeline <customer> [flags]
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `customer` | Yes | Customer domain or UUID |
+| `customer` | Yes, or `--customer` | Customer domain or UUID |
 
 ### Flags
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--customer` | string | — | Same as the `customer` argument |
 | `--timeframe` | string | `30d` | Lookback window: `7d`, `14d`, `30d`, `90d`, `all` |
 | `--start-date` | string | — | Start datetime (ISO 8601, for example `2025-01-01T00:00:00Z`) — overrides `--timeframe` |
 | `--end-date` | string | — | End datetime (ISO 8601, for example `2025-03-01T23:59:59.999Z`) — overrides `--timeframe` |
@@ -707,7 +748,7 @@ outlit users list [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--journey-stage` | string | — | Filter by stage: `DISCOVERED`, `SIGNED_UP`, `ACTIVATED`, `ENGAGED`, `INACTIVE` |
-| `--customer-id` | string | — | Filter to users of a specific customer (UUID) |
+| `--customer` | string | — | Filter to users of one customer: domain, exact name, or ID |
 | `--no-activity-in` | string | — | Inactive for period: `7d`, `14d`, `30d`, `90d` |
 | `--has-activity-in` | string | — | Active within period: `7d`, `14d`, `30d`, `90d` |
 | `--trait` | string | — | Exact trait filters as comma-separated `key=value` pairs (for example `role=admin,onboarded=true`) |
@@ -724,7 +765,7 @@ outlit users list [flags]
 outlit users list --journey-stage ENGAGED
 
 # Inactive users from a specific customer
-outlit users list --customer-id 550e8400-... --no-activity-in 30d
+outlit users list --customer acme.com --no-activity-in 30d
 
 # Filter by exact user traits
 outlit users list --trait "role=admin,onboarded=true"
@@ -791,12 +832,13 @@ outlit facts get --fact-id <id> [flags]
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `customer` | Yes | Customer domain or UUID |
+| `customer` | Yes, or `--customer` | Customer domain or UUID |
 
 ### `facts list` flags
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
+| `--customer` | string | — | Same as the `customer` argument |
 | `--status` | string | — | Comma-separated fact status filter: `ACTIVE`, `ACKNOWLEDGED`, `RESOLVED`, `SNOOZED`, `CANDIDATE` |
 | `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--fact-types` | string | — | Comma-separated public fact type filter, including `CHURN_RISK`, `PRODUCT_USAGE`, `CONTACT_DEPARTURE`, `CONTACT_POSITION_CHANGE`, and `CONTACT_DISENGAGEMENT` |
@@ -909,7 +951,7 @@ outlit search <query> [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--customer` | string | — | Scope to a specific customer (domain or UUID) |
+| `--customer` | string | — | Scope to one customer: domain, exact name, or ID |
 | `--top-k` | number | `20` | Maximum results to return (1–50) |
 | `--after` | string | — | Filter to events after this ISO 8601 datetime |
 | `--before` | string | — | Filter to events before this ISO 8601 datetime |
@@ -989,7 +1031,7 @@ outlit sources list [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--source-type` | string | — | Generic source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
-| `--customer` | string | — | Customer UUID, domain, or name to scope source listing |
+| `--customer` | string | — | Scope to one customer: domain, exact name, or ID |
 | `--participant` | string | — | Participant email or name to filter source records |
 | `--provider` | string | — | Provider identifier such as `gmail`, `gong`, or `google-calendar` |
 | `--has-transcript` | boolean | `false` | Only list call sources with a finalized transcript; when combined with `--source-type`, that type must be `CALL` |

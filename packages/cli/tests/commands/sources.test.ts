@@ -195,6 +195,18 @@ describe("sources list", () => {
     expect(stdout).toContain("Slack conversations")
   })
 
+  test("accepts --customer-id as an alias for --customer", async () => {
+    const { default: sourcesListCmd } = await import("../../src/commands/sources/list")
+
+    await captureStdout(() =>
+      sourcesListCmd.run!({
+        args: { "customer-id": "acme.com", json: true },
+      } as Parameters<NonNullable<typeof sourcesListCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_sources", { customer: "acme.com" })
+  })
+
   test("sends source listing filters to outlit_list_sources", async () => {
     const { default: sourcesListCmd } = await import("../../src/commands/sources/list")
 

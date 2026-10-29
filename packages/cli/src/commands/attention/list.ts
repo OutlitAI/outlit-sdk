@@ -1,6 +1,11 @@
 import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
+import {
+  customerFlagArgs,
+  readCustomerSelector,
+  resolveCustomerIdOrExit,
+} from "../../args/customer"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
@@ -27,7 +32,7 @@ export default defineCommand({
       "Examples:",
       "  outlit attention list",
       "  outlit attention list --status resolved",
-      "  outlit attention list --customer-id 550e8400-e29b-41d4-a716-446655440000 --json",
+      "  outlit attention list --customer acme.com --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -39,10 +44,7 @@ export default defineCommand({
       type: "string",
       description: "Lifecycle filter: open or resolved (Core default: open)",
     },
-    "customer-id": {
-      type: "string",
-      description: "Filter by exact customer UUID",
-    },
+    ...customerFlagArgs,
     limit: {
       type: "string",
       description: "Results per page (1-100; Core default: 25)",
@@ -60,9 +62,9 @@ export default defineCommand({
         json,
       )
     }
+    const customer = readCustomerSelector(args, json)
     const params: Record<string, unknown> = {}
     if (args.status) params.status = args.status
-    if (args["customer-id"]) params.customerId = args["customer-id"]
     if (args.limit) {
       const limit = Number(args.limit)
       if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
@@ -76,6 +78,7 @@ export default defineCommand({
     if (args.cursor) params.cursor = args.cursor
 
     const client = await getClientOrExit(args["api-key"], json)
+    if (customer) params.customerId = await resolveCustomerIdOrExit(client, customer, json)
     return runTool(client, publicToolContracts.outlit_list_attention_items.toolName, params, json)
   },
 })

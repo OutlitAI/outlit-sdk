@@ -1,6 +1,11 @@
 import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../../args/auth"
+import {
+  customerFlagArgs,
+  readCustomerSelector,
+  resolveCustomerIdOrExit,
+} from "../../../args/customer"
 import { AGENT_JSON_HINT, outputArgs } from "../../../args/output"
 import { getClientOrExit, runTool } from "../../../lib/api"
 import { optionalTrimmedString, parseIntegerFlag } from "../../../lib/platform-input"
@@ -11,7 +16,7 @@ export default defineCommand({
     description: [
       publicToolContracts.outlit_list_identity_merge_suggestions.description,
       "",
-      "Usage: outlit identity suggestions list --customer-id <id> --json",
+      "Usage: outlit identity suggestions list --customer acme.com --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -19,7 +24,7 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    "customer-id": { type: "string", description: "Filter by exact customer ID" },
+    ...customerFlagArgs,
     "suggestion-id": {
       type: "string",
       description: "Retrieve one exact saved suggestion in the list envelope",
@@ -34,8 +39,8 @@ export default defineCommand({
     const input: Record<string, unknown> = {
       limit: parseIntegerFlag(args.limit, 50, "--limit", json),
     }
+    const customer = readCustomerSelector(args, json)
     for (const [flag, field] of [
-      ["customer-id", "customerId"],
       ["suggestion-id", "suggestionId"],
       ["status", "status"],
       ["confidence", "confidence"],
@@ -45,6 +50,7 @@ export default defineCommand({
       if (value) input[field] = value
     }
     const client = await getClientOrExit(args["api-key"], json)
+    if (customer) input.customerId = await resolveCustomerIdOrExit(client, customer, json)
     return runTool(
       client,
       publicToolContracts.outlit_list_identity_merge_suggestions.toolName,

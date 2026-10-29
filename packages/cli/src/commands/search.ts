@@ -6,6 +6,7 @@ import {
 } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
+import { customerFlagArgs, readCustomerSelector } from "../args/customer"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
 import { getClientOrExit, runTool } from "../lib/api"
 import { splitCsv } from "../lib/config"
@@ -41,10 +42,7 @@ export default defineCommand({
       description: "Natural language search query",
       required: true,
     },
-    customer: {
-      type: "string",
-      description: "Scope search to a specific customer (UUID or domain)",
-    },
+    ...customerFlagArgs,
     "top-k": {
       type: "string",
       description: "Maximum number of results to return (1–50). Default: 20.",
@@ -87,7 +85,7 @@ export default defineCommand({
 
     const resolved = resolveCustomerContextSearchInput({
       query: args.query,
-      customer: args.customer,
+      customer: readCustomerSelector(args, json),
       topK,
       after: args.after,
       before: args.before,

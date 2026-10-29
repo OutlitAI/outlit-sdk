@@ -18,7 +18,7 @@ Process:
 3. For each candidate, gather customer details, recent timeline, facts, source evidence, billing context, and usage context.
    Use active fact filters such as `outlit facts list <customer> --status ACTIVE --fact-types CHURN_RISK,SENTIMENT,REQUIREMENTS,PRODUCT_USAGE --source-types SUPPORT_TICKET --json` when you need support-backed customer-memory evidence.
    Use stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
-   If you inspect users through the CLI, filter by stable customer ID with `--customer-id`.
+   If you inspect users through the CLI, filter by the customer's domain or stable ID with `--customer`.
 4. Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
 5. Separate ordinary support volume from friction that blocks value realization.
 6. Prioritize friction that repeats, escalates, blocks core workflows, or coincides with usage decay, payment risk, stakeholder disengagement, manual workarounds, paused rollout, or customer proof requests.
