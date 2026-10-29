@@ -114,6 +114,13 @@ describe("customer selector", () => {
     expect(callTool.mock.calls[1]?.[1]).toMatchObject({ cursor: "cursor_2" })
   })
 
+  test("does not count a customer repeated across pages as a second match", async () => {
+    const acme = { id: acmeId, name: "Acme", domain: "acme.com" }
+    const { client } = fakeClient([page([acme], "cursor_2"), page([acme])])
+
+    expect(await resolveCustomerIdOrExit(client, "Acme", true)).toBe(acmeId)
+  })
+
   test("fails on an ambiguous name and lists the candidates", async () => {
     const { client } = fakeClient([
       page([

@@ -144,7 +144,8 @@ export async function resolveCustomerIdOrExit(
   if (UUID_REGEX.test(selector)) return selector
 
   const wanted = selector.toLowerCase()
-  const seen: CustomerCandidate[] = []
+  // Keyed by ID so a customer repeated across pages is not mistaken for a second match.
+  const candidates = new Map<string, CustomerCandidate>()
   let cursor: string | null = null
   for (let page = 0; page < SEARCH_MAX_PAGES; page++) {
     let result: unknown
@@ -163,10 +164,11 @@ export async function resolveCustomerIdOrExit(
       })
     }
     const { items, nextCursor } = readCandidates(result)
-    seen.push(...items)
+    for (const item of items) candidates.set(item.id, item)
     cursor = nextCursor
     if (!cursor) break
   }
+  const seen = [...candidates.values()]
 
   const byDomain = seen.filter((candidate) => candidate.domain?.toLowerCase() === wanted)
   if (byDomain.length === 1) return (byDomain[0] as CustomerCandidate).id
