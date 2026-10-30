@@ -95,6 +95,40 @@ describe("EventQueue.flush", () => {
     expect(queue.size).toBe(0)
   })
 
+  it("a waiting flush rethrows a non-retryable failure instead of resolving", async () => {
+    const send = controlledSend()
+    const queue = new EventQueue({ onFlush: send.onFlush })
+    const failure = Object.assign(new Error("HTTP 401"), { retryable: false })
+
+    queue.enqueue(event("first"))
+    const failing = queue.flush()
+    queue.enqueue(event("second"))
+    const waiting = queue.flush()
+    await send.settle()
+    send.pending[0]?.reject(failure)
+
+    await expect(failing).rejects.toBe(failure)
+    await expect(waiting).rejects.toBe(failure)
+    expect(send.batches).toEqual([["first"]])
+  })
+
+  it("a batch-size trigger does not wait behind, or resend after, an in-flight flush", async () => {
+    const send = controlledSend()
+    const queue = new EventQueue({ maxSize: 1, onFlush: send.onFlush })
+
+    const first = queue.enqueue(event("first")).catch((error: unknown) => error)
+    await queue.enqueue(event("second"))
+    await queue.enqueue(event("third"))
+    expect(send.batches).toEqual([["first"]])
+
+    send.pending[0]?.reject(new Error("timeout"))
+    expect(await first).toEqual(new Error("timeout"))
+    await send.settle()
+
+    expect(send.batches).toEqual([["first"]])
+    expect(queue.size).toBe(3)
+  })
+
   it("a waiting flush resends the events another caller's failed flush put back", async () => {
     const send = controlledSend()
     const queue = new EventQueue({ onFlush: send.onFlush })

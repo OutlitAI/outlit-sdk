@@ -251,7 +251,7 @@ export class Outlit {
     if (this.flushTimer) return
 
     this.flushTimer = setInterval(() => {
-      this.flush().catch((error) => {
+      this.queue.flushIfIdle().catch((error) => {
         if (this.isNonRetryableTransportError(error)) {
           // Already handled and logged in sendEvents().
           return

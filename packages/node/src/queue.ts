@@ -35,8 +35,17 @@ export class EventQueue {
     this.queue.push(event)
 
     if (this.queue.length >= this.maxSize) {
-      await this.flush()
+      await this.flushIfIdle()
     }
+  }
+
+  /**
+   * Flush unless a flush is already in flight. Background triggers (batch size, the interval
+   * timer) use this so they never queue up behind a slow or failing send.
+   */
+  async flushIfIdle(): Promise<void> {
+    if (this.inFlight) return
+    await this.flush()
   }
 
   /**
@@ -44,11 +53,15 @@ export class EventQueue {
    *
    * Resolves only after the events queued before the call were sent. A flush already in flight
    * may hold some of them, or leave newer ones queued, so wait for it first, then send what
-   * remains. Another caller's failure is theirs to report; this call sends once.
+   * remains. A retryable failure there is the other caller's to report (its events are back in
+   * the queue and this call sends them once); a non-retryable one is rethrown, because those
+   * events are gone and later sends are refused.
    */
   async flush(): Promise<void> {
     while (this.inFlight) {
-      await this.inFlight.catch(() => {})
+      await this.inFlight.catch((error: unknown) => {
+        if (isNonRetryableError(error)) throw error
+      })
     }
     if (this.queue.length === 0) return
 
