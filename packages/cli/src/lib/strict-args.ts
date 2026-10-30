@@ -125,7 +125,7 @@ export type ArgProblem =
       commands: string[]
     }
 
-const credentialLikeValue = /^(ok_|sk_|rk_|pk_|whsec_|xox[abprs]-)/i
+const credentialLikeValue = /^(ok_|sk_|rk_|pk_|phx_|whsec_|xox[abprs]-)/i
 
 /** Never echo something that looks like a credential back into logs or agent transcripts. */
 function displayValue(value: string): string {

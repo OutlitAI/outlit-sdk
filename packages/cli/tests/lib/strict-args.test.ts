@@ -200,6 +200,9 @@ describe("strict argument checking", () => {
       { argument: "<redacted>", reason: "unexpected_argument" },
     ])
     expect(JSON.stringify(result)).not.toContain("ok_aaaa")
+    expect(JSON.stringify(await details(["auth", "status", "phx_secret"]))).not.toContain(
+      "phx_secret",
+    )
   })
 
   test.each([
