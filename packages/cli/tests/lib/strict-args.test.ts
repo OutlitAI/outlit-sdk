@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test"
 import { type ArgsDef, type CommandDef, parseArgs } from "citty"
 import { COMMANDS } from "../../src/commands/completions"
-import { findArgProblem, formatArgProblem, visibleFlagNames } from "../../src/lib/strict-args"
+import {
+  analyzeArgs,
+  findArgProblem,
+  formatArgProblem,
+  visibleFlagNames,
+} from "../../src/lib/strict-args"
 import { mainCommand } from "../../src/main"
 
 const customerId = "10000000-0000-4000-8000-000000000001"
@@ -123,6 +128,21 @@ describe("strict argument checking", () => {
     }
   })
 
+  test("rejects a short flag where a value belongs; a dash value must be attached", async () => {
+    for (const rawArgs of [
+      ["users", "list", "--no-activity-in", "-x"],
+      ["users", "list", "--search", "-draft"],
+    ]) {
+      const result = await details(rawArgs)
+      expect(result.code).toBe("missing_input")
+      expect((result.details.invalid as unknown[])[0]).toEqual({
+        argument: rawArgs[2],
+        reason: "missing_value",
+      })
+    }
+    expect(await problem(["users", "list", "--search=-draft"])).toBeNull()
+  })
+
   test("rejects unknown negations and short flags", async () => {
     expect((await details(["users", "list", "--no-bogus"])).details.invalid).toEqual([
       { argument: "--no-bogus", reason: "unknown_flag" },
@@ -130,13 +150,24 @@ describe("strict argument checking", () => {
     expect((await details(["users", "list", "-x"])).code).toBe("unknown_flag")
   })
 
-  test("rejects flags placed before the subcommand", async () => {
-    const result = await details(["--json", "customers", "list"])
+  test("moves flags typed before the subcommand to the subcommand that takes them", async () => {
+    expect(await analyzeArgs(mainCommand, ["--json", "customers", "list"])).toEqual({
+      problem: null,
+      rawArgs: ["customers", "list", "--json"],
+    })
+    expect(await analyzeArgs(mainCommand, ["--json", "setup", "codex"])).toEqual({
+      problem: null,
+      rawArgs: ["setup", "codex", "--json"],
+    })
+    // `--yes` belongs to `setup` itself, so it stays where it was typed.
+    expect(await analyzeArgs(mainCommand, ["setup", "--yes", "codex"])).toEqual({
+      problem: null,
+      rawArgs: ["setup", "--yes", "codex"],
+    })
 
-    expect(result.details.command).toBe("outlit")
-    expect(result.details.invalid).toEqual([
-      { argument: "--json", reason: "unknown_flag", note: "flags go after the subcommand" },
-    ])
+    const unknown = await details(["--bogus", "customers", "list"])
+    expect(unknown.details.command).toBe("outlit customers list")
+    expect(unknown.details.invalid).toEqual([{ argument: "--bogus", reason: "unknown_flag" }])
   })
 
   test("rejects unknown subcommands with a suggestion", async () => {
@@ -205,6 +236,13 @@ describe("strict argument checking", () => {
         const rawArgs = [...path, `--${name}`, ...value]
         expect({ rawArgs, problem: await problem(rawArgs) }).toEqual({ rawArgs, problem: null })
 
+        // The camelCase spelling citty also accepted is rewritten to the declared flag.
+        const camel = name.replace(/-([a-zA-Z0-9])/g, (_, char: string) => char.toUpperCase())
+        if (camel !== name && path.join(" ") !== "integrations setup") {
+          const analyzed = await analyzeArgs(mainCommand, [...path, `--${camel}`, ...value])
+          expect(analyzed).toEqual({ problem: null, rawArgs })
+        }
+
         // citty strips every `--no-*` token; commands read `--no-activity-in` from rawArgs.
         if (name.startsWith("no-")) continue
         const parsed: Record<string, unknown> = parseArgs([`--${name}`, ...value], flags)
@@ -216,12 +254,32 @@ describe("strict argument checking", () => {
     }
   })
 
-  test("rejects camelCase spellings, which citty can silently drop", async () => {
-    const result = await details(["customers", "list", "--orderBy", "name"])
-
-    expect(result.details.invalid).toEqual([
-      { argument: "--orderBy", reason: "unknown_flag", suggestion: "--order-by" },
+  test("keeps camelCase spellings working by rewriting them to the declared flag", async () => {
+    const analyzed = await analyzeArgs(mainCommand, [
+      "customers",
+      "list",
+      "--orderBy",
+      "name",
+      "--apiKey=key",
     ])
+
+    expect(analyzed).toEqual({
+      problem: null,
+      rawArgs: ["customers", "list", "--order-by", "name", "--api-key=key"],
+    })
+    // citty itself kept the default for `--orderBy name`; the rewritten flag carries the value.
+    const { default: list } = await import("../../src/commands/customers/list")
+    const args = await resolve(list.args ?? {})
+    const parse = (raw: string[]): unknown => parseArgs(raw, args)["order-by"]
+    expect(parse(["--orderBy", "name"])).toBe("last_activity_at")
+    expect(parse(["--order-by", "name"])).toBe("name")
+  })
+
+  test("never advertises camelCase spellings", async () => {
+    const result = await details(["customers", "list", "--bogus"])
+
+    expect(result.details.validFlags).toContain("--order-by")
+    expect(result.details.validFlags).not.toContain("--orderBy")
   })
 })
 

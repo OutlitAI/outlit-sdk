@@ -35,25 +35,30 @@ type CustomerSelectorArgs = {
   "customer-id"?: unknown
 }
 
-function selectorValue(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : undefined
-}
-
 /**
  * Reads the customer from `<customer>`, `--customer`, or `--customer-id`. Giving more than one
- * is fine only when they agree.
+ * is fine only when they agree. A supplied but blank customer is an error, never "all customers".
  */
 export function readCustomerSelector(
   args: CustomerSelectorArgs,
   json: boolean,
 ): string | undefined {
-  const given = [
-    { source: "<customer>", value: selectorValue(args.customerPositional) },
-    { source: "--customer", value: selectorValue(args.customer) },
-    { source: "--customer-id", value: selectorValue(args["customer-id"]) },
-  ].filter((entry): entry is { source: string; value: string } => entry.value !== undefined)
+  const given: Array<{ source: string; value: string }> = []
+  for (const [source, value] of [
+    ["<customer>", args.customerPositional],
+    ["--customer", args.customer],
+    ["--customer-id", args["customer-id"]],
+  ] as const) {
+    if (value === undefined) continue
+    const trimmed = typeof value === "string" ? value.trim() : ""
+    if (!trimmed) {
+      return outputError(
+        { message: `${source} needs a customer domain, name, or ID`, code: "invalid_input" },
+        json,
+      )
+    }
+    given.push({ source, value: trimmed })
+  }
 
   const distinct = [...new Set(given.map((entry) => entry.value))]
   if (distinct.length > 1) {
@@ -144,9 +149,14 @@ export async function resolveCustomerIdOrExit(
   if (UUID_REGEX.test(selector)) return selector
 
   const wanted = selector.toLowerCase()
-  // Keyed by ID so a customer repeated across pages is not mistaken for a second match.
-  const candidates = new Map<string, CustomerCandidate>()
+  // Only a selector with a dot or an @ can be a domain (individual customers use their email).
+  const couldBeDomain = /[.@]/.test(selector)
+  // Keyed by ID so a customer repeated across pages is not counted twice.
+  const named = new Map<string, CustomerCandidate>()
+  const close: CustomerCandidate[] = []
+  let exhausted = false
   let cursor: string | null = null
+  // Each page is a billed API call, so stop as soon as the answer is known.
   for (let page = 0; page < SEARCH_MAX_PAGES; page++) {
     let result: unknown
     try {
@@ -164,41 +174,50 @@ export async function resolveCustomerIdOrExit(
       })
     }
     const { items, nextCursor } = readCandidates(result)
-    for (const item of items) candidates.set(item.id, item)
+    for (const item of items) {
+      // A domain is unique in a workspace, so an exact domain decides the lookup.
+      if (item.domain?.toLowerCase() === wanted) return item.id
+      if (item.name?.trim().toLowerCase() === wanted) named.set(item.id, item)
+      else if (close.length < 5 && !close.some((candidate) => candidate.id === item.id)) {
+        close.push(item)
+      }
+    }
     cursor = nextCursor
-    if (!cursor) break
+    if (!cursor) {
+      exhausted = true
+      break
+    }
+    // Two exact names are already ambiguous, unless a later page could still hold the domain.
+    if (named.size > 1 && !couldBeDomain) break
   }
-  const seen = [...candidates.values()]
 
-  const byDomain = seen.filter((candidate) => candidate.domain?.toLowerCase() === wanted)
-  if (byDomain.length === 1) return (byDomain[0] as CustomerCandidate).id
+  const matches = [...named.values()]
+  // A single name is only unique once every match has been seen.
+  if (matches.length === 1 && exhausted) return (matches[0] as CustomerCandidate).id
 
-  const exact =
-    byDomain.length > 1
-      ? byDomain
-      : seen.filter((candidate) => candidate.name?.trim().toLowerCase() === wanted)
-  if (exact.length === 1) return (exact[0] as CustomerCandidate).id
-
-  if (exact.length > 1) {
-    const listed = exact.slice(0, MAX_LISTED_CANDIDATES)
+  if (matches.length > 1 || !exhausted) {
+    const listed = matches.slice(0, MAX_LISTED_CANDIDATES)
+    const head =
+      matches.length > 1
+        ? `"${selector}" matches ${exhausted ? "" : "at least "}${matches.length} customers: ${listed
+            .map(describeCandidate)
+            .join("; ")}.`
+        : `Too many customers match "${selector}" to confirm one by name.`
     return outputError(
       {
-        message: `"${selector}" matches ${exact.length} customers: ${listed
-          .map(describeCandidate)
-          .join("; ")}. Pass the domain or ID instead.`,
+        message: `${head} Pass the domain or ID instead.`,
         code: "ambiguous_customer",
-        details: { candidates: listed },
+        ...(listed.length > 0 ? { details: { candidates: listed } } : {}),
       },
       json,
     )
   }
 
-  const close = seen.slice(0, 5)
   return outputError(
     {
       message: `No customer has the domain or exact name "${selector}".${
         close.length > 0 ? ` Close matches: ${close.map(describeCandidate).join("; ")}.` : ""
-      }${cursor ? " The search stopped early; pass the customer ID." : ""}`,
+      }`,
       code: "customer_not_found",
       ...(close.length > 0 ? { details: { candidates: close } } : {}),
     },

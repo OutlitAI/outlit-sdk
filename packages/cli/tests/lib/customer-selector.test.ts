@@ -60,6 +60,19 @@ describe("customer selector", () => {
     expect(readCustomerSelector({}, true)).toBeUndefined()
   })
 
+  test.each([
+    [{ customer: "" }, "--customer"],
+    [{ customerPositional: "   " }, "<customer>"],
+    [{ "customer-id": " ", customer: "acme.com" }, "--customer-id"],
+  ])("rejects a blank customer instead of dropping the filter: %j", async (args, source) => {
+    const error = await expectExit(() => readCustomerSelector(args, true))
+
+    expect(error).toEqual({
+      error: `${source} needs a customer domain, name, or ID`,
+      code: "invalid_input",
+    })
+  })
+
   test("rejects two different customers", async () => {
     const error = await expectExit(() =>
       readCustomerSelector({ customerPositional: "acme.com", customer: "beta.com" }, true),
@@ -87,12 +100,15 @@ describe("customer selector", () => {
     expect(callTool).not.toHaveBeenCalled()
   })
 
-  test("resolves a domain case-insensitively, ahead of name matches", async () => {
+  test("resolves a domain case-insensitively, ahead of name matches, without more pages", async () => {
     const { client, callTool } = fakeClient([
-      page([
-        { id: acmeEuId, name: "acme.com", domain: "acme.eu" },
-        { id: acmeId, name: "Acme", domain: "acme.com" },
-      ]),
+      page(
+        [
+          { id: acmeEuId, name: "acme.com", domain: "acme.eu" },
+          { id: acmeId, name: "Acme", domain: "acme.com" },
+        ],
+        "cursor_2",
+      ),
     ])
 
     expect(await resolveCustomerIdOrExit(client, "ACME.com", true)).toBe(acmeId)
@@ -102,6 +118,7 @@ describe("customer selector", () => {
       orderBy: "name",
       orderDirection: "asc",
     })
+    expect(callTool).toHaveBeenCalledTimes(1)
   })
 
   test("resolves an exact name on a later page", async () => {
@@ -138,6 +155,44 @@ describe("customer selector", () => {
       { id: acmeEuId, name: "acme", domain: "acme.eu" },
     ])
     expect(error.error).toContain("Pass the domain or ID instead.")
+  })
+
+  test("stops paging once two exact names make a non-domain ambiguous", async () => {
+    const { client, callTool } = fakeClient([
+      page(
+        [
+          { id: acmeId, name: "Acme", domain: "acme.com" },
+          { id: acmeEuId, name: "Acme", domain: "acme.eu" },
+        ],
+        "cursor_2",
+      ),
+    ])
+
+    const error = await expectExit(() => resolveCustomerIdOrExit(client, "acme", true))
+
+    expect(error.code).toBe("ambiguous_customer")
+    expect(error.error).toContain('"acme" matches at least 2 customers')
+    expect(callTool).toHaveBeenCalledTimes(1)
+  })
+
+  test("does not accept a single name when the search stopped before the end", async () => {
+    const pages = Array.from({ length: 10 }, (_, index) =>
+      page(
+        index === 0
+          ? [{ id: acmeId, name: "Acme", domain: "acme.com" }]
+          : [{ id: `10000000-0000-4000-8000-0000000001${index}0`, name: "Acme Co", domain: null }],
+        `cursor_${index + 2}`,
+      ),
+    )
+    const { client, callTool } = fakeClient(pages)
+
+    const error = await expectExit(() => resolveCustomerIdOrExit(client, "acme", true))
+
+    expect(error.code).toBe("ambiguous_customer")
+    expect(error.error).toBe(
+      'Too many customers match "acme" to confirm one by name. Pass the domain or ID instead.',
+    )
+    expect(callTool).toHaveBeenCalledTimes(10)
   })
 
   test("fails when nothing matches exactly, naming close matches", async () => {

@@ -187,6 +187,25 @@ describe("users list", () => {
     }
   })
 
+  test("fails on an empty --customer instead of listing every user", async () => {
+    const { runCommand } = await import("citty")
+    const { default: listCmd } = await import("../../../src/commands/users/list")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    let thrown: unknown
+    try {
+      await runCommand(listCmd, { rawArgs: ["--customer", "", "--json"] })
+    } catch (error) {
+      thrown = error
+    } finally {
+      const stderr = stderrSpy.mock.calls.map((call) => String(call[0])).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+      expectErrorExit(thrown, stderr, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  })
+
   test("keeps --customer-id working as an alias without a lookup", async () => {
     const customerId = "10000000-0000-4000-8000-0000000000aa"
     const { runCommand } = await import("citty")

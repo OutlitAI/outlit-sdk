@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { runMain } from "citty"
 import { CLI_VERSION } from "./lib/config"
-import { exitOnArgProblem, showUsage } from "./lib/strict-args"
+import { prepareArgsOrExit, showUsage } from "./lib/strict-args"
 import {
   INTERNAL_UPDATE_FLAG,
   initializeUpdateNotifier,
@@ -23,8 +23,7 @@ async function startCli() {
 
   initializeUpdateNotifier()
 
-  const rawArgs = process.argv.slice(2)
-  await exitOnArgProblem(mainCommand, rawArgs)
+  const rawArgs = await prepareArgsOrExit(mainCommand, process.argv.slice(2))
   await runMain(mainCommand, { rawArgs, showUsage })
 }
 

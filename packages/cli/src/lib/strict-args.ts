@@ -57,10 +57,16 @@ function toArray(value: string | string[] | undefined): string[] {
 type FlagSpec = { name: string; def: ArgDef }
 
 type ArgsShape = {
+  /** Declared names, plus the camelCase spellings citty also parsed, plus long aliases. */
   longFlags: Map<string, FlagSpec>
   shortFlags: Map<string, FlagSpec>
   positionals: string[]
   visibleFlags: string[]
+}
+
+/** citty's camelCase spelling of a kebab-case flag (`api-key` -> `apiKey`). */
+function camelCase(name: string): string {
+  return name.replace(/-([a-zA-Z0-9])/g, (_, char: string) => char.toUpperCase())
 }
 
 function describeArgs(args: ArgsDef): ArgsShape {
@@ -75,10 +81,11 @@ function describeArgs(args: ArgsDef): ArgsShape {
       continue
     }
 
-    // Only the declared spelling counts. citty also maps camelCase variants, but drops their
-    // value when the flag has a default, so they are reported with the kebab-case suggestion.
+    // citty also parsed camelCase spellings (`--apiKey`). They stay accepted but unadvertised,
+    // and are rewritten to the declared name, because citty dropped their value whenever the
+    // flag had a default.
     const spec = { name, def }
-    longFlags.set(name, spec)
+    for (const spelling of [camelCase(name), kebabCase(name), name]) longFlags.set(spelling, spec)
     if ("alias" in def) {
       for (const alias of toArray(def.alias)) {
         if (alias.length === 1) shortFlags.set(alias, spec)
@@ -109,8 +116,6 @@ export type ArgProblem =
       issues: ArgIssue[]
       validFlags: string[]
       positionals: string[]
-      /** Set when the input sat before a subcommand of this command group. */
-      subcommands?: string[]
     }
   | {
       kind: "command"
@@ -170,72 +175,81 @@ function closest(input: string, candidates: readonly string[]): string | undefin
     .sort((left, right) => right.length - left.length)[0]
 }
 
-function checkTokens(
-  tokens: readonly string[],
-  args: ArgsDef,
-  command: string,
-  subcommands?: readonly string[],
-): ArgProblem | null {
+type Checked = { problem: ArgProblem | null; tokens: string[] }
+
+/** Checks one command's tokens and returns them with every flag in its declared spelling. */
+function checkTokens(tokens: readonly string[], args: ArgsDef, command: string): Checked {
   const shape = describeArgs(args)
   const issues: ArgIssue[] = []
+  const out: string[] = []
   const positionals: Array<{ value: string; afterSwitch?: string }> = []
   const visibleNames = shape.visibleFlags.map((flag) => flag.slice(2))
 
   for (let index = 0; index < tokens.length; index++) {
     const token = tokens[index] as string
+    const next = tokens[index + 1]
 
     if (token === "--") {
       for (const value of tokens.slice(index + 1)) positionals.push({ value })
+      out.push(...tokens.slice(index))
       break
     }
 
     if (token.startsWith("--")) {
       const equalsIndex = token.indexOf("=")
       const name = equalsIndex === -1 ? token.slice(2) : token.slice(2, equalsIndex)
-      const hasInlineValue = equalsIndex !== -1
+      const inline = equalsIndex === -1 ? undefined : token.slice(equalsIndex)
       const spec = shape.longFlags.get(name)
 
       if (spec) {
-        if (takesValue(spec.def) && !hasInlineValue) {
-          const next = tokens[index + 1]
-          if (next === undefined || next.startsWith("--")) {
+        out.push(`--${spec.name}${inline ?? ""}`)
+        if (inline !== undefined) continue
+        if (takesValue(spec.def)) {
+          // citty would take a following flag as this flag's value. A value that really starts
+          // with "-" has to be attached: --search=-draft.
+          if (next === undefined || next.startsWith("-")) {
             issues.push({ argument: `--${name}`, reason: "missing_value" })
           } else {
+            out.push(next)
             index++
           }
-        } else if (!takesValue(spec.def) && !hasInlineValue) {
-          const next = tokens[index + 1]
-          if (next !== undefined && !next.startsWith("-")) {
-            positionals.push({ value: next, afterSwitch: `--${name}` })
-            index++
-          }
+        } else if (next !== undefined && !next.startsWith("-")) {
+          positionals.push({ value: next, afterSwitch: `--${spec.name}` })
+          out.push(next)
+          index++
         }
         continue
       }
 
       const negated = name.startsWith("no-") ? shape.longFlags.get(name.slice(3)) : undefined
-      if (negated && negated.def.type === "boolean" && !hasInlineValue) continue
+      if (negated && negated.def.type === "boolean" && inline === undefined) {
+        out.push(`--no-${negated.name}`)
+        continue
+      }
 
       const suggestion = closest(name, visibleNames)
       issues.push({
         argument: `--${name}`,
         reason: "unknown_flag",
-        ...(suggestion
-          ? { suggestion: `--${suggestion}` }
-          : subcommands
-            ? { note: "flags go after the subcommand" }
-            : {}),
+        ...(suggestion ? { suggestion: `--${suggestion}` } : {}),
       })
       // An unknown flag's value would otherwise be reported again as a stray argument.
-      const next = tokens[index + 1]
-      if (!hasInlineValue && next !== undefined && !next.startsWith("-")) index++
+      if (inline === undefined && next !== undefined && !next.startsWith("-")) index++
       continue
     }
 
     if (token.startsWith("-") && token !== "-") {
       const spec = token.length === 2 ? shape.shortFlags.get(token.slice(1)) : undefined
       if (spec) {
-        if (takesValue(spec.def)) index++
+        out.push(token)
+        if (takesValue(spec.def)) {
+          if (next === undefined || next.startsWith("-")) {
+            issues.push({ argument: token, reason: "missing_value" })
+          } else {
+            out.push(next)
+            index++
+          }
+        }
         continue
       }
       const suggestion = closest(token.replace(/^-+/, ""), visibleNames)
@@ -248,6 +262,7 @@ function checkTokens(
     }
 
     positionals.push({ value: token })
+    out.push(token)
   }
 
   for (const extra of positionals.slice(shape.positionals.length)) {
@@ -263,60 +278,86 @@ function checkTokens(
     issues.push(issue)
   }
 
-  if (issues.length === 0) return null
+  if (issues.length === 0) return { problem: null, tokens: out }
 
   return {
-    kind: "args",
-    command,
-    issues,
-    validFlags: shape.visibleFlags,
-    positionals: shape.positionals,
-    ...(subcommands ? { subcommands: [...subcommands] } : {}),
+    problem: {
+      kind: "args",
+      command,
+      issues,
+      validFlags: shape.visibleFlags,
+      positionals: shape.positionals,
+    },
+    tokens: out,
   }
 }
 
 /**
  * Checks raw CLI input against the command tree the way citty will route it, before anything
- * runs. citty itself ignores unknown flags and surplus positionals, which silently widens a
- * query (for example to the whole workspace) instead of failing.
+ * runs, and returns the input to hand to citty. citty itself ignores unknown flags and surplus
+ * positionals, which silently widens a query (for example to the whole workspace) instead of
+ * failing. Flags typed before a subcommand, which citty would drop, move to the subcommand when
+ * it takes them.
  */
-export async function findArgProblem(
+export async function analyzeArgs(
   root: AnyCommand,
   rawArgs: readonly string[],
-): Promise<ArgProblem | null> {
-  if (rawArgs.length === 0) return null
+): Promise<{ problem: ArgProblem | null; rawArgs: string[] }> {
+  const unchanged = { problem: null, rawArgs: [...rawArgs] }
+  if (rawArgs.length === 0) return unchanged
   // citty answers these itself before parsing anything else.
-  if (rawArgs.includes("--help") || rawArgs.includes("-h")) return null
-  if (rawArgs.length === 1 && rawArgs[0] === "--version") return null
+  if (rawArgs.includes("--help") || rawArgs.includes("-h")) return unchanged
+  if (rawArgs.length === 1 && rawArgs[0] === "--version") return unchanged
 
   const rootMeta = await resolveValue(root.meta ?? {})
   const path = [rootMeta.name ?? "outlit"]
+  // Tokens kept before each chosen subcommand, and the flags typed there.
+  const kept: string[][] = []
+  const carried: Array<{ token: string; level: number; group: string[] | null }> = []
   let command = root
   let tokens = rawArgs
 
+  const assemble = (tail: readonly string[]) => [
+    ...kept.flatMap((segment, level) => [...segment, path[level + 1] as string]),
+    ...tail,
+  ]
+
   while (true) {
-    if (selfCheckedCommands.has(command)) return null
+    if (selfCheckedCommands.has(command)) {
+      return { problem: null, rawArgs: assemble([...carried.map((c) => c.token), ...tokens]) }
+    }
 
     const args = await resolveArgs(command)
     const subCommands = await resolveValue(command.subCommands ?? {})
-    const subCommandNames = Object.keys(subCommands)
-
-    if (subCommandNames.length === 0) return checkTokens(tokens, args, path.join(" "))
-
+    const hasSubCommands = Object.keys(subCommands).length > 0
     // citty routes to the first token that does not start with "-".
-    const subCommandIndex = tokens.findIndex((token) => !token.startsWith("-"))
+    const subCommandIndex = hasSubCommands
+      ? tokens.findIndex((token) => !token.startsWith("-"))
+      : -1
+
     if (subCommandIndex === -1) {
       // citty shows usage when a group runs without a subcommand.
-      return command.run ? checkTokens(tokens, args, path.join(" ")) : null
+      if (hasSubCommands && !command.run) return unchanged
+
+      const label = path.join(" ")
+      const forwarded: string[] = []
+      const unknown: string[] = []
+      for (const item of carried) {
+        const own = checkTokens([item.token], args, label)
+        if (!own.problem) forwarded.push(...own.tokens)
+        else if (item.group) kept[item.level]?.push(...item.group)
+        else unknown.push(item.token)
+      }
+      const checked = checkTokens([...forwarded, ...unknown, ...tokens], args, label)
+      return { problem: checked.problem, rawArgs: assemble(checked.tokens) }
     }
 
-    const leading = checkTokens(
-      tokens.slice(0, subCommandIndex),
-      args,
-      path.join(" "),
-      subCommandNames,
-    )
-    if (leading) return leading
+    const level = kept.length
+    kept.push([])
+    for (const token of tokens.slice(0, subCommandIndex)) {
+      const own = checkTokens([token], args, path.join(" "))
+      carried.push({ token, level, group: own.problem ? null : own.tokens })
+    }
 
     const name = tokens[subCommandIndex] as string
     const next = subCommands[name]
@@ -328,11 +369,14 @@ export async function findArgProblem(
       }
       const suggestion = closest(name, visible)
       return {
-        kind: "command",
-        command: path.join(" "),
-        argument: displayValue(name),
-        commands: visible,
-        ...(suggestion ? { suggestion } : {}),
+        problem: {
+          kind: "command",
+          command: path.join(" "),
+          argument: displayValue(name),
+          commands: visible,
+          ...(suggestion ? { suggestion } : {}),
+        },
+        rawArgs: [...rawArgs],
       }
     }
 
@@ -340,6 +384,13 @@ export async function findArgProblem(
     path.push(name)
     tokens = tokens.slice(subCommandIndex + 1)
   }
+}
+
+export async function findArgProblem(
+  root: AnyCommand,
+  rawArgs: readonly string[],
+): Promise<ArgProblem | null> {
+  return (await analyzeArgs(root, rawArgs)).problem
 }
 
 function describeIssue(issue: ArgIssue): string {
@@ -392,9 +443,8 @@ export function formatArgProblem(problem: ArgProblem): {
 
   const first = problem.issues[0] as ArgIssue
   const flags = `Valid flags: ${problem.validFlags.length > 0 ? problem.validFlags.join(", ") : "(none)"}.`
-  const shape = problem.subcommands
-    ? `Commands: ${problem.subcommands.join(", ")}.`
-    : problem.positionals.length === 0
+  const shape =
+    problem.positionals.length === 0
       ? "Takes no positional arguments."
       : `Positional arguments: ${problem.positionals.map((name) => `<${name}>`).join(" ")}.`
   return {
@@ -412,17 +462,20 @@ export function formatArgProblem(problem: ArgProblem): {
   }
 }
 
-/** Fails fast, in the CLI's usual error shape, when input would otherwise be ignored. */
-export async function exitOnArgProblem(
+/**
+ * Returns the input to run, with flags in their declared spelling and placement, or fails fast
+ * in the CLI's usual error shape when input would otherwise be ignored.
+ */
+export async function prepareArgsOrExit(
   root: AnyCommand,
   rawArgs: readonly string[],
-): Promise<void> {
-  const problem = await findArgProblem(root, rawArgs)
-  if (!problem) return
+): Promise<string[]> {
+  const analyzed = await analyzeArgs(root, rawArgs)
+  if (!analyzed.problem) return analyzed.rawArgs
 
   const json = rawArgs.includes("--json")
-  const formatted = formatArgProblem(problem)
-  outputError(
+  const formatted = formatArgProblem(analyzed.problem)
+  return outputError(
     {
       message: formatted.lines.join(isJsonMode(json) ? " " : "\n"),
       code: formatted.code,

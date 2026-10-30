@@ -21,9 +21,12 @@ positional and `--customer` are interchangeable.
 `users list`, `attention list`, `identity suggestions list`, and `customers identity` call tools
 that take only a customer ID, so the CLI looks the customer up first. A domain or exact name that
 matches no customer fails with `customer_not_found`; a name shared by several customers fails
-with `ambiguous_customer` and lists them, so pass the domain or ID instead. Other commands pass the
-value to Outlit, which resolves it. The ownership and access commands (`customers owner set`,
-`customers grant`, `customers revoke`) and `customers merge` still take exact customer IDs.
+with `ambiguous_customer` and lists them, so pass the domain or ID instead. The lookup is one
+`outlit_list_customers` call per 100 customers whose name or domain contains the text, up to 10
+calls, and each call counts as an API call against your plan. An exact domain usually resolves in
+one call; a customer ID needs none. Other commands pass the value to Outlit, which resolves it.
+The ownership and access commands (`customers owner set`, `customers grant`, `customers revoke`)
+and `customers merge` still take exact customer IDs.
 
 ### Unknown flags and arguments
 
@@ -46,7 +49,9 @@ flag, and lists the valid flags. With `--json` or piped output the error is JSON
 ```
 
 `code` is `unknown_flag`, `unexpected_argument`, `missing_input` (a flag without its value), or
-`unknown_command`. Put flags after the full command, for example `outlit customers list --json`.
+`unknown_command`. A value that starts with `-` must be attached with `=`, for example
+`--search=-draft`; otherwise it is read as another flag. A flag typed before the subcommand, as in
+`outlit --json customers list`, is passed to the subcommand when the subcommand takes it.
 
 ## Activation
 
