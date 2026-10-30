@@ -109,7 +109,7 @@ describe("completions command", () => {
       'COMPREPLY=($(compgen -W "--api-key --json --customer --top-k --after --before --source-types"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --source-types --fact-types --fact-categories --after --before"',
+      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --customer --status --source-types --fact-types --fact-categories --after --before"',
     )
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --fact-id --include"')
     expect(out).toContain(
@@ -126,11 +126,9 @@ describe("completions command", () => {
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --mrr-above --mrr-below --owner-id --owner-email --has-owner --activated-since --search"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --customer-id"',
+      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --customer"',
     )
-    expect(out).not.toContain(
-      '"--api-key --json --limit --cursor --status --customer-id --priority"',
-    )
+    expect(out).not.toContain('"--api-key --json --limit --cursor --status --customer --priority"')
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --event --lookback-days --example-limit"',
     )
@@ -155,7 +153,8 @@ describe("completions command", () => {
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --type --label --default --enabled --disabled"',
     )
-    expect(out).toContain("--customer-id --suggestion-id --status --confidence")
+    expect(out).toContain("--customer --suggestion-id --status --confidence")
+    expect(out).not.toContain("--customer-id")
     expect(out).toContain("--preview-token --request-id --suggestion-id --review-notes")
     expect(out).not.toContain('COMPREPLY=($(compgen -W "--api-key --json --destination-id"')
   })
@@ -235,7 +234,9 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd sources get' -l cursor")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
     expect(out).toContain("-n '__outlit_using_cmd attention list' -l status")
-    expect(out).toContain("-n '__outlit_using_cmd attention list' -l customer-id")
+    expect(out).toContain("-n '__outlit_using_cmd attention list' -l customer")
+    expect(out).toContain("-n '__outlit_using_cmd users list' -l customer")
+    expect(out).not.toContain("-l customer-id")
     expect(out).not.toContain("-n '__outlit_using_cmd attention list' -l priority")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l activated-since")
     expect(out).toContain("-n '__outlit_using_cmd activation preview' -l lookback-days")

@@ -114,6 +114,33 @@ describe("Outlit", () => {
     await outlit.shutdown()
   })
 
+  it("shutdown waits for an in-flight flush and sends what was queued after it", async () => {
+    let release: (() => void) | undefined
+    fetchMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = () => resolve({ ok: true, json: async () => ({ success: true, processed: 1 }) })
+        }),
+    )
+    const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
+
+    outlit.track({ customerId: "cust_123", eventName: "first" })
+    const inFlight = outlit.flush()
+    outlit.track({ customerId: "cust_123", eventName: "second" })
+    const shutdown = outlit.shutdown()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    release?.()
+    await Promise.all([inFlight, shutdown])
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(getLastPayload().events.map((event: { eventName: string }) => event.eventName)).toEqual([
+      "second",
+    ])
+    expect(outlit.queueSize).toBe(0)
+  })
+
   it("exposes only ordinary identity and tracking APIs", async () => {
     const outlit = new Outlit({ publicKey: "pk_test", flushInterval: 60_000 })
 

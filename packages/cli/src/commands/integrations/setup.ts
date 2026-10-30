@@ -7,6 +7,7 @@ import type { OutlitClient } from "../../lib/client"
 import { isJsonMode, outputError, outputResult } from "../../lib/output"
 import { normalizeProviderInput } from "../../lib/providers"
 import { createSpinner } from "../../lib/spinner"
+import { checksOwnArgs } from "../../lib/strict-args"
 import { openBrowser } from "../../lib/tty"
 import {
   collectMixpanelMapping,
@@ -72,7 +73,7 @@ type SetupResponse = {
 const setupOutputSchema = publicToolContracts.outlit_setup_integration.outputSchema
 const STALLED_MESSAGE = "Integration setup did not reach a terminal state."
 
-export default defineCommand({
+const setupCommand = defineCommand({
   meta: {
     name: "setup",
     description: [
@@ -183,6 +184,9 @@ export default defineCommand({
     })
   },
 })
+
+// Rejects unsupported input itself, without echoing values that may be provider secrets.
+export default checksOwnArgs(setupCommand)
 
 async function runPreferredSetup(options: {
   client: OutlitClient

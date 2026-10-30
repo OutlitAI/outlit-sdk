@@ -83,7 +83,7 @@ Once the skill is installed, OpenClaw learns how to use the full `outlit` CLI. Y
 | "Show me paying customers who went silent this month" | `outlit customers list --billing-status PAYING --no-activity-in 30d` |
 | "Get the full profile for acme.com" | `outlit customers get acme.com --include users,revenue,recentTimeline` |
 | "What's been happening across Acme's customer communications?" | `outlit customers timeline acme.com --channels COMMUNICATION --limit 50` |
-| "Find inactive users at Acme Corp" | `outlit users list --customer-id <customer-uuid> --journey-stage INACTIVE` |
+| "Find inactive users at Acme Corp" | `outlit users list --customer acme.com --journey-stage INACTIVE` |
 | "Search for pricing concerns across all customers" | `outlit search "pricing concerns"` |
 | "What do we know about acme.com recently?" | `outlit facts list acme.com --status ACTIVE --limit 20` |
 | "Open the exact call behind that search result" | `outlit sources get --source-type CALL --source-id call_123` |

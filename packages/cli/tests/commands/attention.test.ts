@@ -39,7 +39,7 @@ const attentionItem = {
   preparedActionUrl: null,
 } as const
 
-const mockCallTool = mock(async (toolName: string) => {
+const mockCallTool = mock(async (toolName: string, _params?: unknown): Promise<unknown> => {
   if (toolName === "outlit_get_attention_item") {
     return {
       ...attentionItem,
@@ -109,6 +109,30 @@ describe("attention commands", () => {
         customerId: "22222222-2222-4222-8222-222222222222",
         limit: 50,
         cursor: "opaque-cursor",
+      })
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("resolves --customer to the exact customer ID", async () => {
+    mockCallTool.mockImplementationOnce(async () => ({
+      items: [{ id: attentionItem.customer.id, name: "Acme", domain: "acme.test" }],
+      pagination: { hasMore: false, total: 1, nextCursor: null },
+    }))
+    const { default: listCommand } = await import("../../src/commands/attention/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCommand.run!({
+        args: { customer: "acme.test", json: true },
+      } as Parameters<NonNullable<typeof listCommand.run>>[0])
+
+      expect(mockCallTool.mock.calls.map(([toolName]) => toolName)).toEqual([
+        "outlit_list_customers",
+        "outlit_list_attention_items",
+      ])
+      expect(mockCallTool).toHaveBeenLastCalledWith("outlit_list_attention_items", {
+        customerId: attentionItem.customer.id,
       })
     } finally {
       writeSpy.mockRestore()

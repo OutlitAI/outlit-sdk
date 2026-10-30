@@ -12,6 +12,7 @@ import {
 } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
+import { customerArgs, requireCustomerSelector } from "../../args/customer"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
@@ -85,10 +86,12 @@ export default defineCommand({
       "List structured facts for a customer.",
       "",
       "Filter by fact status, source type, or occurrence date range.",
+      "The customer (<customer> or --customer) accepts a customer domain or UUID.",
       "",
       "Examples:",
       "  outlit facts list acme.com",
       "  outlit facts list acme.com --status ACTIVE",
+      "  outlit facts list --customer acme.com --json",
       "  outlit facts list acme.com --fact-types CHURN_RISK,EXPANSION",
       "  outlit facts list acme.com --source-types CALL,OPPORTUNITY --after 2025-01-01T00:00:00Z",
       "  outlit facts list acme.com --limit 50 --json",
@@ -104,11 +107,7 @@ export default defineCommand({
     ...authArgs,
     ...outputArgs,
     ...paginationArgs,
-    customer: {
-      type: "positional",
-      description: "Customer UUID or domain to retrieve facts for",
-      required: true,
-    },
+    ...customerArgs,
     status: {
       type: "string",
       description: `Comma-separated fact statuses (${customerFactStatuses.join(", ")})`,
@@ -137,6 +136,7 @@ export default defineCommand({
   },
   async run({ args }) {
     const json = !!args.json
+    const customer = requireCustomerSelector(args, "outlit facts list", json)
     const statuses = parseCsvArg(args.status)
     const sourceTypes = parseCsvArg(args["source-types"])
     const factTypes = parseCsvArg(args["fact-types"])
@@ -250,7 +250,7 @@ export default defineCommand({
     const client = await getClientOrExit(args["api-key"], json)
 
     const params: Record<string, unknown> = {
-      customer: args.customer,
+      customer,
     }
     if (statuses) params.status = statuses
     if (normalizedSourceTypes) params.sourceTypes = normalizedSourceTypes
