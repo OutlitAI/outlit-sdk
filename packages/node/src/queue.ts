@@ -20,7 +20,7 @@ export class EventQueue {
   private queue: TrackerEvent[] = []
   private maxSize: number
   private onFlush: (events: TrackerEvent[]) => Promise<void>
-  private isFlushing = false
+  private inFlight: Promise<void> | null = null
 
   constructor(options: QueueOptions) {
     this.maxSize = options.maxSize ?? 100
@@ -41,14 +41,30 @@ export class EventQueue {
 
   /**
    * Flush all events in the queue.
+   *
+   * Resolves only after the events queued before the call were sent. A flush already in flight
+   * may hold some of them, or leave newer ones queued, so wait for it first, then send what
+   * remains. Another caller's failure is theirs to report; this call sends once.
    */
   async flush(): Promise<void> {
-    if (this.isFlushing || this.queue.length === 0) return
+    while (this.inFlight) {
+      await this.inFlight.catch(() => {})
+    }
+    if (this.queue.length === 0) return
 
-    this.isFlushing = true
     const events = [...this.queue]
     this.queue = []
+    const sending = this.send(events)
+    this.inFlight = sending
 
+    try {
+      await sending
+    } finally {
+      if (this.inFlight === sending) this.inFlight = null
+    }
+  }
+
+  private async send(events: TrackerEvent[]): Promise<void> {
     try {
       await this.onFlush(events)
     } catch (error) {
@@ -58,8 +74,6 @@ export class EventQueue {
         this.queue = [...events, ...this.queue]
       }
       throw error
-    } finally {
-      this.isFlushing = false
     }
   }
 
@@ -74,6 +88,6 @@ export class EventQueue {
    * Check if the queue is currently flushing.
    */
   get flushing(): boolean {
-    return this.isFlushing
+    return this.inFlight !== null
   }
 }
