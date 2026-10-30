@@ -341,15 +341,44 @@ export async function analyzeArgs(
 
       const label = path.join(" ")
       const forwarded: string[] = []
-      const unknown: string[] = []
+      // Judged on their own, so a carried flag never takes a value from the subcommand's input.
+      const carriedIssues: ArgIssue[] = []
       for (const item of carried) {
         const own = checkTokens([item.token], args, label)
         if (!own.problem) forwarded.push(...own.tokens)
         else if (item.group) kept[item.level]?.push(...item.group)
-        else unknown.push(item.token)
+        else if (own.problem.kind === "args") carriedIssues.push(...own.problem.issues)
       }
-      const checked = checkTokens([...forwarded, ...unknown, ...tokens], args, label)
-      return { problem: checked.problem, rawArgs: assemble(checked.tokens) }
+      const checked = checkTokens(tokens, args, label)
+      const issues = [
+        ...carriedIssues,
+        ...(checked.problem?.kind === "args" ? checked.problem.issues : []),
+      ]
+      if (issues.length === 0) {
+        // Forwarded flags are complete on their own; they only have to stay before a `--`.
+        const end = checked.tokens.indexOf("--")
+        const at = end === -1 ? checked.tokens.length : end
+        return {
+          problem: null,
+          rawArgs: assemble([
+            ...checked.tokens.slice(0, at),
+            ...forwarded,
+            ...checked.tokens.slice(at),
+          ]),
+        }
+      }
+
+      const shape = describeArgs(args)
+      return {
+        problem: {
+          kind: "args",
+          command: label,
+          issues,
+          validFlags: shape.visibleFlags,
+          positionals: shape.positionals,
+        },
+        rawArgs: [...rawArgs],
+      }
     }
 
     const level = kept.length

@@ -159,6 +159,10 @@ describe("strict argument checking", () => {
       problem: null,
       rawArgs: ["setup", "codex", "--json"],
     })
+    expect(await analyzeArgs(mainCommand, ["--json", "sql", "--", "-1 query"])).toEqual({
+      problem: null,
+      rawArgs: ["sql", "--json", "--", "-1 query"],
+    })
     // `--yes` belongs to `setup` itself, so it stays where it was typed.
     expect(await analyzeArgs(mainCommand, ["setup", "--yes", "codex"])).toEqual({
       problem: null,
@@ -168,6 +172,15 @@ describe("strict argument checking", () => {
     const unknown = await details(["--bogus", "customers", "list"])
     expect(unknown.details.command).toBe("outlit customers list")
     expect(unknown.details.invalid).toEqual([{ argument: "--bogus", reason: "unknown_flag" }])
+  })
+
+  test("a flag moved from before the subcommand never takes a value from after it", async () => {
+    const result = await details(["--search", "--json", "users", "list", "acme"])
+
+    expect(result.details.invalid).toEqual([
+      { argument: "--search", reason: "missing_value" },
+      { argument: "acme", reason: "unexpected_argument", suggestion: "--customer acme" },
+    ])
   })
 
   test("rejects unknown subcommands with a suggestion", async () => {
