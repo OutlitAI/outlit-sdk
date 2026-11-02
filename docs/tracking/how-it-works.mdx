@@ -29,6 +29,10 @@ Each person's journey stage and the customer's billing status are separate. Outl
 
 Your team reviews churn and renewal situations in **Attention**. Developers and agents can also read authorized customer context through the [CLI](/cli/overview), [MCP](/ai-integrations/mcp), or [public tool gateway](/api-reference/tools). Use the [Ingest API](/api-reference/ingest) for custom event ingestion.
 
+## Bots and AI agents
+
+Outlit keeps visits from AI agents, crawlers, and automated browsers and labels them; it doesn't filter them out. Each browser event is classified as human, AI agent, crawler, or automation from the visitor's user agent, with the agent or crawler's name when it identifies itself. The Outlit Browser SDK sends every event and adds a hint when it detects an automated browser, such as Playwright, Puppeteer, or Selenium.
+
 ## Privacy and delivery
 
 The Outlit Browser SDK strips recognized sensitive form fields before sending them. Configure enabled domains under **Settings → Website Visitors**; the public tracking key is visible in browser code by design. If your site needs consent, use the [consent controls](/tracking/browser/script#consent-management) before collecting activity. For retention or deletion requests, ask your Outlit contact about your workspace policy.
