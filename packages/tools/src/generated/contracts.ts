@@ -17337,6 +17337,32 @@ export const ingestTransport = {
         },
         "additionalProperties": false,
       },
+      "traffic": {
+        "type": "object",
+        "properties": {
+          "class": {
+            "type": "string",
+            "const": "automation",
+          },
+          "signals": {
+            "minItems": 1,
+            "maxItems": 2,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "webdriver",
+                "headless",
+              ],
+            },
+          },
+        },
+        "required": [
+          "class",
+          "signals",
+        ],
+        "additionalProperties": false,
+      },
     },
     "required": [
       "events",
@@ -17557,4 +17583,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "89c1bc1604b88acbc86ec105e1bcf8d58355bd61ee951563e3f77765f891482a" as const
+export const sdkConsumerContractHash = "cc5998013df0f30878fea656a3ee9deacd1a782b50d4b332fc47b48386ba0a50" as const
