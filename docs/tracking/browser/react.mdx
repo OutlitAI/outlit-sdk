@@ -200,6 +200,10 @@ import { OutlitProvider } from '@outlit/browser/react'
   Track booking events from calendar embeds (Cal.com, Calendly).
 </ParamField>
 
+<ParamField path="botFilter" type="boolean" default="true">
+  Skip sending events from crawlers and automated browsers. Set to `false` for end-to-end tests of Outlit tracking.
+</ParamField>
+
 <ParamField path="user" type="UserIdentity | null">
   Current user identity. When provided with email or userId, identifies the user. When null or undefined, clears the user identity. This is the recommended way to handle user identity in server-rendered apps.
 </ParamField>

@@ -244,6 +244,7 @@ function autoInit(): void {
   const autoTrack = parseDataAutoTrack(script.getAttribute("data-auto-track"))
   const autoIdentify = script.getAttribute("data-auto-identify") !== "false"
   const trackCalendarEmbeds = script.getAttribute("data-track-calendar-embeds") !== "false"
+  const botFilter = script.getAttribute("data-bot-filter") !== "false"
 
   // Initialize
   outlit.init({
@@ -254,6 +255,7 @@ function autoInit(): void {
     autoTrack,
     autoIdentify,
     trackCalendarEmbeds,
+    botFilter,
   })
 }
 
