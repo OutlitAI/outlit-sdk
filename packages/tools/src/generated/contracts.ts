@@ -16035,6 +16035,7 @@ export const apiKeyGrants = [
   "customer_access:manage",
   "customer_identity:review",
   "customer_identity:merge",
+  "traffic_logs:write",
 ] as const
 
 export const apiKeyValidationSuccessSchema = {
@@ -16166,6 +16167,7 @@ export const apiKeyValidationSuccessSchema = {
               "customer_access:manage",
               "customer_identity:review",
               "customer_identity:merge",
+              "traffic_logs:write",
             ],
           },
         },
@@ -16226,6 +16228,7 @@ export const apiKeyValidationSuccessSchema = {
               "customer_access:manage",
               "customer_identity:review",
               "customer_identity:merge",
+              "traffic_logs:write",
             ],
           },
         },
@@ -16395,6 +16398,7 @@ export const apiKeyValidationSuccessSchemaV2 = {
               "customer_access:manage",
               "customer_identity:review",
               "customer_identity:merge",
+              "traffic_logs:write",
             ],
           },
         },
@@ -16468,6 +16472,7 @@ export const apiKeyValidationSuccessSchemaV2 = {
               "customer_access:manage",
               "customer_identity:review",
               "customer_identity:merge",
+              "traffic_logs:write",
             ],
           },
         },
@@ -17337,6 +17342,32 @@ export const ingestTransport = {
         },
         "additionalProperties": false,
       },
+      "traffic": {
+        "type": "object",
+        "properties": {
+          "class": {
+            "type": "string",
+            "const": "automation",
+          },
+          "signals": {
+            "minItems": 1,
+            "maxItems": 2,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "webdriver",
+                "headless",
+              ],
+            },
+          },
+        },
+        "required": [
+          "class",
+          "signals",
+        ],
+        "additionalProperties": false,
+      },
     },
     "required": [
       "events",
@@ -17557,4 +17588,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "89c1bc1604b88acbc86ec105e1bcf8d58355bd61ee951563e3f77765f891482a" as const
+export const sdkConsumerContractHash = "6cc4d720d2d608ba1a48518a15355c7735e54bdd5137df7303f4996fe6173e78" as const

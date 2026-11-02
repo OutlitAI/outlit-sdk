@@ -1548,7 +1548,8 @@
                     "workspace_settings:manage",
                     "customer_access:manage",
                     "customer_identity:review",
-                    "customer_identity:merge"
+                    "customer_identity:merge",
+                    "traffic_logs:write"
                   ]
                 }
               },
@@ -1608,7 +1609,8 @@
                     "workspace_settings:manage",
                     "customer_access:manage",
                     "customer_identity:review",
-                    "customer_identity:merge"
+                    "customer_identity:merge",
+                    "traffic_logs:write"
                   ]
                 }
               }
@@ -2368,6 +2370,32 @@
                 }
               }
             },
+            "additionalProperties": false
+          },
+          "traffic": {
+            "type": "object",
+            "properties": {
+              "class": {
+                "type": "string",
+                "const": "automation"
+              },
+              "signals": {
+                "minItems": 1,
+                "maxItems": 2,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "webdriver",
+                    "headless"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "class",
+              "signals"
+            ],
             "additionalProperties": false
           }
         },
@@ -17489,5 +17517,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "89c1bc1604b88acbc86ec105e1bcf8d58355bd61ee951563e3f77765f891482a"
+  "x-outlit-contract-hash": "6cc4d720d2d608ba1a48518a15355c7735e54bdd5137df7303f4996fe6173e78"
 }

@@ -148,6 +148,10 @@ export type GeneratedIngestPayload = {
     customerId?: string
     customerTraits?: Record<string, string | number | boolean | null>
   }
+  traffic?: {
+    class: "automation"
+    signals: Array<"webdriver" | "headless">
+  }
 }
 
 export type GeneratedIngestResponse = {
