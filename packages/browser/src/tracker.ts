@@ -282,7 +282,9 @@ export class Outlit {
     }
 
     // Now we can generate/retrieve the visitor ID (sets cookies/localStorage)
-    this.visitorId = getOrCreateVisitorId()
+    this.visitorId = getOrCreateVisitorId({
+      serverSetsCookie: getFirstPartyCookieDomain(this.apiHost) !== null,
+    })
 
     // Start the flush timer
     this.startFlushTimer()

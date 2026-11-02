@@ -66,6 +66,22 @@ describe("getOrCreateVisitorId", () => {
     }
   })
 
+  it("doesn't overwrite a server-set cookie when a first-party proxy refreshes it", () => {
+    cookieHeader = `${KEY}=${SHARED_ID}`
+
+    expect(getOrCreateVisitorId({ serverSetsCookie: true })).toBe(SHARED_ID)
+    expect(visitorCookieWrites()).toEqual([])
+    expect(localStorage.getItem(KEY)).toBe(SHARED_ID)
+  })
+
+  it("still restores a missing cookie when a first-party proxy is used", () => {
+    localStorage.setItem(KEY, LOCAL_ID)
+
+    getOrCreateVisitorId({ serverSetsCookie: true })
+
+    expect(visitorCookieWrites()).toEqual([expect.stringContaining(`${KEY}=${LOCAL_ID};`)])
+  })
+
   it("ignores a malformed cookie and falls back to localStorage", () => {
     cookieHeader = `${KEY}=not-a-uuid`
     localStorage.setItem(KEY, LOCAL_ID)

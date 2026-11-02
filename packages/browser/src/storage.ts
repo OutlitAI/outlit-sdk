@@ -29,13 +29,28 @@ export function generateVisitorId(): string {
  * per-origin, so preferring it would pin each subdomain to its own ID. When the
  * cookie is missing (e.g. Safari ITP expired it), localStorage restores it.
  *
- * Both copies are rewritten on every call so the cookie's expiry is refreshed
- * on each page load — Safari caps script-set cookies at 7 days, so an
- * active visitor's ID only survives if the window keeps rolling.
+ * Without a first-party proxy, the cookie is rewritten on every call so its
+ * expiry is refreshed on each page load — Safari caps script-set cookies at
+ * 7 days, so an active visitor's ID only survives if the window keeps rolling.
+ * Behind a proxy the ingest response sets the cookie with a full lifetime, so
+ * the SDK writes it only when it is missing or wrong: a script write would
+ * replace that server-set cookie with a 7-day one.
  */
-export function getOrCreateVisitorId(): string {
-  const visitorId = readCookieVisitorId() ?? readStoredVisitorId() ?? generateVisitorId()
-  persistVisitorId(visitorId)
+export function getOrCreateVisitorId(options: { serverSetsCookie?: boolean } = {}): string {
+  const cookieId = readCookieVisitorId()
+  const visitorId = cookieId ?? readStoredVisitorId() ?? generateVisitorId()
+
+  try {
+    localStorage.setItem(VISITOR_ID_KEY, visitorId)
+  } catch {
+    // localStorage not available
+  }
+
+  if (!options.serverSetsCookie || cookieId !== visitorId) {
+    // Root-domain cookie for cross-subdomain support
+    setCookie(VISITOR_ID_KEY, visitorId, 365) // 1 year
+  }
+
   return visitorId
 }
 
@@ -52,21 +67,6 @@ function readStoredVisitorId(): string | null {
     // localStorage not available
     return null
   }
-}
-
-/**
- * Persist visitor ID to both localStorage and cookie.
- */
-function persistVisitorId(visitorId: string): void {
-  // Store in localStorage
-  try {
-    localStorage.setItem(VISITOR_ID_KEY, visitorId)
-  } catch {
-    // localStorage not available
-  }
-
-  // Also store in cookie for cross-subdomain support
-  setCookie(VISITOR_ID_KEY, visitorId, 365) // 1 year
 }
 
 /**
