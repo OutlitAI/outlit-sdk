@@ -18,7 +18,6 @@ import {
 } from "@outlit/core"
 
 import { initFormTracking, initPageviewTracking, stopAutocapture } from "./autocapture"
-import { isLikelyBot } from "./bot"
 import {
   type CalendarBookingEvent,
   initCalendarTracking,
@@ -31,6 +30,7 @@ import {
   getOrCreateVisitorId,
   setConsentState,
 } from "./storage"
+import { getTrafficHint, type TrafficHint } from "./traffic"
 
 // ============================================
 // OUTLIT CLIENT
@@ -134,13 +134,6 @@ export interface OutlitOptions extends TrackerConfig {
    * @default 30000 (30 seconds)
    */
   idleTimeout?: number
-  /**
-   * Skip sending events from crawlers and automated browsers (e.g. Googlebot,
-   * Lighthouse, Playwright, Puppeteer, Selenium). Set to `false` to send them,
-   * e.g. for your own end-to-end tests of Outlit tracking.
-   * @default true
-   */
-  botFilter?: boolean
 }
 
 export type UserIdentity = BrowserIdentifyOptions
@@ -171,19 +164,14 @@ export class Outlit {
   // becomes pendingUser if the buffer is discarded, like autoTrack: false.
   private pendingAutoIdentity: { user: UserIdentity | null } | null = null
   private trackingStateListeners = new Set<(enabled: boolean) => void>()
-  private isBot: boolean
+  private trafficHint: TrafficHint | undefined
 
   constructor(options: OutlitOptions) {
     this.publicKey = options.publicKey
     this.apiHost = options.apiHost ?? DEFAULT_API_HOST
     this.flushInterval = options.flushInterval ?? 5000
     this.options = options
-    this.isBot = options.botFilter !== false && isLikelyBot()
-    if (this.isBot) {
-      console.warn(
-        "[Outlit] Crawler or automated browser detected; events will not be sent. Set botFilter: false to send them.",
-      )
-    }
+    this.trafficHint = getTrafficHint()
 
     // Warn in dev if multiple instances are created with the same key
     const isDev =
@@ -882,7 +870,6 @@ export class Outlit {
   private async sendEvents(events: TrackerEvent[]): Promise<void> {
     if (events.length === 0) return
     if (!this.visitorId) return // Can't send without a visitor ID
-    if (this.isBot) return // Drop crawler and automation traffic
 
     // Include only attribution identifiers in payload-level user identity.
     // Profile traits travel on identify events, not on subsequent track batches.
@@ -890,15 +877,20 @@ export class Outlit {
     const customerIdentity = this.getPayloadCustomerIdentity()
     // Include session ID for grouping all events in this batch
     const sessionId = this.sessionTracker?.getSessionId()
-    const payload = buildIngestPayload(
-      this.visitorId,
-      "client",
-      events,
-      userIdentity,
-      sessionId,
-      undefined,
-      customerIdentity,
-    )
+    const payload = {
+      ...buildIngestPayload(
+        this.visitorId,
+        "client",
+        events,
+        userIdentity,
+        sessionId,
+        undefined,
+        customerIdentity,
+      ),
+      // Automation signals only the browser can see; Outlit classifies the
+      // traffic (human, ai_agent, crawler, automation) server-side
+      ...(this.trafficHint && { traffic: this.trafficHint }),
+    }
     // Behind a first-party proxy, ask the ingest endpoint to re-issue the
     // visitor ID cookie from the site's own host, where Safari's 7-day cap on
     // script-set cookies doesn't apply

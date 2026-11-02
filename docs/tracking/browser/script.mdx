@@ -74,10 +74,6 @@ If you prefer a cleaner script tag and don't need to call tracking methods befor
   Set to `"false"` to disable automatic tracking of calendar bookings from Cal.com and Calendly embeds. See [Calendar embed tracking](/tracking/browser/calendar-embeds) for details.
 </ParamField>
 
-<ParamField path="data-bot-filter" type="string">
-  Set to `"false"` to send events from crawlers and automated browsers (Playwright, Puppeteer, Selenium), which the SDK skips by default. Useful for your own end-to-end tests of Outlit tracking.
-</ParamField>
-
 The script-tag loader reads only the attributes listed above. Engagement tracking (`trackEngagement`) and the idle timeout (`idleTimeout`) are **not** configurable via `data-*` attributes — use the [npm package](/tracking/browser/npm) if you need to change them (`init()` options).
 
 ## Consent management

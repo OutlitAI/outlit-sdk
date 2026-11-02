@@ -169,7 +169,6 @@ export function OutlitProvider(props: OutlitProviderProps) {
           "trackCalendarEmbeds",
           "trackEngagement",
           "idleTimeout",
-          "botFilter",
         ] as const
         const conflicting = configKeys.filter(
           (k) => k in props && (props as unknown as Record<string, unknown>)[k] !== undefined,
@@ -196,7 +195,6 @@ export function OutlitProvider(props: OutlitProviderProps) {
         trackCalendarEmbeds,
         trackEngagement,
         idleTimeout,
-        botFilter,
       } = props
       outlitRef.current = new Outlit({
         publicKey,
@@ -210,7 +208,6 @@ export function OutlitProvider(props: OutlitProviderProps) {
         trackCalendarEmbeds,
         trackEngagement,
         idleTimeout,
-        botFilter,
       })
     }
 
