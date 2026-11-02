@@ -1,5 +1,3 @@
-import type { IngestPayload } from "@outlit/core"
-
 // ============================================
 // TRAFFIC HINT
 // ============================================
@@ -9,8 +7,12 @@ import type { IngestPayload } from "@outlit/core"
  * event server-side from the User-Agent (human, ai_agent, crawler,
  * automation); this hint only adds what the server can't see.
  */
-export type TrafficHint = NonNullable<IngestPayload["traffic"]>
-type TrafficSignal = TrafficHint["signals"][number]
+export type TrafficSignal = "webdriver" | "headless"
+
+export interface TrafficHint {
+  class: "automation"
+  signals: TrafficSignal[]
+}
 
 interface NavigatorWithUAData extends Navigator {
   userAgentData?: { brands?: Array<{ brand: string }> }
