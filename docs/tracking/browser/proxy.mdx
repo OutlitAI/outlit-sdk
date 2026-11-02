@@ -104,6 +104,10 @@ Forward `/relay/api/i/v1/*` on your site to `https://app.outlit.ai/api/i/v1/*`. 
 
 SvelteKit, Astro, and other sites deployed on Vercel, Netlify, or Cloudflare can use their host's tab above.
 
+<Warning>
+The proxy must forward the browser's `User-Agent` header unchanged. Outlit labels each visit as human, AI agent, crawler, or automation from that header. If a proxy drops it or substitutes its own (for example a CDN sending `Amazon CloudFront`), every event looks like automation. The snippets above forward it as is. On CloudFront or another CDN, include `User-Agent` in the headers forwarded to the origin.
+</Warning>
+
 The Next.js, Vercel, Netlify, and Nuxt rewrites forward the request's cookies for your domain to Outlit along with the event. Outlit doesn't read or store them. To strip them, use the Cloudflare or Nginx setup.
 
 ## 2. Point the SDK at the proxy
