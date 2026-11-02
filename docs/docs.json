@@ -159,7 +159,8 @@
                   "tracking/browser/sveltekit",
                   "tracking/browser/astro",
                   "tracking/browser/angular",
-                  "tracking/browser/calendar-embeds"
+                  "tracking/browser/calendar-embeds",
+                  "tracking/browser/proxy"
                 ]
               },
               {

@@ -1,0 +1,165 @@
+---
+title: "First-party proxy"
+description: "Send tracking through your own domain so ad blockers and Safari don't drop visitors."
+---
+
+By default the Outlit Browser SDK sends events to `app.outlit.ai`. A first-party proxy sends them through a path on your own site, such as `www.example.com/relay`, which forwards them to Outlit. This has two effects:
+
+- **Fewer blocked events.** Ad blockers that block requests to `outlit.ai` don't block events sent to your own domain. With the default `autoTrack: "auto"`, the region check still goes to Outlit; see [What stays direct](#what-stays-direct).
+- **Visitor IDs that last in Safari.** Safari deletes cookies set by JavaScript after 7 days. Through the proxy, Outlit can set the visitor cookie from your own domain, so it lasts up to a year. That keeps a contact's marketing-site visits, such as a return to your pricing page, linked to the person who signed in to your app.
+
+Setup takes two steps: add one rewrite on your site, then point the SDK at it.
+
+<Note>
+Serve the proxy from the **same host that serves your pages**, as the snippets below do. Safari still applies the 7-day limit to cookies from a separate subdomain that resolves to another provider, so a CNAME such as `t.example.com` pointing elsewhere blocks fewer ads but doesn't keep visitor IDs.
+</Note>
+
+## 1. Add the rewrite
+
+Forward `/relay/api/i/v1/*` on your site to `https://app.outlit.ai/api/i/v1/*`. Only forward that path prefix. You can use another neutral name instead of `relay`; avoid names like `analytics` or `tracking`, which blockers match.
+
+<Tabs>
+  <Tab title="Next.js">
+    In `next.config.js` (or `next.config.ts`):
+
+    ```js
+    module.exports = {
+      async rewrites() {
+        return [
+          {
+            source: "/relay/api/i/v1/:path*",
+            destination: "https://app.outlit.ai/api/i/v1/:path*",
+          },
+        ]
+      },
+    }
+    ```
+
+    If you already have a `rewrites()` function, add this entry to the array it returns.
+  </Tab>
+  <Tab title="Vercel">
+    For non-Next.js sites on Vercel, add this to `vercel.json`:
+
+    ```json
+    {
+      "rewrites": [
+        {
+          "source": "/relay/api/i/v1/:path*",
+          "destination": "https://app.outlit.ai/api/i/v1/:path*"
+        }
+      ]
+    }
+    ```
+  </Tab>
+  <Tab title="Netlify">
+    Add this line to `_redirects` in your publish directory:
+
+    ```text
+    /relay/api/i/v1/*  https://app.outlit.ai/api/i/v1/:splat  200
+    ```
+  </Tab>
+  <Tab title="Cloudflare">
+    Use this for any site whose DNS is proxied through Cloudflare, including Webflow and Framer sites. Create a Worker with this code:
+
+    ```js
+    export default {
+      fetch(request) {
+        const url = new URL(request.url)
+        url.hostname = "app.outlit.ai"
+        url.pathname = url.pathname.replace(/^\/relay/, "")
+
+        const proxied = new Request(url, request)
+        proxied.headers.delete("cookie") // Outlit doesn't need your site's cookies
+        return fetch(proxied)
+      },
+    }
+    ```
+
+    Then add a Worker route for `www.example.com/relay/api/i/v1/*`. Use your own hostname.
+  </Tab>
+  <Tab title="Nginx">
+    Add this inside the `server` block that serves your site:
+
+    ```nginx
+    location /relay/api/i/v1/ {
+      proxy_pass https://app.outlit.ai/api/i/v1/;
+      proxy_set_header Host app.outlit.ai;
+      proxy_set_header Cookie "";
+      proxy_ssl_server_name on;
+    }
+    ```
+  </Tab>
+  <Tab title="Nuxt">
+    In `nuxt.config.ts`:
+
+    ```ts
+    export default defineNuxtConfig({
+      routeRules: {
+        "/relay/api/i/v1/**": { proxy: "https://app.outlit.ai/api/i/v1/**" },
+      },
+    })
+    ```
+  </Tab>
+</Tabs>
+
+SvelteKit, Astro, and other sites deployed on Vercel, Netlify, or Cloudflare can use their host's tab above.
+
+The Next.js, Vercel, Netlify, and Nuxt rewrites forward the request's cookies for your domain to Outlit along with the event. Outlit doesn't read or store them. To strip them, use the Cloudflare or Nginx setup.
+
+## 2. Point the SDK at the proxy
+
+Set the API host to the proxy path. The path is relative, so the same value works in every environment.
+
+<Tabs>
+  <Tab title="Script tag">
+    ```html
+    <script
+      src="https://cdn.outlit.ai/stable/outlit.js"
+      data-public-key="pk_your_public_key"
+      data-api-host="/relay"
+      async
+    ></script>
+    ```
+
+    With the [stub snippet](/tracking/browser/script#installation), replace `s.dataset.publicKey=key;` with `s.dataset.publicKey=key;s.dataset.apiHost="/relay";`.
+  </Tab>
+  <Tab title="npm">
+    ```typescript
+    outlit.init({
+      publicKey: 'pk_your_public_key',
+      apiHost: '/relay',
+    })
+    ```
+  </Tab>
+  <Tab title="React">
+    ```tsx
+    <OutlitProvider publicKey="pk_your_public_key" apiHost="/relay">
+      {children}
+    </OutlitProvider>
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```typescript
+    app.use(OutlitPlugin, {
+      publicKey: 'pk_your_public_key',
+      apiHost: '/relay',
+    })
+    ```
+  </Tab>
+</Tabs>
+
+Use the same setting on every site that shares the visitor, for example both `www.example.com` and `app.example.com`. Each site needs its own rewrite.
+
+## Check that it works
+
+1. Open your site with the browser's developer tools on the **Network** tab.
+2. Filter for `relay`. After a page load or a click, you should see `POST /relay/api/i/v1/<your key>/events` with a `200` or `207` response.
+3. Select that request. Its response headers should include `Set-Cookie: outlit_visitor_id=…; Domain=<your root domain>`. That is the long-lived cookie set from your own domain.
+
+If the request returns `400`, make sure the site's domain is listed under **Settings → Website Visitors**. The proxy forwards your page's `Origin` header, and Outlit still checks it against your enabled domains. A `404` means the rewrite isn't matching: check that the path starts with `/relay/api/i/v1/`.
+
+## What stays direct
+
+With the default `autoTrack: "auto"`, the SDK asks Outlit whether the visitor's region requires consent. That check always goes to `app.outlit.ai`, even when you use a proxy. Outlit has to see the visitor's own network location, not your proxy server's. If the check is blocked, the SDK treats the region as requiring consent and waits for `enableTracking()`. If your site sets a Content Security Policy, allow `connect-src https://app.outlit.ai` for this check.
+
+The SDK script itself still loads from `cdn.outlit.ai`.
