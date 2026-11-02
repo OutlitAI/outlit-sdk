@@ -164,7 +164,7 @@ describe("autoTrack auto mode", () => {
     expect(mockCookies.outlit_consent).toBeUndefined()
   })
 
-  it("uses the configured apiHost for the bootstrap request", async () => {
+  it("sends the bootstrap request to Outlit even when apiHost is a proxy", async () => {
     global.fetch = vi
       .fn()
       .mockResolvedValue(bootstrapResponse({ country: null, consentRequired: true }))
@@ -172,10 +172,7 @@ describe("autoTrack auto mode", () => {
     const outlit = newOutlit({ publicKey: "pk_test", apiHost: "https://edge.example.com/" })
 
     await vi.waitFor(() => expect(global.fetch).toHaveBeenCalled())
-    expect(global.fetch).toHaveBeenCalledWith(
-      "https://edge.example.com/api/i/v1/pk_test/bootstrap",
-      expect.any(Object),
-    )
+    expect(global.fetch).toHaveBeenCalledWith(BOOTSTRAP_URL, expect.any(Object))
     await settleBootstrap()
     expect(outlit.isEnabled()).toBe(false)
   })

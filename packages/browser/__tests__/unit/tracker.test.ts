@@ -135,6 +135,24 @@ describe("payload identity", () => {
     )
   })
 
+  it("sends events to a relative first-party proxy path", async () => {
+    const outlit = new Outlit({
+      publicKey: "pk_test",
+      apiHost: "/relay",
+      autoTrack: false,
+      trackPageviews: false,
+      trackForms: false,
+      trackEngagement: false,
+    })
+
+    outlit.enableTracking()
+    outlit.track("button_clicked", { buttonId: "cta" })
+
+    await outlit.flush()
+
+    expect(global.fetch).toHaveBeenCalledWith("/relay/api/i/v1/pk_test/events", expect.any(Object))
+  })
+
   it("sends custom track events with an event uuid", async () => {
     const outlit = new Outlit({
       publicKey: "pk_test",
