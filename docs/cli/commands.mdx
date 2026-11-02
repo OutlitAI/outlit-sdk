@@ -889,6 +889,8 @@ outlit facts get --fact-id fact_123 --include evidence
 }
 ```
 
+A `COMMITMENT` fact may also carry `owedBy`: `"us"` when your own team owes it, `"customer"` when the customer does, or `null` when that isn't known. Other facts omit it, and so do servers that predate the field.
+
 `facts get` returns the same canonical fact shape as `facts list`. Passing `--include evidence` requests a best-effort evidence expansion; unsupported include values are ignored.
 
 ## Search
