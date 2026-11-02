@@ -88,6 +88,10 @@ outlit.init({
   Track booking events from calendar embeds (Cal.com, Calendly). Fires a calendar event when bookings are detected.
 </ParamField>
 
+<ParamField path="botFilter" type="boolean" default="true">
+  Skip sending events from crawlers and automated browsers (Googlebot, Lighthouse, Playwright, Puppeteer, Selenium). Set to `false` to send them, for example in your own end-to-end tests of Outlit tracking.
+</ParamField>
+
 ## Consent management
 
 The default `autoTrack: "auto"` mode already keeps tracking off for visitors in the EEA, UK, and Switzerland (or when the region is unknown). Have your consent management platform call `enableTracking()` when the user accepts — that call is what records opt-in consent.

@@ -191,6 +191,10 @@ app.use(OutlitPlugin, {
   Track booking events from calendar embeds (Cal.com, Calendly).
 </ParamField>
 
+<ParamField path="botFilter" type="boolean" default="true">
+  Skip sending events from crawlers and automated browsers. Set to `false` for end-to-end tests of Outlit tracking.
+</ParamField>
+
 ## User identity patterns
 
 The `useOutlitUser` composable is the **recommended** way to handle user identity. It's simpler and more reliable than manual `identify()` calls because:

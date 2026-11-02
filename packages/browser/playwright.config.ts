@@ -24,7 +24,14 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // The SDK skips automated browsers, so fixtures run as real visitors:
+        // full Chromium (the headless shell reports a "HeadlessChrome" brand)
+        // with navigator.webdriver hidden. bot-filter.spec.ts restores the flag.
+        channel: "chromium",
+        launchOptions: { args: ["--disable-blink-features=AutomationControlled"] },
+      },
     },
     // Uncomment to test in more browsers
     // {
