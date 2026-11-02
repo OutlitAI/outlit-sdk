@@ -23,50 +23,73 @@ export function generateVisitorId(): string {
 
 /**
  * Get the visitor ID from storage, generating a new one if needed.
- * Tries localStorage first, falls back to cookie.
+ *
+ * The root-domain cookie is the source of truth because it is shared across
+ * subdomains (e.g. www.example.com and app.example.com); localStorage is
+ * per-origin, so preferring it would pin each subdomain to its own ID. When the
+ * cookie is missing (e.g. Safari ITP expired it), localStorage restores it.
+ *
+ * Without a first-party proxy, the cookie is rewritten on every call so its
+ * expiry is refreshed on each page load — Safari caps script-set cookies at
+ * 7 days, so an active visitor's ID only survives if the window keeps rolling.
+ * Behind a proxy the ingest response sets the cookie with a full lifetime, so
+ * the SDK writes it only when it is missing or wrong: a script write would
+ * replace that server-set cookie with a 7-day one.
  */
-export function getOrCreateVisitorId(): string {
-  // Try localStorage first
-  try {
-    const stored = localStorage.getItem(VISITOR_ID_KEY)
-    if (stored && isValidUuid(stored)) {
-      return stored
-    }
-  } catch {
-    // localStorage not available
-  }
+export function getOrCreateVisitorId(options: { serverSetsCookie?: boolean } = {}): string {
+  const cookieId = readCookieVisitorId()
+  const visitorId = cookieId ?? readStoredVisitorId() ?? generateVisitorId()
 
-  // Try cookie fallback
-  const cookieValue = getCookie(VISITOR_ID_KEY)
-  if (cookieValue && isValidUuid(cookieValue)) {
-    // Also store in localStorage for consistency
-    try {
-      localStorage.setItem(VISITOR_ID_KEY, cookieValue)
-    } catch {
-      // Ignore
-    }
-    return cookieValue
-  }
-
-  // Generate new visitor ID
-  const visitorId = generateVisitorId()
-  persistVisitorId(visitorId)
-  return visitorId
-}
-
-/**
- * Persist visitor ID to both localStorage and cookie.
- */
-function persistVisitorId(visitorId: string): void {
-  // Store in localStorage
   try {
     localStorage.setItem(VISITOR_ID_KEY, visitorId)
   } catch {
     // localStorage not available
   }
 
-  // Also store in cookie for cross-subdomain support
-  setCookie(VISITOR_ID_KEY, visitorId, 365) // 1 year
+  if (!options.serverSetsCookie || cookieId !== visitorId) {
+    // Root-domain cookie for cross-subdomain support
+    setCookie(VISITOR_ID_KEY, visitorId, 365) // 1 year
+  }
+
+  return visitorId
+}
+
+function readCookieVisitorId(): string | null {
+  const value = getCookie(VISITOR_ID_KEY)
+  return value && isValidUuid(value) ? value : null
+}
+
+function readStoredVisitorId(): string | null {
+  try {
+    const value = localStorage.getItem(VISITOR_ID_KEY)
+    return value && isValidUuid(value) ? value : null
+  } catch {
+    // localStorage not available
+    return null
+  }
+}
+
+/**
+ * The cookie domain the server should set the visitor ID cookie on, when
+ * `apiHost` is served from the page's own site (a first-party proxy).
+ *
+ * Safari ignores its 7-day cap for cookies set by an HTTP response from the
+ * site's own host, so the ingest endpoint re-issues the visitor ID cookie when
+ * asked. The domain must match the one the SDK writes, so both writes update
+ * the same cookie. Returns null for third-party API hosts, localhost, and IPs.
+ */
+export function getFirstPartyCookieDomain(apiHost: string): string | null {
+  const rootDomain = getRootDomain()
+  if (!rootDomain) return null
+
+  let apiHostname: string
+  try {
+    apiHostname = new URL(apiHost, window.location.href).hostname
+  } catch {
+    return null
+  }
+
+  return apiHostname === rootDomain || apiHostname.endsWith(`.${rootDomain}`) ? rootDomain : null
 }
 
 /**
@@ -83,10 +106,13 @@ function isValidUuid(value: string): boolean {
 function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null
 
-  const value = `; ${document.cookie}`
-  const parts = value.split(`; ${name}=`)
-  if (parts.length === 2) {
-    return parts.pop()?.split(";").shift() ?? null
+  // First match wins: browsers list more specific (longer path, older)
+  // cookies first, and a duplicate name must not hide the value
+  for (const part of document.cookie.split(";")) {
+    const separator = part.indexOf("=")
+    if (separator !== -1 && part.slice(0, separator).trim() === name) {
+      return part.slice(separator + 1).trim()
+    }
   }
   return null
 }

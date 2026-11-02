@@ -24,7 +24,12 @@ import {
   stopCalendarTracking,
 } from "./embed-integrations"
 import { initSessionTracking, type SessionTracker, stopSessionTracking } from "./session-tracker"
-import { getConsentState, getOrCreateVisitorId, setConsentState } from "./storage"
+import {
+  getConsentState,
+  getFirstPartyCookieDomain,
+  getOrCreateVisitorId,
+  setConsentState,
+} from "./storage"
 
 // ============================================
 // OUTLIT CLIENT
@@ -277,7 +282,9 @@ export class Outlit {
     }
 
     // Now we can generate/retrieve the visitor ID (sets cookies/localStorage)
-    this.visitorId = getOrCreateVisitorId()
+    this.visitorId = getOrCreateVisitorId({
+      serverSetsCookie: getFirstPartyCookieDomain(this.apiHost) !== null,
+    })
 
     // Start the flush timer
     this.startFlushTimer()
@@ -873,7 +880,14 @@ export class Outlit {
       undefined,
       customerIdentity,
     )
-    const url = buildIngestUrl(this.apiHost, this.publicKey)
+    // Behind a first-party proxy, ask the ingest endpoint to re-issue the
+    // visitor ID cookie from the site's own host, where Safari's 7-day cap on
+    // script-set cookies doesn't apply
+    const cookieDomain = getFirstPartyCookieDomain(this.apiHost)
+    const ingestUrl = buildIngestUrl(this.apiHost, this.publicKey)
+    const url = cookieDomain
+      ? `${ingestUrl}?cookie_domain=${encodeURIComponent(cookieDomain)}`
+      : ingestUrl
 
     try {
       // Use sendBeacon for better reliability on page unload
@@ -895,6 +909,8 @@ export class Outlit {
         },
         body: JSON.stringify(payload),
         keepalive: true,
+        // The proxied response's Set-Cookie only applies with credentials
+        ...(cookieDomain && { credentials: "include" as const }),
       })
 
       if (!response.ok) {
