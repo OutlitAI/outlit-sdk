@@ -53,7 +53,9 @@ jobs:
 
   ci:
     name: Lint, Build & Test
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to 26.04, which Playwright's chromium
+    # install doesn't support yet
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v6
