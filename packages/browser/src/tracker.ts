@@ -655,7 +655,10 @@ export class Outlit {
 
     void (async () => {
       try {
-        const response = await fetch(buildBootstrapUrl(this.apiHost, this.publicKey), {
+        // Always ask Outlit directly, never through apiHost: behind a
+        // first-party proxy the region would be the proxy server's, and the
+        // consent decision must reflect the visitor's own location
+        const response = await fetch(buildBootstrapUrl(DEFAULT_API_HOST, this.publicKey), {
           credentials: "omit",
           signal: controller.signal,
         })
