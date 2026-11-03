@@ -35,6 +35,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Test Core contract merge guard
+        run: node --test .github/scripts/core-contract-guard.test.mjs
+
       - name: Test changeset release-plan validation
         run: node --test .github/scripts/validate-changesets.test.mjs
 

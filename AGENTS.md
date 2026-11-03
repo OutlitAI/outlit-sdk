@@ -63,12 +63,10 @@ Bun workspaces resolve any matching version range to the local package, so concr
 - Before merging the Version Packages PR, run CI on its exact latest head by adding the existing
   `skip-changelog` label (or removing and re-adding it after a bot update), wait for `Changeset
   Check`, `Lint, Build & Test`, and `Rust CI`, then review the final package/version list.
-- For contracts coordinated with Core, use this order: merge the SDK source PR to `main`, merge
-  and promote the matching Core change to production, verify Core production, and only then merge
-  the Version Packages PR. Do not publish the stable SDK merely because SDK `main` or a canary is
-  green.
-- Keep Core's default SDK-main drift validation fail-closed. Do not replace this release order
-  with mutable counterpart branches or a bypass of either repository's normal drift checks.
+- For generated-contract changes, follow `docs/release-coordination.md`: review the SDK companion,
+  pin its exact commit in Core, merge Core first, rerun **Core Contract Merge Order**, then merge
+  SDK. Labels never bypass contract validation. Stable SDK publication still waits for verified
+  Core production. Do not merge SDK-first or override a failed guard.
 
 See `docs/release-coordination.md` for the maintainer checklist.
 

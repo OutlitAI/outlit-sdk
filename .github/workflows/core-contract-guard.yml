@@ -1,0 +1,42 @@
+name: Core contract merge guard
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: SDK PR number to recheck after its Core companion merges
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+  statuses: write
+
+concurrency:
+  group: core-contract-guard-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify Core contract acceptance
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # pull_request_target's SHA is the trusted base, never the SDK PR head.
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Verify data and report status on the exact SDK PR head
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CORE_CONTRACTS_READ_TOKEN: ${{ secrets.CORE_CONTRACTS_READ_TOKEN }}
+        run: node .github/scripts/core-contract-guard.mjs
