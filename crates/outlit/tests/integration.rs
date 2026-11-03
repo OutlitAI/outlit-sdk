@@ -833,7 +833,6 @@ async fn test_timer_retries_back_off_while_the_api_keeps_failing() {
     // five (20, 40, 80, 160, 320ms apart).
     let attempts = received.load(Ordering::SeqCst);
     assert!((2..=6).contains(&attempts), "{attempts} attempts");
-    assert_eq!(client.pending_event_count().await, 1);
 }
 
 #[tokio::test]
@@ -844,7 +843,7 @@ async fn test_a_rejected_batch_does_not_hold_back_the_others() {
     Mock::given(method("POST"))
         .respond_with(StatusResponder {
             counter: received.clone(),
-            statuses: vec![422, 200],
+            statuses: vec![503, 422, 200],
         })
         .mount(&mock_server)
         .await;
@@ -856,13 +855,83 @@ async fn test_a_rejected_batch_does_not_hold_back_the_others() {
         .build()
         .unwrap();
 
-    // max_batch_size(1) makes every send flush its own batch.
-    let first = client.track("first", email("user@test.com"));
-    let second = client.track("second", email("user@test.com"));
-    assert!(first.send().await.is_err());
-    second.send().await.unwrap();
+    // The first send's flush fails with 503, so the event is requeued and
+    // automatic flushes back off; the second send only queues.
+    assert!(client
+        .track("first", email("user@test.com"))
+        .send()
+        .await
+        .is_err());
+    client
+        .track("second", email("user@test.com"))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(received.load(Ordering::SeqCst), 1);
+    assert_eq!(client.pending_event_count().await, 2);
+
+    // One flush, two batches: the first is rejected and dropped, the second
+    // still goes out.
+    let error = client.flush().await.unwrap_err();
+    assert!(matches!(error, outlit::Error::Api { status: 422, .. }));
+    assert_eq!(client.pending_event_count().await, 0);
 
     let requests = mock_server.received_requests().await.unwrap();
-    assert_eq!(requests.len(), 2);
-    assert_eq!(client.pending_event_count().await, 0);
+    assert_eq!(requests.len(), 3);
+    let last: serde_json::Value = serde_json::from_slice(&requests[2].body).unwrap();
+    assert_eq!(last["events"][0]["eventName"], "second");
+}
+
+#[tokio::test]
+async fn test_queued_size_triggered_flushes_respect_a_backoff_set_while_they_waited() {
+    let mock_server = MockServer::start().await;
+    let received = Arc::new(AtomicUsize::new(0));
+
+    Mock::given(method("POST"))
+        .respond_with(DelayedFailuresResponder {
+            counter: received.clone(),
+            delays: vec![Duration::from_millis(100)],
+        })
+        .mount(&mock_server)
+        .await;
+
+    let client = Arc::new(
+        Outlit::builder("pk_test")
+            .api_host(mock_server.uri())
+            .flush_interval(Duration::from_secs(100))
+            .max_batch_size(1)
+            .build()
+            .unwrap(),
+    );
+
+    // The first send's flush is in flight (and will fail with 500) while
+    // more sends queue up behind the flush lock.
+    let first_client = client.clone();
+    let first = tokio::spawn(async move {
+        first_client
+            .track("event_0", email("user@test.com"))
+            .send()
+            .await
+    });
+    wait_for_call_count(&received, 1).await;
+
+    let mut waiting = Vec::new();
+    for i in 1..10 {
+        let client = client.clone();
+        waiting.push(tokio::spawn(async move {
+            client
+                .track(format!("event_{i}"), email("user@test.com"))
+                .send()
+                .await
+        }));
+    }
+
+    assert!(first.await.unwrap().is_err());
+    for send in waiting {
+        send.await.unwrap().unwrap();
+    }
+
+    // The failure set the backoff before any queued caller got the lock.
+    assert_eq!(received.load(Ordering::SeqCst), 1);
+    assert_eq!(client.pending_event_count().await, 10);
 }

@@ -36,11 +36,12 @@ impl Error {
     /// retryable. Other `4xx` responses (an unknown public key, an invalid or
     /// oversized batch) fail the same way every time, so the client drops
     /// those events instead of requeuing them. A success response whose body
-    /// can't be decoded isn't retried either: the API already accepted the
-    /// events, and sending them again would duplicate them.
+    /// isn't the expected JSON ([`Error::Serialization`]) isn't retried either:
+    /// the API already accepted the events, and sending them again would
+    /// duplicate them.
     pub fn is_retryable(&self) -> bool {
         match self {
-            Error::Http(error) => !error.is_decode(),
+            Error::Http(_) => true,
             Error::Api { status, .. } => matches!(status, 408 | 429 | 500..=599),
             Error::Config(_) | Error::Shutdown | Error::Serialization(_) => false,
         }
