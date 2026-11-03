@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1](https://github.com/OutlitAI/outlit-sdk/compare/outlit-v0.4.0...outlit-v0.4.1) - 2026-11-03
+
+### Fixed
+
+- *(rust)* log an undecodable success response as such, once
+- *(rust)* check backoff under the flush lock; retry body read failures
+- *(rust)* drop batches the API rejects for good and back off retries
+
 ## [0.4.0](https://github.com/OutlitAI/outlit-sdk/compare/outlit-v0.3.0...outlit-v0.4.0) - 2026-08-05
 
 ### Other
