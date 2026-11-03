@@ -31,7 +31,7 @@ Your team reviews churn and renewal situations in **Attention**. Developers and 
 
 ## Bots and AI agents
 
-Outlit keeps visits from AI agents, crawlers, and automated browsers and labels them; it doesn't filter them out. Each browser event is classified from the visitor's user agent. Its `$traffic_class` property is `human`, `ai_agent`, `crawler`, or `automation`, and named bots also carry `$bot_name` (such as `ChatGPT-User` or `GPTBot`), `$bot_category`, and `$bot_operator`. The Outlit Browser SDK sends every event and adds a hint when it detects an automated browser, such as Playwright, Puppeteer, or Selenium.
+Outlit keeps visits from AI agents, crawlers, and automated browsers and labels them; it doesn't filter them out. The same consent rules apply to them as to any visitor. Each browser event is classified from the visitor's user agent. Its `$traffic_class` property is `human`, `ai_agent`, `crawler`, or `automation`, and named bots also carry `$bot_name` (such as `ChatGPT-User` or `GPTBot`), `$bot_category`, and `$bot_operator`. The Outlit Browser SDK sends every event and adds a hint when it detects an automated browser, such as Playwright, Puppeteer, or Selenium.
 
 ## Privacy and delivery
 

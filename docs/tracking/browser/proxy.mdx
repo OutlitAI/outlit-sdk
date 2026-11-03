@@ -157,7 +157,7 @@ Use the same setting on every site that shares the visitor, for example both `ww
 ## Check that it works
 
 1. Open your site with the browser's developer tools on the **Network** tab.
-2. Filter for `relay`. After a page load or a click, you should see `POST /relay/api/i/v1/<your key>/events` with a `200` or `207` response.
+2. Filter for `relay`. After a page load or a click, you should see `POST /relay/api/i/v1/<your key>/events` with a `200` or `207` response. If tracking is waiting for consent (see [What stays direct](#what-stays-direct)), no request is sent until your site calls `enableTracking()`, so grant consent first.
 3. Select that request. Its response headers should include `Set-Cookie: outlit_visitor_id=…; Domain=<your root domain>`. That is the long-lived cookie set from your own domain.
 
 If the request returns `400`, make sure the site's domain is listed under **Settings → Website Visitors**. The proxy forwards your page's `Origin` header, and Outlit still checks it against your enabled domains. A `404` means the rewrite isn't matching: check that the path starts with `/relay/api/i/v1/`.
