@@ -935,3 +935,31 @@ async fn test_queued_size_triggered_flushes_respect_a_backoff_set_while_they_wai
     assert_eq!(received.load(Ordering::SeqCst), 1);
     assert_eq!(client.pending_event_count().await, 10);
 }
+
+#[tokio::test]
+async fn test_a_success_response_that_is_not_json_is_not_resent() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(200).set_body_string("<html>ok</html>"))
+        .expect(1)
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_test")
+        .api_host(mock_server.uri())
+        .flush_interval(Duration::from_secs(100))
+        .build()
+        .unwrap();
+
+    client
+        .track("event", email("user@test.com"))
+        .send()
+        .await
+        .unwrap();
+
+    let error = client.flush().await.unwrap_err();
+    assert!(matches!(error, outlit::Error::Serialization(_)), "{error}");
+    assert_eq!(client.pending_event_count().await, 0);
+    client.flush().await.unwrap();
+}

@@ -461,19 +461,30 @@ async fn send_events_in_batches(
 }
 
 /// Statuses whose dropped batches have already been logged at error level.
+/// `0` stands for a success response whose body couldn't be decoded.
 static LOGGED_REJECTIONS: std::sync::Mutex<Vec<u16>> = std::sync::Mutex::new(Vec::new());
 
 /// Logs a dropped batch at error level the first time its status is seen in
 /// this process, and at debug level after that. A rejection like an unknown
 /// public key repeats on every flush, so logging each one would flood logs.
 fn log_rejected_batch(error: &Error, event_count: usize) {
-    let status = match error {
-        Error::Api { status, .. } => Some(*status),
-        _ => None,
+    let Error::Api { status, .. } = error else {
+        // The API answered with success, so the events were most likely
+        // accepted; resending them would duplicate them.
+        if first_rejection_with_status(0) {
+            error!(
+                error = %error,
+                event_count,
+                "API response to sent events could not be decoded, not resending them (check api_host; further occurrences are logged at debug level)"
+            );
+        } else {
+            debug!(error = %error, event_count, "API response to sent events could not be decoded");
+        }
+        return;
     };
-    if status.map_or(true, first_rejection_with_status) {
+    if first_rejection_with_status(*status) {
         let hint = match status {
-            Some(400 | 401 | 403 | 404) => {
+            400 | 401 | 403 | 404 => {
                 "check that the public key is correct and its tracking config is active; "
             }
             _ => "",
