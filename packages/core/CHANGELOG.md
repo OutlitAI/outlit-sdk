@@ -1,5 +1,11 @@
 # @outlit/core
 
+## 4.1.0
+
+### Minor Changes
+
+- [#264](https://github.com/OutlitAI/outlit-sdk/pull/264) [`57919c9`](https://github.com/OutlitAI/outlit-sdk/commit/57919c9e04997a83d1e20791a21bab926d756d3e) Thanks [@leo-paz](https://github.com/leo-paz)! - Tag traffic from automated browsers instead of dropping it. The browser SDK sends every event, and when it detects automation that only the browser can see (`navigator.webdriver` from Playwright, Puppeteer, or Selenium, or headless Chrome), it adds a `traffic` hint to the batch. Outlit classifies all browser traffic server-side as human, AI agent, crawler, or automation, so bot and AI-agent visits stay visible and distinguishable. `@outlit/core`'s `IngestPayload` type includes the optional `traffic` field.
+
 ## 4.0.0
 
 ### Minor Changes

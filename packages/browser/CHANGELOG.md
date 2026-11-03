@@ -1,5 +1,20 @@
 # @outlit/browser
 
+## 4.1.0
+
+### Minor Changes
+
+- [#264](https://github.com/OutlitAI/outlit-sdk/pull/264) [`57919c9`](https://github.com/OutlitAI/outlit-sdk/commit/57919c9e04997a83d1e20791a21bab926d756d3e) Thanks [@leo-paz](https://github.com/leo-paz)! - Tag traffic from automated browsers instead of dropping it. The browser SDK sends every event, and when it detects automation that only the browser can see (`navigator.webdriver` from Playwright, Puppeteer, or Selenium, or headless Chrome), it adds a `traffic` hint to the batch. Outlit classifies all browser traffic server-side as human, AI agent, crawler, or automation, so bot and AI-agent visits stay visible and distinguishable. `@outlit/core`'s `IngestPayload` type includes the optional `traffic` field.
+
+### Patch Changes
+
+- [#262](https://github.com/OutlitAI/outlit-sdk/pull/262) [`abf78fe`](https://github.com/OutlitAI/outlit-sdk/commit/abf78fe8b4376cde93339ef9135261b9724a3690) Thanks [@leo-paz](https://github.com/leo-paz)! - Keep the `autoTrack: "auto"` region check on Outlit's own host even when `apiHost` points at a proxy, so a consent decision always reflects the visitor's location rather than the proxy server's. If the check is blocked, tracking still waits for `enableTracking()`.
+
+- [#258](https://github.com/OutlitAI/outlit-sdk/pull/258) [`4f0af00`](https://github.com/OutlitAI/outlit-sdk/commit/4f0af008ffd5430f609f174e577ff4bd1d9f5b01) Thanks [@leo-paz](https://github.com/leo-paz)! - Keep one visitor ID across subdomains and Safari's 7-day cookie limit: the browser SDK now reads the shared root-domain cookie before localStorage, restores the cookie from localStorage when it has expired, and refreshes the cookie on every page load. When `apiHost` points at a first-party proxy on the same site, ingest requests ask Outlit to re-issue the visitor cookie from the site's own host.
+
+- Updated dependencies [[`57919c9`](https://github.com/OutlitAI/outlit-sdk/commit/57919c9e04997a83d1e20791a21bab926d756d3e)]:
+  - @outlit/core@4.1.0
+
 ## 4.0.0
 
 ### Major Changes
