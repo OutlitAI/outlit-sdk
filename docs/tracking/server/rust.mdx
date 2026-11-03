@@ -278,6 +278,8 @@ match client.track("event", email("user@test.com")).send().await {
 }
 ```
 
+When a send fails with a network error, a timeout, `408`, `429`, or a `5xx` response, the events stay queued and the background flush retries them, waiting longer after each consecutive failure (up to 5 minutes). Other `4xx` responses, such as an unknown public key, fail the same way on every attempt, so the SDK drops those events and logs the first rejection of each status. `error.is_retryable()` tells you which case an error is.
+
 ## Next steps
 
 <CardGroup cols={2}>

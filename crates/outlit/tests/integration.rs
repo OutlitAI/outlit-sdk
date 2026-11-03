@@ -5,7 +5,7 @@ use serde_json::json;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
-use wiremock::matchers::{method, path};
+use wiremock::matchers::{header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
@@ -661,4 +661,208 @@ async fn test_identify_with_fingerprint_links_device() {
         .unwrap();
 
     client.flush().await.unwrap();
+}
+
+#[tokio::test]
+async fn test_requests_identify_the_sdk_in_the_user_agent() {
+    let mock_server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(header(
+            "user-agent",
+            concat!("outlit-rust/", env!("CARGO_PKG_VERSION")),
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "success": true,
+            "processed": 1
+        })))
+        .expect(1)
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_test")
+        .api_host(mock_server.uri())
+        .flush_interval(Duration::from_secs(100))
+        .build()
+        .unwrap();
+
+    client
+        .track("event", email("user@test.com"))
+        .send()
+        .await
+        .unwrap();
+    client.flush().await.unwrap();
+}
+
+/// Responds with a fixed status and counts the calls.
+struct StatusResponder {
+    counter: Arc<AtomicUsize>,
+    statuses: Vec<u16>,
+}
+
+impl wiremock::Respond for StatusResponder {
+    fn respond(&self, _request: &wiremock::Request) -> ResponseTemplate {
+        let call = self.counter.fetch_add(1, Ordering::SeqCst);
+        let status = self.statuses.get(call).or(self.statuses.last()).copied();
+        match status {
+            Some(status) if status >= 400 => ResponseTemplate::new(status).set_body_json(json!({
+                "success": false,
+                "processed": 0,
+                "errors": [{ "index": -1, "message": "Invalid or inactive tracking configuration" }]
+            })),
+            _ => ResponseTemplate::new(200).set_body_json(json!({
+                "success": true,
+                "processed": 1
+            })),
+        }
+    }
+}
+
+async fn client_answered_with(
+    statuses: Vec<u16>,
+    flush_interval: Duration,
+) -> (Outlit, Arc<AtomicUsize>, MockServer) {
+    let mock_server = MockServer::start().await;
+    let received = Arc::new(AtomicUsize::new(0));
+
+    Mock::given(method("POST"))
+        .respond_with(StatusResponder {
+            counter: received.clone(),
+            statuses,
+        })
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_unknown")
+        .api_host(mock_server.uri())
+        .flush_interval(flush_interval)
+        .build()
+        .unwrap();
+    (client, received, mock_server)
+}
+
+#[tokio::test]
+async fn test_non_retryable_rejections_drop_the_batch() {
+    for status in [400, 401, 403, 404, 413, 422] {
+        let (client, received, _server) =
+            client_answered_with(vec![status], Duration::from_secs(100)).await;
+
+        client
+            .track("event", email("user@test.com"))
+            .send()
+            .await
+            .unwrap();
+
+        let error = client.flush().await.unwrap_err();
+        assert!(
+            matches!(error, outlit::Error::Api { status: s, .. } if s == status),
+            "{status}: {error}"
+        );
+        assert!(!error.is_retryable());
+        assert_eq!(
+            client.pending_event_count().await,
+            0,
+            "{status} must not requeue"
+        );
+
+        // Nothing is left to resend.
+        client.flush().await.unwrap();
+        client.shutdown().await.unwrap();
+        assert_eq!(received.load(Ordering::SeqCst), 1, "{status} was resent");
+    }
+}
+
+#[tokio::test]
+async fn test_an_unknown_public_key_is_not_retried_by_the_timer() {
+    let (client, received, _server) =
+        client_answered_with(vec![400], Duration::from_millis(20)).await;
+
+    client
+        .track("event", email("user@test.com"))
+        .send()
+        .await
+        .unwrap();
+    tokio::time::sleep(Duration::from_millis(200)).await;
+
+    // One attempt for the one batch, not one per timer tick.
+    assert_eq!(received.load(Ordering::SeqCst), 1);
+    assert_eq!(client.pending_event_count().await, 0);
+    client.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn test_retryable_failures_keep_the_batch() {
+    for status in [408, 429, 500, 503] {
+        let (client, received, _server) =
+            client_answered_with(vec![status, 200], Duration::from_secs(100)).await;
+
+        client
+            .track("event", email("user@test.com"))
+            .send()
+            .await
+            .unwrap();
+
+        let error = client.flush().await.unwrap_err();
+        assert!(error.is_retryable(), "{status}: {error}");
+        assert_eq!(
+            client.pending_event_count().await,
+            1,
+            "{status} must requeue"
+        );
+
+        client.flush().await.unwrap();
+        assert_eq!(client.pending_event_count().await, 0);
+        assert_eq!(received.load(Ordering::SeqCst), 2);
+        client.shutdown().await.unwrap();
+    }
+}
+
+#[tokio::test]
+async fn test_timer_retries_back_off_while_the_api_keeps_failing() {
+    let (client, received, _server) =
+        client_answered_with(vec![503], Duration::from_millis(20)).await;
+
+    client
+        .track("event", email("user@test.com"))
+        .send()
+        .await
+        .unwrap();
+    tokio::time::sleep(Duration::from_millis(400)).await;
+
+    // Without backoff this is ~20 attempts; doubling from 20ms allows about
+    // five (20, 40, 80, 160, 320ms apart).
+    let attempts = received.load(Ordering::SeqCst);
+    assert!((2..=6).contains(&attempts), "{attempts} attempts");
+    assert_eq!(client.pending_event_count().await, 1);
+}
+
+#[tokio::test]
+async fn test_a_rejected_batch_does_not_hold_back_the_others() {
+    let mock_server = MockServer::start().await;
+    let received = Arc::new(AtomicUsize::new(0));
+
+    Mock::given(method("POST"))
+        .respond_with(StatusResponder {
+            counter: received.clone(),
+            statuses: vec![422, 200],
+        })
+        .mount(&mock_server)
+        .await;
+
+    let client = Outlit::builder("pk_test")
+        .api_host(mock_server.uri())
+        .flush_interval(Duration::from_secs(100))
+        .max_batch_size(1)
+        .build()
+        .unwrap();
+
+    // max_batch_size(1) makes every send flush its own batch.
+    let first = client.track("first", email("user@test.com"));
+    let second = client.track("second", email("user@test.com"));
+    assert!(first.send().await.is_err());
+    second.send().await.unwrap();
+
+    let requests = mock_server.received_requests().await.unwrap();
+    assert_eq!(requests.len(), 2);
+    assert_eq!(client.pending_event_count().await, 0);
 }

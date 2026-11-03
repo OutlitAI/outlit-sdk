@@ -6,6 +6,9 @@ use crate::types::{IngestPayload, IngestResponse};
 use crate::Error;
 use tracing::{debug, warn};
 
+/// Sent with every request so the API can tell which SDK and version sent it.
+pub(crate) const USER_AGENT: &str = concat!("outlit-rust/", env!("CARGO_PKG_VERSION"));
+
 /// HTTP transport for sending events to the Outlit API.
 #[derive(Debug)]
 pub struct HttpTransport {
@@ -17,6 +20,7 @@ impl HttpTransport {
     /// Create a new HTTP transport.
     pub fn new(config: &Config) -> Result<Self, Error> {
         let client = reqwest::Client::builder()
+            .user_agent(USER_AGENT)
             .timeout(config.timeout())
             .build()?;
 
@@ -51,7 +55,8 @@ impl HttpTransport {
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".into());
-            warn!(status = %status, body = %body, "API request failed");
+            // The client logs failures once it knows whether it will retry.
+            debug!(status = %status, body = %body, "API request failed");
             return Err(Error::Api {
                 status: status.as_u16(),
                 message: body,
@@ -93,6 +98,14 @@ mod tests {
         assert_eq!(
             transport.endpoint,
             "https://example.com/api/i/v1/pk_test_123/events"
+        );
+    }
+
+    #[test]
+    fn test_user_agent_names_the_sdk_and_its_version() {
+        assert_eq!(
+            USER_AGENT,
+            format!("outlit-rust/{}", env!("CARGO_PKG_VERSION"))
         );
     }
 }

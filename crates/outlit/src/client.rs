@@ -8,9 +8,13 @@ use crate::types::{IngestPayload, SourceType, TrackerEvent};
 use crate::{Email, Error, Fingerprint, UserId};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::Mutex;
-use tokio::time::interval;
+use tokio::time::{interval, Instant};
 use tracing::{debug, error, info, instrument};
+
+/// Longest wait between automatic retries of a failing send.
+const MAX_RETRY_BACKOFF: Duration = Duration::from_secs(300);
 
 /// Outlit analytics client.
 ///
@@ -61,6 +65,7 @@ pub struct Outlit {
     shutdown_lock: Mutex<()>,
     flush_lock: Arc<Mutex<()>>,
     flush_handle: Mutex<Option<tokio::task::JoinHandle<()>>>,
+    backoff: Arc<RetryBackoff>,
 }
 
 impl Outlit {
@@ -73,6 +78,7 @@ impl Outlit {
     pub(crate) fn from_config(config: Config) -> Result<Self, Error> {
         let queue = Arc::new(EventQueue::new(config.max_batch_size()));
         let transport = Arc::new(HttpTransport::new(&config)?);
+        let backoff = Arc::new(RetryBackoff::new(config.flush_interval()));
 
         let client = Self {
             config,
@@ -83,6 +89,7 @@ impl Outlit {
             shutdown_lock: Mutex::new(()),
             flush_lock: Arc::new(Mutex::new(())),
             flush_handle: Mutex::new(None),
+            backoff,
         };
 
         client.start_flush_timer();
@@ -215,6 +222,10 @@ impl Outlit {
 
     /// Flush all pending events immediately.
     ///
+    /// Events the API rejects for good (see [`Error::is_retryable`]) are
+    /// dropped, and the error is returned. Events that failed for a retryable
+    /// reason stay queued; the background timer retries them with backoff.
+    ///
     /// Important: Call this before your application exits!
     #[instrument(skip(self))]
     pub async fn flush(&self) -> Result<(), Error> {
@@ -222,6 +233,7 @@ impl Outlit {
         flush_queued_events(
             &self.queue,
             &self.transport,
+            &self.backoff,
             self.config.max_batch_size(),
             false,
         )
@@ -258,6 +270,7 @@ impl Outlit {
         flush_queued_events(
             &self.queue,
             &self.transport,
+            &self.backoff,
             self.config.max_batch_size(),
             false,
         )
@@ -281,6 +294,7 @@ impl Outlit {
         let flush_interval = self.config.flush_interval();
         let is_shutdown = self.is_shutdown.clone();
         let flush_lock = self.flush_lock.clone();
+        let backoff = self.backoff.clone();
 
         let handle = tokio::spawn(async move {
             let mut timer = interval(flush_interval);
@@ -296,12 +310,17 @@ impl Outlit {
                     break;
                 }
 
+                if backoff.is_waiting() {
+                    continue;
+                }
+
                 let _flush_guard = flush_lock.lock().await;
                 if is_shutdown.load(Ordering::SeqCst) {
                     break;
                 }
 
-                let _ = flush_queued_events(&queue, &transport, queue.max_size(), true).await;
+                let _ =
+                    flush_queued_events(&queue, &transport, &backoff, queue.max_size(), true).await;
             }
         });
 
@@ -322,7 +341,9 @@ impl Outlit {
             self.queue.should_flush().await
         };
 
-        if should_flush {
+        // While retries are backing off, a full queue waits for the timer
+        // instead of sending on every new event.
+        if should_flush && !self.backoff.is_waiting() {
             self.flush().await?;
         }
 
@@ -333,6 +354,7 @@ impl Outlit {
 async fn flush_queued_events(
     queue: &EventQueue,
     transport: &HttpTransport,
+    backoff: &RetryBackoff,
     max_batch_size: usize,
     periodic: bool,
 ) -> Result<(), Error> {
@@ -351,26 +373,45 @@ async fn flush_queued_events(
         info!(event_count = events.len(), "flushing events");
     }
 
-    if let Err((error, unsent_events)) =
-        send_events_in_batches(transport, events, max_batch_size).await
-    {
-        if periodic {
-            error!(error = %error, "periodic flush failed, requeuing events");
-        } else {
-            error!(error = %error, "flush failed, requeuing events");
+    match send_events_in_batches(transport, events, max_batch_size).await {
+        Ok(()) => {
+            backoff.reset();
+            Ok(())
         }
-        queue.requeue(unsent_events).await;
-        return Err(error);
+        Err(SendFailure::Rejected(error)) => {
+            backoff.reset();
+            Err(error)
+        }
+        Err(SendFailure::Retryable(error, unsent_events)) => {
+            let delay = backoff.record_failure();
+            if periodic {
+                error!(error = %error, retry_in = ?delay, "periodic flush failed, requeuing events");
+            } else {
+                error!(error = %error, retry_in = ?delay, "flush failed, requeuing events");
+            }
+            queue.requeue(unsent_events).await;
+            Err(error)
+        }
     }
-
-    Ok(())
 }
 
+/// Why a flush didn't send everything.
+enum SendFailure {
+    /// The API rejected at least one batch for good; those events were dropped.
+    Rejected(Error),
+    /// A batch failed for a retryable reason; these events are still unsent.
+    Retryable(Error, Vec<TrackerEvent>),
+}
+
+/// Sends events in batches. A batch the API rejects for good is dropped and
+/// the remaining batches still go out. A retryable failure stops the flush and
+/// hands back the failed batch and everything after it.
 async fn send_events_in_batches(
     transport: &HttpTransport,
     mut events: Vec<TrackerEvent>,
     max_batch_size: usize,
-) -> Result<(), (Error, Vec<TrackerEvent>)> {
+) -> Result<(), SendFailure> {
+    let mut rejected = None;
     while !events.is_empty() {
         let remaining = if events.len() > max_batch_size {
             events.split_off(max_batch_size)
@@ -383,15 +424,118 @@ async fn send_events_in_batches(
         };
 
         if let Err(error) = transport.send(&payload).await {
-            let mut unsent_events = payload.events;
-            unsent_events.extend(remaining);
-            return Err((error, unsent_events));
+            if error.is_retryable() {
+                let mut unsent_events = payload.events;
+                unsent_events.extend(remaining);
+                return Err(SendFailure::Retryable(error, unsent_events));
+            }
+            log_rejected_batch(&error, payload.events.len());
+            rejected.get_or_insert(error);
         }
 
         events = remaining;
     }
 
-    Ok(())
+    match rejected {
+        Some(error) => Err(SendFailure::Rejected(error)),
+        None => Ok(()),
+    }
+}
+
+/// Statuses whose dropped batches have already been logged at error level.
+static LOGGED_REJECTIONS: std::sync::Mutex<Vec<u16>> = std::sync::Mutex::new(Vec::new());
+
+/// Logs a dropped batch at error level the first time its status is seen in
+/// this process, and at debug level after that. A rejection like an unknown
+/// public key repeats on every flush, so logging each one would flood logs.
+fn log_rejected_batch(error: &Error, event_count: usize) {
+    let status = match error {
+        Error::Api { status, .. } => Some(*status),
+        _ => None,
+    };
+    if status.map_or(true, first_rejection_with_status) {
+        let hint = match status {
+            Some(400 | 401 | 403 | 404) => {
+                "check that the public key is correct and its tracking config is active; "
+            }
+            _ => "",
+        };
+        error!(
+            error = %error,
+            event_count,
+            "API rejected events, dropping them ({hint}further rejections with this status are logged at debug level)"
+        );
+    } else {
+        debug!(error = %error, event_count, "API rejected events, dropping them");
+    }
+}
+
+fn first_rejection_with_status(status: u16) -> bool {
+    let mut logged = LOGGED_REJECTIONS
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    if logged.contains(&status) {
+        return false;
+    }
+    logged.push(status);
+    true
+}
+
+/// Exponential backoff for automatic retries after a retryable failure. The
+/// background timer and size-triggered flushes wait it out; explicit
+/// `flush()` and `shutdown()` calls always try right away.
+#[derive(Debug)]
+struct RetryBackoff {
+    base: Duration,
+    state: std::sync::Mutex<BackoffState>,
+}
+
+#[derive(Debug, Default)]
+struct BackoffState {
+    failures: u32,
+    resume_at: Option<Instant>,
+}
+
+impl RetryBackoff {
+    fn new(base: Duration) -> Self {
+        Self {
+            base,
+            state: std::sync::Mutex::new(BackoffState::default()),
+        }
+    }
+
+    fn state(&self) -> std::sync::MutexGuard<'_, BackoffState> {
+        self.state
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
+    fn is_waiting(&self) -> bool {
+        self.state()
+            .resume_at
+            .is_some_and(|resume_at| Instant::now() < resume_at)
+    }
+
+    /// Records a failed attempt and returns how long automatic retries wait.
+    fn record_failure(&self) -> Duration {
+        let mut state = self.state();
+        state.failures = state.failures.saturating_add(1);
+        let delay = retry_delay(self.base, state.failures);
+        state.resume_at = Some(Instant::now() + delay);
+        delay
+    }
+
+    fn reset(&self) {
+        *self.state() = BackoffState::default();
+    }
+}
+
+/// The base interval doubled for each consecutive failure after the first,
+/// capped at [`MAX_RETRY_BACKOFF`] (or the base, if that is longer).
+fn retry_delay(base: Duration, failures: u32) -> Duration {
+    let doublings = failures.saturating_sub(1).min(16);
+    base.saturating_mul(1 << doublings)
+        .min(MAX_RETRY_BACKOFF.max(base))
 }
 
 // ============================================
@@ -559,5 +703,39 @@ mod tests {
         send.await.unwrap().unwrap();
         shutdown.await.unwrap().unwrap();
         assert_eq!(client.pending_event_count().await, 0);
+    }
+
+    #[test]
+    fn test_retry_delay_doubles_up_to_the_cap() {
+        let base = Duration::from_secs(10);
+        assert_eq!(retry_delay(base, 1), Duration::from_secs(10));
+        assert_eq!(retry_delay(base, 2), Duration::from_secs(20));
+        assert_eq!(retry_delay(base, 5), Duration::from_secs(160));
+        assert_eq!(retry_delay(base, 6), MAX_RETRY_BACKOFF);
+        assert_eq!(retry_delay(base, u32::MAX), MAX_RETRY_BACKOFF);
+        // A flush interval above the cap is never shortened.
+        let slow = Duration::from_secs(600);
+        assert_eq!(retry_delay(slow, 3), slow);
+    }
+
+    #[tokio::test]
+    async fn test_backoff_waits_after_a_failure_and_clears_on_reset() {
+        let backoff = RetryBackoff::new(Duration::from_secs(60));
+        assert!(!backoff.is_waiting());
+
+        backoff.record_failure();
+        assert!(backoff.is_waiting());
+        assert_eq!(backoff.record_failure(), Duration::from_secs(120));
+
+        backoff.reset();
+        assert!(!backoff.is_waiting());
+        assert_eq!(backoff.record_failure(), Duration::from_secs(60));
+    }
+
+    #[test]
+    fn test_each_rejection_status_is_logged_at_error_level_once() {
+        // 499 isn't used by any other test in this process.
+        assert!(first_rejection_with_status(499));
+        assert!(!first_rejection_with_status(499));
     }
 }
