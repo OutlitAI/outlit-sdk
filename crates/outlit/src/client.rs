@@ -310,13 +310,14 @@ impl Outlit {
                     break;
                 }
 
-                if backoff.is_waiting() {
-                    continue;
-                }
-
                 let _flush_guard = flush_lock.lock().await;
                 if is_shutdown.load(Ordering::SeqCst) {
                     break;
+                }
+                // Checked under the flush lock, so a failure that just set the
+                // backoff is seen here.
+                if backoff.is_waiting() {
+                    continue;
                 }
 
                 let _ =
@@ -341,13 +342,30 @@ impl Outlit {
             self.queue.should_flush().await
         };
 
-        // While retries are backing off, a full queue waits for the timer
-        // instead of sending on every new event.
-        if should_flush && !self.backoff.is_waiting() {
-            self.flush().await?;
+        if should_flush {
+            self.flush_unless_backing_off().await?;
         }
 
         Ok(())
+    }
+
+    /// A size-triggered flush. While retries are backing off, a full queue
+    /// waits for the timer instead of sending on every new event. The check
+    /// happens under the flush lock, so callers queued behind a failing send
+    /// see the backoff it set instead of each retrying in turn.
+    async fn flush_unless_backing_off(&self) -> Result<(), Error> {
+        let _flush_guard = self.flush_lock.lock().await;
+        if self.backoff.is_waiting() {
+            return Ok(());
+        }
+        flush_queued_events(
+            &self.queue,
+            &self.transport,
+            &self.backoff,
+            self.config.max_batch_size(),
+            false,
+        )
+        .await
     }
 }
 

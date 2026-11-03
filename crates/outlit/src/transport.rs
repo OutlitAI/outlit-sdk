@@ -63,7 +63,10 @@ impl HttpTransport {
             });
         }
 
-        let result = response.json::<IngestResponse>().await?;
+        // Reading the body can still fail on the network (retryable); a body
+        // that arrived but isn't the expected JSON is a serialization error.
+        let body = response.bytes().await?;
+        let result = serde_json::from_slice::<IngestResponse>(&body)?;
 
         if let Some(errors) = &result.errors {
             for error in errors {
