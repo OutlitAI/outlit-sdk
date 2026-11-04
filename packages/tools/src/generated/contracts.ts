@@ -13365,7 +13365,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "inbox",
     "title": "List Inbox",
-    "description": "List one section of your Inbox, as the Inbox page shows it and in its order: today's list, the rest of your open work, what you snoozed, what you finished since your earlier list, or the Pool of work no one has taken. Each item has an opaque itemId, what it asks, why now, how it closes, its customer, plan and source, and its state. Admins can read a teammate's today or open list with owner.",
+    "description": "List one section of your Inbox as tasks, as the Inbox page shows it and in its order: today's list, the rest of your open work, what you snoozed, what you finished since your earlier list, or the Pool of tasks no one has taken. Each task has its itemId, what it asks, why now, how it closes, what it is part of, its customer, what it answers and its state. Admins can read a teammate's today or open list with owner.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -13376,7 +13376,7 @@ export const publicToolContracts = {
       "type": "object",
       "properties": {
         "section": {
-          "description": "Which part of the Inbox to list (default: today): today (today's list), open (the rest of the open work), snoozed, done (finished since the earlier list, then won't do) or pool (work no one has taken)",
+          "description": "Which part of the Inbox to list (default: today): today (today's list), open (the rest of the open work), snoozed, done (finished since the earlier list, then won't do) or pool (tasks no one has taken)",
           "default": "today",
           "type": "string",
           "enum": [
@@ -13388,7 +13388,7 @@ export const publicToolContracts = {
           ],
         },
         "customer": {
-          "description": "Only this customer's items: its ID, name or domain",
+          "description": "Only this customer's tasks: its ID, name or domain",
           "type": "string",
           "minLength": 1,
           "maxLength": 500,
@@ -13456,10 +13456,9 @@ export const publicToolContracts = {
             "properties": {
               "itemId": {
                 "type": "string",
-                "minLength": 6,
-                "maxLength": 1000,
-                "pattern": "^inb1_[A-Za-z0-9_-]+$",
-                "description": "Opaque; pass it to outlit_get_inbox_item",
+                "minLength": 1,
+                "maxLength": 191,
+                "description": "The task's ID; pass it to outlit_get_inbox_item",
               },
               "type": {
                 "anyOf": [
@@ -13467,7 +13466,7 @@ export const publicToolContracts = {
                     "type": "string",
                     "enum": [
                       "reply",
-                      "reach_out",
+                      "follow_up",
                       "keep_promise",
                       "do",
                       "record",
@@ -13477,7 +13476,11 @@ export const publicToolContracts = {
                     "type": "null",
                   },
                 ],
-                "description": "What the item asks: reply, reach_out (write first or follow up), keep_promise, do (the plan's next step) or record (an outcome). Null on a snoozed or done row",
+                "description": "What the task asks: reply, follow_up (write first or follow up), keep_promise, do (the plan's next step) or record (an outcome). Null on a snoozed or done row",
+              },
+              "looksDone": {
+                "type": "boolean",
+                "description": "The task looks done already; the only question is whether it happened",
               },
               "title": {
                 "type": "string",
@@ -13505,7 +13508,57 @@ export const publicToolContracts = {
                     "type": "null",
                   },
                 ],
-                "description": "How the item closes on its own",
+                "description": "How the task closes on its own",
+              },
+              "partOf": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "work": {
+                        "type": "string",
+                        "enum": [
+                          "renewal",
+                          "reengagement",
+                          "growth",
+                        ],
+                      },
+                      "caseId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 191,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "title": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 500,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                    },
+                    "required": [
+                      "work",
+                      "caseId",
+                      "title",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+                "description": "The work the task belongs to (a renewal, re-engagement or growth) and its case",
               },
               "customer": {
                 "type": "object",
@@ -13526,34 +13579,33 @@ export const publicToolContracts = {
                 ],
                 "additionalProperties": false,
               },
-              "plan": {
+              "trigger": {
                 "anyOf": [
                   {
                     "type": "object",
                     "properties": {
-                      "id": {
+                      "line": {
                         "type": "string",
                         "minLength": 1,
-                        "maxLength": 191,
+                        "maxLength": 500,
                       },
-                      "step": {
+                      "provider": {
                         "anyOf": [
                           {
-                            "type": "integer",
-                            "exclusiveMinimum": 0,
-                            "maximum": 9007199254740991,
+                            "type": "string",
+                            "maxLength": 100,
                           },
                           {
                             "type": "null",
                           },
                         ],
                       },
-                      "of": {
+                      "at": {
                         "anyOf": [
                           {
-                            "type": "integer",
-                            "exclusiveMinimum": 0,
-                            "maximum": 9007199254740991,
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                           },
                           {
                             "type": "null",
@@ -13562,9 +13614,9 @@ export const publicToolContracts = {
                       },
                     },
                     "required": [
-                      "id",
-                      "step",
-                      "of",
+                      "line",
+                      "provider",
+                      "at",
                     ],
                     "additionalProperties": false,
                   },
@@ -13572,40 +13624,7 @@ export const publicToolContracts = {
                     "type": "null",
                   },
                 ],
-                "description": "The plan the item is a step of, and its place in it (step 2 of 3)",
-              },
-              "source": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "email",
-                          "support_ticket",
-                          "call",
-                          "slack_thread",
-                          "reading",
-                        ],
-                      },
-                      "id": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 191,
-                      },
-                    },
-                    "required": [
-                      "type",
-                      "id",
-                    ],
-                    "additionalProperties": false,
-                  },
-                  {
-                    "type": "null",
-                  },
-                ],
-                "description": "The conversation or record the item rests on",
+                "description": "What the task answers: its source conversation, the tool it came from and when",
               },
               "dueAt": {
                 "anyOf": [
@@ -13657,34 +13676,36 @@ export const publicToolContracts = {
                 ],
               },
               "actions": {
-                "maxItems": 9,
+                "maxItems": 10,
                 "type": "array",
                 "items": {
                   "type": "string",
                   "enum": [
                     "done",
                     "wont_do",
+                    "wrong",
+                    "reopen",
                     "snooze",
                     "unsnooze",
-                    "reopen",
                     "take",
                     "put_back",
-                    "keep_promise",
                     "not_covered",
+                    "recover_cover",
                   ],
                 },
-                "description": "What the Inbox tools can do to this item now; empty when none",
+                "description": "What can be decided on this task now; empty when nothing can be",
               },
             },
             "required": [
               "itemId",
               "type",
+              "looksDone",
               "title",
               "whyNow",
               "doneWhen",
+              "partOf",
               "customer",
-              "plan",
-              "source",
+              "trigger",
               "dueAt",
               "state",
               "snoozedUntil",
@@ -13696,7 +13717,7 @@ export const publicToolContracts = {
         },
         "complete": {
           "type": "boolean",
-          "description": "False when part of the open work could not be read; some items may be missing",
+          "description": "False when part of the open work could not be read; some tasks may be missing",
         },
         "pagination": {
           "type": "object",
@@ -13746,7 +13767,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "inbox",
     "title": "Get Inbox Item",
-    "description": "Get one item from your Inbox by its itemId: the item as outlit_list_inbox lists it, plus what it turns on (the email, ticket, call or Slack thread, with its last turns), the reply Outlit prepared for it, and the promise and reply steps it stands for.",
+    "description": "Get one task from your Inbox by its itemId: the task as outlit_list_inbox lists it, plus what it turns on (the email, ticket, call or Slack thread, with its last turns), the reply Outlit prepared for it, and the promise and reply tasks it stands for.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -13758,10 +13779,9 @@ export const publicToolContracts = {
       "properties": {
         "itemId": {
           "type": "string",
-          "minLength": 6,
-          "maxLength": 1000,
-          "pattern": "^inb1_[A-Za-z0-9_-]+$",
-          "description": "The item's itemId, as outlit_list_inbox returns it",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "The task's itemId, as outlit_list_inbox returns it",
         },
       },
       "required": [
@@ -13775,10 +13795,9 @@ export const publicToolContracts = {
       "properties": {
         "itemId": {
           "type": "string",
-          "minLength": 6,
-          "maxLength": 1000,
-          "pattern": "^inb1_[A-Za-z0-9_-]+$",
-          "description": "Opaque; pass it to outlit_get_inbox_item",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "The task's ID; pass it to outlit_get_inbox_item",
         },
         "type": {
           "anyOf": [
@@ -13786,7 +13805,7 @@ export const publicToolContracts = {
               "type": "string",
               "enum": [
                 "reply",
-                "reach_out",
+                "follow_up",
                 "keep_promise",
                 "do",
                 "record",
@@ -13796,7 +13815,11 @@ export const publicToolContracts = {
               "type": "null",
             },
           ],
-          "description": "What the item asks: reply, reach_out (write first or follow up), keep_promise, do (the plan's next step) or record (an outcome). Null on a snoozed or done row",
+          "description": "What the task asks: reply, follow_up (write first or follow up), keep_promise, do (the plan's next step) or record (an outcome). Null on a snoozed or done row",
+        },
+        "looksDone": {
+          "type": "boolean",
+          "description": "The task looks done already; the only question is whether it happened",
         },
         "title": {
           "type": "string",
@@ -13824,7 +13847,57 @@ export const publicToolContracts = {
               "type": "null",
             },
           ],
-          "description": "How the item closes on its own",
+          "description": "How the task closes on its own",
+        },
+        "partOf": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "work": {
+                  "type": "string",
+                  "enum": [
+                    "renewal",
+                    "reengagement",
+                    "growth",
+                  ],
+                },
+                "caseId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "title": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 500,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "required": [
+                "work",
+                "caseId",
+                "title",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "The work the task belongs to (a renewal, re-engagement or growth) and its case",
         },
         "customer": {
           "type": "object",
@@ -13845,34 +13918,33 @@ export const publicToolContracts = {
           ],
           "additionalProperties": false,
         },
-        "plan": {
+        "trigger": {
           "anyOf": [
             {
               "type": "object",
               "properties": {
-                "id": {
+                "line": {
                   "type": "string",
                   "minLength": 1,
-                  "maxLength": 191,
+                  "maxLength": 500,
                 },
-                "step": {
+                "provider": {
                   "anyOf": [
                     {
-                      "type": "integer",
-                      "exclusiveMinimum": 0,
-                      "maximum": 9007199254740991,
+                      "type": "string",
+                      "maxLength": 100,
                     },
                     {
                       "type": "null",
                     },
                   ],
                 },
-                "of": {
+                "at": {
                   "anyOf": [
                     {
-                      "type": "integer",
-                      "exclusiveMinimum": 0,
-                      "maximum": 9007199254740991,
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                     },
                     {
                       "type": "null",
@@ -13881,9 +13953,9 @@ export const publicToolContracts = {
                 },
               },
               "required": [
-                "id",
-                "step",
-                "of",
+                "line",
+                "provider",
+                "at",
               ],
               "additionalProperties": false,
             },
@@ -13891,40 +13963,7 @@ export const publicToolContracts = {
               "type": "null",
             },
           ],
-          "description": "The plan the item is a step of, and its place in it (step 2 of 3)",
-        },
-        "source": {
-          "anyOf": [
-            {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "email",
-                    "support_ticket",
-                    "call",
-                    "slack_thread",
-                    "reading",
-                  ],
-                },
-                "id": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 191,
-                },
-              },
-              "required": [
-                "type",
-                "id",
-              ],
-              "additionalProperties": false,
-            },
-            {
-              "type": "null",
-            },
-          ],
-          "description": "The conversation or record the item rests on",
+          "description": "What the task answers: its source conversation, the tool it came from and when",
         },
         "dueAt": {
           "anyOf": [
@@ -13976,23 +14015,24 @@ export const publicToolContracts = {
           ],
         },
         "actions": {
-          "maxItems": 9,
+          "maxItems": 10,
           "type": "array",
           "items": {
             "type": "string",
             "enum": [
               "done",
               "wont_do",
+              "wrong",
+              "reopen",
               "snooze",
               "unsnooze",
-              "reopen",
               "take",
               "put_back",
-              "keep_promise",
               "not_covered",
+              "recover_cover",
             ],
           },
-          "description": "What the Inbox tools can do to this item now; empty when none",
+          "description": "What can be decided on this task now; empty when nothing can be",
         },
         "sourcePreview": {
           "anyOf": [
@@ -14152,7 +14192,7 @@ export const publicToolContracts = {
               "type": "null",
             },
           ],
-          "description": "What the item turns on, as the Inbox's reading pane shows it; null when none",
+          "description": "What the task turns on, as the Inbox's reading pane shows it; null when none",
         },
         "draft": {
           "anyOf": [
@@ -14204,7 +14244,7 @@ export const publicToolContracts = {
               "type": "null",
             },
           ],
-          "description": "The reply Outlit prepared for this step, for the person to edit and send",
+          "description": "The reply Outlit prepared for this task, for the person to edit and send",
         },
         "coveredSteps": {
           "maxItems": 50,
@@ -14244,18 +14284,19 @@ export const publicToolContracts = {
             ],
             "additionalProperties": false,
           },
-          "description": "Promise and reply steps this item stands for: finishing it finishes them",
+          "description": "Promise and reply tasks this task stands for: finishing it finishes them",
         },
       },
       "required": [
         "itemId",
         "type",
+        "looksDone",
         "title",
         "whyNow",
         "doneWhen",
+        "partOf",
         "customer",
-        "plan",
-        "source",
+        "trigger",
         "dueAt",
         "state",
         "snoozedUntil",
@@ -17738,4 +17779,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "da7a4fc78fcd9f293c9d6c8b6a99c1ab1b1f954a41d88d01ae8f0f48de73f82c" as const
+export const sdkConsumerContractHash = "e74e17144afe79a614e7f11ef9548c0fa87acda72cded5c67a2331f460ac3db2" as const
