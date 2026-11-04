@@ -95,6 +95,8 @@ For coding agents that run local commands, see [Agent skills](/ai-integrations/s
 | `outlit_get_attention_item` | Retrieve one attention item by exact UUID |
 | `outlit_list_inbox` | List one section of your Inbox (today, open, snoozed, done or pool) as tasks, each with its task `itemId` |
 | `outlit_get_inbox_item` | Retrieve one Inbox task by `itemId`, with its source preview, prepared reply and covered tasks |
+| `outlit_decide_inbox_item` | Decide your own Inbox tasks (done, won't do, snooze, take and more), returning an `undoToken` |
+| `outlit_undo_inbox_decision` | Undo a decision with the `undoToken` it returned |
 | `outlit_assign_customer_owner` | Assign a customer's primary owner |
 | `outlit_grant_customer_access` | Share a customer with a workspace member as Viewer or Editor |
 | `outlit_update_customer_access` | Change an existing collaborator between Viewer and Editor |

@@ -289,6 +289,18 @@
       }
     },
     {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_decide_inbox_item')]",
+      "update": {
+        "title": "Decide Inbox item"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_undo_inbox_decision')]",
+      "update": {
+        "title": "Undo Inbox decision"
+      }
+    },
+    {
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_identity')]",
       "update": {
         "title": "Get customer identity"
@@ -580,6 +592,18 @@
       "target": "$.components.schemas['ToolOutput_outlit_get_inbox_item']",
       "update": {
         "title": "Get Inbox item"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_decide_inbox_item']",
+      "update": {
+        "title": "Decide Inbox item"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_undo_inbox_decision']",
+      "update": {
+        "title": "Undo Inbox decision"
       }
     },
     {
