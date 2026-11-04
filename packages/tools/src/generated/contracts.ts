@@ -46,6 +46,8 @@ export const publicToolNames = [
   "outlit_get_customer_credits",
   "outlit_list_attention_items",
   "outlit_get_attention_item",
+  "outlit_list_inbox",
+  "outlit_get_inbox_item",
   "outlit_get_customer_identity",
   "outlit_list_identity_merge_suggestions",
   "outlit_reject_identity_merge_suggestion",
@@ -13357,6 +13359,915 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
+  "outlit_list_inbox": {
+    "toolName": "outlit_list_inbox",
+    "commandId": "inbox.list",
+    "commandVersion": 1,
+    "ownerDomain": "inbox",
+    "title": "List Inbox",
+    "description": "List one section of your Inbox, as the Inbox page shows it and in its order: today's list, the rest of your open work, what you snoozed, what you finished since your earlier list, or the Pool of work no one has taken. Each item has an opaque itemId, what it asks, why now, how it closes, its customer, plan and source, and its state. Admins can read a teammate's today or open list with owner.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "section": {
+          "description": "Which part of the Inbox to list (default: today): today (today's list), open (the rest of the open work), snoozed, done (finished since the earlier list, then won't do) or pool (work no one has taken)",
+          "default": "today",
+          "type": "string",
+          "enum": [
+            "today",
+            "open",
+            "snoozed",
+            "done",
+            "pool",
+          ],
+        },
+        "customer": {
+          "description": "Only this customer's items: its ID, name or domain",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+        },
+        "owner": {
+          "description": "Admins only: a teammate's user ID, to read their today or open list. Omit for your own Inbox",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "limit": {
+          "description": "Results per page (default: 25, max: 100)",
+          "default": 25,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+        },
+        "cursor": {
+          "description": "Opaque cursor from a previous response with the same filters",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+        },
+      },
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "section": {
+          "type": "string",
+          "enum": [
+            "today",
+            "open",
+            "snoozed",
+            "done",
+            "pool",
+          ],
+        },
+        "owner": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 500,
+            },
+          },
+          "required": [
+            "id",
+            "name",
+          ],
+          "additionalProperties": false,
+        },
+        "items": {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "itemId": {
+                "type": "string",
+                "minLength": 6,
+                "maxLength": 1000,
+                "pattern": "^inb1_[A-Za-z0-9_-]+$",
+                "description": "Opaque; pass it to outlit_get_inbox_item",
+              },
+              "type": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "reply",
+                      "reach_out",
+                      "keep_promise",
+                      "do",
+                      "record",
+                    ],
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+                "description": "What the item asks: reply, reach_out (write first or follow up), keep_promise, do (the plan's next step) or record (an outcome). Null on a snoozed or done row",
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+              },
+              "whyNow": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 2000,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "doneWhen": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 500,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+                "description": "How the item closes on its own",
+              },
+              "customer": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 500,
+                  },
+                },
+                "required": [
+                  "id",
+                  "name",
+                ],
+                "additionalProperties": false,
+              },
+              "plan": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191,
+                      },
+                      "step": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "of": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                    },
+                    "required": [
+                      "id",
+                      "step",
+                      "of",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+                "description": "The plan the item is a step of, and its place in it (step 2 of 3)",
+              },
+              "source": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "email",
+                          "support_ticket",
+                          "call",
+                          "slack_thread",
+                          "reading",
+                        ],
+                      },
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191,
+                      },
+                    },
+                    "required": [
+                      "type",
+                      "id",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+                "description": "The conversation or record the item rests on",
+              },
+              "dueAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "unassigned",
+                  "snoozed",
+                  "done",
+                  "wont_do",
+                  "expired",
+                  "closed",
+                ],
+                "description": "open, unassigned (in the Pool), snoozed, done, wont_do, expired (its window ended) or closed (its plan stopped)",
+              },
+              "snoozedUntil": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "doneAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "actions": {
+                "maxItems": 9,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "done",
+                    "wont_do",
+                    "snooze",
+                    "unsnooze",
+                    "reopen",
+                    "take",
+                    "put_back",
+                    "keep_promise",
+                    "not_covered",
+                  ],
+                },
+                "description": "What the Inbox tools can do to this item now; empty when none",
+              },
+            },
+            "required": [
+              "itemId",
+              "type",
+              "title",
+              "whyNow",
+              "doneWhen",
+              "customer",
+              "plan",
+              "source",
+              "dueAt",
+              "state",
+              "snoozedUntil",
+              "doneAt",
+              "actions",
+            ],
+            "additionalProperties": false,
+          },
+        },
+        "complete": {
+          "type": "boolean",
+          "description": "False when part of the open work could not be read; some items may be missing",
+        },
+        "pagination": {
+          "type": "object",
+          "properties": {
+            "hasMore": {
+              "type": "boolean",
+            },
+            "nextCursor": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "total": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+            },
+          },
+          "required": [
+            "hasMore",
+            "nextCursor",
+            "total",
+          ],
+          "additionalProperties": false,
+        },
+      },
+      "required": [
+        "section",
+        "owner",
+        "items",
+        "complete",
+        "pagination",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_get_inbox_item": {
+    "toolName": "outlit_get_inbox_item",
+    "commandId": "inbox.get",
+    "commandVersion": 1,
+    "ownerDomain": "inbox",
+    "title": "Get Inbox Item",
+    "description": "Get one item from your Inbox by its itemId: the item as outlit_list_inbox lists it, plus what it turns on (the email, ticket, call or Slack thread, with its last turns), the reply Outlit prepared for it, and the promise and reply steps it stands for.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "itemId": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 1000,
+          "pattern": "^inb1_[A-Za-z0-9_-]+$",
+          "description": "The item's itemId, as outlit_list_inbox returns it",
+        },
+      },
+      "required": [
+        "itemId",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "itemId": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 1000,
+          "pattern": "^inb1_[A-Za-z0-9_-]+$",
+          "description": "Opaque; pass it to outlit_get_inbox_item",
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "reply",
+                "reach_out",
+                "keep_promise",
+                "do",
+                "record",
+              ],
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "What the item asks: reply, reach_out (write first or follow up), keep_promise, do (the plan's next step) or record (an outcome). Null on a snoozed or done row",
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+        },
+        "whyNow": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 2000,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "doneWhen": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 500,
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "How the item closes on its own",
+        },
+        "customer": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 500,
+            },
+          },
+          "required": [
+            "id",
+            "name",
+          ],
+          "additionalProperties": false,
+        },
+        "plan": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 191,
+                },
+                "step": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "of": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "required": [
+                "id",
+                "step",
+                "of",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "The plan the item is a step of, and its place in it (step 2 of 3)",
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "support_ticket",
+                    "call",
+                    "slack_thread",
+                    "reading",
+                  ],
+                },
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 191,
+                },
+              },
+              "required": [
+                "type",
+                "id",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "The conversation or record the item rests on",
+        },
+        "dueAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "open",
+            "unassigned",
+            "snoozed",
+            "done",
+            "wont_do",
+            "expired",
+            "closed",
+          ],
+          "description": "open, unassigned (in the Pool), snoozed, done, wont_do, expired (its window ended) or closed (its plan stopped)",
+        },
+        "snoozedUntil": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "doneAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "actions": {
+          "maxItems": 9,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "done",
+              "wont_do",
+              "snooze",
+              "unsnooze",
+              "reopen",
+              "take",
+              "put_back",
+              "keep_promise",
+              "not_covered",
+            ],
+          },
+          "description": "What the Inbox tools can do to this item now; empty when none",
+        },
+        "sourcePreview": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "support_ticket",
+                    "call",
+                    "slack_thread",
+                    "reading",
+                    "last_contact",
+                  ],
+                },
+                "channel": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "ticket",
+                    "call",
+                    "slack",
+                    "other",
+                  ],
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 500,
+                },
+                "at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "from": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 500,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "direction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "inbound",
+                        "outbound",
+                      ],
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "excerpt": {
+                  "type": "string",
+                  "maxLength": 2000,
+                },
+                "messages": {
+                  "maxItems": 5,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 500,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "at": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "direction": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "inbound",
+                              "outbound",
+                            ],
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "text": {
+                        "type": "string",
+                        "maxLength": 2000,
+                      },
+                    },
+                    "required": [
+                      "from",
+                      "at",
+                      "direction",
+                      "text",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  "description": "The thread's last turns, newest last",
+                },
+                "href": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 2000,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "required": [
+                "kind",
+                "channel",
+                "title",
+                "at",
+                "from",
+                "direction",
+                "excerpt",
+                "messages",
+                "href",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "What the item turns on, as the Inbox's reading pane shows it; null when none",
+        },
+        "draft": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "to": {
+                  "type": "string",
+                  "maxLength": 500,
+                },
+                "subject": {
+                  "type": "string",
+                  "maxLength": 1000,
+                },
+                "body": {
+                  "type": "string",
+                  "maxLength": 20000,
+                },
+                "channel": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "email",
+                        "ticket",
+                        "slack",
+                      ],
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "stale": {
+                  "type": "boolean",
+                  "description": "The customer wrote again after the message this draft answers",
+                },
+              },
+              "required": [
+                "to",
+                "subject",
+                "body",
+                "channel",
+                "stale",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "The reply Outlit prepared for this step, for the person to edit and send",
+        },
+        "coveredSteps": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "promise",
+                  "reply",
+                ],
+              },
+              "title": {
+                "type": "string",
+                "maxLength": 500,
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "done",
+                ],
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+              },
+            },
+            "required": [
+              "kind",
+              "title",
+              "state",
+              "at",
+            ],
+            "additionalProperties": false,
+          },
+          "description": "Promise and reply steps this item stands for: finishing it finishes them",
+        },
+      },
+      "required": [
+        "itemId",
+        "type",
+        "title",
+        "whyNow",
+        "doneWhen",
+        "customer",
+        "plan",
+        "source",
+        "dueAt",
+        "state",
+        "snoozedUntil",
+        "doneAt",
+        "actions",
+        "sourcePreview",
+        "draft",
+        "coveredSteps",
+      ],
+      "additionalProperties": false,
+    },
+  },
   "outlit_get_customer_identity": {
     "toolName": "outlit_get_customer_identity",
     "commandId": "customer.identity.get",
@@ -15164,6 +16075,8 @@ export const consumerToolPolicies = {
     "outlit_get_customer_credits",
     "outlit_list_attention_items",
     "outlit_get_attention_item",
+    "outlit_list_inbox",
+    "outlit_get_inbox_item",
     "outlit_get_customer_identity",
     "outlit_list_identity_merge_suggestions",
     "outlit_reject_identity_merge_suggestion",
@@ -15213,6 +16126,8 @@ export const consumerToolPolicies = {
     "outlit_get_customer_credits",
     "outlit_list_attention_items",
     "outlit_get_attention_item",
+    "outlit_list_inbox",
+    "outlit_get_inbox_item",
     "outlit_get_customer_identity",
     "outlit_list_identity_merge_suggestions",
     "outlit_reject_identity_merge_suggestion",
@@ -16823,4 +17738,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "6bba3f92ca85fb6d1f60f4518a8e7eb02d2776687ea4b627168444b1426970f0" as const
+export const sdkConsumerContractHash = "da7a4fc78fcd9f293c9d6c8b6a99c1ab1b1f954a41d88d01ae8f0f48de73f82c" as const

@@ -53,6 +53,13 @@ against the shared `@outlit/tools` contract before the tool runs.
 | `outlit_list_attention_items` | List authorized open or resolved attention items (bounded fields, `preparedActionUrl`) |
 | `outlit_get_attention_item` | Retrieve one attention item by exact UUID |
 
+### Inbox
+
+| Tool | Purpose |
+|---|---|
+| `outlit_list_inbox` | List one section of your Inbox (today, open, snoozed, done or pool), in the Inbox page's order, with an opaque `itemId` per item |
+| `outlit_get_inbox_item` | Retrieve one Inbox item by `itemId`, with its source preview, prepared reply and covered steps |
+
 ### Access
 
 | Tool | Purpose |
