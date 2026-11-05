@@ -1,5 +1,15 @@
 # @outlit/tools
 
+## 2.3.0
+
+### Minor Changes
+
+- [#272](https://github.com/OutlitAI/outlit-sdk/pull/272) [`f84fff5`](https://github.com/OutlitAI/outlit-sdk/commit/f84fff5c660c1b1ebe0ffe8053e845c1b7fdbe3e) Thanks [@leo-paz](https://github.com/leo-paz)! - Add the Inbox read tools to the generated public tool contracts and the OpenAPI document: `outlit_list_inbox` lists one section of a person's Inbox (today, open, snoozed, done or pool) as tasks, each with its task `itemId`, what it asks, what it is part of, its customer and what it answers; `outlit_get_inbox_item` reads one task by that id with its source preview, prepared reply and covered tasks. Outlit turns them on per workspace.
+
+- [#273](https://github.com/OutlitAI/outlit-sdk/pull/273) [`7e515aa`](https://github.com/OutlitAI/outlit-sdk/commit/7e515aade75e113d1bdeb6a8fc9a6c80cba25147) Thanks [@leo-paz](https://github.com/leo-paz)! - Add the Inbox write tools to the generated public tool contracts and the OpenAPI document: `outlit_act_on_inbox_item` takes a person's own action on one Inbox task by `itemId` (done, won't do, wrong, reopen, snooze, unsnooze, take, put back, not covered) and returns an `undoToken`; `outlit_undo_inbox_action` reverses it with that token. Rows' `actions` stay empty for now. Outlit turns them on per workspace.
+
+- [#267](https://github.com/OutlitAI/outlit-sdk/pull/267) [`0194ae3`](https://github.com/OutlitAI/outlit-sdk/commit/0194ae3760b15360d56c9ca906cbbd614cafab3f) Thanks [@leo-paz](https://github.com/leo-paz)! - Remove the four scoped identity repair tools (`outlit_list_scoped_repairs`, `outlit_preview_scoped_repair`, `outlit_execute_scoped_repair`, `outlit_verify_scoped_repair`) from the generated public tool contracts and the OpenAPI document. Outlit no longer offers them to customers over MCP, the CLI, Pi or the API; scoped repairs stay available on the Identity page in the Outlit app.
+
 ## 2.2.6
 
 ### Patch Changes
