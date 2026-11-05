@@ -41,6 +41,7 @@ import {
   getPublicToolContract,
   isOutlitToolsApiError,
   matchesGeneratedJsonSchema,
+  normalizeCustomerSourceToolInput,
   normalizeCustomerSourceType,
   piToolNames,
   publicOpenApiTransports,
@@ -671,6 +672,12 @@ describe("tool contracts", () => {
     expect(normalizeCustomerSourceType(" crm_opportunity ")).toBe("OPPORTUNITY")
     expect(normalizeCustomerSourceType(" opportunity ")).toBe("OPPORTUNITY")
     expect(normalizeCustomerSourceType(" person_profile ")).toBe("PERSON_PROFILE")
+    expect(normalizeCustomerSourceType("STRIPE_INVOICE")).toBeNull()
+    expect(normalizeCustomerSourceToolInput(" Stripe_Invoice ")).toBe("INVOICE")
+    expect(normalizeCustomerSourceToolInput("invoice")).toBe("INVOICE")
+    expect(normalizeCustomerSourceToolInput("crm")).toBe("OPPORTUNITY")
+    expect(normalizeCustomerSourceToolInput("ZENDESK_TICKET")).toBeNull()
+    expect(normalizeCustomerSourceToolInput("constructor")).toBeNull()
     expect(normalizeCustomerSourceType("ZENDESK_TICKET")).toBeNull()
     expect(normalizeCustomerSourceType("toString")).toBeNull()
     expect(normalizeCustomerSourceType("constructor")).toBeNull()

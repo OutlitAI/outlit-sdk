@@ -405,7 +405,7 @@ describe("customers list", () => {
       expect(output).toContain("Domain")
       expect(output).toContain("Billing")
       expect(output).toContain("ARR")
-      expect(output).toContain("12000.00 USD")
+      expect(output).toContain("$12,000")
       expect(output).toContain("Acme")
       expect(output).toContain("acme.com")
       expect(output).toContain("PAYING")

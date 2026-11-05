@@ -36,6 +36,24 @@ export function normalizeCustomerSourceType(value: string): CustomerSourceType |
   )
 }
 
+/**
+ * Aliases the source tools (get and list) accept on input only. The timeline labels Stripe billing
+ * rows STRIPE_INVOICE, so normalizeCustomerSourceType does not map them. Mirrors Core's
+ * customerSourceToolInputAliasMap, which the generated contracts don't carry.
+ */
+const customerSourceToolInputAliasMap = {
+  STRIPE_INVOICE: "INVOICE",
+} as const satisfies Record<string, CustomerSourceType>
+
+/** The canonical type a source tool's sourceType input names, including its input-only aliases. */
+export function normalizeCustomerSourceToolInput(value: string): CustomerSourceType | null {
+  const normalized = normalizeCustomerSourceType(value)
+  if (normalized) return normalized
+  const key = value.trim().toUpperCase()
+  if (!Object.hasOwn(customerSourceToolInputAliasMap, key)) return null
+  return customerSourceToolInputAliasMap[key as keyof typeof customerSourceToolInputAliasMap]
+}
+
 export type SearchArgsLike = {
   query?: string
   customer?: string | null

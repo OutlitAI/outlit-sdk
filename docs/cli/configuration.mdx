@@ -86,12 +86,12 @@ When running in an interactive terminal, the CLI outputs:
 Example:
 
 ```
-┌──────────────────────────┬────────────┬─────────┬──────────────┬────────────┐
-│ Name                     │ Domain     │ Billing │ ARR          │ Last Active│
-├──────────────────────────┼────────────┼─────────┼──────────────┼────────────┤
-│ Acme Corp                │ acme.com   │ PAYING  │ 60000.00 USD │ 2d ago     │
-│ Globex Inc               │ globex.com │ TRIALING│ 0.00 USD     │ 5h ago     │
-└──────────────────────────┴────────────┴─────────┴──────────────┴────────────┘
+┌──────────────────────────┬────────────┬─────────┬──────────┬────────────┐
+│ Name                     │ Domain     │ Billing │ ARR      │ Last Active│
+├──────────────────────────┼────────────┼─────────┼──────────┼────────────┤
+│ Acme Corp                │ acme.com   │ PAYING  │ $60,000  │ 2d ago     │
+│ Globex Inc               │ globex.com │ TRIALING│ $0       │ 5h ago     │
+└──────────────────────────┴────────────┴─────────┴──────────┴────────────┘
 Showing 20 of 150 total. Next page: --cursor cursor_abc123
 ```
 
@@ -195,12 +195,12 @@ The CLI formats values for readability in TTY mode:
 
 | Type | Raw value | Displayed as |
 |------|-----------|-------------|
-| ARR | `{ "amount": 6000000, "currency": "USD", "estimated": false }` | `60000.00 USD` |
+| ARR | `{ "amount": 6000000, "currency": "USD", "estimated": false }` | `$60,000` |
 | Date | `2025-02-10T15:30:00Z` | `2d ago` |
 | Long names | `Very Long Customer Name Inc` | `Very Long Custo...` |
 | Missing values | `null` / `undefined` | `--` |
 
-The ARR column is the annualized revenue run rate, the same figure the Outlit app shows, and it names the currency from `arr.currency`. For USD, EUR, GBP, and CAD the CLI divides the amount by 100 (`6000000` is `60000.00 USD`). For any other currency it shows the billing provider's raw amount with the code, because those currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)); JPY has no minor unit, so `500000` shows as `500000 JPY`. An estimate (usage or per-seat) is prefixed with `~`, and a customer with no known ARR shows `--`. Use `--json` for the raw `arr` object.
+The ARR column is the annualized revenue run rate, the same figure the Outlit app shows, formatted from `arr.amount` and `arr.currency` the way the app formats it: the amount is converted using the currency's own minor-unit digits (cents for USD, EUR, GBP, CAD and AUD; none for JPY; three for KWD; ISK and UGX stay in hundredths, as Stripe keeps them) and shown in whole units with the currency symbol, for example `$60,000` or `A$12,000`. An estimate (usage or per-seat) is prefixed with `~`, a currency code the CLI doesn't recognize shows the raw amount followed by the code, and a customer with no known ARR shows `--`. Use `--json` for the raw `arr` object.
 
 ### Relative date format
 

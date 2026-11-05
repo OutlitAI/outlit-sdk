@@ -129,6 +129,21 @@ describe("sources get", () => {
     })
   })
 
+  test("accepts the STRIPE_INVOICE alias for INVOICE before lookup", async () => {
+    const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
+
+    await captureStdout(() =>
+      sourcesGetCmd.run!({
+        args: { "source-type": "stripe_invoice", "source-id": "in_example", json: true },
+      } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_source", {
+      sourceType: "INVOICE",
+      sourceId: "in_example",
+    })
+  })
+
   test("normalizes direct CRM source alias before lookup", async () => {
     const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
 
@@ -193,6 +208,21 @@ describe("sources list", () => {
     expect(exitCode).toBe(0)
     expect(stderr).toBe("")
     expect(stdout).toContain("Slack conversations")
+  })
+
+  test("accepts the STRIPE_INVOICE alias for INVOICE when listing", async () => {
+    const { default: sourcesListCmd } = await import("../../src/commands/sources/list")
+
+    await captureStdout(() =>
+      sourcesListCmd.run!({
+        args: { "source-type": "STRIPE_INVOICE", customer: "acme.com", json: true },
+      } as Parameters<NonNullable<typeof sourcesListCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith(
+      "outlit_list_sources",
+      expect.objectContaining({ sourceType: "INVOICE", customer: "acme.com" }),
+    )
   })
 
   test("sends source listing filters to outlit_list_sources", async () => {
