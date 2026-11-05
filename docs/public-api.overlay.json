@@ -277,6 +277,18 @@
       }
     },
     {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_inbox')]",
+      "update": {
+        "title": "List Inbox"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_inbox_item')]",
+      "update": {
+        "title": "Get Inbox item"
+      }
+    },
+    {
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_identity')]",
       "update": {
         "title": "Get customer identity"
@@ -556,6 +568,18 @@
       "target": "$.components.schemas['ToolOutput_outlit_get_attention_item']",
       "update": {
         "title": "Get attention item"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_inbox']",
+      "update": {
+        "title": "List Inbox"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_inbox_item']",
+      "update": {
+        "title": "Get Inbox item"
       }
     },
     {

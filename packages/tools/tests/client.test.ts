@@ -123,13 +123,15 @@ describe("toolsets", () => {
       "outlit_get_customer_credits",
       "outlit_list_attention_items",
       "outlit_get_attention_item",
+      "outlit_list_inbox",
+      "outlit_get_inbox_item",
       "outlit_get_customer_identity",
       "outlit_list_identity_merge_suggestions",
       "outlit_reject_identity_merge_suggestion",
       "outlit_merge_customers",
       "outlit_get_customer_merge_status",
     ])
-    expect(allPublicToolNames).toHaveLength(47)
+    expect(allPublicToolNames).toHaveLength(49)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })

@@ -46,6 +46,8 @@ export const publicToolNames = [
   "outlit_get_customer_credits",
   "outlit_list_attention_items",
   "outlit_get_attention_item",
+  "outlit_list_inbox",
+  "outlit_get_inbox_item",
   "outlit_get_customer_identity",
   "outlit_list_identity_merge_suggestions",
   "outlit_reject_identity_merge_suggestion",
@@ -13357,6 +13359,956 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
+  "outlit_list_inbox": {
+    "toolName": "outlit_list_inbox",
+    "commandId": "inbox.list",
+    "commandVersion": 1,
+    "ownerDomain": "inbox",
+    "title": "List Inbox",
+    "description": "List one section of your Inbox as tasks, as the Inbox page shows it and in its order: today's list, the rest of your open work, what you snoozed, what you finished since your earlier list, or the Pool of tasks no one has taken. Each task has its itemId, what it asks, why now, how it closes, what it is part of, its customer, what it answers and its state. Admins can read a teammate's today or open list with owner.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "section": {
+          "description": "Which part of the Inbox to list (default: today): today (today's list), open (the rest of the open work), snoozed, done (finished since the earlier list, then won't do) or pool (tasks no one has taken)",
+          "default": "today",
+          "type": "string",
+          "enum": [
+            "today",
+            "open",
+            "snoozed",
+            "done",
+            "pool",
+          ],
+        },
+        "customer": {
+          "description": "Only this customer's tasks: its ID, name or domain",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+        },
+        "owner": {
+          "description": "Admins only: a teammate's user ID, to read their today or open list. Omit for your own Inbox",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+        },
+        "limit": {
+          "description": "Results per page (default: 25, max: 100)",
+          "default": 25,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+        },
+        "cursor": {
+          "description": "Opaque cursor from a previous response with the same filters",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+        },
+      },
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "section": {
+          "type": "string",
+          "enum": [
+            "today",
+            "open",
+            "snoozed",
+            "done",
+            "pool",
+          ],
+        },
+        "owner": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 500,
+            },
+          },
+          "required": [
+            "id",
+            "name",
+          ],
+          "additionalProperties": false,
+        },
+        "items": {
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "itemId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191,
+                "description": "The task's ID; pass it to outlit_get_inbox_item",
+              },
+              "type": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "reply",
+                      "follow_up",
+                      "keep_promise",
+                      "do",
+                      "record",
+                    ],
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+                "description": "What the task asks: reply, follow_up (write first or follow up), keep_promise, do (the plan's next step) or record (an outcome). Null on a snoozed or done row",
+              },
+              "looksDone": {
+                "type": "boolean",
+                "description": "The task looks done already; the only question is whether it happened",
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500,
+              },
+              "whyNow": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 2000,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "doneWhen": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 500,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+                "description": "How the task closes on its own",
+              },
+              "partOf": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "work": {
+                        "type": "string",
+                        "enum": [
+                          "renewal",
+                          "reengagement",
+                          "growth",
+                        ],
+                      },
+                      "caseId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 191,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "title": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 500,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                    },
+                    "required": [
+                      "work",
+                      "caseId",
+                      "title",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+                "description": "The work the task belongs to (a renewal, re-engagement or growth) and its case",
+              },
+              "customer": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 500,
+                  },
+                },
+                "required": [
+                  "id",
+                  "name",
+                ],
+                "additionalProperties": false,
+              },
+              "trigger": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "line": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500,
+                      },
+                      "provider": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 100,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "at": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                    },
+                    "required": [
+                      "line",
+                      "provider",
+                      "at",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+                "description": "What the task answers: its source conversation, the tool it came from and when",
+              },
+              "dueAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "unassigned",
+                  "snoozed",
+                  "done",
+                  "wont_do",
+                  "expired",
+                  "closed",
+                ],
+                "description": "open, unassigned (in the Pool), snoozed, done, wont_do, expired (its window ended) or closed (its plan stopped)",
+              },
+              "snoozedUntil": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "doneAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "actions": {
+                "maxItems": 10,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "done",
+                    "wont_do",
+                    "wrong",
+                    "reopen",
+                    "snooze",
+                    "unsnooze",
+                    "take",
+                    "put_back",
+                    "not_covered",
+                    "recover_cover",
+                  ],
+                },
+                "description": "What can be decided on this task now; empty when nothing can be",
+              },
+            },
+            "required": [
+              "itemId",
+              "type",
+              "looksDone",
+              "title",
+              "whyNow",
+              "doneWhen",
+              "partOf",
+              "customer",
+              "trigger",
+              "dueAt",
+              "state",
+              "snoozedUntil",
+              "doneAt",
+              "actions",
+            ],
+            "additionalProperties": false,
+          },
+        },
+        "complete": {
+          "type": "boolean",
+          "description": "False when part of the open work could not be read; some tasks may be missing",
+        },
+        "pagination": {
+          "type": "object",
+          "properties": {
+            "hasMore": {
+              "type": "boolean",
+            },
+            "nextCursor": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2000,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+            "total": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+            },
+          },
+          "required": [
+            "hasMore",
+            "nextCursor",
+            "total",
+          ],
+          "additionalProperties": false,
+        },
+      },
+      "required": [
+        "section",
+        "owner",
+        "items",
+        "complete",
+        "pagination",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_get_inbox_item": {
+    "toolName": "outlit_get_inbox_item",
+    "commandId": "inbox.get",
+    "commandVersion": 1,
+    "ownerDomain": "inbox",
+    "title": "Get Inbox Item",
+    "description": "Get one task from your Inbox by its itemId: the task as outlit_list_inbox lists it, plus what it turns on (the email, ticket, call or Slack thread, with its last turns), the reply Outlit prepared for it, and the promise and reply tasks it stands for.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "itemId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "The task's itemId, as outlit_list_inbox returns it",
+        },
+      },
+      "required": [
+        "itemId",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "itemId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "The task's ID; pass it to outlit_get_inbox_item",
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "reply",
+                "follow_up",
+                "keep_promise",
+                "do",
+                "record",
+              ],
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "What the task asks: reply, follow_up (write first or follow up), keep_promise, do (the plan's next step) or record (an outcome). Null on a snoozed or done row",
+        },
+        "looksDone": {
+          "type": "boolean",
+          "description": "The task looks done already; the only question is whether it happened",
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+        },
+        "whyNow": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 2000,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "doneWhen": {
+          "anyOf": [
+            {
+              "type": "string",
+              "maxLength": 500,
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "How the task closes on its own",
+        },
+        "partOf": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "work": {
+                  "type": "string",
+                  "enum": [
+                    "renewal",
+                    "reengagement",
+                    "growth",
+                  ],
+                },
+                "caseId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 191,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "title": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 500,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "required": [
+                "work",
+                "caseId",
+                "title",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "The work the task belongs to (a renewal, re-engagement or growth) and its case",
+        },
+        "customer": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191,
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 500,
+            },
+          },
+          "required": [
+            "id",
+            "name",
+          ],
+          "additionalProperties": false,
+        },
+        "trigger": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500,
+                },
+                "provider": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 100,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "required": [
+                "line",
+                "provider",
+                "at",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "What the task answers: its source conversation, the tool it came from and when",
+        },
+        "dueAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "open",
+            "unassigned",
+            "snoozed",
+            "done",
+            "wont_do",
+            "expired",
+            "closed",
+          ],
+          "description": "open, unassigned (in the Pool), snoozed, done, wont_do, expired (its window ended) or closed (its plan stopped)",
+        },
+        "snoozedUntil": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "doneAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "actions": {
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "done",
+              "wont_do",
+              "wrong",
+              "reopen",
+              "snooze",
+              "unsnooze",
+              "take",
+              "put_back",
+              "not_covered",
+              "recover_cover",
+            ],
+          },
+          "description": "What can be decided on this task now; empty when nothing can be",
+        },
+        "sourcePreview": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "support_ticket",
+                    "call",
+                    "slack_thread",
+                    "reading",
+                    "last_contact",
+                  ],
+                },
+                "channel": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "ticket",
+                    "call",
+                    "slack",
+                    "other",
+                  ],
+                },
+                "title": {
+                  "type": "string",
+                  "maxLength": 500,
+                },
+                "at": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "from": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 500,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "direction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "inbound",
+                        "outbound",
+                      ],
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "excerpt": {
+                  "type": "string",
+                  "maxLength": 2000,
+                },
+                "messages": {
+                  "maxItems": 5,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 500,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "at": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "direction": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "inbound",
+                              "outbound",
+                            ],
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "text": {
+                        "type": "string",
+                        "maxLength": 2000,
+                      },
+                    },
+                    "required": [
+                      "from",
+                      "at",
+                      "direction",
+                      "text",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  "description": "The thread's last turns, newest last",
+                },
+                "href": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 2000,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "required": [
+                "kind",
+                "channel",
+                "title",
+                "at",
+                "from",
+                "direction",
+                "excerpt",
+                "messages",
+                "href",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "What the task turns on, as the Inbox's reading pane shows it; null when none",
+        },
+        "draft": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "to": {
+                  "type": "string",
+                  "maxLength": 500,
+                },
+                "subject": {
+                  "type": "string",
+                  "maxLength": 1000,
+                },
+                "body": {
+                  "type": "string",
+                  "maxLength": 20000,
+                },
+                "channel": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "email",
+                        "ticket",
+                        "slack",
+                      ],
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "stale": {
+                  "type": "boolean",
+                  "description": "The customer wrote again after the message this draft answers",
+                },
+              },
+              "required": [
+                "to",
+                "subject",
+                "body",
+                "channel",
+                "stale",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "The reply Outlit prepared for this task, for the person to edit and send",
+        },
+        "coveredSteps": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "promise",
+                  "reply",
+                ],
+              },
+              "title": {
+                "type": "string",
+                "maxLength": 500,
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "done",
+                ],
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+              },
+            },
+            "required": [
+              "kind",
+              "title",
+              "state",
+              "at",
+            ],
+            "additionalProperties": false,
+          },
+          "description": "Promise and reply tasks this task stands for: finishing it finishes them",
+        },
+      },
+      "required": [
+        "itemId",
+        "type",
+        "looksDone",
+        "title",
+        "whyNow",
+        "doneWhen",
+        "partOf",
+        "customer",
+        "trigger",
+        "dueAt",
+        "state",
+        "snoozedUntil",
+        "doneAt",
+        "actions",
+        "sourcePreview",
+        "draft",
+        "coveredSteps",
+      ],
+      "additionalProperties": false,
+    },
+  },
   "outlit_get_customer_identity": {
     "toolName": "outlit_get_customer_identity",
     "commandId": "customer.identity.get",
@@ -15164,6 +16116,8 @@ export const consumerToolPolicies = {
     "outlit_get_customer_credits",
     "outlit_list_attention_items",
     "outlit_get_attention_item",
+    "outlit_list_inbox",
+    "outlit_get_inbox_item",
     "outlit_get_customer_identity",
     "outlit_list_identity_merge_suggestions",
     "outlit_reject_identity_merge_suggestion",
@@ -15213,6 +16167,8 @@ export const consumerToolPolicies = {
     "outlit_get_customer_credits",
     "outlit_list_attention_items",
     "outlit_get_attention_item",
+    "outlit_list_inbox",
+    "outlit_get_inbox_item",
     "outlit_get_customer_identity",
     "outlit_list_identity_merge_suggestions",
     "outlit_reject_identity_merge_suggestion",
@@ -16823,4 +17779,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "6bba3f92ca85fb6d1f60f4518a8e7eb02d2776687ea4b627168444b1426970f0" as const
+export const sdkConsumerContractHash = "e74e17144afe79a614e7f11ef9548c0fa87acda72cded5c67a2331f460ac3db2" as const
