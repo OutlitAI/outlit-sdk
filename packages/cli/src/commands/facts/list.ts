@@ -1,12 +1,12 @@
 import {
-  type CustomerSourceType,
+  type CustomerSourceFilterType,
   customerFactCategories,
   customerFactStatuses,
   customerFactTypes,
   customerSourceTypeAliases,
   customerSourceTypeInputs,
   customerSourceTypes,
-  normalizeCustomerSourceType,
+  normalizeCustomerSourceFilterInput,
   publicToolContracts,
   unsupportedCustomerFactTypes,
 } from "@outlit/tools"
@@ -33,12 +33,14 @@ function invalidValues(values: string[] | undefined, allowed: readonly string[])
   return values.filter((value) => !allowed.includes(value))
 }
 
-function normalizeSourceTypes(values: string[] | undefined): CustomerSourceType[] | undefined {
+function normalizeSourceTypes(
+  values: string[] | undefined,
+): CustomerSourceFilterType[] | undefined {
   if (!values) return undefined
 
-  return Array.from(new Set(values.map((value) => normalizeCustomerSourceType(value)))).filter(
-    (sourceType): sourceType is CustomerSourceType => sourceType !== null,
-  )
+  return Array.from(
+    new Set(values.map((value) => normalizeCustomerSourceFilterInput(value))),
+  ).filter((sourceType): sourceType is CustomerSourceFilterType => sourceType !== null)
 }
 
 const sourceTypeDescription = `${customerSourceTypes.join(", ")} (aliases: ${customerSourceTypeAliases.join(", ")})`
@@ -154,7 +156,7 @@ export default defineCommand({
     }
 
     const invalidSourceTypes =
-      sourceTypes?.filter((value) => !normalizeCustomerSourceType(value)) ?? []
+      sourceTypes?.filter((value) => !normalizeCustomerSourceFilterInput(value)) ?? []
     if (invalidSourceTypes.length > 0) {
       return outputError(
         {

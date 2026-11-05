@@ -205,6 +205,45 @@ describe("customers list", () => {
     })
   }
 
+  for (const [label, args, rawArgs] of [
+    ["empty --arr-above=", { "arr-above": "" }, ["--arr-above="]],
+    ["valueless --arr-below", { "arr-below": "" }, ["--arr-below"]],
+    ["non-numeric --arr-above", { "arr-above": "lots" }, ["--arr-above", "lots"]],
+    ["empty --mrr-above=", {}, ["--mrr-above="]],
+    ["valueless --mrr-above", {}, ["--mrr-above"]],
+    ["--mrr-below followed by another flag", {}, ["--mrr-below", "--limit", "5"]],
+  ] as const) {
+    test(`rejects ${label} before calling the customer tool`, async () => {
+      const { default: listCmd } = await import("../../../src/commands/customers/list")
+
+      await runExpectingError(async () => {
+        await listCmd.run!({
+          args: { ...args, json: true },
+          rawArgs: [...rawArgs],
+        } as Parameters<NonNullable<typeof listCmd.run>>[0])
+      }, "invalid_input")
+
+      expect(mockCallTool).not.toHaveBeenCalled()
+    })
+  }
+
+  test("accepts a zero ARR threshold", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: { "arr-above": "0", json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({ arrAbove: 0 }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("parses --no-activity-in through citty without treating it as a negated boolean", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)

@@ -15,6 +15,7 @@ export {
 } from "./client.js"
 export type {
   CustomerContextSearchInput,
+  CustomerSourceFilterType,
   CustomerSourceType,
   CustomerSourceTypeInput,
   JsonSchema,
@@ -25,6 +26,7 @@ export type {
 export {
   getPublicToolContract,
   isPublicToolName,
+  normalizeCustomerSourceFilterInput,
   normalizeCustomerSourceToolInput,
   normalizeCustomerSourceType,
   resolveCustomerContextSearchInput,

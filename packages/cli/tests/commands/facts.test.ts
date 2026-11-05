@@ -30,6 +30,21 @@ describe("facts commands", () => {
     mockCallTool.mockClear()
   })
 
+  test("list sends the STRIPE_INVOICE source filter unchanged", async () => {
+    const { default: factsListCmd } = await import("../../src/commands/facts/list")
+
+    await captureStdout(() =>
+      factsListCmd.run!({
+        args: { customer: "acme.com", "source-types": "stripe_invoice,call", json: true },
+      } as Parameters<NonNullable<typeof factsListCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith(
+      "outlit_list_facts",
+      expect.objectContaining({ sourceTypes: ["STRIPE_INVOICE", "CALL"] }),
+    )
+  })
+
   test("list sends customer filters to outlit_list_facts", async () => {
     const { default: factsListCmd } = await import("../../src/commands/facts/list")
 

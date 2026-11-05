@@ -116,7 +116,8 @@ outlit customers list [flags]
 # Paying customers inactive for 30 days
 outlit customers list --billing-status PAYING --no-activity-in 30d
 
-# High-ARR customers sorted by revenue
+# High-ARR customers sorted by revenue (the threshold is in each customer's own billing
+# currency: $6,000 for USD, €6,000 for EUR)
 outlit customers list --arr-above 600000 --order-by arr_cents --order-direction desc
 
 # Search for a customer
@@ -284,7 +285,7 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
 }
 ```
 
-`revenue.arr` is the same figure the customer page shows, with its `currency`, whether it is an `estimate`, the revenue `lifecycle` (`active`, `past_due`, `paused`, `churned`, `trialing`, or `null`), and the `parts` it is counted from: the larger of subscriptions plus usage, and what was invoiced in the last 12 months. `revenue.arr.amount` and `revenue.lifetimeRevenue` are in the billing provider's units, like `arr` in `customers list`: for a customer billed in USD, `6000000` is $60,000 ARR and `2400000` is $24,000 of lifetime revenue; `lifetimeRevenue` doesn't name its currency. `--include renewal` returns `renewal`, the renewal date the customer page shows (`YYYY-MM-DD`) with its `source` (`outlit`, `crm`, or `billing`), or `null` when the customer has none.
+`revenue.arr` is the same figure the customer page shows, with its `currency`, its `estimated` flag (whether the amount includes a usage or per-seat estimate), the revenue `lifecycle` (`active`, `past_due`, `paused`, `churned`, `trialing`, or `null`), and the `parts` it is counted from: the larger of subscriptions plus usage, and what was invoiced in the last 12 months. `revenue.arr.amount` and `revenue.lifetimeRevenue` are in the billing provider's units, like `arr` in `customers list`: for a customer billed in USD, `6000000` is $60,000 ARR and `2400000` is $24,000 of lifetime revenue; `lifetimeRevenue` doesn't name its currency. `--include renewal` returns `renewal`, the renewal date the customer page shows (`YYYY-MM-DD`) with its `source` (`outlit`, `crm`, or `billing`), or `null` when the customer has none.
 
 <Info>
   `customer.activatedAt` is an ISO-8601 timestamp when Outlit has recorded company activation, and `null` otherwise. Contact journey stages remain separate under

@@ -874,6 +874,25 @@ describe("resolveCustomerContextSearchInput", () => {
     })
   })
 
+  test("passes STRIPE_INVOICE through search input unchanged, like Core", () => {
+    expect(
+      resolveCustomerContextSearchInput({
+        query: "invoices",
+        sourceTypes: [" stripe_invoice ", "invoice", "STRIPE_INVOICE"],
+      }),
+    ).toEqual({
+      ok: true,
+      request: {
+        query: "invoices",
+        customer: undefined,
+        topK: undefined,
+        after: undefined,
+        before: undefined,
+        sourceTypes: ["STRIPE_INVOICE", "INVOICE"],
+      },
+    })
+  })
+
   test("normalizes source types and CRM aliases in search input", () => {
     expect(
       resolveCustomerContextSearchInput({

@@ -57,6 +57,21 @@ describe("search", () => {
     })
   })
 
+  test("sends the STRIPE_INVOICE source filter unchanged", async () => {
+    const { default: searchCmd } = await import("../../src/commands/search")
+
+    await captureStdout(() =>
+      searchCmd.run!({
+        args: { query: "invoices", "source-types": "stripe_invoice,call", json: true },
+      } as Parameters<NonNullable<typeof searchCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith(
+      "outlit_search_customer_context",
+      expect.objectContaining({ sourceTypes: ["STRIPE_INVOICE", "CALL"] }),
+    )
+  })
+
   test("normalizes case-insensitive CRM opportunity source filters", async () => {
     const { default: searchCmd } = await import("../../src/commands/search")
 

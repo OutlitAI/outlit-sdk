@@ -47,12 +47,18 @@ function normalizeCustomerListResult(data: unknown): unknown {
   }
 }
 
-/** Reads the last value given for an undeclared `--flag value` or `--flag=value` option. */
+/**
+ * Reads the last value given for an undeclared `--flag value` or `--flag=value` option. Returns
+ * undefined when the flag is absent and "" when it is present without a value (a following token
+ * that starts with `--` is the next flag, not a value).
+ */
 function rawFlagValue(rawArgs: string[] | undefined, flag: string): string | undefined {
   let value: string | undefined
   for (const [index, arg] of (rawArgs ?? []).entries()) {
-    if (arg === `--${flag}`) value = rawArgs?.[index + 1]
-    else if (arg.startsWith(`--${flag}=`)) value = arg.slice(flag.length + 3)
+    if (arg === `--${flag}`) {
+      const next = rawArgs?.[index + 1]
+      value = next === undefined || next.startsWith("--") ? "" : next
+    } else if (arg.startsWith(`--${flag}=`)) value = arg.slice(flag.length + 3)
   }
   return value
 }
@@ -148,8 +154,8 @@ export default defineCommand({
       ["mrr-below", "mrrBelow", rawFlagValue(rawArgs, "mrr-below")],
     ] as const
     for (const [flag, param, raw] of numericFlags) {
-      if (!raw) continue
-      const value = Number(raw)
+      if (raw === undefined) continue
+      const value = typeof raw === "string" && raw.trim() !== "" ? Number(raw) : Number.NaN
       if (!Number.isFinite(value)) {
         return outputError({ message: `--${flag} must be a number`, code: "invalid_input" }, json)
       }
