@@ -1,9 +1,9 @@
 import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
+import { customerArgs, requireCustomerSelector } from "../../args/customer"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
-import { requiredTrimmedString } from "../../lib/platform-input"
 import { parseBoundedInteger } from "../features/input"
 
 export default defineCommand({
@@ -14,7 +14,7 @@ export default defineCommand({
       "Unavailable source evidence remains distinct from no matches in the requested window.",
       "Provider-defined units remain separate from linked event counts.",
       "",
-      "The customer argument accepts a customer domain, UUID, or exact name.",
+      "The customer (<customer> or --customer) accepts a customer domain, UUID, or exact name.",
       "",
       "Examples:",
       "  outlit customers features acme.com --json",
@@ -27,11 +27,7 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    customer: {
-      type: "positional",
-      description: "Customer ID, domain (acme.com), or exact name",
-      required: true,
-    },
+    ...customerArgs,
     weeks: { type: "string", description: "Historical usage window in weeks (1-53, default: 12)" },
     weekly: {
       type: "boolean",
@@ -41,13 +37,14 @@ export default defineCommand({
   },
   async run({ args }) {
     const json = !!args.json
+    const customer = requireCustomerSelector(args, "outlit customers features", json)
     const client = await getClientOrExit(args["api-key"], json)
 
     return runTool(
       client,
       publicToolContracts.outlit_get_customer_features.toolName,
       {
-        customer: requiredTrimmedString(args.customer, "<customer>", json),
+        customer,
         weeks: parseBoundedInteger(args.weeks, 12, "--weeks", 1, 53, json),
         ...(args.weekly ? { includeWeeklyUsage: true } : {}),
       },

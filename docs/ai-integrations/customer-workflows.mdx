@@ -25,7 +25,7 @@ outlit customers timeline acme.com --timeframe 90d --json
 outlit facts list acme.com --status ACTIVE --json
 ```
 
-**Then:** open the sources behind facts (`outlit sources get --source-type CALL --source-id <id>`) and check `outlit attention list --customer-id <uuid>` for review items Outlit already prepared.
+**Then:** open the sources behind facts (`outlit sources get --source-type CALL --source-id <id>`) and check `outlit attention list --customer acme.com` for review items Outlit already prepared.
 
 ## Recipe: renewal preparation
 
@@ -60,7 +60,7 @@ outlit customers list --billing-status PAYING --has-activity-in 7d --order-by mr
 outlit customers features acme.com --weeks 12 --weekly --json
 
 # Seat-by-seat engagement inside the account
-outlit users list --customer-id '<uuid>' --journey-stage ENGAGED --json
+outlit users list --customer acme.com --journey-stage ENGAGED --json
 ```
 
 An `unavailable` state means a source did not report; it does not mean usage is zero.
@@ -71,7 +71,7 @@ Read the review queue Outlit's agents produced.
 
 ```bash
 outlit attention list --json
-outlit attention list --status resolved --customer-id '<uuid>' --json
+outlit attention list --status resolved --customer acme.com --json
 outlit attention get '<attention-item-uuid>' --json
 ```
 
@@ -140,8 +140,8 @@ If you can't confirm a source ever synced, leave the absence inconclusive — re
 
 | Task | Command | Identity argument |
 |------|---------|-------------------|
-| Inspect resolved identifiers | `outlit customers identity <uuid>` | Exact UUID only |
-| Review merge suggestions | `outlit identity suggestions list` | Optional `--customer-id`, `--status`, `--confidence` filters |
+| Inspect resolved identifiers | `outlit customers identity <customer>` | Domain, exact name, or ID; resolved to the exact ID |
+| Review merge suggestions | `outlit identity suggestions list` | Optional `--customer`, `--status`, `--confidence` filters |
 | Reject a suggestion | `outlit identity suggestions reject <suggestion-id>` | Exact suggestion ID (positional) |
 | Merge duplicate customers | `outlit customers merge <survivorId> <duplicateId>` | Exact UUIDs, two-phase (see recipe above) |
 

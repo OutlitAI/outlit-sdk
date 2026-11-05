@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import { runCommand } from "citty"
 import { mockExitThrow, setNonInteractive, TEST_API_KEY, useTempEnv } from "../helpers"
 
+const customerId = "10000000-0000-4000-8000-000000000001"
 const calls: Array<{ tool: string; params: unknown }> = []
 mock.module("../../src/lib/client", () => ({
   createClient: async () => ({
@@ -9,6 +10,12 @@ mock.module("../../src/lib/client", () => ({
     baseUrl: "https://app.outlit.ai",
     callTool: async (tool: string, params: unknown) => {
       calls.push({ tool, params })
+      if (tool === "outlit_list_customers") {
+        return {
+          items: [{ id: customerId, name: "Acme", domain: "acme.com" }],
+          pagination: { hasMore: false, nextCursor: null },
+        }
+      }
       if (tool === "outlit_reject_identity_merge_suggestion") {
         return { suggestionId: "proposal_1", status: "REJECTED" }
       }
@@ -34,12 +41,12 @@ describe("identity CLI tools", () => {
   })
 
   test.each([
-    ["identity", ["customer_1"], "outlit_get_customer_identity", { customerId: "customer_1" }],
+    ["identity", [customerId], "outlit_get_customer_identity", { customerId }],
     [
       "list",
       [
-        "--customer-id",
-        "customer_1",
+        "--customer",
+        customerId,
         "--suggestion-id",
         "proposal_1",
         "--cursor",
@@ -53,7 +60,7 @@ describe("identity CLI tools", () => {
       ],
       "outlit_list_identity_merge_suggestions",
       {
-        customerId: "customer_1",
+        customerId,
         suggestionId: "proposal_1",
         cursor: "page_2",
         limit: 7,
@@ -116,6 +123,32 @@ describe("identity CLI tools", () => {
           ? { suggestionId: "proposal_1", status: "REJECTED" }
           : { operationId: "operation_1", status: "queued" },
       )
+    } finally {
+      write.mockRestore()
+    }
+  })
+
+  test.each([
+    ["identity", ["acme.com"], "outlit_get_customer_identity", { customerId }],
+    ["identity", ["--customer", "acme.com"], "outlit_get_customer_identity", { customerId }],
+    [
+      "list",
+      ["--customer", "acme.com"],
+      "outlit_list_identity_merge_suggestions",
+      { customerId, limit: 50 },
+    ],
+  ] as const)("%s resolves a customer domain to its ID first", async (name, rawArgs, tool, params) => {
+    const cmd = await command(name)
+    const write = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await runCommand(cmd.root, { rawArgs: [...cmd.prefix, ...rawArgs, "--json"] })
+      expect(calls).toEqual([
+        {
+          tool: "outlit_list_customers",
+          params: { search: "acme.com", limit: 100, orderBy: "name", orderDirection: "asc" },
+        },
+        { tool, params },
+      ])
     } finally {
       write.mockRestore()
     }

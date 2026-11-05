@@ -1,6 +1,7 @@
 import { customerIncludeSections, customerTimeframes, publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
+import { customerArgs, requireCustomerSelector } from "../../args/customer"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
@@ -11,7 +12,7 @@ export default defineCommand({
     description: [
       "Get details for a customer by ID, domain, or name.",
       "",
-      "The customer argument accepts:",
+      "The customer (<customer> or --customer) accepts:",
       "  - Customer domain (acme.com)",
       "  - Customer ID (UUID)",
       "  - Customer name (partial match)",
@@ -24,6 +25,7 @@ export default defineCommand({
       "Examples:",
       "  outlit customers get acme.com",
       "  outlit customers get acme.com --include users,revenue",
+      "  outlit customers get --customer acme.com --json",
       "  outlit customers get acme.com --include users,revenue,recentTimeline --timeframe 90d",
       "",
       AGENT_JSON_HINT,
@@ -32,11 +34,7 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    customer: {
-      type: "positional",
-      description: "Customer ID, domain (acme.com), or name",
-      required: true,
-    },
+    ...customerArgs,
     include: {
       type: "string",
       description: [
@@ -53,10 +51,11 @@ export default defineCommand({
   },
   async run({ args }) {
     const json = !!args.json
+    const customer = requireCustomerSelector(args, "outlit customers get", json)
     const client = await getClientOrExit(args["api-key"], json)
 
     const params: Record<string, unknown> = {
-      customer: args.customer,
+      customer,
       timeframe: args.timeframe,
     }
 

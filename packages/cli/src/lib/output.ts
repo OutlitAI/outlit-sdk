@@ -23,16 +23,20 @@ export function outputResult(data: unknown): void {
 /**
  * Write an error and exit with code 1.
  *
- * In JSON mode: writes { "error": "message string" } to stderr.
+ * In JSON mode: writes { "error": "message string", "code": "...", ...details } to stderr.
  * In TTY mode: writes "Error: message" to stderr.
  *
  * Typed as `never` because it always calls process.exit() — TypeScript
  * uses this to eliminate dead-code guard clauses after error calls.
  */
-export function outputError(error: { message: string; code?: string }, json: boolean): never {
+export function outputError(
+  error: { message: string; code?: string; details?: Record<string, unknown> },
+  json: boolean,
+): never {
   if (isJsonMode(json)) {
-    const body: Record<string, string> = { error: error.message }
+    const body: Record<string, unknown> = { error: error.message }
     if (error.code) body.code = error.code
+    if (error.details) Object.assign(body, error.details)
     process.stderr.write(`${JSON.stringify(body, null, 2)}\n`)
   } else {
     console.error(`Error: ${error.message}`)

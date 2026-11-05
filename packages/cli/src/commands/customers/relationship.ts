@@ -1,6 +1,7 @@
 import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
+import { customerArgs, requireCustomerSelector } from "../../args/customer"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 
@@ -15,7 +16,7 @@ export default defineCommand({
       "summary timestamp when available. It does not expand the compact customer get response, expose",
       "raw fact IDs or source quotes, or replace the chronological timeline.",
       "",
-      "The customer argument accepts:",
+      "The customer (<customer> or --customer) accepts:",
       "  - Customer domain (acme.com)",
       "  - Customer ID (UUID)",
       "  - Exact customer name",
@@ -30,20 +31,17 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    customer: {
-      type: "positional",
-      description: "Customer ID, domain (acme.com), or name",
-      required: true,
-    },
+    ...customerArgs,
   },
   async run({ args }) {
     const json = !!args.json
+    const customer = requireCustomerSelector(args, "outlit customers relationship", json)
     const client = await getClientOrExit(args["api-key"], json)
 
     return runTool(
       client,
       publicToolContracts.outlit_get_customer_relationship.toolName,
-      { customer: args.customer },
+      { customer },
       json,
     )
   },

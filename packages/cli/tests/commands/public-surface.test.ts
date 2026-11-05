@@ -21,7 +21,7 @@ const retiredToolPrefixes = [
 
 describe("public CLI surface", () => {
   test("uses current journey-stage values in root help examples", () => {
-    const cliSource = readFileSync(join(packageRoot, "src", "cli.ts"), "utf8")
+    const cliSource = readFileSync(join(packageRoot, "src", "main.ts"), "utf8")
     const documentedStages = [
       ...cliSource.matchAll(/outlit users list --journey-stage ([A-Z_]+)/g),
     ].map((match) => match[1] ?? "")
@@ -34,7 +34,7 @@ describe("public CLI surface", () => {
   })
 
   test("does not register retired command families or notification sending", () => {
-    const cliSource = readFileSync(join(packageRoot, "src", "cli.ts"), "utf8")
+    const cliSource = readFileSync(join(packageRoot, "src", "main.ts"), "utf8")
 
     for (const command of [...retiredCommandFamilies, "notify"]) {
       expect(cliSource).not.toContain(`${command}: () => import(`)

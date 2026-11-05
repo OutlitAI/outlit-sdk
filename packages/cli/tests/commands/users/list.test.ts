@@ -1,17 +1,19 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
-  TEST_API_KEY,
   expectErrorExit,
   mockExitThrow,
   setInteractive,
   setNonInteractive,
+  TEST_API_KEY,
   useTempEnv,
 } from "../../helpers"
 
-const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
-  items: [{ id: "u1", email: "alice@acme.com", name: "Alice", journeyStage: "CHAMPION" }],
-  pagination: { hasMore: false, nextCursor: null, total: 1 },
-}))
+const mockCallTool = mock(
+  async (_toolName: string, _params: unknown): Promise<unknown> => ({
+    items: [{ id: "u1", email: "alice@acme.com", name: "Alice", journeyStage: "CHAMPION" }],
+    pagination: { hasMore: false, nextCursor: null, total: 1 },
+  }),
+)
 
 mock.module("../../../src/lib/client", () => ({
   createClient: async () => ({
@@ -37,7 +39,7 @@ describe("users list", () => {
       await listCmd.run!({
         args: {
           "journey-stage": "CHAMPION",
-          "customer-id": "cust-uuid-123",
+          "customer-id": "10000000-0000-4000-8000-000000000123",
           "no-activity-in": "30d",
           "has-activity-in": "7d",
           search: "alice",
@@ -53,7 +55,7 @@ describe("users list", () => {
         "outlit_list_users",
         expect.objectContaining({
           journeyStage: "CHAMPION",
-          customerId: "cust-uuid-123",
+          customerId: "10000000-0000-4000-8000-000000000123",
           noActivityInLast: "30d",
           hasActivityInLast: "7d",
           search: "alice",
@@ -158,6 +160,65 @@ describe("users list", () => {
     } finally {
       logSpy.mockRestore()
       setNonInteractive()
+    }
+  })
+
+  test("resolves --customer to the customer ID before listing users", async () => {
+    const customerId = "10000000-0000-4000-8000-0000000000aa"
+    mockCallTool.mockImplementationOnce(async () => ({
+      items: [{ id: customerId, name: "AthenaHQ", domain: "athenahq.ai" }],
+      pagination: { hasMore: false, nextCursor: null, total: 1 },
+    }))
+    const { runCommand } = await import("citty")
+    const { default: listCmd } = await import("../../../src/commands/users/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await runCommand(listCmd, { rawArgs: ["--customer", "athenahq.ai", "--json"] })
+
+      expect(mockCallTool.mock.calls).toEqual([
+        [
+          "outlit_list_customers",
+          { search: "athenahq.ai", limit: 100, orderBy: "name", orderDirection: "asc" },
+        ],
+        ["outlit_list_users", expect.objectContaining({ customerId })],
+      ])
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("fails on an empty --customer instead of listing every user", async () => {
+    const { runCommand } = await import("citty")
+    const { default: listCmd } = await import("../../../src/commands/users/list")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    let thrown: unknown
+    try {
+      await runCommand(listCmd, { rawArgs: ["--customer", "", "--json"] })
+    } catch (error) {
+      thrown = error
+    } finally {
+      const stderr = stderrSpy.mock.calls.map((call) => String(call[0])).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+      expectErrorExit(thrown, stderr, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  })
+
+  test("keeps --customer-id working as an alias without a lookup", async () => {
+    const customerId = "10000000-0000-4000-8000-0000000000aa"
+    const { runCommand } = await import("citty")
+    const { default: listCmd } = await import("../../../src/commands/users/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await runCommand(listCmd, { rawArgs: ["--customer-id", customerId, "--json"] })
+
+      expect(mockCallTool.mock.calls).toEqual([
+        ["outlit_list_users", expect.objectContaining({ customerId })],
+      ])
+    } finally {
+      writeSpy.mockRestore()
     }
   })
 })

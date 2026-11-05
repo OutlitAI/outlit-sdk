@@ -2,6 +2,11 @@ import { publicToolContracts, userJourneyStages } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import {
+  customerFlagArgs,
+  readCustomerSelector,
+  resolveCustomerIdOrExit,
+} from "../../args/customer"
+import {
   activityFilterArgs,
   applyListFilters,
   orderArgs,
@@ -26,7 +31,7 @@ export default defineCommand({
       "Examples:",
       "  outlit users list                                          # all users",
       "  outlit users list --journey-stage ENGAGED                 # engaged users only",
-      "  outlit users list --customer-id <uuid>                    # users for a customer",
+      "  outlit users list --customer acme.com                     # users for a customer",
       "  outlit users list --no-activity-in 30d                    # inactive users",
       "  outlit users list --search alice --order-by last_activity_at",
       "  outlit users list --json | jq '.[].email'                 # pipe-friendly",
@@ -43,10 +48,7 @@ export default defineCommand({
       type: "string",
       description: `Filter by journey stage (${userJourneyStages.join(", ")})`,
     },
-    "customer-id": {
-      type: "string",
-      description: "Filter users belonging to a specific customer (UUID)",
-    },
+    ...customerFlagArgs,
     ...activityFilterArgs,
     ...orderArgs,
     search: {
@@ -56,11 +58,12 @@ export default defineCommand({
   },
   async run({ args, rawArgs }) {
     const json = !!args.json
+    const customer = readCustomerSelector(args, json)
     const client = await getClientOrExit(args["api-key"], json)
 
     const params: Record<string, unknown> = {}
     if (args["journey-stage"]) params.journeyStage = args["journey-stage"]
-    if (args["customer-id"]) params.customerId = args["customer-id"]
+    if (customer) params.customerId = await resolveCustomerIdOrExit(client, customer, json)
     if (args.trait) {
       try {
         const traitFilters = parseTraitFilters(args.trait)

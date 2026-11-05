@@ -18,6 +18,7 @@ const JSON_F: Flag = { name: "--json", desc: "Force JSON output" }
 const API_KEY_F: Flag = { name: "--api-key", desc: "Outlit API key" }
 const LIMIT_F: Flag = { name: "--limit", desc: "Max results (1-100)" }
 const CURSOR_F: Flag = { name: "--cursor", desc: "Pagination cursor" }
+const CUSTOMER_F: Flag = { name: "--customer", desc: "Customer domain, exact name, or ID" }
 
 const COMMON = [API_KEY_F, JSON_F] as const
 const PAGINATED = [...COMMON, LIMIT_F, CURSOR_F] as const
@@ -29,7 +30,7 @@ const ACTIVITY_ORDER = [
 ] as const
 
 /** Single source of truth for all completion scripts. */
-const COMMANDS: readonly CmdDef[] = [
+export const COMMANDS: readonly CmdDef[] = [
   {
     name: "auth",
     desc: "Manage authentication",
@@ -38,7 +39,11 @@ const COMMANDS: readonly CmdDef[] = [
       {
         name: "login",
         desc: "Store API key",
-        flags: [JSON_F, { name: "--key", desc: "API key to store" }],
+        flags: [
+          JSON_F,
+          { name: "--key", desc: "API key to store" },
+          { name: "--browser", desc: "Approve a scoped key in the browser" },
+        ],
       },
       { name: "logout", desc: "Remove stored key", flags: [JSON_F] },
       { name: "status", desc: "Check auth state", flags: [...COMMON] },
@@ -71,6 +76,7 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "Get customer by ID or domain",
         flags: [
           ...COMMON,
+          CUSTOMER_F,
           { name: "--include", desc: `Sections: ${customerIncludeSections.join(", ")}` },
           { name: "--timeframe", desc: "Metrics timeframe" },
         ],
@@ -78,12 +84,12 @@ const COMMANDS: readonly CmdDef[] = [
       {
         name: "relationship",
         desc: "Get a bounded customer relationship",
-        flags: [...COMMON],
+        flags: [...COMMON, CUSTOMER_F],
       },
       {
         name: "identity",
         desc: "Inspect customer identity and possible split records",
-        flags: [...COMMON],
+        flags: [...COMMON, CUSTOMER_F],
       },
       {
         name: "merge",
@@ -103,16 +109,22 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "Get event and metered Feature usage for a customer",
         flags: [
           ...COMMON,
+          CUSTOMER_F,
           { name: "--weeks", desc: "Historical usage window (1-53 weeks)" },
           { name: "--weekly", desc: "Include ordered weekly usage" },
         ],
       },
-      { name: "credits", desc: "Get imported credit pools and burn summaries", flags: [...COMMON] },
+      {
+        name: "credits",
+        desc: "Get imported credit pools and burn summaries",
+        flags: [...COMMON, CUSTOMER_F],
+      },
       {
         name: "timeline",
         desc: "Show activity timeline",
         flags: [
           ...PAGINATED,
+          CUSTOMER_F,
           { name: "--channels", desc: "Filter by channels" },
           { name: "--event-types", desc: "Filter by event types" },
           { name: "--timeframe", desc: "Event timeframe" },
@@ -157,7 +169,7 @@ const COMMANDS: readonly CmdDef[] = [
         flags: [
           ...PAGINATED,
           { name: "--status", desc: "Lifecycle: open or resolved" },
-          { name: "--customer-id", desc: "Filter by exact customer UUID" },
+          CUSTOMER_F,
         ],
       },
       { name: "get", desc: "Get one Attention item by exact ID", flags: [...COMMON] },
@@ -176,7 +188,7 @@ const COMMANDS: readonly CmdDef[] = [
             desc: "List complete suggestion details",
             flags: [
               ...PAGINATED,
-              { name: "--customer-id", desc: "Filter by exact customer ID" },
+              CUSTOMER_F,
               { name: "--suggestion-id", desc: "Retrieve one exact suggestion" },
               { name: "--status", desc: "suggested, processing, merged, or rejected" },
               { name: "--confidence", desc: "HIGH, MEDIUM, or LOW" },
@@ -234,7 +246,7 @@ const COMMANDS: readonly CmdDef[] = [
           ...ACTIVITY_ORDER,
           { name: "--trait", desc: "Filter by trait key=value pairs" },
           { name: "--journey-stage", desc: "Filter by journey stage" },
-          { name: "--customer-id", desc: "Filter by customer UUID" },
+          CUSTOMER_F,
           { name: "--search", desc: "Search name or email" },
         ],
       },
@@ -268,6 +280,7 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "List customer facts",
         flags: [
           ...PAGINATED,
+          CUSTOMER_F,
           { name: "--status", desc: "Filter by fact status" },
           { name: "--source-types", desc: "Filter by source types" },
           { name: "--fact-types", desc: "Filter by fact types" },
@@ -297,7 +310,7 @@ const COMMANDS: readonly CmdDef[] = [
         flags: [
           ...PAGINATED,
           { name: "--source-type", desc: "Source type" },
-          { name: "--customer", desc: "Scope to customer" },
+          CUSTOMER_F,
           { name: "--participant", desc: "Filter by participant" },
           { name: "--provider", desc: "Filter by provider" },
           { name: "--has-transcript", desc: "Only calls with transcripts" },
@@ -333,7 +346,7 @@ const COMMANDS: readonly CmdDef[] = [
     desc: "Search customer context",
     flags: [
       ...COMMON,
-      { name: "--customer", desc: "Scope to customer (UUID or domain)" },
+      CUSTOMER_F,
       { name: "--top-k", desc: "Max results" },
       { name: "--after", desc: "Events after date (ISO 8601)" },
       { name: "--before", desc: "Events before date (ISO 8601)" },
@@ -470,7 +483,7 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "skills", desc: "Launch the interactive Outlit skills installer", flags: [JSON_F] },
     ],
   },
-  { name: "upgrade", desc: "Upgrade the CLI", flags: [] },
+  { name: "upgrade", desc: "Upgrade the CLI", flags: [JSON_F] },
   { name: "doctor", desc: "Diagnose environment", flags: [...COMMON] },
   { name: "completions", desc: "Generate shell completions", flags: [] },
 ]

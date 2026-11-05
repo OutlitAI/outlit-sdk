@@ -49,6 +49,66 @@ describe("customers get", () => {
     }
   })
 
+  test("takes the customer as <customer>, --customer, or the --customer-id alias", async () => {
+    const { runCommand } = await import("citty")
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      for (const rawArgs of [
+        ["acme.com", "--json"],
+        ["--customer", "acme.com", "--json"],
+        ["--customer-id", "acme.com", "--json"],
+        ["acme.com", "--customer", "acme.com", "--json"],
+      ]) {
+        mockCallTool.mockClear()
+        await runCommand(getCmd, { rawArgs })
+        expect(mockCallTool).toHaveBeenCalledWith(
+          "outlit_get_customer",
+          expect.objectContaining({ customer: "acme.com" }),
+        )
+      }
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("rejects two different customers before an API call", async () => {
+    const { runCommand } = await import("citty")
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    let thrown: unknown
+    try {
+      await runCommand(getCmd, { rawArgs: ["acme.com", "--customer", "beta.com", "--json"] })
+    } catch (error) {
+      thrown = error
+    } finally {
+      const stderr = stderrSpy.mock.calls.map((call) => String(call[0])).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+      expectErrorExit(thrown, stderr, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  })
+
+  test("requires a customer", async () => {
+    const { runCommand } = await import("citty")
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    let thrown: unknown
+    try {
+      await runCommand(getCmd, { rawArgs: ["--json"] })
+    } catch (error) {
+      thrown = error
+    } finally {
+      const stderr = stderrSpy.mock.calls.map((call) => String(call[0])).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+      expectErrorExit(thrown, stderr, "missing_input")
+    }
+  })
+
   test("splits --include on comma and passes as array", async () => {
     const { default: getCmd } = await import("../../../src/commands/customers/get")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)

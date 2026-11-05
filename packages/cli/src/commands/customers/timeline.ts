@@ -1,6 +1,7 @@
 import { publicToolContracts, timelineChannels, timelineTimeframes } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
+import { customerArgs, requireCustomerSelector } from "../../args/customer"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
@@ -37,7 +38,7 @@ export default defineCommand({
     description: [
       "Show the activity timeline for a customer.",
       "",
-      "The customer argument accepts:",
+      "The customer (<customer> or --customer) accepts:",
       "  - Customer domain (acme.com)",
       "  - Customer ID (UUID)",
       "",
@@ -49,6 +50,7 @@ export default defineCommand({
       "Examples:",
       "  outlit customers timeline acme.com",
       "  outlit customers timeline acme.com --timeframe 90d",
+      "  outlit customers timeline --customer acme.com --json",
       "  outlit customers timeline acme.com --channels COMMUNICATION,MEETING",
       "  outlit customers timeline acme.com --start-date 2025-01-01T00:00:00Z --end-date 2025-03-01T23:59:59.999Z",
       "  outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50",
@@ -60,11 +62,7 @@ export default defineCommand({
     ...authArgs,
     ...outputArgs,
     ...paginationArgs,
-    customer: {
-      type: "positional",
-      description: "Customer ID or domain (acme.com)",
-      required: true,
-    },
+    ...customerArgs,
     channels: {
       type: "string",
       description: `Comma-separated list of channels to filter (${timelineChannels.join(", ")})`,
@@ -91,11 +89,12 @@ export default defineCommand({
   },
   async run({ args }) {
     const json = !!args.json
+    const customer = requireCustomerSelector(args, "outlit customers timeline", json)
     const client = await getClientOrExit(args["api-key"], json)
 
     const hasDateRange = !!args["start-date"] || !!args["end-date"]
 
-    const params: Record<string, unknown> = { customer: args.customer }
+    const params: Record<string, unknown> = { customer }
 
     // MUTUAL EXCLUSIVITY: send timeframe only when no date range is set
     if (hasDateRange) {
