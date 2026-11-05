@@ -25,7 +25,7 @@ Process:
 
 Guardrails:
 - Do not treat healthy usage alone as expansion readiness.
-- Do not rank plan mismatch, high MRR, or broad feature usage alone.
+- Do not rank plan mismatch, high ARR, or broad feature usage alone.
 - Prioritize buying intent, plan-limit pain, capacity pressure, seat growth, or a clear next package to sell.
 - Every ranked customer should have explicit expansion intent, plan-limit pain, capacity pressure, seat or team growth, a premium-feature request, or a similarly concrete expansion trigger.
 - Do not recommend an expansion motion without explaining the likely expansion path.
@@ -40,7 +40,7 @@ BEGIN_RESULT_JSON
       "rank": 1,
       "name": "Customer name",
       "domain": "customer-domain",
-      "currentMrrCents": 12345,
+      "arrCents": 12345,
       "expansionSignal": "short description",
       "confidence": "high|medium|low",
       "likelyExpansionPath": "seats|plan_upgrade|usage_volume|premium_feature|new_team|unknown",

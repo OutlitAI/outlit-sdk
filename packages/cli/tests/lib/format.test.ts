@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test"
-import { capitalize, formatCents, formatNumber, relativeDate, truncate } from "../../src/lib/format"
+import {
+  capitalize,
+  formatArr,
+  formatCents,
+  formatNumber,
+  relativeDate,
+  truncate,
+} from "../../src/lib/format"
 
 describe("formatCents", () => {
   test("converts cents to dollar string", () => {
@@ -13,6 +20,23 @@ describe("formatCents", () => {
     expect(formatCents(null)).toBe("--")
     expect(formatCents(undefined)).toBe("--")
     expect(formatCents("not a number")).toBe("--")
+  })
+})
+
+describe("formatArr", () => {
+  test("divides cent currencies by 100 and shows the code", () => {
+    expect(formatArr({ amount: 1200000, currency: "USD", estimated: false })).toBe("12000.00 USD")
+    expect(formatArr({ amount: 99, currency: "eur", estimated: false })).toBe("0.99 EUR")
+  })
+
+  test("shows the raw amount for other currencies and marks estimates", () => {
+    expect(formatArr({ amount: 500000, currency: "JPY", estimated: true })).toBe("~500000 JPY")
+  })
+
+  test("returns -- when ARR is unknown", () => {
+    expect(formatArr(null)).toBe("--")
+    expect(formatArr(undefined)).toBe("--")
+    expect(formatArr({ amount: "x", currency: "USD" })).toBe("--")
   })
 })
 

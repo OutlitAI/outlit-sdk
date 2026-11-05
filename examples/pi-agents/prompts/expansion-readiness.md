@@ -18,13 +18,13 @@ Use Outlit tools to gather evidence before ranking:
 
 Important guardrails:
 - Do not treat healthy usage alone as expansion readiness.
-- Do not rank plan mismatch, high MRR, or broad feature usage alone.
+- Do not rank plan mismatch, high ARR, or broad feature usage alone.
 - Prioritize buying intent, plan-limit pain, capacity pressure, seat growth, or a clear next package to sell.
 - Every ranked customer should have explicit expansion intent, plan-limit pain, capacity pressure, seat or team growth, a premium-feature request, or a similarly concrete expansion trigger.
 - Do not recommend an expansion motion without explaining the likely expansion path.
 
 Return:
-- A table of ranked customers with customer, domain, current MRR or plan context, expansion signal, confidence, likely expansion path, and recommended action.
+- A table of ranked customers with customer, domain, current ARR or plan context, expansion signal, confidence, likely expansion path, and recommended action.
 - Evidence notes for each customer, tied to usage, conversations, facts, timeline events, or source snippets.
 - Missing data that would improve the expansion recommendation.
 

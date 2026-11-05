@@ -2499,13 +2499,23 @@
               "90d"
             ]
           },
+          "arrAbove": {
+            "description": "Minimum ARR, in arr.amount's units per year (1200000 is $12,000 for a customer billed in USD). Customers whose ARR is unknown never match.",
+            "type": "number",
+            "minimum": 0
+          },
+          "arrBelow": {
+            "description": "Maximum ARR, in arr.amount's units per year. Customers whose ARR is unknown never match.",
+            "type": "number",
+            "minimum": 0
+          },
           "mrrAbove": {
-            "description": "Minimum MRR, in currentMrr's units (10000 is $100 for a customer billed in USD)",
+            "description": "Deprecated: use arrAbove.",
             "type": "number",
             "minimum": 0
           },
           "mrrBelow": {
-            "description": "Maximum MRR, in currentMrr's units",
+            "description": "Deprecated: use arrBelow.",
             "type": "number",
             "minimum": 0
           },
@@ -2562,13 +2572,14 @@
             "type": "string"
           },
           "orderBy": {
-            "description": "Field to order results by",
+            "description": "Field to order results by: last_activity_at, first_seen_at, name, arr_cents. arr_cents puts customers whose ARR is unknown last when descending.",
             "default": "last_activity_at",
             "type": "string",
             "enum": [
               "last_activity_at",
               "first_seen_at",
               "name",
+              "arr_cents",
               "mrr_cents"
             ]
           },
@@ -2744,7 +2755,8 @@
                 "revenue",
                 "recentTimeline",
                 "behaviorMetrics",
-                "enrichment"
+                "enrichment",
+                "renewal"
               ]
             }
           },
@@ -2993,8 +3005,10 @@
                 "OPPORTUNITY",
                 "SLACK",
                 "PERSON_PROFILE",
+                "INVOICE",
                 "CRM",
-                "CRM_OPPORTUNITY"
+                "CRM_OPPORTUNITY",
+                "STRIPE_INVOICE"
               ]
             }
           },
@@ -3106,8 +3120,10 @@
               "OPPORTUNITY",
               "SLACK",
               "PERSON_PROFILE",
+              "INVOICE",
               "CRM",
               "CRM_OPPORTUNITY",
+              "STRIPE_INVOICE",
               "EXTRACTED"
             ]
           },
@@ -3148,8 +3164,10 @@
               "OPPORTUNITY",
               "SLACK",
               "PERSON_PROFILE",
+              "INVOICE",
               "CRM",
-              "CRM_OPPORTUNITY"
+              "CRM_OPPORTUNITY",
+              "STRIPE_INVOICE"
             ]
           },
           "customer": {
@@ -3255,8 +3273,10 @@
                 "OPPORTUNITY",
                 "SLACK",
                 "PERSON_PROFILE",
+                "INVOICE",
                 "CRM",
-                "CRM_OPPORTUNITY"
+                "CRM_OPPORTUNITY",
+                "STRIPE_INVOICE"
               ]
             }
           }
@@ -4743,24 +4763,38 @@
                   "minimum": 0,
                   "maximum": 9007199254740991
                 },
-                "currentMrr": {
+                "arr": {
                   "anyOf": [
                     {
-                      "type": "number"
+                      "type": "object",
+                      "properties": {
+                        "amount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Annualized revenue run rate, the same ARR figure the Outlit app shows: an integer in the billing provider's units for `currency`. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. 0 for a churned, paused or trialing customer."
+                        },
+                        "currency": {
+                          "type": "string",
+                          "description": "ISO currency code of amount."
+                        },
+                        "estimated": {
+                          "type": "boolean",
+                          "description": "The amount includes a usage or per-seat estimate, shown as ~ in the app."
+                        }
+                      },
+                      "required": [
+                        "amount",
+                        "currency",
+                        "estimated"
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "null"
                     }
                   ],
-                  "description": "Monthly recurring revenue as an integer amount in the billing provider's units for the customer's currency, which this result doesn't name. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. ARR is 12 × this value in the same units. Null unless mrrCalculationStatus is calculated."
-                },
-                "mrrCalculationStatus": {
-                  "type": "string",
-                  "enum": [
-                    "calculated",
-                    "mixed_currency",
-                    "unavailable"
-                  ]
+                  "description": "Null when the app shows no ARR for this customer."
                 },
                 "owner": {
                   "anyOf": [
@@ -4811,8 +4845,7 @@
                 "firstSeenAt",
                 "lastActivityAt",
                 "contactCount",
-                "currentMrr",
-                "mrrCalculationStatus",
+                "arr",
                 "owner",
                 "daysSinceActivity"
               ],
@@ -5518,28 +5551,113 @@
           "revenue": {
             "type": "object",
             "properties": {
-              "currentMrr": {
+              "arr": {
                 "anyOf": [
                   {
-                    "type": "number"
+                    "type": "object",
+                    "properties": {
+                      "amount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                        "description": "Annualized revenue run rate, the same ARR figure the customer page shows: an integer in the billing provider's units for `currency`. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. 0 for a churned, paused or trialing customer."
+                      },
+                      "currency": {
+                        "type": "string",
+                        "description": "ISO currency code of amount and parts."
+                      },
+                      "estimated": {
+                        "type": "boolean",
+                        "description": "The amount includes a usage or per-seat estimate, shown as ~ in the app."
+                      },
+                      "lifecycle": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "past_due",
+                              "paused",
+                              "churned",
+                              "trialing"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "The customer's revenue state; null when unknown."
+                      },
+                      "parts": {
+                        "type": "object",
+                        "properties": {
+                          "subscriptions": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Active subscriptions at list price, annualized."
+                          },
+                          "usage": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Annualized usage estimate."
+                          },
+                          "invoicedLast12Months": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Invoiced in the last 12 months."
+                          }
+                        },
+                        "required": [
+                          "subscriptions",
+                          "usage",
+                          "invoicedLast12Months"
+                        ],
+                        "additionalProperties": false,
+                        "description": "What amount was counted from, in the same units: the larger of subscriptions plus usage, and invoiced in the last 12 months. A part is null when unknown or not applicable."
+                      }
+                    },
+                    "required": [
+                      "amount",
+                      "currency",
+                      "estimated",
+                      "lifecycle",
+                      "parts"
+                    ],
+                    "additionalProperties": false
                   },
                   {
                     "type": "null"
                   }
                 ],
-                "description": "Monthly recurring revenue as an integer amount in the billing provider's units for the customer's currency, which this result doesn't name. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. ARR is 12 × this value in the same units. Null unless mrrCalculationStatus is calculated."
-              },
-              "mrrCalculationStatus": {
-                "type": "string",
-                "enum": [
-                  "calculated",
-                  "mixed_currency",
-                  "unavailable"
-                ]
+                "description": "Null when the app shows no ARR for this customer."
               },
               "lifetimeRevenue": {
                 "type": "number",
-                "description": "Lifetime revenue in the billing provider's units for the currency it was billed in, like currentMrr: cents for USD, EUR, GBP and CAD, so divide by 100. Other currencies follow the provider's amount rules, so don't assume a divisor for them."
+                "description": "Lifetime revenue in the billing provider's units for the currency it was billed in, like arr.amount: cents for USD, EUR, GBP and CAD, so divide by 100. Other currencies follow the provider's amount rules, so don't assume a divisor for them."
               },
               "activeSubscriptions": {
                 "type": "integer",
@@ -5548,8 +5666,7 @@
               }
             },
             "required": [
-              "currentMrr",
-              "mrrCalculationStatus",
+              "arr",
               "lifetimeRevenue",
               "activeSubscriptions"
             ],
@@ -6050,6 +6167,37 @@
               "error"
             ],
             "additionalProperties": false
+          },
+          "renewal": {
+            "description": "The renewal date the customer page shows, with its source; null when the customer has none",
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "date": {
+                    "type": "string",
+                    "description": "Renewal date, YYYY-MM-DD"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "outlit",
+                      "crm",
+                      "billing"
+                    ],
+                    "description": "Where the date comes from: set in Outlit, a CRM opportunity, or the billing period of a yearly subscription"
+                  }
+                },
+                "required": [
+                  "date",
+                  "source"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -6730,7 +6878,8 @@
                             "SUPPORT_TICKET",
                             "OPPORTUNITY",
                             "SLACK",
-                            "PERSON_PROFILE"
+                            "PERSON_PROFILE",
+                            "INVOICE"
                           ]
                         },
                         "sourceId": {
@@ -6791,7 +6940,8 @@
                                 "SUPPORT_TICKET",
                                 "OPPORTUNITY",
                                 "SLACK",
-                                "PERSON_PROFILE"
+                                "PERSON_PROFILE",
+                                "INVOICE"
                               ]
                             },
                             {
@@ -7002,7 +7152,8 @@
                                   "SUPPORT_TICKET",
                                   "OPPORTUNITY",
                                   "SLACK",
-                                  "PERSON_PROFILE"
+                                  "PERSON_PROFILE",
+                                  "INVOICE"
                                 ]
                               },
                               {
@@ -7231,7 +7382,8 @@
                       "SUPPORT_TICKET",
                       "OPPORTUNITY",
                       "SLACK",
-                      "PERSON_PROFILE"
+                      "PERSON_PROFILE",
+                      "INVOICE"
                     ]
                   },
                   "sourceId": {
@@ -7292,7 +7444,8 @@
                           "SUPPORT_TICKET",
                           "OPPORTUNITY",
                           "SLACK",
-                          "PERSON_PROFILE"
+                          "PERSON_PROFILE",
+                          "INVOICE"
                         ]
                       },
                       {
@@ -7503,7 +7656,8 @@
                             "SUPPORT_TICKET",
                             "OPPORTUNITY",
                             "SLACK",
-                            "PERSON_PROFILE"
+                            "PERSON_PROFILE",
+                            "INVOICE"
                           ]
                         },
                         {
@@ -7604,7 +7758,8 @@
               "SUPPORT_TICKET",
               "OPPORTUNITY",
               "SLACK",
-              "PERSON_PROFILE"
+              "PERSON_PROFILE",
+              "INVOICE"
             ]
           },
           "sourceId": {
@@ -7789,7 +7944,8 @@
                   "SUPPORT_TICKET",
                   "OPPORTUNITY",
                   "SLACK",
-                  "PERSON_PROFILE"
+                  "PERSON_PROFILE",
+                  "INVOICE"
                 ]
               },
               "sourceId": {
@@ -7938,7 +8094,8 @@
                     "SUPPORT_TICKET",
                     "OPPORTUNITY",
                     "SLACK",
-                    "PERSON_PROFILE"
+                    "PERSON_PROFILE",
+                    "INVOICE"
                   ]
                 },
                 "sourceId": {
@@ -8123,7 +8280,8 @@
                         "SUPPORT_TICKET",
                         "OPPORTUNITY",
                         "SLACK",
-                        "PERSON_PROFILE"
+                        "PERSON_PROFILE",
+                        "INVOICE"
                       ]
                     },
                     "sourceId": {
@@ -8520,7 +8678,8 @@
                                     "SUPPORT_TICKET",
                                     "OPPORTUNITY",
                                     "SLACK",
-                                    "PERSON_PROFILE"
+                                    "PERSON_PROFILE",
+                                    "INVOICE"
                                   ]
                                 },
                                 "sourceId": {
@@ -8581,7 +8740,8 @@
                                         "SUPPORT_TICKET",
                                         "OPPORTUNITY",
                                         "SLACK",
-                                        "PERSON_PROFILE"
+                                        "PERSON_PROFILE",
+                                        "INVOICE"
                                       ]
                                     },
                                     {
@@ -8792,7 +8952,8 @@
                                           "SUPPORT_TICKET",
                                           "OPPORTUNITY",
                                           "SLACK",
-                                          "PERSON_PROFILE"
+                                          "PERSON_PROFILE",
+                                          "INVOICE"
                                         ]
                                       },
                                       {
@@ -8910,7 +9071,8 @@
                         "SUPPORT_TICKET",
                         "OPPORTUNITY",
                         "SLACK",
-                        "PERSON_PROFILE"
+                        "PERSON_PROFILE",
+                        "INVOICE"
                       ]
                     },
                     "sourceId": {
@@ -17857,5 +18019,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "9409f42bc10034b8afef6a3ca3597fbe8ae9fa8ed8846f1e7b4b0b6a4320c31c"
+  "x-outlit-contract-hash": "11999ac2e89df5a82bd79729fcd1a84004103a37d1ec3b392bd4d2a0d6e781a8"
 }

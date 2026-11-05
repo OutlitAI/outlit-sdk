@@ -64,7 +64,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "List Customers",
-    "description": "Browse and filter customers. Use this to find customers by billing status, activity recency, revenue, or name. Returns a paginated list with summary info (MRR, last activity, status). currentMrr is in the billing provider's units for the customer's currency, which the result doesn't name. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345 MRR, USD). Other currencies follow the provider's amount rules. ARR is 12 × currentMrr in the same units.",
+    "description": "Browse and filter customers. Use this to find customers by billing status, activity recency, revenue, or name. Returns a paginated list with summary info (ARR, last activity, status). arr is the annualized revenue run rate, the same figure the Outlit app shows, with its currency: amount is in the billing provider's units for that currency (for USD, EUR, GBP and CAD this is cents: divide by 100, e.g. 1200000 is $12,000 ARR, USD; other currencies follow the provider's amount rules). arr is null when the app shows none, and amount is 0 for a churned, paused or trialing customer.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -111,13 +111,23 @@ export const publicToolContracts = {
             "90d",
           ],
         },
+        "arrAbove": {
+          "description": "Minimum ARR, in arr.amount's units per year (1200000 is $12,000 for a customer billed in USD). Customers whose ARR is unknown never match.",
+          "type": "number",
+          "minimum": 0,
+        },
+        "arrBelow": {
+          "description": "Maximum ARR, in arr.amount's units per year. Customers whose ARR is unknown never match.",
+          "type": "number",
+          "minimum": 0,
+        },
         "mrrAbove": {
-          "description": "Minimum MRR, in currentMrr's units (10000 is $100 for a customer billed in USD)",
+          "description": "Deprecated: use arrAbove.",
           "type": "number",
           "minimum": 0,
         },
         "mrrBelow": {
-          "description": "Maximum MRR, in currentMrr's units",
+          "description": "Deprecated: use arrBelow.",
           "type": "number",
           "minimum": 0,
         },
@@ -174,13 +184,14 @@ export const publicToolContracts = {
           "type": "string",
         },
         "orderBy": {
-          "description": "Field to order results by",
+          "description": "Field to order results by: last_activity_at, first_seen_at, name, arr_cents. arr_cents puts customers whose ARR is unknown last when descending.",
           "default": "last_activity_at",
           "type": "string",
           "enum": [
             "last_activity_at",
             "first_seen_at",
             "name",
+            "arr_cents",
             "mrr_cents",
           ],
         },
@@ -272,24 +283,38 @@ export const publicToolContracts = {
                 "minimum": 0,
                 "maximum": 9007199254740991,
               },
-              "currentMrr": {
+              "arr": {
                 "anyOf": [
                   {
-                    "type": "number",
+                    "type": "object",
+                    "properties": {
+                      "amount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                        "description": "Annualized revenue run rate, the same ARR figure the Outlit app shows: an integer in the billing provider's units for `currency`. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. 0 for a churned, paused or trialing customer.",
+                      },
+                      "currency": {
+                        "type": "string",
+                        "description": "ISO currency code of amount.",
+                      },
+                      "estimated": {
+                        "type": "boolean",
+                        "description": "The amount includes a usage or per-seat estimate, shown as ~ in the app.",
+                      },
+                    },
+                    "required": [
+                      "amount",
+                      "currency",
+                      "estimated",
+                    ],
+                    "additionalProperties": false,
                   },
                   {
                     "type": "null",
                   },
                 ],
-                "description": "Monthly recurring revenue as an integer amount in the billing provider's units for the customer's currency, which this result doesn't name. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. ARR is 12 × this value in the same units. Null unless mrrCalculationStatus is calculated.",
-              },
-              "mrrCalculationStatus": {
-                "type": "string",
-                "enum": [
-                  "calculated",
-                  "mixed_currency",
-                  "unavailable",
-                ],
+                "description": "Null when the app shows no ARR for this customer.",
               },
               "owner": {
                 "anyOf": [
@@ -340,8 +365,7 @@ export const publicToolContracts = {
               "firstSeenAt",
               "lastActivityAt",
               "contactCount",
-              "currentMrr",
-              "mrrCalculationStatus",
+              "arr",
               "owner",
               "daysSinceActivity",
             ],
@@ -939,7 +963,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, or company enrichment. Revenue amounts (currentMrr, lifetimeRevenue) are in the billing provider's units for the customer's currency, which the result doesn't name. For USD, EUR, GBP and CAD these are cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules. ARR is 12 × currentMrr in the same units.",
+    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, or company enrichment, or the renewal date and its source. Revenue includes arr, the annualized revenue run rate, exactly as the customer page shows it, with its currency, whether it is an estimate, the revenue lifecycle and the parts it is counted from; amounts are in the billing provider's units for that currency (for USD, EUR, GBP and CAD these are cents: divide by 100, e.g. 1234500 is $12,345, USD; other currencies follow the provider's amount rules). lifetimeRevenue does not name its currency.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -966,6 +990,7 @@ export const publicToolContracts = {
               "recentTimeline",
               "behaviorMetrics",
               "enrichment",
+              "renewal",
             ],
           },
         },
@@ -1273,28 +1298,113 @@ export const publicToolContracts = {
         "revenue": {
           "type": "object",
           "properties": {
-            "currentMrr": {
+            "arr": {
               "anyOf": [
                 {
-                  "type": "number",
+                  "type": "object",
+                  "properties": {
+                    "amount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Annualized revenue run rate, the same ARR figure the customer page shows: an integer in the billing provider's units for `currency`. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. 0 for a churned, paused or trialing customer.",
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "ISO currency code of amount and parts.",
+                    },
+                    "estimated": {
+                      "type": "boolean",
+                      "description": "The amount includes a usage or per-seat estimate, shown as ~ in the app.",
+                    },
+                    "lifecycle": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "active",
+                            "past_due",
+                            "paused",
+                            "churned",
+                            "trialing",
+                          ],
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                      "description": "The customer's revenue state; null when unknown.",
+                    },
+                    "parts": {
+                      "type": "object",
+                      "properties": {
+                        "subscriptions": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "Active subscriptions at list price, annualized.",
+                        },
+                        "usage": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "Annualized usage estimate.",
+                        },
+                        "invoicedLast12Months": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "Invoiced in the last 12 months.",
+                        },
+                      },
+                      "required": [
+                        "subscriptions",
+                        "usage",
+                        "invoicedLast12Months",
+                      ],
+                      "additionalProperties": false,
+                      "description": "What amount was counted from, in the same units: the larger of subscriptions plus usage, and invoiced in the last 12 months. A part is null when unknown or not applicable.",
+                    },
+                  },
+                  "required": [
+                    "amount",
+                    "currency",
+                    "estimated",
+                    "lifecycle",
+                    "parts",
+                  ],
+                  "additionalProperties": false,
                 },
                 {
                   "type": "null",
                 },
               ],
-              "description": "Monthly recurring revenue as an integer amount in the billing provider's units for the customer's currency, which this result doesn't name. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. ARR is 12 × this value in the same units. Null unless mrrCalculationStatus is calculated.",
-            },
-            "mrrCalculationStatus": {
-              "type": "string",
-              "enum": [
-                "calculated",
-                "mixed_currency",
-                "unavailable",
-              ],
+              "description": "Null when the app shows no ARR for this customer.",
             },
             "lifetimeRevenue": {
               "type": "number",
-              "description": "Lifetime revenue in the billing provider's units for the currency it was billed in, like currentMrr: cents for USD, EUR, GBP and CAD, so divide by 100. Other currencies follow the provider's amount rules, so don't assume a divisor for them.",
+              "description": "Lifetime revenue in the billing provider's units for the currency it was billed in, like arr.amount: cents for USD, EUR, GBP and CAD, so divide by 100. Other currencies follow the provider's amount rules, so don't assume a divisor for them.",
             },
             "activeSubscriptions": {
               "type": "integer",
@@ -1303,8 +1413,7 @@ export const publicToolContracts = {
             },
           },
           "required": [
-            "currentMrr",
-            "mrrCalculationStatus",
+            "arr",
             "lifetimeRevenue",
             "activeSubscriptions",
           ],
@@ -1805,6 +1914,37 @@ export const publicToolContracts = {
             "error",
           ],
           "additionalProperties": false,
+        },
+        "renewal": {
+          "description": "The renewal date the customer page shows, with its source; null when the customer has none",
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "Renewal date, YYYY-MM-DD",
+                },
+                "source": {
+                  "type": "string",
+                  "enum": [
+                    "outlit",
+                    "crm",
+                    "billing",
+                  ],
+                  "description": "Where the date comes from: set in Outlit, a CRM opportunity, or the billing period of a yearly subscription",
+                },
+              },
+              "required": [
+                "date",
+                "source",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
         },
       },
       "required": [
@@ -2671,8 +2811,10 @@ export const publicToolContracts = {
               "OPPORTUNITY",
               "SLACK",
               "PERSON_PROFILE",
+              "INVOICE",
               "CRM",
               "CRM_OPPORTUNITY",
+              "STRIPE_INVOICE",
             ],
           },
         },
@@ -2897,6 +3039,7 @@ export const publicToolContracts = {
                           "OPPORTUNITY",
                           "SLACK",
                           "PERSON_PROFILE",
+                          "INVOICE",
                         ],
                       },
                       "sourceId": {
@@ -2958,6 +3101,7 @@ export const publicToolContracts = {
                               "OPPORTUNITY",
                               "SLACK",
                               "PERSON_PROFILE",
+                              "INVOICE",
                             ],
                           },
                           {
@@ -3169,6 +3313,7 @@ export const publicToolContracts = {
                                 "OPPORTUNITY",
                                 "SLACK",
                                 "PERSON_PROFILE",
+                                "INVOICE",
                               ],
                             },
                             {
@@ -3436,6 +3581,7 @@ export const publicToolContracts = {
                     "OPPORTUNITY",
                     "SLACK",
                     "PERSON_PROFILE",
+                    "INVOICE",
                   ],
                 },
                 "sourceId": {
@@ -3497,6 +3643,7 @@ export const publicToolContracts = {
                         "OPPORTUNITY",
                         "SLACK",
                         "PERSON_PROFILE",
+                        "INVOICE",
                       ],
                     },
                     {
@@ -3708,6 +3855,7 @@ export const publicToolContracts = {
                           "OPPORTUNITY",
                           "SLACK",
                           "PERSON_PROFILE",
+                          "INVOICE",
                         ],
                       },
                       {
@@ -3803,7 +3951,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customer-context",
     "title": "Get Source",
-    "description": "Get one exact source record by generic sourceType and sourceId. Use this when you already know the concrete underlying source you want to inspect.",
+    "description": "Get one exact source record by generic sourceType and sourceId. Use this when you already know the concrete underlying source you want to inspect. For a Stripe invoice use sourceType INVOICE (STRIPE_INVOICE is accepted) with the Stripe invoice id (in_...): the record lists every stored line item, with amounts in the billing provider's minor units for the invoice's currency (cents for USD, EUR, GBP and CAD; other currencies follow the provider's amount rules).",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -3823,8 +3971,10 @@ export const publicToolContracts = {
             "OPPORTUNITY",
             "SLACK",
             "PERSON_PROFILE",
+            "INVOICE",
             "CRM",
             "CRM_OPPORTUNITY",
+            "STRIPE_INVOICE",
             "EXTRACTED",
           ],
         },
@@ -3865,6 +4015,7 @@ export const publicToolContracts = {
             "OPPORTUNITY",
             "SLACK",
             "PERSON_PROFILE",
+            "INVOICE",
           ],
         },
         "sourceId": {
@@ -4050,6 +4201,7 @@ export const publicToolContracts = {
                 "OPPORTUNITY",
                 "SLACK",
                 "PERSON_PROFILE",
+                "INVOICE",
               ],
             },
             "sourceId": {
@@ -4188,7 +4340,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customer-context",
     "title": "List Sources",
-    "description": "List concrete source records deterministically. Use this instead of semantic search when you need enumerated calls, emails, calendar events, support tickets, Slack conversations, or opportunities.",
+    "description": "List concrete source records deterministically. Use this instead of semantic search when you need enumerated calls, emails, calendar events, support tickets, Slack conversations, or opportunities. Invoices are listed only when you pass sourceType INVOICE with a customer, newest first.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -4209,8 +4361,10 @@ export const publicToolContracts = {
             "OPPORTUNITY",
             "SLACK",
             "PERSON_PROFILE",
+            "INVOICE",
             "CRM",
             "CRM_OPPORTUNITY",
+            "STRIPE_INVOICE",
           ],
         },
         "customer": {
@@ -4282,6 +4436,7 @@ export const publicToolContracts = {
                   "OPPORTUNITY",
                   "SLACK",
                   "PERSON_PROFILE",
+                  "INVOICE",
                 ],
               },
               "sourceId": {
@@ -4467,6 +4622,7 @@ export const publicToolContracts = {
                       "OPPORTUNITY",
                       "SLACK",
                       "PERSON_PROFILE",
+                      "INVOICE",
                     ],
                   },
                   "sourceId": {
@@ -4696,8 +4852,10 @@ export const publicToolContracts = {
               "OPPORTUNITY",
               "SLACK",
               "PERSON_PROFILE",
+              "INVOICE",
               "CRM",
               "CRM_OPPORTUNITY",
+              "STRIPE_INVOICE",
             ],
           },
         },
@@ -4943,6 +5101,7 @@ export const publicToolContracts = {
                                   "OPPORTUNITY",
                                   "SLACK",
                                   "PERSON_PROFILE",
+                                  "INVOICE",
                                 ],
                               },
                               "sourceId": {
@@ -5004,6 +5163,7 @@ export const publicToolContracts = {
                                       "OPPORTUNITY",
                                       "SLACK",
                                       "PERSON_PROFILE",
+                                      "INVOICE",
                                     ],
                                   },
                                   {
@@ -5215,6 +5375,7 @@ export const publicToolContracts = {
                                         "OPPORTUNITY",
                                         "SLACK",
                                         "PERSON_PROFILE",
+                                        "INVOICE",
                                       ],
                                     },
                                     {
@@ -5333,6 +5494,7 @@ export const publicToolContracts = {
                       "OPPORTUNITY",
                       "SLACK",
                       "PERSON_PROFILE",
+                      "INVOICE",
                     ],
                   },
                   "sourceId": {
@@ -5499,7 +5661,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "analytics",
     "title": "Run SQL Query",
-    "description": "Execute read-only SQL queries against your analytics views.\n\nAvailable views:\n- activity: Customer activity events (event_name, event_type, event_channel, customer_id, occurred_at, properties, ...)\n- customers: Customer attributes (customer_id, domain, name, billing_status, plan, mrr_cents, traits, ...)\n- users: User attributes (user_id, email, name, customer_id, traits, ...)\n- revenue: Revenue snapshots over time (customer_id, snapshot_date, mrr_cents, ...)\n\nAll queries are automatically filtered to your organization's data.\nOnly SELECT queries are allowed.\nProperties and traits are JSON strings; inspect schemas and examples before filtering nested values.\n\nExample queries:\n- SELECT event_name, count(*) FROM activity GROUP BY 1 ORDER BY 2 DESC LIMIT 10\n- SELECT billing_status, sum(mrr_cents)/100 as mrr FROM customers GROUP BY 1\n- SELECT * FROM activity WHERE customer_id = 'cust_123' ORDER BY occurred_at DESC LIMIT 50",
+    "description": "Execute read-only SQL queries against your analytics views.\n\nAvailable views:\n- activity: Customer activity events (event_name, event_type, event_channel, customer_id, occurred_at, properties, ...)\n- customers: Customer attributes (customer_id, domain, name, billing_status, plan, arr_cents (the revenue number: annualized, in arr_currency's units), arr_currency, traits, ...; mrr_cents and mrr_status are deprecated, use arr_cents)\n- users: User attributes (user_id, email, name, customer_id, traits, ...)\n- revenue: Revenue snapshots over time (customer_id, snapshot_date, mrr_cents, ...)\n\nAll queries are automatically filtered to your organization's data.\nOnly SELECT queries are allowed.\nProperties and traits are JSON strings; inspect schemas and examples before filtering nested values.\n\nExample queries:\n- SELECT event_name, count(*) FROM activity GROUP BY 1 ORDER BY 2 DESC LIMIT 10\n- SELECT billing_status, sum(arr_cents)/100 AS arr FROM customers WHERE arr_currency = 'USD' GROUP BY 1\n- SELECT * FROM activity WHERE customer_id = 'cust_123' ORDER BY occurred_at DESC LIMIT 50",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -17882,7 +18044,7 @@ export const customerListOrderFields = [
   "last_activity_at",
   "first_seen_at",
   "name",
-  "mrr_cents",
+  "arr_cents",
 ] as const
 
 export const customerIncludeSections = [
@@ -17891,6 +18053,7 @@ export const customerIncludeSections = [
   "recentTimeline",
   "behaviorMetrics",
   "enrichment",
+  "renewal",
 ] as const
 
 export const customerSourceTypes = [
@@ -17901,6 +18064,7 @@ export const customerSourceTypes = [
   "OPPORTUNITY",
   "SLACK",
   "PERSON_PROFILE",
+  "INVOICE",
 ] as const
 
 export const customerSourceTypeAliasMap = {
@@ -17921,8 +18085,10 @@ export const customerSourceTypeInputs = [
   "OPPORTUNITY",
   "SLACK",
   "PERSON_PROFILE",
+  "INVOICE",
   "CRM",
   "CRM_OPPORTUNITY",
+  "STRIPE_INVOICE",
 ] as const
 
 export const customerTimeframes = [
@@ -17979,4 +18145,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "9409f42bc10034b8afef6a3ca3597fbe8ae9fa8ed8846f1e7b4b0b6a4320c31c" as const
+export const sdkConsumerContractHash = "11999ac2e89df5a82bd79729fcd1a84004103a37d1ec3b392bd4d2a0d6e781a8" as const

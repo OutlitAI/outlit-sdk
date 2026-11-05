@@ -507,7 +507,7 @@ describe("tool contracts", () => {
     expect(activatedSinceRegex.test("2026-07-01")).toBe(false)
   })
 
-  test("exposes bounded customer enrichment and explicit MRR calculation state", () => {
+  test("exposes bounded customer enrichment, renewal and ARR", () => {
     const contract = getPublicToolContract("outlit_get_customer")
     const inputProperties = contract.inputSchema.properties as Record<string, unknown>
     const outputProperties = (contract.outputSchema as { properties: Record<string, unknown> })
@@ -518,17 +518,16 @@ describe("tool contracts", () => {
     )
     expect(inputProperties.include).toEqual(
       expect.objectContaining({
-        items: expect.objectContaining({ enum: expect.arrayContaining(["enrichment"]) }),
+        items: expect.objectContaining({
+          enum: expect.arrayContaining(["enrichment", "renewal"]),
+        }),
       }),
     )
     expect(outputProperties.enrichment).toEqual(expect.objectContaining({ type: "object" }))
     expect(outputProperties.revenue).toEqual(
       expect.objectContaining({
         properties: expect.objectContaining({
-          currentMrr: expect.objectContaining({ anyOf: expect.any(Array) }),
-          mrrCalculationStatus: expect.objectContaining({
-            enum: ["calculated", "mixed_currency", "unavailable"],
-          }),
+          arr: expect.objectContaining({ anyOf: expect.any(Array) }),
         }),
       }),
     )
@@ -651,6 +650,7 @@ describe("tool contracts", () => {
       "OPPORTUNITY",
       "SLACK",
       "PERSON_PROFILE",
+      "INVOICE",
     ])
     expect(customerSourceTypeInputs).toEqual([
       "EMAIL",
@@ -660,8 +660,10 @@ describe("tool contracts", () => {
       "OPPORTUNITY",
       "SLACK",
       "PERSON_PROFILE",
+      "INVOICE",
       "CRM",
       "CRM_OPPORTUNITY",
+      "STRIPE_INVOICE",
     ])
     expect(normalizeCustomerSourceType("CRM")).toBe("OPPORTUNITY")
     expect(normalizeCustomerSourceType("CRM_OPPORTUNITY")).toBe("OPPORTUNITY")
@@ -925,7 +927,7 @@ describe("resolveCustomerContextSearchInput", () => {
     ).toEqual({
       ok: false,
       message:
-        "Unknown source types: ZENDESK_TICKET. Allowed: EMAIL, CALL, CALENDAR_EVENT, SUPPORT_TICKET, OPPORTUNITY, SLACK, PERSON_PROFILE, CRM, CRM_OPPORTUNITY",
+        "Unknown source types: ZENDESK_TICKET. Allowed: EMAIL, CALL, CALENDAR_EVENT, SUPPORT_TICKET, OPPORTUNITY, SLACK, PERSON_PROFILE, INVOICE, CRM, CRM_OPPORTUNITY, STRIPE_INVOICE",
     })
   })
 })

@@ -51,7 +51,7 @@ function createPiHarness() {
 const commandScopes = [
   {
     commandName: "outlit-usage-decay-watchtower",
-    scope: "paying customers over $500 MRR",
+    scope: "paying customers over $6,000 ARR",
   },
   {
     commandName: "outlit-friction-to-churn",
@@ -203,7 +203,7 @@ describe("outlit growth agents report workflow", () => {
     expect(sentMessages[0]).toContain("excludedCandidates")
     expect(sentMessages[0]).toContain("Do not rename keys")
     expect(sentMessages[0]).toContain("structured report")
-    expect(sentMessages[0]).toContain('"mrrCents"')
+    expect(sentMessages[0]).toContain('"arrCents"')
     expect(sentMessages[0]).toContain("Already-churned accounts belong in excluded candidates")
     expect(sentMessages[0]).not.toContain("unless the user explicitly asks for postmortems")
   })

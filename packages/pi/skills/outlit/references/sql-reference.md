@@ -7,7 +7,7 @@ Always inspect schema first with `outlit_schema`.
 ## Views
 
 - `activity`: product and communication activity
-- `customers`: customer attributes, billing, revenue
+- `customers`: customer attributes, billing, revenue (`arr_cents` with `arr_currency`; `mrr_cents` is deprecated)
 - `users`: user attributes and journey stages
 - `revenue`: daily MRR snapshots
 
@@ -20,7 +20,7 @@ toStartOfMonth(occurred_at)
 dateDiff('day', first_seen_at, now())
 occurred_at >= now() - INTERVAL 30 DAY
 countIf(billing_status = 'PAYING')
-sumIf(mrr_cents, billing_status = 'PAYING')
+sumIf(arr_cents, billing_status = 'PAYING' AND arr_currency = 'USD')
 JSONExtractString(properties, 'path')
 JSONExtractString(traits, 'plan')
 ```

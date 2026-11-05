@@ -56,17 +56,53 @@ describe("customers list", () => {
     }
   })
 
-  test("passes mrrAbove as number when --mrr-above is set", async () => {
+  test("still maps the previously published --mrr-above spelling", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await listCmd.run!({
-        args: { "mrr-above": "10000", json: true },
+        args: { json: true },
+        rawArgs: ["--mrr-above", "10000"],
       } as Parameters<NonNullable<typeof listCmd.run>>[0])
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
         expect.objectContaining({ mrrAbove: 10000 }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("passes arrAbove and arrBelow as numbers", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: { "arr-above": "1200000", "arr-below": "5000000", json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({ arrAbove: 1200000, arrBelow: 5000000 }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("still maps the previously published --mrr-below spelling", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: { json: true },
+        rawArgs: ["--mrr-below=2500"],
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({ mrrBelow: 2500 }),
       )
     } finally {
       writeSpy.mockRestore()
@@ -340,6 +376,22 @@ describe("customers list", () => {
 
   test("renders table with box-drawing characters in interactive mode", async () => {
     setInteractive()
+    mockCallTool.mockImplementationOnce(
+      async () =>
+        ({
+          items: [
+            {
+              id: "1",
+              name: "Acme",
+              domain: "acme.com",
+              billingStatus: "PAYING",
+              activatedAt: null,
+              arr: { amount: 1200000, currency: "USD", estimated: false },
+            },
+          ],
+          pagination: { hasMore: false, nextCursor: null, total: 1 },
+        }) as never,
+    )
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const logSpy = spyOn(console, "log").mockImplementation(() => {})
     try {
@@ -352,6 +404,8 @@ describe("customers list", () => {
       expect(output).toContain("Name")
       expect(output).toContain("Domain")
       expect(output).toContain("Billing")
+      expect(output).toContain("ARR")
+      expect(output).toContain("12000.00 USD")
       expect(output).toContain("Acme")
       expect(output).toContain("acme.com")
       expect(output).toContain("PAYING")

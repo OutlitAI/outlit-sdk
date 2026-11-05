@@ -4,6 +4,23 @@ export function formatCents(value: unknown): string {
   return `$${(value / 100).toFixed(2)}`
 }
 
+const CENT_CURRENCIES = new Set(["USD", "EUR", "GBP", "CAD"])
+
+/**
+ * Formats an `{ amount, currency, estimated }` ARR value. USD, EUR, GBP and CAD amounts are cents
+ * (divided by 100); any other currency shows the provider's raw amount. Returns "--" when unknown.
+ */
+export function formatArr(value: unknown): string {
+  if (typeof value !== "object" || value === null) return "--"
+  const { amount, currency, estimated } = value as Record<string, unknown>
+  if (typeof amount !== "number" || Number.isNaN(amount) || typeof currency !== "string") {
+    return "--"
+  }
+  const code = currency.toUpperCase()
+  const shown = CENT_CURRENCIES.has(code) ? (amount / 100).toFixed(2) : String(amount)
+  return `${estimated === true ? "~" : ""}${shown} ${code}`
+}
+
 /** Formats an ISO date string as relative time. Returns "--" for null/undefined. */
 export function relativeDate(value: unknown): string {
   if (value == null || typeof value !== "string") return "--"

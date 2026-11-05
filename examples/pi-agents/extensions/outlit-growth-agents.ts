@@ -185,7 +185,7 @@ const COMMANDS: AgentCommand[] = [
           "questions about premium capabilities, additional seats, volume, or adjacent use cases",
         ],
         avoid:
-          "Do not treat healthy usage, plan mismatch, high MRR, or broad feature usage alone as expansion readiness. Prioritize buying intent, capacity pressure, plan-limit pain, seat or team growth, premium-feature asks, or a clear next package to sell.",
+          "Do not treat healthy usage, plan mismatch, high ARR, or broad feature usage alone as expansion readiness. Prioritize buying intent, capacity pressure, plan-limit pain, seat or team growth, premium-feature asks, or a clear next package to sell.",
       }),
     trigger:
       /\b(expansion readiness|expansion signal|upgrade intent|upgrade opportunity|ready to upgrade|upsell opportunity|seat growth|add(?:ing)? seats|more seats|seat limit|plan limit|power users?|usage trend up|buy more|higher plan|premium feature)\b/i,
@@ -419,7 +419,7 @@ Structured report:
     "openQuestions": []
   }
 - Do not rename keys, omit required keys, or replace required objects with null.
-- In rankedCustomers, include customer, domain, signal, hardEvidence, supportingContext, confidence, recommendedAction, and missingData. Include billingStatus and "mrrCents" when available.
+- In rankedCustomers, include customer, domain, signal, hardEvidence, supportingContext, confidence, recommendedAction, and missingData. Include billingStatus and "arrCents" when available.
 - In excludedCandidates, include customer, domain, and reason.
 - If no live customer survives the evidence gate, use severity "low", rankedCustomers: [], and explain that no actionable account survived review.
 `.trim()
@@ -429,7 +429,7 @@ function buildUsageDecayReportInstructions(): string {
   return `
 Usage-decay structured report details:
 - Use confidence values exactly: "high", "medium", or "low".
-- Use mrrCents for revenue. Do not use mrr, mrrDollars, or other revenue keys.
+- Use arrCents for revenue. Do not use mrr, mrrDollars, or other revenue keys.
 - Include candidateReviewSummary.liveSaveMotionOnly as true in the structured report.
 - Use severity "high" only when at least one ranked customer has high confidence and meaningful current or future revenue at risk; otherwise use "medium" for credible live risks and "low" when no live save-motion account survives.
 - If candidate evidence is sparse but the pretriage activity metrics show paid non-use, keep the candidate ranked with lower confidence instead of excluding solely for sparse timeline/search/fact context. Exclude only when richer evidence clearly contradicts the activity signal.

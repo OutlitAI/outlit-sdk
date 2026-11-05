@@ -179,7 +179,7 @@ export type OutlitChurnPretriageCustomer = {
   customerName: string | null
   domain: string | null
   billingStatus: ChurnBillingStatus | null
-  mrrCents: number | null
+  arrCents: number | null
   disposition: ChurnDisposition
   customerHeuristics: OutlitChurnCustomerHeuristic[]
   userHeuristics: OutlitChurnUserHeuristic[]
@@ -808,7 +808,7 @@ function createCustomerAccumulator(
       customerName: directoryCustomer?.customerName ?? null,
       domain: directoryCustomer?.domain ?? null,
       billingStatus: directoryCustomer?.billingStatus ?? null,
-      mrrCents: directoryCustomer?.mrrCents ?? null,
+      arrCents: directoryCustomer?.arrCents ?? null,
       disposition: "investigate",
       customerHeuristics: [],
       userHeuristics: [],
@@ -1174,8 +1174,8 @@ function finalizeSurfacedCustomers(
       (left.customerHeuristics.length + left.userHeuristics.length)
     if (signalDelta !== 0) return signalDelta
 
-    const mrrDelta = (right.mrrCents ?? 0) - (left.mrrCents ?? 0)
-    if (mrrDelta !== 0) return mrrDelta
+    const arrDelta = (right.arrCents ?? 0) - (left.arrCents ?? 0)
+    if (arrDelta !== 0) return arrDelta
 
     return left.customerId.localeCompare(right.customerId)
   })
@@ -1307,7 +1307,7 @@ function toPromptPretriageCustomer(customer: OutlitChurnPretriageCustomer) {
     customerName: customer.customerName,
     domain: customer.domain,
     billingStatus: customer.billingStatus,
-    mrrCents: customer.mrrCents,
+    arrCents: customer.arrCents,
     disposition: customer.disposition,
     signals: [
       ...customer.customerHeuristics.map((signal) => ({

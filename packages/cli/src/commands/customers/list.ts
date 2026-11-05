@@ -11,7 +11,7 @@ import {
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
-import { formatCents, relativeDate, truncate } from "../../lib/format"
+import { formatArr, relativeDate, truncate } from "../../lib/format"
 import { outputError } from "../../lib/output"
 import { isIso8601DateTime } from "../../lib/platform-input"
 
@@ -47,6 +47,16 @@ function normalizeCustomerListResult(data: unknown): unknown {
   }
 }
 
+/** Reads the last value given for an undeclared `--flag value` or `--flag=value` option. */
+function rawFlagValue(rawArgs: string[] | undefined, flag: string): string | undefined {
+  let value: string | undefined
+  for (const [index, arg] of (rawArgs ?? []).entries()) {
+    if (arg === `--${flag}`) value = rawArgs?.[index + 1]
+    else if (arg.startsWith(`--${flag}=`)) value = arg.slice(flag.length + 3)
+  }
+  return value
+}
+
 export default defineCommand({
   meta: {
     name: "list",
@@ -60,11 +70,12 @@ export default defineCommand({
       "  outlit customers list                                    # all customers",
       "  outlit customers list --billing-status PAYING           # paying only",
       "  outlit customers list --no-activity-in 30d              # churning customers",
-      "  outlit customers list --mrr-above 10000 --limit 50      # high-value at-risk",
+      "  outlit customers list --arr-above 1200000 --limit 50    # high-value at-risk",
       "  outlit customers list --activated-since 2026-07-01T00:00:00Z",
       "  outlit customers list --json | jq '.items[].domain'     # pipe-friendly",
       "",
       `Billing statuses: ${customerBillingStatuses.join(", ")}`,
+      "Sort fields: last_activity_at, first_seen_at, name, arr_cents",
       "Activity periods: 7d, 14d, 30d, 90d",
       "",
       AGENT_JSON_HINT,
@@ -81,14 +92,14 @@ export default defineCommand({
       type: "string",
       description: `Filter by billing status (${customerBillingStatuses.join(", ")})`,
     },
-    "mrr-above": {
+    "arr-above": {
       type: "string",
       description:
-        "Filter by MRR above threshold, in currentMrr's units: cents for USD, EUR, GBP and CAD (e.g. 10000 = $100/mo in USD)",
+        "Filter by ARR above threshold per year, in the billing provider's minor units: cents for USD, EUR, GBP and CAD (e.g. 1200000 = $12,000/yr in USD)",
     },
-    "mrr-below": {
+    "arr-below": {
       type: "string",
-      description: "Filter by MRR below threshold, in currentMrr's units",
+      description: "Filter by ARR below threshold per year, in the same units as --arr-above",
     },
     "owner-id": {
       type: "string",
@@ -128,19 +139,21 @@ export default defineCommand({
 
     const params: Record<string, unknown> = {}
     if (args["billing-status"]) params.billingStatus = args["billing-status"]
-    if (args["mrr-above"]) {
-      const value = Number(args["mrr-above"])
+    // --mrr-above and --mrr-below are previously published spellings: still accepted from the raw
+    // arguments, but no longer declared, so help and completions advertise only --arr-*.
+    const numericFlags = [
+      ["arr-above", "arrAbove", args["arr-above"]],
+      ["arr-below", "arrBelow", args["arr-below"]],
+      ["mrr-above", "mrrAbove", rawFlagValue(rawArgs, "mrr-above")],
+      ["mrr-below", "mrrBelow", rawFlagValue(rawArgs, "mrr-below")],
+    ] as const
+    for (const [flag, param, raw] of numericFlags) {
+      if (!raw) continue
+      const value = Number(raw)
       if (!Number.isFinite(value)) {
-        return outputError({ message: "--mrr-above must be a number", code: "invalid_input" }, json)
+        return outputError({ message: `--${flag} must be a number`, code: "invalid_input" }, json)
       }
-      params.mrrAbove = value
-    }
-    if (args["mrr-below"]) {
-      const value = Number(args["mrr-below"])
-      if (!Number.isFinite(value)) {
-        return outputError({ message: "--mrr-below must be a number", code: "invalid_input" }, json)
-      }
-      params.mrrBelow = value
+      params[param] = value
     }
     if (args["owner-id"]) params.ownerId = args["owner-id"]
     if (args["owner-email"]) params.ownerEmail = args["owner-email"]
@@ -173,7 +186,7 @@ export default defineCommand({
           { header: "Name", key: "name", format: (v) => truncate(v, 24) },
           { header: "Domain", key: "domain" },
           { header: "Billing", key: "billingStatus" },
-          { header: "MRR", key: "currentMrr", format: formatCents },
+          { header: "ARR", key: "arr", format: formatArr },
           { header: "Last Active", key: "lastActivityAt", format: relativeDate },
         ],
       },
