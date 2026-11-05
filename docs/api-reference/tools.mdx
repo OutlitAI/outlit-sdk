@@ -165,7 +165,7 @@ const result = await outlit.callTool(
 )
 ```
 
-The package also exports `publicToolContracts`, `publicToolNames`, server-defined `consumerToolPolicies`, `defaultToolNames`, `analyticalToolNames`, `piToolNames`, `cliToolNames`, `allPublicToolNames`, `publicOpenApiTransports`, `toolGatewayTransport`, `apiKeyValidationTransport`, `toolGatewayErrorCodes`, `toolGatewayErrorSchema`, `ingestTransport`, and enum lists such as `customerSourceTypes`. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases. `INVOICE` is the canonical Stripe invoice source type; `STRIPE_INVOICE` is an accepted input alias.
+The package also exports `publicToolContracts`, `publicToolNames`, server-defined `consumerToolPolicies`, `defaultToolNames`, `analyticalToolNames`, `piToolNames`, `cliToolNames`, `allPublicToolNames`, `publicOpenApiTransports`, `toolGatewayTransport`, `apiKeyValidationTransport`, `toolGatewayErrorCodes`, `toolGatewayErrorSchema`, `ingestTransport`, and enum lists such as `customerSourceTypes`. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases. `INVOICE` is the canonical Stripe invoice source type; `outlit_get_source` and `outlit_list_sources` also accept `STRIPE_INVOICE` as an input alias, but search and `outlit_list_facts` do not.
 
 ## Examples
 
@@ -199,7 +199,7 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 
 ### Read a Stripe invoice
 
-Use `INVOICE` (`STRIPE_INVOICE` is accepted as an alias) with the Stripe invoice ID. The record lists every stored line item: amounts, quantity, price, product, service period, whether it recurs or is one-off, and proration. Amounts are in the billing provider's minor units for the invoice's currency.
+Use `INVOICE` (`outlit_get_source` and `outlit_list_sources` also accept `STRIPE_INVOICE` as an alias) with the Stripe invoice ID. The record lists every stored line item: amounts, quantity, price, product, service period, whether it recurs or is one-off, and proration. Amounts are in the billing provider's minor units for the invoice's currency.
 
 ```json
 {

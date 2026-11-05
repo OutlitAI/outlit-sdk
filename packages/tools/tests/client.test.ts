@@ -664,7 +664,6 @@ describe("tool contracts", () => {
       "INVOICE",
       "CRM",
       "CRM_OPPORTUNITY",
-      "STRIPE_INVOICE",
     ])
     expect(normalizeCustomerSourceType("CRM")).toBe("OPPORTUNITY")
     expect(normalizeCustomerSourceType("CRM_OPPORTUNITY")).toBe("OPPORTUNITY")
@@ -688,8 +687,10 @@ describe("tool contracts", () => {
       string,
       { enum?: readonly string[] }
     >
+    // Only the source tools accept the STRIPE_INVOICE alias; search and facts do not.
     expect(exactSourceProperties.sourceType?.enum).toEqual([
       ...customerSourceTypeInputs,
+      "STRIPE_INVOICE",
       "EXTRACTED",
     ])
 
@@ -874,23 +875,18 @@ describe("resolveCustomerContextSearchInput", () => {
     })
   })
 
-  test("passes STRIPE_INVOICE through search input unchanged, like Core", () => {
-    expect(
-      resolveCustomerContextSearchInput({
-        query: "invoices",
-        sourceTypes: [" stripe_invoice ", "invoice", "STRIPE_INVOICE"],
-      }),
-    ).toEqual({
-      ok: true,
-      request: {
-        query: "invoices",
-        customer: undefined,
-        topK: undefined,
-        after: undefined,
-        before: undefined,
-        sourceTypes: ["STRIPE_INVOICE", "INVOICE"],
-      },
+  test("rejects STRIPE_INVOICE in search input, which only the source tools accept", () => {
+    const result = resolveCustomerContextSearchInput({
+      query: "invoices",
+      sourceTypes: ["stripe_invoice"],
     })
+
+    expect(result).toEqual({
+      ok: false,
+      message: expect.stringContaining("Unknown source types: stripe_invoice."),
+    })
+    expect(result.ok ? "" : result.message).not.toMatch(/Allowed:.*STRIPE_INVOICE/)
+    expect(customerSourceTypeInputs).not.toContain("STRIPE_INVOICE")
   })
 
   test("normalizes source types and CRM aliases in search input", () => {
@@ -953,7 +949,7 @@ describe("resolveCustomerContextSearchInput", () => {
     ).toEqual({
       ok: false,
       message:
-        "Unknown source types: ZENDESK_TICKET. Allowed: EMAIL, CALL, CALENDAR_EVENT, SUPPORT_TICKET, OPPORTUNITY, SLACK, PERSON_PROFILE, INVOICE, CRM, CRM_OPPORTUNITY, STRIPE_INVOICE",
+        "Unknown source types: ZENDESK_TICKET. Allowed: EMAIL, CALL, CALENDAR_EVENT, SUPPORT_TICKET, OPPORTUNITY, SLACK, PERSON_PROFILE, INVOICE, CRM, CRM_OPPORTUNITY",
     })
   })
 })

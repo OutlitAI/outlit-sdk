@@ -3,6 +3,7 @@ import {
   captureStdout,
   expectErrorExit,
   mockExitThrow,
+  runExpectingError,
   setNonInteractive,
   TEST_API_KEY,
   useTempEnv,
@@ -57,19 +58,16 @@ describe("search", () => {
     })
   })
 
-  test("sends the STRIPE_INVOICE source filter unchanged", async () => {
+  test("rejects the STRIPE_INVOICE source filter, which only the source tools accept", async () => {
     const { default: searchCmd } = await import("../../src/commands/search")
 
-    await captureStdout(() =>
-      searchCmd.run!({
-        args: { query: "invoices", "source-types": "stripe_invoice,call", json: true },
-      } as Parameters<NonNullable<typeof searchCmd.run>>[0]),
-    )
+    await runExpectingError(async () => {
+      await searchCmd.run!({
+        args: { query: "invoices", "source-types": "stripe_invoice", json: true },
+      } as Parameters<NonNullable<typeof searchCmd.run>>[0])
+    }, "invalid_input")
 
-    expect(mockCallTool).toHaveBeenCalledWith(
-      "outlit_search_customer_context",
-      expect.objectContaining({ sourceTypes: ["STRIPE_INVOICE", "CALL"] }),
-    )
+    expect(mockCallTool).not.toHaveBeenCalled()
   })
 
   test("normalizes case-insensitive CRM opportunity source filters", async () => {

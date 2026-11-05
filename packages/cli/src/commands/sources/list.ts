@@ -129,7 +129,7 @@ export default defineCommand({
     if (args["source-type"] && !sourceType) {
       return outputError(
         {
-          message: `--source-type must be one of ${customerSourceTypeInputs.join(", ")}`,
+          message: `--source-type must be one of ${[...customerSourceTypeInputs, "STRIPE_INVOICE"].join(", ")}`,
           code: "invalid_input",
         },
         json,

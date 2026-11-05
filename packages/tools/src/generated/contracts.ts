@@ -2814,7 +2814,6 @@ export const publicToolContracts = {
               "INVOICE",
               "CRM",
               "CRM_OPPORTUNITY",
-              "STRIPE_INVOICE",
             ],
           },
         },
@@ -4855,7 +4854,6 @@ export const publicToolContracts = {
               "INVOICE",
               "CRM",
               "CRM_OPPORTUNITY",
-              "STRIPE_INVOICE",
             ],
           },
         },
@@ -18088,7 +18086,6 @@ export const customerSourceTypeInputs = [
   "INVOICE",
   "CRM",
   "CRM_OPPORTUNITY",
-  "STRIPE_INVOICE",
 ] as const
 
 export const customerTimeframes = [
@@ -18145,4 +18142,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "11999ac2e89df5a82bd79729fcd1a84004103a37d1ec3b392bd4d2a0d6e781a8" as const
+export const sdkConsumerContractHash = "b0d3a500cbaa9afafb3dc7c1f6a96ba6bbbab608a90c57a0957cd6b2d54c7a8b" as const

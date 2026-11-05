@@ -1046,7 +1046,7 @@ outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
 outlit sources get --source-type INVOICE --source-id in_1PqExample --json
 ```
 
-`INVOICE` is a Stripe invoice (`STRIPE_INVOICE` is accepted as an alias): pass its Stripe invoice ID (`in_...`) to read every stored line item with amounts, quantity, price, product, service period, whether it recurs or is one-off, and proration. Amounts are in the billing provider's minor units for the invoice's currency.
+`INVOICE` is a Stripe invoice (`sources get` and `sources list` also accept `STRIPE_INVOICE` as an alias; `search` and `facts list` do not): pass its Stripe invoice ID (`in_...`) to read every stored line item with amounts, quantity, price, product, service period, whether it recurs or is one-off, and proration. Amounts are in the billing provider's minor units for the invoice's currency.
 
 `EXTRACTED` is accepted by the exact-source tool API but is currently rejected by
 `outlit sources get`. Use one of the source types listed above in the CLI.

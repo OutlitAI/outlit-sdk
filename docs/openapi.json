@@ -3007,8 +3007,7 @@
                 "PERSON_PROFILE",
                 "INVOICE",
                 "CRM",
-                "CRM_OPPORTUNITY",
-                "STRIPE_INVOICE"
+                "CRM_OPPORTUNITY"
               ]
             }
           },
@@ -3275,8 +3274,7 @@
                 "PERSON_PROFILE",
                 "INVOICE",
                 "CRM",
-                "CRM_OPPORTUNITY",
-                "STRIPE_INVOICE"
+                "CRM_OPPORTUNITY"
               ]
             }
           }
@@ -18019,5 +18017,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "11999ac2e89df5a82bd79729fcd1a84004103a37d1ec3b392bd4d2a0d6e781a8"
+  "x-outlit-contract-hash": "b0d3a500cbaa9afafb3dc7c1f6a96ba6bbbab608a90c57a0957cd6b2d54c7a8b"
 }

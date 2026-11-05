@@ -54,18 +54,6 @@ export function normalizeCustomerSourceToolInput(value: string): CustomerSourceT
   return customerSourceToolInputAliasMap[key as keyof typeof customerSourceToolInputAliasMap]
 }
 
-/** A source type filter value for search and facts: canonical types, plus STRIPE_INVOICE as sent. */
-export type CustomerSourceFilterType = CustomerSourceType | "STRIPE_INVOICE"
-
-/**
- * Normalizes a source-type filter for the search and facts list tools. Like Core, those tools take
- * STRIPE_INVOICE as a raw filter value, so it passes through unchanged instead of becoming INVOICE.
- */
-export function normalizeCustomerSourceFilterInput(value: string): CustomerSourceFilterType | null {
-  if (value.trim().toUpperCase() === "STRIPE_INVOICE") return "STRIPE_INVOICE"
-  return normalizeCustomerSourceType(value)
-}
-
 export type SearchArgsLike = {
   query?: string
   customer?: string | null
@@ -81,7 +69,7 @@ export type CustomerContextSearchInput = {
   topK?: number
   after?: string
   before?: string
-  sourceTypes?: CustomerSourceFilterType[]
+  sourceTypes?: CustomerSourceType[]
 }
 
 export function resolveCustomerContextSearchInput(
@@ -113,7 +101,7 @@ export function resolveCustomerContextSearchInput(
   }
 
   const invalidSourceTypes =
-    value.sourceTypes?.filter((sourceType) => !normalizeCustomerSourceFilterInput(sourceType)) ?? []
+    value.sourceTypes?.filter((sourceType) => !normalizeCustomerSourceType(sourceType)) ?? []
   if (invalidSourceTypes.length > 0) {
     return {
       ok: false,
@@ -123,10 +111,8 @@ export function resolveCustomerContextSearchInput(
 
   const normalizedSourceTypes = value.sourceTypes
     ? Array.from(
-        new Set(
-          value.sourceTypes.map((sourceType) => normalizeCustomerSourceFilterInput(sourceType)),
-        ),
-      ).filter((sourceType): sourceType is CustomerSourceFilterType => sourceType !== null)
+        new Set(value.sourceTypes.map((sourceType) => normalizeCustomerSourceType(sourceType))),
+      ).filter((sourceType): sourceType is CustomerSourceType => sourceType !== null)
     : undefined
 
   return {

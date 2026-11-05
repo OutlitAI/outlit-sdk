@@ -3,6 +3,7 @@ import {
   captureStdout,
   expectErrorExit,
   mockExitThrow,
+  runExpectingError,
   setNonInteractive,
   TEST_API_KEY,
   useTempEnv,
@@ -30,19 +31,16 @@ describe("facts commands", () => {
     mockCallTool.mockClear()
   })
 
-  test("list sends the STRIPE_INVOICE source filter unchanged", async () => {
+  test("list rejects the STRIPE_INVOICE source filter, which only the source tools accept", async () => {
     const { default: factsListCmd } = await import("../../src/commands/facts/list")
 
-    await captureStdout(() =>
-      factsListCmd.run!({
-        args: { customer: "acme.com", "source-types": "stripe_invoice,call", json: true },
-      } as Parameters<NonNullable<typeof factsListCmd.run>>[0]),
-    )
+    await runExpectingError(async () => {
+      await factsListCmd.run!({
+        args: { customer: "acme.com", "source-types": "stripe_invoice", json: true },
+      } as Parameters<NonNullable<typeof factsListCmd.run>>[0])
+    }, "invalid_input")
 
-    expect(mockCallTool).toHaveBeenCalledWith(
-      "outlit_list_facts",
-      expect.objectContaining({ sourceTypes: ["STRIPE_INVOICE", "CALL"] }),
-    )
+    expect(mockCallTool).not.toHaveBeenCalled()
   })
 
   test("list sends customer filters to outlit_list_facts", async () => {
