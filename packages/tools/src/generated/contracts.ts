@@ -14317,7 +14317,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "inbox",
     "title": "Decide Inbox Item",
-    "description": "Decide one of your Inbox tasks, by its itemId from outlit_list_inbox: mark it done, won't do (with a reason), wrong, reopen it, snooze it (up to two weeks; a week by default) or unsnooze it, take a Pool task or put it back, or say a plan step doesn't cover it (not_covered) and undo that (recover_cover). Done and reopen also take several tasks of one customer. The decision is your own, as if you made it on the Inbox page. Returns what changed and an undoToken that reverses it with outlit_undo_inbox_decision.",
+    "description": "Decide one of your Inbox tasks, by its itemId from outlit_list_inbox: mark it done, won't do (with a reason), wrong, reopen it, snooze it (up to two weeks; a week by default) or unsnooze it, take a Pool task or put it back, or say a plan step doesn't cover it (not_covered) and undo that (recover_cover). Done also closes the tasks it stands for, as on the page. The decision is your own, as if you made it on the Inbox page. Returns what changed and an undoToken that reverses it with outlit_undo_inbox_decision.",
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
@@ -14327,16 +14327,11 @@ export const publicToolContracts = {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
-        "itemIds": {
-          "minItems": 1,
-          "maxItems": 500,
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 191,
-          },
-          "description": "The tasks to decide, by itemId. One task, or several of one customer for done and reopen",
+        "itemId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "The task's itemId, as outlit_list_inbox returns it",
         },
         "decision": {
           "type": "string",
@@ -14371,7 +14366,7 @@ export const publicToolContracts = {
         },
       },
       "required": [
-        "itemIds",
+        "itemId",
         "decision",
       ],
       "additionalProperties": false,
@@ -17984,4 +17979,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "05dbc202a9031aaa2d8094714434052172eca484d67c0647a58fc9f982d80668" as const
+export const sdkConsumerContractHash = "c27ed852fd5237be9a63b2965856e54b40603df2f22cbfcaae4b7a00c7dd9a4c" as const

@@ -4474,16 +4474,11 @@
       "ToolInput_outlit_decide_inbox_item": {
         "type": "object",
         "properties": {
-          "itemIds": {
-            "minItems": 1,
-            "maxItems": 500,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 191
-            },
-            "description": "The tasks to decide, by itemId. One task, or several of one customer for done and reopen"
+          "itemId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191,
+            "description": "The task's itemId, as outlit_list_inbox returns it"
           },
           "decision": {
             "type": "string",
@@ -4518,7 +4513,7 @@
           }
         },
         "required": [
-          "itemIds",
+          "itemId",
           "decision"
         ],
         "additionalProperties": false
@@ -17862,5 +17857,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "05dbc202a9031aaa2d8094714434052172eca484d67c0647a58fc9f982d80668"
+  "x-outlit-contract-hash": "c27ed852fd5237be9a63b2965856e54b40603df2f22cbfcaae4b7a00c7dd9a4c"
 }
