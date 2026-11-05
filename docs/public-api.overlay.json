@@ -289,15 +289,15 @@
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_decide_inbox_item')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_act_on_inbox_item')]",
       "update": {
-        "title": "Decide Inbox item"
+        "title": "Act on Inbox item"
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_undo_inbox_decision')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_undo_inbox_action')]",
       "update": {
-        "title": "Undo Inbox decision"
+        "title": "Undo Inbox action"
       }
     },
     {
@@ -595,15 +595,15 @@
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_decide_inbox_item']",
+      "target": "$.components.schemas['ToolOutput_outlit_act_on_inbox_item']",
       "update": {
-        "title": "Decide Inbox item"
+        "title": "Act on Inbox item"
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_undo_inbox_decision']",
+      "target": "$.components.schemas['ToolOutput_outlit_undo_inbox_action']",
       "update": {
-        "title": "Undo Inbox decision"
+        "title": "Undo Inbox action"
       }
     },
     {

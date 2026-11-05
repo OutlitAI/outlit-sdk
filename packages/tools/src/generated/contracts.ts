@@ -48,8 +48,8 @@ export const publicToolNames = [
   "outlit_get_attention_item",
   "outlit_list_inbox",
   "outlit_get_inbox_item",
-  "outlit_decide_inbox_item",
-  "outlit_undo_inbox_decision",
+  "outlit_act_on_inbox_item",
+  "outlit_undo_inbox_action",
   "outlit_get_customer_identity",
   "outlit_list_identity_merge_suggestions",
   "outlit_reject_identity_merge_suggestion",
@@ -13695,7 +13695,7 @@ export const publicToolContracts = {
                     "recover_cover",
                   ],
                 },
-                "description": "Not filled yet, so always empty. Decide with outlit_decide_inbox_item; it refuses a decision the task can't take",
+                "description": "Not filled yet, so always empty. Act with outlit_act_on_inbox_item; it refuses an action the task can't take",
               },
             },
             "required": [
@@ -14034,7 +14034,7 @@ export const publicToolContracts = {
               "recover_cover",
             ],
           },
-          "description": "Not filled yet, so always empty. Decide with outlit_decide_inbox_item; it refuses a decision the task can't take",
+          "description": "Not filled yet, so always empty. Act with outlit_act_on_inbox_item; it refuses an action the task can't take",
         },
         "sourcePreview": {
           "anyOf": [
@@ -14311,13 +14311,13 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
-  "outlit_decide_inbox_item": {
-    "toolName": "outlit_decide_inbox_item",
+  "outlit_act_on_inbox_item": {
+    "toolName": "outlit_act_on_inbox_item",
     "commandId": "inbox.decide",
     "commandVersion": 1,
     "ownerDomain": "inbox",
-    "title": "Decide Inbox Item",
-    "description": "Decide one of your Inbox tasks, by its itemId from outlit_list_inbox: mark it done, won't do (with a reason), wrong, reopen it, snooze it (up to two weeks; a week by default) or unsnooze it, take a Pool task or put it back, or say a plan step doesn't cover it (not_covered) and undo that (recover_cover). Done also closes the tasks it stands for, as on the page. The decision is your own, as if you made it on the Inbox page. Returns what changed and an undoToken that reverses it with outlit_undo_inbox_decision.",
+    "title": "Act on Inbox Item",
+    "description": "Act on one of your Inbox tasks, by its itemId from outlit_list_inbox: mark it done, won't do (with a reason), wrong, reopen it, snooze it (up to two weeks; a week by default) or unsnooze it, take a Pool task or put it back, or say a plan step doesn't cover it (not_covered) and undo that (recover_cover). Done also closes the tasks it stands for, as on the page. The action is your own, as if you took it on the Inbox page. Returns what changed and an undoToken that reverses it with outlit_undo_inbox_action.",
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
@@ -14333,7 +14333,7 @@ export const publicToolContracts = {
           "maxLength": 191,
           "description": "The task's itemId, as outlit_list_inbox returns it",
         },
-        "decision": {
+        "action": {
           "type": "string",
           "enum": [
             "done",
@@ -14367,7 +14367,7 @@ export const publicToolContracts = {
       },
       "required": [
         "itemId",
-        "decision",
+        "action",
       ],
       "additionalProperties": false,
     },
@@ -14413,7 +14413,7 @@ export const publicToolContracts = {
               "type": "null",
             },
           ],
-          "description": "Pass to outlit_undo_inbox_decision to reverse this; null when it has no undo",
+          "description": "Pass to outlit_undo_inbox_action to reverse this; null when it has no undo",
         },
         "undoUntil": {
           "anyOf": [
@@ -14438,13 +14438,13 @@ export const publicToolContracts = {
       "additionalProperties": false,
     },
   },
-  "outlit_undo_inbox_decision": {
-    "toolName": "outlit_undo_inbox_decision",
+  "outlit_undo_inbox_action": {
+    "toolName": "outlit_undo_inbox_action",
     "commandId": "inbox.undo",
     "commandVersion": 1,
     "ownerDomain": "inbox",
-    "title": "Undo Inbox Decision",
-    "description": "Undo a decision outlit_decide_inbox_item made, with the undoToken it returned. Only you can undo your own decision, and only while the task is as it left it.",
+    "title": "Undo Inbox Action",
+    "description": "Undo an action outlit_act_on_inbox_item took, with the undoToken it returned. Only you can undo your own action, and only while the task is as it left it.",
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
@@ -14458,7 +14458,7 @@ export const publicToolContracts = {
           "type": "string",
           "minLength": 1,
           "maxLength": 100000,
-          "description": "The undoToken outlit_decide_inbox_item returned, exactly as it came",
+          "description": "The undoToken outlit_act_on_inbox_item returned, exactly as it came",
         },
       },
       "required": [
@@ -16314,8 +16314,8 @@ export const consumerToolPolicies = {
     "outlit_get_attention_item",
     "outlit_list_inbox",
     "outlit_get_inbox_item",
-    "outlit_decide_inbox_item",
-    "outlit_undo_inbox_decision",
+    "outlit_act_on_inbox_item",
+    "outlit_undo_inbox_action",
     "outlit_get_customer_identity",
     "outlit_list_identity_merge_suggestions",
     "outlit_reject_identity_merge_suggestion",
@@ -16367,8 +16367,8 @@ export const consumerToolPolicies = {
     "outlit_get_attention_item",
     "outlit_list_inbox",
     "outlit_get_inbox_item",
-    "outlit_decide_inbox_item",
-    "outlit_undo_inbox_decision",
+    "outlit_act_on_inbox_item",
+    "outlit_undo_inbox_action",
     "outlit_get_customer_identity",
     "outlit_list_identity_merge_suggestions",
     "outlit_reject_identity_merge_suggestion",
@@ -17979,4 +17979,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "c27ed852fd5237be9a63b2965856e54b40603df2f22cbfcaae4b7a00c7dd9a4c" as const
+export const sdkConsumerContractHash = "9409f42bc10034b8afef6a3ca3597fbe8ae9fa8ed8846f1e7b4b0b6a4320c31c" as const

@@ -806,10 +806,10 @@
                     "properties": {
                       "tool": {
                         "type": "string",
-                        "const": "outlit_decide_inbox_item"
+                        "const": "outlit_act_on_inbox_item"
                       },
                       "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_decide_inbox_item"
+                        "$ref": "#/components/schemas/ToolInput_outlit_act_on_inbox_item"
                       }
                     },
                     "required": [
@@ -823,10 +823,10 @@
                     "properties": {
                       "tool": {
                         "type": "string",
-                        "const": "outlit_undo_inbox_decision"
+                        "const": "outlit_undo_inbox_action"
                       },
                       "input": {
-                        "$ref": "#/components/schemas/ToolInput_outlit_undo_inbox_decision"
+                        "$ref": "#/components/schemas/ToolInput_outlit_undo_inbox_action"
                       }
                     },
                     "required": [
@@ -1067,10 +1067,10 @@
                       "$ref": "#/components/schemas/ToolOutput_outlit_get_inbox_item"
                     },
                     {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_decide_inbox_item"
+                      "$ref": "#/components/schemas/ToolOutput_outlit_act_on_inbox_item"
                     },
                     {
-                      "$ref": "#/components/schemas/ToolOutput_outlit_undo_inbox_decision"
+                      "$ref": "#/components/schemas/ToolOutput_outlit_undo_inbox_action"
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_get_customer_identity"
@@ -4471,7 +4471,7 @@
         ],
         "additionalProperties": false
       },
-      "ToolInput_outlit_decide_inbox_item": {
+      "ToolInput_outlit_act_on_inbox_item": {
         "type": "object",
         "properties": {
           "itemId": {
@@ -4480,7 +4480,7 @@
             "maxLength": 191,
             "description": "The task's itemId, as outlit_list_inbox returns it"
           },
-          "decision": {
+          "action": {
             "type": "string",
             "enum": [
               "done",
@@ -4514,18 +4514,18 @@
         },
         "required": [
           "itemId",
-          "decision"
+          "action"
         ],
         "additionalProperties": false
       },
-      "ToolInput_outlit_undo_inbox_decision": {
+      "ToolInput_outlit_undo_inbox_action": {
         "type": "object",
         "properties": {
           "undoToken": {
             "type": "string",
             "minLength": 1,
             "maxLength": 100000,
-            "description": "The undoToken outlit_decide_inbox_item returned, exactly as it came"
+            "description": "The undoToken outlit_act_on_inbox_item returned, exactly as it came"
           }
         },
         "required": [
@@ -15663,7 +15663,7 @@
                       "recover_cover"
                     ]
                   },
-                  "description": "Not filled yet, so always empty. Decide with outlit_decide_inbox_item; it refuses a decision the task can't take"
+                  "description": "Not filled yet, so always empty. Act with outlit_act_on_inbox_item; it refuses an action the task can't take"
                 }
               },
               "required": [
@@ -15972,7 +15972,7 @@
                 "recover_cover"
               ]
             },
-            "description": "Not filled yet, so always empty. Decide with outlit_decide_inbox_item; it refuses a decision the task can't take"
+            "description": "Not filled yet, so always empty. Act with outlit_act_on_inbox_item; it refuses an action the task can't take"
           },
           "sourcePreview": {
             "anyOf": [
@@ -16248,7 +16248,7 @@
         ],
         "additionalProperties": false
       },
-      "ToolOutput_outlit_decide_inbox_item": {
+      "ToolOutput_outlit_act_on_inbox_item": {
         "type": "object",
         "properties": {
           "itemIds": {
@@ -16289,7 +16289,7 @@
                 "type": "null"
               }
             ],
-            "description": "Pass to outlit_undo_inbox_decision to reverse this; null when it has no undo"
+            "description": "Pass to outlit_undo_inbox_action to reverse this; null when it has no undo"
           },
           "undoUntil": {
             "anyOf": [
@@ -16313,7 +16313,7 @@
         ],
         "additionalProperties": false
       },
-      "ToolOutput_outlit_undo_inbox_decision": {
+      "ToolOutput_outlit_undo_inbox_action": {
         "type": "object",
         "properties": {
           "itemIds": {
@@ -17857,5 +17857,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "c27ed852fd5237be9a63b2965856e54b40603df2f22cbfcaae4b7a00c7dd9a4c"
+  "x-outlit-contract-hash": "9409f42bc10034b8afef6a3ca3597fbe8ae9fa8ed8846f1e7b4b0b6a4320c31c"
 }

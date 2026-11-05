@@ -59,8 +59,8 @@ against the shared `@outlit/tools` contract before the tool runs.
 |---|---|
 | `outlit_list_inbox` | List one section of your Inbox (today, open, snoozed, done or pool), as tasks in the Inbox page's order, each with its task `itemId`, type, what it is part of and what it answers |
 | `outlit_get_inbox_item` | Retrieve one Inbox task by `itemId`, with its source preview, prepared reply and covered tasks |
-| `outlit_decide_inbox_item` | Decide your own Inbox tasks by `itemId` (done, won't do, wrong, reopen, snooze, unsnooze, take, put back, not covered), as you would on the Inbox page; returns an `undoToken` |
-| `outlit_undo_inbox_decision` | Undo a decision with the `undoToken` it returned |
+| `outlit_act_on_inbox_item` | Act on your own Inbox task by `itemId` (done, won't do, wrong, reopen, snooze, unsnooze, take, put back, not covered), as you would on the Inbox page; returns an `undoToken` |
+| `outlit_undo_inbox_action` | Undo an action with the `undoToken` it returned |
 
 ### Access
 
