@@ -806,6 +806,40 @@
                     "properties": {
                       "tool": {
                         "type": "string",
+                        "const": "outlit_act_on_inbox_item"
+                      },
+                      "input": {
+                        "$ref": "#/components/schemas/ToolInput_outlit_act_on_inbox_item"
+                      }
+                    },
+                    "required": [
+                      "tool",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
+                        "const": "outlit_undo_inbox_action"
+                      },
+                      "input": {
+                        "$ref": "#/components/schemas/ToolInput_outlit_undo_inbox_action"
+                      }
+                    },
+                    "required": [
+                      "tool",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
                         "const": "outlit_get_customer_identity"
                       },
                       "input": {
@@ -1031,6 +1065,12 @@
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_get_inbox_item"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ToolOutput_outlit_act_on_inbox_item"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ToolOutput_outlit_undo_inbox_action"
                     },
                     {
                       "$ref": "#/components/schemas/ToolOutput_outlit_get_customer_identity"
@@ -4428,6 +4468,68 @@
         },
         "required": [
           "itemId"
+        ],
+        "additionalProperties": false
+      },
+      "ToolInput_outlit_act_on_inbox_item": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191,
+            "description": "The task's itemId, as outlit_list_inbox returns it"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "done",
+              "wont_do",
+              "wrong",
+              "reopen",
+              "snooze",
+              "unsnooze",
+              "take",
+              "put_back",
+              "not_covered",
+              "recover_cover"
+            ],
+            "description": "done, wont_do, wrong (a reply that isn't owed), reopen, snooze, unsnooze, take or put_back (a Pool task), not_covered (a task its plan step doesn't cover) or recover_cover"
+          },
+          "until": {
+            "description": "snooze only: when the task comes back, within 14 days (default: a week)",
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "reason": {
+            "description": "wont_do only: already_handled, not_needed or not_ours",
+            "type": "string",
+            "enum": [
+              "already_handled",
+              "not_needed",
+              "not_ours"
+            ]
+          }
+        },
+        "required": [
+          "itemId",
+          "action"
+        ],
+        "additionalProperties": false
+      },
+      "ToolInput_outlit_undo_inbox_action": {
+        "type": "object",
+        "properties": {
+          "undoToken": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100000,
+            "description": "The undoToken outlit_act_on_inbox_item returned, exactly as it came"
+          }
+        },
+        "required": [
+          "undoToken"
         ],
         "additionalProperties": false
       },
@@ -15561,7 +15663,7 @@
                       "recover_cover"
                     ]
                   },
-                  "description": "What can be decided on this task now; empty when nothing can be"
+                  "description": "Not filled yet, so always empty. Act with outlit_act_on_inbox_item; it refuses an action the task can't take"
                 }
               },
               "required": [
@@ -15870,7 +15972,7 @@
                 "recover_cover"
               ]
             },
-            "description": "What can be decided on this task now; empty when nothing can be"
+            "description": "Not filled yet, so always empty. Act with outlit_act_on_inbox_item; it refuses an action the task can't take"
           },
           "sourcePreview": {
             "anyOf": [
@@ -16143,6 +16245,108 @@
           "sourcePreview",
           "draft",
           "coveredSteps"
+        ],
+        "additionalProperties": false
+      },
+      "ToolOutput_outlit_act_on_inbox_item": {
+        "type": "object",
+        "properties": {
+          "itemIds": {
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191
+            },
+            "description": "The tasks this changed, in the order given"
+          },
+          "changed": {
+            "type": "boolean",
+            "description": "False when nothing was written, such as a repeated call"
+          },
+          "snoozedUntil": {
+            "description": "A snooze's end; null once a task is unsnoozed",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "undoToken": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Pass to outlit_undo_inbox_action to reverse this; null when it has no undo"
+          },
+          "undoUntil": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When undoToken stops working"
+          }
+        },
+        "required": [
+          "itemIds",
+          "changed",
+          "undoToken",
+          "undoUntil"
+        ],
+        "additionalProperties": false
+      },
+      "ToolOutput_outlit_undo_inbox_action": {
+        "type": "object",
+        "properties": {
+          "itemIds": {
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 191
+            },
+            "description": "The tasks this changed, in the order given"
+          },
+          "changed": {
+            "type": "boolean",
+            "description": "False when nothing was written, such as a repeated call"
+          },
+          "snoozedUntil": {
+            "description": "A snooze's end; null once a task is unsnoozed",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "itemIds",
+          "changed"
         ],
         "additionalProperties": false
       },
@@ -17653,5 +17857,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "e74e17144afe79a614e7f11ef9548c0fa87acda72cded5c67a2331f460ac3db2"
+  "x-outlit-contract-hash": "9409f42bc10034b8afef6a3ca3597fbe8ae9fa8ed8846f1e7b4b0b6a4320c31c"
 }

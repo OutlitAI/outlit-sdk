@@ -48,6 +48,8 @@ export const publicToolNames = [
   "outlit_get_attention_item",
   "outlit_list_inbox",
   "outlit_get_inbox_item",
+  "outlit_act_on_inbox_item",
+  "outlit_undo_inbox_action",
   "outlit_get_customer_identity",
   "outlit_list_identity_merge_suggestions",
   "outlit_reject_identity_merge_suggestion",
@@ -13693,7 +13695,7 @@ export const publicToolContracts = {
                     "recover_cover",
                   ],
                 },
-                "description": "What can be decided on this task now; empty when nothing can be",
+                "description": "Not filled yet, so always empty. Act with outlit_act_on_inbox_item; it refuses an action the task can't take",
               },
             },
             "required": [
@@ -14032,7 +14034,7 @@ export const publicToolContracts = {
               "recover_cover",
             ],
           },
-          "description": "What can be decided on this task now; empty when nothing can be",
+          "description": "Not filled yet, so always empty. Act with outlit_act_on_inbox_item; it refuses an action the task can't take",
         },
         "sourcePreview": {
           "anyOf": [
@@ -14305,6 +14307,200 @@ export const publicToolContracts = {
         "sourcePreview",
         "draft",
         "coveredSteps",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_act_on_inbox_item": {
+    "toolName": "outlit_act_on_inbox_item",
+    "commandId": "inbox.decide",
+    "commandVersion": 1,
+    "ownerDomain": "inbox",
+    "title": "Act on Inbox Item",
+    "description": "Act on one of your Inbox tasks, by its itemId from outlit_list_inbox: mark it done, won't do (with a reason), wrong, reopen it, snooze it (up to two weeks; a week by default) or unsnooze it, take a Pool task or put it back, or say a plan step doesn't cover it (not_covered) and undo that (recover_cover). Done also closes the tasks it stands for, as on the page. The action is your own, as if you took it on the Inbox page. Returns what changed and an undoToken that reverses it with outlit_undo_inbox_action.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "itemId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 191,
+          "description": "The task's itemId, as outlit_list_inbox returns it",
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "done",
+            "wont_do",
+            "wrong",
+            "reopen",
+            "snooze",
+            "unsnooze",
+            "take",
+            "put_back",
+            "not_covered",
+            "recover_cover",
+          ],
+          "description": "done, wont_do, wrong (a reply that isn't owed), reopen, snooze, unsnooze, take or put_back (a Pool task), not_covered (a task its plan step doesn't cover) or recover_cover",
+        },
+        "until": {
+          "description": "snooze only: when the task comes back, within 14 days (default: a week)",
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+        },
+        "reason": {
+          "description": "wont_do only: already_handled, not_needed or not_ours",
+          "type": "string",
+          "enum": [
+            "already_handled",
+            "not_needed",
+            "not_ours",
+          ],
+        },
+      },
+      "required": [
+        "itemId",
+        "action",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "itemIds": {
+          "maxItems": 500,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191,
+          },
+          "description": "The tasks this changed, in the order given",
+        },
+        "changed": {
+          "type": "boolean",
+          "description": "False when nothing was written, such as a repeated call",
+        },
+        "snoozedUntil": {
+          "description": "A snooze's end; null once a task is unsnoozed",
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "undoToken": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100000,
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "Pass to outlit_undo_inbox_action to reverse this; null when it has no undo",
+        },
+        "undoUntil": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "When undoToken stops working",
+        },
+      },
+      "required": [
+        "itemIds",
+        "changed",
+        "undoToken",
+        "undoUntil",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_undo_inbox_action": {
+    "toolName": "outlit_undo_inbox_action",
+    "commandId": "inbox.undo",
+    "commandVersion": 1,
+    "ownerDomain": "inbox",
+    "title": "Undo Inbox Action",
+    "description": "Undo an action outlit_act_on_inbox_item took, with the undoToken it returned. Only you can undo your own action, and only while the task is as it left it.",
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "undoToken": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100000,
+          "description": "The undoToken outlit_act_on_inbox_item returned, exactly as it came",
+        },
+      },
+      "required": [
+        "undoToken",
+      ],
+      "additionalProperties": false,
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "itemIds": {
+          "maxItems": 500,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 191,
+          },
+          "description": "The tasks this changed, in the order given",
+        },
+        "changed": {
+          "type": "boolean",
+          "description": "False when nothing was written, such as a repeated call",
+        },
+        "snoozedUntil": {
+          "description": "A snooze's end; null once a task is unsnoozed",
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+      },
+      "required": [
+        "itemIds",
+        "changed",
       ],
       "additionalProperties": false,
     },
@@ -16118,6 +16314,8 @@ export const consumerToolPolicies = {
     "outlit_get_attention_item",
     "outlit_list_inbox",
     "outlit_get_inbox_item",
+    "outlit_act_on_inbox_item",
+    "outlit_undo_inbox_action",
     "outlit_get_customer_identity",
     "outlit_list_identity_merge_suggestions",
     "outlit_reject_identity_merge_suggestion",
@@ -16169,6 +16367,8 @@ export const consumerToolPolicies = {
     "outlit_get_attention_item",
     "outlit_list_inbox",
     "outlit_get_inbox_item",
+    "outlit_act_on_inbox_item",
+    "outlit_undo_inbox_action",
     "outlit_get_customer_identity",
     "outlit_list_identity_merge_suggestions",
     "outlit_reject_identity_merge_suggestion",
@@ -17779,4 +17979,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "e74e17144afe79a614e7f11ef9548c0fa87acda72cded5c67a2331f460ac3db2" as const
+export const sdkConsumerContractHash = "9409f42bc10034b8afef6a3ca3597fbe8ae9fa8ed8846f1e7b4b0b6a4320c31c" as const
