@@ -68,6 +68,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -419,6 +420,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -775,6 +777,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -967,6 +970,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -2116,6 +2120,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -2272,6 +2277,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -2333,6 +2339,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -2418,7 +2425,8 @@ export const publicToolContracts = {
     "description": "Change an existing customer collaborator between Viewer and Editor.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -2505,6 +2513,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": true,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -2555,6 +2564,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -2925,6 +2935,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -3597,6 +3608,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -4107,6 +4119,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -4496,6 +4509,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -4948,6 +4962,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -5816,6 +5831,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -5900,6 +5916,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -6109,6 +6126,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -6493,6 +6511,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -6883,6 +6902,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": false,
       "openWorldHint": true,
     },
     "inputSchema": {
@@ -7292,6 +7312,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": true,
     },
     "inputSchema": {
@@ -7696,6 +7717,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": true,
     },
     "inputSchema": {
@@ -8086,6 +8108,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -8476,6 +8499,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": true,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -8534,6 +8558,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": false,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -8593,6 +8618,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -8690,6 +8716,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": false,
       "openWorldHint": true,
     },
     "inputSchema": {
@@ -8779,6 +8806,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -8839,6 +8867,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -8941,6 +8970,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": false,
       "openWorldHint": true,
     },
     "inputSchema": {
@@ -9990,6 +10020,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -10040,6 +10071,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -10237,6 +10269,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -10307,6 +10340,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -10371,6 +10405,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -10461,6 +10496,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -11016,6 +11052,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -11337,6 +11374,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": true,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -11402,6 +11440,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -12595,6 +12634,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -13034,6 +13074,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -13361,6 +13402,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -13799,6 +13841,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -14201,6 +14244,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -14749,6 +14793,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": false,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -14876,6 +14921,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": false,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -14943,6 +14989,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -15152,6 +15199,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -16281,6 +16329,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -16333,6 +16382,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": true,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -16562,6 +16612,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
+      "idempotentHint": true,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -18411,4 +18462,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "b77a1b10fd174c041e1ae2c6fa7dfec1b049dc32053dd4e5ccb9a86123311ff8" as const
+export const sdkConsumerContractHash = "c6d28220c78462ae76121c60a4ed7146310f0d2a02f5851d531ea73462457709" as const
