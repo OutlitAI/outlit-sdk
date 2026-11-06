@@ -978,7 +978,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, company enrichment, the renewal date and its source, or crm: the CRM and support tool accounts linked to the customer with their own fields (segment, health, stage, owner and custom fields) as stored, which can be hundreds so request it only when needed. Revenue includes arr, the annualized revenue run rate, exactly as the customer page shows it, with its currency, whether it is an estimate, the revenue lifecycle and the parts it is counted from; amounts are in the billing provider's units for that currency (for USD, EUR, GBP and CAD these are cents: divide by 100, e.g. 1234500 is $12,345, USD; other currencies follow the provider's amount rules). lifetimeRevenueCurrency names lifetimeRevenue's currency.",
+    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, company enrichment, the renewal date and its source, or crm: the CRM and support tool accounts linked to the customer with their own fields (segment, health, stage, owner and custom fields) as stored, which can be hundreds so request it only when needed, or links: the id of every record in another system linked to the customer (billing customers, CRM and support accounts, product analytics groups, Slack channels). Revenue includes arr, the annualized revenue run rate, exactly as the customer page shows it, with its currency, whether it is an estimate, the revenue lifecycle and the parts it is counted from; amounts are in the billing provider's units for that currency (for USD, EUR, GBP and CAD these are cents: divide by 100, e.g. 1234500 is $12,345, USD; other currencies follow the provider's amount rules). lifetimeRevenueCurrency names lifetimeRevenue's currency.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -1008,6 +1008,7 @@ export const publicToolContracts = {
               "enrichment",
               "renewal",
               "crm",
+              "links",
             ],
           },
         },
@@ -2382,6 +2383,90 @@ export const publicToolContracts = {
                 ],
                 "additionalProperties": false,
               },
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "links": {
+          "description": "Every record in another system linked to this customer, including records still held by customers merged into it: billing customers, CRM and support accounts, product analytics groups and accounts, Slack channels and the product's own customer id. A record is listed only when its id in that system is known. Use it to tell whether two customers share a record, or to name the record to look up in that system; for a CRM account's own fields use include crm. Ordered by kind, provider and id. Null when the read is bound to a past point in time.",
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "records": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "billing_customer",
+                          "crm_account",
+                          "support_account",
+                          "analytics_group",
+                          "analytics_account",
+                          "slack_channel",
+                          "slack_workspace",
+                          "external_organization",
+                        ],
+                        "description": "What the record is: a billing customer (such as a Stripe customer), a CRM or support account, a product analytics group or account, a Slack channel or workspace, or the customer's id in the product's own sign-up system.",
+                      },
+                      "provider": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                        "description": "The system that holds the record, such as stripe, hubspot or posthog; null when unknown.",
+                      },
+                      "id": {
+                        "type": "string",
+                        "description": "The record's id in that system, such as a Stripe customer id (cus_...).",
+                      },
+                      "connectionId": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                        "description": "The Outlit integration connection the record came through; null when none names it.",
+                      },
+                      "linkedAt": {
+                        "type": "string",
+                        "description": "When Outlit linked the record to this customer, ISO 8601. Outlit's own time, not a fact about the customer.",
+                      },
+                    },
+                    "required": [
+                      "kind",
+                      "provider",
+                      "id",
+                      "connectionId",
+                      "linkedAt",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "omitted": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "How many more linked records exist beyond the first 50, which are left out.",
+                },
+              },
+              "required": [
+                "records",
+                "omitted",
+              ],
+              "additionalProperties": false,
             },
             {
               "type": "null",
@@ -18657,6 +18742,7 @@ export const customerIncludeSections = [
   "enrichment",
   "renewal",
   "crm",
+  "links",
 ] as const
 
 export const customerSourceTypes = [
@@ -18747,4 +18833,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "aba66920c4d369ad42e40cd780da52f98dca76395d77348c3b1b41c1de569710" as const
+export const sdkConsumerContractHash = "c763c8f5420ee5d8e623c4e69aec48f8e2713300e99a96286858d1552ed726ba" as const
