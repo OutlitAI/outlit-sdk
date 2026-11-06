@@ -53,6 +53,10 @@ transition, and an optional stable error. Supported next transitions are:
 - `browser_handoff` for authentication, recovery, or provider-controlled external setup
 - `crm_mapping` with the exact recommendation that can be confirmed and returned
 - `mixpanel_mapping` with a preview used to choose and confirm an exact mapping
+- `stripe_renewal_date_field` for a ready Stripe connection, listing the subscription metadata keys
+  (`key`, `subscriptionCount`, `sampleDate`). Choose one by sending
+  `configuration: { kind: "stripe_renewal_date_field", key }`, or `key: null` to clear it. The step is
+  optional, and a key whose `sampleDate` is `null` does not hold dates and cannot be chosen.
 
 On `CREDENTIAL_REQUIRED`, collect the provider's declared credential shape through a secret-safe
 channel and retry once. Never log, serialize into errors, or return submitted credentials. Browser

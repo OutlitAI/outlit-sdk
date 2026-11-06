@@ -165,6 +165,19 @@ export async function collectMixpanelMapping(
   return { mode, groupKey }
 }
 
+/** Picks the metadata key that holds renewal dates; null means skip. */
+export async function collectStripeRenewalDateKey(
+  dateKeys: Array<{ key: string }>,
+): Promise<string | null> {
+  if (dateKeys.length === 0) return null
+  // Metadata keys are never empty, so "" can stand for skipping.
+  const key = await choice("Which Stripe metadata key holds the renewal date?", [
+    ...dateKeys.map(({ key }) => ({ value: key, label: key })),
+    { value: "", label: "Skip" },
+  ])
+  return key === "" ? null : key
+}
+
 async function secret(message: string): Promise<string> {
   const value = await p.password({
     message,

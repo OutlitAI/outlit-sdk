@@ -38,6 +38,31 @@ describe("integration setup input", () => {
   })
 
   test.each([
+    ["a key", "renews_at"],
+    ["null to clear the field", null],
+  ])("accepts a Stripe renewal date field configuration with %s", (_label, key) => {
+    expect(
+      parseSetupConfig(
+        JSON.stringify({ configuration: { kind: "stripe_renewal_date_field", key } }),
+        "stripe",
+      ),
+    ).toEqual({
+      provider: "stripe",
+      configuration: { kind: "stripe_renewal_date_field", key },
+    })
+  })
+
+  test.each([
+    ["a missing key", { kind: "stripe_renewal_date_field" }],
+    ["an empty key", { kind: "stripe_renewal_date_field", key: "" }],
+    ["a numeric key", { kind: "stripe_renewal_date_field", key: 3 }],
+  ])("rejects a Stripe renewal date field configuration with %s", (_label, configuration) => {
+    expect(() => parseSetupConfig(JSON.stringify({ configuration }), "stripe")).toThrow(
+      SetupInputError,
+    )
+  })
+
+  test.each([
     ["multiple JSON values", "{} {}"],
     ["an array", "[]"],
     ["a provider", '{"provider":"fireflies"}'],

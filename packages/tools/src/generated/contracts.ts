@@ -8784,7 +8784,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "integrations",
     "title": "Set Up Integration",
-    "description": "Continue integration setup through validated credentials, safe configuration, or a trusted browser handoff.",
+    "description": "Continue integration setup through validated credentials, safe configuration, or a trusted browser handoff. For a connected Stripe account, an optional stripe_renewal_date_field step names the subscription metadata key that holds renewal dates.",
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
@@ -8923,6 +8923,32 @@ export const publicToolContracts = {
               "type": "string",
               "const": "oauth",
             },
+            "configuration": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "stripe_renewal_date_field",
+                },
+                "key": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "required": [
+                "kind",
+                "key",
+              ],
+              "additionalProperties": false,
+            },
           },
           "required": [
             "provider",
@@ -8951,6 +8977,32 @@ export const publicToolContracts = {
               },
               "required": [
                 "apiKey",
+              ],
+              "additionalProperties": false,
+            },
+            "configuration": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "stripe_renewal_date_field",
+                },
+                "key": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "required": [
+                "kind",
+                "key",
               ],
               "additionalProperties": false,
             },
@@ -9653,6 +9705,69 @@ export const publicToolContracts = {
                   "required": [
                     "kind",
                     "preview",
+                  ],
+                  "additionalProperties": false,
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "stripe_renewal_date_field",
+                    },
+                    "selectedKey": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "liveSubscriptionCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                    },
+                    "keys": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                          },
+                          "subscriptionCount": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                          },
+                          "sampleDate": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                        },
+                        "required": [
+                          "key",
+                          "subscriptionCount",
+                          "sampleDate",
+                        ],
+                        "additionalProperties": false,
+                      },
+                    },
+                  },
+                  "required": [
+                    "kind",
+                    "selectedKey",
+                    "liveSubscriptionCount",
+                    "keys",
                   ],
                   "additionalProperties": false,
                 },
@@ -18142,4 +18257,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "b0d3a500cbaa9afafb3dc7c1f6a96ba6bbbab608a90c57a0957cd6b2d54c7a8b" as const
+export const sdkConsumerContractHash = "46b0bb1e5f982e4f8807ce038910083ba15131487817bad040b7366a08d8a38b" as const

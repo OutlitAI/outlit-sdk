@@ -3668,6 +3668,32 @@
               "connectionMode": {
                 "type": "string",
                 "const": "oauth"
+              },
+              "configuration": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "stripe_renewal_date_field"
+                  },
+                  "key": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "key"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -3697,6 +3723,32 @@
                 },
                 "required": [
                   "apiKey"
+                ],
+                "additionalProperties": false
+              },
+              "configuration": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "stripe_renewal_date_field"
+                  },
+                  "key": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "key"
                 ],
                 "additionalProperties": false
               }
@@ -12214,6 +12266,69 @@
                       "preview"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "stripe_renewal_date_field"
+                      },
+                      "selectedKey": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "liveSubscriptionCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "keys": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "subscriptionCount": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "sampleDate": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "key",
+                            "subscriptionCount",
+                            "sampleDate"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "selectedKey",
+                      "liveSubscriptionCount",
+                      "keys"
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               },
@@ -18017,5 +18132,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "b0d3a500cbaa9afafb3dc7c1f6a96ba6bbbab608a90c57a0957cd6b2d54c7a8b"
+  "x-outlit-contract-hash": "46b0bb1e5f982e4f8807ce038910083ba15131487817bad040b7366a08d8a38b"
 }
