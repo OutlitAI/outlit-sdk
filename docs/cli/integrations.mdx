@@ -23,6 +23,8 @@ Interactive setup can:
   polled for at most five minutes. Recovery and external setup open in the browser; the CLI does not wait for them to finish.
 - Display a CRM recommendation and submit that exact mapping after confirmation.
 - Display a Mixpanel preview and submit the exact mapping selected by the user.
+- List a connected Stripe account's subscription metadata keys and submit the one that holds renewal
+  dates. This step is optional; skipping it finishes setup as `ready`.
 
 If setup repeats a credential, authentication, or mapping step, the CLI stops with `SETUP_STALLED`. If it cannot open a validated handoff URL, it prints the URL so you can open it yourself.
 
@@ -47,6 +49,17 @@ An explicit HubSpot CRM mapping is likewise supplied as the generated CRM mappin
 printf '%s\n' '{"configuration":{"kind":"crm_mapping","mappings":[{"pipelineId":"default","pipelineName":"Sales","mappings":[{"outlitStage":"Won","crmStages":[{"id":"closedwon","name":"Closed Won"}]}]}],"confirm":true}}' \
   | outlit integrations setup hubspot --config-stdin --json
 ```
+
+A Stripe renewal date field is supplied as a metadata key, or `null` to clear it:
+
+```bash
+printf '%s\n' '{"configuration":{"kind":"stripe_renewal_date_field","key":"renews_at"}}' \
+  | outlit integrations setup stripe --config-stdin --json
+```
+
+In JSON mode, run setup first without `--config-stdin`: a connected Stripe account returns the step
+as `next`, with each key's subscription count and a sample date (`null` when the key does not hold
+dates, which makes it unusable). Then rerun with the key you chose.
 
 The provider remains the positional CLI argument and is rejected inside the stdin document. Unknown
 top-level fields are also rejected. `--config-stdin` is explicit; ordinary piped stdin is not read.

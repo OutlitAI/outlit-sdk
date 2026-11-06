@@ -969,6 +969,176 @@ describe("integrations setup", () => {
     expect(previewSeenBeforeChoice).toBe(true)
   })
 
+  describe("Stripe renewal date field", () => {
+    const renewalStep = setupResult({
+      provider: "stripe",
+      name: "Stripe",
+      category: "billing",
+      status: "ready",
+      next: {
+        kind: "stripe_renewal_date_field",
+        selectedKey: null,
+        liveSubscriptionCount: 5,
+        keys: [
+          { key: "renews_at", subscriptionCount: 2, sampleDate: "2028-01-31" },
+          { key: "plan_notes", subscriptionCount: 4, sampleDate: null },
+        ],
+      },
+    })
+
+    function mockStripeSetup(onSetup: (input: ToolInput, call: number) => unknown) {
+      let setupCalls = 0
+      mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
+        if (toolName === "outlit_get_integration_capabilities") {
+          return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
+        }
+        if (toolName !== "outlit_setup_integration") throw new Error(`unexpected tool ${toolName}`)
+        setupCalls += 1
+        return onSetup(input, setupCalls)
+      })
+    }
+
+    test("lists the keys, offers only date keys, and sends the picked key", async () => {
+      setInteractive()
+      mockStripeSetup((_input, call) =>
+        call === 1 ? renewalStep : setupResult({ provider: "stripe", name: "Stripe" }),
+      )
+      const logSpy = spyOn(console, "log").mockImplementation(() => {})
+      let output = ""
+      let offered: unknown
+      mockSelect.mockImplementationOnce((async (options: { options: unknown }) => {
+        offered = options.options
+        return "renews_at"
+      }) as never)
+
+      try {
+        const { default: setup } = await import("../../../src/commands/integrations/setup")
+        await setup.run!({ args: { provider: "stripe" } } as never)
+      } finally {
+        output = logSpy.mock.calls.map((call) => call[0]).join("\n")
+        logSpy.mockRestore()
+      }
+
+      expect(output).toContain("renews_at · on 2 of 5 subscriptions · e.g. Jan 31, 2028")
+      expect(output).toContain("plan_notes · on 4 of 5 subscriptions · not a date")
+      expect(offered).toEqual([
+        { value: "renews_at", label: "renews_at" },
+        { value: "", label: "Skip" },
+      ])
+      expect(mockCallTool).toHaveBeenCalledTimes(3)
+      expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_setup_integration", {
+        provider: "stripe",
+        configuration: { kind: "stripe_renewal_date_field", key: "renews_at" },
+      })
+      expect(output).toContain("Stripe: ready")
+    })
+
+    test("finishes ready without saving when the person skips", async () => {
+      setInteractive()
+      mockStripeSetup(() => renewalStep)
+      mockSelect.mockResolvedValueOnce("" as never)
+      const logSpy = spyOn(console, "log").mockImplementation(() => {})
+      let printed: unknown[] = []
+
+      try {
+        const { default: setup } = await import("../../../src/commands/integrations/setup")
+        await setup.run!({ args: { provider: "stripe" } } as never)
+      } finally {
+        printed = logSpy.mock.calls.map((call) => call[0])
+        logSpy.mockRestore()
+      }
+
+      expect(mockCallTool).toHaveBeenCalledTimes(2)
+      expect(printed).toContain("Stripe: ready")
+    })
+
+    test("skips the prompt when no key holds a date", async () => {
+      setInteractive()
+      mockStripeSetup(() =>
+        setupResult({
+          provider: "stripe",
+          name: "Stripe",
+          next: {
+            kind: "stripe_renewal_date_field",
+            selectedKey: null,
+            liveSubscriptionCount: 1,
+            keys: [{ key: "plan_notes", subscriptionCount: 1, sampleDate: null }],
+          },
+        }),
+      )
+      const logSpy = spyOn(console, "log").mockImplementation(() => {})
+
+      try {
+        const { default: setup } = await import("../../../src/commands/integrations/setup")
+        await setup.run!({ args: { provider: "stripe" } } as never)
+      } finally {
+        logSpy.mockRestore()
+      }
+
+      expect(mockSelect).not.toHaveBeenCalled()
+      expect(mockCallTool).toHaveBeenCalledTimes(2)
+    })
+
+    test("returns the step unchanged in JSON mode without prompting", async () => {
+      mockStripeSetup(() => renewalStep)
+
+      const { default: setup } = await import("../../../src/commands/integrations/setup")
+      const result = await captureStdout(() =>
+        setup.run!({ args: { provider: "stripe", json: true } } as never),
+      )
+
+      expect(result).toEqual(renewalStep)
+      expect(mockSelect).not.toHaveBeenCalled()
+      expect(mockCallTool).toHaveBeenCalledTimes(2)
+    })
+
+    test("sends a supplied key through stdin and returns the response", async () => {
+      const config = { configuration: { kind: "stripe_renewal_date_field", key: null } }
+      mockStripeSetup(() => setupResult({ provider: "stripe", name: "Stripe" }))
+      const stdinSpy = spyOn(Bun.stdin, "text").mockResolvedValue(JSON.stringify(config))
+      try {
+        const { default: setup } = await import("../../../src/commands/integrations/setup")
+        await captureStdout(() =>
+          setup.run!({
+            args: { provider: "stripe", json: true, "config-stdin": true },
+          } as never),
+        )
+      } finally {
+        stdinSpy.mockRestore()
+      }
+
+      expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_setup_integration", {
+        provider: "stripe",
+        ...config,
+      })
+    })
+
+    test("exits nonzero when the key prompt is cancelled", async () => {
+      setInteractive()
+      mockStripeSetup(() => renewalStep)
+      mockSelect.mockResolvedValueOnce(promptCancelled as never)
+
+      const { default: setup } = await import("../../../src/commands/integrations/setup")
+      await expectInteractiveError(
+        () => setup.run!({ args: { provider: "stripe" } } as never),
+        "Integration setup was cancelled.",
+      )
+    })
+
+    test("stalls when Core repeats the step after a pick", async () => {
+      setInteractive()
+      mockStripeSetup(() => renewalStep)
+      mockSelect.mockResolvedValueOnce("renews_at" as never)
+
+      const { default: setup } = await import("../../../src/commands/integrations/setup")
+      await expectInteractiveError(
+        () => setup.run!({ args: { provider: "stripe" } } as never),
+        "Integration setup did not reach a terminal state.",
+      )
+      expect(mockCallTool).toHaveBeenCalledTimes(3)
+    })
+  })
+
   test("fails with the stable Core setup error without echoing submitted secrets", async () => {
     const secret = "synthetic-provider-secret-never-echo"
     mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {

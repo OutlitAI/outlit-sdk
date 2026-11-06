@@ -11,6 +11,7 @@ import { openBrowser } from "../../lib/tty"
 import {
   collectMixpanelMapping,
   collectProviderCredentials,
+  collectStripeRenewalDateKey,
   confirmCrmRecommendation,
   hasCrmConfiguration,
   parseSetupConfig,
@@ -60,12 +61,19 @@ type MixpanelMappingNext = {
   preview: { candidateAccountKeys?: Array<{ key: string }> }
 }
 
+type StripeRenewalDateFieldNext = {
+  kind: "stripe_renewal_date_field"
+  selectedKey: string | null
+  liveSubscriptionCount: number
+  keys: Array<{ key: string; subscriptionCount: number; sampleDate: string | null }>
+}
+
 type SetupResponse = {
   provider: string
   name: string
   category: string
   status: "not_connected" | "awaiting_auth" | "setup_required" | "ready" | "requires_intervention"
-  next: BrowserHandoff | CrmMappingNext | MixpanelMappingNext | null
+  next: BrowserHandoff | CrmMappingNext | MixpanelMappingNext | StripeRenewalDateFieldNext | null
   error: null | { code: string; message: string; retryable: boolean }
 }
 
@@ -371,6 +379,34 @@ async function runPreferredSetup(options: {
       continue
     }
 
+    if (response.next.kind === "stripe_renewal_date_field") {
+      if (mappingUsed || transitions.has("stripe_renewal_date_field")) return stalled(json)
+      printStripeRenewalDateField(response.next, machineMode)
+      if (machineMode || suppliedConfig) return finishSetup(response, machineMode)
+
+      let key: string | null
+      try {
+        key = await collectStripeRenewalDateKey(
+          response.next.keys.filter((candidate) => candidate.sampleDate !== null),
+        )
+      } catch (error) {
+        if (error instanceof SetupCancelledError) {
+          return outputError({ message: error.message, code: "SETUP_CANCELLED" }, json)
+        }
+        return outputError(
+          { message: "Could not collect the Stripe renewal date field.", code: "SETUP_CANCELLED" },
+          json,
+        )
+      }
+      // The step is optional: skipping is a normal ready finish.
+      if (key === null) return finishSetup(response, machineMode)
+
+      mappingUsed = true
+      transitions.add("stripe_renewal_date_field")
+      input = { provider, configuration: { kind: "stripe_renewal_date_field", key } }
+      continue
+    }
+
     return invalidSetupResponse(json)
   }
 
@@ -576,6 +612,26 @@ function printMixpanelPreview(preview: unknown, machineMode: boolean): void {
   if (!machineMode) {
     console.log(`Mixpanel mapping preview:\n${JSON.stringify(preview, null, 2)}`)
   }
+}
+
+function printStripeRenewalDateField(next: StripeRenewalDateFieldNext, machineMode: boolean): void {
+  if (machineMode) return
+  const lines = next.keys.map(({ key, subscriptionCount, sampleDate }) => {
+    const example = sampleDate === null ? "not a date" : `e.g. ${formatSampleDate(sampleDate)}`
+    return `  ${key} · on ${subscriptionCount} of ${next.liveSubscriptionCount} subscriptions · ${example}`
+  })
+  console.log(`Stripe subscription metadata keys:\n${lines.join("\n")}`)
+}
+
+function formatSampleDate(value: string): string {
+  const date = new Date(`${value}T00:00:00Z`)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  })
 }
 
 function finishSetup(response: SetupResponse, machineMode: boolean): void {
