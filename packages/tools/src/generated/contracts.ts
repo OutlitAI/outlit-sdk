@@ -2863,7 +2863,7 @@ export const publicToolContracts = {
           },
         },
         "concepts": {
-          "description": "Only memory about these features or topics, by name or alias. Case and plurals don't matter, and a topic includes its subtopics. Use it whenever the question is about a specific feature or theme. Names come from outlit_list_concepts.",
+          "description": "Only memory filed under these concepts (product features or topics), by name or alias. Case and plurals don't matter, and a concept includes the concepts under it. Use it whenever the question is about a specific feature or theme. Names come from outlit_list_concepts.",
           "maxItems": 10,
           "type": "array",
           "items": {
@@ -3383,7 +3383,7 @@ export const publicToolContracts = {
                 ],
               },
               "concepts": {
-                "description": "The features and topics memory files this fact under, by name, as outlit_list_concepts lists them.",
+                "description": "The concepts memory files this fact under, by name, as outlit_list_concepts lists them.",
                 "type": "array",
                 "items": {
                   "type": "string",
@@ -3932,7 +3932,7 @@ export const publicToolContracts = {
           ],
         },
         "concepts": {
-          "description": "The features and topics memory files this fact under, by name, as outlit_list_concepts lists them.",
+          "description": "The concepts memory files this fact under, by name, as outlit_list_concepts lists them.",
           "type": "array",
           "items": {
             "type": "string",
@@ -4882,7 +4882,7 @@ export const publicToolContracts = {
           },
         },
         "concepts": {
-          "description": "Only memory about these features or topics, by name or alias. Case and plurals don't matter, and a topic includes its subtopics. Use it whenever the question is about a specific feature or theme. Names come from outlit_list_concepts.",
+          "description": "Only memory filed under these concepts (product features or topics), by name or alias. Case and plurals don't matter, and a concept includes the concepts under it. Use it whenever the question is about a specific feature or theme. Names come from outlit_list_concepts.",
           "maxItems": 10,
           "type": "array",
           "items": {
@@ -5467,7 +5467,7 @@ export const publicToolContracts = {
                         ],
                       },
                       "concepts": {
-                        "description": "The features and topics memory files this fact under, by name, as outlit_list_concepts lists them.",
+                        "description": "The concepts memory files this fact under, by name, as outlit_list_concepts lists them.",
                         "type": "array",
                         "items": {
                           "type": "string",
@@ -5699,7 +5699,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customer-context",
     "title": "List Memory Concepts",
-    "description": "List what customer memory is organized by: this organization's product features (from its own plans and product data) and the standard topics every organization has, such as Pricing, Onboarding or Integrations. Call it when a question is about a part of the product or a theme and you don't know the exact names, or to see which features a customer talks about most.",
+    "description": "List the concepts customer memory is organized by: this organization's product features (from its own plans and product data) and the standard topics every organization has, such as Pricing, Onboarding or Integrations. Call it when a question is about a part of the product or a theme and you don't know the exact concept names, or to see which concepts a customer talks about most.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -5714,14 +5714,6 @@ export const publicToolContracts = {
           "type": "string",
           "minLength": 1,
           "maxLength": 500,
-        },
-        "kind": {
-          "description": "feature for the organization's product features only, topic for the standard topics only. Omit for both.",
-          "type": "string",
-          "enum": [
-            "feature",
-            "topic",
-          ],
         },
       },
     },
@@ -5780,13 +5772,6 @@ export const publicToolContracts = {
                 "type": "string",
                 "description": "Pass it, or an alias, in concepts to outlit_list_facts or outlit_search_customer_context.",
               },
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "feature",
-                  "topic",
-                ],
-              },
               "aliases": {
                 "type": "array",
                 "items": {
@@ -5813,18 +5798,17 @@ export const publicToolContracts = {
                     "type": "null",
                   },
                 ],
-                "description": "The parent topic's name for a subtopic; null for a feature or a top-level topic.",
+                "description": "The name of the concept it sits under; null for a top-level concept.",
               },
               "entryCount": {
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 9007199254740991,
-                "description": "Live memory entries filed under it, only the customer's when a customer was given. A topic's count includes its subtopics' entries, each entry once.",
+                "description": "Live memory entries filed under it, only the customer's when a customer was given. A concept's count includes the entries of the concepts under it, each entry once.",
               },
             },
             "required": [
               "name",
-              "kind",
               "aliases",
               "description",
               "parent",
@@ -5832,10 +5816,10 @@ export const publicToolContracts = {
             ],
             "additionalProperties": false,
           },
-          "description": "Features first, then topics, each top-level topic followed by its subtopics; most entries first within each.",
+          "description": "Each top-level concept followed by the concepts under it; most entries first within each.",
         },
         "countsLimited": {
-          "description": "Present when more entries are filed under these features and topics than one call counts: each entryCount then counts only the 1,000 written most recently. Name a customer to narrow the count.",
+          "description": "Present when more entries are filed under these concepts than one call counts: each entryCount then counts only the 1,000 written most recently. Name a customer to narrow the count.",
           "type": "boolean",
           "const": true,
         },
@@ -18340,4 +18324,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "407ab0fd2250f9013746f32c47d2eab61010ba6b9a9cda3c67b98480e24c9608" as const
+export const sdkConsumerContractHash = "3f36346403257a277c3ab5a40f909e83640f3293452264ece0835722e0b617a8" as const

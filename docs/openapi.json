@@ -3075,7 +3075,7 @@
             }
           },
           "concepts": {
-            "description": "Only memory about these features or topics, by name or alias. Case and plurals don't matter, and a topic includes its subtopics. Use it whenever the question is about a specific feature or theme. Names come from outlit_list_concepts.",
+            "description": "Only memory filed under these concepts (product features or topics), by name or alias. Case and plurals don't matter, and a concept includes the concepts under it. Use it whenever the question is about a specific feature or theme. Names come from outlit_list_concepts.",
             "maxItems": 10,
             "type": "array",
             "items": {
@@ -3307,7 +3307,7 @@
             }
           },
           "concepts": {
-            "description": "Only memory about these features or topics, by name or alias. Case and plurals don't matter, and a topic includes its subtopics. Use it whenever the question is about a specific feature or theme. Names come from outlit_list_concepts.",
+            "description": "Only memory filed under these concepts (product features or topics), by name or alias. Case and plurals don't matter, and a concept includes the concepts under it. Use it whenever the question is about a specific feature or theme. Names come from outlit_list_concepts.",
             "maxItems": 10,
             "type": "array",
             "items": {
@@ -3329,14 +3329,6 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 500
-          },
-          "kind": {
-            "description": "feature for the organization's product features only, topic for the standard topics only. Omit for both.",
-            "type": "string",
-            "enum": [
-              "feature",
-              "topic"
-            ]
           }
         }
       },
@@ -7268,7 +7260,7 @@
                   ]
                 },
                 "concepts": {
-                  "description": "The features and topics memory files this fact under, by name, as outlit_list_concepts lists them.",
+                  "description": "The concepts memory files this fact under, by name, as outlit_list_concepts lists them.",
                   "type": "array",
                   "items": {
                     "type": "string"
@@ -7779,7 +7771,7 @@
             ]
           },
           "concepts": {
-            "description": "The features and topics memory files this fact under, by name, as outlit_list_concepts lists them.",
+            "description": "The concepts memory files this fact under, by name, as outlit_list_concepts lists them.",
             "type": "array",
             "items": {
               "type": "string"
@@ -9082,7 +9074,7 @@
                           ]
                         },
                         "concepts": {
-                          "description": "The features and topics memory files this fact under, by name, as outlit_list_concepts lists them.",
+                          "description": "The concepts memory files this fact under, by name, as outlit_list_concepts lists them.",
                           "type": "array",
                           "items": {
                             "type": "string"
@@ -9361,13 +9353,6 @@
                   "type": "string",
                   "description": "Pass it, or an alias, in concepts to outlit_list_facts or outlit_search_customer_context."
                 },
-                "kind": {
-                  "type": "string",
-                  "enum": [
-                    "feature",
-                    "topic"
-                  ]
-                },
                 "aliases": {
                   "type": "array",
                   "items": {
@@ -9394,18 +9379,17 @@
                       "type": "null"
                     }
                   ],
-                  "description": "The parent topic's name for a subtopic; null for a feature or a top-level topic."
+                  "description": "The name of the concept it sits under; null for a top-level concept."
                 },
                 "entryCount": {
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9007199254740991,
-                  "description": "Live memory entries filed under it, only the customer's when a customer was given. A topic's count includes its subtopics' entries, each entry once."
+                  "description": "Live memory entries filed under it, only the customer's when a customer was given. A concept's count includes the entries of the concepts under it, each entry once."
                 }
               },
               "required": [
                 "name",
-                "kind",
                 "aliases",
                 "description",
                 "parent",
@@ -9413,10 +9397,10 @@
               ],
               "additionalProperties": false
             },
-            "description": "Features first, then topics, each top-level topic followed by its subtopics; most entries first within each."
+            "description": "Each top-level concept followed by the concepts under it; most entries first within each."
           },
           "countsLimited": {
-            "description": "Present when more entries are filed under these features and topics than one call counts: each entryCount then counts only the 1,000 written most recently. Name a customer to narrow the count.",
+            "description": "Present when more entries are filed under these concepts than one call counts: each entryCount then counts only the 1,000 written most recently. Name a customer to narrow the count.",
             "type": "boolean",
             "const": true
           }
@@ -18214,5 +18198,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "407ab0fd2250f9013746f32c47d2eab61010ba6b9a9cda3c67b98480e24c9608"
+  "x-outlit-contract-hash": "3f36346403257a277c3ab5a40f909e83640f3293452264ece0835722e0b617a8"
 }
