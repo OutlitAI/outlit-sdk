@@ -2277,7 +2277,7 @@ export const publicToolContracts = {
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": false,
-      "idempotentHint": true,
+      "idempotentHint": false,
       "openWorldHint": false,
     },
     "inputSchema": {
@@ -2338,7 +2338,7 @@ export const publicToolContracts = {
     "description": "Share a customer with an active workspace member as a Viewer or Editor. The customer ID must be exact.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
     },
@@ -18462,4 +18462,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "c6d28220c78462ae76121c60a4ed7146310f0d2a02f5851d531ea73462457709" as const
+export const sdkConsumerContractHash = "4faa60109048752477e24040a26ae6028d5af2f104d01c4f2782c16401a23be6" as const
