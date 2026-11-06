@@ -87,10 +87,10 @@ Example:
 
 ```
 ┌──────────────────────────┬────────────┬─────────┬──────────┬────────────┐
-│ Name                     │ Domain     │ Billing │ MRR      │ Last Active│
+│ Name                     │ Domain     │ Billing │ ARR      │ Last Active│
 ├──────────────────────────┼────────────┼─────────┼──────────┼────────────┤
-│ Acme Corp                │ acme.com   │ PAYING  │ $5000.00 │ 2d ago     │
-│ Globex Inc               │ globex.com │ TRIALING│ $0.00    │ 5h ago     │
+│ Acme Corp                │ acme.com   │ PAYING  │ $60,000  │ 2d ago     │
+│ Globex Inc               │ globex.com │ TRIALING│ $0       │ 5h ago     │
 └──────────────────────────┴────────────┴─────────┴──────────┴────────────┘
 Showing 20 of 150 total. Next page: --cursor cursor_abc123
 ```
@@ -195,12 +195,12 @@ The CLI formats values for readability in TTY mode:
 
 | Type | Raw value | Displayed as |
 |------|-----------|-------------|
-| MRR | `500000` | `$5000.00` |
+| ARR | `{ "amount": 6000000, "currency": "USD", "estimated": false }` | `$60,000` |
 | Date | `2025-02-10T15:30:00Z` | `2d ago` |
 | Long names | `Very Long Customer Name Inc` | `Very Long Custo...` |
 | Missing values | `null` / `undefined` | `--` |
 
-The MRR column always divides `currentMrr` by 100 and shows `$`, because the list result doesn't name the customer's currency. That is right for customers billed in USD. For EUR, GBP, and CAD the amount is right but the symbol isn't. Other currencies follow the billing provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)), so the amount can be wrong too: JPY has no minor unit, so `500000` is ¥500,000, not `$5000.00`. Use `--json` for the raw `currentMrr`.
+The ARR column is the annualized revenue run rate, the same figure the Outlit app shows, formatted from `arr.amount` and `arr.currency` the way the app formats it: the amount is converted using the currency's own minor-unit digits (cents for USD, EUR, GBP, CAD and AUD; none for JPY; three for KWD; ISK and UGX stay in hundredths, as Stripe keeps them) and shown in whole units with the currency symbol, for example `$60,000` or `A$12,000`. An estimate (usage or per-seat) is prefixed with `~`, a currency code the CLI doesn't recognize shows the raw amount followed by the code, and a customer with no known ARR shows `--`. Use `--json` for the raw `arr` object.
 
 ### Relative date format
 
@@ -242,7 +242,7 @@ done
 
 ```bash
 outlit customers list --limit 100 --json \
-  | jq -r '.items[] | [.domain, .billingStatus, .currentMrr] | @csv'
+  | jq -r '.items[] | [.domain, .billingStatus, .arr.amount, .arr.currency] | @csv'
 ```
 
 ### CI health check

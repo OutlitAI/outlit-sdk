@@ -155,14 +155,14 @@ describe("runOutlitChurnPretriage", () => {
             customerName: "Alpha",
             domain: "alpha.example",
             billingStatus: "PAYING",
-            mrrCents: 20000,
+            arrCents: 20000,
           },
           {
             customerId: "cust_b",
             customerName: "Beta",
             domain: "beta.example",
             billingStatus: "PAST_DUE",
-            mrrCents: 10000,
+            arrCents: 10000,
           },
         ],
       })
@@ -196,35 +196,35 @@ describe("runOutlitChurnPretriage", () => {
             customerName: "Past Due Co",
             domain: "pastdue.example",
             billingStatus: "PAST_DUE",
-            mrrCents: 15000,
+            arrCents: 15000,
           },
           {
             customerId: "cust_low_activity",
             customerName: "Low Activity Co",
             domain: "low.example",
             billingStatus: "PAYING",
-            mrrCents: 25000,
+            arrCents: 25000,
           },
           {
             customerId: "cust_drop",
             customerName: "Drop Co",
             domain: "drop.example",
             billingStatus: "PAYING",
-            mrrCents: 35000,
+            arrCents: 35000,
           },
           {
             customerId: "cust_user_stale",
             customerName: "User Stale Co",
             domain: "user-stale.example",
             billingStatus: "PAYING",
-            mrrCents: 45000,
+            arrCents: 45000,
           },
           {
             customerId: "cust_all_inactive",
             customerName: "All Inactive Co",
             domain: "all-inactive.example",
             billingStatus: "PAYING",
-            mrrCents: 55000,
+            arrCents: 55000,
           },
         ],
       })
@@ -463,7 +463,7 @@ function createRotationQueryMock() {
       customerName: `Customer ${customerNumber}`,
       domain: `customer-${customerNumber}.example`,
       billingStatus: "PAYING",
-      mrrCents: 10000 + customerNumber,
+      arrCents: 10000 + customerNumber,
     }
   })
 
@@ -493,7 +493,7 @@ function createMixedDispositionQueryMock() {
       customerName: `Investigate ${customerNumber}`,
       domain: `investigate-${customerNumber}.example`,
       billingStatus: "PAYING",
-      mrrCents: 10000,
+      arrCents: 10000,
     }
   })
 
@@ -506,7 +506,7 @@ function createMixedDispositionQueryMock() {
           customerName: "Likely Co",
           domain: "likely.example",
           billingStatus: "PAST_DUE",
-          mrrCents: 10000,
+          arrCents: 10000,
         },
         ...investigateRows,
       ],
@@ -540,7 +540,7 @@ function createTiebreakerQueryMock() {
     customerName: customerId,
     domain: `${customerId}.example`,
     billingStatus: "PAYING",
-    mrrCents: 10000,
+    arrCents: 10000,
   }))
 
   return vi

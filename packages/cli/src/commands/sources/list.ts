@@ -2,7 +2,7 @@ import {
   customerSourceTypeAliases,
   customerSourceTypeInputs,
   customerSourceTypes,
-  normalizeCustomerSourceType,
+  normalizeCustomerSourceToolInput,
   publicToolContracts,
 } from "@outlit/tools"
 import { defineCommand } from "citty"
@@ -11,7 +11,7 @@ import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
 
-const sourceTypeDescription = `${customerSourceTypes.join(", ")} (aliases: ${customerSourceTypeAliases.join(", ")})`
+const sourceTypeDescription = `${customerSourceTypes.join(", ")} (aliases: ${[...customerSourceTypeAliases, "STRIPE_INVOICE"].join(", ")})`
 const ISO_8601_UTC_DATE_TIME_REGEX =
   /^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$/
 
@@ -123,13 +123,13 @@ export default defineCommand({
   async run({ args }) {
     const json = !!args.json
     const sourceType = args["source-type"]
-      ? normalizeCustomerSourceType(args["source-type"])
+      ? normalizeCustomerSourceToolInput(args["source-type"])
       : undefined
 
     if (args["source-type"] && !sourceType) {
       return outputError(
         {
-          message: `--source-type must be one of ${customerSourceTypeInputs.join(", ")}`,
+          message: `--source-type must be one of ${[...customerSourceTypeInputs, "STRIPE_INVOICE"].join(", ")}`,
           code: "invalid_input",
         },
         json,

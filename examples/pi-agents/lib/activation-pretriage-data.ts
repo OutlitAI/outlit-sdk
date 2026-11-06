@@ -16,7 +16,7 @@ export type CustomerDirectoryRow = {
   customerName: string | null
   domain: string | null
   billingStatus: ActivationBillingStatus | null
-  mrrCents: number | null
+  arrCents: number | null
 }
 
 export type UserActivationRow = {
@@ -97,12 +97,12 @@ function buildCustomerDirectorySql(sqlParts: SqlParts): string {
       any(name) AS customerName,
       any(domain) AS domain,
       any(billing_status) AS billingStatus,
-      any(mrr_cents) AS mrrCents
+      any(arr_cents) AS arrCents
     FROM customers
     WHERE customer_id != ''
       AND ${sqlParts.customerScopeFilter}
     GROUP BY customer_id
-    ORDER BY mrrCents DESC
+    ORDER BY arrCents DESC
     LIMIT 10000
   `
 }
@@ -163,7 +163,7 @@ function buildEventActivationSql(
 function normalizeCustomerDirectoryRow(row: CustomerDirectoryRow): CustomerDirectoryRow {
   return {
     ...row,
-    mrrCents: row.mrrCents === null ? null : Number(row.mrrCents),
+    arrCents: row.arrCents === null ? null : Number(row.arrCents),
   }
 }
 

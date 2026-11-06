@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test"
-import { capitalize, formatCents, formatNumber, relativeDate, truncate } from "../../src/lib/format"
+import {
+  capitalize,
+  formatArr,
+  formatCents,
+  formatNumber,
+  relativeDate,
+  truncate,
+} from "../../src/lib/format"
 
 describe("formatCents", () => {
   test("converts cents to dollar string", () => {
@@ -13,6 +20,45 @@ describe("formatCents", () => {
     expect(formatCents(null)).toBe("--")
     expect(formatCents(undefined)).toBe("--")
     expect(formatCents("not a number")).toBe("--")
+  })
+})
+
+describe("formatArr", () => {
+  const arr = (amount: number, currency: string, estimated = false) => ({
+    amount,
+    currency,
+    estimated,
+  })
+
+  test("shows whole major units with the currency symbol", () => {
+    expect(formatArr(arr(1200000, "USD"))).toBe("$12,000")
+    expect(formatArr(arr(1200000, "eur"))).toBe("€12,000")
+    expect(formatArr(arr(1200000, "AUD"))).toBe("A$12,000")
+    expect(formatArr(arr(0, "USD"))).toBe("$0")
+  })
+
+  test("uses the currency's own minor-unit digits", () => {
+    expect(formatArr(arr(500000, "JPY"))).toBe("¥500,000")
+    expect(formatArr(arr(1234567, "KWD"))).toBe("KWD\u00a01,235")
+  })
+
+  test("keeps Stripe's hundredths for ISK and UGX", () => {
+    expect(formatArr(arr(600000, "ISK"))).toBe("ISK\u00a06,000")
+    expect(formatArr(arr(600000, "UGX"))).toBe("UGX\u00a06,000")
+  })
+
+  test("shows the raw amount with the code for an invalid currency code", () => {
+    expect(formatArr(arr(1200000, "NOT_A_CODE"))).toBe("1200000 NOT_A_CODE")
+  })
+
+  test("marks estimates with ~", () => {
+    expect(formatArr(arr(1200000, "USD", true))).toBe("~$12,000")
+  })
+
+  test("returns -- when ARR is unknown", () => {
+    expect(formatArr(null)).toBe("--")
+    expect(formatArr(undefined)).toBe("--")
+    expect(formatArr({ amount: "x", currency: "USD" })).toBe("--")
   })
 })
 

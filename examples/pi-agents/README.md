@@ -70,7 +70,7 @@ pi
 Use a slash command with a specific scope:
 
 ```text
-/outlit-usage-decay-watchtower paying customers over $500 MRR
+/outlit-usage-decay-watchtower paying customers over $6,000 ARR
 /outlit-friction-to-churn customers with integration complaints
 /outlit-activation-failure trial accounts from the last 30 days
 /outlit-expansion-readiness starter-plan customers
@@ -215,7 +215,7 @@ Common failure modes to watch for:
 - Calling subscription cancellation or renewal friction "usage decay" without product usage evidence.
 - Calling legal/procurement negotiation "product friction" without a product, support, implementation, integration, bug, or blocker artifact.
 - Calling mature paying churn-risk accounts "activation failures" when they are already past first value.
-- Calling high usage, high MRR, or plan mismatch "expansion readiness" without buying intent, plan-limit pain, capacity pressure, seat/team growth, or a premium-feature ask.
+- Calling high usage, high ARR, or plan mismatch "expansion readiness" without buying intent, plan-limit pain, capacity pressure, seat/team growth, or a premium-feature ask.
 
 ## Minimal Agent
 

@@ -41,6 +41,7 @@ import {
   getPublicToolContract,
   isOutlitToolsApiError,
   matchesGeneratedJsonSchema,
+  normalizeCustomerSourceToolInput,
   normalizeCustomerSourceType,
   piToolNames,
   publicOpenApiTransports,
@@ -507,7 +508,7 @@ describe("tool contracts", () => {
     expect(activatedSinceRegex.test("2026-07-01")).toBe(false)
   })
 
-  test("exposes bounded customer enrichment and explicit MRR calculation state", () => {
+  test("exposes bounded customer enrichment, renewal and ARR", () => {
     const contract = getPublicToolContract("outlit_get_customer")
     const inputProperties = contract.inputSchema.properties as Record<string, unknown>
     const outputProperties = (contract.outputSchema as { properties: Record<string, unknown> })
@@ -518,17 +519,16 @@ describe("tool contracts", () => {
     )
     expect(inputProperties.include).toEqual(
       expect.objectContaining({
-        items: expect.objectContaining({ enum: expect.arrayContaining(["enrichment"]) }),
+        items: expect.objectContaining({
+          enum: expect.arrayContaining(["enrichment", "renewal"]),
+        }),
       }),
     )
     expect(outputProperties.enrichment).toEqual(expect.objectContaining({ type: "object" }))
     expect(outputProperties.revenue).toEqual(
       expect.objectContaining({
         properties: expect.objectContaining({
-          currentMrr: expect.objectContaining({ anyOf: expect.any(Array) }),
-          mrrCalculationStatus: expect.objectContaining({
-            enum: ["calculated", "mixed_currency", "unavailable"],
-          }),
+          arr: expect.objectContaining({ anyOf: expect.any(Array) }),
         }),
       }),
     )
@@ -651,6 +651,7 @@ describe("tool contracts", () => {
       "OPPORTUNITY",
       "SLACK",
       "PERSON_PROFILE",
+      "INVOICE",
     ])
     expect(customerSourceTypeInputs).toEqual([
       "EMAIL",
@@ -660,6 +661,7 @@ describe("tool contracts", () => {
       "OPPORTUNITY",
       "SLACK",
       "PERSON_PROFILE",
+      "INVOICE",
       "CRM",
       "CRM_OPPORTUNITY",
     ])
@@ -669,6 +671,12 @@ describe("tool contracts", () => {
     expect(normalizeCustomerSourceType(" crm_opportunity ")).toBe("OPPORTUNITY")
     expect(normalizeCustomerSourceType(" opportunity ")).toBe("OPPORTUNITY")
     expect(normalizeCustomerSourceType(" person_profile ")).toBe("PERSON_PROFILE")
+    expect(normalizeCustomerSourceType("STRIPE_INVOICE")).toBeNull()
+    expect(normalizeCustomerSourceToolInput(" Stripe_Invoice ")).toBe("INVOICE")
+    expect(normalizeCustomerSourceToolInput("invoice")).toBe("INVOICE")
+    expect(normalizeCustomerSourceToolInput("crm")).toBe("OPPORTUNITY")
+    expect(normalizeCustomerSourceToolInput("ZENDESK_TICKET")).toBeNull()
+    expect(normalizeCustomerSourceToolInput("constructor")).toBeNull()
     expect(normalizeCustomerSourceType("ZENDESK_TICKET")).toBeNull()
     expect(normalizeCustomerSourceType("toString")).toBeNull()
     expect(normalizeCustomerSourceType("constructor")).toBeNull()
@@ -679,8 +687,10 @@ describe("tool contracts", () => {
       string,
       { enum?: readonly string[] }
     >
+    // Only the source tools accept the STRIPE_INVOICE alias; search and facts do not.
     expect(exactSourceProperties.sourceType?.enum).toEqual([
       ...customerSourceTypeInputs,
+      "STRIPE_INVOICE",
       "EXTRACTED",
     ])
 
@@ -865,6 +875,20 @@ describe("resolveCustomerContextSearchInput", () => {
     })
   })
 
+  test("rejects STRIPE_INVOICE in search input, which only the source tools accept", () => {
+    const result = resolveCustomerContextSearchInput({
+      query: "invoices",
+      sourceTypes: ["stripe_invoice"],
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      message: expect.stringContaining("Unknown source types: stripe_invoice."),
+    })
+    expect(result.ok ? "" : result.message).not.toMatch(/Allowed:.*STRIPE_INVOICE/)
+    expect(customerSourceTypeInputs).not.toContain("STRIPE_INVOICE")
+  })
+
   test("normalizes source types and CRM aliases in search input", () => {
     expect(
       resolveCustomerContextSearchInput({
@@ -925,7 +949,7 @@ describe("resolveCustomerContextSearchInput", () => {
     ).toEqual({
       ok: false,
       message:
-        "Unknown source types: ZENDESK_TICKET. Allowed: EMAIL, CALL, CALENDAR_EVENT, SUPPORT_TICKET, OPPORTUNITY, SLACK, PERSON_PROFILE, CRM, CRM_OPPORTUNITY",
+        "Unknown source types: ZENDESK_TICKET. Allowed: EMAIL, CALL, CALENDAR_EVENT, SUPPORT_TICKET, OPPORTUNITY, SLACK, PERSON_PROFILE, INVOICE, CRM, CRM_OPPORTUNITY",
     })
   })
 })

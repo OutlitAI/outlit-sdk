@@ -77,7 +77,7 @@ export type OutlitActivationPretriageCustomer = {
   customerName: string | null
   domain: string | null
   billingStatus: ActivationBillingStatus | null
-  mrrCents: number | null
+  arrCents: number | null
   signals: OutlitActivationPretriageSignal[]
   activationBaseline: {
     usersObserved: number
@@ -432,7 +432,7 @@ function compareActivationCustomers(
   const signalDiff = right.signals.length - left.signals.length
   if (signalDiff !== 0) return signalDiff
 
-  const revenueDiff = (right.mrrCents ?? 0) - (left.mrrCents ?? 0)
+  const revenueDiff = (right.arrCents ?? 0) - (left.arrCents ?? 0)
   if (revenueDiff !== 0) return revenueDiff
 
   return left.customerId.localeCompare(right.customerId)
@@ -485,7 +485,7 @@ function toPromptActivationCustomer(customer: OutlitActivationPretriageCustomer)
     customerName: customer.customerName,
     domain: customer.domain,
     billingStatus: customer.billingStatus,
-    mrrCents: customer.mrrCents,
+    arrCents: customer.arrCents,
     signals: customer.signals,
     activationBaseline: customer.activationBaseline,
   }

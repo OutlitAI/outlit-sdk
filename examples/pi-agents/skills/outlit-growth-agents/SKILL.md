@@ -20,7 +20,7 @@ Use Outlit tools to ground customer signal work in actual customer data. These a
    - Use `outlit_schema` before SQL when you need view names, columns, or valid query surfaces.
    - Keep SQL on the public `activity`, `customers`, `users`, and `revenue` views. Do not query a non-public `events` view.
    - Use `outlit_query` for cohorts, usage trends, active-user counts, activation gaps, revenue filters, event aggregates, and repeated signal patterns.
-   - Use `outlit_list_customers` for portfolio scans, billing status, MRR, activity recency, and customer search.
+   - Use `outlit_list_customers` for portfolio scans, billing status, ARR, activity recency, and customer search.
    - Use `outlit_list_users` when account-level behavior depends on user activation, active users, or champion disappearance. When using the CLI directly, filter users with the stable customer ID, not a display name or domain.
    - Use `outlit_search_customer_context` for thematic discovery across customers.
 3. Gather account evidence.
@@ -89,7 +89,7 @@ Output discipline:
 - If a usage-decay review inspects an already-churned account, include it in `excludedCandidates` with an exclusion reason instead of `rankedCustomers`; keep `candidateReviewSummary` counts aligned with the reviewed, ranked, and excluded totals in the structured report.
 - Return the structured report in the final answer. Use severity `low` and `rankedCustomers: []` when no live account survives the evidence gate.
 - For usage-decay, include `candidateReviewSummary`, `rankedCustomers`, `excludedCandidates`, `dataQualityNotes`, and `openQuestions`.
-- Do not rename JSON keys. Use `mrrCents` and confidence values `high`/`medium`/`low`.
+- Do not rename JSON keys. Use `arrCents` and confidence values `high`/`medium`/`low`.
 - Treat pretriage activity metrics as hard behavior evidence. If timeline/search/fact context is sparse, lower confidence instead of excluding solely for sparse context.
 
 ### Friction-to-Churn
@@ -159,7 +159,7 @@ Look for:
 Avoid:
 
 - treating healthy usage alone as expansion intent
-- ranking plan mismatch, high MRR, or broad feature usage without buying intent, plan-limit pain, capacity pressure, seat or team growth, or a premium-feature request
+- ranking plan mismatch, high ARR, or broad feature usage without buying intent, plan-limit pain, capacity pressure, seat or team growth, or a premium-feature request
 - recommending outreach without a concrete expansion path
 
 ## Output Rules

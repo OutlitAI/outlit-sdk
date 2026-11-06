@@ -2,7 +2,7 @@ import {
   customerSourceTypeAliases,
   customerSourceTypeInputs,
   customerSourceTypes,
-  normalizeCustomerSourceType,
+  normalizeCustomerSourceToolInput,
   publicToolContracts,
 } from "@outlit/tools"
 import { defineCommand } from "citty"
@@ -11,7 +11,7 @@ import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
 
-const sourceTypeDescription = `${customerSourceTypes.join(", ")} (aliases: ${customerSourceTypeAliases.join(", ")})`
+const sourceTypeDescription = `${customerSourceTypes.join(", ")} (aliases: ${[...customerSourceTypeAliases, "STRIPE_INVOICE"].join(", ")})`
 
 export default defineCommand({
   meta: {
@@ -57,11 +57,11 @@ export default defineCommand({
   async run({ args }) {
     const json = !!args.json
 
-    const sourceType = normalizeCustomerSourceType(args["source-type"])
+    const sourceType = normalizeCustomerSourceToolInput(args["source-type"])
     if (!sourceType) {
       return outputError(
         {
-          message: `--source-type must be one of ${customerSourceTypeInputs.join(", ")}`,
+          message: `--source-type must be one of ${[...customerSourceTypeInputs, "STRIPE_INVOICE"].join(", ")}`,
           code: "invalid_input",
         },
         json,

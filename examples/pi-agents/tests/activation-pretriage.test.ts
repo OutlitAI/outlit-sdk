@@ -27,14 +27,14 @@ describe("runOutlitActivationPretriage", () => {
             customerName: "Stalled Co",
             domain: "stalled.example",
             billingStatus: "TRIALING",
-            mrrCents: 0,
+            arrCents: 0,
           },
           {
             customerId: "cust_activated",
             customerName: "Activated Co",
             domain: "activated.example",
             billingStatus: "TRIALING",
-            mrrCents: 0,
+            arrCents: 0,
           },
         ],
       })
@@ -163,14 +163,14 @@ describe("runOutlitActivationPretriage", () => {
             customerName: "Alpha",
             domain: "alpha.example",
             billingStatus: "TRIALING",
-            mrrCents: 0,
+            arrCents: 0,
           },
           {
             customerId: "cust_b",
             customerName: "Beta",
             domain: "beta.example",
             billingStatus: "NONE",
-            mrrCents: 0,
+            arrCents: 0,
           },
         ],
       })

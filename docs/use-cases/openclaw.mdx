@@ -69,7 +69,7 @@ OpenClaw can use the Outlit CLI to read authorized customer profiles, revenue, a
 
     Then message OpenClaw in your chat platform:
     ```
-    List my paying customers sorted by MRR.
+    List my paying customers sorted by ARR.
     ```
   </Step>
 </Steps>
@@ -124,14 +124,14 @@ openclaw cron add \
 
 ### Revenue snapshot (weekly)
 
-Get a current MRR snapshot for your top accounts. This recipe assumes every account bills in one currency: the `customers` view doesn't name a currency, so the prompt states it. `mrr_cents` is in the billing provider's units: cents for USD, EUR, GBP, and CAD. Change USD to the currency you bill in; for a currency outside those four, replace the divide-by-100 step with your provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). If your accounts bill in more than one currency, the ranking and the total would mix units. Use the `revenue` view instead, which has a `currency` column on each snapshot, and rank and total within each currency.
+Get a current ARR snapshot for your top accounts. `arr_cents` is the annualized revenue run rate, the same figure the Outlit app shows, in the billing provider's units: cents for USD, EUR, GBP, and CAD. `arr_currency` names the currency, and this recipe filters to one so the ranking and the total never mix units. Change USD to the currency you bill in; for a currency outside those four, replace the divide-by-100 step with your provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). If your accounts bill in more than one currency, run the recipe once per currency.
 
 ```bash
 openclaw cron add \
   --name "Revenue Snapshot" \
   --cron "0 9 * * 1" \
   --tz "America/New_York" \
-  --message "Run: outlit sql \"SELECT domain, mrr_cents FROM customers ORDER BY mrr_cents DESC LIMIT 15\". We bill in USD, so mrr_cents is cents: divide it by 100 for MRR in dollars. Format as a revenue snapshot table, show rank, and note the total MRR across all listed accounts." \
+  --message "Run: outlit sql \"SELECT domain, arr_cents FROM customers WHERE arr_currency = 'USD' ORDER BY arr_cents DESC LIMIT 15\". arr_cents is cents: divide it by 100 for ARR in dollars. Format as a revenue snapshot table, show rank, and note the total ARR across all listed accounts." \
   --announce
 ```
 

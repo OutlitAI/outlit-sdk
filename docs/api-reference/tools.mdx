@@ -30,7 +30,7 @@ against the shared `@outlit/tools` contract before the tool runs.
 
 | Tool | Purpose |
 |---|---|
-| `outlit_list_customers` | Browse and filter customers by billing status, activity recency, revenue, traits, or name |
+| `outlit_list_customers` | Browse and filter customers by billing status, activity recency, ARR, traits, or name |
 | `outlit_list_users` | Browse and filter users by journey stage, activity recency, customer, traits, email, or name |
 | `outlit_get_customer` | Get full details for one customer, with optional related sections |
 | `outlit_get_customer_relationship` | Bounded relationship read model: categorized statements with source labels (no raw fact IDs or quotes) |
@@ -165,7 +165,7 @@ const result = await outlit.callTool(
 )
 ```
 
-The package also exports `publicToolContracts`, `publicToolNames`, server-defined `consumerToolPolicies`, `defaultToolNames`, `analyticalToolNames`, `piToolNames`, `cliToolNames`, `allPublicToolNames`, `publicOpenApiTransports`, `toolGatewayTransport`, `apiKeyValidationTransport`, `toolGatewayErrorCodes`, `toolGatewayErrorSchema`, `ingestTransport`, and enum lists such as `customerSourceTypes`. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases.
+The package also exports `publicToolContracts`, `publicToolNames`, server-defined `consumerToolPolicies`, `defaultToolNames`, `analyticalToolNames`, `piToolNames`, `cliToolNames`, `allPublicToolNames`, `publicOpenApiTransports`, `toolGatewayTransport`, `apiKeyValidationTransport`, `toolGatewayErrorCodes`, `toolGatewayErrorSchema`, `ingestTransport`, and enum lists such as `customerSourceTypes`. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases. `INVOICE` is the canonical Stripe invoice source type; `outlit_get_source` and `outlit_list_sources` also accept `STRIPE_INVOICE` as an input alias, but search and `outlit_list_facts` do not.
 
 ## Examples
 
@@ -196,6 +196,34 @@ curl -X POST https://app.outlit.ai/api/tools/call \
   }
 }
 ```
+
+### Read a Stripe invoice
+
+Use `INVOICE` (`outlit_get_source` and `outlit_list_sources` also accept `STRIPE_INVOICE` as an alias) with the Stripe invoice ID. The record lists every stored line item: amounts, quantity, price, product, service period, whether it recurs or is one-off, and proration. Amounts are in the billing provider's minor units for the invoice's currency.
+
+```json
+{
+  "tool": "outlit_get_source",
+  "input": {
+    "sourceType": "INVOICE",
+    "sourceId": "in_1PqExample"
+  }
+}
+```
+
+### Read a customer's renewal date
+
+```json
+{
+  "tool": "outlit_get_customer",
+  "input": {
+    "customer": "acme.com",
+    "include": ["renewal"]
+  }
+}
+```
+
+Returns `"renewal": { "date": "2026-03-01", "source": "billing" }`, the date the customer page shows. `source` is `outlit` (set in Outlit), `crm` (a CRM opportunity), or `billing` (the billing period of a yearly subscription). `renewal` is `null` when the customer has none.
 
 ### Search customer context
 
@@ -388,7 +416,9 @@ Returns `{ "id": "10000000-0000-4000-8000-000000000004", "createdAt": "2026-09-2
 
 The response is the selected tool's JSON result. List tools return paginated collections; exact lookup tools return the matched record or an error when the record cannot be found. Search returns grouped artifact-level `source` and `fact` results, not raw vector chunks. Fact results include provenance fields such as `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink` when available.
 
-Money amounts such as `currentMrr`, `lifetimeRevenue`, and `accountImportance.arrCents` are in the billing provider's units for the currency they were billed in. For USD, EUR, GBP, and CAD these are cents: divide by 100 (for example, 1234500 is $12,345 in USD). Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)), so don't assume a divisor for them. Attention items return the currency alongside `arrCents`; customer results don't name it. ARR is 12 × `currentMrr` in the same units. The example below is for a customer billed in USD, so `"currentMrr": 25000` is $250 MRR.
+Money amounts such as `arr.amount`, `lifetimeRevenue`, and `accountImportance.arrCents` are in the billing provider's units for the currency they were billed in. For USD, EUR, GBP, and CAD these are cents: divide by 100 (for example, 1234500 is $12,345 in USD). Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)), so don't assume a divisor for them. Customer `arr` is the annualized revenue run rate, the same figure the Outlit app shows, and names its `currency`; `estimated` is `true` when the amount includes a usage or per-seat estimate. `arr.amount` is `0` for a churned, paused, or trialing customer, and `arr` is `null` when the app shows none. `outlit_get_customer` returns `revenue.arr` with the customer's `lifecycle` and the `parts` it is counted from. Attention items return the currency alongside `arrCents`; `lifetimeRevenue` doesn't name its currency. The example below is for a customer billed in USD, so `"amount": 300000` is $3,000 ARR.
+
+The legacy monthly `currentMrr` and `mrrCalculationStatus` fields are removed from customer results. `outlit_list_customers` still accepts `mrrAbove`, `mrrBelow` (monthly amounts, times 12), and `orderBy: "mrr_cents"` for compatibility, but they are deprecated: use `arrAbove`, `arrBelow` (per year, in `arr.amount`'s units), and `orderBy: "arr_cents"`.
 
 Example list response:
 
@@ -404,8 +434,7 @@ Example list response:
       "firstSeenAt": "2025-12-02T17:05:00.000Z",
       "lastActivityAt": "2026-04-10T18:22:11.000Z",
       "contactCount": 42,
-      "currentMrr": 25000,
-      "mrrCalculationStatus": "calculated",
+      "arr": { "amount": 300000, "currency": "USD", "estimated": false },
       "owner": null,
       "daysSinceActivity": 3
     }

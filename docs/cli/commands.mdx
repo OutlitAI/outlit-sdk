@@ -98,14 +98,14 @@ outlit customers list [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--billing-status` | string | — | Filter by billing status: `NONE`, `TRIALING`, `PAYING`, `PAST_DUE`, `CHURNED` |
-| `--mrr-above` | number | — | MRR floor, in `currentMrr`'s units: cents for USD, EUR, GBP, and CAD (e.g. `10000` for $100/mo in USD) |
-| `--mrr-below` | number | — | MRR ceiling, in the same units as `--mrr-above` |
+| `--arr-above` | number | — | ARR floor per year, in the billing provider's minor units: cents for USD, EUR, GBP, and CAD (e.g. `1200000` for $12,000/yr in USD). Customers whose ARR is unknown never match |
+| `--arr-below` | number | — | ARR ceiling per year, in the same units as `--arr-above` |
 | `--no-activity-in` | string | — | Inactive for period: `7d`, `14d`, `30d`, `90d` |
 | `--has-activity-in` | string | — | Active within period: `7d`, `14d`, `30d`, `90d` |
 | `--trait` | string | — | Exact trait filters as comma-separated `key=value` pairs (for example `segment=enterprise,active=true`) |
 | `--activated-since` | string | — | Company activation at or after an ISO-8601 datetime; explicit offsets are accepted |
 | `--search` | string | — | Search by name or domain |
-| `--order-by` | string | `last_activity_at` | Sort field |
+| `--order-by` | string | `last_activity_at` | Sort field: `last_activity_at`, `first_seen_at`, `name`, `arr_cents` (customers with unknown ARR sort last when descending) |
 | `--order-direction` | string | `desc` | Sort direction: `asc`, `desc` |
 | `--limit` | number | `20` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor from a previous response |
@@ -116,8 +116,9 @@ outlit customers list [flags]
 # Paying customers inactive for 30 days
 outlit customers list --billing-status PAYING --no-activity-in 30d
 
-# High-MRR customers sorted by revenue
-outlit customers list --mrr-above 50000 --order-by mrr_cents --order-direction desc
+# High-ARR customers sorted by revenue (the threshold is in each customer's own billing
+# currency: $6,000 for USD, €6,000 for EUR)
+outlit customers list --arr-above 600000 --order-by arr_cents --order-direction desc
 
 # Search for a customer
 outlit customers list --search "acme"
@@ -142,8 +143,7 @@ outlit customers list --json | jq '.items[] | {domain, activatedAt}'
       "name": "Acme Corp",
       "domain": "acme.com",
       "billingStatus": "PAYING",
-      "currentMrr": 500000,
-      "mrrCalculationStatus": "calculated",
+      "arr": { "amount": 6000000, "currency": "USD", "estimated": false },
       "contactCount": 42,
       "firstSeenAt": "2025-01-02T10:00:00Z",
       "lastActivityAt": "2025-02-10T15:30:00Z",
@@ -160,7 +160,11 @@ outlit customers list --json | jq '.items[] | {domain, activatedAt}'
 }
 ```
 
-`currentMrr` is an integer in the billing provider's units for the customer's currency, which the response doesn't name. For USD, EUR, GBP, and CAD this is cents: `500000` is $5,000 MRR for a customer billed in USD. Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). ARR is 12 × `currentMrr` in the same units. `currentMrr` is `null` unless `mrrCalculationStatus` is `calculated`.
+`arr` is the annualized revenue run rate, the same figure the Outlit app shows. `arr.amount` is an integer in the billing provider's units for `arr.currency`. For USD, EUR, GBP, and CAD this is cents: `6000000` is $60,000 ARR for a customer billed in USD. Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). `arr.estimated` is `true` when the amount includes a usage or per-seat estimate (shown as `~` in the app). `arr.amount` is `0` for a churned, paused, or trialing customer, and `arr` is `null` when the app shows none.
+
+<Info>
+  `--mrr-above` and `--mrr-below` (treated as monthly amounts, times 12) and `--order-by mrr_cents` still work for compatibility but are deprecated. Use `--arr-above`, `--arr-below`, and `--order-by arr_cents`.
+</Info>
 
 ### Pagination
 
@@ -199,7 +203,7 @@ outlit customers get <customer> [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--include` | string | — | Comma-separated sections: `users`, `revenue`, `recentTimeline`, `behaviorMetrics`, `enrichment` |
+| `--include` | string | — | Comma-separated sections: `users`, `revenue`, `recentTimeline`, `behaviorMetrics`, `enrichment`, `renewal` |
 | `--timeframe` | string | `30d` | Lookback window for included sections: `7d`, `14d`, `30d`, `90d` |
 
 ### Examples
@@ -259,11 +263,17 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
     }
   ],
   "revenue": {
-    "currentMrr": 500000,
-    "mrrCalculationStatus": "calculated",
+    "arr": {
+      "amount": 6000000,
+      "currency": "USD",
+      "estimated": false,
+      "lifecycle": "active",
+      "parts": { "subscriptions": 6000000, "usage": null, "invoicedLast12Months": 5400000 }
+    },
     "lifetimeRevenue": 2400000,
     "activeSubscriptions": 1
   },
+  "renewal": { "date": "2026-03-01", "source": "billing" },
   "recentTimeline": [
     {
       "type": "PAGE_VIEW",
@@ -275,7 +285,7 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
 }
 ```
 
-`revenue.currentMrr` and `revenue.lifetimeRevenue` are in the billing provider's units, like `currentMrr` in `customers list`: for a customer billed in USD, `500000` is $5,000 MRR and `2400000` is $24,000 of lifetime revenue.
+`revenue.arr` is the same figure the customer page shows, with its `currency`, its `estimated` flag (whether the amount includes a usage or per-seat estimate), the revenue `lifecycle` (`active`, `past_due`, `paused`, `churned`, `trialing`, or `null`), and the `parts` it is counted from: the larger of subscriptions plus usage, and what was invoiced in the last 12 months. `revenue.arr.amount` and `revenue.lifetimeRevenue` are in the billing provider's units, like `arr` in `customers list`: for a customer billed in USD, `6000000` is $60,000 ARR and `2400000` is $24,000 of lifetime revenue; `lifetimeRevenue` doesn't name its currency. `--include renewal` returns `renewal`, the renewal date the customer page shows (`YYYY-MM-DD`) with its `source` (`outlit`, `crm`, or `billing`), or `null` when the customer has none.
 
 <Info>
   `customer.activatedAt` is an ISO-8601 timestamp when Outlit has recorded company activation, and `null` otherwise. Contact journey stages remain separate under
@@ -798,7 +808,7 @@ outlit facts get --fact-id <id> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--status` | string | — | Comma-separated fact status filter: `ACTIVE`, `ACKNOWLEDGED`, `RESOLVED`, `SNOOZED`, `CANDIDATE` |
-| `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`, `INVOICE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--fact-types` | string | — | Comma-separated public fact type filter, including `CHURN_RISK`, `PRODUCT_USAGE`, `CONTACT_DEPARTURE`, `CONTACT_POSITION_CHANGE`, and `CONTACT_DISENGAGEMENT` |
 | `--fact-categories` | string | — | Comma-separated fact category filter: `MEMORY`, `RELATIONSHIP`, `CUSTOM` |
 | `--after` | string | — | Lower bound on fact occurrence time (ISO 8601 datetime) |
@@ -913,7 +923,7 @@ outlit search <query> [flags]
 | `--top-k` | number | `20` | Maximum results to return (1–50) |
 | `--after` | string | — | Filter to events after this ISO 8601 datetime |
 | `--before` | string | — | Filter to events before this ISO 8601 datetime |
-| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`, `INVOICE`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 
 ### Examples
 
@@ -988,7 +998,7 @@ outlit sources list [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Generic source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-type` | string | — | Generic source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`, `INVOICE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`, `STRIPE_INVOICE` |
 | `--customer` | string | — | Customer UUID, domain, or name to scope source listing |
 | `--participant` | string | — | Participant email or name to filter source records |
 | `--provider` | string | — | Provider identifier such as `gmail`, `gong`, or `google-calendar` |
@@ -1019,7 +1029,7 @@ outlit sources get --source-type <type> --source-id <id> [--limit <count>] [--cu
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`, `INVOICE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`, `STRIPE_INVOICE` |
 | `--source-id` | string | — | Exact source identifier |
 | `--limit` | number | `10` | Exact content segments per page (1–100). |
 | `--cursor` | string | — | Opaque cursor returned by a previous exact lookup for the same source. |
@@ -1033,7 +1043,10 @@ outlit sources get --source-type SLACK --source-id thread_123 --limit 50
 outlit sources get --source-type SLACK --source-id thread_123 --cursor "$CURSOR"
 outlit sources get --source-type OPPORTUNITY --source-id opp_123
 outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
+outlit sources get --source-type INVOICE --source-id in_1PqExample --json
 ```
+
+`INVOICE` is a Stripe invoice (`sources get` and `sources list` also accept `STRIPE_INVOICE` as an alias; `search` and `facts list` do not): pass its Stripe invoice ID (`in_...`) to read every stored line item with amounts, quantity, price, product, service period, whether it recurs or is one-off, and proration. Amounts are in the billing provider's minor units for the invoice's currency.
 
 `EXTRACTED` is accepted by the exact-source tool API but is currently rejected by
 `outlit sources get`. Use one of the source types listed above in the CLI.
@@ -1129,7 +1142,7 @@ outlit sql "SELECT event_type, COUNT(*) as cnt FROM activity GROUP BY 1 ORDER BY
 outlit sql --query-file ./queries/monthly-activity.sql
 
 # Pipe to jq
-outlit sql "SELECT domain, mrr_cents FROM customers ORDER BY mrr_cents DESC LIMIT 10" | jq
+outlit sql "SELECT domain, arr_cents, arr_currency FROM customers WHERE arr_currency = 'USD' ORDER BY arr_cents DESC LIMIT 10" | jq
 ```
 
 ### JSON response
@@ -1203,13 +1216,13 @@ The public `customers` analytics view exposes company activation as
       "description": "Customer domain when known."
     },
     {
-      "name": "mrr_cents",
+      "name": "arr_cents",
       "type": "Nullable(Int64)",
-      "description": "Current monthly recurring revenue in cents."
+      "description": "Annualized revenue run rate in the billing provider's minor units; see arr_currency."
     }
   ],
   "exampleQueries": [
-    "SELECT domain, mrr_cents FROM customers ORDER BY mrr_cents DESC LIMIT 10"
+    "SELECT domain, arr_cents, arr_currency FROM customers WHERE arr_currency = 'USD' ORDER BY arr_cents DESC LIMIT 10"
   ]
 }
 ```

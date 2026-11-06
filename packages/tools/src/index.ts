@@ -25,6 +25,7 @@ export type {
 export {
   getPublicToolContract,
   isPublicToolName,
+  normalizeCustomerSourceToolInput,
   normalizeCustomerSourceType,
   resolveCustomerContextSearchInput,
 } from "./contracts.js"
