@@ -1,5 +1,19 @@
 # @outlit/tools
 
+## 2.4.0
+
+### Minor Changes
+
+- [#274](https://github.com/OutlitAI/outlit-sdk/pull/274) [`e5029e2`](https://github.com/OutlitAI/outlit-sdk/commit/e5029e2355b3cf9a22adc8fce4371240c0c30a36) Thanks [@leo-paz](https://github.com/leo-paz)! - Revenue is now ARR, the annualized revenue run rate the Outlit app shows. Breaking output change for `@outlit/tools` consumers: the legacy monthly `currentMrr` and `mrrCalculationStatus` fields are removed. `outlit_list_customers` items carry `arr: { amount, currency, estimated } | null`, and `outlit_get_customer` revenue carries `arr` with its `lifecycle` and the `parts` it is counted from (subscriptions, usage, invoiced in the last 12 months). `outlit_list_customers` takes `arrAbove`, `arrBelow` and `orderBy: "arr_cents"`; `mrrAbove`, `mrrBelow` and `mrr_cents` still work but are deprecated. `outlit_get_customer` can `include` `renewal`: the renewal date the customer page shows, with its source (`outlit`, `crm` or `billing`). `outlit_get_source` and `outlit_list_sources` read Stripe invoices with every line item through the new `INVOICE` source type (`outlit_get_source`, `outlit_list_sources` and the matching `outlit sources get` and `outlit sources list` also accept `STRIPE_INVOICE` as an alias; search and facts list do not). The SQL `customers` view gains `arr_cents`, `arr_currency`, `arr_estimated` and `revenue_lifecycle`; `mrr_cents` and `mrr_status` remain for about a month, deprecated.
+
+  The CLI adds `outlit customers list --arr-above`, `--arr-below` and `--order-by arr_cents`, and the table's MRR column becomes ARR, shown with its currency. `--mrr-above`, `--mrr-below` and `mrr_cents` are still accepted but no longer advertised. The Pi SQL reference now uses `arr_cents`.
+
+- [#276](https://github.com/OutlitAI/outlit-sdk/pull/276) [`6a5e0eb`](https://github.com/OutlitAI/outlit-sdk/commit/6a5e0ebf84f7dc7d0717d22444084e5cce1753c5) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit_get_customer` can `include` `crm`: each CRM or support tool account linked to the customer, with its owner as that system records it and every non-empty field as stored, labelled, custom fields included. Fields past the response's size limit are counted in `omittedFieldCount` and named in `omittedFields` while they fit, and the new `crmFields` input asks for fields by key or label. The section is enabled per workspace. `revenue.activeSubscriptions` is now described: it counts active, trialing and past-due subscriptions.
+
+- [#278](https://github.com/OutlitAI/outlit-sdk/pull/278) [`99ce585`](https://github.com/OutlitAI/outlit-sdk/commit/99ce5858523f8f1dd73425fb95d2eaed09cef15a) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit_setup_integration` gains an optional Stripe step: a ready Stripe connection can return a `stripe_renewal_date_field` next transition listing subscription metadata keys, and accepts `configuration: { kind: "stripe_renewal_date_field", key }` (or `key: null`) to choose the field renewal dates are read from.
+
+  `outlit integrations setup stripe` lists the metadata keys and lets you pick the renewal date field or skip it; with `--json` or `--config-stdin` it returns the step so an agent can rerun with the chosen key.
+
 ## 2.3.0
 
 ### Minor Changes
