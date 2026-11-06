@@ -963,7 +963,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, or company enrichment, or the renewal date and its source. Revenue includes arr, the annualized revenue run rate, exactly as the customer page shows it, with its currency, whether it is an estimate, the revenue lifecycle and the parts it is counted from; amounts are in the billing provider's units for that currency (for USD, EUR, GBP and CAD these are cents: divide by 100, e.g. 1234500 is $12,345, USD; other currencies follow the provider's amount rules). lifetimeRevenue does not name its currency.",
+    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, company enrichment, the renewal date and its source, or crm: the CRM and support tool accounts linked to the customer with their own fields (segment, health, stage, owner and custom fields) as stored, which can be hundreds so request it only when needed. Revenue includes arr, the annualized revenue run rate, exactly as the customer page shows it, with its currency, whether it is an estimate, the revenue lifecycle and the parts it is counted from; amounts are in the billing provider's units for that currency (for USD, EUR, GBP and CAD these are cents: divide by 100, e.g. 1234500 is $12,345, USD; other currencies follow the provider's amount rules). lifetimeRevenue does not name its currency.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -991,6 +991,7 @@ export const publicToolContracts = {
               "behaviorMetrics",
               "enrichment",
               "renewal",
+              "crm",
             ],
           },
         },
@@ -1004,6 +1005,15 @@ export const publicToolContracts = {
             "30d",
             "90d",
           ],
+        },
+        "crmFields": {
+          "description": "With include crm only: the CRM fields to return, by key or label (case is ignored), for example the keys an earlier response listed in omittedFields. Send [] (the default) for every field.",
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 191,
+          },
         },
       },
       "required": [
@@ -1410,6 +1420,7 @@ export const publicToolContracts = {
               "type": "integer",
               "minimum": 0,
               "maximum": 9007199254740991,
+              "description": "Subscriptions that bill now: active, trialing or past due. billingStatus says whether payments are behind.",
             },
           },
           "required": [
@@ -1940,6 +1951,148 @@ export const publicToolContracts = {
                 "source",
               ],
               "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
+        "crm": {
+          "description": "The CRM and support tool accounts linked to this customer, one entry each, with the account's own fields (segment, health, stage, owner and custom fields) as stored there. Opt-in because an account can carry hundreds of fields. Absent when the section is not enabled for the workspace; null when the read is bound to a past point in time.",
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "description": "The system that holds the account: hubspot, salesforce, attio or pylon.",
+                  },
+                  "connectionId": {
+                    "type": "string",
+                    "description": "The Outlit integration connection the account syncs through.",
+                  },
+                  "accountId": {
+                    "type": "string",
+                    "description": "The account's id in that system.",
+                  },
+                  "name": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                    "description": "The account's name in that system.",
+                  },
+                  "owner": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                          },
+                        },
+                        "required": [
+                          "name",
+                          "email",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                    "description": "The account owner as that system records it; null when it records none. Not Outlit's customer owner.",
+                  },
+                  "recordUpdatedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                    "description": "When that system last modified the account, ISO 8601. A Salesforce formula field can change without moving it, so such a value may lag until the account next changes.",
+                  },
+                  "fields": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "description": "The field's API name or slug in that system.",
+                        },
+                        "label": {
+                          "type": "string",
+                          "description": "The field's name in that system's UI; the key when unknown.",
+                        },
+                        "value": {
+                          "description": "The value as that system stores it: a string, number, boolean, array, or for Attio its value objects. A picklist holds the option's stored value, not its label.",
+                        },
+                        "custom": {
+                          "type": "boolean",
+                          "description": "True for a field the customer's team added to that system.",
+                        },
+                      },
+                      "required": [
+                        "key",
+                        "label",
+                        "value",
+                        "custom",
+                      ],
+                      "additionalProperties": false,
+                    },
+                    "description": "The account's non-empty fields, sorted by key.",
+                  },
+                  "omittedFields": {
+                    "description": "Keys of fields left out so the response stays within its size limit, as many as fit. Ask for them with crmFields.",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                    },
+                  },
+                  "omittedFieldCount": {
+                    "description": "How many fields were left out, including any not named in omittedFields.",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                },
+                "required": [
+                  "provider",
+                  "connectionId",
+                  "accountId",
+                  "name",
+                  "owner",
+                  "recordUpdatedAt",
+                  "fields",
+                ],
+                "additionalProperties": false,
+              },
             },
             {
               "type": "null",
@@ -18167,6 +18320,7 @@ export const customerIncludeSections = [
   "behaviorMetrics",
   "enrichment",
   "renewal",
+  "crm",
 ] as const
 
 export const customerSourceTypes = [
@@ -18257,4 +18411,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "46b0bb1e5f982e4f8807ce038910083ba15131487817bad040b7366a08d8a38b" as const
+export const sdkConsumerContractHash = "b77a1b10fd174c041e1ae2c6fa7dfec1b049dc32053dd4e5ccb9a86123311ff8" as const
