@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import {
-  TEST_API_KEY,
   expectErrorExit,
   mockExitThrow,
   setInteractive,
   setNonInteractive,
+  TEST_API_KEY,
   useTempEnv,
 } from "../../helpers"
 

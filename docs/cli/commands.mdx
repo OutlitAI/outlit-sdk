@@ -100,6 +100,7 @@ outlit customers list [flags]
 | `--billing-status` | string | — | Filter by billing status: `NONE`, `TRIALING`, `PAYING`, `PAST_DUE`, `CHURNED` |
 | `--arr-above` | number | — | ARR floor per year, in the billing provider's minor units: cents for USD, EUR, GBP, and CAD (e.g. `1200000` for $12,000/yr in USD). Customers whose ARR is unknown never match |
 | `--arr-below` | number | — | ARR ceiling per year, in the same units as `--arr-above` |
+| `--currency` | string | — | Only customers whose ARR is in this ISO 4217 currency (e.g. `USD`). ARR is never converted between currencies, so `--order-by arr_cents` and the ARR bounds compare amounts in each customer's own currency; the JSON response's `arrCurrencies` lists the currencies it compared |
 | `--no-activity-in` | string | — | Inactive for period: `7d`, `14d`, `30d`, `90d` |
 | `--has-activity-in` | string | — | Active within period: `7d`, `14d`, `30d`, `90d` |
 | `--trait` | string | — | Exact trait filters as comma-separated `key=value` pairs (for example `segment=enterprise,active=true`) |

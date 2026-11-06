@@ -39,7 +39,7 @@ describe("logout", () => {
     const stdoutSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
 
     let calledPath = ""
-    let calledOpts: unknown = undefined
+    let calledOpts: unknown
     try {
       await logoutCmd.run!({
         args: { json: true },

@@ -10,7 +10,7 @@ import {
   resolveApiKey,
   storeApiKey,
 } from "../../src/lib/config"
-import { TEST_API_KEY, expectErrorExit, mockExitThrow, useTempEnv } from "../helpers"
+import { expectErrorExit, mockExitThrow, TEST_API_KEY, useTempEnv } from "../helpers"
 
 describe("getConfigDir()", () => {
   test('returns platform-appropriate config path containing "outlit"', () => {

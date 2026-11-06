@@ -123,7 +123,7 @@ describe("completions command", () => {
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --source-type --source-id"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --arr-above --arr-below --owner-id --owner-email --has-owner --activated-since --search"',
+      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --arr-above --arr-below --currency --owner-id --owner-email --has-owner --activated-since --search"',
     )
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --customer-id"',

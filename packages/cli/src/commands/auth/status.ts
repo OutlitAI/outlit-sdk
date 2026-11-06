@@ -2,7 +2,7 @@ import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { outputArgs } from "../../args/output"
 import { validateKeyOrExit } from "../../lib/api"
-import { TICK, maskKey, requireCredential } from "../../lib/config"
+import { maskKey, requireCredential, TICK } from "../../lib/config"
 import { isJsonMode, outputResult } from "../../lib/output"
 
 export default defineCommand({
