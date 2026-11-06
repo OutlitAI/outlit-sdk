@@ -81,6 +81,7 @@ describe("createOutlitPiExtension", () => {
       "outlit_get_source",
       "outlit_list_sources",
       "outlit_search_customer_context",
+      "outlit_list_concepts",
     ])
     expect(registeredNames).toEqual([...defaultToolNames])
   })
