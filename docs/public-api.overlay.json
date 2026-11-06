@@ -97,6 +97,12 @@
       }
     },
     {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_concepts')]",
+      "update": {
+        "title": "List memory concepts"
+      }
+    },
+    {
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_fact')]",
       "update": {
         "title": "Get fact"
@@ -400,6 +406,12 @@
       "target": "$.components.schemas['ToolOutput_outlit_list_facts']",
       "update": {
         "title": "List facts"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_concepts']",
+      "update": {
+        "title": "List memory concepts"
       }
     },
     {

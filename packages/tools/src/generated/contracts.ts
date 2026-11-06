@@ -19,6 +19,7 @@ export const publicToolNames = [
   "outlit_get_source",
   "outlit_list_sources",
   "outlit_search_customer_context",
+  "outlit_list_concepts",
   "outlit_query",
   "outlit_schema",
   "outlit_list_destinations",
@@ -2768,7 +2769,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customer-context",
     "title": "List Customer Facts",
-    "description": "List structured facts known about a customer. Use filters like status, sourceTypes, factTypes, factCategories, and date bounds to narrow the result set. For topic-specific retrieval, use outlit_search_customer_context instead.",
+    "description": "List structured facts known about a customer. Use filters like status, sourceTypes, factTypes, factCategories, and date bounds to narrow the result set. When the question is about a specific feature or theme, pass concepts (names from outlit_list_concepts). To find facts and sources by what they say, in free text, use outlit_search_customer_context.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -2859,6 +2860,15 @@ export const publicToolContracts = {
               "RELATIONSHIP",
               "CUSTOM",
             ],
+          },
+        },
+        "concepts": {
+          "description": "Only memory about these features or topics, by name or alias. Case and plurals don't matter, and a topic includes its subtopics. Use it whenever the question is about a specific feature or theme. Names come from outlit_list_concepts.",
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 200,
           },
         },
         "after": {
@@ -3371,6 +3381,13 @@ export const publicToolContracts = {
                     "type": "null",
                   },
                 ],
+              },
+              "concepts": {
+                "description": "The features and topics memory files this fact under, by name, as outlit_list_concepts lists them.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
               },
             },
             "required": [
@@ -3913,6 +3930,13 @@ export const publicToolContracts = {
               "type": "null",
             },
           ],
+        },
+        "concepts": {
+          "description": "The features and topics memory files this fact under, by name, as outlit_list_concepts lists them.",
+          "type": "array",
+          "items": {
+            "type": "string",
+          },
         },
       },
       "required": [
@@ -4791,7 +4815,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customer-context",
     "title": "Search Customer Context",
-    "description": "Search across all known customer context using a natural-language query. Returns ranked artifact-level discovery previews with at most two matching excerpts per source or fact. Use outlit_get_source with a returned sourceType and sourceId when you need the canonical source contents. Omit customer to search across all customers in the organization.",
+    "description": "Search across all known customer context using a natural-language query. Returns ranked artifact-level discovery previews with at most two matching excerpts per source or fact. Use outlit_get_source with a returned sourceType and sourceId when you need the canonical source contents. Omit customer to search across all customers in the organization. When the question is about a specific feature or theme, pass concepts (names from outlit_list_concepts): only memory filed under them comes back, without raw sources.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -4855,6 +4879,15 @@ export const publicToolContracts = {
               "CRM",
               "CRM_OPPORTUNITY",
             ],
+          },
+        },
+        "concepts": {
+          "description": "Only memory about these features or topics, by name or alias. Case and plurals don't matter, and a topic includes its subtopics. Use it whenever the question is about a specific feature or theme. Names come from outlit_list_concepts.",
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 200,
           },
         },
       },
@@ -5433,6 +5466,13 @@ export const publicToolContracts = {
                           },
                         ],
                       },
+                      "concepts": {
+                        "description": "The features and topics memory files this fact under, by name, as outlit_list_concepts lists them.",
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                        },
+                      },
                     },
                     "required": [
                       "id",
@@ -5649,6 +5689,160 @@ export const publicToolContracts = {
       "required": [
         "customer",
         "results",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_list_concepts": {
+    "toolName": "outlit_list_concepts",
+    "commandId": "concept.list",
+    "commandVersion": 1,
+    "ownerDomain": "customer-context",
+    "title": "List Memory Concepts",
+    "description": "List what customer memory is organized by: this organization's product features (from its own plans and product data) and the standard topics every organization has, such as Pricing, Onboarding or Integrations. Call it when a question is about a part of the product or a theme and you don't know the exact names, or to see which features a customer talks about most.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customer": {
+          "description": "Customer ID or domain. When given, each entryCount counts only this customer's memory; omit it to count across the customers you can read.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+        },
+        "kind": {
+          "description": "feature for the organization's product features only, topic for the standard topics only. Omit for both.",
+          "type": "string",
+          "enum": [
+            "feature",
+            "topic",
+          ],
+        },
+      },
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "customer": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                },
+                "name": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "domain": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "required": [
+                "id",
+                "name",
+                "domain",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+          "description": "The customer the counts are for; null when they count every customer you can read.",
+        },
+        "concepts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Pass it, or an alias, in concepts to outlit_list_facts or outlit_search_customer_context.",
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "feature",
+                  "topic",
+                ],
+              },
+              "aliases": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                },
+                "description": "Other names it goes by",
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "parent": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+                "description": "The parent topic's name for a subtopic; null for a feature or a top-level topic.",
+              },
+              "entryCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Live memory entries filed under it, only the customer's when a customer was given. A topic's count includes its subtopics' entries, each entry once.",
+              },
+            },
+            "required": [
+              "name",
+              "kind",
+              "aliases",
+              "description",
+              "parent",
+              "entryCount",
+            ],
+            "additionalProperties": false,
+          },
+          "description": "Features first, then topics, each top-level topic followed by its subtopics; most entries first within each.",
+        },
+        "countsLimited": {
+          "description": "Present when more entries are filed under these features and topics than one call counts: each entryCount then counts only the 1,000 written most recently. Name a customer to narrow the count.",
+          "type": "boolean",
+          "const": true,
+        },
+      },
+      "required": [
+        "customer",
+        "concepts",
       ],
       "additionalProperties": false,
     },
@@ -16415,6 +16609,7 @@ export const consumerToolPolicies = {
     "outlit_get_source",
     "outlit_list_sources",
     "outlit_search_customer_context",
+    "outlit_list_concepts",
   ],
   "analytical": [
     "outlit_list_customers",
@@ -16426,6 +16621,7 @@ export const consumerToolPolicies = {
     "outlit_get_source",
     "outlit_list_sources",
     "outlit_search_customer_context",
+    "outlit_list_concepts",
     "outlit_query",
     "outlit_schema",
   ],
@@ -16445,6 +16641,7 @@ export const consumerToolPolicies = {
     "outlit_get_source",
     "outlit_list_sources",
     "outlit_search_customer_context",
+    "outlit_list_concepts",
     "outlit_query",
     "outlit_schema",
     "outlit_list_destinations",
@@ -16498,6 +16695,7 @@ export const consumerToolPolicies = {
     "outlit_get_source",
     "outlit_list_sources",
     "outlit_search_customer_context",
+    "outlit_list_concepts",
     "outlit_query",
     "outlit_schema",
     "outlit_list_destinations",
@@ -18142,4 +18340,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "b0d3a500cbaa9afafb3dc7c1f6a96ba6bbbab608a90c57a0957cd6b2d54c7a8b" as const
+export const sdkConsumerContractHash = "407ab0fd2250f9013746f32c47d2eab61010ba6b9a9cda3c67b98480e24c9608" as const

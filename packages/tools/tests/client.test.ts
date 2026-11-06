@@ -97,6 +97,7 @@ describe("toolsets", () => {
       "outlit_get_source",
       "outlit_list_sources",
       "outlit_search_customer_context",
+      "outlit_list_concepts",
       "outlit_query",
       "outlit_schema",
       "outlit_list_destinations",
@@ -134,7 +135,7 @@ describe("toolsets", () => {
       "outlit_merge_customers",
       "outlit_get_customer_merge_status",
     ])
-    expect(allPublicToolNames).toHaveLength(51)
+    expect(allPublicToolNames).toHaveLength(52)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
