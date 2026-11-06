@@ -140,7 +140,7 @@ describe("toolsets", () => {
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
 
-  test("keeps the default agent toolset to the nine read-only intelligence tools", () => {
+  test("keeps the default agent toolset to the ten read-only intelligence tools", () => {
     expect(defaultToolNames).toEqual([
       "outlit_list_customers",
       "outlit_list_users",
@@ -151,6 +151,7 @@ describe("toolsets", () => {
       "outlit_get_source",
       "outlit_list_sources",
       "outlit_search_customer_context",
+      "outlit_list_concepts",
     ])
     expect(sqlToolNames).toEqual(["outlit_query", "outlit_schema"])
     expect(piToolNames).toEqual(allPublicToolNames)
