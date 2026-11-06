@@ -271,6 +271,7 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
       "parts": { "subscriptions": 6000000, "usage": null, "invoicedLast12Months": 0 }
     },
     "lifetimeRevenue": 2400000,
+    "lifetimeRevenueCurrency": "USD",
     "activeSubscriptions": 1,
     "subscriptions": [
       {
@@ -308,7 +309,7 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
 }
 ```
 
-`revenue.arr` is the same figure the customer page shows, with its `currency`, its `estimated` flag (whether the amount includes a usage or per-seat estimate), the revenue `lifecycle` (`active`, `past_due`, `paused`, `churned`, `trialing`, or `null`), and the `parts` it is counted from: the larger of subscriptions plus usage, and `invoicedLast12Months`, the invoice charges outside any subscription (one-time invoice items) whose service began in the last 12 months. Subscription charges are never in it, so it is not the customer's total invoiced. `revenue.subscriptions` lists each live subscription (active, past due, paused or trialing) with every item, including items a given invoice doesn't bill, and `revenue.overdueInvoices` lists open invoices past their due date that still owe money, oldest first. Each is left out when Outlit can't read it. `revenue.arr.amount` and `revenue.lifetimeRevenue` are in the billing provider's units, like `arr` in `customers list`: for a customer billed in USD, `6000000` is $60,000 ARR and `2400000` is $24,000 of lifetime revenue; `lifetimeRevenue` doesn't name its currency. `--include renewal` returns `renewal`, the renewal date the customer page shows (`YYYY-MM-DD`) with its `source` (`outlit`, `crm`, or `billing`), or `null` when the customer has none.
+`revenue.arr` is the same figure the customer page shows, with its `currency`, its `estimated` flag (whether the amount includes a usage or per-seat estimate), the revenue `lifecycle` (`active`, `past_due`, `paused`, `churned`, `trialing`, or `null`), and the `parts` it is counted from: the larger of subscriptions plus usage, and `invoicedLast12Months`, the invoice charges outside any subscription (one-time invoice items) whose service began in the last 12 months. Subscription charges are never in it, so it is not the customer's total invoiced. `revenue.subscriptions` lists each live subscription (active, past due, paused or trialing) with every item, including items a given invoice doesn't bill, and `revenue.overdueInvoices` lists open invoices past their due date that still owe money, oldest first. Each is left out when Outlit can't read it. `revenue.arr.amount` and `revenue.lifetimeRevenue` are in the billing provider's units, like `arr` in `customers list`: for a customer billed in USD, `6000000` is $60,000 ARR and `2400000` is $24,000 of lifetime revenue; `lifetimeRevenueCurrency` names the currency of `lifetimeRevenue`. `--include renewal` returns `renewal`, the renewal date the customer page shows (`YYYY-MM-DD`) with its `source` (`outlit`, `crm`, or `billing`), or `null` when the customer has none.
 
 <Info>
   `customer.activatedAt` is an ISO-8601 timestamp when Outlit has recorded company activation, and `null` otherwise. Contact journey stages remain separate under
