@@ -74,6 +74,10 @@ const COMMANDS: readonly CmdDef[] = [
           ...COMMON,
           { name: "--include", desc: `Sections: ${customerIncludeSections.join(", ")}` },
           { name: "--timeframe", desc: "Metrics timeframe" },
+          {
+            name: "--subscriptions",
+            desc: "With revenue: live (default) or all, adding canceled ones",
+          },
         ],
       },
       {

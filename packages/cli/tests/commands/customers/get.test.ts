@@ -97,6 +97,22 @@ describe("customers get", () => {
     expect(help).not.toContain("balances")
   })
 
+  test("passes the subscriptions arg to the API", async () => {
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await getCmd.run!({
+        args: { customer: "acme.com", include: "revenue", subscriptions: "all", json: true },
+      } as Parameters<NonNullable<typeof getCmd.run>>[0])
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_get_customer",
+        expect.objectContaining({ include: ["revenue"], subscriptions: "all" }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("passes timeframe arg to API", async () => {
     const { default: getCmd } = await import("../../../src/commands/customers/get")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)

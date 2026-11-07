@@ -25,6 +25,7 @@ export default defineCommand({
       "  outlit customers get acme.com",
       "  outlit customers get acme.com --include users,revenue",
       "  outlit customers get acme.com --include users,revenue,recentTimeline --timeframe 90d",
+      "  outlit customers get acme.com --include revenue --subscriptions all",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -50,6 +51,11 @@ export default defineCommand({
       description: "Timeframe for metrics (7d, 14d, 30d, 90d)",
       default: "30d",
     },
+    subscriptions: {
+      type: "string",
+      description:
+        "With --include revenue: live (default) or all, which adds the most recently canceled subscriptions",
+    },
   },
   async run({ args }) {
     const json = !!args.json
@@ -62,6 +68,9 @@ export default defineCommand({
 
     if (args.include) {
       params.include = splitCsv(args.include)
+    }
+    if (args.subscriptions) {
+      params.subscriptions = args.subscriptions
     }
 
     return runTool(client, publicToolContracts.outlit_get_customer.toolName, params, json)
