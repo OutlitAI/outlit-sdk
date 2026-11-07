@@ -91,6 +91,35 @@ describe("customers list", () => {
     }
   })
 
+  test("passes --currency as arrCurrency", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: { currency: "EUR", "order-by": "arr_cents", json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({ arrCurrency: "EUR" }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("rejects a --currency that isn't a three-letter code before calling the customer tool", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+
+    await runExpectingError(async () => {
+      await listCmd.run!({
+        args: { currency: "euros", json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+    }, "invalid_input")
+
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
   test("still maps the previously published --mrr-below spelling", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)

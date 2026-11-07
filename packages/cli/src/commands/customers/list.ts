@@ -107,6 +107,11 @@ export default defineCommand({
       type: "string",
       description: "Filter by ARR below threshold per year, in the same units as --arr-above",
     },
+    currency: {
+      type: "string",
+      description:
+        "Only customers whose ARR is in this ISO 4217 currency (e.g. USD). ARR is never converted, so use it to rank or bound ARR within one currency",
+    },
     "owner-id": {
       type: "string",
       description: "Filter by internal customer owner user ID",
@@ -160,6 +165,15 @@ export default defineCommand({
         return outputError({ message: `--${flag} must be a number`, code: "invalid_input" }, json)
       }
       params[param] = value
+    }
+    if (args.currency) {
+      if (!/^[A-Za-z]{3}$/.test(args.currency)) {
+        return outputError(
+          { message: "--currency must be a three-letter ISO 4217 code", code: "invalid_input" },
+          json,
+        )
+      }
+      params.arrCurrency = args.currency
     }
     if (args["owner-id"]) params.ownerId = args["owner-id"]
     if (args["owner-email"]) params.ownerEmail = args["owner-email"]

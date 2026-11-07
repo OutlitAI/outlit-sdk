@@ -113,14 +113,19 @@ export const publicToolContracts = {
           ],
         },
         "arrAbove": {
-          "description": "Minimum ARR, in arr.amount's units per year (1200000 is $12,000 for a customer billed in USD). Customers whose ARR is unknown never match.",
+          "description": "Minimum ARR, in arr.amount's units per year (1200000 is $12,000 for a customer billed in USD). Each customer is compared in its own currency, never converted: pass arrCurrency to compare one currency. Customers whose ARR is unknown never match.",
           "type": "number",
           "minimum": 0,
         },
         "arrBelow": {
-          "description": "Maximum ARR, in arr.amount's units per year. Customers whose ARR is unknown never match.",
+          "description": "Maximum ARR, in arr.amount's units per year, compared in each customer's own currency like arrAbove. Customers whose ARR is unknown never match.",
           "type": "number",
           "minimum": 0,
+        },
+        "arrCurrency": {
+          "description": "Only customers whose ARR is in this ISO 4217 currency, such as USD. Outlit never converts ARR between currencies, so use this to rank or bound ARR within one currency.",
+          "type": "string",
+          "pattern": "^[A-Za-z]{3}$",
         },
         "mrrAbove": {
           "description": "Deprecated: use arrAbove.",
@@ -185,7 +190,7 @@ export const publicToolContracts = {
           "type": "string",
         },
         "orderBy": {
-          "description": "Field to order results by: last_activity_at, first_seen_at, name, arr_cents. arr_cents puts customers whose ARR is unknown last when descending.",
+          "description": "Field to order results by: last_activity_at, first_seen_at, name, arr_cents. arr_cents puts customers whose ARR is unknown last when descending, and compares amounts across currencies without converting them; arrCurrencies in the response says when that happened.",
           "default": "last_activity_at",
           "type": "string",
           "enum": [
@@ -401,6 +406,13 @@ export const publicToolContracts = {
             "total",
           ],
           "additionalProperties": false,
+        },
+        "arrCurrencies": {
+          "description": "Present when the call ordered or bounded by ARR: the ARR currencies among all matched customers. With more than one, amounts were compared as if they were the same unit, so a ranking mixes currencies; pass arrCurrency to rank within one.",
+          "type": "array",
+          "items": {
+            "type": "string",
+          },
         },
       },
       "required": [
@@ -18735,4 +18747,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "3c1c0a45d7a9861fd7e28d6ee57dd4ccdb7e538ec90d9a8437b4899d8547705a" as const
+export const sdkConsumerContractHash = "aba66920c4d369ad42e40cd780da52f98dca76395d77348c3b1b41c1de569710" as const

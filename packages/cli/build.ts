@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-import { $ } from "bun"
 import { mkdirSync } from "node:fs"
+import { $ } from "bun"
 
 const targets = [
   { target: "bun-darwin-arm64", out: "dist/outlit-darwin-arm64" },

@@ -8,16 +8,18 @@ export interface Spinner {
 
 // Braille spinner frames generated at runtime to avoid encoding issues
 // when the bundled file is read as Latin-1 instead of UTF-8.
-const UNICODE_FRAMES = [0x280b, 0x2819, 0x2839, 0x2838, 0x283c, 0x2834, 0x2826, 0x2827, 0x2807, 0x280f].map(
-  (cp) => String.fromCodePoint(cp),
-)
+const UNICODE_FRAMES = [
+  0x280b, 0x2819, 0x2839, 0x2838, 0x283c, 0x2834, 0x2826, 0x2827, 0x2807, 0x280f,
+].map((cp) => String.fromCodePoint(cp))
 const ASCII_FRAMES = ["-", "\\", "|", "/"]
 
 const FRAMES = isUnicodeSupported ? UNICODE_FRAMES : ASCII_FRAMES
 const INTERVAL_MS = 80
 
 // Use 0x2713 (✓) to match TICK in config.ts
-const SUCCESS_SYMBOL = isUnicodeSupported ? String.fromCodePoint(0x2713) : String.fromCodePoint(0x221a)
+const SUCCESS_SYMBOL = isUnicodeSupported
+  ? String.fromCodePoint(0x2713)
+  : String.fromCodePoint(0x221a)
 const FAIL_SYMBOL = isUnicodeSupported ? String.fromCodePoint(0x2717) : "x"
 
 const HIDE_CURSOR = "\x1B[?25l"

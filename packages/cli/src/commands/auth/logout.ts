@@ -2,7 +2,7 @@ import { rmSync } from "node:fs"
 import { join } from "node:path"
 import { defineCommand } from "citty"
 import { outputArgs } from "../../args/output"
-import { TICK, getConfigDir, isEnoentError } from "../../lib/config"
+import { getConfigDir, isEnoentError, TICK } from "../../lib/config"
 import { errorMessage, isJsonMode, outputError, outputResult } from "../../lib/output"
 
 export default defineCommand({

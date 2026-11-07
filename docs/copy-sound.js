@@ -1,4 +1,4 @@
-;(function () {
+;(() => {
   const sound = new Audio("/sounds/copy.wav")
   sound.volume = 1
 

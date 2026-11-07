@@ -2,7 +2,9 @@ import { describe, expect, spyOn, test } from "bun:test"
 import { isUnicodeSupported } from "../../src/lib/tty"
 import { setInteractive, setNonInteractive } from "../helpers"
 
-const SUCCESS_CHAR = isUnicodeSupported ? String.fromCodePoint(0x2713) : String.fromCodePoint(0x221a)
+const SUCCESS_CHAR = isUnicodeSupported
+  ? String.fromCodePoint(0x2713)
+  : String.fromCodePoint(0x221a)
 const FAIL_CHAR = isUnicodeSupported ? String.fromCodePoint(0x2717) : "x"
 
 describe("createSpinner", () => {

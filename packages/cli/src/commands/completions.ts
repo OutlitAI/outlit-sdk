@@ -59,6 +59,7 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--billing-status", desc: "Filter by billing status" },
           { name: "--arr-above", desc: "ARR above threshold per year (minor units)" },
           { name: "--arr-below", desc: "ARR below threshold per year (minor units)" },
+          { name: "--currency", desc: "Only customers whose ARR is in this currency" },
           { name: "--owner-id", desc: "Filter by owner user ID" },
           { name: "--owner-email", desc: "Filter by owner email" },
           { name: "--has-owner", desc: "Only customers with an owner" },
