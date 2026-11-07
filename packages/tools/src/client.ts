@@ -109,7 +109,7 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
 
 function parseGatewayError(text: string): ToolGatewayErrorEnvelope | undefined {
   try {
-    const value = JSON.parse(text) as unknown
+    const value = withoutUnknownEnvelopeFields(JSON.parse(text) as unknown)
     if (matchesGeneratedJsonSchema(value, toolGatewayErrorSchema)) {
       return value as ToolGatewayErrorEnvelope
     }
@@ -117,6 +117,17 @@ function parseGatewayError(text: string): ToolGatewayErrorEnvelope | undefined {
     // Non-JSON failures retain the status and raw response text.
   }
   return undefined
+}
+
+// A newer gateway may add envelope fields this build doesn't know. Drop them
+// rather than the whole envelope, so the code and retryable still reach the caller.
+function withoutUnknownEnvelopeFields(value: unknown): unknown {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return value
+  return Object.fromEntries(
+    Object.entries(value).filter(([property]) =>
+      Object.hasOwn(toolGatewayErrorSchema.properties, property),
+    ),
+  )
 }
 
 export type RuntimeJsonSchema = {

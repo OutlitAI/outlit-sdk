@@ -810,8 +810,8 @@ describe("createOutlitClient", () => {
         code: "TOOL_CALL_FORBIDDEN",
         message: "Capability not authorized",
         retryable: false,
-        requestId: "request_extra",
-        internalDetail: "must not cross the gateway boundary",
+        requestId: "request_bad_next",
+        next: { tool: "outlit_list_customers" },
       },
     ]
     const client = createOutlitClient({
@@ -828,6 +828,34 @@ describe("createOutlitClient", () => {
       if (!isOutlitToolsApiError(error)) throw new Error("expected OutlitToolsApiError")
       expect(error.envelope).toBeUndefined()
     }
+  })
+
+  test("keeps the envelope and drops top-level fields this build does not know", async () => {
+    const known = {
+      code: "INVALID_TOOL_INPUT",
+      message: "Invalid input",
+      retryable: false,
+      requestId: "request_newer_gateway",
+      validationIssues: [
+        { code: "invalid_value", path: "billingStatus", validValues: ["PAYING", "TRIALING"] },
+      ],
+      next: { instruction: "Use one of the valid values for billingStatus." },
+    }
+    const client = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi
+        .fn()
+        .mockResolvedValue(
+          new Response(
+            JSON.stringify({ ...known, internalDetail: "must not cross the gateway boundary" }),
+            { status: 400 },
+          ),
+        ),
+    })
+
+    const error = await client.callTool("outlit_list_customers").catch((value: unknown) => value)
+    if (!isOutlitToolsApiError(error)) throw new Error("expected OutlitToolsApiError")
+    expect(error.envelope).toEqual(known)
   })
 })
 

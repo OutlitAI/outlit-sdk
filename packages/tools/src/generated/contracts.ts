@@ -18064,6 +18064,14 @@ export const toolGatewayErrorSchema = {
             "type": "string",
             "maxLength": 200,
           },
+          "validValues": {
+            "maxItems": 30,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 100,
+            },
+          },
         },
         "required": [
           "code",
@@ -18071,6 +18079,37 @@ export const toolGatewayErrorSchema = {
         ],
         "additionalProperties": false,
       },
+    },
+    "next": {
+      "type": "object",
+      "properties": {
+        "instruction": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+        },
+        "tool": {
+          "type": "string",
+          "maxLength": 100,
+          "pattern": "^outlit_[a-z0-9_]+$",
+        },
+        "input": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+          },
+          "additionalProperties": {},
+        },
+      },
+      "required": [
+        "instruction",
+      ],
+      "additionalProperties": false,
+    },
+    "missingPermission": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
     },
   },
   "required": [
@@ -19077,4 +19116,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "115f5bab78642e89287ead8628885edfce3b16c0674f0f02398136ae3c12fc47" as const
+export const sdkConsumerContractHash = "e4b1d3bc6a4031ccbecd1051f46b230e171a2944e793b7be7611bd0da8e236d2" as const
