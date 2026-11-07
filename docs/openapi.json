@@ -2961,6 +2961,14 @@
               "90d"
             ]
           },
+          "subscriptions": {
+            "description": "With include revenue only: which subscriptions revenue.subscriptions lists. live (the default when omitted) lists the ones that bill now; all adds canceled ones with endedAt (the 20 most recently ended), for questions like whether a canceled subscription was replaced or why a customer has two billing records.",
+            "type": "string",
+            "enum": [
+              "live",
+              "all"
+            ]
+          },
           "crmFields": {
             "description": "With include crm only: the CRM fields to return, by key or label (case is ignored), for example the keys an earlier response listed in omittedFields. Send [] (the default) for every field. Applies to the accounts and to the users' contacts.",
             "maxItems": 100,
@@ -6283,7 +6291,7 @@
                 "description": "Subscriptions that bill now: active, trialing or past due. billingStatus says whether payments are behind."
               },
               "subscriptions": {
-                "description": "The customer's live subscriptions in the billing provider (active, past due, paused or trialing) with every item, including items an invoice skips in a given cycle. Ended subscriptions are not listed. Absent when unavailable.",
+                "description": "The customer's live subscriptions in the billing provider (active, past due, paused or trialing) with every item, including items an invoice skips in a given cycle. With input subscriptions all, canceled subscriptions follow the live ones, most recently ended first (at most 20). Absent when unavailable.",
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -6294,7 +6302,7 @@
                     },
                     "status": {
                       "type": "string",
-                      "description": "The provider's status: active, past_due, paused or trialing."
+                      "description": "The provider's own status: active, past_due, paused or trialing, and with subscriptions all also canceled."
                     },
                     "paused": {
                       "type": "boolean",
@@ -6472,7 +6480,31 @@
                         ],
                         "additionalProperties": false
                       },
-                      "description": "Every item on the subscription."
+                      "description": "Every item on the subscription. Empty for a canceled one, whose stored snapshot lists no items."
+                    },
+                    "billingAccountId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "The Stripe customer id (cus_...) the subscription bills through; null when unknown. Match it against revenue.billingAccounts."
+                    },
+                    "endedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "When the subscription ended; null while it is live."
                     }
                   },
                   "required": [
@@ -6482,7 +6514,30 @@
                     "currentPeriodEnd",
                     "cancelAtPeriodEnd",
                     "cancelAt",
-                    "items"
+                    "items",
+                    "billingAccountId",
+                    "endedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "billingAccounts": {
+                "description": "Every Stripe customer behind this customer, including ones on customers merged into it, sorted by id. Absent when it can't be read.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "type": "string",
+                      "const": "stripe"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "provider",
+                    "id"
                   ],
                   "additionalProperties": false
                 }
@@ -19258,5 +19313,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "180cb33fc7fb1ec4df2745f6aefa35a0929a6a72803e4c77cf246928e5587751"
+  "x-outlit-contract-hash": "7a5ec3a60fddb1c5f867d418ed9e68db3678b764803732c91a09d15c4ec2436c"
 }
