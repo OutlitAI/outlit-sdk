@@ -256,7 +256,7 @@ Returns `"crm"`: one entry per CRM or support tool account linked to the custome
 
 ### Read a contact's or deal's CRM fields
 
-`outlit_list_users` with `"include": ["crm"]` (or `outlit_get_customer` with `"include": ["users", "crm"]`) adds `crm` to each user: the CRM contacts linked to them, with `fields` in the same shape as account fields. `outlit_get_source` on an `OPPORTUNITY` adds the deal's `fields`. The same size limit applies: fields left out are counted in `omittedFieldCount`, and contacts left out are counted in `omittedCrmContacts`.
+`outlit_list_users` with `"include": ["crm"]` (or `outlit_get_customer` with `"include": ["users", "crm"]`) adds `crm` to each user: the CRM contacts linked to them, with `fields` in the same shape as account fields. `outlit_get_source` on an `OPPORTUNITY` adds the deal's `fields`. The same size limit applies: fields left out are counted in `omittedFieldCount`, and contacts left out are counted in `omittedCrmContacts`. A user has no `crm` when the section is not enabled for the workspace or when the size limit left no room for them; ask for fewer users or `crmFields` to get it.
 
 ### Search customer context
 
