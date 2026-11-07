@@ -54,7 +54,7 @@ export default defineCommand({
     subscriptions: {
       type: "string",
       description:
-        "With --include revenue: live (default) or all, which adds the most recently ended subscriptions",
+        "With --include revenue: live (default) or all, which adds the most recently canceled subscriptions",
     },
   },
   async run({ args }) {
