@@ -30,7 +30,8 @@ against the shared `@outlit/tools` contract before the tool runs.
 
 | Tool | Purpose |
 |---|---|
-| `outlit_list_customers` | Browse and filter customers by billing status, activity recency, ARR, traits, or name |
+| `outlit_list_customers` | Browse and filter customers by billing status, activity recency, ARR, traits, CRM fields, or name |
+| `outlit_list_crm_fields` | List the account fields the CRM and support tools hold, with their values, to filter customers on |
 | `outlit_list_users` | Browse and filter users by journey stage, activity recency, customer, traits, email, or name |
 | `outlit_get_customer` | Get full details for one customer, with optional related sections |
 | `outlit_get_customer_relationship` | Bounded relationship read model: categorized statements with source labels (no raw fact IDs or quotes) |
@@ -238,6 +239,20 @@ Returns `"renewal": { "date": "2026-03-01", "source": "billing" }`, the date the
 ```
 
 Returns `"crm"`: one entry per CRM or support tool account linked to the customer, with `provider`, `connectionId`, `accountId`, `name`, the `owner` as that system records it, `recordUpdatedAt`, and `fields`: every non-empty field as stored, each with its `key`, `label`, `value` and whether it is `custom`. `contacts` lists the people that system associates with the account, whatever their email domain, most recently modified first: up to 25, each with `contactId`, `name`, `email`, `title` and `userId`, the customer's user with that contact or email (`null` when the person is not one of its users). More are counted in `omittedContactCount`. Fields past the response's size limit are counted in `omittedFieldCount` and named in `omittedFields` while they fit; ask for them with `crmFields`, by key or label. The section is enabled per workspace, and is absent until it is.
+
+### Filter and list customers by CRM fields
+
+```json
+{
+  "tool": "outlit_list_customers",
+  "input": {
+    "crm": [{ "field": { "provider": "hubspot", "key": "lifecyclestage" }, "op": "eq", "value": "customer" }],
+    "crmFields": [{ "provider": "hubspot", "key": "industry" }]
+  }
+}
+```
+
+`crm` filters by fields of the customers' CRM and support tool accounts: up to 10 filters, all of which must hold, each by any linked account. `eq` and `in` compare text ignoring case; `gte` and `lte` compare numbers or ISO dates. `crmFields` (up to 5) adds `crm` to each customer: each field with its `label` and its `values` across the customer's linked accounts. Find a field's `provider` and `key`, its picklist `options` and the values accounts hold with `outlit_list_crm_fields`. Filters matching more than 5,000 customers are refused; add a narrower one.
 
 ### Read a contact's or deal's CRM fields
 

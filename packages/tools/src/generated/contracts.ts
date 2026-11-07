@@ -5,6 +5,7 @@ export const contractVersion = 1 as const
 
 export const publicToolNames = [
   "outlit_list_customers",
+  "outlit_list_crm_fields",
   "outlit_list_users",
   "outlit_list_workspace_users",
   "outlit_get_customer",
@@ -64,7 +65,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "List Customers",
-    "description": "Browse and filter customers. Use this to find customers by billing status, activity recency, revenue, or name. Returns a paginated list with summary info (ARR, last activity, status). arr is the annualized revenue run rate, the same figure the Outlit app shows, with its currency: amount is in the billing provider's units for that currency (for USD, EUR, GBP and CAD this is cents: divide by 100, e.g. 1200000 is $12,000 ARR, USD; other currencies follow the provider's amount rules). arr is null when the app shows none, and amount is 0 for a churned, paused or trialing customer.",
+    "description": "Browse and filter customers. Use this to find customers by billing status, activity recency, revenue, name, or their CRM and support tool fields (crm; crmFields returns those fields' values on each customer, e.g. segment and health across the book; use outlit_list_crm_fields to find keys and values). Returns a paginated list with summary info (ARR, last activity, status). arr is the annualized revenue run rate, the same figure the Outlit app shows, with its currency: amount is in the billing provider's units for that currency (for USD, EUR, GBP and CAD this is cents: divide by 100, e.g. 1200000 is $12,000 ARR, USD; other currencies follow the provider's amount rules). arr is null when the app shows none, and amount is 0 for a churned, paused or trialing customer.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -177,6 +178,120 @@ export const publicToolContracts = {
         "hasOwner": {
           "description": "Filter customers by whether they have an owner",
           "type": "boolean",
+        },
+        "crm": {
+          "description": "Filter by fields of the customer's CRM and support tool accounts, such as segment, health or stage; use outlit_list_crm_fields to find keys and values. All filters must hold; each holds when any linked account meets it. eq and in compare text ignoring case; gte and lte compare numbers, or ISO dates, never text. A multi-value field matches when any of its values does.",
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "hubspot",
+                      "salesforce",
+                      "attio",
+                      "pylon",
+                    ],
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                    "description": "The field's key (API name) in that system, as outlit_list_crm_fields lists it.",
+                  },
+                },
+                "required": [
+                  "provider",
+                  "key",
+                ],
+              },
+              "op": {
+                "type": "string",
+                "enum": [
+                  "eq",
+                  "in",
+                  "gte",
+                  "lte",
+                ],
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 500,
+                      },
+                      {
+                        "type": "number",
+                      },
+                      {
+                        "type": "boolean",
+                      },
+                    ],
+                  },
+                  {
+                    "minItems": 1,
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 500,
+                        },
+                        {
+                          "type": "number",
+                        },
+                        {
+                          "type": "boolean",
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+            "required": [
+              "field",
+              "op",
+              "value",
+            ],
+          },
+        },
+        "crmFields": {
+          "description": "CRM and support tool account fields to return on each customer, as crm; use outlit_list_crm_fields to find keys.",
+          "maxItems": 5,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "hubspot",
+                  "salesforce",
+                  "attio",
+                  "pylon",
+                ],
+              },
+              "key": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 191,
+                "description": "The field's key (API name) in that system, as outlit_list_crm_fields lists it.",
+              },
+            },
+            "required": [
+              "provider",
+              "key",
+            ],
+          },
         },
         "limit": {
           "description": "Results per page (max 1000)",
@@ -361,6 +476,66 @@ export const publicToolContracts = {
                   },
                 ],
               },
+              "crm": {
+                "description": "With crmFields: each asked-for field, in the order asked.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "object",
+                      "properties": {
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "hubspot",
+                            "salesforce",
+                            "attio",
+                            "pylon",
+                          ],
+                        },
+                        "key": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 191,
+                          "description": "The field's key (API name) in that system, as outlit_list_crm_fields lists it.",
+                        },
+                      },
+                      "required": [
+                        "provider",
+                        "key",
+                      ],
+                      "additionalProperties": false,
+                    },
+                    "label": {
+                      "type": "string",
+                    },
+                    "values": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "number",
+                          },
+                          {
+                            "type": "boolean",
+                          },
+                        ],
+                      },
+                      "description": "The field's values across the customer's linked accounts in that system, without duplicates; a multi-value field's values are listed one by one. Empty when no linked account has one.",
+                    },
+                  },
+                  "required": [
+                    "field",
+                    "label",
+                    "values",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
             },
             "required": [
               "id",
@@ -413,6 +588,173 @@ export const publicToolContracts = {
           "items": {
             "type": "string",
           },
+        },
+      },
+      "required": [
+        "items",
+        "pagination",
+      ],
+      "additionalProperties": false,
+    },
+  },
+  "outlit_list_crm_fields": {
+    "toolName": "outlit_list_crm_fields",
+    "commandId": "crm_field.list",
+    "commandVersion": 1,
+    "ownerDomain": "customers",
+    "title": "List CRM Fields",
+    "description": "List the account fields the workspace's CRM and support tools hold (segment, health, stage, owner and custom fields), with each field's label, type, picklist options, the values customers' linked accounts hold, and how many accounts hold one. Use it to find the field and values for outlit_list_customers' crm filter and crmFields, for questions across many customers; for one customer's fields use outlit_get_customer with include crm.",
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+    },
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "provider": {
+          "description": "Only this system's fields",
+          "type": "string",
+          "enum": [
+            "hubspot",
+            "salesforce",
+            "attio",
+            "pylon",
+          ],
+        },
+        "search": {
+          "description": "Only fields whose key or label contains this text, ignoring case",
+          "type": "string",
+          "maxLength": 100,
+        },
+        "limit": {
+          "description": "Fields per page (max 50)",
+          "default": 20,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+        },
+        "cursor": {
+          "description": "Pagination cursor from previous response",
+          "type": "string",
+        },
+      },
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "hubspot",
+                      "salesforce",
+                      "attio",
+                      "pylon",
+                    ],
+                  },
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 191,
+                    "description": "The field's key (API name) in that system, as outlit_list_crm_fields lists it.",
+                  },
+                },
+                "required": [
+                  "provider",
+                  "key",
+                ],
+                "additionalProperties": false,
+                "description": "Pass this as-is to outlit_list_customers' crm filter or crmFields.",
+              },
+              "label": {
+                "type": "string",
+              },
+              "type": {
+                "type": "string",
+                "description": "The field's type in that system, as it names it.",
+              },
+              "options": {
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                    },
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+                "description": "A picklist's choices as that system defines them; null for other fields.",
+              },
+              "observedValues": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                    },
+                    {
+                      "type": "number",
+                    },
+                    {
+                      "type": "boolean",
+                    },
+                  ],
+                },
+                "description": "Up to 20 of the values the customers' linked accounts hold, most common first, a multi-value field's values one by one.",
+              },
+              "accounts": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "How many accounts linked to customers hold a value.",
+              },
+            },
+            "required": [
+              "field",
+              "label",
+              "type",
+              "options",
+              "observedValues",
+              "accounts",
+            ],
+            "additionalProperties": false,
+          },
+        },
+        "pagination": {
+          "type": "object",
+          "properties": {
+            "hasMore": {
+              "type": "boolean",
+            },
+            "nextCursor": {
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
+            },
+          },
+          "required": [
+            "hasMore",
+            "nextCursor",
+          ],
+          "additionalProperties": false,
         },
       },
       "required": [
@@ -17379,6 +17721,7 @@ export const consumerToolPolicies = {
   ],
   "pi": [
     "outlit_list_customers",
+    "outlit_list_crm_fields",
     "outlit_list_users",
     "outlit_list_workspace_users",
     "outlit_get_customer",
@@ -17432,6 +17775,7 @@ export const consumerToolPolicies = {
   ],
   "cli": [
     "outlit_list_customers",
+    "outlit_list_crm_fields",
     "outlit_list_users",
     "outlit_list_workspace_users",
     "outlit_get_customer",
@@ -19092,4 +19436,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "c8b49af1d92fa76e41f0b918483937dc3b2dd968c61c56a8559c5d0b20e3aa3e" as const
+export const sdkConsumerContractHash = "379399948b7edfbd1abdd595fd6061da0145be353722feed4eadefbc79e38312" as const

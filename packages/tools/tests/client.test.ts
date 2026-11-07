@@ -83,6 +83,7 @@ describe("toolsets", () => {
   test("matches the Core-owned public tool set, including customer collaboration", () => {
     expect(allPublicToolNames).toEqual([
       "outlit_list_customers",
+      "outlit_list_crm_fields",
       "outlit_list_users",
       "outlit_list_workspace_users",
       "outlit_get_customer",
@@ -134,7 +135,7 @@ describe("toolsets", () => {
       "outlit_merge_customers",
       "outlit_get_customer_merge_status",
     ])
-    expect(allPublicToolNames).toHaveLength(51)
+    expect(allPublicToolNames).toHaveLength(52)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
