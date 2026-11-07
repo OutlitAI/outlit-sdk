@@ -1082,7 +1082,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, company enrichment, the renewal date and its source, or crm: the CRM and support tool accounts linked to the customer with their own fields (segment, health, stage, owner and custom fields) as stored, which can be hundreds so request it only when needed, or links: the id of every record in another system linked to the customer (billing customers, CRM and support accounts, product analytics groups, Slack channels). With both users and crm, each user also carries crm: their contact records there, with their own fields. Revenue includes arr, the annualized revenue run rate, exactly as the customer page shows it, with its currency, whether it is an estimate, the revenue lifecycle and the parts it is counted from; amounts are in the billing provider's units for that currency (for USD, EUR, GBP and CAD these are cents: divide by 100, e.g. 1234500 is $12,345, USD; other currencies follow the provider's amount rules). lifetimeRevenueCurrency names lifetimeRevenue's currency.",
+    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, company enrichment, the renewal date and its source, or crm: the CRM and support tool accounts linked to the customer with their own fields (segment, health, stage, lifecycle, owner and custom fields) as stored and the contacts associated with each account; request it when the question is about how that system classifies the account (its stage, segment, health or owner) or who the account's contacts are, and pass crmFields to read only some fields, since an account can carry hundreds; or links: the id of every record in another system linked to the customer (billing customers, CRM and support accounts, product analytics groups, Slack channels). With both users and crm, each user also carries crm: their contact records there, with their own fields. Revenue includes arr, the annualized revenue run rate, exactly as the customer page shows it, with its currency, whether it is an estimate, the revenue lifecycle and the parts it is counted from; amounts are in the billing provider's units for that currency (for USD, EUR, GBP and CAD these are cents: divide by 100, e.g. 1234500 is $12,345, USD; other currencies follow the provider's amount rules). lifetimeRevenueCurrency names lifetimeRevenue's currency.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -1125,14 +1125,6 @@ export const publicToolContracts = {
             "14d",
             "30d",
             "90d",
-          ],
-        },
-        "subscriptions": {
-          "description": "With include revenue only: which subscriptions revenue.subscriptions lists. live (the default when omitted) lists the ones that bill now; all adds canceled ones with endedAt (the 20 most recently ended), for questions like whether a canceled subscription was replaced or why a customer has two billing records.",
-          "type": "string",
-          "enum": [
-            "live",
-            "all",
           ],
         },
         "crmFields": {
@@ -1648,7 +1640,7 @@ export const publicToolContracts = {
               "description": "Subscriptions that bill now: active, trialing or past due. billingStatus says whether payments are behind.",
             },
             "subscriptions": {
-              "description": "The customer's live subscriptions in the billing provider (active, past due, paused or trialing) with every item, including items an invoice skips in a given cycle. With input subscriptions all, canceled subscriptions follow the live ones, most recently ended first (at most 20). Absent when unavailable.",
+              "description": "The customer's live subscriptions in the billing provider (active, past due, paused or trialing) with every item, including items an invoice skips in a given cycle. Ended subscriptions are not listed. Absent when unavailable.",
               "type": "array",
               "items": {
                 "type": "object",
@@ -1659,7 +1651,7 @@ export const publicToolContracts = {
                   },
                   "status": {
                     "type": "string",
-                    "description": "The provider's own status: active, past_due, paused or trialing, and with subscriptions all also canceled.",
+                    "description": "The provider's status: active, past_due, paused or trialing.",
                   },
                   "paused": {
                     "type": "boolean",
@@ -1837,31 +1829,7 @@ export const publicToolContracts = {
                       ],
                       "additionalProperties": false,
                     },
-                    "description": "Every item on the subscription. Empty for a canceled one, whose stored snapshot lists no items.",
-                  },
-                  "billingAccountId": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                    "description": "The Stripe customer id (cus_...) the subscription bills through; null when unknown. Match it against revenue.billingAccounts.",
-                  },
-                  "endedAt": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "format": "date-time",
-                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                    "description": "When the subscription ended; null while it is live.",
+                    "description": "Every item on the subscription.",
                   },
                 },
                 "required": [
@@ -1872,29 +1840,6 @@ export const publicToolContracts = {
                   "cancelAtPeriodEnd",
                   "cancelAt",
                   "items",
-                  "billingAccountId",
-                  "endedAt",
-                ],
-                "additionalProperties": false,
-              },
-            },
-            "billingAccounts": {
-              "description": "Every Stripe customer behind this customer, including ones on customers merged into it, sorted by id. Absent when it can't be read.",
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "provider": {
-                    "type": "string",
-                    "const": "stripe",
-                  },
-                  "id": {
-                    "type": "string",
-                  },
-                },
-                "required": [
-                  "provider",
-                  "id",
                 ],
                 "additionalProperties": false,
               },
@@ -2492,7 +2437,7 @@ export const publicToolContracts = {
           ],
         },
         "crm": {
-          "description": "The CRM and support tool accounts linked to this customer, one entry each, with the account's own fields (segment, health, stage, owner and custom fields) as stored there. Opt-in because an account can carry hundreds of fields. Absent when the section is not enabled for the workspace; null when the read is bound to a past point in time.",
+          "description": "The CRM and support tool accounts linked to this customer, one entry each, with the account's own fields (segment, health, stage, owner and custom fields) as stored there and its associated contacts. Opt-in because an account can carry hundreds of fields. Absent when the section is not enabled for the workspace; null when the read is bound to a past point in time.",
           "anyOf": [
             {
               "type": "array",
@@ -2571,6 +2516,75 @@ export const publicToolContracts = {
                     ],
                     "description": "When that system last modified the account, ISO 8601. A Salesforce formula field can change without moving it, so such a value may lag until the account next changes.",
                   },
+                  "contacts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "contactId": {
+                          "type": "string",
+                          "description": "The contact's id in that system.",
+                        },
+                        "name": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                        },
+                        "email": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                        },
+                        "title": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "The contact's job title there.",
+                        },
+                        "userId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "The id of this customer's user with that contact or email; null when the person is not one of its users, for example someone on another email domain.",
+                        },
+                      },
+                      "required": [
+                        "contactId",
+                        "name",
+                        "email",
+                        "title",
+                        "userId",
+                      ],
+                      "additionalProperties": false,
+                    },
+                    "description": "The contacts that system associates with the account, whatever their email domain, most recently modified first, at most 25.",
+                  },
+                  "omittedContactCount": {
+                    "description": "How many more associated contacts there are beyond those listed.",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991,
+                  },
                   "fields": {
                     "type": "array",
                     "items": {
@@ -2623,6 +2637,7 @@ export const publicToolContracts = {
                   "name",
                   "owner",
                   "recordUpdatedAt",
+                  "contacts",
                   "fields",
                 ],
                 "additionalProperties": false,
@@ -18064,14 +18079,6 @@ export const toolGatewayErrorSchema = {
             "type": "string",
             "maxLength": 200,
           },
-          "validValues": {
-            "maxItems": 30,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "maxLength": 100,
-            },
-          },
         },
         "required": [
           "code",
@@ -18079,37 +18086,6 @@ export const toolGatewayErrorSchema = {
         ],
         "additionalProperties": false,
       },
-    },
-    "next": {
-      "type": "object",
-      "properties": {
-        "instruction": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 300,
-        },
-        "tool": {
-          "type": "string",
-          "maxLength": 100,
-          "pattern": "^outlit_[a-z0-9_]+$",
-        },
-        "input": {
-          "type": "object",
-          "propertyNames": {
-            "type": "string",
-          },
-          "additionalProperties": {},
-        },
-      },
-      "required": [
-        "instruction",
-      ],
-      "additionalProperties": false,
-    },
-    "missingPermission": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 100,
     },
   },
   "required": [
@@ -19116,4 +19092,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "e4b1d3bc6a4031ccbecd1051f46b230e171a2944e793b7be7611bd0da8e236d2" as const
+export const sdkConsumerContractHash = "c8b49af1d92fa76e41f0b918483937dc3b2dd968c61c56a8559c5d0b20e3aa3e" as const

@@ -1403,14 +1403,6 @@
                 "path": {
                   "type": "string",
                   "maxLength": 200
-                },
-                "validValues": {
-                  "maxItems": 30,
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "maxLength": 100
-                  }
                 }
               },
               "required": [
@@ -1419,37 +1411,6 @@
               ],
               "additionalProperties": false
             }
-          },
-          "next": {
-            "type": "object",
-            "properties": {
-              "instruction": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 300
-              },
-              "tool": {
-                "type": "string",
-                "maxLength": 100,
-                "pattern": "^outlit_[a-z0-9_]+$"
-              },
-              "input": {
-                "type": "object",
-                "propertyNames": {
-                  "type": "string"
-                },
-                "additionalProperties": {}
-              }
-            },
-            "required": [
-              "instruction"
-            ],
-            "additionalProperties": false
-          },
-          "missingPermission": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 100
           }
         },
         "required": [
@@ -2834,14 +2795,6 @@
               "14d",
               "30d",
               "90d"
-            ]
-          },
-          "subscriptions": {
-            "description": "With include revenue only: which subscriptions revenue.subscriptions lists. live (the default when omitted) lists the ones that bill now; all adds canceled ones with endedAt (the 20 most recently ended), for questions like whether a canceled subscription was replaced or why a customer has two billing records.",
-            "type": "string",
-            "enum": [
-              "live",
-              "all"
             ]
           },
           "crmFields": {
@@ -5986,7 +5939,7 @@
                 "description": "Subscriptions that bill now: active, trialing or past due. billingStatus says whether payments are behind."
               },
               "subscriptions": {
-                "description": "The customer's live subscriptions in the billing provider (active, past due, paused or trialing) with every item, including items an invoice skips in a given cycle. With input subscriptions all, canceled subscriptions follow the live ones, most recently ended first (at most 20). Absent when unavailable.",
+                "description": "The customer's live subscriptions in the billing provider (active, past due, paused or trialing) with every item, including items an invoice skips in a given cycle. Ended subscriptions are not listed. Absent when unavailable.",
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -5997,7 +5950,7 @@
                     },
                     "status": {
                       "type": "string",
-                      "description": "The provider's own status: active, past_due, paused or trialing, and with subscriptions all also canceled."
+                      "description": "The provider's status: active, past_due, paused or trialing."
                     },
                     "paused": {
                       "type": "boolean",
@@ -6175,31 +6128,7 @@
                         ],
                         "additionalProperties": false
                       },
-                      "description": "Every item on the subscription. Empty for a canceled one, whose stored snapshot lists no items."
-                    },
-                    "billingAccountId": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ],
-                      "description": "The Stripe customer id (cus_...) the subscription bills through; null when unknown. Match it against revenue.billingAccounts."
-                    },
-                    "endedAt": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "format": "date-time",
-                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ],
-                      "description": "When the subscription ended; null while it is live."
+                      "description": "Every item on the subscription."
                     }
                   },
                   "required": [
@@ -6209,30 +6138,7 @@
                     "currentPeriodEnd",
                     "cancelAtPeriodEnd",
                     "cancelAt",
-                    "items",
-                    "billingAccountId",
-                    "endedAt"
-                  ],
-                  "additionalProperties": false
-                }
-              },
-              "billingAccounts": {
-                "description": "Every Stripe customer behind this customer, including ones on customers merged into it, sorted by id. Absent when it can't be read.",
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "provider": {
-                      "type": "string",
-                      "const": "stripe"
-                    },
-                    "id": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "provider",
-                    "id"
+                    "items"
                   ],
                   "additionalProperties": false
                 }
@@ -6830,7 +6736,7 @@
             ]
           },
           "crm": {
-            "description": "The CRM and support tool accounts linked to this customer, one entry each, with the account's own fields (segment, health, stage, owner and custom fields) as stored there. Opt-in because an account can carry hundreds of fields. Absent when the section is not enabled for the workspace; null when the read is bound to a past point in time.",
+            "description": "The CRM and support tool accounts linked to this customer, one entry each, with the account's own fields (segment, health, stage, owner and custom fields) as stored there and its associated contacts. Opt-in because an account can carry hundreds of fields. Absent when the section is not enabled for the workspace; null when the read is bound to a past point in time.",
             "anyOf": [
               {
                 "type": "array",
@@ -6909,6 +6815,75 @@
                       ],
                       "description": "When that system last modified the account, ISO 8601. A Salesforce formula field can change without moving it, so such a value may lag until the account next changes."
                     },
+                    "contacts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "contactId": {
+                            "type": "string",
+                            "description": "The contact's id in that system."
+                          },
+                          "name": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "title": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "The contact's job title there."
+                          },
+                          "userId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "The id of this customer's user with that contact or email; null when the person is not one of its users, for example someone on another email domain."
+                          }
+                        },
+                        "required": [
+                          "contactId",
+                          "name",
+                          "email",
+                          "title",
+                          "userId"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "The contacts that system associates with the account, whatever their email domain, most recently modified first, at most 25."
+                    },
+                    "omittedContactCount": {
+                      "description": "How many more associated contacts there are beyond those listed.",
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    },
                     "fields": {
                       "type": "array",
                       "items": {
@@ -6961,6 +6936,7 @@
                     "name",
                     "owner",
                     "recordUpdatedAt",
+                    "contacts",
                     "fields"
                   ],
                   "additionalProperties": false
@@ -18938,5 +18914,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "e4b1d3bc6a4031ccbecd1051f46b230e171a2944e793b7be7611bd0da8e236d2"
+  "x-outlit-contract-hash": "c8b49af1d92fa76e41f0b918483937dc3b2dd968c61c56a8559c5d0b20e3aa3e"
 }

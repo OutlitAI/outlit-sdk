@@ -237,7 +237,7 @@ Returns `"renewal": { "date": "2026-03-01", "source": "billing" }`, the date the
 }
 ```
 
-Returns `"crm"`: one entry per CRM or support tool account linked to the customer, with `provider`, `connectionId`, `accountId`, `name`, the `owner` as that system records it, `recordUpdatedAt`, and `fields`: every non-empty field as stored, each with its `key`, `label`, `value` and whether it is `custom`. Fields past the response's size limit are counted in `omittedFieldCount` and named in `omittedFields` while they fit; ask for them with `crmFields`, by key or label. The section is enabled per workspace, and is absent until it is.
+Returns `"crm"`: one entry per CRM or support tool account linked to the customer, with `provider`, `connectionId`, `accountId`, `name`, the `owner` as that system records it, `recordUpdatedAt`, and `fields`: every non-empty field as stored, each with its `key`, `label`, `value` and whether it is `custom`. `contacts` lists the people that system associates with the account, whatever their email domain, most recently modified first: up to 25, each with `contactId`, `name`, `email`, `title` and `userId`, the customer's user with that contact or email (`null` when the person is not one of its users). More are counted in `omittedContactCount`. Fields past the response's size limit are counted in `omittedFieldCount` and named in `omittedFields` while they fit; ask for them with `crmFields`, by key or label. The section is enabled per workspace, and is absent until it is.
 
 ### Read a contact's or deal's CRM fields
 
