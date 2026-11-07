@@ -1128,8 +1128,7 @@ export const publicToolContracts = {
           ],
         },
         "subscriptions": {
-          "description": "With include revenue only: which subscriptions revenue.subscriptions lists. live (the default) lists the ones that bill now; all adds canceled ones with endedAt (the 20 most recently ended), for questions like whether a canceled subscription was replaced or why a customer has two billing records.",
-          "default": "live",
+          "description": "With include revenue only: which subscriptions revenue.subscriptions lists. live (the default when omitted) lists the ones that bill now; all adds canceled ones with endedAt (the 20 most recently ended), for questions like whether a canceled subscription was replaced or why a customer has two billing records.",
           "type": "string",
           "enum": [
             "live",
@@ -19078,4 +19077,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "7c20d879ad5eea226a2d4e60ae17b11d424773b45d7467ff622319d4039245a4" as const
+export const sdkConsumerContractHash = "115f5bab78642e89287ead8628885edfce3b16c0674f0f02398136ae3c12fc47" as const
