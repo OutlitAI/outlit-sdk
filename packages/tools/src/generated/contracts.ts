@@ -966,7 +966,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, company enrichment, the renewal date and its source, or crm: the CRM and support tool accounts linked to the customer with their own fields (segment, health, stage, owner and custom fields) as stored, which can be hundreds so request it only when needed. Revenue includes arr, the annualized revenue run rate, exactly as the customer page shows it, with its currency, whether it is an estimate, the revenue lifecycle and the parts it is counted from; amounts are in the billing provider's units for that currency (for USD, EUR, GBP and CAD these are cents: divide by 100, e.g. 1234500 is $12,345, USD; other currencies follow the provider's amount rules). lifetimeRevenue does not name its currency.",
+    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, company enrichment, the renewal date and its source, or crm: the CRM and support tool accounts linked to the customer with their own fields (segment, health, stage, owner and custom fields) as stored, which can be hundreds so request it only when needed. Revenue includes arr, the annualized revenue run rate, exactly as the customer page shows it, with its currency, whether it is an estimate, the revenue lifecycle and the parts it is counted from; amounts are in the billing provider's units for that currency (for USD, EUR, GBP and CAD these are cents: divide by 100, e.g. 1234500 is $12,345, USD; other currencies follow the provider's amount rules). lifetimeRevenueCurrency names lifetimeRevenue's currency.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -1389,7 +1389,7 @@ export const publicToolContracts = {
                               "type": "null",
                             },
                           ],
-                          "description": "Invoiced in the last 12 months.",
+                          "description": "Invoice charges outside any subscription (one-time invoice items, leaving out setup, onboarding and implementation fees and prorations) whose service period began in the last 12 months. Subscription charges are never in it, so it is not the customer's total invoiced.",
                         },
                       },
                       "required": [
@@ -1398,7 +1398,7 @@ export const publicToolContracts = {
                         "invoicedLast12Months",
                       ],
                       "additionalProperties": false,
-                      "description": "What amount was counted from, in the same units: the larger of subscriptions plus usage, and invoiced in the last 12 months. A part is null when unknown or not applicable.",
+                      "description": "What amount was counted from, in the same units: the larger of subscriptions plus usage, and invoicedLast12Months. A part is null when unknown or not applicable.",
                     },
                   },
                   "required": [
@@ -1418,13 +1418,286 @@ export const publicToolContracts = {
             },
             "lifetimeRevenue": {
               "type": "number",
-              "description": "Lifetime revenue in the billing provider's units for the currency it was billed in, like arr.amount: cents for USD, EUR, GBP and CAD, so divide by 100. Other currencies follow the provider's amount rules, so don't assume a divisor for them.",
+              "description": "Lifetime revenue in the billing provider's units for lifetimeRevenueCurrency, like arr.amount: cents for USD, EUR, GBP and CAD, so divide by 100. Other currencies follow the provider's amount rules, so don't assume a divisor for them.",
+            },
+            "lifetimeRevenueCurrency": {
+              "description": "ISO currency code of lifetimeRevenue; null when nothing has been paid or the currency is unknown.",
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "type": "null",
+                },
+              ],
             },
             "activeSubscriptions": {
               "type": "integer",
               "minimum": 0,
               "maximum": 9007199254740991,
               "description": "Subscriptions that bill now: active, trialing or past due. billingStatus says whether payments are behind.",
+            },
+            "subscriptions": {
+              "description": "The customer's live subscriptions in the billing provider (active, past due, paused or trialing) with every item, including items an invoice skips in a given cycle. Ended subscriptions are not listed. Absent when unavailable.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The billing provider's subscription id (sub_...).",
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The provider's status: active, past_due, paused or trialing.",
+                  },
+                  "paused": {
+                    "type": "boolean",
+                    "description": "Collection is paused.",
+                  },
+                  "currentPeriodEnd": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                    "description": "End of the current billing period. With items on different intervals it is the shortest interval's period, not the term.",
+                  },
+                  "cancelAtPeriodEnd": {
+                    "anyOf": [
+                      {
+                        "type": "boolean",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                    "description": "The subscription is set to end at currentPeriodEnd instead of renewing. Null when unknown: Outlit's stored billing data predates it, and cancelAt is then null too.",
+                  },
+                  "cancelAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                    "description": "When a scheduled cancellation ends the subscription; null when none is scheduled or unknown.",
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "productId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "The billing provider's product id (prod_...).",
+                        },
+                        "productName": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "The product's name in the billing provider; null when Outlit has not synced it.",
+                        },
+                        "priceId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "The billing provider's price id (price_...).",
+                        },
+                        "quantity": {
+                          "anyOf": [
+                            {
+                              "type": "number",
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "Units (seats) on a licensed item; null when unset.",
+                        },
+                        "unitAmount": {
+                          "anyOf": [
+                            {
+                              "type": "number",
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "List price per unit for one billing interval, in the same units as arr.amount; null when the price has no single unit amount (tiers).",
+                        },
+                        "currency": {
+                          "type": "string",
+                          "description": "ISO currency code of unitAmount.",
+                        },
+                        "interval": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "day",
+                                "week",
+                                "month",
+                                "year",
+                              ],
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                        },
+                        "intervalCount": {
+                          "anyOf": [
+                            {
+                              "type": "number",
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "Billing intervals per charge, e.g. 3 months.",
+                        },
+                        "usageType": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "licensed",
+                                "metered",
+                              ],
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "licensed bills a fixed quantity; metered bills reported usage.",
+                        },
+                        "billingScheme": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "per_unit",
+                                "tiered",
+                              ],
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                        },
+                      },
+                      "required": [
+                        "productId",
+                        "productName",
+                        "priceId",
+                        "quantity",
+                        "unitAmount",
+                        "currency",
+                        "interval",
+                        "intervalCount",
+                        "usageType",
+                        "billingScheme",
+                      ],
+                      "additionalProperties": false,
+                    },
+                    "description": "Every item on the subscription.",
+                  },
+                },
+                "required": [
+                  "id",
+                  "status",
+                  "paused",
+                  "currentPeriodEnd",
+                  "cancelAtPeriodEnd",
+                  "cancelAt",
+                  "items",
+                ],
+                "additionalProperties": false,
+              },
+            },
+            "overdueInvoices": {
+              "description": "Open invoices past their due date that still owe money, oldest due first (at most 20). Empty when none is overdue; absent when unavailable.",
+              "maxItems": 20,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The invoice id (in_...); read it with outlit_get_source INVOICE.",
+                  },
+                  "number": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
+                  "amountRemaining": {
+                    "type": "number",
+                    "description": "Still owed, in the billing provider's minor units for currency.",
+                  },
+                  "currency": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
+                  },
+                  "dueDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                  },
+                  "daysOverdue": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                },
+                "required": [
+                  "id",
+                  "number",
+                  "amountRemaining",
+                  "currency",
+                  "dueDate",
+                  "daysOverdue",
+                ],
+                "additionalProperties": false,
+              },
             },
           },
           "required": [
@@ -4115,7 +4388,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customer-context",
     "title": "Get Source",
-    "description": "Get one exact source record by generic sourceType and sourceId. Use this when you already know the concrete underlying source you want to inspect. For a Stripe invoice use sourceType INVOICE (STRIPE_INVOICE is accepted) with the Stripe invoice id (in_...): the record lists every stored line item, with amounts in the billing provider's minor units for the invoice's currency (cents for USD, EUR, GBP and CAD; other currencies follow the provider's amount rules).",
+    "description": "Get one exact source record by generic sourceType and sourceId. Use this when you already know the concrete underlying source you want to inspect. For a Stripe invoice use sourceType INVOICE (STRIPE_INVOICE is accepted) with the Stripe invoice id (in_...): the record lists every stored line item, with amounts in the billing provider's minor units for the invoice's currency (cents for USD, EUR, GBP and CAD; other currencies follow the provider's amount rules). The lines are what that invoice billed for its period, not the subscription's item set: a yearly item is absent from its monthly invoices, and a metered item with no usage may be absent too.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -18462,4 +18735,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "4faa60109048752477e24040a26ae6028d5af2f104d01c4f2782c16401a23be6" as const
+export const sdkConsumerContractHash = "3c1c0a45d7a9861fd7e28d6ee57dd4ccdb7e538ec90d9a8437b4899d8547705a" as const
