@@ -109,14 +109,29 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
 
 function parseGatewayError(text: string): ToolGatewayErrorEnvelope | undefined {
   try {
-    const value = JSON.parse(text) as unknown
-    if (matchesGeneratedJsonSchema(value, toolGatewayErrorSchema)) {
+    const value = withoutUnknownEnvelopeFields(JSON.parse(text) as unknown)
+    if (
+      matchesGeneratedJsonSchema(value, toolGatewayErrorSchema) &&
+      // The generated schema can't carry Core's per-code rule for this field.
+      (value.missingPermission === undefined || value.code === "TOOL_CALL_FORBIDDEN")
+    ) {
       return value as ToolGatewayErrorEnvelope
     }
   } catch {
     // Non-JSON failures retain the status and raw response text.
   }
   return undefined
+}
+
+// A newer gateway may add envelope fields this build doesn't know. Drop them
+// rather than the whole envelope, so the code and retryable still reach the caller.
+function withoutUnknownEnvelopeFields(value: unknown): unknown {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return value
+  return Object.fromEntries(
+    Object.entries(value).filter(([property]) =>
+      Object.hasOwn(toolGatewayErrorSchema.properties, property),
+    ),
+  )
 }
 
 export type RuntimeJsonSchema = {
