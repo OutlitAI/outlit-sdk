@@ -17697,6 +17697,7 @@ export const publicOpenApiTransports = [
 export const consumerToolPolicies = {
   "default": [
     "outlit_list_customers",
+    "outlit_list_crm_fields",
     "outlit_list_users",
     "outlit_get_customer",
     "outlit_get_timeline",
@@ -17708,6 +17709,7 @@ export const consumerToolPolicies = {
   ],
   "analytical": [
     "outlit_list_customers",
+    "outlit_list_crm_fields",
     "outlit_list_users",
     "outlit_get_customer",
     "outlit_get_timeline",
@@ -19436,4 +19438,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "379399948b7edfbd1abdd595fd6061da0145be353722feed4eadefbc79e38312" as const
+export const sdkConsumerContractHash = "180cb33fc7fb1ec4df2745f6aefa35a0929a6a72803e4c77cf246928e5587751" as const

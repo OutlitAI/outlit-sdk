@@ -140,9 +140,10 @@ describe("toolsets", () => {
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
 
-  test("keeps the default agent toolset to the nine read-only intelligence tools", () => {
+  test("keeps the default agent toolset to the ten read-only intelligence tools", () => {
     expect(defaultToolNames).toEqual([
       "outlit_list_customers",
+      "outlit_list_crm_fields",
       "outlit_list_users",
       "outlit_get_customer",
       "outlit_get_timeline",
