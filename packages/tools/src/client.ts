@@ -110,7 +110,11 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
 function parseGatewayError(text: string): ToolGatewayErrorEnvelope | undefined {
   try {
     const value = withoutUnknownEnvelopeFields(JSON.parse(text) as unknown)
-    if (matchesGeneratedJsonSchema(value, toolGatewayErrorSchema)) {
+    if (
+      matchesGeneratedJsonSchema(value, toolGatewayErrorSchema) &&
+      // The generated schema can't carry Core's per-code rule for this field.
+      (value.missingPermission === undefined || value.code === "TOOL_CALL_FORBIDDEN")
+    ) {
       return value as ToolGatewayErrorEnvelope
     }
   } catch {
