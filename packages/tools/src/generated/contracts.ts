@@ -428,7 +428,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "users",
     "title": "List Users",
-    "description": "Browse and filter users. Use this to find users by journey stage, activity recency, customer, or email/name. Returns a paginated list with activity info and each user's sources: where Outlit found them (CRM, support tool, product analytics, Slack) and the calls, meetings, emails, tickets and Slack threads they took part in.",
+    "description": "Browse and filter users. Use this to find users by journey stage, activity recency, customer, or email/name. Returns a paginated list with activity info and each user's sources: where Outlit found them (CRM, support tool, product analytics, Slack) and the calls, meetings, emails, tickets and Slack threads they took part in. Pass include crm to add each user's contact records in the CRM and support tool with their own fields (job title, lead status, custom fields) as stored there, which can be hundreds, so request it only when needed.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -521,6 +521,25 @@ export const publicToolContracts = {
             "asc",
             "desc",
           ],
+        },
+        "include": {
+          "description": "Additional data to include for each user. crm adds the user's contact records in the CRM and support tool with their own fields (job title, lead status, custom fields) as stored there; request it only when needed.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "crm",
+            ],
+          },
+        },
+        "crmFields": {
+          "description": "With include crm only: the CRM fields to return, by key or label (case is ignored), for example the keys an earlier response listed in omittedFields. Send [] (the default) for every field.",
+          "maxItems": 100,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 191,
+          },
         },
       },
     },
@@ -681,6 +700,91 @@ export const publicToolContracts = {
                   "additionalProperties": false,
                 },
                 "description": "Where Outlit found this person: the systems that hold a record of them and the conversations they took part in. Empty when Outlit has no source recorded; absent from servers that predate it.",
+              },
+              "crm": {
+                "description": "With include crm: the contact records in the CRM and support tool that this user is linked to, one entry each, with the contact's own fields as stored there. Empty when the user has no linked contact; null when the read is bound to a past point in time. Absent unless requested, when the section is not enabled for the workspace, or when the size limit left no room for this user (then ask for fewer users or crmFields). The size limit is shared by all users in the response.",
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "provider": {
+                          "type": "string",
+                          "description": "The system that holds the contact: hubspot, salesforce, attio or pylon.",
+                        },
+                        "connectionId": {
+                          "type": "string",
+                          "description": "The Outlit integration connection the contact syncs through.",
+                        },
+                        "contactId": {
+                          "type": "string",
+                          "description": "The contact's id in that system.",
+                        },
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "description": "The field's API name or slug in that system.",
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "The field's name in that system's UI; the key when unknown.",
+                              },
+                              "value": {
+                                "description": "The value as that system stores it: a string, number, boolean, array, or for Attio its value objects. A picklist holds the option's stored value, not its label.",
+                              },
+                              "custom": {
+                                "type": "boolean",
+                                "description": "True for a field the customer's team added to that system.",
+                              },
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "value",
+                              "custom",
+                            ],
+                            "additionalProperties": false,
+                          },
+                          "description": "The contact's non-empty fields, sorted by key.",
+                        },
+                        "omittedFields": {
+                          "description": "Keys of fields left out so the response stays within its size limit, as many as fit. Ask for them with crmFields.",
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                          },
+                        },
+                        "omittedFieldCount": {
+                          "description": "How many fields were left out, including any not named in omittedFields.",
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                        },
+                      },
+                      "required": [
+                        "provider",
+                        "connectionId",
+                        "contactId",
+                        "fields",
+                      ],
+                      "additionalProperties": false,
+                    },
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "omittedCrmContacts": {
+                "description": "With include crm: how many of this user's linked contacts are left out of crm so the response stays within its size limit. Absent when none are.",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991,
               },
               "relationshipRole": {
                 "anyOf": [
@@ -978,7 +1082,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, company enrichment, the renewal date and its source, or crm: the CRM and support tool accounts linked to the customer with their own fields (segment, health, stage, owner and custom fields) as stored, which can be hundreds so request it only when needed, or links: the id of every record in another system linked to the customer (billing customers, CRM and support accounts, product analytics groups, Slack channels). Revenue includes arr, the annualized revenue run rate, exactly as the customer page shows it, with its currency, whether it is an estimate, the revenue lifecycle and the parts it is counted from; amounts are in the billing provider's units for that currency (for USD, EUR, GBP and CAD these are cents: divide by 100, e.g. 1234500 is $12,345, USD; other currencies follow the provider's amount rules). lifetimeRevenueCurrency names lifetimeRevenue's currency.",
+    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, company enrichment, the renewal date and its source, or crm: the CRM and support tool accounts linked to the customer with their own fields (segment, health, stage, owner and custom fields) as stored, which can be hundreds so request it only when needed, or links: the id of every record in another system linked to the customer (billing customers, CRM and support accounts, product analytics groups, Slack channels). With both users and crm, each user also carries crm: their contact records there, with their own fields. Revenue includes arr, the annualized revenue run rate, exactly as the customer page shows it, with its currency, whether it is an estimate, the revenue lifecycle and the parts it is counted from; amounts are in the billing provider's units for that currency (for USD, EUR, GBP and CAD these are cents: divide by 100, e.g. 1234500 is $12,345, USD; other currencies follow the provider's amount rules). lifetimeRevenueCurrency names lifetimeRevenue's currency.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -1024,7 +1128,7 @@ export const publicToolContracts = {
           ],
         },
         "crmFields": {
-          "description": "With include crm only: the CRM fields to return, by key or label (case is ignored), for example the keys an earlier response listed in omittedFields. Send [] (the default) for every field.",
+          "description": "With include crm only: the CRM fields to return, by key or label (case is ignored), for example the keys an earlier response listed in omittedFields. Send [] (the default) for every field. Applies to the accounts and to the users' contacts.",
           "maxItems": 100,
           "type": "array",
           "items": {
@@ -1265,6 +1369,91 @@ export const publicToolContracts = {
                   "additionalProperties": false,
                 },
                 "description": "Where Outlit found this person: the systems that hold a record of them and the conversations they took part in. Empty when Outlit has no source recorded; absent from servers that predate it.",
+              },
+              "crm": {
+                "description": "With include crm: the contact records in the CRM and support tool that this user is linked to, one entry each, with the contact's own fields as stored there. Empty when the user has no linked contact; null when the read is bound to a past point in time. Absent unless requested, when the section is not enabled for the workspace, or when the size limit left no room for this user (then ask for fewer users or crmFields). The size limit is shared by all users in the response.",
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "provider": {
+                          "type": "string",
+                          "description": "The system that holds the contact: hubspot, salesforce, attio or pylon.",
+                        },
+                        "connectionId": {
+                          "type": "string",
+                          "description": "The Outlit integration connection the contact syncs through.",
+                        },
+                        "contactId": {
+                          "type": "string",
+                          "description": "The contact's id in that system.",
+                        },
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "description": "The field's API name or slug in that system.",
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "The field's name in that system's UI; the key when unknown.",
+                              },
+                              "value": {
+                                "description": "The value as that system stores it: a string, number, boolean, array, or for Attio its value objects. A picklist holds the option's stored value, not its label.",
+                              },
+                              "custom": {
+                                "type": "boolean",
+                                "description": "True for a field the customer's team added to that system.",
+                              },
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "value",
+                              "custom",
+                            ],
+                            "additionalProperties": false,
+                          },
+                          "description": "The contact's non-empty fields, sorted by key.",
+                        },
+                        "omittedFields": {
+                          "description": "Keys of fields left out so the response stays within its size limit, as many as fit. Ask for them with crmFields.",
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                          },
+                        },
+                        "omittedFieldCount": {
+                          "description": "How many fields were left out, including any not named in omittedFields.",
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                        },
+                      },
+                      "required": [
+                        "provider",
+                        "connectionId",
+                        "contactId",
+                        "fields",
+                      ],
+                      "additionalProperties": false,
+                    },
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "omittedCrmContacts": {
+                "description": "With include crm: how many of this user's linked contacts are left out of crm so the response stays within its size limit. Absent when none are.",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991,
               },
               "relationshipRole": {
                 "anyOf": [
@@ -4485,7 +4674,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customer-context",
     "title": "Get Source",
-    "description": "Get one exact source record by generic sourceType and sourceId. Use this when you already know the concrete underlying source you want to inspect. For a Stripe invoice use sourceType INVOICE (STRIPE_INVOICE is accepted) with the Stripe invoice id (in_...): the record lists every stored line item, with amounts in the billing provider's minor units for the invoice's currency (cents for USD, EUR, GBP and CAD; other currencies follow the provider's amount rules). The lines are what that invoice billed for its period, not the subscription's item set: a yearly item is absent from its monthly invoices, and a metered item with no usage may be absent too.",
+    "description": "Get one exact source record by generic sourceType and sourceId. Use this when you already know the concrete underlying source you want to inspect. For a Stripe invoice use sourceType INVOICE (STRIPE_INVOICE is accepted) with the Stripe invoice id (in_...): the record lists every stored line item, with amounts in the billing provider's minor units for the invoice's currency (cents for USD, EUR, GBP and CAD; other currencies follow the provider's amount rules). The lines are what that invoice billed for its period, not the subscription's item set: a yearly item is absent from its monthly invoices, and a metered item with no usage may be absent too. For a CRM opportunity (sourceType OPPORTUNITY) the record also lists the deal's own CRM fields as record.fields (each with key, label, value and custom, custom fields included) when the workspace has the CRM fields enabled; record.omittedFields names any left out to keep the response small.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -18833,4 +19022,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "c763c8f5420ee5d8e623c4e69aec48f8e2713300e99a96286858d1552ed726ba" as const
+export const sdkConsumerContractHash = "9d80b7b3a9173d0a08e2a81dda26903a19d6bbfb25901aa4ac7877fa318dd5ac" as const
