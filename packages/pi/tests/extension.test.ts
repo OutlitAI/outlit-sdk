@@ -73,6 +73,7 @@ describe("createOutlitPiExtension", () => {
     const registeredNames = pi.registeredTools.map((tool) => tool.name)
     expect(defaultToolNames).toEqual([
       "outlit_list_customers",
+      "outlit_list_crm_fields",
       "outlit_list_users",
       "outlit_get_customer",
       "outlit_get_timeline",
