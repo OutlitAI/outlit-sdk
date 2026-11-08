@@ -1,5 +1,29 @@
 # @outlit/tools
 
+## 2.5.0
+
+### Minor Changes
+
+- [#288](https://github.com/OutlitAI/outlit-sdk/pull/288) [`3cf621a`](https://github.com/OutlitAI/outlit-sdk/commit/3cf621a675cf8c2078243cf05946dba95af54e49) Thanks [@leo-paz](https://github.com/leo-paz)! - Each account in `outlit_get_customer`'s `crm` section lists the contacts that system associates with it, whatever their email domain: up to 25, with name, email, title and `userId` (the customer's user with that contact, or `null`). More are counted in `omittedContactCount`.
+
+  `outlit_list_customers` takes `crm` filters on CRM and support tool account fields and `crmFields`, which returns those fields' values on each customer. New `outlit_list_crm_fields` lists the fields, with picklist options, the values linked accounts hold, and how many hold one. It joins `defaultToolNames`, so `@outlit/pi` registers it by default.
+
+- [#280](https://github.com/OutlitAI/outlit-sdk/pull/280) [`6277cf0`](https://github.com/OutlitAI/outlit-sdk/commit/6277cf07821740341d8a94d3043243bcae39c5a7) Thanks [@leo-paz](https://github.com/leo-paz)! - CRM fields for contacts and deals. `outlit_list_users` can `include` `crm`. Users there, and in `outlit_get_customer` when both `users` and `crm` are included, then carry `crm`: one entry per linked CRM contact, with its labelled fields. A user whose contacts didn't fit the response's size limit says how many were left out in `omittedCrmContacts`. `outlit_get_source` on an opportunity carries the deal's labelled fields. Enabled per workspace with the account `crm` section.
+
+- [#281](https://github.com/OutlitAI/outlit-sdk/pull/281) [`2c3092c`](https://github.com/OutlitAI/outlit-sdk/commit/2c3092cdc415f67bf15972ee74d31d07187a291b) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit_get_customer` with `include` `revenue` returns `revenue.subscriptions`, each live subscription with its scheduled cancellation (`cancelAtPeriodEnd`, `cancelAt`) and every item (product name, price, quantity, unit amount, interval, licensed or metered), and `revenue.overdueInvoices`, open invoices past their due date with days overdue, and `revenue.lifetimeRevenueCurrency`, the currency of `lifetimeRevenue`. `arr.parts.invoicedLast12Months` is now described as what it always was, invoice charges outside subscriptions, and `outlit_get_source` says invoice lines are what one invoice billed, not the subscription's items.
+
+- [#289](https://github.com/OutlitAI/outlit-sdk/pull/289) [`255dd70`](https://github.com/OutlitAI/outlit-sdk/commit/255dd7076c31903c41dd34f20e957ca5855808ad) Thanks [@leo-paz](https://github.com/leo-paz)! - Gateway error envelopes can carry `next` (the instruction, and optionally the tool and input, for the next call), `missingPermission` on `TOOL_CALL_FORBIDDEN`, and `validValues` on a validation issue. The client keeps an error's envelope when a newer gateway adds top-level fields it doesn't know, dropping only those fields; unknown fields inside `next` or a validation issue still reject the envelope.
+
+- [#287](https://github.com/OutlitAI/outlit-sdk/pull/287) [`bc278e0`](https://github.com/OutlitAI/outlit-sdk/commit/bc278e0c616b2987ec29026553adab0f57a9e654) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit_get_customer` revenue lists the customer's Stripe billing accounts and each subscription's billing account and end date; `subscriptions: "all"` (CLI `--subscriptions all`) adds the most recently canceled subscriptions.
+
+- [#285](https://github.com/OutlitAI/outlit-sdk/pull/285) [`cea8bfd`](https://github.com/OutlitAI/outlit-sdk/commit/cea8bfd80a9839fb5276d68b2b6d9eb2bfd428d3) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit_get_customer` accepts `include: ["links"]`. It returns every record in another system linked to the customer: billing customers, CRM and support accounts, product analytics groups and accounts, Slack channels and workspaces, and the product's own customer id. Each comes with its provider, connection and when Outlit linked it, and the list is capped at 50 with `omitted` counting the rest.
+
+- [#284](https://github.com/OutlitAI/outlit-sdk/pull/284) [`06a29b3`](https://github.com/OutlitAI/outlit-sdk/commit/06a29b30d4db860c29fb6c95770dc2dc91cfd47b) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit_list_customers` accepts `arrCurrency` to keep customers whose ARR is in one currency, and its response carries `arrCurrencies`, the currencies among the matched customers, whenever it ordered or bounded by ARR. Outlit never converts ARR, so more than one currency there means the ranking compared amounts in different currencies. `outlit customers list` gains `--currency`.
+
+### Patch Changes
+
+- [#282](https://github.com/OutlitAI/outlit-sdk/pull/282) [`0addb1e`](https://github.com/OutlitAI/outlit-sdk/commit/0addb1ed4278733bc5b010f06f7c2fe1cb7a4c25) Thanks [@leo-paz](https://github.com/leo-paz)! - Every public tool now declares `idempotentHint` as `true` or `false`, so MCP clients and app stores that require all four hints get an explicit value. `outlit_update_customer_access` and `outlit_grant_customer_access` are now `destructiveHint: true`, since either can move an Editor to Viewer and remove edit rights. `outlit_assign_customer_owner` is `idempotentHint: false`, since every call restamps the assignment time.
+
 ## 2.4.0
 
 ### Minor Changes

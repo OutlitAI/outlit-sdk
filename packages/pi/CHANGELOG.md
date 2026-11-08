@@ -1,5 +1,20 @@
 # @outlit/pi
 
+## 2.2.0
+
+### Minor Changes
+
+- [#288](https://github.com/OutlitAI/outlit-sdk/pull/288) [`3cf621a`](https://github.com/OutlitAI/outlit-sdk/commit/3cf621a675cf8c2078243cf05946dba95af54e49) Thanks [@leo-paz](https://github.com/leo-paz)! - Each account in `outlit_get_customer`'s `crm` section lists the contacts that system associates with it, whatever their email domain: up to 25, with name, email, title and `userId` (the customer's user with that contact, or `null`). More are counted in `omittedContactCount`.
+
+  `outlit_list_customers` takes `crm` filters on CRM and support tool account fields and `crmFields`, which returns those fields' values on each customer. New `outlit_list_crm_fields` lists the fields, with picklist options, the values linked accounts hold, and how many hold one. It joins `defaultToolNames`, so `@outlit/pi` registers it by default.
+
+### Patch Changes
+
+- [#282](https://github.com/OutlitAI/outlit-sdk/pull/282) [`0addb1e`](https://github.com/OutlitAI/outlit-sdk/commit/0addb1ed4278733bc5b010f06f7c2fe1cb7a4c25) Thanks [@leo-paz](https://github.com/leo-paz)! - Every public tool now declares `idempotentHint` as `true` or `false`, so MCP clients and app stores that require all four hints get an explicit value. `outlit_update_customer_access` and `outlit_grant_customer_access` are now `destructiveHint: true`, since either can move an Editor to Viewer and remove edit rights. `outlit_assign_customer_owner` is `idempotentHint: false`, since every call restamps the assignment time.
+
+- Updated dependencies [[`3cf621a`](https://github.com/OutlitAI/outlit-sdk/commit/3cf621a675cf8c2078243cf05946dba95af54e49), [`6277cf0`](https://github.com/OutlitAI/outlit-sdk/commit/6277cf07821740341d8a94d3043243bcae39c5a7), [`2c3092c`](https://github.com/OutlitAI/outlit-sdk/commit/2c3092cdc415f67bf15972ee74d31d07187a291b), [`255dd70`](https://github.com/OutlitAI/outlit-sdk/commit/255dd7076c31903c41dd34f20e957ca5855808ad), [`bc278e0`](https://github.com/OutlitAI/outlit-sdk/commit/bc278e0c616b2987ec29026553adab0f57a9e654), [`cea8bfd`](https://github.com/OutlitAI/outlit-sdk/commit/cea8bfd80a9839fb5276d68b2b6d9eb2bfd428d3), [`06a29b3`](https://github.com/OutlitAI/outlit-sdk/commit/06a29b30d4db860c29fb6c95770dc2dc91cfd47b), [`0addb1e`](https://github.com/OutlitAI/outlit-sdk/commit/0addb1ed4278733bc5b010f06f7c2fe1cb7a4c25)]:
+  - @outlit/tools@2.5.0
+
 ## 2.1.12
 
 ### Patch Changes
