@@ -1,5 +1,20 @@
 # @outlit/cli
 
+## 3.4.0
+
+### Minor Changes
+
+- [#287](https://github.com/OutlitAI/outlit-sdk/pull/287) [`bc278e0`](https://github.com/OutlitAI/outlit-sdk/commit/bc278e0c616b2987ec29026553adab0f57a9e654) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit_get_customer` revenue lists the customer's Stripe billing accounts and each subscription's billing account and end date; `subscriptions: "all"` (CLI `--subscriptions all`) adds the most recently canceled subscriptions.
+
+- [#284](https://github.com/OutlitAI/outlit-sdk/pull/284) [`06a29b3`](https://github.com/OutlitAI/outlit-sdk/commit/06a29b30d4db860c29fb6c95770dc2dc91cfd47b) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit_list_customers` accepts `arrCurrency` to keep customers whose ARR is in one currency, and its response carries `arrCurrencies`, the currencies among the matched customers, whenever it ordered or bounded by ARR. Outlit never converts ARR, so more than one currency there means the ranking compared amounts in different currencies. `outlit customers list` gains `--currency`.
+
+### Patch Changes
+
+- [#282](https://github.com/OutlitAI/outlit-sdk/pull/282) [`0addb1e`](https://github.com/OutlitAI/outlit-sdk/commit/0addb1ed4278733bc5b010f06f7c2fe1cb7a4c25) Thanks [@leo-paz](https://github.com/leo-paz)! - Every public tool now declares `idempotentHint` as `true` or `false`, so MCP clients and app stores that require all four hints get an explicit value. `outlit_update_customer_access` and `outlit_grant_customer_access` are now `destructiveHint: true`, since either can move an Editor to Viewer and remove edit rights. `outlit_assign_customer_owner` is `idempotentHint: false`, since every call restamps the assignment time.
+
+- Updated dependencies [[`3cf621a`](https://github.com/OutlitAI/outlit-sdk/commit/3cf621a675cf8c2078243cf05946dba95af54e49), [`6277cf0`](https://github.com/OutlitAI/outlit-sdk/commit/6277cf07821740341d8a94d3043243bcae39c5a7), [`2c3092c`](https://github.com/OutlitAI/outlit-sdk/commit/2c3092cdc415f67bf15972ee74d31d07187a291b), [`255dd70`](https://github.com/OutlitAI/outlit-sdk/commit/255dd7076c31903c41dd34f20e957ca5855808ad), [`bc278e0`](https://github.com/OutlitAI/outlit-sdk/commit/bc278e0c616b2987ec29026553adab0f57a9e654), [`cea8bfd`](https://github.com/OutlitAI/outlit-sdk/commit/cea8bfd80a9839fb5276d68b2b6d9eb2bfd428d3), [`06a29b3`](https://github.com/OutlitAI/outlit-sdk/commit/06a29b30d4db860c29fb6c95770dc2dc91cfd47b), [`0addb1e`](https://github.com/OutlitAI/outlit-sdk/commit/0addb1ed4278733bc5b010f06f7c2fe1cb7a4c25)]:
+  - @outlit/tools@2.5.0
+
 ## 3.3.0
 
 ### Minor Changes
