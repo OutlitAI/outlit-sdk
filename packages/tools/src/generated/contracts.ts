@@ -536,6 +536,46 @@ export const publicToolContracts = {
                   "additionalProperties": false,
                 },
               },
+              "crmSummary": {
+                "description": "The customer's CRM and support tool accounts at a glance, by field label: the stage and the first custom picklists, numbers and yes/no fields (a segment, tier or health score), at most 4 per account from 3 accounts, values as stored. A label two systems share carries the second one's provider, as \"Segment (pylon)\". Absent when not enabled for the workspace, when crmFields is given, or when no linked account has such a field.",
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                },
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "number",
+                        },
+                        {
+                          "type": "boolean",
+                        },
+                      ],
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "number",
+                          },
+                          {
+                            "type": "boolean",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
             },
             "required": [
               "id",
@@ -19617,4 +19657,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "f27b479663e62c3efa0be5ae6748bcff107698bf1f728f2857447eb5d551190a" as const
+export const sdkConsumerContractHash = "77fe36f3bf331da1914dc70121c47796dcf52f525dad4af6871b4d62c0c7a0fc" as const
