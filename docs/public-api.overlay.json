@@ -37,6 +37,12 @@
       }
     },
     {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_crm_fields')]",
+      "update": {
+        "title": "List CRM fields"
+      }
+    },
+    {
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_users')]",
       "update": {
         "title": "List users"
@@ -340,6 +346,12 @@
       "target": "$.components.schemas['ToolOutput_outlit_list_customers']",
       "update": {
         "title": "List customers"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_crm_fields']",
+      "update": {
+        "title": "List CRM fields"
       }
     },
     {
