@@ -3045,6 +3045,91 @@ export const publicToolContracts = {
             },
           ],
         },
+        "crmSummary": {
+          "description": "Each linked CRM and support tool account at a glance, without include crm: its stage and the custom picklists, numbers and yes/no fields that system holds (a segment, tier or health score), at most 8 per account, values as stored. Every field of the account, and its contacts, are under include crm. Absent when not enabled for the workspace, when include crm is requested, or when no linked account has such a field.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "type": "string",
+              },
+              "accountId": {
+                "type": "string",
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
+              "fields": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                    },
+                    "label": {
+                      "type": "string",
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                            },
+                            {
+                              "type": "number",
+                            },
+                            {
+                              "type": "boolean",
+                            },
+                          ],
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                              },
+                              {
+                                "type": "number",
+                              },
+                              {
+                                "type": "boolean",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                  },
+                  "required": [
+                    "key",
+                    "label",
+                    "value",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+            },
+            "required": [
+              "provider",
+              "accountId",
+              "name",
+              "fields",
+            ],
+            "additionalProperties": false,
+          },
+        },
         "links": {
           "description": "Every record in another system linked to this customer, including records still held by customers merged into it: billing customers, CRM and support accounts, product analytics groups and accounts, Slack channels and the product's own customer id. A record is listed only when its id in that system is known. Use it to tell whether two customers share a record, or to name the record to look up in that system; for a CRM account's own fields use include crm. Ordered by kind, provider and id. Null when the read is bound to a past point in time.",
           "anyOf": [
@@ -19532,4 +19617,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "696da531a576098a4d673bf7c25188769d15b1cb096fd60a8431aeb515648510" as const
+export const sdkConsumerContractHash = "f27b479663e62c3efa0be5ae6748bcff107698bf1f728f2857447eb5d551190a" as const
