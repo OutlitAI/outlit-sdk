@@ -117,6 +117,18 @@ export function parseTraitFilters(
   return filters
 }
 
+/** Reads `--no-activity-in` and `--has-activity-in`, which citty may parse as a negated boolean. */
+export function readActivityFilterArgs(
+  args: { "no-activity-in"?: string; "has-activity-in"?: string },
+  rawArgs?: string[],
+): { noActivityIn?: string; hasActivityIn?: string } {
+  const argsRecord = args as Record<string, unknown>
+  return {
+    noActivityIn: readStringArg(argsRecord, "no-activity-in", rawArgs),
+    hasActivityIn: readStringArg(argsRecord, "has-activity-in", rawArgs),
+  }
+}
+
 /** Applies activity filters, search, and ordering to an API params object. */
 export function applyListFilters(
   params: Record<string, unknown>,
@@ -129,9 +141,7 @@ export function applyListFilters(
   },
   rawArgs?: string[],
 ): void {
-  const argsRecord = args as Record<string, unknown>
-  const noActivityIn = readStringArg(argsRecord, "no-activity-in", rawArgs)
-  const hasActivityIn = readStringArg(argsRecord, "has-activity-in", rawArgs)
+  const { noActivityIn, hasActivityIn } = readActivityFilterArgs(args, rawArgs)
 
   if (noActivityIn) params.noActivityInLast = noActivityIn
   if (hasActivityIn) params.hasActivityInLast = hasActivityIn

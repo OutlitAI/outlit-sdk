@@ -16,7 +16,8 @@ export default defineCommand({
       "  - Customer ID (UUID)",
       "  - Customer name (partial match)",
       "",
-      'The primary record is returned under "customer". --include users adds "users".',
+      'The primary record is returned under "customer". Each included section (such as "users")',
+      "is {status, asOf, data}, or a status and reason when there is nothing to show.",
       "",
       `Available include sections: ${customerIncludeSections.join(", ")}`,
       `Timeframes: ${customerTimeframes.join(", ")}`,
@@ -25,7 +26,7 @@ export default defineCommand({
       "  outlit customers get acme.com",
       "  outlit customers get acme.com --include users,revenue",
       "  outlit customers get acme.com --include users,revenue,recentTimeline --timeframe 90d",
-      "  outlit customers get acme.com --include revenue --subscriptions all",
+      "  outlit customers get acme.com --include billing --subscriptions all",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -54,7 +55,7 @@ export default defineCommand({
     subscriptions: {
       type: "string",
       description:
-        "With --include revenue: live (default) or all, which adds the most recently canceled subscriptions",
+        "With --include billing: live (default) or all, which adds the most recently canceled subscriptions",
     },
   },
   async run({ args }) {

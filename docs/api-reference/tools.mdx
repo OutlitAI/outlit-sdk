@@ -15,7 +15,7 @@ Pass an Outlit API key in the `Authorization` header as `Bearer ok_...`.
   "tool": "outlit_list_customers",
   "input": {
     "limit": 10,
-    "billingStatus": "PAYING"
+    "filters": { "billingStatus": ["paying"] }
   }
 }
 ```
@@ -30,8 +30,8 @@ against the shared `@outlit/tools` contract before the tool runs.
 
 | Tool | Purpose |
 |---|---|
-| `outlit_list_customers` | Browse and filter customers by billing status, activity recency, ARR, traits, CRM fields, or name |
-| `outlit_list_crm_fields` | List the account fields the CRM and support tools hold, with their values, to filter customers on |
+| `outlit_list_customers` | Browse and filter customers by billing status, activity recency, ARR, owner, customer fields (CRM, support tool or SDK traits), or name |
+| `outlit_list_customer_fields` | List the fields Outlit holds about customers (CRM and support tool account fields, SDK traits), with their values, to filter customers on |
 | `outlit_list_users` | Browse and filter users by journey stage, activity recency, customer, traits, email, or name |
 | `outlit_get_customer` | Get full details for one customer, with optional related sections |
 | `outlit_get_customer_relationship` | Bounded relationship read model: categorized statements with source labels (no raw fact IDs or quotes) |
@@ -179,7 +179,7 @@ curl -X POST https://app.outlit.ai/api/tools/call \
   -d '{
     "tool": "outlit_list_customers",
     "input": {
-      "billingStatus": "PAYING",
+      "filters": { "billingStatus": ["paying"] },
       "limit": 10
     }
   }'
@@ -224,7 +224,7 @@ Use `INVOICE` (`outlit_get_source` and `outlit_list_sources` also accept `STRIPE
 }
 ```
 
-Returns `"renewal": { "date": "2026-03-01", "source": "billing" }`, the date the customer page shows. `source` is `outlit` (set in Outlit), `crm` (a CRM opportunity), or `billing` (the billing period of a yearly subscription). `renewal` is `null` when the customer has none.
+Returns `"renewal": { "status": "available", "asOf": "...", "data": { "date": "2026-03-01", "source": "billing" } }`, the date the customer page shows. `source` is `outlit` (set in Outlit), `crm` (a CRM opportunity), or `billing` (the billing period of a yearly subscription). The section has status `empty` when the customer has none.
 
 ### Read a customer's CRM account fields
 
@@ -238,21 +238,25 @@ Returns `"renewal": { "date": "2026-03-01", "source": "billing" }`, the date the
 }
 ```
 
-Returns `"crm"`: one entry per CRM or support tool account linked to the customer, with `provider`, `connectionId`, `accountId`, `name`, the `owner` as that system records it, `recordUpdatedAt`, and `fields`: every non-empty field as stored, each with its `key`, `label`, `value` and whether it is `custom`. `contacts` lists the people that system associates with the account, whatever their email domain, most recently modified first: up to 25, each with `contactId`, `name`, `email`, `title` and `userId`, the customer's user with that contact or email (`null` when the person is not one of its users). More are counted in `omittedContactCount`. Fields past the response's size limit are counted in `omittedFieldCount` and named in `omittedFields` while they fit; ask for them with `crmFields`, by key or label. The section is enabled per workspace, and is absent until it is.
+Returns `crm.data`: one entry per CRM or support tool account linked to the customer, with `provider`, `connectionId`, `accountId`, `name`, the `owner` as that system records it, `recordUpdatedAt`, and `fields`: every non-empty field as stored, each with its `key`, `label`, `value` and whether it is `custom`. `contacts` lists the people that system associates with the account, whatever their email domain, most recently modified first: up to 25, each with `contactId`, `name`, `email`, `title` and `userId`, the customer's user with that contact or email (`null` when the person is not one of its users). More are counted in `omittedContactCount`. Fields past the response's size limit are counted in `omittedFieldCount` and named in `omittedFields` while they fit; ask for them with `crmFields`, by key or label. The section is enabled per workspace, and is absent until it is.
 
-### Filter and list customers by CRM fields
+### Filter and list customers by customer fields
 
 ```json
 {
   "tool": "outlit_list_customers",
   "input": {
-    "crm": [{ "field": { "provider": "hubspot", "key": "lifecyclestage" }, "op": "eq", "value": "customer" }],
-    "crmFields": [{ "provider": "hubspot", "key": "industry" }]
+    "filters": {
+      "fields": [{ "field": { "source": "hubspot", "key": "lifecyclestage" }, "op": "eq", "value": "customer" }]
+    },
+    "fields": [{ "source": "hubspot", "key": "industry" }]
   }
 }
 ```
 
-`crm` filters by fields of the customers' CRM and support tool accounts: up to 10 filters, all of which must hold, each by any linked account. `eq` and `in` compare text ignoring case; `gte` and `lte` compare numbers or ISO dates. `crmFields` (up to 5) adds `crm` to each customer: each field with its `label` and its `values` across the customer's linked accounts. Find a field's `provider` and `key`, its picklist `options` and the values accounts hold with `outlit_list_crm_fields`. Filters matching more than 5,000 customers are refused; add a narrower one.
+`filters.fields` filters by customer fields: up to 10 filters, all of which must hold. A field's `source` is `hubspot`, `salesforce`, `attio`, `pylon` (the fields of the customers' CRM and support tool accounts, any linked account counting) or `traits` (traits sent with the Outlit SDK). `eq` and `in` compare text ignoring case; `gte` and `lte` compare numbers or ISO dates. `fields` (up to 5) adds `fields` to each customer: each field with its `label` and its `values`. Find a field's `source` and `key`, its picklist `options` and the values customers hold with `outlit_list_customer_fields`. Filters matching more than 5,000 customers are refused; add a narrower one.
+
+`outlit_list_customers` filters are grouped under `filters`: `billingStatus` (an array of lowercase statuses), `arr` (`above`, `below`, `currency`; minor units), `fields`, `owner` (`id`, `email`, `has`), `activity` (`within`, `notWithin`, `activatedSince`) and `search`. The earlier top-level spellings (`billingStatus`, `arrAbove`, `arrBelow`, `arrCurrency`, `mrrAbove`, `mrrBelow`, `traitFilters`, `crm`, `crmFields`, `search`, `ownerId`, `ownerEmail`, `hasOwner`, `hasActivityInLast`, `noActivityInLast`, `activatedSince`), uppercase billing statuses and the `orderBy` values `arr_cents`, `mrr_cents` and `first_seen_at` are mapped to the new ones until 2026-12-11, and refused with the new name after that. `outlit_list_crm_fields` is now `outlit_list_customer_fields`, with `provider` renamed `source`.
 
 ### Read a contact's or deal's CRM fields
 
@@ -449,9 +453,9 @@ Returns `{ "id": "10000000-0000-4000-8000-000000000004", "createdAt": "2026-09-2
 
 The response is the selected tool's JSON result. List tools return paginated collections; exact lookup tools return the matched record or an error when the record cannot be found. Search returns grouped artifact-level `source` and `fact` results, not raw vector chunks. Fact results include provenance fields such as `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink` when available.
 
-Money amounts such as `arr.amount`, `lifetimeRevenue`, and `accountImportance.arrCents` are in the billing provider's units for the currency they were billed in. For USD, EUR, GBP, and CAD these are cents: divide by 100 (for example, 1234500 is $12,345 in USD). Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)), so don't assume a divisor for them. Customer `arr` is the annualized revenue run rate, the same figure the Outlit app shows, and names its `currency`; `estimated` is `true` when the amount includes a usage or per-seat estimate. `arr.amount` is `0` for a churned, paused, or trialing customer, and `arr` is `null` when the app shows none. `outlit_get_customer` returns `revenue.arr` with the customer's `lifecycle` and the `parts` it is counted from. Attention items return the currency alongside `arrCents`, and `outlit_get_customer` names `lifetimeRevenue`'s in `lifetimeRevenueCurrency`. The example below is for a customer billed in USD, so `"amount": 300000` is $3,000 ARR.
+Money is always `{ "amount", "currency", "decimals", "formatted" }`: `amount` is an integer in the billing provider's minor units for the currency, `decimals` is how many digits follow the decimal point (so `amount / 10^decimals` is the major-unit value), and `formatted` is ready to display (for example 1234500 is "$12,345.00" in USD). Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). Customer `arr` is the annualized revenue run rate, the same figure the Outlit app shows: `arr.value` is the money, and `estimated` is `true` when the amount includes a usage or per-seat estimate. `arr.value.amount` is `0` for a churned, paused, or trialing customer, and `arr` is `null` when the app shows none. `outlit_get_customer` returns `revenue.data.arr` with the customer's `lifecycle` and the `parts` it is counted from. Attention items return the currency alongside `arrCents`. The example below is for a customer billed in USD, so `"amount": 300000` is $3,000.00 ARR.
 
-The legacy monthly `currentMrr` and `mrrCalculationStatus` fields are removed from customer results. `outlit_list_customers` still accepts `mrrAbove`, `mrrBelow` (monthly amounts, times 12), and `orderBy: "mrr_cents"` for compatibility, but they are deprecated: use `arrAbove`, `arrBelow` (per year, in `arr.amount`'s units), and `orderBy: "arr_cents"`.
+The legacy monthly `currentMrr` and `mrrCalculationStatus` fields are removed from customer results. Customer lists and reads use lowercase billing statuses (`none`, `trialing`, `paying`, `past_due`, `churned`), `page` for pagination, and `outlit.firstSyncedAt` for when Outlit first synced the customer (formerly `firstSeenAt`). Each section `outlit_get_customer` includes is `{ "status": "available", "asOf", "data" }`, or a `status` of `empty`, `not_connected`, `not_synced` or `unavailable` with a `reason`.
 
 Example list response:
 
@@ -462,20 +466,27 @@ Example list response:
       "id": "cus_123",
       "name": "Acme",
       "domain": "acme.com",
-      "billingStatus": "PAYING",
+      "billingStatus": "paying",
       "activatedAt": "2026-01-15T09:30:00.000Z",
-      "firstSeenAt": "2025-12-02T17:05:00.000Z",
+      "outlit": { "firstSyncedAt": "2025-12-02T17:05:00.000Z" },
       "lastActivityAt": "2026-04-10T18:22:11.000Z",
       "contactCount": 42,
-      "arr": { "amount": 300000, "currency": "USD", "estimated": false },
+      "arr": {
+        "value": { "amount": 300000, "currency": "USD", "decimals": 2, "formatted": "$3,000.00" },
+        "estimated": false,
+        "lifecycle": "active"
+      },
       "owner": null,
       "daysSinceActivity": 3
     }
   ],
-  "pagination": {
+  "page": {
     "hasMore": true,
     "nextCursor": "cursor_abc",
     "total": 128
+  },
+  "totals": {
+    "arr": [{ "amount": 38400000, "currency": "USD", "decimals": 2, "formatted": "$384,000.00" }]
   }
 }
 ```

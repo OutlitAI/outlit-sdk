@@ -22,6 +22,7 @@ pi
 The default extension registers the default customer intelligence tools from `@outlit/tools`:
 
 - `outlit_list_customers`
+- `outlit_list_customer_fields`
 - `outlit_list_users`
 - `outlit_get_customer`
 - `outlit_get_timeline`

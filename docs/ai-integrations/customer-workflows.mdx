@@ -13,7 +13,7 @@ Find paying customers that went quiet, then rank by revenue exposure.
 
 ```bash
 # 1. Paying customers with no activity in 30 days, highest ARR first
-outlit customers list --billing-status PAYING --no-activity-in 30d --order-by arr_cents --json
+outlit customers list --billing-status paying --no-activity-in 30d --order-by arr --json
 
 # 2. Full profile for each account worth a look
 outlit customers get acme.com --include users,revenue,recentTimeline --json
@@ -36,7 +36,7 @@ Assemble the account's current state and evidence before a renewal conversation.
 outlit customers relationship acme.com --json
 
 # Billing position
-outlit customers get acme.com --include revenue --json
+outlit customers get acme.com --include revenue,billing --json
 
 # Renewal-relevant evidence
 outlit search "renewal" --customer acme.com --json
@@ -54,7 +54,7 @@ Accounts that are healthy enough to expand.
 
 ```bash
 # Active paying customers, sorted by ARR
-outlit customers list --billing-status PAYING --has-activity-in 7d --order-by arr_cents --json
+outlit customers list --billing-status paying --has-activity-in 7d --order-by arr --json
 
 # Feature adoption for one account (1-53 weeks, optional weekly breakdown)
 outlit customers features acme.com --weeks 12 --weekly --json

@@ -4,38 +4,17 @@ export function formatCents(value: unknown): string {
   return `$${(value / 100).toFixed(2)}`
 }
 
-/** Stripe keeps these two in hundredths although ISO 4217 gives them no minor unit. */
-const STRIPE_HUNDREDTHS_CURRENCIES = new Set(["ISK", "UGX"])
-
 /**
- * Formats an `{ amount, currency, estimated }` ARR value the way the Outlit app does: the amount is
- * in Stripe's units for the currency (the currency's own minor-unit digits, with ISK and UGX in
- * hundredths), shown in whole major units with the currency symbol. An estimate (usage or
- * per-seat) is prefixed with `~`. Returns "--" when unknown.
+ * Formats an ARR measure (`{ value: Money, estimated }`) with the Money's own `formatted` text. An
+ * estimate (usage or per-seat) is prefixed with `~`. Returns "--" when unknown.
  */
 export function formatArr(value: unknown): string {
   if (typeof value !== "object" || value === null) return "--"
-  const { amount, currency, estimated } = value as Record<string, unknown>
-  if (typeof amount !== "number" || Number.isNaN(amount) || typeof currency !== "string") {
-    return "--"
-  }
-  const code = currency.trim().toUpperCase() || "USD"
-  let shown: string
-  try {
-    const digits =
-      new Intl.NumberFormat("en-US", { style: "currency", currency: code }).resolvedOptions()
-        .maximumFractionDigits ?? 2
-    const major = amount / 10 ** (STRIPE_HUNDREDTHS_CURRENCIES.has(code) ? 2 : digits)
-    shown = new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: code,
-      maximumFractionDigits: 0,
-    }).format(major)
-  } catch {
-    // An unrecognized currency code: show the provider's raw amount with the code.
-    shown = `${amount} ${code}`
-  }
-  return `${estimated === true ? "~" : ""}${shown}`
+  const { value: money, estimated } = value as { value?: unknown; estimated?: unknown }
+  if (typeof money !== "object" || money === null) return "--"
+  const { formatted } = money as { formatted?: unknown }
+  if (typeof formatted !== "string" || formatted === "") return "--"
+  return `${estimated === true ? "~" : ""}${formatted}`
 }
 
 /** Formats an ISO date string as relative time. Returns "--" for null/undefined. */

@@ -1,16 +1,21 @@
-import { customerBillingStatuses, publicToolContracts } from "@outlit/tools"
+import {
+  customerBillingStatuses,
+  customerListOrderFields,
+  publicToolContracts,
+} from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import {
   activityFilterArgs,
-  applyListFilters,
   orderArgs,
   parseTraitFilters,
+  readActivityFilterArgs,
   traitFilterArgs,
 } from "../../args/filters"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
+import { splitCsv } from "../../lib/config"
 import { formatArr, relativeDate, truncate } from "../../lib/format"
 import { outputError } from "../../lib/output"
 import { isIso8601DateTime } from "../../lib/platform-input"
@@ -47,6 +52,13 @@ function normalizeCustomerListResult(data: unknown): unknown {
   }
 }
 
+/** Previously published sort names, accepted and mapped to the current ones. */
+const legacyOrderFields: Record<string, (typeof customerListOrderFields)[number]> = {
+  arr_cents: "arr",
+  mrr_cents: "arr",
+  first_seen_at: "first_synced_at",
+}
+
 /**
  * Reads the last value given for an undeclared `--flag value` or `--flag=value` option. Returns
  * undefined when the flag is absent and "" when it is present without a value (a following token
@@ -74,14 +86,14 @@ export default defineCommand({
       "",
       "Examples:",
       "  outlit customers list                                    # all customers",
-      "  outlit customers list --billing-status PAYING           # paying only",
+      "  outlit customers list --billing-status paying           # paying only",
       "  outlit customers list --no-activity-in 30d              # churning customers",
       "  outlit customers list --arr-above 1200000 --limit 50    # high-value at-risk",
       "  outlit customers list --activated-since 2026-07-01T00:00:00Z",
       "  outlit customers list --json | jq '.items[].domain'     # pipe-friendly",
       "",
       `Billing statuses: ${customerBillingStatuses.join(", ")}`,
-      "Sort fields: last_activity_at, first_seen_at, name, arr_cents",
+      `Sort fields: ${customerListOrderFields.join(", ")}`,
       "Activity periods: 7d, 14d, 30d, 90d",
       "",
       AGENT_JSON_HINT,
@@ -94,9 +106,14 @@ export default defineCommand({
     ...activityFilterArgs,
     ...traitFilterArgs,
     ...orderArgs,
+    cursor: {
+      type: "string",
+      description:
+        "Cursor from a previous response (page.nextCursor).\nUse this to fetch the next page of results.",
+    },
     "billing-status": {
       type: "string",
-      description: `Filter by billing status (${customerBillingStatuses.join(", ")})`,
+      description: `Filter by billing status (${customerBillingStatuses.join(", ")}); comma-separate several`,
     },
     "arr-above": {
       type: "string",
@@ -149,22 +166,29 @@ export default defineCommand({
     const client = await getClientOrExit(args["api-key"], json)
 
     const params: Record<string, unknown> = {}
-    if (args["billing-status"]) params.billingStatus = args["billing-status"]
+    const filters: Record<string, unknown> = {}
+    const billingStatuses = args["billing-status"]
+      ? splitCsv(args["billing-status"]).map((status) => status.toLowerCase())
+      : []
+    if (billingStatuses.length > 0) filters.billingStatus = billingStatuses
+
     // --mrr-above and --mrr-below are previously published spellings: still accepted from the raw
-    // arguments, but no longer declared, so help and completions advertise only --arr-*.
+    // arguments, but no longer declared, so help and completions advertise only --arr-*. A monthly
+    // amount filters as twelve months of it.
     const numericFlags = [
-      ["arr-above", "arrAbove", args["arr-above"]],
-      ["arr-below", "arrBelow", args["arr-below"]],
-      ["mrr-above", "mrrAbove", rawFlagValue(rawArgs, "mrr-above")],
-      ["mrr-below", "mrrBelow", rawFlagValue(rawArgs, "mrr-below")],
+      ["arr-above", "above", 1, args["arr-above"]],
+      ["arr-below", "below", 1, args["arr-below"]],
+      ["mrr-above", "above", 12, rawFlagValue(rawArgs, "mrr-above")],
+      ["mrr-below", "below", 12, rawFlagValue(rawArgs, "mrr-below")],
     ] as const
-    for (const [flag, param, raw] of numericFlags) {
+    const arr: Record<string, unknown> = {}
+    for (const [flag, bound, factor, raw] of numericFlags) {
       if (raw === undefined) continue
       const value = typeof raw === "string" && raw.trim() !== "" ? Number(raw) : Number.NaN
       if (!Number.isFinite(value)) {
         return outputError({ message: `--${flag} must be a number`, code: "invalid_input" }, json)
       }
-      params[param] = value
+      arr[bound] = Math.round(value * factor)
     }
     if (args.currency) {
       if (!/^[A-Za-z]{3}$/.test(args.currency)) {
@@ -173,17 +197,32 @@ export default defineCommand({
           json,
         )
       }
-      params.arrCurrency = args.currency
+      arr.currency = args.currency
     }
-    if (args["owner-id"]) params.ownerId = args["owner-id"]
-    if (args["owner-email"]) params.ownerEmail = args["owner-email"]
-    if (typeof args["has-owner"] === "boolean") params.hasOwner = args["has-owner"]
-    if (activatedSince) params.activatedSince = activatedSince
+    if (Object.keys(arr).length > 0) filters.arr = arr
+
+    const owner: Record<string, unknown> = {}
+    if (args["owner-id"]) owner.id = args["owner-id"]
+    if (args["owner-email"]) owner.email = args["owner-email"]
+    if (typeof args["has-owner"] === "boolean") owner.has = args["has-owner"]
+    if (Object.keys(owner).length > 0) filters.owner = owner
+
+    const { noActivityIn, hasActivityIn } = readActivityFilterArgs(args, rawArgs)
+    const activity: Record<string, unknown> = {}
+    if (hasActivityIn) activity.within = hasActivityIn
+    if (noActivityIn) activity.notWithin = noActivityIn
+    if (activatedSince) activity.activatedSince = activatedSince
+    if (Object.keys(activity).length > 0) filters.activity = activity
+
     if (args.trait) {
       try {
         const traitFilters = parseTraitFilters(args.trait)
         if (traitFilters) {
-          params.traitFilters = traitFilters
+          filters.fields = Object.entries(traitFilters).map(([key, value]) => ({
+            field: { source: "traits", key },
+            op: "eq",
+            value,
+          }))
         }
       } catch (error) {
         return outputError(
@@ -195,13 +234,18 @@ export default defineCommand({
         )
       }
     }
-    applyListFilters(params, args, rawArgs)
+    if (args.search) filters.search = args.search
+    if (Object.keys(filters).length > 0) params.filters = filters
+
+    if (args["order-by"]) params.orderBy = legacyOrderFields[args["order-by"]] ?? args["order-by"]
+    if (args["order-direction"]) params.orderDirection = args["order-direction"]
     applyPagination(params, args, json)
 
     return runTool(client, publicToolContracts.outlit_list_customers.toolName, params, json, {
       spinnerMessage: "Fetching customers...",
       transform: normalizeCustomerListResult,
       table: {
+        paginationKey: "page",
         columns: [
           { header: "Name", key: "name", format: (v) => truncate(v, 24) },
           { header: "Domain", key: "domain" },

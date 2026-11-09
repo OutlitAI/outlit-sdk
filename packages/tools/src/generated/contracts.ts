@@ -5,7 +5,7 @@ export const contractVersion = 1 as const
 
 export const publicToolNames = [
   "outlit_list_customers",
-  "outlit_list_crm_fields",
+  "outlit_list_customer_fields",
   "outlit_list_users",
   "outlit_list_workspace_users",
   "outlit_get_customer",
@@ -62,10 +62,10 @@ export const publicToolContracts = {
   "outlit_list_customers": {
     "toolName": "outlit_list_customers",
     "commandId": "customer.list",
-    "commandVersion": 1,
+    "commandVersion": 2,
     "ownerDomain": "customers",
     "title": "List Customers",
-    "description": "Browse and filter customers. Use this to find customers by billing status, activity recency, revenue, name, or their CRM and support tool fields (crm; crmFields returns those fields' values on each customer, e.g. segment and health across the book; use outlit_list_crm_fields to find keys and values). Returns a paginated list with summary info (ARR, last activity, status). arr is the annualized revenue run rate, the same figure the Outlit app shows, with its currency: amount is in the billing provider's units for that currency (for USD, EUR, GBP and CAD this is cents: divide by 100, e.g. 1200000 is $12,000 ARR, USD; other currencies follow the provider's amount rules). arr is null when the app shows none, and amount is 0 for a churned, paused or trialing customer.",
+    "description": "Browse and filter customers by billing status, ARR, owner, activity, name or any customer field (CRM, support tool or SDK trait; find them with outlit_list_customer_fields). Returns a page of customers with ARR, last activity and status, total ARR per currency, and with fields each customer's values for the fields asked for, e.g. segment and health across the book.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -76,219 +76,209 @@ export const publicToolContracts = {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
-        "activatedSince": {
-          "description": "Filter customers activated at or after this ISO-8601 datetime",
-          "type": "string",
-          "format": "date-time",
-          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-        },
-        "billingStatus": {
-          "description": "Filter by billing status",
-          "type": "string",
-          "enum": [
-            "NONE",
-            "TRIALING",
-            "PAYING",
-            "PAST_DUE",
-            "CHURNED",
-          ],
-        },
-        "hasActivityInLast": {
-          "description": "Filter customers with activity in the last N days",
-          "type": "string",
-          "enum": [
-            "7d",
-            "14d",
-            "30d",
-            "90d",
-          ],
-        },
-        "noActivityInLast": {
-          "description": "Filter customers with NO activity in the last N days",
-          "type": "string",
-          "enum": [
-            "7d",
-            "14d",
-            "30d",
-            "90d",
-          ],
-        },
-        "arrAbove": {
-          "description": "Minimum ARR, in arr.amount's units per year (1200000 is $12,000 for a customer billed in USD). Each customer is compared in its own currency, never converted: pass arrCurrency to compare one currency. Customers whose ARR is unknown never match.",
-          "type": "number",
-          "minimum": 0,
-        },
-        "arrBelow": {
-          "description": "Maximum ARR, in arr.amount's units per year, compared in each customer's own currency like arrAbove. Customers whose ARR is unknown never match.",
-          "type": "number",
-          "minimum": 0,
-        },
-        "arrCurrency": {
-          "description": "Only customers whose ARR is in this ISO 4217 currency, such as USD. Outlit never converts ARR between currencies, so use this to rank or bound ARR within one currency.",
-          "type": "string",
-          "pattern": "^[A-Za-z]{3}$",
-        },
-        "mrrAbove": {
-          "description": "Deprecated: use arrAbove.",
-          "type": "number",
-          "minimum": 0,
-        },
-        "mrrBelow": {
-          "description": "Deprecated: use arrBelow.",
-          "type": "number",
-          "minimum": 0,
-        },
-        "traitFilters": {
-          "description": "Filter by exact trait values using key/value pairs",
+        "filters": {
           "type": "object",
-          "propertyNames": {
-            "type": "string",
-            "pattern": "^[A-Za-z0-9_-]{1,100}$",
-          },
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 500,
-              },
-              {
-                "type": "number",
-              },
-              {
-                "type": "boolean",
-              },
-            ],
-          },
-        },
-        "search": {
-          "description": "Search by customer name or domain (case-insensitive)",
-          "type": "string",
-          "maxLength": 500,
-        },
-        "ownerId": {
-          "description": "Filter customers by internal owner user ID",
-          "type": "string",
-          "maxLength": 500,
-        },
-        "ownerEmail": {
-          "description": "Filter customers by internal owner email address",
-          "type": "string",
-          "maxLength": 500,
-        },
-        "hasOwner": {
-          "description": "Filter customers by whether they have an owner",
-          "type": "boolean",
-        },
-        "crm": {
-          "description": "Filter by fields of the customer's CRM and support tool accounts, such as segment, health or stage; use outlit_list_crm_fields to find keys and values. All filters must hold; each holds when any linked account meets it. eq and in compare text ignoring case; gte and lte compare numbers, or ISO dates, never text. A multi-value field matches when any of its values does.",
-          "maxItems": 10,
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "field": {
-                "type": "object",
-                "properties": {
-                  "provider": {
-                    "type": "string",
-                    "enum": [
-                      "hubspot",
-                      "salesforce",
-                      "attio",
-                      "pylon",
-                    ],
-                  },
-                  "key": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 191,
-                    "description": "The field's key (API name) in that system, as outlit_list_crm_fields lists it.",
-                  },
-                },
-                "required": [
-                  "provider",
-                  "key",
-                ],
-              },
-              "op": {
+          "properties": {
+            "billingStatus": {
+              "minItems": 1,
+              "maxItems": 5,
+              "type": "array",
+              "items": {
                 "type": "string",
                 "enum": [
-                  "eq",
-                  "in",
-                  "gte",
-                  "lte",
-                ],
-              },
-              "value": {
-                "anyOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 500,
-                      },
-                      {
-                        "type": "number",
-                      },
-                      {
-                        "type": "boolean",
-                      },
-                    ],
-                  },
-                  {
-                    "minItems": 1,
-                    "maxItems": 50,
-                    "type": "array",
-                    "items": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "maxLength": 500,
-                        },
-                        {
-                          "type": "number",
-                        },
-                        {
-                          "type": "boolean",
-                        },
-                      ],
-                    },
-                  },
+                  "none",
+                  "trialing",
+                  "paying",
+                  "past_due",
+                  "churned",
                 ],
               },
             },
-            "required": [
-              "field",
-              "op",
-              "value",
-            ],
+            "arr": {
+              "description": "ARR bounds in minor units, like Money.amount (1200000 is $12,000.00 in USD), compared in each customer's own currency, never converted. Unknown ARR never matches.",
+              "type": "object",
+              "properties": {
+                "above": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                "below": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                "currency": {
+                  "description": "ISO 4217; only customers billed in it.",
+                  "type": "string",
+                  "pattern": "^[A-Za-z]{3}$",
+                },
+              },
+            },
+            "fields": {
+              "description": "Customer fields from outlit_list_customer_fields; all must hold. eq and in ignore case; gte and lte take a number or ISO date. A multi-value field matches when any value does.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "object",
+                    "properties": {
+                      "source": {
+                        "type": "string",
+                        "enum": [
+                          "hubspot",
+                          "salesforce",
+                          "attio",
+                          "pylon",
+                          "traits",
+                        ],
+                      },
+                      "key": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191,
+                      },
+                    },
+                    "required": [
+                      "source",
+                      "key",
+                    ],
+                  },
+                  "op": {
+                    "type": "string",
+                    "enum": [
+                      "eq",
+                      "in",
+                      "gte",
+                      "lte",
+                    ],
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 500,
+                          },
+                          {
+                            "type": "number",
+                          },
+                          {
+                            "type": "boolean",
+                          },
+                        ],
+                      },
+                      {
+                        "minItems": 1,
+                        "maxItems": 50,
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "maxLength": 500,
+                            },
+                            {
+                              "type": "number",
+                            },
+                            {
+                              "type": "boolean",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                "required": [
+                  "field",
+                  "op",
+                  "value",
+                ],
+              },
+            },
+            "owner": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 500,
+                },
+                "email": {
+                  "type": "string",
+                  "maxLength": 500,
+                },
+                "has": {
+                  "description": "Whether the customer has an owner.",
+                  "type": "boolean",
+                },
+              },
+            },
+            "activity": {
+              "type": "object",
+              "properties": {
+                "within": {
+                  "description": "Active in the last N days.",
+                  "type": "string",
+                  "enum": [
+                    "7d",
+                    "14d",
+                    "30d",
+                    "90d",
+                  ],
+                },
+                "notWithin": {
+                  "description": "No activity in the last N days.",
+                  "type": "string",
+                  "enum": [
+                    "7d",
+                    "14d",
+                    "30d",
+                    "90d",
+                  ],
+                },
+                "activatedSince": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                },
+              },
+            },
+            "search": {
+              "description": "Name or domain contains, ignoring case.",
+              "type": "string",
+              "maxLength": 500,
+            },
           },
         },
-        "crmFields": {
-          "description": "CRM and support tool account fields to return on each customer, as crm; use outlit_list_crm_fields to find keys.",
+        "fields": {
+          "description": "Customer fields to return on each customer, from outlit_list_customer_fields.",
           "maxItems": 5,
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
-              "provider": {
+              "source": {
                 "type": "string",
                 "enum": [
                   "hubspot",
                   "salesforce",
                   "attio",
                   "pylon",
+                  "traits",
                 ],
               },
               "key": {
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 191,
-                "description": "The field's key (API name) in that system, as outlit_list_crm_fields lists it.",
               },
             },
             "required": [
-              "provider",
+              "source",
               "key",
             ],
           },
@@ -301,23 +291,21 @@ export const publicToolContracts = {
           "maximum": 1000,
         },
         "cursor": {
-          "description": "Pagination cursor from previous response",
+          "description": "page.nextCursor of the previous response",
           "type": "string",
         },
         "orderBy": {
-          "description": "Field to order results by: last_activity_at, first_seen_at, name, arr_cents. arr_cents puts customers whose ARR is unknown last when descending, and compares amounts across currencies without converting them; arrCurrencies in the response says when that happened.",
+          "description": "arr puts unknown ARR last when descending; arrCurrencies says if currencies mixed.",
           "default": "last_activity_at",
           "type": "string",
           "enum": [
             "last_activity_at",
-            "first_seen_at",
+            "first_synced_at",
             "name",
-            "arr_cents",
-            "mrr_cents",
+            "arr",
           ],
         },
         "orderDirection": {
-          "description": "Sort direction",
           "default": "desc",
           "type": "string",
           "enum": [
@@ -362,24 +350,14 @@ export const publicToolContracts = {
               "billingStatus": {
                 "type": "string",
                 "enum": [
-                  "NONE",
-                  "TRIALING",
-                  "PAYING",
-                  "PAST_DUE",
-                  "CHURNED",
+                  "none",
+                  "trialing",
+                  "paying",
+                  "past_due",
+                  "churned",
                 ],
               },
               "activatedAt": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                  },
-                  {
-                    "type": "null",
-                  },
-                ],
-              },
-              "firstSeenAt": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -399,6 +377,18 @@ export const publicToolContracts = {
                   },
                 ],
               },
+              "daysSinceActivity": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
+              },
               "contactCount": {
                 "type": "integer",
                 "minimum": 0,
@@ -409,25 +399,211 @@ export const publicToolContracts = {
                   {
                     "type": "object",
                     "properties": {
-                      "amount": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991,
-                        "description": "Annualized revenue run rate, the same ARR figure the Outlit app shows: an integer in the billing provider's units for `currency`. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. 0 for a churned, paused or trialing customer.",
-                      },
-                      "currency": {
-                        "type": "string",
-                        "description": "ISO currency code of amount.",
+                      "value": {
+                        "type": "object",
+                        "properties": {
+                          "amount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                          },
+                          "currency": {
+                            "type": "string",
+                            "pattern": "^[A-Z]{3}$",
+                            "description": "ISO 4217 code.",
+                          },
+                          "decimals": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4,
+                          },
+                          "formatted": {
+                            "type": "string",
+                            "description": "For example \"$12,000.00\".",
+                          },
+                        },
+                        "required": [
+                          "amount",
+                          "currency",
+                          "decimals",
+                          "formatted",
+                        ],
+                        "additionalProperties": false,
+                        "description": "0 for a churned, paused or trialing customer.",
                       },
                       "estimated": {
                         "type": "boolean",
-                        "description": "The amount includes a usage or per-seat estimate, shown as ~ in the app.",
+                        "description": "Includes a usage or per-seat estimate (~ in the app).",
+                      },
+                      "lifecycle": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "active",
+                              "past_due",
+                              "paused",
+                              "churned",
+                              "trialing",
+                            ],
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "parts": {
+                        "description": "Annualized parts; null when unknown or not applicable.",
+                        "type": "object",
+                        "properties": {
+                          "subscriptions": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "amount": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                  },
+                                  "currency": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z]{3}$",
+                                    "description": "ISO 4217 code.",
+                                  },
+                                  "decimals": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 4,
+                                  },
+                                  "formatted": {
+                                    "type": "string",
+                                    "description": "For example \"$12,000.00\".",
+                                  },
+                                },
+                                "required": [
+                                  "amount",
+                                  "currency",
+                                  "decimals",
+                                  "formatted",
+                                ],
+                                "additionalProperties": false,
+                                "description": "amount is in minor units; divide by 10^decimals, or read formatted.",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                            "description": "Live subscriptions at list price.",
+                          },
+                          "usage": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "amount": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                  },
+                                  "currency": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z]{3}$",
+                                    "description": "ISO 4217 code.",
+                                  },
+                                  "decimals": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 4,
+                                  },
+                                  "formatted": {
+                                    "type": "string",
+                                    "description": "For example \"$12,000.00\".",
+                                  },
+                                },
+                                "required": [
+                                  "amount",
+                                  "currency",
+                                  "decimals",
+                                  "formatted",
+                                ],
+                                "additionalProperties": false,
+                                "description": "amount is in minor units; divide by 10^decimals, or read formatted.",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                            "description": "Usage estimate.",
+                          },
+                          "invoicedLast12Months": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "amount": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                  },
+                                  "currency": {
+                                    "type": "string",
+                                    "pattern": "^[A-Z]{3}$",
+                                    "description": "ISO 4217 code.",
+                                  },
+                                  "decimals": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 4,
+                                  },
+                                  "formatted": {
+                                    "type": "string",
+                                    "description": "For example \"$12,000.00\".",
+                                  },
+                                },
+                                "required": [
+                                  "amount",
+                                  "currency",
+                                  "decimals",
+                                  "formatted",
+                                ],
+                                "additionalProperties": false,
+                                "description": "amount is in minor units; divide by 10^decimals, or read formatted.",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                            "description": "Invoice charges outside any subscription whose service began in the last 12 months, leaving out setup fees and prorations.",
+                          },
+                        },
+                        "required": [
+                          "subscriptions",
+                          "usage",
+                          "invoicedLast12Months",
+                        ],
+                        "additionalProperties": false,
+                      },
+                      "basis": {
+                        "description": "Which counted: subscriptions plus usage, or invoicedLast12Months, the larger.",
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "subscriptions",
+                              "invoices",
+                            ],
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
                       },
                     },
                     "required": [
-                      "amount",
-                      "currency",
+                      "value",
                       "estimated",
+                      "lifecycle",
                     ],
                     "additionalProperties": false,
                   },
@@ -435,7 +611,7 @@ export const publicToolContracts = {
                     "type": "null",
                   },
                 ],
-                "description": "Null when the app shows no ARR for this customer.",
+                "description": "Null when the app shows no ARR.",
               },
               "owner": {
                 "anyOf": [
@@ -464,20 +640,38 @@ export const publicToolContracts = {
                   },
                 ],
               },
-              "daysSinceActivity": {
-                "anyOf": [
-                  {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 9007199254740991,
+              "outlit": {
+                "type": "object",
+                "properties": {
+                  "firstSyncedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
                   },
-                  {
-                    "type": "null",
+                  "updatedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                      },
+                      {
+                        "type": "null",
+                      },
+                    ],
                   },
+                },
+                "required": [
+                  "firstSyncedAt",
                 ],
+                "additionalProperties": false,
+                "description": "Outlit's own times for its record, not facts about the customer.",
               },
-              "crm": {
-                "description": "With crmFields: each asked-for field, in the order asked.",
+              "fields": {
+                "description": "With input fields, in order.",
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -485,24 +679,24 @@ export const publicToolContracts = {
                     "field": {
                       "type": "object",
                       "properties": {
-                        "provider": {
+                        "source": {
                           "type": "string",
                           "enum": [
                             "hubspot",
                             "salesforce",
                             "attio",
                             "pylon",
+                            "traits",
                           ],
                         },
                         "key": {
                           "type": "string",
                           "minLength": 1,
                           "maxLength": 191,
-                          "description": "The field's key (API name) in that system, as outlit_list_crm_fields lists it.",
                         },
                       },
                       "required": [
-                        "provider",
+                        "source",
                         "key",
                       ],
                       "additionalProperties": false,
@@ -525,7 +719,7 @@ export const publicToolContracts = {
                           },
                         ],
                       },
-                      "description": "The field's values across the customer's linked accounts in that system, without duplicates; a multi-value field's values are listed one by one. Empty when no linked account has one.",
+                      "description": "The customer's values, without duplicates; empty when it holds none.",
                     },
                   },
                   "required": [
@@ -537,7 +731,7 @@ export const publicToolContracts = {
                 },
               },
               "crmSummary": {
-                "description": "The customer's CRM and support tool accounts at a glance, by field label: the stage and the first custom picklists, numbers and yes/no fields (a segment, tier or health score), at most 4 per account from 3 accounts, values as stored. A label two systems share carries the second one's provider, as \"Segment (pylon)\". Absent when not enabled for the workspace, when crmFields is given, or when no linked account has such a field.",
+                "description": "The customer's CRM and support tool accounts at a glance, by field label: the stage and the first custom picklists, numbers and yes/no fields, at most 4 per account from 3 accounts. Absent when not enabled, with input fields, or when no account has such a field.",
                 "type": "object",
                 "propertyNames": {
                   "type": "string",
@@ -583,17 +777,17 @@ export const publicToolContracts = {
               "domain",
               "billingStatus",
               "activatedAt",
-              "firstSeenAt",
               "lastActivityAt",
+              "daysSinceActivity",
               "contactCount",
               "arr",
               "owner",
-              "daysSinceActivity",
+              "outlit",
             ],
             "additionalProperties": false,
           },
         },
-        "pagination": {
+        "page": {
           "type": "object",
           "properties": {
             "hasMore": {
@@ -613,6 +807,7 @@ export const publicToolContracts = {
               "type": "integer",
               "minimum": 0,
               "maximum": 9007199254740991,
+              "description": "How many items match, over every page.",
             },
           },
           "required": [
@@ -622,28 +817,88 @@ export const publicToolContracts = {
           ],
           "additionalProperties": false,
         },
+        "totals": {
+          "type": "object",
+          "properties": {
+            "arr": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                  },
+                  "currency": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{3}$",
+                    "description": "ISO 4217 code.",
+                  },
+                  "decimals": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4,
+                  },
+                  "formatted": {
+                    "type": "string",
+                    "description": "For example \"$12,000.00\".",
+                  },
+                },
+                "required": [
+                  "amount",
+                  "currency",
+                  "decimals",
+                  "formatted",
+                ],
+                "additionalProperties": false,
+                "description": "amount is in minor units; divide by 10^decimals, or read formatted.",
+              },
+              "description": "Total ARR of every matched customer, one per currency.",
+            },
+          },
+          "required": [
+            "arr",
+          ],
+          "additionalProperties": false,
+        },
         "arrCurrencies": {
-          "description": "Present when the call ordered or bounded by ARR: the ARR currencies among all matched customers. With more than one, amounts were compared as if they were the same unit, so a ranking mixes currencies; pass arrCurrency to rank within one.",
+          "description": "When the call ordered or bounded by ARR: the currencies among the matches. With more than one, amounts were compared unconverted; pass filters.arr.currency to rank within one.",
           "type": "array",
           "items": {
             "type": "string",
           },
         },
+        "coverage": {
+          "description": "When items is empty.",
+          "type": "object",
+          "properties": {
+            "searched": {
+              "type": "string",
+              "maxLength": 500,
+            },
+          },
+          "required": [
+            "searched",
+          ],
+          "additionalProperties": false,
+        },
       },
       "required": [
         "items",
-        "pagination",
+        "page",
+        "totals",
       ],
       "additionalProperties": false,
     },
   },
-  "outlit_list_crm_fields": {
-    "toolName": "outlit_list_crm_fields",
+  "outlit_list_customer_fields": {
+    "toolName": "outlit_list_customer_fields",
     "commandId": "crm_field.list",
-    "commandVersion": 1,
+    "commandVersion": 2,
     "ownerDomain": "customers",
-    "title": "List CRM Fields",
-    "description": "List the account fields the workspace's CRM and support tools hold (segment, health, stage, owner and custom fields), with each field's label, type, picklist options, the values customers' linked accounts hold, and how many accounts hold one. Use it to find the field and values for outlit_list_customers' crm filter and crmFields, for questions across many customers; for one customer's fields use outlit_get_customer with include crm.",
+    "title": "List Customer Fields",
+    "description": "List the fields Outlit holds about customers: CRM and support tool account fields (segment, health, stage, owner, custom fields) and SDK traits, each with its label, type, picklist options, values in use and how many customers hold one. Use it to find the field and values for outlit_list_customers' filters.fields and fields; for one customer's CRM fields use outlit_get_customer with include crm.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -654,14 +909,15 @@ export const publicToolContracts = {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
       "properties": {
-        "provider": {
-          "description": "Only this system's fields",
+        "source": {
+          "description": "Only this source's fields",
           "type": "string",
           "enum": [
             "hubspot",
             "salesforce",
             "attio",
             "pylon",
+            "traits",
           ],
         },
         "search": {
@@ -677,7 +933,7 @@ export const publicToolContracts = {
           "maximum": 50,
         },
         "cursor": {
-          "description": "Pagination cursor from previous response",
+          "description": "page.nextCursor of the previous response",
           "type": "string",
         },
       },
@@ -694,35 +950,35 @@ export const publicToolContracts = {
               "field": {
                 "type": "object",
                 "properties": {
-                  "provider": {
+                  "source": {
                     "type": "string",
                     "enum": [
                       "hubspot",
                       "salesforce",
                       "attio",
                       "pylon",
+                      "traits",
                     ],
                   },
                   "key": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 191,
-                    "description": "The field's key (API name) in that system, as outlit_list_crm_fields lists it.",
                   },
                 },
                 "required": [
-                  "provider",
+                  "source",
                   "key",
                 ],
                 "additionalProperties": false,
-                "description": "Pass this as-is to outlit_list_customers' crm filter or crmFields.",
+                "description": "Pass as-is to outlit_list_customers' filters.fields or fields.",
               },
               "label": {
                 "type": "string",
               },
               "type": {
                 "type": "string",
-                "description": "The field's type in that system, as it names it.",
+                "description": "The field's type as its source names it.",
               },
               "options": {
                 "anyOf": [
@@ -736,9 +992,9 @@ export const publicToolContracts = {
                     "type": "null",
                   },
                 ],
-                "description": "A picklist's choices as that system defines them; null for other fields.",
+                "description": "A picklist's choices; null otherwise.",
               },
-              "observedValues": {
+              "values": {
                 "type": "array",
                 "items": {
                   "anyOf": [
@@ -753,13 +1009,13 @@ export const publicToolContracts = {
                     },
                   ],
                 },
-                "description": "Up to 20 of the values the customers' linked accounts hold, most common first, a multi-value field's values one by one.",
+                "description": "Up to 20 values in use, most common first.",
               },
-              "accounts": {
+              "customers": {
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 9007199254740991,
-                "description": "How many accounts linked to customers hold a value.",
+                "description": "How many customers hold a value.",
               },
             },
             "required": [
@@ -767,13 +1023,13 @@ export const publicToolContracts = {
               "label",
               "type",
               "options",
-              "observedValues",
-              "accounts",
+              "values",
+              "customers",
             ],
             "additionalProperties": false,
           },
         },
-        "pagination": {
+        "page": {
           "type": "object",
           "properties": {
             "hasMore": {
@@ -789,17 +1045,38 @@ export const publicToolContracts = {
                 },
               ],
             },
+            "total": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "How many items match, over every page.",
+            },
           },
           "required": [
             "hasMore",
             "nextCursor",
+            "total",
+          ],
+          "additionalProperties": false,
+        },
+        "coverage": {
+          "description": "When items is empty.",
+          "type": "object",
+          "properties": {
+            "searched": {
+              "type": "string",
+              "maxLength": 500,
+            },
+          },
+          "required": [
+            "searched",
           ],
           "additionalProperties": false,
         },
       },
       "required": [
         "items",
-        "pagination",
+        "page",
       ],
       "additionalProperties": false,
     },
@@ -1461,10 +1738,10 @@ export const publicToolContracts = {
   "outlit_get_customer": {
     "toolName": "outlit_get_customer",
     "commandId": "customer.get",
-    "commandVersion": 1,
+    "commandVersion": 2,
     "ownerDomain": "customers",
     "title": "Get Customer",
-    "description": "Get full details for a single customer. Optionally include users (each with their sources: where Outlit found them and the conversations they took part in), revenue, recent activity, engagement metrics, company enrichment, the renewal date and its source, or crm: the CRM and support tool accounts linked to the customer with their own fields (segment, health, stage, lifecycle, owner and custom fields) as stored and the contacts associated with each account; request it when the question is about how that system classifies the account (its stage, segment, health or owner) or who the account's contacts are, and pass crmFields to read only some fields, since an account can carry hundreds; or links: the id of every record in another system linked to the customer (billing customers, CRM and support accounts, product analytics groups, Slack channels). With both users and crm, each user also carries crm: their contact records there, with their own fields. Revenue includes arr, the annualized revenue run rate, exactly as the customer page shows it, with its currency, whether it is an estimate, the revenue lifecycle and the parts it is counted from; amounts are in the billing provider's units for that currency (for USD, EUR, GBP and CAD these are cents: divide by 100, e.g. 1234500 is $12,345, USD; other currencies follow the provider's amount rules). lifetimeRevenueCurrency names lifetimeRevenue's currency.",
+    "description": "Get one customer. include adds sections: users (with where Outlit found each and the conversations they took part in), revenue (ARR exactly as the customer page shows it, and lifetime revenue), billing (each Stripe customer behind it, active or ended, its subscriptions with every item, overdue invoices), recentTimeline, behaviorMetrics, enrichment, renewal (date and source), crm (the linked CRM and support tool accounts with their own fields, which can be hundreds, and contacts; pass crmFields to read only some; with users, each user's contact records too) and links (every record in another system linked to the customer). Each section has a status: available with its data, or empty, not_connected, not_synced or unavailable with the reason.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -1482,13 +1759,14 @@ export const publicToolContracts = {
           "description": "Customer ID, domain, or name to look up",
         },
         "include": {
-          "description": "Additional data sections to include in the response",
+          "description": "Sections to add; each comes back with a status, and its data when available",
           "type": "array",
           "items": {
             "type": "string",
             "enum": [
               "users",
               "revenue",
+              "billing",
               "recentTimeline",
               "behaviorMetrics",
               "enrichment",
@@ -1510,7 +1788,7 @@ export const publicToolContracts = {
           ],
         },
         "subscriptions": {
-          "description": "With include revenue only: which subscriptions revenue.subscriptions lists. live (the default when omitted) lists the ones that bill now; all adds canceled ones with endedAt (the 20 most recently ended), for questions like whether a canceled subscription was replaced or why a customer has two billing records.",
+          "description": "With include billing: live (default) lists subscriptions that bill now; all adds the 20 most recently ended, for whether one was replaced or why there are two billing accounts.",
           "type": "string",
           "enum": [
             "live",
@@ -1564,24 +1842,14 @@ export const publicToolContracts = {
             "billingStatus": {
               "type": "string",
               "enum": [
-                "NONE",
-                "TRIALING",
-                "PAYING",
-                "PAST_DUE",
-                "CHURNED",
+                "none",
+                "trialing",
+                "paying",
+                "past_due",
+                "churned",
               ],
             },
             "activatedAt": {
-              "anyOf": [
-                {
-                  "type": "string",
-                },
-                {
-                  "type": "null",
-                },
-              ],
-            },
-            "firstSeenAt": {
               "anyOf": [
                 {
                   "type": "string",
@@ -1628,6 +1896,36 @@ export const publicToolContracts = {
                 },
               ],
             },
+            "outlit": {
+              "type": "object",
+              "properties": {
+                "firstSyncedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "updatedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+              },
+              "required": [
+                "firstSyncedAt",
+              ],
+              "additionalProperties": false,
+              "description": "Outlit's own times for its record, not facts about the customer.",
+            },
           },
           "required": [
             "id",
@@ -1635,1085 +1933,1498 @@ export const publicToolContracts = {
             "domain",
             "billingStatus",
             "activatedAt",
-            "firstSeenAt",
             "lastActivityAt",
             "owner",
+            "outlit",
           ],
           "additionalProperties": false,
         },
         "users": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-              },
-              "email": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                  },
-                  {
-                    "type": "null",
-                  },
-                ],
-              },
-              "name": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                  },
-                  {
-                    "type": "null",
-                  },
-                ],
-              },
-              "journeyStage": {
-                "type": "string",
-                "enum": [
-                  "DISCOVERED",
-                  "SIGNED_UP",
-                  "ACTIVATED",
-                  "ENGAGED",
-                  "INACTIVE",
-                ],
-              },
-              "lastActivityAt": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                  },
-                  {
-                    "type": "null",
-                  },
-                ],
-              },
-              "sources": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "system": {
-                      "type": "string",
-                      "description": "Lowercase id of the system, such as hubspot, salesforce, attio, pylon, posthog, slack, stripe, google-mail, google-calendar, ergo, fireflies, gong, mixpanel, outlit (the Outlit SDK) or product-analytics (a product-analytics provider Outlit did not record).",
-                    },
-                    "kind": {
-                      "type": "string",
-                      "enum": [
-                        "contact",
-                        "product_user",
-                        "chat_member",
-                        "billing_customer",
-                        "call",
-                        "meeting",
-                        "email",
-                        "support_ticket",
-                        "slack_thread",
-                      ],
-                      "description": "Records: contact (a contact in a CRM or support tool), product_user (a user in product analytics or product sign-in), chat_member (a Slack member), billing_customer. Conversations the person took part in: call, meeting, email, support_ticket, slack_thread.",
-                    },
-                    "count": {
-                      "anyOf": [
-                        {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 9007199254740991,
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                      "description": "How many conversations of this kind; null for records.",
-                    },
-                    "firstSeenAt": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                      "description": "When the record was created in the system (or first linked to this person), or the first conversation.",
-                    },
-                    "lastSeenAt": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                      "description": "The latest conversation; null for records.",
-                    },
-                  },
-                  "required": [
-                    "system",
-                    "kind",
-                    "count",
-                    "firstSeenAt",
-                    "lastSeenAt",
-                  ],
-                  "additionalProperties": false,
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "const": "available",
                 },
-                "description": "Where Outlit found this person: the systems that hold a record of them and the conversations they took part in. Empty when Outlit has no source recorded; absent from servers that predate it.",
-              },
-              "crm": {
-                "description": "With include crm: the contact records in the CRM and support tool that this user is linked to, one entry each, with the contact's own fields as stored there. Empty when the user has no linked contact; null when the read is bound to a past point in time. Absent unless requested, when the section is not enabled for the workspace, or when the size limit left no room for this user (then ask for fewer users or crmFields). The size limit is shared by all users in the response.",
-                "anyOf": [
-                  {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "provider": {
-                          "type": "string",
-                          "description": "The system that holds the contact: hubspot, salesforce, attio or pylon.",
-                        },
-                        "connectionId": {
-                          "type": "string",
-                          "description": "The Outlit integration connection the contact syncs through.",
-                        },
-                        "contactId": {
-                          "type": "string",
-                          "description": "The contact's id in that system.",
-                        },
-                        "fields": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "key": {
-                                "type": "string",
-                                "description": "The field's API name or slug in that system.",
-                              },
-                              "label": {
-                                "type": "string",
-                                "description": "The field's name in that system's UI; the key when unknown.",
-                              },
-                              "value": {
-                                "description": "The value as that system stores it: a string, number, boolean, array, or for Attio its value objects. A picklist holds the option's stored value, not its label.",
-                              },
-                              "custom": {
-                                "type": "boolean",
-                                "description": "True for a field the customer's team added to that system.",
-                              },
-                            },
-                            "required": [
-                              "key",
-                              "label",
-                              "value",
-                              "custom",
-                            ],
-                            "additionalProperties": false,
-                          },
-                          "description": "The contact's non-empty fields, sorted by key.",
-                        },
-                        "omittedFields": {
-                          "description": "Keys of fields left out so the response stays within its size limit, as many as fit. Ask for them with crmFields.",
-                          "type": "array",
-                          "items": {
+                "asOf": {
+                  "type": "string",
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                      },
+                      "email": {
+                        "anyOf": [
+                          {
                             "type": "string",
                           },
-                        },
-                        "omittedFieldCount": {
-                          "description": "How many fields were left out, including any not named in omittedFields.",
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991,
-                        },
-                      },
-                      "required": [
-                        "provider",
-                        "connectionId",
-                        "contactId",
-                        "fields",
-                      ],
-                      "additionalProperties": false,
-                    },
-                  },
-                  {
-                    "type": "null",
-                  },
-                ],
-              },
-              "omittedCrmContacts": {
-                "description": "With include crm: how many of this user's linked contacts are left out of crm so the response stays within its size limit. Absent when none are.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991,
-              },
-              "relationshipRole": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                  },
-                  {
-                    "type": "null",
-                  },
-                ],
-              },
-              "jobTitle": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                  },
-                  {
-                    "type": "null",
-                  },
-                ],
-              },
-              "department": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                  },
-                  {
-                    "type": "null",
-                  },
-                ],
-              },
-              "employmentStartDate": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-                  },
-                  {
-                    "type": "null",
-                  },
-                ],
-              },
-            },
-            "required": [
-              "id",
-              "email",
-              "name",
-              "journeyStage",
-              "lastActivityAt",
-              "relationshipRole",
-              "jobTitle",
-              "department",
-              "employmentStartDate",
-            ],
-            "additionalProperties": false,
-          },
-        },
-        "revenue": {
-          "type": "object",
-          "properties": {
-            "arr": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "amount": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991,
-                      "description": "Annualized revenue run rate, the same ARR figure the customer page shows: an integer in the billing provider's units for `currency`. For USD, EUR, GBP and CAD this is cents: divide by 100 (e.g. 1234500 is $12,345, USD). Other currencies follow the provider's amount rules (Stripe's currency docs), so don't assume a divisor for them. 0 for a churned, paused or trialing customer.",
-                    },
-                    "currency": {
-                      "type": "string",
-                      "description": "ISO currency code of amount and parts.",
-                    },
-                    "estimated": {
-                      "type": "boolean",
-                      "description": "The amount includes a usage or per-seat estimate, shown as ~ in the app.",
-                    },
-                    "lifecycle": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "enum": [
-                            "active",
-                            "past_due",
-                            "paused",
-                            "churned",
-                            "trialing",
-                          ],
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                      "description": "The customer's revenue state; null when unknown.",
-                    },
-                    "parts": {
-                      "type": "object",
-                      "properties": {
-                        "subscriptions": {
-                          "anyOf": [
-                            {
-                              "type": "integer",
-                              "minimum": -9007199254740991,
-                              "maximum": 9007199254740991,
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                          "description": "Active subscriptions at list price, annualized.",
-                        },
-                        "usage": {
-                          "anyOf": [
-                            {
-                              "type": "integer",
-                              "minimum": -9007199254740991,
-                              "maximum": 9007199254740991,
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                          "description": "Annualized usage estimate.",
-                        },
-                        "invoicedLast12Months": {
-                          "anyOf": [
-                            {
-                              "type": "integer",
-                              "minimum": -9007199254740991,
-                              "maximum": 9007199254740991,
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                          "description": "Invoice charges outside any subscription (one-time invoice items, leaving out setup, onboarding and implementation fees and prorations) whose service period began in the last 12 months. Subscription charges are never in it, so it is not the customer's total invoiced.",
-                        },
-                      },
-                      "required": [
-                        "subscriptions",
-                        "usage",
-                        "invoicedLast12Months",
-                      ],
-                      "additionalProperties": false,
-                      "description": "What amount was counted from, in the same units: the larger of subscriptions plus usage, and invoicedLast12Months. A part is null when unknown or not applicable.",
-                    },
-                  },
-                  "required": [
-                    "amount",
-                    "currency",
-                    "estimated",
-                    "lifecycle",
-                    "parts",
-                  ],
-                  "additionalProperties": false,
-                },
-                {
-                  "type": "null",
-                },
-              ],
-              "description": "Null when the app shows no ARR for this customer.",
-            },
-            "lifetimeRevenue": {
-              "type": "number",
-              "description": "Lifetime revenue in the billing provider's units for lifetimeRevenueCurrency, like arr.amount: cents for USD, EUR, GBP and CAD, so divide by 100. Other currencies follow the provider's amount rules, so don't assume a divisor for them.",
-            },
-            "lifetimeRevenueCurrency": {
-              "description": "ISO currency code of lifetimeRevenue; null when nothing has been paid or the currency is unknown.",
-              "anyOf": [
-                {
-                  "type": "string",
-                },
-                {
-                  "type": "null",
-                },
-              ],
-            },
-            "activeSubscriptions": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991,
-              "description": "Subscriptions that bill now: active, trialing or past due. billingStatus says whether payments are behind.",
-            },
-            "subscriptions": {
-              "description": "The customer's live subscriptions in the billing provider (active, past due, paused or trialing) with every item, including items an invoice skips in a given cycle. With input subscriptions all, canceled subscriptions follow the live ones, most recently ended first (at most 20). Absent when unavailable.",
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "description": "The billing provider's subscription id (sub_...).",
-                  },
-                  "status": {
-                    "type": "string",
-                    "description": "The provider's own status: active, past_due, paused or trialing, and with subscriptions all also canceled.",
-                  },
-                  "paused": {
-                    "type": "boolean",
-                    "description": "Collection is paused.",
-                  },
-                  "currentPeriodEnd": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "format": "date-time",
-                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                    "description": "End of the current billing period. With items on different intervals it is the shortest interval's period, not the term.",
-                  },
-                  "cancelAtPeriodEnd": {
-                    "anyOf": [
-                      {
-                        "type": "boolean",
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                    "description": "The subscription is set to end at currentPeriodEnd instead of renewing. Null when unknown: Outlit's stored billing data predates it, and cancelAt is then null too.",
-                  },
-                  "cancelAt": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "format": "date-time",
-                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                    "description": "When a scheduled cancellation ends the subscription; null when none is scheduled or unknown.",
-                  },
-                  "items": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "productId": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                          "description": "The billing provider's product id (prod_...).",
-                        },
-                        "productName": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                          "description": "The product's name in the billing provider; null when Outlit has not synced it.",
-                        },
-                        "priceId": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                          "description": "The billing provider's price id (price_...).",
-                        },
-                        "quantity": {
-                          "anyOf": [
-                            {
-                              "type": "number",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                          "description": "Units (seats) on a licensed item; null when unset.",
-                        },
-                        "unitAmount": {
-                          "anyOf": [
-                            {
-                              "type": "number",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                          "description": "List price per unit for one billing interval, in the same units as arr.amount; null when the price has no single unit amount (tiers).",
-                        },
-                        "currency": {
-                          "type": "string",
-                          "description": "ISO currency code of unitAmount.",
-                        },
-                        "interval": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "enum": [
-                                "day",
-                                "week",
-                                "month",
-                                "year",
-                              ],
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                        "intervalCount": {
-                          "anyOf": [
-                            {
-                              "type": "number",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                          "description": "Billing intervals per charge, e.g. 3 months.",
-                        },
-                        "usageType": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "enum": [
-                                "licensed",
-                                "metered",
-                              ],
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                          "description": "licensed bills a fixed quantity; metered bills reported usage.",
-                        },
-                        "billingScheme": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "enum": [
-                                "per_unit",
-                                "tiered",
-                              ],
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                      },
-                      "required": [
-                        "productId",
-                        "productName",
-                        "priceId",
-                        "quantity",
-                        "unitAmount",
-                        "currency",
-                        "interval",
-                        "intervalCount",
-                        "usageType",
-                        "billingScheme",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    "description": "Every item on the subscription. Empty for a canceled one, whose stored snapshot lists no items.",
-                  },
-                  "billingAccountId": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                    "description": "The Stripe customer id (cus_...) the subscription bills through; null when unknown. Match it against revenue.billingAccounts.",
-                  },
-                  "endedAt": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "format": "date-time",
-                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                    "description": "When the subscription ended; null while it is live.",
-                  },
-                },
-                "required": [
-                  "id",
-                  "status",
-                  "paused",
-                  "currentPeriodEnd",
-                  "cancelAtPeriodEnd",
-                  "cancelAt",
-                  "items",
-                  "billingAccountId",
-                  "endedAt",
-                ],
-                "additionalProperties": false,
-              },
-            },
-            "billingAccounts": {
-              "description": "Every Stripe customer behind this customer, including ones on customers merged into it, sorted by id. Absent when it can't be read.",
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "provider": {
-                    "type": "string",
-                    "const": "stripe",
-                  },
-                  "id": {
-                    "type": "string",
-                  },
-                },
-                "required": [
-                  "provider",
-                  "id",
-                ],
-                "additionalProperties": false,
-              },
-            },
-            "overdueInvoices": {
-              "description": "Open invoices past their due date that still owe money, oldest due first (at most 20). Empty when none is overdue; absent when unavailable.",
-              "maxItems": 20,
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "description": "The invoice id (in_...); read it with outlit_get_source INVOICE.",
-                  },
-                  "number": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                  },
-                  "amountRemaining": {
-                    "type": "number",
-                    "description": "Still owed, in the billing provider's minor units for currency.",
-                  },
-                  "currency": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                  },
-                  "dueDate": {
-                    "type": "string",
-                    "format": "date-time",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                  },
-                  "daysOverdue": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 9007199254740991,
-                  },
-                },
-                "required": [
-                  "id",
-                  "number",
-                  "amountRemaining",
-                  "currency",
-                  "dueDate",
-                  "daysOverdue",
-                ],
-                "additionalProperties": false,
-              },
-            },
-          },
-          "required": [
-            "arr",
-            "lifetimeRevenue",
-            "activeSubscriptions",
-          ],
-          "additionalProperties": false,
-        },
-        "recentTimeline": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "type": {
-                "type": "string",
-              },
-              "title": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                  },
-                  {
-                    "type": "null",
-                  },
-                ],
-              },
-              "contact": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                  },
-                  {
-                    "type": "null",
-                  },
-                ],
-              },
-              "occurredAt": {
-                "type": "string",
-              },
-            },
-            "required": [
-              "type",
-              "title",
-              "contact",
-              "occurredAt",
-            ],
-            "additionalProperties": false,
-          },
-        },
-        "behaviorMetrics": {
-          "type": "object",
-          "properties": {
-            "activityCount": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991,
-            },
-            "activeUsers": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991,
-            },
-            "lastEmailAt": {
-              "anyOf": [
-                {
-                  "type": "string",
-                },
-                {
-                  "type": "null",
-                },
-              ],
-            },
-            "lastMeetingAt": {
-              "anyOf": [
-                {
-                  "type": "string",
-                },
-                {
-                  "type": "null",
-                },
-              ],
-            },
-          },
-          "required": [
-            "activityCount",
-            "activeUsers",
-            "lastEmailAt",
-            "lastMeetingAt",
-          ],
-          "additionalProperties": false,
-        },
-        "enrichment": {
-          "type": "object",
-          "properties": {
-            "status": {
-              "type": "string",
-              "enum": [
-                "MISSING",
-                "FRESH",
-                "STALE",
-                "FAILED",
-                "NO_MATCH",
-                "INPUT_CHANGED",
-              ],
-            },
-            "provider": {
-              "anyOf": [
-                {
-                  "type": "string",
-                },
-                {
-                  "type": "null",
-                },
-              ],
-            },
-            "providerEntityId": {
-              "anyOf": [
-                {
-                  "type": "string",
-                },
-                {
-                  "type": "null",
-                },
-              ],
-            },
-            "summary": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "domain": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "websiteUrl": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "description": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "logoUrl": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "linkedinUrl": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "yearFounded": {
-                      "anyOf": [
-                        {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991,
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "companyType": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "employeeCountRange": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "headcount": {
-                      "anyOf": [
-                        {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991,
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "industry": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "categories": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                      },
-                    },
-                    "markets": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                      },
-                    },
-                    "headquarters": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "fundingSummary": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "totalInvestmentUsd": {
-                              "anyOf": [
-                                {
-                                  "type": "number",
-                                },
-                                {
-                                  "type": "null",
-                                },
-                              ],
-                            },
-                            "lastRoundType": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                },
-                                {
-                                  "type": "null",
-                                },
-                              ],
-                            },
-                            "lastRoundAmountUsd": {
-                              "anyOf": [
-                                {
-                                  "type": "number",
-                                },
-                                {
-                                  "type": "null",
-                                },
-                              ],
-                            },
-                            "lastFundraiseDate": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                },
-                                {
-                                  "type": "null",
-                                },
-                              ],
-                            },
-                            "investors": {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                              },
-                            },
+                          {
+                            "type": "null",
                           },
-                          "required": [
-                            "totalInvestmentUsd",
-                            "lastRoundType",
-                            "lastRoundAmountUsd",
-                            "lastFundraiseDate",
-                            "investors",
-                          ],
-                          "additionalProperties": false,
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "hiringSummary": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "openingsCount": {
-                              "anyOf": [
-                                {
-                                  "type": "integer",
-                                  "minimum": -9007199254740991,
-                                  "maximum": 9007199254740991,
-                                },
-                                {
-                                  "type": "null",
-                                },
-                              ],
-                            },
-                            "recentTitles": {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                              },
-                            },
+                        ],
+                      },
+                      "name": {
+                        "anyOf": [
+                          {
+                            "type": "string",
                           },
-                          "required": [
-                            "openingsCount",
-                            "recentTitles",
-                          ],
-                          "additionalProperties": false,
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "followerSummary": {
-                      "anyOf": [
-                        {
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "journeyStage": {
+                        "type": "string",
+                        "enum": [
+                          "DISCOVERED",
+                          "SIGNED_UP",
+                          "ACTIVATED",
+                          "ENGAGED",
+                          "INACTIVE",
+                        ],
+                      },
+                      "lastActivityAt": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "sources": {
+                        "type": "array",
+                        "items": {
                           "type": "object",
                           "properties": {
+                            "system": {
+                              "type": "string",
+                              "description": "Lowercase id of the system, such as hubspot, salesforce, attio, pylon, posthog, slack, stripe, google-mail, google-calendar, ergo, fireflies, gong, mixpanel, outlit (the Outlit SDK) or product-analytics (a product-analytics provider Outlit did not record).",
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "contact",
+                                "product_user",
+                                "chat_member",
+                                "billing_customer",
+                                "call",
+                                "meeting",
+                                "email",
+                                "support_ticket",
+                                "slack_thread",
+                              ],
+                              "description": "Records: contact (a contact in a CRM or support tool), product_user (a user in product analytics or product sign-in), chat_member (a Slack member), billing_customer. Conversations the person took part in: call, meeting, email, support_ticket, slack_thread.",
+                            },
                             "count": {
                               "anyOf": [
                                 {
                                   "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991,
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                              "description": "How many conversations of this kind; null for records.",
+                            },
+                            "firstSeenAt": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                              "description": "When the record was created in the system (or first linked to this person), or the first conversation.",
+                            },
+                            "lastSeenAt": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                              "description": "The latest conversation; null for records.",
+                            },
+                          },
+                          "required": [
+                            "system",
+                            "kind",
+                            "count",
+                            "firstSeenAt",
+                            "lastSeenAt",
+                          ],
+                          "additionalProperties": false,
+                        },
+                        "description": "Where Outlit found this person: the systems that hold a record of them and the conversations they took part in. Empty when Outlit has no source recorded; absent from servers that predate it.",
+                      },
+                      "crm": {
+                        "description": "With include crm: the contact records in the CRM and support tool that this user is linked to, one entry each, with the contact's own fields as stored there. Empty when the user has no linked contact; null when the read is bound to a past point in time. Absent unless requested, when the section is not enabled for the workspace, or when the size limit left no room for this user (then ask for fewer users or crmFields). The size limit is shared by all users in the response.",
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "provider": {
+                                  "type": "string",
+                                  "description": "The system that holds the contact: hubspot, salesforce, attio or pylon.",
+                                },
+                                "connectionId": {
+                                  "type": "string",
+                                  "description": "The Outlit integration connection the contact syncs through.",
+                                },
+                                "contactId": {
+                                  "type": "string",
+                                  "description": "The contact's id in that system.",
+                                },
+                                "fields": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "key": {
+                                        "type": "string",
+                                        "description": "The field's API name or slug in that system.",
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "description": "The field's name in that system's UI; the key when unknown.",
+                                      },
+                                      "value": {
+                                        "description": "The value as that system stores it: a string, number, boolean, array, or for Attio its value objects. A picklist holds the option's stored value, not its label.",
+                                      },
+                                      "custom": {
+                                        "type": "boolean",
+                                        "description": "True for a field the customer's team added to that system.",
+                                      },
+                                    },
+                                    "required": [
+                                      "key",
+                                      "label",
+                                      "value",
+                                      "custom",
+                                    ],
+                                    "additionalProperties": false,
+                                  },
+                                  "description": "The contact's non-empty fields, sorted by key.",
+                                },
+                                "omittedFields": {
+                                  "description": "Keys of fields left out so the response stays within its size limit, as many as fit. Ask for them with crmFields.",
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                  },
+                                },
+                                "omittedFieldCount": {
+                                  "description": "How many fields were left out, including any not named in omittedFields.",
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                },
+                              },
+                              "required": [
+                                "provider",
+                                "connectionId",
+                                "contactId",
+                                "fields",
+                              ],
+                              "additionalProperties": false,
+                            },
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "omittedCrmContacts": {
+                        "description": "With include crm: how many of this user's linked contacts are left out of crm so the response stays within its size limit. Absent when none are.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                      },
+                      "relationshipRole": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "jobTitle": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "department": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "employmentStartDate": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                    },
+                    "required": [
+                      "id",
+                      "email",
+                      "name",
+                      "journeyStage",
+                      "lastActivityAt",
+                      "relationshipRole",
+                      "jobTitle",
+                      "department",
+                      "employmentStartDate",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+              },
+              "required": [
+                "status",
+                "asOf",
+                "data",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "empty",
+                    "not_connected",
+                    "not_synced",
+                    "unavailable",
+                  ],
+                },
+                "reason": {
+                  "type": "string",
+                  "maxLength": 300,
+                },
+                "next": {
+                  "type": "object",
+                  "properties": {
+                    "instruction": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300,
+                    },
+                    "tool": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^outlit_[a-z0-9_]+$",
+                    },
+                    "input": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                      },
+                      "additionalProperties": {},
+                    },
+                  },
+                  "required": [
+                    "instruction",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "status",
+                "reason",
+              ],
+              "additionalProperties": false,
+            },
+          ],
+        },
+        "revenue": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "const": "available",
+                },
+                "asOf": {
+                  "type": "string",
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "arr": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "value": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$",
+                                  "description": "ISO 4217 code.",
+                                },
+                                "decimals": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 4,
+                                },
+                                "formatted": {
+                                  "type": "string",
+                                  "description": "For example \"$12,000.00\".",
+                                },
+                              },
+                              "required": [
+                                "amount",
+                                "currency",
+                                "decimals",
+                                "formatted",
+                              ],
+                              "additionalProperties": false,
+                              "description": "0 for a churned, paused or trialing customer.",
+                            },
+                            "estimated": {
+                              "type": "boolean",
+                              "description": "Includes a usage or per-seat estimate (~ in the app).",
+                            },
+                            "lifecycle": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "enum": [
+                                    "active",
+                                    "past_due",
+                                    "paused",
+                                    "churned",
+                                    "trialing",
+                                  ],
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "parts": {
+                              "description": "Annualized parts; null when unknown or not applicable.",
+                              "type": "object",
+                              "properties": {
+                                "subscriptions": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "amount": {
+                                          "type": "integer",
+                                          "minimum": -9007199254740991,
+                                          "maximum": 9007199254740991,
+                                        },
+                                        "currency": {
+                                          "type": "string",
+                                          "pattern": "^[A-Z]{3}$",
+                                          "description": "ISO 4217 code.",
+                                        },
+                                        "decimals": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 4,
+                                        },
+                                        "formatted": {
+                                          "type": "string",
+                                          "description": "For example \"$12,000.00\".",
+                                        },
+                                      },
+                                      "required": [
+                                        "amount",
+                                        "currency",
+                                        "decimals",
+                                        "formatted",
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "amount is in minor units; divide by 10^decimals, or read formatted.",
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                  "description": "Live subscriptions at list price.",
+                                },
+                                "usage": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "amount": {
+                                          "type": "integer",
+                                          "minimum": -9007199254740991,
+                                          "maximum": 9007199254740991,
+                                        },
+                                        "currency": {
+                                          "type": "string",
+                                          "pattern": "^[A-Z]{3}$",
+                                          "description": "ISO 4217 code.",
+                                        },
+                                        "decimals": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 4,
+                                        },
+                                        "formatted": {
+                                          "type": "string",
+                                          "description": "For example \"$12,000.00\".",
+                                        },
+                                      },
+                                      "required": [
+                                        "amount",
+                                        "currency",
+                                        "decimals",
+                                        "formatted",
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "amount is in minor units; divide by 10^decimals, or read formatted.",
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                  "description": "Usage estimate.",
+                                },
+                                "invoicedLast12Months": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "amount": {
+                                          "type": "integer",
+                                          "minimum": -9007199254740991,
+                                          "maximum": 9007199254740991,
+                                        },
+                                        "currency": {
+                                          "type": "string",
+                                          "pattern": "^[A-Z]{3}$",
+                                          "description": "ISO 4217 code.",
+                                        },
+                                        "decimals": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 4,
+                                        },
+                                        "formatted": {
+                                          "type": "string",
+                                          "description": "For example \"$12,000.00\".",
+                                        },
+                                      },
+                                      "required": [
+                                        "amount",
+                                        "currency",
+                                        "decimals",
+                                        "formatted",
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "amount is in minor units; divide by 10^decimals, or read formatted.",
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                  "description": "Invoice charges outside any subscription whose service began in the last 12 months, leaving out setup fees and prorations.",
+                                },
+                              },
+                              "required": [
+                                "subscriptions",
+                                "usage",
+                                "invoicedLast12Months",
+                              ],
+                              "additionalProperties": false,
+                            },
+                            "basis": {
+                              "description": "Which counted: subscriptions plus usage, or invoicedLast12Months, the larger.",
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "enum": [
+                                    "subscriptions",
+                                    "invoices",
+                                  ],
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                          },
+                          "required": [
+                            "value",
+                            "estimated",
+                            "lifecycle",
+                          ],
+                          "additionalProperties": false,
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                      "description": "Exactly as the customer page shows; null when it shows none.",
+                    },
+                    "lifetimeRevenue": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "amount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                          },
+                          "currency": {
+                            "type": "string",
+                            "pattern": "^[A-Z]{3}$",
+                            "description": "ISO 4217 code.",
+                          },
+                          "decimals": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4,
+                          },
+                          "formatted": {
+                            "type": "string",
+                            "description": "For example \"$12,000.00\".",
+                          },
+                        },
+                        "required": [
+                          "amount",
+                          "currency",
+                          "decimals",
+                          "formatted",
+                        ],
+                        "additionalProperties": false,
+                        "description": "amount is in minor units; divide by 10^decimals, or read formatted.",
+                      },
+                      "description": "Paid to date, one per currency.",
+                    },
+                    "activeSubscriptions": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Subscriptions that bill now: active, trialing or past due.",
+                    },
+                  },
+                  "required": [
+                    "arr",
+                    "lifetimeRevenue",
+                    "activeSubscriptions",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "status",
+                "asOf",
+                "data",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "empty",
+                    "not_connected",
+                    "not_synced",
+                    "unavailable",
+                  ],
+                },
+                "reason": {
+                  "type": "string",
+                  "maxLength": 300,
+                },
+                "next": {
+                  "type": "object",
+                  "properties": {
+                    "instruction": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300,
+                    },
+                    "tool": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^outlit_[a-z0-9_]+$",
+                    },
+                    "input": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                      },
+                      "additionalProperties": {},
+                    },
+                  },
+                  "required": [
+                    "instruction",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "status",
+                "reason",
+              ],
+              "additionalProperties": false,
+            },
+          ],
+        },
+        "billing": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "const": "available",
+                },
+                "asOf": {
+                  "type": "string",
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "accounts": {
+                      "anyOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "provider": {
+                                "type": "string",
+                                "const": "stripe",
+                              },
+                              "id": {
+                                "type": "string",
+                                "description": "The Stripe customer id (cus_...).",
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "active",
+                                  "ended",
+                                ],
+                                "description": "ended: no live subscription bills through it and its last one ended.",
+                              },
+                              "endedAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                                "description": "When its last subscription ended; null while active.",
+                              },
+                            },
+                            "required": [
+                              "provider",
+                              "id",
+                              "status",
+                              "endedAt",
+                            ],
+                            "additionalProperties": false,
+                          },
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                      "description": "Every Stripe customer behind this customer, including merged ones, sorted by id; null when unreadable.",
+                    },
+                    "subscriptions": {
+                      "anyOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "The billing provider's subscription id (sub_...).",
+                              },
+                              "status": {
+                                "type": "string",
+                                "description": "The provider's own status: active, past_due, paused or trialing, and with subscriptions all also canceled.",
+                              },
+                              "paused": {
+                                "type": "boolean",
+                                "description": "Collection is paused.",
+                              },
+                              "currentPeriodEnd": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                                "description": "End of the current billing period. With items on different intervals it is the shortest interval's period, not the term.",
+                              },
+                              "cancelAtPeriodEnd": {
+                                "anyOf": [
+                                  {
+                                    "type": "boolean",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                                "description": "The subscription is set to end at currentPeriodEnd instead of renewing. Null when unknown: Outlit's stored billing data predates it, and cancelAt is then null too.",
+                              },
+                              "cancelAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                                "description": "When a scheduled cancellation ends the subscription; null when none is scheduled or unknown.",
+                              },
+                              "items": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "productId": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                      "description": "The billing provider's product id (prod_...).",
+                                    },
+                                    "productName": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                      "description": "The product's name in the billing provider; null when Outlit has not synced it.",
+                                    },
+                                    "priceId": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                      "description": "The billing provider's price id (price_...).",
+                                    },
+                                    "quantity": {
+                                      "anyOf": [
+                                        {
+                                          "type": "number",
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                      "description": "Units (seats) on a licensed item; null when unset.",
+                                    },
+                                    "unitAmount": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "amount": {
+                                              "type": "integer",
+                                              "minimum": -9007199254740991,
+                                              "maximum": 9007199254740991,
+                                            },
+                                            "currency": {
+                                              "type": "string",
+                                              "pattern": "^[A-Z]{3}$",
+                                              "description": "ISO 4217 code.",
+                                            },
+                                            "decimals": {
+                                              "type": "integer",
+                                              "minimum": 0,
+                                              "maximum": 4,
+                                            },
+                                            "formatted": {
+                                              "type": "string",
+                                              "description": "For example \"$12,000.00\".",
+                                            },
+                                          },
+                                          "required": [
+                                            "amount",
+                                            "currency",
+                                            "decimals",
+                                            "formatted",
+                                          ],
+                                          "additionalProperties": false,
+                                          "description": "amount is in minor units; divide by 10^decimals, or read formatted.",
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                      "description": "List price per unit for one interval; null for tiered prices.",
+                                    },
+                                    "interval": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "day",
+                                            "week",
+                                            "month",
+                                            "year",
+                                          ],
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                    },
+                                    "intervalCount": {
+                                      "anyOf": [
+                                        {
+                                          "type": "number",
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                      "description": "Billing intervals per charge, e.g. 3 months.",
+                                    },
+                                    "usageType": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "licensed",
+                                            "metered",
+                                          ],
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                      "description": "licensed bills a fixed quantity; metered bills reported usage.",
+                                    },
+                                    "billingScheme": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "per_unit",
+                                            "tiered",
+                                          ],
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                  "required": [
+                                    "productId",
+                                    "productName",
+                                    "priceId",
+                                    "quantity",
+                                    "unitAmount",
+                                    "interval",
+                                    "intervalCount",
+                                    "usageType",
+                                    "billingScheme",
+                                  ],
+                                  "additionalProperties": false,
+                                },
+                                "description": "Every item on the subscription. Empty for a canceled one, whose stored snapshot lists no items.",
+                              },
+                              "billingAccountId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                                "description": "The Stripe customer id (cus_...) the subscription bills through; null when unknown. Match it against billing.accounts.",
+                              },
+                              "endedAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                                "description": "When the subscription ended; null while it is live.",
+                              },
+                            },
+                            "required": [
+                              "id",
+                              "status",
+                              "paused",
+                              "currentPeriodEnd",
+                              "cancelAtPeriodEnd",
+                              "cancelAt",
+                              "items",
+                              "billingAccountId",
+                              "endedAt",
+                            ],
+                            "additionalProperties": false,
+                          },
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                      "description": "Live subscriptions (active, past due, paused or trialing) with every item; with subscriptions all, ended ones follow, most recent first. Null when unreadable.",
+                    },
+                    "overdueInvoices": {
+                      "anyOf": [
+                        {
+                          "maxItems": 20,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "The invoice id (in_...); read it with outlit_get_source INVOICE.",
+                              },
+                              "number": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "amountRemaining": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "amount": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991,
+                                      },
+                                      "currency": {
+                                        "type": "string",
+                                        "pattern": "^[A-Z]{3}$",
+                                        "description": "ISO 4217 code.",
+                                      },
+                                      "decimals": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 4,
+                                      },
+                                      "formatted": {
+                                        "type": "string",
+                                        "description": "For example \"$12,000.00\".",
+                                      },
+                                    },
+                                    "required": [
+                                      "amount",
+                                      "currency",
+                                      "decimals",
+                                      "formatted",
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "amount is in minor units; divide by 10^decimals, or read formatted.",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                                "description": "Still owed; null when its currency is unknown.",
+                              },
+                              "dueDate": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                              },
+                              "daysOverdue": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991,
+                              },
+                            },
+                            "required": [
+                              "id",
+                              "number",
+                              "amountRemaining",
+                              "dueDate",
+                              "daysOverdue",
+                            ],
+                            "additionalProperties": false,
+                          },
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                      "description": "Open invoices past due, oldest first (at most 20); null when unreadable.",
+                    },
+                  },
+                  "required": [
+                    "accounts",
+                    "subscriptions",
+                    "overdueInvoices",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "status",
+                "asOf",
+                "data",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "empty",
+                    "not_connected",
+                    "not_synced",
+                    "unavailable",
+                  ],
+                },
+                "reason": {
+                  "type": "string",
+                  "maxLength": 300,
+                },
+                "next": {
+                  "type": "object",
+                  "properties": {
+                    "instruction": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300,
+                    },
+                    "tool": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^outlit_[a-z0-9_]+$",
+                    },
+                    "input": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                      },
+                      "additionalProperties": {},
+                    },
+                  },
+                  "required": [
+                    "instruction",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "status",
+                "reason",
+              ],
+              "additionalProperties": false,
+            },
+          ],
+        },
+        "recentTimeline": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "const": "available",
+                },
+                "asOf": {
+                  "type": "string",
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                      },
+                      "title": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "contact": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "occurredAt": {
+                        "type": "string",
+                      },
+                    },
+                    "required": [
+                      "type",
+                      "title",
+                      "contact",
+                      "occurredAt",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+              },
+              "required": [
+                "status",
+                "asOf",
+                "data",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "empty",
+                    "not_connected",
+                    "not_synced",
+                    "unavailable",
+                  ],
+                },
+                "reason": {
+                  "type": "string",
+                  "maxLength": 300,
+                },
+                "next": {
+                  "type": "object",
+                  "properties": {
+                    "instruction": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300,
+                    },
+                    "tool": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^outlit_[a-z0-9_]+$",
+                    },
+                    "input": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                      },
+                      "additionalProperties": {},
+                    },
+                  },
+                  "required": [
+                    "instruction",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "status",
+                "reason",
+              ],
+              "additionalProperties": false,
+            },
+          ],
+        },
+        "behaviorMetrics": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "const": "available",
+                },
+                "asOf": {
+                  "type": "string",
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "activityCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                    },
+                    "activeUsers": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                    },
+                    "lastEmailAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "lastMeetingAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                  },
+                  "required": [
+                    "activityCount",
+                    "activeUsers",
+                    "lastEmailAt",
+                    "lastMeetingAt",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "status",
+                "asOf",
+                "data",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "empty",
+                    "not_connected",
+                    "not_synced",
+                    "unavailable",
+                  ],
+                },
+                "reason": {
+                  "type": "string",
+                  "maxLength": 300,
+                },
+                "next": {
+                  "type": "object",
+                  "properties": {
+                    "instruction": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300,
+                    },
+                    "tool": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^outlit_[a-z0-9_]+$",
+                    },
+                    "input": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                      },
+                      "additionalProperties": {},
+                    },
+                  },
+                  "required": [
+                    "instruction",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "status",
+                "reason",
+              ],
+              "additionalProperties": false,
+            },
+          ],
+        },
+        "enrichment": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "const": "available",
+                },
+                "asOf": {
+                  "type": "string",
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "provider": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "providerEntityId": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "summary": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "domain": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "websiteUrl": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "description": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "logoUrl": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "linkedinUrl": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "yearFounded": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
                                   "minimum": -9007199254740991,
                                   "maximum": 9007199254740991,
                                 },
@@ -2722,15 +3433,503 @@ export const publicToolContracts = {
                                 },
                               ],
                             },
-                            "growth": {
-                              "type": "object",
-                              "propertyNames": {
+                            "companyType": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "employeeCountRange": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "headcount": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "industry": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "categories": {
+                              "type": "array",
+                              "items": {
                                 "type": "string",
                               },
-                              "additionalProperties": {
+                            },
+                            "markets": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                              },
+                            },
+                            "headquarters": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "fundingSummary": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "totalInvestmentUsd": {
+                                      "anyOf": [
+                                        {
+                                          "type": "number",
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                    },
+                                    "lastRoundType": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                    },
+                                    "lastRoundAmountUsd": {
+                                      "anyOf": [
+                                        {
+                                          "type": "number",
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                    },
+                                    "lastFundraiseDate": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                    },
+                                    "investors": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                      },
+                                    },
+                                  },
+                                  "required": [
+                                    "totalInvestmentUsd",
+                                    "lastRoundType",
+                                    "lastRoundAmountUsd",
+                                    "lastFundraiseDate",
+                                    "investors",
+                                  ],
+                                  "additionalProperties": false,
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "hiringSummary": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "openingsCount": {
+                                      "anyOf": [
+                                        {
+                                          "type": "integer",
+                                          "minimum": -9007199254740991,
+                                          "maximum": 9007199254740991,
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                    },
+                                    "recentTitles": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                      },
+                                    },
+                                  },
+                                  "required": [
+                                    "openingsCount",
+                                    "recentTitles",
+                                  ],
+                                  "additionalProperties": false,
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "followerSummary": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "count": {
+                                      "anyOf": [
+                                        {
+                                          "type": "integer",
+                                          "minimum": -9007199254740991,
+                                          "maximum": 9007199254740991,
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                    },
+                                    "growth": {
+                                      "type": "object",
+                                      "propertyNames": {
+                                        "type": "string",
+                                      },
+                                      "additionalProperties": {
+                                        "anyOf": [
+                                          {
+                                            "type": "number",
+                                          },
+                                          {
+                                            "type": "null",
+                                          },
+                                        ],
+                                      },
+                                    },
+                                  },
+                                  "required": [
+                                    "count",
+                                    "growth",
+                                  ],
+                                  "additionalProperties": false,
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                          },
+                          "additionalProperties": false,
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "match": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                          },
+                          "additionalProperties": {},
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "lastSuccessfulRefreshAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "lastAttemptAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "expiresAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "freshness": {
+                      "type": "string",
+                      "enum": [
+                        "fresh",
+                        "stale",
+                        "input_changed",
+                      ],
+                    },
+                  },
+                  "required": [
+                    "provider",
+                    "providerEntityId",
+                    "summary",
+                    "match",
+                    "lastSuccessfulRefreshAt",
+                    "lastAttemptAt",
+                    "expiresAt",
+                    "freshness",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "status",
+                "asOf",
+                "data",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "empty",
+                    "not_connected",
+                    "not_synced",
+                    "unavailable",
+                  ],
+                },
+                "reason": {
+                  "type": "string",
+                  "maxLength": 300,
+                },
+                "next": {
+                  "type": "object",
+                  "properties": {
+                    "instruction": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300,
+                    },
+                    "tool": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^outlit_[a-z0-9_]+$",
+                    },
+                    "input": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                      },
+                      "additionalProperties": {},
+                    },
+                  },
+                  "required": [
+                    "instruction",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "status",
+                "reason",
+              ],
+              "additionalProperties": false,
+            },
+          ],
+        },
+        "renewal": {
+          "description": "The renewal date the customer page shows, with its source",
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "const": "available",
+                },
+                "asOf": {
+                  "type": "string",
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "date": {
+                      "type": "string",
+                      "description": "Renewal date, YYYY-MM-DD",
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "outlit",
+                        "crm",
+                        "billing",
+                      ],
+                      "description": "Set in Outlit, a CRM opportunity, or the billing period of a yearly subscription",
+                    },
+                  },
+                  "required": [
+                    "date",
+                    "source",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "status",
+                "asOf",
+                "data",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "empty",
+                    "not_connected",
+                    "not_synced",
+                    "unavailable",
+                  ],
+                },
+                "reason": {
+                  "type": "string",
+                  "maxLength": 300,
+                },
+                "next": {
+                  "type": "object",
+                  "properties": {
+                    "instruction": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300,
+                    },
+                    "tool": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^outlit_[a-z0-9_]+$",
+                    },
+                    "input": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                      },
+                      "additionalProperties": {},
+                    },
+                  },
+                  "required": [
+                    "instruction",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "status",
+                "reason",
+              ],
+              "additionalProperties": false,
+            },
+          ],
+        },
+        "crm": {
+          "description": "The CRM and support tool accounts linked to this customer with the account's own fields (segment, health, stage, owner and custom fields) as stored there and its associated contacts.",
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "const": "available",
+                },
+                "asOf": {
+                  "type": "string",
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "provider": {
+                        "type": "string",
+                        "description": "The system that holds the account: hubspot, salesforce, attio or pylon.",
+                      },
+                      "connectionId": {
+                        "type": "string",
+                        "description": "The Outlit integration connection the account syncs through.",
+                      },
+                      "accountId": {
+                        "type": "string",
+                        "description": "The account's id in that system.",
+                      },
+                      "name": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                        "description": "The account's name in that system.",
+                      },
+                      "owner": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "name": {
                                 "anyOf": [
                                   {
-                                    "type": "number",
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "email": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
                                   },
                                   {
                                     "type": "null",
@@ -2738,350 +3937,212 @@ export const publicToolContracts = {
                                 ],
                               },
                             },
+                            "required": [
+                              "name",
+                              "email",
+                            ],
+                            "additionalProperties": false,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                        "description": "The account owner as that system records it; null when it records none. Not Outlit's customer owner.",
+                      },
+                      "recordUpdatedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                        "description": "When that system last modified the account, ISO 8601. A Salesforce formula field can change without moving it, so such a value may lag until the account next changes.",
+                      },
+                      "contacts": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "contactId": {
+                              "type": "string",
+                              "description": "The contact's id in that system.",
+                            },
+                            "name": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "email": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "title": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                              "description": "The contact's job title there.",
+                            },
+                            "userId": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                              "description": "The id of this customer's user with that contact or email; null when the person is not one of its users, for example someone on another email domain.",
+                            },
                           },
                           "required": [
-                            "count",
-                            "growth",
+                            "contactId",
+                            "name",
+                            "email",
+                            "title",
+                            "userId",
                           ],
                           "additionalProperties": false,
                         },
-                        {
-                          "type": "null",
+                        "description": "The contacts that system associates with the account, whatever their email domain, most recently modified first, at most 25.",
+                      },
+                      "omittedContactCount": {
+                        "description": "How many more associated contacts there are beyond those listed.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                      },
+                      "fields": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "description": "The field's API name or slug in that system.",
+                            },
+                            "label": {
+                              "type": "string",
+                              "description": "The field's name in that system's UI; the key when unknown.",
+                            },
+                            "value": {
+                              "description": "The value as that system stores it: a string, number, boolean, array, or for Attio its value objects. A picklist holds the option's stored value, not its label.",
+                            },
+                            "custom": {
+                              "type": "boolean",
+                              "description": "True for a field the customer's team added to that system.",
+                            },
+                          },
+                          "required": [
+                            "key",
+                            "label",
+                            "value",
+                            "custom",
+                          ],
+                          "additionalProperties": false,
                         },
-                      ],
+                        "description": "The account's non-empty fields, sorted by key.",
+                      },
+                      "omittedFields": {
+                        "description": "Keys of fields left out so the response stays within its size limit, as many as fit. Ask for them with crmFields.",
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                        },
+                      },
+                      "omittedFieldCount": {
+                        "description": "How many fields were left out, including any not named in omittedFields.",
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                      },
                     },
+                    "required": [
+                      "provider",
+                      "connectionId",
+                      "accountId",
+                      "name",
+                      "owner",
+                      "recordUpdatedAt",
+                      "contacts",
+                      "fields",
+                    ],
+                    "additionalProperties": false,
                   },
-                  "additionalProperties": false,
-                },
-                {
-                  "type": "null",
-                },
-              ],
-            },
-            "match": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "propertyNames": {
-                    "type": "string",
-                  },
-                  "additionalProperties": {},
-                },
-                {
-                  "type": "null",
-                },
-              ],
-            },
-            "lastSuccessfulRefreshAt": {
-              "anyOf": [
-                {
-                  "type": "string",
-                },
-                {
-                  "type": "null",
-                },
-              ],
-            },
-            "lastAttemptAt": {
-              "anyOf": [
-                {
-                  "type": "string",
-                },
-                {
-                  "type": "null",
-                },
-              ],
-            },
-            "expiresAt": {
-              "anyOf": [
-                {
-                  "type": "string",
-                },
-                {
-                  "type": "null",
-                },
-              ],
-            },
-            "error": {
-              "anyOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "class": {
-                      "type": "string",
-                    },
-                    "message": {
-                      "type": "string",
-                    },
-                    "retryable": {
-                      "type": "boolean",
-                    },
-                  },
-                  "required": [
-                    "class",
-                    "message",
-                  ],
-                  "additionalProperties": false,
-                },
-                {
-                  "type": "null",
-                },
-              ],
-            },
-          },
-          "required": [
-            "status",
-            "provider",
-            "providerEntityId",
-            "summary",
-            "match",
-            "lastSuccessfulRefreshAt",
-            "lastAttemptAt",
-            "expiresAt",
-            "error",
-          ],
-          "additionalProperties": false,
-        },
-        "renewal": {
-          "description": "The renewal date the customer page shows, with its source; null when the customer has none",
-          "anyOf": [
-            {
-              "type": "object",
-              "properties": {
-                "date": {
-                  "type": "string",
-                  "description": "Renewal date, YYYY-MM-DD",
-                },
-                "source": {
-                  "type": "string",
-                  "enum": [
-                    "outlit",
-                    "crm",
-                    "billing",
-                  ],
-                  "description": "Where the date comes from: set in Outlit, a CRM opportunity, or the billing period of a yearly subscription",
                 },
               },
               "required": [
-                "date",
-                "source",
+                "status",
+                "asOf",
+                "data",
               ],
               "additionalProperties": false,
             },
             {
-              "type": "null",
-            },
-          ],
-        },
-        "crm": {
-          "description": "The CRM and support tool accounts linked to this customer, one entry each, with the account's own fields (segment, health, stage, owner and custom fields) as stored there and its associated contacts. Opt-in because an account can carry hundreds of fields. Absent when the section is not enabled for the workspace; null when the read is bound to a past point in time.",
-          "anyOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "provider": {
-                    "type": "string",
-                    "description": "The system that holds the account: hubspot, salesforce, attio or pylon.",
-                  },
-                  "connectionId": {
-                    "type": "string",
-                    "description": "The Outlit integration connection the account syncs through.",
-                  },
-                  "accountId": {
-                    "type": "string",
-                    "description": "The account's id in that system.",
-                  },
-                  "name": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                    "description": "The account's name in that system.",
-                  },
-                  "owner": {
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                              },
-                              {
-                                "type": "null",
-                              },
-                            ],
-                          },
-                          "email": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                              },
-                              {
-                                "type": "null",
-                              },
-                            ],
-                          },
-                        },
-                        "required": [
-                          "name",
-                          "email",
-                        ],
-                        "additionalProperties": false,
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                    "description": "The account owner as that system records it; null when it records none. Not Outlit's customer owner.",
-                  },
-                  "recordUpdatedAt": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                      },
-                      {
-                        "type": "null",
-                      },
-                    ],
-                    "description": "When that system last modified the account, ISO 8601. A Salesforce formula field can change without moving it, so such a value may lag until the account next changes.",
-                  },
-                  "contacts": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "contactId": {
-                          "type": "string",
-                          "description": "The contact's id in that system.",
-                        },
-                        "name": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                        "email": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                        "title": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                          "description": "The contact's job title there.",
-                        },
-                        "userId": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                          "description": "The id of this customer's user with that contact or email; null when the person is not one of its users, for example someone on another email domain.",
-                        },
-                      },
-                      "required": [
-                        "contactId",
-                        "name",
-                        "email",
-                        "title",
-                        "userId",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    "description": "The contacts that system associates with the account, whatever their email domain, most recently modified first, at most 25.",
-                  },
-                  "omittedContactCount": {
-                    "description": "How many more associated contacts there are beyond those listed.",
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 9007199254740991,
-                  },
-                  "fields": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "key": {
-                          "type": "string",
-                          "description": "The field's API name or slug in that system.",
-                        },
-                        "label": {
-                          "type": "string",
-                          "description": "The field's name in that system's UI; the key when unknown.",
-                        },
-                        "value": {
-                          "description": "The value as that system stores it: a string, number, boolean, array, or for Attio its value objects. A picklist holds the option's stored value, not its label.",
-                        },
-                        "custom": {
-                          "type": "boolean",
-                          "description": "True for a field the customer's team added to that system.",
-                        },
-                      },
-                      "required": [
-                        "key",
-                        "label",
-                        "value",
-                        "custom",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    "description": "The account's non-empty fields, sorted by key.",
-                  },
-                  "omittedFields": {
-                    "description": "Keys of fields left out so the response stays within its size limit, as many as fit. Ask for them with crmFields.",
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                    },
-                  },
-                  "omittedFieldCount": {
-                    "description": "How many fields were left out, including any not named in omittedFields.",
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 9007199254740991,
-                  },
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "empty",
+                    "not_connected",
+                    "not_synced",
+                    "unavailable",
+                  ],
                 },
-                "required": [
-                  "provider",
-                  "connectionId",
-                  "accountId",
-                  "name",
-                  "owner",
-                  "recordUpdatedAt",
-                  "contacts",
-                  "fields",
-                ],
-                "additionalProperties": false,
+                "reason": {
+                  "type": "string",
+                  "maxLength": 300,
+                },
+                "next": {
+                  "type": "object",
+                  "properties": {
+                    "instruction": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300,
+                    },
+                    "tool": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^outlit_[a-z0-9_]+$",
+                    },
+                    "input": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                      },
+                      "additionalProperties": {},
+                    },
+                  },
+                  "required": [
+                    "instruction",
+                  ],
+                  "additionalProperties": false,
+                },
               },
-            },
-            {
-              "type": "null",
+              "required": [
+                "status",
+                "reason",
+              ],
+              "additionalProperties": false,
             },
           ],
         },
@@ -3171,86 +4232,150 @@ export const publicToolContracts = {
           },
         },
         "links": {
-          "description": "Every record in another system linked to this customer, including records still held by customers merged into it: billing customers, CRM and support accounts, product analytics groups and accounts, Slack channels and the product's own customer id. A record is listed only when its id in that system is known. Use it to tell whether two customers share a record, or to name the record to look up in that system; for a CRM account's own fields use include crm. Ordered by kind, provider and id. Null when the read is bound to a past point in time.",
-          "anyOf": [
+          "description": "Every record in another system linked to this customer, including records still held by customers merged into it: billing customers, CRM and support accounts, product analytics groups and accounts, Slack channels and the product's own customer id. A record is listed only when its id in that system is known. Ordered by kind, provider and id.",
+          "oneOf": [
             {
               "type": "object",
               "properties": {
-                "records": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "enum": [
-                          "billing_customer",
-                          "crm_account",
-                          "support_account",
-                          "analytics_group",
-                          "analytics_account",
-                          "slack_channel",
-                          "slack_workspace",
-                          "external_organization",
-                        ],
-                        "description": "What the record is: a billing customer (such as a Stripe customer), a CRM or support account, a product analytics group or account, a Slack channel or workspace, or the customer's id in the product's own sign-up system.",
-                      },
-                      "provider": {
-                        "anyOf": [
-                          {
+                "status": {
+                  "type": "string",
+                  "const": "available",
+                },
+                "asOf": {
+                  "type": "string",
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "records": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
                             "type": "string",
+                            "enum": [
+                              "billing_customer",
+                              "crm_account",
+                              "support_account",
+                              "analytics_group",
+                              "analytics_account",
+                              "slack_channel",
+                              "slack_workspace",
+                              "external_organization",
+                            ],
+                            "description": "What the record is: a billing customer (such as a Stripe customer), a CRM or support account, a product analytics group or account, a Slack channel or workspace, or the customer's id in the product's own sign-up system.",
                           },
-                          {
-                            "type": "null",
+                          "provider": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                            "description": "The system that holds the record, such as stripe, hubspot or posthog; null when unknown.",
                           },
-                        ],
-                        "description": "The system that holds the record, such as stripe, hubspot or posthog; null when unknown.",
-                      },
-                      "id": {
-                        "type": "string",
-                        "description": "The record's id in that system, such as a Stripe customer id (cus_...).",
-                      },
-                      "connectionId": {
-                        "anyOf": [
-                          {
+                          "id": {
                             "type": "string",
+                            "description": "The record's id in that system, such as a Stripe customer id (cus_...).",
                           },
-                          {
-                            "type": "null",
+                          "connectionId": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                              },
+                              {
+                                "type": "null",
+                              },
+                            ],
+                            "description": "The Outlit integration connection the record came through; null when none names it.",
                           },
+                          "linkedAt": {
+                            "type": "string",
+                            "description": "When Outlit linked the record to this customer, ISO 8601. Outlit's own time, not a fact about the customer.",
+                          },
+                        },
+                        "required": [
+                          "kind",
+                          "provider",
+                          "id",
+                          "connectionId",
+                          "linkedAt",
                         ],
-                        "description": "The Outlit integration connection the record came through; null when none names it.",
-                      },
-                      "linkedAt": {
-                        "type": "string",
-                        "description": "When Outlit linked the record to this customer, ISO 8601. Outlit's own time, not a fact about the customer.",
+                        "additionalProperties": false,
                       },
                     },
-                    "required": [
-                      "kind",
-                      "provider",
-                      "id",
-                      "connectionId",
-                      "linkedAt",
-                    ],
-                    "additionalProperties": false,
+                    "omitted": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "How many more linked records exist beyond the first 50, which are left out.",
+                    },
                   },
-                },
-                "omitted": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "maximum": 9007199254740991,
-                  "description": "How many more linked records exist beyond the first 50, which are left out.",
+                  "required": [
+                    "records",
+                    "omitted",
+                  ],
+                  "additionalProperties": false,
                 },
               },
               "required": [
-                "records",
-                "omitted",
+                "status",
+                "asOf",
+                "data",
               ],
               "additionalProperties": false,
             },
             {
-              "type": "null",
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "empty",
+                    "not_connected",
+                    "not_synced",
+                    "unavailable",
+                  ],
+                },
+                "reason": {
+                  "type": "string",
+                  "maxLength": 300,
+                },
+                "next": {
+                  "type": "object",
+                  "properties": {
+                    "instruction": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 300,
+                    },
+                    "tool": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^outlit_[a-z0-9_]+$",
+                    },
+                    "input": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                      },
+                      "additionalProperties": {},
+                    },
+                  },
+                  "required": [
+                    "instruction",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "status",
+                "reason",
+              ],
+              "additionalProperties": false,
             },
           ],
         },
@@ -17877,7 +19002,7 @@ export const publicOpenApiTransports = [
 export const consumerToolPolicies = {
   "default": [
     "outlit_list_customers",
-    "outlit_list_crm_fields",
+    "outlit_list_customer_fields",
     "outlit_list_users",
     "outlit_get_customer",
     "outlit_get_timeline",
@@ -17889,7 +19014,7 @@ export const consumerToolPolicies = {
   ],
   "analytical": [
     "outlit_list_customers",
-    "outlit_list_crm_fields",
+    "outlit_list_customer_fields",
     "outlit_list_users",
     "outlit_get_customer",
     "outlit_get_timeline",
@@ -17903,7 +19028,7 @@ export const consumerToolPolicies = {
   ],
   "pi": [
     "outlit_list_customers",
-    "outlit_list_crm_fields",
+    "outlit_list_customer_fields",
     "outlit_list_users",
     "outlit_list_workspace_users",
     "outlit_get_customer",
@@ -17957,7 +19082,7 @@ export const consumerToolPolicies = {
   ],
   "cli": [
     "outlit_list_customers",
-    "outlit_list_crm_fields",
+    "outlit_list_customer_fields",
     "outlit_list_users",
     "outlit_list_workspace_users",
     "outlit_get_customer",
@@ -19480,11 +20605,11 @@ export const ingestTransport = {
 } as const
 
 export const customerBillingStatuses = [
-  "NONE",
-  "TRIALING",
-  "PAYING",
-  "PAST_DUE",
-  "CHURNED",
+  "none",
+  "trialing",
+  "paying",
+  "past_due",
+  "churned",
 ] as const
 
 export const customerActivityWindows = [
@@ -19553,14 +20678,15 @@ export const customerFactCategories = [
 
 export const customerListOrderFields = [
   "last_activity_at",
-  "first_seen_at",
+  "first_synced_at",
   "name",
-  "arr_cents",
+  "arr",
 ] as const
 
 export const customerIncludeSections = [
   "users",
   "revenue",
+  "billing",
   "recentTimeline",
   "behaviorMetrics",
   "enrichment",
@@ -19657,4 +20783,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "deeb06036e7ab46cfa55ab69cf6bd1d11535928196aa26e2190469a22d9a5c0c" as const
+export const sdkConsumerContractHash = "c492f9ded289b9812f2cc656f3dd4f536a8f8726c734645acd2733171f2b1bdf" as const

@@ -83,7 +83,7 @@ describe("toolsets", () => {
   test("matches the Core-owned public tool set, including customer collaboration", () => {
     expect(allPublicToolNames).toEqual([
       "outlit_list_customers",
-      "outlit_list_crm_fields",
+      "outlit_list_customer_fields",
       "outlit_list_users",
       "outlit_list_workspace_users",
       "outlit_get_customer",
@@ -143,7 +143,7 @@ describe("toolsets", () => {
   test("keeps the default agent toolset to the ten read-only intelligence tools", () => {
     expect(defaultToolNames).toEqual([
       "outlit_list_customers",
-      "outlit_list_crm_fields",
+      "outlit_list_customer_fields",
       "outlit_list_users",
       "outlit_get_customer",
       "outlit_get_timeline",
@@ -410,7 +410,7 @@ describe("tool contracts", () => {
         new Response(
           JSON.stringify({
             items: [],
-            pagination: { hasMore: false, nextCursor: null },
+            page: { hasMore: false, nextCursor: null, total: 0 },
           }),
           { status: 200 },
         ),
@@ -485,26 +485,26 @@ describe("tool contracts", () => {
     expect(workspaceProperties.orderBy?.enum).toEqual(["name", "email", "owned_customer_count"])
 
     const customerContract = getPublicToolContract("outlit_list_customers")
-    const customerProperties = customerContract.inputSchema.properties as Record<
-      string,
-      { type?: string; description?: string; format?: string; pattern?: string }
-    >
+    type ObjectSchema = { properties: Record<string, Record<string, unknown>> }
+    const filters = customerContract.inputSchema.properties.filters as unknown as ObjectSchema
+    const owner = filters.properties.owner as unknown as ObjectSchema
+    const activity = filters.properties.activity as unknown as ObjectSchema
 
-    expect(customerProperties.ownerId).toEqual(expect.objectContaining({ type: "string" }))
-    expect(customerProperties.ownerEmail).toEqual(expect.objectContaining({ type: "string" }))
-    expect(customerProperties.hasOwner).toEqual(expect.objectContaining({ type: "boolean" }))
-    expect(customerProperties.activatedSince).toEqual(
+    expect(customerContract.inputSchema.properties).not.toHaveProperty("ownerId")
+    expect(owner.properties.id).toEqual(expect.objectContaining({ type: "string" }))
+    expect(owner.properties.email).toEqual(expect.objectContaining({ type: "string" }))
+    expect(owner.properties.has).toEqual(expect.objectContaining({ type: "boolean" }))
+    expect(activity.properties.activatedSince).toEqual(
       expect.objectContaining({
         type: "string",
         format: "date-time",
-        description: "Filter customers activated at or after this ISO-8601 datetime",
       }),
     )
     expect(sdkConsumerContractHash).toMatch(/^[a-f0-9]{64}$/)
 
-    const activatedSincePattern = customerProperties.activatedSince?.pattern
+    const activatedSincePattern = activity.properties.activatedSince?.pattern
     expect(activatedSincePattern).toBeDefined()
-    const activatedSinceRegex = new RegExp(activatedSincePattern ?? "")
+    const activatedSinceRegex = new RegExp(String(activatedSincePattern ?? ""))
     expect(activatedSinceRegex.test("2026-07-01T00:00:00.000Z")).toBe(true)
     expect(activatedSinceRegex.test("2026-07-01T00:00:00+05:30")).toBe(true)
     expect(activatedSinceRegex.test("2026-07-01")).toBe(false)
@@ -526,14 +526,13 @@ describe("tool contracts", () => {
         }),
       }),
     )
-    expect(outputProperties.enrichment).toEqual(expect.objectContaining({ type: "object" }))
-    expect(outputProperties.revenue).toEqual(
-      expect.objectContaining({
-        properties: expect.objectContaining({
-          arr: expect.objectContaining({ anyOf: expect.any(Array) }),
-        }),
-      }),
-    )
+    const section = (name: string) => outputProperties[name] as { oneOf: unknown[] }
+    // Every include is a section: available with its data, or a status saying why there is none.
+    for (const name of ["users", "revenue", "billing", "enrichment", "renewal", "crm", "links"]) {
+      expect(section(name).oneOf).toHaveLength(2)
+    }
+    expect(JSON.stringify(section("revenue"))).toContain("lifetimeRevenue")
+    expect(JSON.stringify(section("billing"))).toContain("overdueInvoices")
   })
 
   test("validates the dedicated customer credits contract and result aliases", () => {
@@ -865,7 +864,7 @@ describe("createOutlitClient", () => {
       retryable: false,
       requestId: "request_newer_gateway",
       validationIssues: [
-        { code: "invalid_value", path: "billingStatus", validValues: ["PAYING", "TRIALING"] },
+        { code: "invalid_value", path: "billingStatus", validValues: ["paying", "trialing"] },
       ],
       next: { instruction: "Use one of the valid values for billingStatus." },
     }
