@@ -3427,7 +3427,7 @@ export const publicToolContracts = {
     "description": "Assign an active workspace member as this customer’s primary owner. The former owner keeps Editor access.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": false,
       "openWorldHint": false,
     },
@@ -8462,7 +8462,7 @@ export const publicToolContracts = {
     "description": "Update ordinary destination metadata. Use the dedicated enable or disable tool for lifecycle state.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": true,
     },
@@ -10120,7 +10120,7 @@ export const publicToolContracts = {
     "description": "Continue integration setup through validated credentials, safe configuration, or a trusted browser handoff. For a connected Stripe account, an optional stripe_renewal_date_field step names the subscription metadata key that holds renewal dates.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": false,
       "openWorldHint": true,
     },
@@ -11419,7 +11419,7 @@ export const publicToolContracts = {
     "description": "Set the product event used for future customer activation, or disable event-based activation with null. This does not backfill history.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
     },
@@ -11555,7 +11555,7 @@ export const publicToolContracts = {
     "description": "Update the workspace default timezone (a valid IANA timezone) and/or the default customer owner (an active workspace member, or null to clear).",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
     },
@@ -19657,4 +19657,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "77fe36f3bf331da1914dc70121c47796dcf52f525dad4af6871b4d62c0c7a0fc" as const
+export const sdkConsumerContractHash = "c176fd6c3c9b7ca0bba73e8c3ee10b91fd7e8f4fa6d86f23c8395b4e84d48cf2" as const
