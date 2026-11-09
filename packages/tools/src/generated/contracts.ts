@@ -3427,7 +3427,7 @@ export const publicToolContracts = {
     "description": "Assign an active workspace member as this customer’s primary owner. The former owner keeps Editor access.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": false,
       "openWorldHint": false,
     },
@@ -8052,7 +8052,7 @@ export const publicToolContracts = {
     "description": "Create a Slack channel destination from an available channel.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": false,
       "openWorldHint": true,
     },
@@ -8462,7 +8462,7 @@ export const publicToolContracts = {
     "description": "Update ordinary destination metadata. Use the dedicated enable or disable tool for lifecycle state.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": true,
     },
@@ -8867,7 +8867,7 @@ export const publicToolContracts = {
     "description": "Enable an ordinary destination that is ready for delivery.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": true,
     },
@@ -9258,7 +9258,7 @@ export const publicToolContracts = {
     "description": "Disable an ordinary non-default destination.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
     },
@@ -10120,7 +10120,7 @@ export const publicToolContracts = {
     "description": "Continue integration setup through validated credentials, safe configuration, or a trusted browser handoff. For a connected Stripe account, an optional stripe_renewal_date_field step names the subscription metadata key that holds renewal dates.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": false,
       "openWorldHint": true,
     },
@@ -11419,7 +11419,7 @@ export const publicToolContracts = {
     "description": "Set the product event used for future customer activation, or disable event-based activation with null. This does not backfill history.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
     },
@@ -11555,7 +11555,7 @@ export const publicToolContracts = {
     "description": "Update the workspace default timezone (a valid IANA timezone) and/or the default customer owner (an active workspace member, or null to clear).",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": false,
     },
@@ -15943,7 +15943,7 @@ export const publicToolContracts = {
     "description": "Act on one of your Inbox tasks, by its itemId from outlit_list_inbox: mark it done, won't do (with a reason), wrong, reopen it, snooze it (up to two weeks; a week by default) or unsnooze it, take a Pool task or put it back, or say a plan step doesn't cover it (not_covered) and undo that (recover_cover). Done also closes the tasks it stands for, as on the page. The action is your own, as if you took it on the Inbox page. Returns what changed and an undoToken that reverses it with outlit_undo_inbox_action.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": false,
       "openWorldHint": false,
     },
@@ -16071,7 +16071,7 @@ export const publicToolContracts = {
     "description": "Undo an action outlit_act_on_inbox_item took, with the undoToken it returned. Only you can undo your own action, and only while the task is as it left it.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": false,
       "openWorldHint": false,
     },
@@ -19657,4 +19657,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "77fe36f3bf331da1914dc70121c47796dcf52f525dad4af6871b4d62c0c7a0fc" as const
+export const sdkConsumerContractHash = "deeb06036e7ab46cfa55ab69cf6bd1d11535928196aa26e2190469a22d9a5c0c" as const
