@@ -9,10 +9,10 @@ mock.module("../../src/lib/client", () => ({
     baseUrl: "https://app.outlit.ai",
     callTool: async (tool: string, params: unknown) => {
       calls.push({ tool, params })
-      if (tool === "outlit_reject_identity_merge_suggestion") {
-        return { suggestionId: "proposal_1", status: "REJECTED" }
+      if (tool === "outlit_reject_merge_suggestion") {
+        return { suggestion: { id: "proposal_1", status: "rejected" } }
       }
-      return { operationId: "operation_1", status: "queued" }
+      return { operation: { id: "operation_1", status: "queued" } }
     },
   }),
 }))
@@ -34,7 +34,13 @@ describe("identity CLI tools", () => {
   })
 
   test.each([
-    ["identity", ["customer_1"], "outlit_get_customer_identity", { customerId: "customer_1" }],
+    ["identity", ["customer_1"], "outlit_get_identity", { customer: "customer_1" }],
+    [
+      "identity",
+      ["customer_1", "--links"],
+      "outlit_get_identity",
+      { customer: "customer_1", include: ["links"] },
+    ],
     [
       "list",
       [
@@ -50,28 +56,29 @@ describe("identity CLI tools", () => {
         "rejected",
         "--confidence",
         "MEDIUM",
+        "--include",
+        "impact,scope",
       ],
-      "outlit_list_identity_merge_suggestions",
+      "outlit_list_merge_suggestions",
       {
-        customerId: "customer_1",
-        suggestionId: "proposal_1",
+        customer: "customer_1",
         cursor: "page_2",
         limit: 7,
-        status: "rejected",
-        confidence: "MEDIUM",
+        include: ["impact", "scope"],
+        filters: { id: "proposal_1", status: "rejected", confidence: "medium" },
       },
     ],
     [
       "reject",
-      ["proposal_1", "--review-notes", "Different companies"],
-      "outlit_reject_identity_merge_suggestion",
-      { suggestionId: "proposal_1", reviewNotes: "Different companies" },
+      ["proposal_1", "--review-notes", "Different companies", "--request-id", "request_9"],
+      "outlit_reject_merge_suggestion",
+      { id: "proposal_1", note: "Different companies", requestId: "request_9" },
     ],
     [
       "merge",
       ["survivor_1", "duplicate_1"],
       "outlit_merge_customers",
-      { survivingCustomerId: "survivor_1", duplicateCustomerId: "duplicate_1", dryRun: true },
+      { mode: "preview", survivor: "survivor_1", duplicate: "duplicate_1" },
     ],
     [
       "merge",
@@ -90,21 +97,16 @@ describe("identity CLI tools", () => {
       ],
       "outlit_merge_customers",
       {
-        survivingCustomerId: "survivor_1",
-        duplicateCustomerId: "duplicate_1",
-        dryRun: false,
+        mode: "execute",
+        survivor: "survivor_1",
+        duplicate: "duplicate_1",
         previewToken: "reviewed_token",
         requestId: "request_1",
         suggestionId: "proposal_1",
-        reviewNotes: "Same company verified",
+        note: "Same company verified",
       },
     ],
-    [
-      "merge-status",
-      ["operation_1"],
-      "outlit_get_customer_merge_status",
-      { operationId: "operation_1" },
-    ],
+    ["merge-status", ["operation_1"], "outlit_get_merge", { id: "operation_1" }],
   ] as const)("%s sends the exact canonical request", async (name, rawArgs, tool, params) => {
     const cmd = await command(name)
     const write = spyOn(process.stdout, "write").mockImplementation(() => true)
@@ -112,10 +114,25 @@ describe("identity CLI tools", () => {
       await runCommand(cmd.root, { rawArgs: [...cmd.prefix, ...rawArgs, "--json"] })
       expect(calls).toEqual([{ tool, params }])
       expect(JSON.parse(String(write.mock.calls[0]?.[0]))).toEqual(
-        tool === "outlit_reject_identity_merge_suggestion"
-          ? { suggestionId: "proposal_1", status: "REJECTED" }
-          : { operationId: "operation_1", status: "queued" },
+        tool === "outlit_reject_merge_suggestion"
+          ? { suggestion: { id: "proposal_1", status: "rejected" } }
+          : { operation: { id: "operation_1", status: "queued" } },
       )
+    } finally {
+      write.mockRestore()
+    }
+  })
+
+  test("reject sends a fresh request ID when none is passed, so a replay needs --request-id", async () => {
+    const cmd = await command("reject")
+    const write = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await runCommand(cmd.root, { rawArgs: [...cmd.prefix, "proposal_1", "--json"] })
+      await runCommand(cmd.root, { rawArgs: [...cmd.prefix, "proposal_1", "--json"] })
+      const ids = calls.map((call) => (call.params as { requestId: string }).requestId)
+      expect(ids[0]).toMatch(/^[0-9a-f-]{36}$/)
+      expect(ids[1]).not.toBe(ids[0])
+      expect(calls[0]?.params).toEqual({ id: "proposal_1", requestId: ids[0] })
     } finally {
       write.mockRestore()
     }

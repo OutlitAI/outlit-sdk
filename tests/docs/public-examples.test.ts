@@ -248,7 +248,7 @@ describe("public documentation examples", () => {
       ["Customers list", "outlit_list_customers"],
       ["Customers get", "outlit_get_customer"],
       ["Customers get: relationship", "outlit_get_customer"],
-      ["Attention", "outlit_list_attention_items"],
+      ["Attention", "outlit_list_cases"],
       ["Customers timeline", "outlit_get_timeline"],
       ["People list", "outlit_list_people"],
       ["Facts", "outlit_list_facts"],

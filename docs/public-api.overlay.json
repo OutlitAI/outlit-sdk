@@ -217,57 +217,57 @@
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_attention_items')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_cases')]",
       "update": {
-        "title": "List attention items"
+        "title": "List cases"
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_attention_item')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_case')]",
       "update": {
-        "title": "Get attention item"
+        "title": "Get case"
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_inbox')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_tasks')]",
       "update": {
-        "title": "List Inbox"
+        "title": "List tasks"
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_inbox_item')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_task')]",
       "update": {
-        "title": "Get Inbox item"
+        "title": "Get task"
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_act_on_inbox_item')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_act_on_task')]",
       "update": {
-        "title": "Act on Inbox item"
+        "title": "Act on task"
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_undo_inbox_action')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_undo_task_action')]",
       "update": {
-        "title": "Undo Inbox action"
+        "title": "Undo task action"
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_identity')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_identity')]",
       "update": {
-        "title": "Get customer identity"
+        "title": "Get identity"
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_identity_merge_suggestions')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_merge_suggestions')]",
       "update": {
-        "title": "List identity merge suggestions"
+        "title": "List merge suggestions"
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_reject_identity_merge_suggestion')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_reject_merge_suggestion')]",
       "update": {
-        "title": "Reject identity merge suggestion"
+        "title": "Reject merge suggestion"
       }
     },
     {
@@ -277,9 +277,9 @@
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_merge_status')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_merge')]",
       "update": {
-        "title": "Get customer merge status"
+        "title": "Get merge"
       }
     },
     {
@@ -469,57 +469,57 @@
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_list_attention_items']",
+      "target": "$.components.schemas['ToolOutput_outlit_list_cases']",
       "update": {
-        "title": "List attention items"
+        "title": "List cases"
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_get_attention_item']",
+      "target": "$.components.schemas['ToolOutput_outlit_get_case']",
       "update": {
-        "title": "Get attention item"
+        "title": "Get case"
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_list_inbox']",
+      "target": "$.components.schemas['ToolOutput_outlit_list_tasks']",
       "update": {
-        "title": "List Inbox"
+        "title": "List tasks"
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_get_inbox_item']",
+      "target": "$.components.schemas['ToolOutput_outlit_get_task']",
       "update": {
-        "title": "Get Inbox item"
+        "title": "Get task"
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_act_on_inbox_item']",
+      "target": "$.components.schemas['ToolOutput_outlit_act_on_task']",
       "update": {
-        "title": "Act on Inbox item"
+        "title": "Act on task"
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_undo_inbox_action']",
+      "target": "$.components.schemas['ToolOutput_outlit_undo_task_action']",
       "update": {
-        "title": "Undo Inbox action"
+        "title": "Undo task action"
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_get_customer_identity']",
+      "target": "$.components.schemas['ToolOutput_outlit_get_identity']",
       "update": {
-        "title": "Get customer identity"
+        "title": "Get identity"
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_list_identity_merge_suggestions']",
+      "target": "$.components.schemas['ToolOutput_outlit_list_merge_suggestions']",
       "update": {
-        "title": "List identity merge suggestions"
+        "title": "List merge suggestions"
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_reject_identity_merge_suggestion']",
+      "target": "$.components.schemas['ToolOutput_outlit_reject_merge_suggestion']",
       "update": {
-        "title": "Reject identity merge suggestion"
+        "title": "Reject merge suggestion"
       }
     },
     {
@@ -529,9 +529,9 @@
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_get_customer_merge_status']",
+      "target": "$.components.schemas['ToolOutput_outlit_get_merge']",
       "update": {
-        "title": "Get customer merge status"
+        "title": "Get merge"
       }
     },
     {

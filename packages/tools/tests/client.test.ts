@@ -124,17 +124,17 @@ describe("toolsets", () => {
       "outlit_list_features",
       "outlit_create_feature",
       "outlit_archive_feature",
-      "outlit_list_attention_items",
-      "outlit_get_attention_item",
-      "outlit_list_inbox",
-      "outlit_get_inbox_item",
-      "outlit_act_on_inbox_item",
-      "outlit_undo_inbox_action",
-      "outlit_get_customer_identity",
-      "outlit_list_identity_merge_suggestions",
-      "outlit_reject_identity_merge_suggestion",
+      "outlit_list_cases",
+      "outlit_get_case",
+      "outlit_list_tasks",
+      "outlit_get_task",
+      "outlit_act_on_task",
+      "outlit_undo_task_action",
+      "outlit_get_identity",
+      "outlit_list_merge_suggestions",
+      "outlit_reject_merge_suggestion",
       "outlit_merge_customers",
-      "outlit_get_customer_merge_status",
+      "outlit_get_merge",
     ])
     expect(allPublicToolNames).toHaveLength(42)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
@@ -157,7 +157,7 @@ describe("toolsets", () => {
     expect(sqlToolNames).toEqual(["outlit_query", "outlit_get_schema"])
     expect(piToolNames).toEqual(allPublicToolNames)
     expect(cliToolNames).toEqual(allPublicToolNames)
-    for (const toolName of ["outlit_list_attention_items", "outlit_get_attention_item"] as const) {
+    for (const toolName of ["outlit_list_cases", "outlit_get_case"] as const) {
       expect(defaultToolNames).not.toContain(toolName)
       expect(analyticalToolNames).not.toContain(toolName)
       expect(piToolNames).toContain(toolName)
@@ -200,8 +200,8 @@ describe("toolsets", () => {
 
 describe("tool contracts", () => {
   test("exposes the Core merge impact scope without making unavailable counts mandatory", () => {
-    const suggestions = getPublicToolContract("outlit_list_identity_merge_suggestions")
-    const item = suggestions.outputSchema.properties.suggestions.items
+    const suggestions = getPublicToolContract("outlit_list_merge_suggestions")
+    const item = suggestions.outputSchema.properties.items.items
     const impact = item.properties.impact
     const scope = item.properties.scope
 
@@ -290,14 +290,14 @@ describe("tool contracts", () => {
     expect(analyticsRow.activated_at).toBeNull()
   })
 
-  test("exports generated Attention result types with Core-owned ARR fields", () => {
+  test("exports generated case result types with Core-owned ARR at assessment as Money", () => {
     expectTypeOf<AttentionListResult["items"][number]>().toEqualTypeOf<AttentionItemSummary>()
-    expectTypeOf<AttentionItemResult["accountImportance"]["arrCents"]>().toEqualTypeOf<
+    expectTypeOf<
+      NonNullable<AttentionItemResult["importance"]["arrAtAssessment"]>["amount"]
+    >().toEqualTypeOf<number>()
+    expectTypeOf<AttentionItemSummary["importance"]["shareWithinCurrency"]>().toEqualTypeOf<
       number | null
     >()
-    expectTypeOf<
-      AttentionItemSummary["accountImportance"]["arrShareWithinCurrency"]
-    >().toEqualTypeOf<number | null>()
   })
 
   test("projects the product-facing Feature lifecycle and customer usage contracts", () => {

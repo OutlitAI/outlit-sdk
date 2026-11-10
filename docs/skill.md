@@ -68,12 +68,12 @@ Tool availability depends on the MCP server or Pi tool policy. If a named tool i
 | Workspace timezone | `outlit_get_settings`, `outlit_update_settings` | `outlit settings get/update` |
 | Workspace Features | `outlit_list_features`, `outlit_create_feature`, `outlit_archive_feature` | `outlit features list/create/archive` |
 | Customer Feature usage | `outlit_get_customer_features` | `outlit customers features` |
-| Review current Attention items | `outlit_list_attention_items`, `outlit_get_attention_item` | `outlit attention list/get` |
-| Diagnose possible identity splits | `outlit_get_customer_identity` | `outlit customers identity <customerId>` |
-| Browse saved merge suggestions and history | `outlit_list_identity_merge_suggestions` | `outlit identity suggestions list` |
-| Reject a saved suggestion | `outlit_reject_identity_merge_suggestion` | `outlit identity suggestions reject <suggestionId>` |
+| Review current Attention items | `outlit_list_cases`, `outlit_get_case` | `outlit attention list/get` |
+| Diagnose possible identity splits | `outlit_get_identity` | `outlit customers identity <customerId>` |
+| Browse saved merge suggestions and history | `outlit_list_merge_suggestions` | `outlit identity suggestions list` |
+| Reject a saved suggestion | `outlit_reject_merge_suggestion` | `outlit identity suggestions reject <suggestionId>` |
 | Preview or execute a customer merge | `outlit_merge_customers` | `outlit customers merge <survivorId> <duplicateId>` |
-| Track a merge operation | `outlit_get_customer_merge_status` | `outlit customers merge-status <operationId>` |
+| Track a merge operation | `outlit_get_merge` | `outlit customers merge-status <operationId>` |
 
 `outlit customers grant` also updates an existing collaborator's role; access commands are siblings of `owner`, not subcommands of it. Archives (`destinations archive`, `features archive`) and `customers owner set` preview before they apply: in a terminal the CLI asks, and without one it needs `--yes` or it changes nothing and exits 1. Owner and access changes return an `undo` token. In the tool calls, send a fresh `requestId` with every write that takes one.
 
@@ -113,7 +113,7 @@ Supported generic source types are `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_T
 
 ## Identity and Customer Merges
 
-When calls or other communications exist but product usage is absent, use `outlit_get_customer_identity` for bounded split-record diagnosis alongside source readiness and usage checks. Candidates and shared participants are leads, not permission to combine evidence or proof of one company. Empty or incomplete identity results do not establish inactivity.
+When calls or other communications exist but product usage is absent, use `outlit_get_identity` for bounded split-record diagnosis alongside source readiness and usage checks. Candidates and shared participants are leads, not permission to combine evidence or proof of one company. Empty or incomplete identity results do not establish inactivity.
 
 Merging is dangerous and has no supported undo. Only execute when the user authorized it and the records are certainly the same customer. Similar names, related domains, shared participants, a suggested match, or parent/subsidiary relationships are insufficient. The merge command defaults to preview; execution requires explicit permission, the reviewed preview token, and a stable request ID. Any pair involving an `INDIVIDUAL` requires an eligible saved suggestion.
 

@@ -13,7 +13,7 @@ export default defineCommand({
       "",
       "Preview: outlit customers merge <survivorId> <duplicateId> --json",
       "Execute: outlit customers merge <survivorId> <duplicateId> --execute --preview-token <token> --request-id <stableId> --json",
-      "Status: outlit customers merge-status <operationId> --json",
+      "Status: outlit customers merge-status <operationId> --json (the operation.id from execute)",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -30,7 +30,7 @@ export default defineCommand({
     },
     "preview-token": {
       type: "string",
-      description: "Reviewed preview token, required with --execute",
+      description: "preview.token from the preview, required with --execute",
     },
     "request-id": {
       type: "string",
@@ -41,23 +41,27 @@ export default defineCommand({
       description:
         publicToolContracts.outlit_merge_customers.inputSchema.properties.suggestionId.description,
     },
-    "review-notes": { type: "string", description: "Optional explanation for this merge" },
+    "review-notes": {
+      type: "string",
+      description: "Optional explanation for this merge (execute only)",
+    },
   },
   async run({ args }) {
     const json = !!args.json
+    const execute = args.execute === true
     const input: Record<string, unknown> = {
-      survivingCustomerId: requiredTrimmedString(args.survivorId, "<survivorId>", json),
-      duplicateCustomerId: requiredTrimmedString(args.duplicateId, "<duplicateId>", json),
-      dryRun: args.execute !== true,
+      mode: execute ? "execute" : "preview",
+      survivor: requiredTrimmedString(args.survivorId, "<survivorId>", json),
+      duplicate: requiredTrimmedString(args.duplicateId, "<duplicateId>", json),
     }
-    if (args.execute === true) {
+    if (execute) {
       input.previewToken = requiredTrimmedString(args["preview-token"], "--preview-token", json)
       input.requestId = requiredTrimmedString(args["request-id"], "--request-id", json)
     }
     const suggestionId = optionalTrimmedString(args["suggestion-id"])
-    const reviewNotes = optionalTrimmedString(args["review-notes"])
+    const note = optionalTrimmedString(args["review-notes"])
     if (suggestionId) input.suggestionId = suggestionId
-    if (reviewNotes) input.reviewNotes = reviewNotes
+    if (execute && note) input.note = note
     const client = await getClientOrExit(args["api-key"], json)
     return runTool(client, publicToolContracts.outlit_merge_customers.toolName, input, json)
   },

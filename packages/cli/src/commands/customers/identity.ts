@@ -9,9 +9,9 @@ export default defineCommand({
   meta: {
     name: "identity",
     description: [
-      publicToolContracts.outlit_get_customer_identity.description,
+      publicToolContracts.outlit_get_identity.description,
       "",
-      "Usage: outlit customers identity <customerId> --json",
+      "Usage: outlit customers identity <customerId> [--links] --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -19,7 +19,12 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    customerId: { type: "positional", description: "Exact customer ID", required: true },
+    customerId: { type: "positional", description: "Customer ID, domain or name", required: true },
+    links: {
+      type: "boolean",
+      description: "Also list the customer's records in other systems",
+      default: false,
+    },
   },
   async run({ args }) {
     const json = !!args.json
@@ -27,8 +32,8 @@ export default defineCommand({
     const client = await getClientOrExit(args["api-key"], json)
     return runTool(
       client,
-      publicToolContracts.outlit_get_customer_identity.toolName,
-      { customerId },
+      publicToolContracts.outlit_get_identity.toolName,
+      { customer: customerId, ...(args.links === true ? { include: ["links"] } : {}) },
       json,
     )
   },

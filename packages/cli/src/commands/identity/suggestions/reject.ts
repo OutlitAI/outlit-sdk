@@ -9,9 +9,9 @@ export default defineCommand({
   meta: {
     name: "reject",
     description: [
-      publicToolContracts.outlit_reject_identity_merge_suggestion.description,
+      publicToolContracts.outlit_reject_merge_suggestion.description,
       "",
-      "Usage: outlit identity suggestions reject <suggestionId> --review-notes 'Different companies' --json",
+      "Usage: outlit identity suggestions reject <suggestionId> --review-notes 'Different companies' [--request-id <stableId>] --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -21,16 +21,21 @@ export default defineCommand({
     ...outputArgs,
     suggestionId: { type: "positional", description: "Exact saved suggestion ID", required: true },
     "review-notes": { type: "string", description: "Optional reason for rejection" },
+    "request-id": {
+      type: "string",
+      description: "Stable request ID, reuse for identical retries (default: a new one per run)",
+    },
   },
   async run({ args }) {
     const json = !!args.json
     const suggestionId = requiredTrimmedString(args.suggestionId, "<suggestionId>", json)
-    const reviewNotes = optionalTrimmedString(args["review-notes"])
+    const note = optionalTrimmedString(args["review-notes"])
+    const requestId = optionalTrimmedString(args["request-id"]) ?? crypto.randomUUID()
     const client = await getClientOrExit(args["api-key"], json)
     return runTool(
       client,
-      publicToolContracts.outlit_reject_identity_merge_suggestion.toolName,
-      { suggestionId, ...(reviewNotes ? { reviewNotes } : {}) },
+      publicToolContracts.outlit_reject_merge_suggestion.toolName,
+      { id: suggestionId, ...(note ? { note } : {}), requestId },
       json,
     )
   },

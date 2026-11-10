@@ -434,11 +434,12 @@ Inspect a customer's identity coverage and possible split records using its exac
 
 ```bash
 outlit customers identity "<customerId>" --json
+outlit customers identity "<customerId>" --links --json
 ```
 
-Candidate records are leads, not proof of common identity. An empty or incomplete search does not prove the account has zero usage. This read never creates a merge suggestion or combines customer activity.
+`--links` also lists the customer's records in other systems. Each candidate carries a `customer` (`{ id, name, domain }`), its `type` (`company` or `individual`) and the call-participant domains that point to it, each with a `source` that `outlit sources get` opens. Candidate records are leads, not proof of common identity. An empty or incomplete search does not prove the account has zero usage. This read never creates a merge suggestion or combines customer activity.
 
-Saved suggestions and review history are a separate read. List returns complete details; use `--suggestion-id` to retrieve one exact record in the same collection response, or `--customer-id` to scope the list. Follow `nextCursor` using `--cursor`.
+Saved suggestions and review history are a separate read. List returns each suggestion's details; use `--suggestion-id` to retrieve one exact record in the same collection response, or `--customer-id` to scope the list. Follow `page.nextCursor` using `--cursor`. Impact, scope, Jev evidence and the cluster are left out unless you ask with `--include impact,scope,jev,cluster`.
 
 ```bash
 outlit identity suggestions list --customer-id "<customerId>" --limit 20 --json
@@ -446,26 +447,28 @@ outlit identity suggestions list --suggestion-id "<suggestionId>" --json
 outlit identity suggestions reject "<suggestionId>" --review-notes "Different companies" --json
 ```
 
-List also accepts `--status suggested|processing|merged|rejected` and `--confidence HIGH|MEDIUM|LOW`. Rejection requires identity review authority and does not authorize merging. It returns only `{ "suggestionId": "…", "status": "REJECTED" }`; read the suggestion list again for updated details.
+List also accepts `--status suggested|processing|merged|rejected` and `--confidence high|medium|low` (the uppercase spelling still works). `--limit` defaults to 25. Rejection requires identity review authority and does not authorize merging. Each run sends a new request ID; pass `--request-id` to make a retry safe. It returns `{ "suggestion": { "id": "…", "status": "rejected" }, "next": … }`; read the suggestion list again for updated details.
 
-The merge command previews by default. Both positional arguments are exact IDs; the first is the surviving record. Without `--suggestion-id`, both records must be `COMPANY` customers. A pair involving an `INDIVIDUAL` requires an eligible saved suggestion for that exact pair. An optional `--suggestion-id` links an existing suggestion to the exact pair, and `--review-notes` records the review explanation.
+The merge command previews by default. Both positional arguments are exact IDs; the first is the surviving record. Without `--suggestion-id`, both records must be company customers. A pair involving an individual requires an eligible saved suggestion for that exact pair. An optional `--suggestion-id` links an existing suggestion to the exact pair, and `--review-notes` records the review explanation.
 
 ```bash
 outlit customers merge "<survivorId>" "<duplicateId>" --json
 ```
 
+The preview returns `preview.token` (pass it as `--preview-token`), the impact and warnings, and `links`: the two customers' linked records, split into `shared`, `conflicting` (the same kind of record in the same system with different IDs), `survivorOnly` and `duplicateOnly`. When `links.complete` is false, only `shared` is definitive.
+
 <Warning>
 Merge execution is dangerous and has no supported undo. It moves customer data and access relationships into the survivor. Execute only when authorized and certain that the records represent the same customer; two company records must represent the same company. Similar names, related domains, shared participants, and parent/subsidiary relationships do not establish that identity. If uncertain, do not execute.
 </Warning>
 
-Execution requires an explicit `--execute`, the reviewed preview's token, a stable request ID, and dedicated merge authority. A read-only credential can preview but cannot execute. A merge API key must include an explicitly selected `customer_identity:merge` grant; ordinary full-access and personal CLI presets exclude it. Use the same pair, token, request ID, and review inputs when retrying an execution.
+Execution requires an explicit `--execute`, the reviewed preview's token, a stable request ID, and dedicated merge authority. A read-only credential can preview but cannot execute. A merge API key must include an explicitly selected `customer_identity:merge` grant; ordinary full-access and personal CLI presets exclude it. Use the same pair, token, request ID, and review inputs when retrying an execution. The result is `operation`: `{ id, survivor, duplicate, status, phase, failure }`.
 
 ```bash
 outlit customers merge "<survivorId>" "<duplicateId>" --execute --preview-token "<token>" --request-id "<stableId>" --json
 outlit customers merge-status "<operationId>" --json
 ```
 
-A saved suggestion's `latestJob.operationId`, when present, can be passed to `customers merge-status`. A null value means that job has no public operation ID attached.
+An execution's `operation.id`, or a saved suggestion's `latestJob.operation.id` when present, can be passed to `customers merge-status`. A null `latestJob.operation` means that job has no public operation attached. A `failure` with code `not_started` means nothing moved: preview the pair again. Code `incomplete` means the merge began and Outlit is recovering it: keep polling and never execute it again.
 
 A queued or running merge has not finished. Reading status does not run the merge again, including after a partial failure. The workspace must support these commands, and the API key needs the required permission.
 
@@ -559,7 +562,7 @@ Outlit rejects stale revisions and prevents archiving the final active Feature. 
 
 ## Attention
 
-Inspect the authorized, read-only Attention collection. Attention is separate from customer
+Inspect the authorized, read-only Attention collection (churn-risk cases). Attention is separate from customer
 relationship and from the chronological customer timeline.
 
 ```text
@@ -567,29 +570,28 @@ outlit attention list [flags]
 outlit attention get <id> [flags]
 ```
 
-`attention list` defaults to open items. It accepts optional `--customer-id`, `--limit`
-(1–100; server default 25), and an opaque `--cursor` returned with the same filters. Use
-`--status resolved` for resolved items. Each returned item includes its current priority;
-the command does not filter by priority.
+`attention list` defaults to open cases. It accepts optional `--customer-id` (an ID; a domain or
+name also works), `--limit` (1–100; server default 25), and an opaque `--cursor` returned with the
+same filters. Use `--status resolved` for resolved cases. Each returned case includes its current
+priority; the command does not filter by priority.
 
 ```bash
 outlit attention list --status resolved --customer-id 550e8400-e29b-41d4-a716-446655440000 --json
 outlit attention get 550e8400-e29b-41d4-a716-446655440000 --json
 ```
 
-List rows contain bounded customer identity, current priority, evidence count, lifecycle times,
-and account importance. Detail adds the current assessment, timeline, evidence summaries, and
-latest visible update. `accountImportance.arrCents` is calculated by Outlit as 12 × the stored
-monthly revenue; clients must not multiply it again. It is in the billing provider's units for
-`accountImportance.currency`: cents for USD, EUR, GBP, and CAD (`1200000` is $12,000 ARR in USD),
-and other currencies follow the provider's amount rules. `arrShareWithinCurrency` and
-`arrPercentileWithinCurrency` compare only customers in the same currency; neither implies FX
-conversion or an all-currency organization total.
+List rows contain the customer, its owner, current priority, status and lifecycle times, evidence
+count, and importance. Detail adds the current `assessment`, timeline, and evidence summaries.
+`importance.arrAtAssessment` is Money (`{ amount, currency, decimals, formatted }`) calculated by
+Outlit as 12 × the monthly revenue when the case was assessed; clients must not multiply it again.
+`shareWithinCurrency` and `percentileWithinCurrency` compare only customers in the same currency;
+neither implies FX conversion or an all-currency organization total.
 
-Both responses may contain a current reviewable `preparedActionUrl` only. They never include
-action IDs, action lifecycle or execution state, email drafts, recipients, evidence IDs, source
-URLs, internal responsibility-agent configuration, or billing-recovery details. The commands are
-read-only: there is no resolve, reopen, send, or review operation.
+Each piece of evidence names its `source` (`{ type, id }`) when `outlit sources get` can open it,
+and otherwise says why not. Both responses may contain a current reviewable `preparedAction.url`
+only. They never include action IDs, action lifecycle or execution state, email drafts, recipients,
+evidence excerpts, internal responsibility-agent configuration, or billing-recovery details. The
+commands are read-only: there is no resolve, reopen, send, or review operation.
 
 ### JSON response
 
@@ -601,32 +603,48 @@ read-only: there is no resolve, reopen, send, or review operation.
       "customer": {
         "id": "4ad7ee3b-a3ff-46a8-902b-2b8eae6be671",
         "name": "Acme Corp",
-        "domain": "acme.com",
-        "ownerName": "Ada Lovelace"
+        "domain": "acme.com"
+      },
+      "owner": {
+        "id": "user_2abc",
+        "name": "Ada Lovelace",
+        "email": "ada@example.com"
       },
       "title": "Reporting usage collapsed",
-      "priority": "HIGH",
+      "priority": "high",
+      "status": "open",
+      "openedAt": "2026-08-01T00:00:00.000Z",
+      "resolvedAt": null,
+      "reopenedAt": null,
+      "materialUpdateAt": null,
       "evidenceCount": 2,
-      "lifecycle": {
-        "status": "open",
-        "customerVisibleAt": "2026-08-01T00:00:00.000Z",
-        "resolvedAt": null,
-        "reopenedAt": null,
-        "createdAt": "2026-08-01T00:00:00.000Z",
-        "updatedAt": "2026-08-02T00:00:00.000Z",
-        "materialUpdateAt": null
-      },
-      "accountImportance": {
-        "arrCents": 1200000,
-        "currency": "USD",
-        "arrShareWithinCurrency": 0.12,
-        "arrPercentileWithinCurrency": 95,
+      "importance": {
+        "arrAtAssessment": {
+          "amount": 1200000,
+          "currency": "USD",
+          "decimals": 2,
+          "formatted": "$12,000.00"
+        },
+        "shareWithinCurrency": 0.12,
+        "percentileWithinCurrency": 95,
         "segments": ["Enterprise"]
       },
-      "preparedActionUrl": null
+      "preparedAction": null,
+      "tasks": {
+        "instruction": "List this customer's open tasks.",
+        "tool": "outlit_list_tasks",
+        "input": {
+          "section": "open",
+          "customer": "4ad7ee3b-a3ff-46a8-902b-2b8eae6be671"
+        }
+      },
+      "outlit": {
+        "createdAt": "2026-08-01T00:00:00.000Z",
+        "updatedAt": "2026-08-02T00:00:00.000Z"
+      }
     }
   ],
-  "pagination": {
+  "page": {
     "hasMore": false,
     "nextCursor": null,
     "total": 1
