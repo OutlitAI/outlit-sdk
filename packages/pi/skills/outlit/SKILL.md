@@ -14,8 +14,10 @@ Do not invent customer state when Outlit can answer it. Call out sparse or messy
 ## Tool Choice
 
 - Use `outlit_list_customers` to discover customers for portfolio, segment, risk, revenue, trial, or account-health questions.
+- Use `outlit_list_customer_fields` to find a CRM, support tool or trait field and the values customers hold before filtering `outlit_list_customers` by it (`filters.fields`) or returning it (`fields`). Filters live under `filters`; page with `page.nextCursor`.
 - Use `outlit_list_users` for user-level questions or when a customer answer depends on individual users.
 - Use `outlit_get_customer` before deep analysis of a named customer or account.
+  Each included section reports a `status`: only `available` has `data`; `empty`, `not_connected`, `not_synced` and `unavailable` say why there is none, which is not the same as zero. Money values carry `formatted` text; show it as is.
 - Use `outlit_get_timeline` when order, recency, activity sequence, meetings, messages, product usage, support, or billing chronology matters.
 - Use `outlit_list_facts` to browse structured account facts, known signals, open issues, health indicators, relationship notes, activation, billing, or renewal context. Narrow with `status`, `sourceTypes`, and `factTypes` when you know what evidence class you need.
 - Use `outlit_get_fact` when you already have a fact id and need the canonical fact payload.

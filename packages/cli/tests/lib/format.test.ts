@@ -24,41 +24,26 @@ describe("formatCents", () => {
 })
 
 describe("formatArr", () => {
-  const arr = (amount: number, currency: string, estimated = false) => ({
-    amount,
-    currency,
+  const arr = (formatted: string, estimated = false) => ({
+    value: { amount: 1200000, currency: "USD", decimals: 2, formatted },
     estimated,
+    lifecycle: "active",
   })
 
-  test("shows whole major units with the currency symbol", () => {
-    expect(formatArr(arr(1200000, "USD"))).toBe("$12,000")
-    expect(formatArr(arr(1200000, "eur"))).toBe("€12,000")
-    expect(formatArr(arr(1200000, "AUD"))).toBe("A$12,000")
-    expect(formatArr(arr(0, "USD"))).toBe("$0")
-  })
-
-  test("uses the currency's own minor-unit digits", () => {
-    expect(formatArr(arr(500000, "JPY"))).toBe("¥500,000")
-    expect(formatArr(arr(1234567, "KWD"))).toBe("KWD\u00a01,235")
-  })
-
-  test("keeps Stripe's hundredths for ISK and UGX", () => {
-    expect(formatArr(arr(600000, "ISK"))).toBe("ISK\u00a06,000")
-    expect(formatArr(arr(600000, "UGX"))).toBe("UGX\u00a06,000")
-  })
-
-  test("shows the raw amount with the code for an invalid currency code", () => {
-    expect(formatArr(arr(1200000, "NOT_A_CODE"))).toBe("1200000 NOT_A_CODE")
+  test("shows the Money's own formatted text", () => {
+    expect(formatArr(arr("$12,000.00"))).toBe("$12,000.00")
+    expect(formatArr(arr("\u20ac12,000.00"))).toBe("\u20ac12,000.00")
   })
 
   test("marks estimates with ~", () => {
-    expect(formatArr(arr(1200000, "USD", true))).toBe("~$12,000")
+    expect(formatArr(arr("$12,000.00", true))).toBe("~$12,000.00")
   })
 
   test("returns -- when ARR is unknown", () => {
     expect(formatArr(null)).toBe("--")
     expect(formatArr(undefined)).toBe("--")
-    expect(formatArr({ amount: "x", currency: "USD" })).toBe("--")
+    expect(formatArr({ value: null, estimated: false })).toBe("--")
+    expect(formatArr({ value: { amount: 1, currency: "USD" } })).toBe("--")
   })
 })
 

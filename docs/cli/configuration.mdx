@@ -86,12 +86,12 @@ When running in an interactive terminal, the CLI outputs:
 Example:
 
 ```
-┌──────────────────────────┬────────────┬─────────┬──────────┬────────────┐
-│ Name                     │ Domain     │ Billing │ ARR      │ Last Active│
-├──────────────────────────┼────────────┼─────────┼──────────┼────────────┤
-│ Acme Corp                │ acme.com   │ PAYING  │ $60,000  │ 2d ago     │
-│ Globex Inc               │ globex.com │ TRIALING│ $0       │ 5h ago     │
-└──────────────────────────┴────────────┴─────────┴──────────┴────────────┘
+┌──────────────────────────┬────────────┬──────────┬────────────┬────────────┐
+│ Name                     │ Domain     │ Billing  │ ARR        │ Last Active│
+├──────────────────────────┼────────────┼──────────┼────────────┼────────────┤
+│ Acme Corp                │ acme.com   │ paying   │ $60,000.00 │ 2d ago     │
+│ Globex Inc               │ globex.com │ trialing │ $0.00      │ 5h ago     │
+└──────────────────────────┴────────────┴──────────┴────────────┴────────────┘
 Showing 20 of 150 total. Next page: --cursor cursor_abc123
 ```
 
@@ -108,7 +108,7 @@ When JSON mode is active, all output is pretty-printed JSON on stdout:
       "domain": "acme.com"
     }
   ],
-  "pagination": {
+  "page": {
     "hasMore": true,
     "nextCursor": "cursor_abc123",
     "total": 150
@@ -195,12 +195,12 @@ The CLI formats values for readability in TTY mode:
 
 | Type | Raw value | Displayed as |
 |------|-----------|-------------|
-| ARR | `{ "amount": 6000000, "currency": "USD", "estimated": false }` | `$60,000` |
+| ARR | `{ "value": { "amount": 6000000, "currency": "USD", "decimals": 2, "formatted": "$60,000.00" }, "estimated": false }` | `$60,000.00` |
 | Date | `2025-02-10T15:30:00Z` | `2d ago` |
 | Long names | `Very Long Customer Name Inc` | `Very Long Custo...` |
 | Missing values | `null` / `undefined` | `--` |
 
-The ARR column is the annualized revenue run rate, the same figure the Outlit app shows, formatted from `arr.amount` and `arr.currency` the way the app formats it: the amount is converted using the currency's own minor-unit digits (cents for USD, EUR, GBP, CAD and AUD; none for JPY; three for KWD; ISK and UGX stay in hundredths, as Stripe keeps them) and shown in whole units with the currency symbol, for example `$60,000` or `A$12,000`. An estimate (usage or per-seat) is prefixed with `~`, a currency code the CLI doesn't recognize shows the raw amount followed by the code, and a customer with no known ARR shows `--`. Use `--json` for the raw `arr` object.
+The ARR column is the annualized revenue run rate, the same figure the Outlit app shows, printed as the API's own display text for the amount (`arr.value.formatted`), for example `$60,000.00` or `A$12,000.00`. An estimate (usage or per-seat) is prefixed with `~`, and a customer with no known ARR shows `--`. Use `--json` for the raw `arr` object.
 
 ### Relative date format
 
@@ -231,10 +231,10 @@ while true; do
 
   jq -r '.items[].domain' <<< "$PAGE" >> all_domains.txt
 
-  HAS_MORE=$(jq -r '.pagination.hasMore' <<< "$PAGE")
+  HAS_MORE=$(jq -r '.page.hasMore' <<< "$PAGE")
   [ "$HAS_MORE" = "false" ] && break
 
-  CURSOR=$(jq -r '.pagination.nextCursor' <<< "$PAGE")
+  CURSOR=$(jq -r '.page.nextCursor' <<< "$PAGE")
 done
 ```
 
@@ -242,7 +242,7 @@ done
 
 ```bash
 outlit customers list --limit 100 --json \
-  | jq -r '.items[] | [.domain, .billingStatus, .arr.amount, .arr.currency] | @csv'
+  | jq -r '.items[] | [.domain, .billingStatus, .arr.value.amount, .arr.value.currency] | @csv'
 ```
 
 ### CI health check

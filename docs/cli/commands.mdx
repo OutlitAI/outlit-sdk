@@ -97,29 +97,29 @@ outlit customers list [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--billing-status` | string | — | Filter by billing status: `NONE`, `TRIALING`, `PAYING`, `PAST_DUE`, `CHURNED` |
+| `--billing-status` | string | — | Filter by billing status: `none`, `trialing`, `paying`, `past_due`, `churned`. Separate several with commas (for example `paying,past_due`) |
 | `--arr-above` | number | — | ARR floor per year, in the billing provider's minor units: cents for USD, EUR, GBP, and CAD (e.g. `1200000` for $12,000/yr in USD). Customers whose ARR is unknown never match |
 | `--arr-below` | number | — | ARR ceiling per year, in the same units as `--arr-above` |
-| `--currency` | string | — | Only customers whose ARR is in this ISO 4217 currency (e.g. `USD`). ARR is never converted between currencies, so `--order-by arr_cents` and the ARR bounds compare amounts in each customer's own currency; the JSON response's `arrCurrencies` lists the currencies it compared |
+| `--currency` | string | — | Only customers whose ARR is in this ISO 4217 currency (e.g. `USD`). ARR is never converted between currencies, so `--order-by arr` and the ARR bounds compare amounts in each customer's own currency; the JSON response's `arrCurrencies` lists the currencies it compared |
 | `--no-activity-in` | string | — | Inactive for period: `7d`, `14d`, `30d`, `90d` |
 | `--has-activity-in` | string | — | Active within period: `7d`, `14d`, `30d`, `90d` |
 | `--trait` | string | — | Exact trait filters as comma-separated `key=value` pairs (for example `segment=enterprise,active=true`) |
 | `--activated-since` | string | — | Company activation at or after an ISO-8601 datetime; explicit offsets are accepted |
 | `--search` | string | — | Search by name or domain |
-| `--order-by` | string | `last_activity_at` | Sort field: `last_activity_at`, `first_seen_at`, `name`, `arr_cents` (customers with unknown ARR sort last when descending) |
+| `--order-by` | string | `last_activity_at` | Sort field: `last_activity_at`, `first_synced_at`, `name`, `arr` (customers with unknown ARR sort last when descending) |
 | `--order-direction` | string | `desc` | Sort direction: `asc`, `desc` |
 | `--limit` | number | `20` | Results per page (1–100) |
-| `--cursor` | string | — | Pagination cursor from a previous response |
+| `--cursor` | string | — | Cursor from a previous response (`page.nextCursor`) |
 
 ### Examples
 
 ```bash
 # Paying customers inactive for 30 days
-outlit customers list --billing-status PAYING --no-activity-in 30d
+outlit customers list --billing-status paying --no-activity-in 30d
 
 # High-ARR customers sorted by revenue (the threshold is in each customer's own billing
 # currency: $6,000 for USD, €6,000 for EUR)
-outlit customers list --arr-above 600000 --order-by arr_cents --order-direction desc
+outlit customers list --arr-above 600000 --order-by arr --order-direction desc
 
 # Search for a customer
 outlit customers list --search "acme"
@@ -143,28 +143,35 @@ outlit customers list --json | jq '.items[] | {domain, activatedAt}'
       "id": "550e8400-e29b-41d4-a716-446655440000",
       "name": "Acme Corp",
       "domain": "acme.com",
-      "billingStatus": "PAYING",
-      "arr": { "amount": 6000000, "currency": "USD", "estimated": false },
+      "billingStatus": "paying",
+      "arr": {
+        "value": { "amount": 6000000, "currency": "USD", "decimals": 2, "formatted": "$60,000.00" },
+        "estimated": false,
+        "lifecycle": "active"
+      },
       "contactCount": 42,
-      "firstSeenAt": "2025-01-02T10:00:00Z",
+      "outlit": { "firstSyncedAt": "2025-01-02T10:00:00Z" },
       "lastActivityAt": "2025-02-10T15:30:00Z",
       "activatedAt": "2025-01-20T09:15:00Z",
       "owner": null,
       "daysSinceActivity": 3
     }
   ],
-  "pagination": {
+  "page": {
     "hasMore": true,
     "nextCursor": "cursor_abc123",
     "total": 150
+  },
+  "totals": {
+    "arr": [{ "amount": 900000000, "currency": "USD", "decimals": 2, "formatted": "$9,000,000.00" }]
   }
 }
 ```
 
-`arr` is the annualized revenue run rate, the same figure the Outlit app shows. `arr.amount` is an integer in the billing provider's units for `arr.currency`. For USD, EUR, GBP, and CAD this is cents: `6000000` is $60,000 ARR for a customer billed in USD. Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). `arr.estimated` is `true` when the amount includes a usage or per-seat estimate (shown as `~` in the app). `arr.amount` is `0` for a churned, paused, or trialing customer, and `arr` is `null` when the app shows none.
+`arr` is the annualized revenue run rate, the same figure the Outlit app shows. `arr.value` is a money amount: `amount` is an integer in minor units, `decimals` says how many digits are after the decimal point, and `formatted` is ready to display (`6000000` with 2 decimals is $60,000.00 for a customer billed in USD). Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). `arr.estimated` is `true` when the amount includes a usage or per-seat estimate (shown as `~` in the app). `arr.value.amount` is `0` for a churned, paused, or trialing customer, and `arr` is `null` when the app shows none. `totals.arr` adds up the ARR of every matched customer, one amount per currency. `outlit.firstSyncedAt` is when Outlit first synced the customer.
 
 <Info>
-  `--mrr-above` and `--mrr-below` (treated as monthly amounts, times 12) and `--order-by mrr_cents` still work for compatibility but are deprecated. Use `--arr-above`, `--arr-below`, and `--order-by arr_cents`.
+  `--mrr-above` and `--mrr-below` (treated as monthly amounts, times 12) and the earlier uppercase `--billing-status PAYING` and sort names `arr_cents`, `mrr_cents` and `first_seen_at` still work for compatibility but are deprecated. Use `--arr-above`, `--arr-below`, lowercase statuses, and `--order-by arr` or `first_synced_at`.
 </Info>
 
 ### Pagination
@@ -176,7 +183,7 @@ Use `--cursor` to page through results:
 outlit customers list --limit 50 --json > page1.json
 
 # Next page
-CURSOR=$(jq -r '.pagination.nextCursor' page1.json)
+CURSOR=$(jq -r '.page.nextCursor' page1.json)
 outlit customers list --limit 50 --cursor "$CURSOR" --json
 ```
 
@@ -204,9 +211,9 @@ outlit customers get <customer> [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--include` | string | — | Comma-separated sections: `users`, `revenue`, `recentTimeline`, `behaviorMetrics`, `enrichment`, `renewal`, `crm`, `links` |
+| `--include` | string | — | Comma-separated sections: `users`, `revenue`, `billing`, `recentTimeline`, `behaviorMetrics`, `enrichment`, `renewal`, `crm`, `links` |
 | `--timeframe` | string | `30d` | Lookback window for included sections: `7d`, `14d`, `30d`, `90d` |
-| `--subscriptions` | string | `live` | With `--include revenue`: `live`, or `all` to add the 20 most recently canceled subscriptions |
+| `--subscriptions` | string | `live` | With `--include billing`: `live`, or `all` to add the 20 most recently canceled subscriptions |
 
 ### Examples
 
@@ -229,94 +236,122 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "name": "Acme Corp",
     "domain": "acme.com",
-    "billingStatus": "PAYING",
+    "billingStatus": "paying",
     "activatedAt": "2025-01-20T09:15:00Z",
-    "firstSeenAt": "2025-01-02T10:00:00Z",
     "lastActivityAt": "2025-02-10T15:30:00Z",
-    "owner": null
+    "owner": null,
+    "outlit": { "firstSyncedAt": "2025-01-02T10:00:00Z" }
   },
-  "users": [
-    {
-      "id": "user-uuid",
-      "name": "Jane Doe",
-      "email": "jane@acme.com",
-      "journeyStage": "ENGAGED",
-      "lastActivityAt": "2025-02-10T15:30:00Z",
-      "relationshipRole": "Champion",
-      "jobTitle": "VP of Product",
-      "department": "Product",
-      "employmentStartDate": "2023-04-10",
-      "sources": [
-        {
-          "system": "hubspot",
-          "kind": "contact",
-          "count": null,
-          "firstSeenAt": "2024-11-04T16:15:01.000Z",
-          "lastSeenAt": null
-        },
-        {
-          "system": "gong",
-          "kind": "call",
-          "count": 4,
-          "firstSeenAt": "2025-01-06T17:00:00.000Z",
-          "lastSeenAt": "2025-02-10T15:30:00.000Z"
-        }
-      ]
-    }
-  ],
-  "revenue": {
-    "arr": {
-      "amount": 6000000,
-      "currency": "USD",
-      "estimated": false,
-      "lifecycle": "active",
-      "parts": { "subscriptions": 6000000, "usage": null, "invoicedLast12Months": 0 }
-    },
-    "lifetimeRevenue": 2400000,
-    "lifetimeRevenueCurrency": "USD",
-    "activeSubscriptions": 1,
-    "subscriptions": [
+  "users": {
+    "status": "available",
+    "asOf": "2025-02-11T09:00:00.000Z",
+    "data": [
       {
-        "id": "sub_1Q2w3E",
-        "status": "active",
-        "paused": false,
-        "currentPeriodEnd": "2026-03-01T00:00:00.000Z",
-        "cancelAtPeriodEnd": false,
-        "cancelAt": null,
-        "billingAccountId": "cus_4Fg7Hj",
-        "endedAt": null,
-        "items": [
+        "id": "user-uuid",
+        "name": "Jane Doe",
+        "email": "jane@acme.com",
+        "journeyStage": "ENGAGED",
+        "lastActivityAt": "2025-02-10T15:30:00Z",
+        "relationshipRole": "Champion",
+        "jobTitle": "VP of Product",
+        "department": "Product",
+        "employmentStartDate": "2023-04-10",
+        "sources": [
           {
-            "productId": "prod_9x8Y",
-            "productName": "Platform",
-            "priceId": "price_7Kp2",
-            "quantity": 1,
-            "unitAmount": 6000000,
-            "currency": "USD",
-            "interval": "year",
-            "intervalCount": 1,
-            "usageType": "licensed",
-            "billingScheme": "per_unit"
+            "system": "hubspot",
+            "kind": "contact",
+            "count": null,
+            "firstSeenAt": "2024-11-04T16:15:01.000Z",
+            "lastSeenAt": null
+          },
+          {
+            "system": "gong",
+            "kind": "call",
+            "count": 4,
+            "firstSeenAt": "2025-01-06T17:00:00.000Z",
+            "lastSeenAt": "2025-02-10T15:30:00.000Z"
           }
         ]
       }
-    ],
-    "overdueInvoices": [],
-    "billingAccounts": [{ "provider": "stripe", "id": "cus_4Fg7Hj" }]
+    ]
   },
-  "renewal": { "date": "2026-03-01", "source": "billing" },
-  "recentTimeline": [
-    {
-      "type": "PAGE_VIEW",
-      "title": "Pricing page viewed",
-      "contact": "jane@acme.com",
-      "occurredAt": "2025-02-10T15:30:00Z"
+  "revenue": {
+    "status": "available",
+    "asOf": "2025-02-11T09:00:00.000Z",
+    "data": {
+      "arr": {
+        "value": { "amount": 6000000, "currency": "USD", "decimals": 2, "formatted": "$60,000.00" },
+        "estimated": false,
+        "lifecycle": "active",
+        "parts": {
+          "subscriptions": { "amount": 6000000, "currency": "USD", "decimals": 2, "formatted": "$60,000.00" },
+          "usage": null,
+          "invoicedLast12Months": { "amount": 0, "currency": "USD", "decimals": 2, "formatted": "$0.00" }
+        },
+        "basis": "subscriptions"
+      },
+      "lifetimeRevenue": [
+        { "amount": 2400000, "currency": "USD", "decimals": 2, "formatted": "$24,000.00" }
+      ],
+      "activeSubscriptions": 1
     }
-  ]
+  },
+  "billing": {
+    "status": "available",
+    "asOf": "2025-02-11T09:00:00.000Z",
+    "data": {
+      "accounts": [{ "provider": "stripe", "id": "cus_4Fg7Hj", "status": "active", "endedAt": null }],
+      "subscriptions": [
+        {
+          "id": "sub_1Q2w3E",
+          "status": "active",
+          "paused": false,
+          "currentPeriodEnd": "2026-03-01T00:00:00.000Z",
+          "cancelAtPeriodEnd": false,
+          "cancelAt": null,
+          "billingAccountId": "cus_4Fg7Hj",
+          "endedAt": null,
+          "items": [
+            {
+              "productId": "prod_9x8Y",
+              "productName": "Platform",
+              "priceId": "price_7Kp2",
+              "quantity": 1,
+              "unitAmount": { "amount": 6000000, "currency": "USD", "decimals": 2, "formatted": "$60,000.00" },
+              "interval": "year",
+              "intervalCount": 1,
+              "usageType": "licensed",
+              "billingScheme": "per_unit"
+            }
+          ]
+        }
+      ],
+      "overdueInvoices": []
+    }
+  },
+  "renewal": {
+    "status": "available",
+    "asOf": "2025-02-11T09:00:00.000Z",
+    "data": { "date": "2026-03-01", "source": "billing" }
+  },
+  "recentTimeline": {
+    "status": "available",
+    "asOf": "2025-02-11T09:00:00.000Z",
+    "data": [
+      {
+        "type": "PAGE_VIEW",
+        "title": "Pricing page viewed",
+        "contact": "jane@acme.com",
+        "occurredAt": "2025-02-10T15:30:00Z"
+      }
+    ]
+  }
 }
 ```
 
-`revenue.arr` is the same figure the customer page shows, with its `currency`, its `estimated` flag (whether the amount includes a usage or per-seat estimate), the revenue `lifecycle` (`active`, `past_due`, `paused`, `churned`, `trialing`, or `null`), and the `parts` it is counted from: the larger of subscriptions plus usage, and `invoicedLast12Months`, the invoice charges outside any subscription (one-time invoice items) whose service began in the last 12 months. Subscription charges are never in it, so it is not the customer's total invoiced. `revenue.subscriptions` lists each live subscription (active, past due, paused or trialing) with every item, including items a given invoice doesn't bill, and `revenue.overdueInvoices` lists open invoices past their due date that still owe money, oldest first. `revenue.billingAccounts` lists every Stripe customer behind the customer, and each subscription's `billingAccountId` says which one it bills through. `--subscriptions all` adds the 20 most recently canceled subscriptions, with `endedAt`, after the live ones: use it to see whether a canceled subscription was replaced or why a customer has two billing records. Each is left out when Outlit can't read it. `revenue.arr.amount` and `revenue.lifetimeRevenue` are in the billing provider's units, like `arr` in `customers list`: for a customer billed in USD, `6000000` is $60,000 ARR and `2400000` is $24,000 of lifetime revenue; `lifetimeRevenueCurrency` names the currency of `lifetimeRevenue`. `--include renewal` returns `renewal`, the renewal date the customer page shows (`YYYY-MM-DD`) with its `source` (`outlit`, `crm`, or `billing`), or `null` when the customer has none. `--include links` returns `links.records`: every record in another system linked to the customer (billing customers such as Stripe `cus_` ids, CRM and support accounts, product analytics groups, Slack channels, and the product's own customer id), each with its `kind`, `provider`, `id`, `connectionId`, and `linkedAt` (when Outlit linked it). Up to 50 are listed, and `links.omitted` counts the rest.
+Every included section is an object with a `status`. `"available"` carries `asOf` (when it was read) and `data`. Any other status, `"empty"`, `"not_connected"`, `"not_synced"` or `"unavailable"`, has a `reason` instead of `data`, and sometimes a `next` call to make, so a section with nothing to show is told apart from one that was not read.
+
+`revenue.data.arr` is the same figure the customer page shows, with its `value` (a money amount), its `estimated` flag (whether the amount includes a usage or per-seat estimate), the revenue `lifecycle` (`active`, `past_due`, `paused`, `churned`, `trialing`, or `null`), and the `parts` it is counted from: the larger of subscriptions plus usage, and `invoicedLast12Months`, the invoice charges outside any subscription (one-time invoice items) whose service began in the last 12 months. Subscription charges are never in it, so it is not the customer's total invoiced. `revenue.data.lifetimeRevenue` lists what the customer has paid to date, one money amount per currency. `--include billing` returns `billing.data`: `subscriptions` lists each live subscription (active, past due, paused or trialing) with every item, including items a given invoice doesn't bill, `overdueInvoices` lists open invoices past their due date that still owe money, oldest first, and `accounts` lists every Stripe customer behind the customer, each with its `status` (`active` or `ended`); each subscription's `billingAccountId` says which one it bills through. `--subscriptions all` adds the 20 most recently canceled subscriptions, with `endedAt`, after the live ones: use it to see whether a canceled subscription was replaced or why a customer has two billing records. Each is `null` when Outlit can't read it. Money amounts have `amount` in minor units, `decimals` and a display-ready `formatted`: for a customer billed in USD, `6000000` is $60,000.00 of ARR and `2400000` is $24,000.00 of lifetime revenue. `--include renewal` returns `renewal.data`, the renewal date the customer page shows (`YYYY-MM-DD`) with its `source` (`outlit`, `crm`, or `billing`); the section is `empty` when the customer has none. `--include links` returns `links.data.records`: every record in another system linked to the customer (billing customers such as Stripe `cus_` ids, CRM and support accounts, product analytics groups, Slack channels, and the product's own customer id), each with its `kind`, `provider`, `id`, `connectionId`, and `linkedAt` (when Outlit linked it). Up to 50 are listed, and `links.data.omitted` counts the rest.
 
 <Info>
   `customer.activatedAt` is an ISO-8601 timestamp when Outlit has recorded company activation, and `null` otherwise. Contact journey stages remain separate under

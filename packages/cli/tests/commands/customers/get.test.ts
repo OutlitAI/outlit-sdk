@@ -12,7 +12,7 @@ const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
     id: "1",
     name: "Acme Corp",
     domain: "acme.com",
-    billingStatus: "PAYING",
+    billingStatus: "paying",
     activatedAt: "2026-07-28T20:00:00.000Z",
   },
 }))
@@ -102,11 +102,11 @@ describe("customers get", () => {
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await getCmd.run!({
-        args: { customer: "acme.com", include: "revenue", subscriptions: "all", json: true },
+        args: { customer: "acme.com", include: "billing", subscriptions: "all", json: true },
       } as Parameters<NonNullable<typeof getCmd.run>>[0])
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_get_customer",
-        expect.objectContaining({ include: ["revenue"], subscriptions: "all" }),
+        expect.objectContaining({ include: ["billing"], subscriptions: "all" }),
       )
     } finally {
       writeSpy.mockRestore()

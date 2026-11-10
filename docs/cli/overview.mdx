@@ -65,7 +65,7 @@ outlit --version
   <Step title="Query your data">
     ```bash
     # List paying customers
-    outlit customers list --billing-status PAYING
+    outlit customers list --billing-status paying
 
     # Get a customer profile
     outlit customers get acme.com --include users,revenue,recentTimeline
@@ -141,7 +141,7 @@ ok_ab...1234 (config)
 | Command | Description |
 |---------|-------------|
 | [`activation`](/cli/commands#activation) | Read, preview against past events, update, or disable the exact product event used for contact and company activation |
-| [`customers list`](/cli/commands#customers-list) | Filter and list customers by billing status, MRR, activity, and traits |
+| [`customers list`](/cli/commands#customers-list) | Filter and list customers by billing status, ARR, activity, and traits |
 | [`customers get`](/cli/commands#customers-get) | Get a detailed customer profile with optional sections (users, revenue, etc.) |
 | [`customers features`](/cli/commands#customers-features) | Read event-based and imported metered Feature usage for one authorized customer |
 | [`customers credits`](/cli/commands#customers-credits) | Read imported credit pools and burn summaries for one authorized customer |

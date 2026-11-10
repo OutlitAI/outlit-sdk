@@ -80,7 +80,7 @@ Once the skill is installed, OpenClaw learns how to use the full `outlit` CLI. Y
 
 | Ask OpenClaw... | What it runs |
 |----------------|-------------|
-| "Show me paying customers who went silent this month" | `outlit customers list --billing-status PAYING --no-activity-in 30d` |
+| "Show me paying customers who went silent this month" | `outlit customers list --billing-status paying --no-activity-in 30d` |
 | "Get the full profile for acme.com" | `outlit customers get acme.com --include users,revenue,recentTimeline` |
 | "What's been happening across Acme's customer communications?" | `outlit customers timeline acme.com --channels COMMUNICATION --limit 50` |
 | "Find inactive users at Acme Corp" | `outlit users list --customer-id <customer-uuid> --journey-stage INACTIVE` |
@@ -118,7 +118,7 @@ openclaw cron add \
   --name "Trial Health Check" \
   --cron "0 9 * * *" \
   --tz "America/New_York" \
-  --message "Run: outlit customers list --billing-status TRIALING --no-activity-in 7d. Summarize as a trial health report, list each trial, days since last activity, and suggest an outreach action." \
+  --message "Run: outlit customers list --billing-status trialing --no-activity-in 7d. Summarize as a trial health report, list each trial, days since last activity, and suggest an outreach action." \
   --announce
 ```
 

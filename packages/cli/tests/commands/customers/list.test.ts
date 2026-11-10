@@ -16,11 +16,11 @@ const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
       id: "1",
       name: "Acme",
       domain: "acme.com",
-      billingStatus: "PAYING",
+      billingStatus: "paying",
       activatedAt: null,
     },
   ],
-  pagination: { hasMore: false, nextCursor: null, total: 1 },
+  page: { hasMore: false, nextCursor: null, total: 1 },
 }))
 
 mock.module("../../../src/lib/client", () => ({
@@ -39,7 +39,7 @@ describe("customers list", () => {
     mockCallTool.mockClear()
   })
 
-  test("calls outlit_list_customers with billingStatus when --billing-status is set", async () => {
+  test("sends --billing-status as lowercase filters.billingStatus, accepting the old uppercase", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -49,14 +49,24 @@ describe("customers list", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
-        expect.objectContaining({ billingStatus: "PAYING" }),
+        expect.objectContaining({ filters: { billingStatus: ["paying"] } }),
+      )
+
+      mockCallTool.mockClear()
+      await listCmd.run!({
+        args: { "billing-status": "paying,past_due", json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({ filters: { billingStatus: ["paying", "past_due"] } }),
       )
     } finally {
       writeSpy.mockRestore()
     }
   })
 
-  test("still maps the previously published --mrr-above spelling", async () => {
+  test("still maps the previously published --mrr-above spelling to twelve months of it", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -67,14 +77,14 @@ describe("customers list", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
-        expect.objectContaining({ mrrAbove: 10000 }),
+        expect.objectContaining({ filters: { arr: { above: 120000 } } }),
       )
     } finally {
       writeSpy.mockRestore()
     }
   })
 
-  test("passes arrAbove and arrBelow as numbers", async () => {
+  test("passes filters.arr above and below as numbers", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -84,14 +94,14 @@ describe("customers list", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
-        expect.objectContaining({ arrAbove: 1200000, arrBelow: 5000000 }),
+        expect.objectContaining({ filters: { arr: { above: 1200000, below: 5000000 } } }),
       )
     } finally {
       writeSpy.mockRestore()
     }
   })
 
-  test("passes --currency as arrCurrency", async () => {
+  test("passes --currency as filters.arr.currency and maps the old arr_cents sort to arr", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -101,7 +111,7 @@ describe("customers list", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
-        expect.objectContaining({ arrCurrency: "EUR" }),
+        expect.objectContaining({ filters: { arr: { currency: "EUR" } }, orderBy: "arr" }),
       )
     } finally {
       writeSpy.mockRestore()
@@ -120,7 +130,7 @@ describe("customers list", () => {
     expect(mockCallTool).not.toHaveBeenCalled()
   })
 
-  test("still maps the previously published --mrr-below spelling", async () => {
+  test("still maps the previously published --mrr-below spelling to twelve months of it", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -131,14 +141,14 @@ describe("customers list", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
-        expect.objectContaining({ mrrBelow: 2500 }),
+        expect.objectContaining({ filters: { arr: { below: 30000 } } }),
       )
     } finally {
       writeSpy.mockRestore()
     }
   })
 
-  test("passes noActivityInLast when --no-activity-in is set", async () => {
+  test("passes filters.activity.notWithin when --no-activity-in is set", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -148,7 +158,7 @@ describe("customers list", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
-        expect.objectContaining({ noActivityInLast: "30d" }),
+        expect.objectContaining({ filters: { activity: { notWithin: "30d" } } }),
       )
     } finally {
       writeSpy.mockRestore()
@@ -171,9 +181,7 @@ describe("customers list", () => {
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
         expect.objectContaining({
-          ownerId: "user_123",
-          ownerEmail: "kevin@nooks.ai",
-          hasOwner: true,
+          filters: { owner: { id: "user_123", email: "kevin@nooks.ai", has: true } },
         }),
       )
     } finally {
@@ -191,7 +199,9 @@ describe("customers list", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
-        expect.objectContaining({ activatedSince: "2026-07-01T00:00:00.000Z" }),
+        expect.objectContaining({
+          filters: { activity: { activatedSince: "2026-07-01T00:00:00.000Z" } },
+        }),
       )
     } finally {
       writeSpy.mockRestore()
@@ -208,7 +218,9 @@ describe("customers list", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
-        expect.objectContaining({ activatedSince: "2026-07-01T00:00:00+05:30" }),
+        expect.objectContaining({
+          filters: { activity: { activatedSince: "2026-07-01T00:00:00+05:30" } },
+        }),
       )
     } finally {
       writeSpy.mockRestore()
@@ -266,7 +278,7 @@ describe("customers list", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
-        expect.objectContaining({ arrAbove: 0 }),
+        expect.objectContaining({ filters: { arr: { above: 0 } } }),
       )
     } finally {
       writeSpy.mockRestore()
@@ -283,7 +295,7 @@ describe("customers list", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
-        expect.objectContaining({ noActivityInLast: "30d", limit: 3 }),
+        expect.objectContaining({ filters: { activity: { notWithin: "30d" } }, limit: 3 }),
       )
     } finally {
       writeSpy.mockRestore()
@@ -300,7 +312,7 @@ describe("customers list", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
-        expect.objectContaining({ noActivityInLast: "30d" }),
+        expect.objectContaining({ filters: { activity: { notWithin: "30d" } } }),
       )
     } finally {
       writeSpy.mockRestore()
@@ -314,13 +326,13 @@ describe("customers list", () => {
           id: "1",
           name: "Future Activity",
           domain: "future.example",
-          billingStatus: "NONE",
+          billingStatus: "none",
           activatedAt: null,
           lastActivityAt: "2026-05-05 19:00:00.000",
           daysSinceActivity: -9,
         },
       ],
-      pagination: { hasMore: false, nextCursor: null, total: 1 },
+      page: { hasMore: false, nextCursor: null, total: 1 },
     }))
 
     const { default: listCmd } = await import("../../../src/commands/customers/list")
@@ -341,7 +353,7 @@ describe("customers list", () => {
     }
   })
 
-  test("maps --trait filters into traitFilters params", async () => {
+  test("maps --trait filters into filters.fields trait equality filters", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -352,10 +364,12 @@ describe("customers list", () => {
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_customers",
         expect.objectContaining({
-          traitFilters: {
-            segment: "enterprise",
-            active: true,
-            seats: 25,
+          filters: {
+            fields: [
+              { field: { source: "traits", key: "segment" }, op: "eq", value: "enterprise" },
+              { field: { source: "traits", key: "active" }, op: "eq", value: true },
+              { field: { source: "traits", key: "seats" }, op: "eq", value: 25 },
+            ],
           },
         }),
       )
@@ -364,7 +378,7 @@ describe("customers list", () => {
     }
   })
 
-  test("omits traitFilters when --trait is only whitespace", async () => {
+  test("omits filters when --trait is only whitespace", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -376,10 +390,47 @@ describe("customers list", () => {
       } as Parameters<NonNullable<typeof listCmd.run>>[0])
 
       const [[, params]] = mockCallTool.mock.calls as [[string, Record<string, unknown>]]
-      expect(params).not.toHaveProperty("traitFilters")
+      expect(params).not.toHaveProperty("filters")
     } finally {
       writeSpy.mockRestore()
     }
+  })
+
+  test("maps --search, --has-activity-in and the old first_seen_at sort", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: {
+          search: "acme",
+          "has-activity-in": "7d",
+          "order-by": "first_seen_at",
+          "order-direction": "asc",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({
+          filters: { search: "acme", activity: { within: "7d" } },
+          orderBy: "first_synced_at",
+          orderDirection: "asc",
+        }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("advertises only the current sort names", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const meta = typeof listCmd.meta === "function" ? await listCmd.meta() : await listCmd.meta
+    const description = meta?.description ?? ""
+
+    expect(description).toContain("last_activity_at, first_synced_at, name, arr")
+    expect(description).not.toContain("arr_cents")
+    expect(description).not.toContain("first_seen_at")
   })
 
   test("outputs JSON result to stdout", async () => {
@@ -452,12 +503,16 @@ describe("customers list", () => {
               id: "1",
               name: "Acme",
               domain: "acme.com",
-              billingStatus: "PAYING",
+              billingStatus: "paying",
               activatedAt: null,
-              arr: { amount: 1200000, currency: "USD", estimated: false },
+              arr: {
+                value: { amount: 1200000, currency: "USD", decimals: 2, formatted: "$12,000.00" },
+                estimated: false,
+                lifecycle: "active",
+              },
             },
           ],
-          pagination: { hasMore: false, nextCursor: null, total: 1 },
+          page: { hasMore: false, nextCursor: null, total: 1 },
         }) as never,
     )
     const { default: listCmd } = await import("../../../src/commands/customers/list")
@@ -473,10 +528,10 @@ describe("customers list", () => {
       expect(output).toContain("Domain")
       expect(output).toContain("Billing")
       expect(output).toContain("ARR")
-      expect(output).toContain("$12,000")
+      expect(output).toContain("$12,000.00")
       expect(output).toContain("Acme")
       expect(output).toContain("acme.com")
-      expect(output).toContain("PAYING")
+      expect(output).toContain("paying")
     } finally {
       logSpy.mockRestore()
       setNonInteractive()

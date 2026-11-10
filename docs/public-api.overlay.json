@@ -37,9 +37,9 @@
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_crm_fields')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_customer_fields')]",
       "update": {
-        "title": "List CRM fields"
+        "title": "List customer fields"
       }
     },
     {
@@ -349,9 +349,9 @@
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_list_crm_fields']",
+      "target": "$.components.schemas['ToolOutput_outlit_list_customer_fields']",
       "update": {
-        "title": "List CRM fields"
+        "title": "List customer fields"
       }
     },
     {
