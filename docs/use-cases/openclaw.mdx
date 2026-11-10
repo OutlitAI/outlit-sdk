@@ -96,19 +96,6 @@ The Outlit skill guides OpenClaw through JSON responses, money values in the bil
 
 OpenClaw can deliver a recurring summary of Outlit data to your messaging channel. Its cron jobs read context; they do not replace the churn and renewal monitoring Outlit runs in **Attention**.
 
-### Open attention digest (daily)
-
-Start with the items Outlit has already assessed and placed in **Attention**.
-
-```bash
-openclaw cron add \
-  --name "Open Attention Digest" \
-  --cron "0 9 * * *" \
-  --tz "America/New_York" \
-  --message "Run: outlit attention list --json. Summarize the open items by customer and priority, with the evidence available in each item. Link each item for human review. Do not infer that an empty list means monitoring is inactive." \
-  --announce
-```
-
 ### Trial health check (daily)
 
 Trials that went quiet after a week probably need a nudge before expiration.

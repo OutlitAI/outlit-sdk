@@ -54,7 +54,7 @@ async function startCli() {
         "",
         "Toolsets (how Outlit groups its agent tools):",
         "  core      customers, people, facts, sources, search, sql, schema",
-        "  work      attention",
+        "  work      tasks (agent tools only; no CLI commands)",
         "  identity  customers identity, merge, merge-status",
         "  admin     ws-users, customers owner/grant/revoke, destinations, integrations,",
         "            settings, activation, features",
@@ -66,7 +66,6 @@ async function startCli() {
     subCommands: {
       auth: () => import("./commands/auth/index").then((m) => m.default),
       activation: () => import("./commands/activation/index").then((m) => m.default),
-      attention: () => import("./commands/attention/index").then((m) => m.default),
       customers: () => import("./commands/customers/index").then((m) => m.default),
       identity: () => import("./commands/identity/index").then((m) => m.default),
       people: () => import("./commands/people/index").then((m) => m.default),

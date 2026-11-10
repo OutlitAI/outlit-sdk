@@ -116,8 +116,6 @@ describe("createOutlitPiExtension", () => {
     expect(allPublicToolNames).toContain("outlit_list_people")
     expect(allPublicToolNames).toContain("outlit_list_toolsets")
     expect(allPublicToolNames).toContain("outlit_load_toolset")
-    expect(allPublicToolNames).toContain("outlit_list_cases")
-    expect(allPublicToolNames).toContain("outlit_get_case")
     expect(allPublicToolNames).toContain("outlit_list_features")
     expect(allPublicToolNames).toContain("outlit_create_feature")
     expect(allPublicToolNames).toContain("outlit_archive_feature")

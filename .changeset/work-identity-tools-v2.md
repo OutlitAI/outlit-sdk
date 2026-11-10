@@ -4,7 +4,7 @@
 "@outlit/pi": major
 ---
 
-The work and identity tools move to the Agent API v2 shapes. This ships in the same release as the customer and context tools (`customer-tools-v2`, `context-tools-v2`), so there is one major bump. Eleven tools change; their commands are unchanged. Core maps the old tool names and input spellings until 2026-12-11, and the old outputs are gone.
+The work and identity tools move to the Agent API v2 shapes. This ships in the same release as the customer and context tools (`customer-tools-v2`, `context-tools-v2`), so there is one major bump. Nine tools change; their commands are unchanged. Core maps the old tool names and input spellings until 2026-12-11, and the old outputs are gone.
 
 **Tool renames** (the default-toolset and Pi entries change with them):
 
@@ -14,15 +14,13 @@ The work and identity tools move to the Agent API v2 shapes. This ships in the s
 | `outlit_get_inbox_item` | `outlit_get_task` |
 | `outlit_act_on_inbox_item` | `outlit_act_on_task` |
 | `outlit_undo_inbox_action` | `outlit_undo_task_action` |
-| `outlit_list_attention_items` | `outlit_list_cases` |
-| `outlit_get_attention_item` | `outlit_get_case` |
 | `outlit_get_customer_identity` | `outlit_get_identity` |
 | `outlit_list_identity_merge_suggestions` | `outlit_list_merge_suggestions` |
 | `outlit_reject_identity_merge_suggestion` | `outlit_reject_merge_suggestion` |
 | `outlit_get_customer_merge_status` | `outlit_get_merge` |
 | `outlit_merge_customers` | same name, new input and output |
 
-The generated result types follow: `AttentionListResult` and `AttentionItemResult` are now the `outlit_list_cases` and `outlit_get_case` results (the type names are unchanged).
+The case tools are not part of this release: see `hide-case-tools`.
 
 **Shared shapes.**
 
@@ -35,15 +33,10 @@ The generated result types follow: `AttentionListResult` and `AttentionItemResul
 
 **Tasks.**
 
-- `outlit_list_tasks`: `owner` input is `filters.owner`. Output `owner` is a member (`{ id, name, email }`); `items[].itemId` is `items[].id`; `items[].customer` is a `CustomerRef`; `items[].partOf` is `{ work, title, case: { id } | null, renewalId }` (`case.id` is what `outlit_get_case` opens; `caseId` is gone); `items[].actions` is the actions `outlit_act_on_task` accepts now, or `null` when they could not be read in time; `complete` is `incomplete { reason, next } | null`; `pagination` is `page`.
+- `outlit_list_tasks`: `owner` input is `filters.owner`. Output `owner` is a member (`{ id, name, email }`); `items[].itemId` is `items[].id`; `items[].customer` is a `CustomerRef`; `items[].partOf` is `{ work, title, renewalId }` (`caseId` is gone); `items[].actions` is the actions `outlit_act_on_task` accepts now, or `null` when they could not be read in time; `complete` is `incomplete { reason, next } | null`; `pagination` is `page`.
 - `outlit_get_task`: `itemId` is `id`. New `include` (`source`, `draft`, `covered`; default `source` and `covered`; the prepared reply is opt-in). Output is `{ task, source?, draft?, covered? }`, each a section; `sourcePreview` is `source.data` (without `channel`) and `coveredSteps` is `covered.data.steps`.
 - `outlit_act_on_task`: `itemId` is `id`; `requestId` is required. `until` (snooze only) and `reason` (`wont_do` only) on another action are ignored and named in `ignored[]` instead of refusing the call. Output `itemIds` is `affected.taskIds`; `undoToken` and `undoUntil` are `undo`; `next` is new. An action the task cannot take is `INVALID_TOOL_INPUT` with that task's valid actions.
 - `outlit_undo_task_action`: `requestId` is required. Output `itemIds` is `affected.taskIds`; `next` is new. A token that is invalid or past `undo.until` is `INVALID_TOOL_INPUT` on `undoToken`.
-
-**Cases.**
-
-- `outlit_list_cases`: `status` is `filters.status`; `customerId` is `customer`. Items: `customer` is a `CustomerRef` and `owner` (was `customer.ownerName`) is a member with an email; `priority` is lowercase; `accountImportance { arrCents, currency, arrShareWithinCurrency, arrPercentileWithinCurrency, segments }` is `importance { arrAtAssessment: Money | null, shareWithinCurrency, percentileWithinCurrency, segments }`; `lifecycle { status, customerVisibleAt, resolvedAt, reopenedAt, createdAt, updatedAt, materialUpdateAt }` is `status`, `openedAt` (was `customerVisibleAt`), `resolvedAt`, `reopenedAt`, `materialUpdateAt` and `outlit { createdAt, updatedAt }`; `preparedActionUrl` is `preparedAction { url } | null`; `tasks` is new (the call that lists that customer's open tasks); `pagination` is `page`.
-- `outlit_get_case`: `whatChanged`, `whyItMatters`, `uncertainty`, `priorityReason` and `latestUpdate` are `assessment { ... }`. Evidence `window { start, end }` is `window { after, before }`, and each entry has `source { type, id } | null` (open it with `outlit_get_source`) with `sourceUnavailable` (`metric` or `unsupported_type`) when it is null. Excerpts and fields stay out.
 
 **Identity.**
 
@@ -53,6 +46,6 @@ The generated result types follow: `AttentionListResult` and `AttentionItemResul
 - `outlit_merge_customers`: `dryRun` is `mode: "preview" | "execute"` (default `preview`); `survivingCustomerId` and `duplicateCustomerId` are `survivor` and `duplicate` (exact IDs only); `reviewNotes` is `note` (execute only). Keys a mode does not take are ignored and named in `ignored[]`. A preview returns `{ mode, survivor, duplicate, preview { token, expiresAt }, evaluatedAt, impact, warnings, links, next }`, where `links` compares the two customers' linked records (`shared`, `conflicting`, `survivorOnly`, `duplicateOnly`, `complete`). An execute returns `{ mode, operation, next }`.
 - `outlit_get_merge`: `operationId` is `id`. Output `{ kind, operationId, survivingCustomerId, duplicateCustomerId, status, phase, error }` is `{ operation { id, survivor, duplicate, status, phase, failure }, next }`. `failure.code` is `not_started` (nothing moved: preview the pair again) or `incomplete` (Outlit is recovering it: keep polling, never execute again).
 
-**CLI.** Command paths and flag names are unchanged; the CLI maps them to the new inputs. `customers merge` maps `--execute` to `mode` and `--review-notes` to `note` (sent with `--execute` only); `--preview-token` and `--request-id` stay required with `--execute`. `identity suggestions list` maps `--customer-id` to `customer` and `--suggestion-id`, `--status` and `--confidence` to `filters`, with `--confidence` lowercase (the uppercase spelling is still accepted but no longer advertised), and `--limit` defaults to 25. `--include impact,scope,jev,cluster` is new there, and `customers identity --links` is new. `identity suggestions reject` sends a new `requestId` each run; pass `--request-id` to reuse one on a retry. `customers merge-status <operationId>` sends it as `id`. `attention list --customer-id` and `--status` map to `customer` and `filters.status`. JSON output is the v2 result (`page`, `owner`, `importance`, `operation`, `undo`).
+**CLI.** Command paths and flag names are unchanged; the CLI maps them to the new inputs. `customers merge` maps `--execute` to `mode` and `--review-notes` to `note` (sent with `--execute` only); `--preview-token` and `--request-id` stay required with `--execute`. `identity suggestions list` maps `--customer-id` to `customer` and `--suggestion-id`, `--status` and `--confidence` to `filters`, with `--confidence` lowercase (the uppercase spelling is still accepted but no longer advertised), and `--limit` defaults to 25. `--include impact,scope,jev,cluster` is new there, and `customers identity --links` is new. `identity suggestions reject` sends a new `requestId` each run; pass `--request-id` to reuse one on a retry. `customers merge-status <operationId>` sends it as `id`. JSON output is the v2 result (`page`, `owner`, `importance`, `operation`, `undo`).
 
 **Pi and skills.** The Pi toolset and skills use the new tool names.
