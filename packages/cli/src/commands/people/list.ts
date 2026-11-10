@@ -26,7 +26,11 @@ const legacyOrderFields: Record<string, (typeof personOrderFields)[number]> = {
   first_seen_at: "first_synced_at",
 }
 
-const wholeDays = /^[1-9]\d{0,2}d$/
+// The window's spelling comes from the contract: a whole number of minutes, hours or days.
+const activityWindow = new RegExp(
+  getPublicToolContract("outlit_list_people").inputSchema.properties.filters.properties.activity
+    .properties.within.pattern,
+)
 
 /** The names of a CSV flag that the contract's enum accepts, case-insensitively. */
 function parseEnumList(
@@ -81,7 +85,7 @@ export default defineCommand({
       `Journey stages: ${journeyStages.join(", ")}`,
       `Roles: ${personRoles.join(", ")}`,
       `Sort fields: ${personOrderFields.join(", ")}`,
-      "Activity periods: whole days, 1d to 730d",
+      "Activity periods: whole minutes, hours or days, such as 90m, 12h or 30d (at most 3650d)",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -143,10 +147,10 @@ export default defineCommand({
       ["--no-activity-in", "notWithin", noActivityIn],
     ] as const) {
       if (!value) continue
-      if (!wholeDays.test(value)) {
+      if (!activityWindow.test(value)) {
         return outputError(
           {
-            message: `${flag} must be whole days such as 30d (got: ${value})`,
+            message: `${flag} must be a whole number of days, hours or minutes such as 30d, 12h or 90m (got: ${value})`,
             code: "invalid_input",
           },
           json,
