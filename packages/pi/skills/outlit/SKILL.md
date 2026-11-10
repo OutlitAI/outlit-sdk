@@ -13,8 +13,8 @@ Do not invent customer state when Outlit can answer it. Call out sparse or messy
 
 ## Tool Choice
 
-- Use `outlit_list_customers` to discover customers for portfolio, segment, risk, revenue, trial, or account-health questions.
-- Use `outlit_list_customer_fields` to find a CRM, support tool or trait field and the values customers hold before filtering `outlit_list_customers` by it (`filters.fields`) or returning it (`fields`). Filters live under `filters`; `filters.partOf` lists one customer's direct subsidiaries with their ARR; page with `page.nextCursor`.
+- Use `outlit_list_customers` to discover customers for portfolio, segment, risk, revenue, trial, or account-health questions. `filters.partOf` lists one customer's direct subsidiaries with their ARR.
+- Use `outlit_list_customer_fields` to find a CRM, support tool or trait field and the values customers hold before filtering `outlit_list_customers` by it (`filters.fields`) or returning it (`fields`). Filters live under `filters`; page with `page.nextCursor`.
 - Use `outlit_list_people` for questions about the people at customers: who the champion or decision maker is, who went quiet, who last spoke to us. Pass `customer` for one account, which also lists the people its CRM companies link to. Filters live under `filters`; each person carries `lastCommunication` (the latest conversation they took part in, never product use).
 - Use `outlit_get_customer` before deep analysis of a named customer or account.
   Each included section reports a `status`: only `available` has `data`; `empty`, `not_connected`, `not_synced` and `unavailable` say why there is none, which is not the same as zero. Money values carry `formatted` text; show it as is.
