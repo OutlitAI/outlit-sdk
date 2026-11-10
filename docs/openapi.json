@@ -3443,7 +3443,8 @@
                     "opportunity",
                     "slack",
                     "person_profile",
-                    "invoice"
+                    "invoice",
+                    "crm_note"
                   ]
                 }
               },
@@ -3564,6 +3565,7 @@
                   "slack",
                   "person_profile",
                   "invoice",
+                  "crm_note",
                   "extracted"
                 ]
               },
@@ -3622,7 +3624,8 @@
                     "opportunity",
                     "slack",
                     "person_profile",
-                    "invoice"
+                    "invoice",
+                    "crm_note"
                   ]
                 }
               },
@@ -3710,7 +3713,8 @@
                     "opportunity",
                     "slack",
                     "person_profile",
-                    "invoice"
+                    "invoice",
+                    "crm_note"
                   ]
                 }
               },
@@ -11688,7 +11692,8 @@
                         "opportunity",
                         "slack",
                         "person_profile",
-                        "invoice"
+                        "invoice",
+                        "crm_note"
                       ]
                     },
                     "id": {
@@ -12128,7 +12133,8 @@
                             "opportunity",
                             "slack",
                             "person_profile",
-                            "invoice"
+                            "invoice",
+                            "crm_note"
                           ]
                         },
                         "id": {
@@ -12246,7 +12252,8 @@
                                   "opportunity",
                                   "slack",
                                   "person_profile",
-                                  "invoice"
+                                  "invoice",
+                                  "crm_note"
                                 ]
                               },
                               "id": {
@@ -12537,7 +12544,8 @@
                           "opportunity",
                           "slack",
                           "person_profile",
-                          "invoice"
+                          "invoice",
+                          "crm_note"
                         ]
                       },
                       "id": {
@@ -12655,7 +12663,8 @@
                                 "opportunity",
                                 "slack",
                                 "person_profile",
-                                "invoice"
+                                "invoice",
+                                "crm_note"
                               ]
                             },
                             "id": {
@@ -12735,7 +12744,8 @@
                   "opportunity",
                   "slack",
                   "person_profile",
-                  "invoice"
+                  "invoice",
+                  "crm_note"
                 ]
               },
               "id": {
@@ -13413,7 +13423,8 @@
                         "opportunity",
                         "slack",
                         "person_profile",
-                        "invoice"
+                        "invoice",
+                        "crm_note"
                       ]
                     },
                     "id": {
@@ -14225,7 +14236,8 @@
                                     "opportunity",
                                     "slack",
                                     "person_profile",
-                                    "invoice"
+                                    "invoice",
+                                    "crm_note"
                                   ]
                                 },
                                 "id": {
@@ -14343,7 +14355,8 @@
                                           "opportunity",
                                           "slack",
                                           "person_profile",
-                                          "invoice"
+                                          "invoice",
+                                          "crm_note"
                                         ]
                                       },
                                       "id": {
@@ -14434,7 +14447,8 @@
                             "opportunity",
                             "slack",
                             "person_profile",
-                            "invoice"
+                            "invoice",
+                            "crm_note"
                           ]
                         },
                         "id": {
@@ -14568,7 +14582,8 @@
                                 "opportunity",
                                 "slack",
                                 "person_profile",
-                                "invoice"
+                                "invoice",
+                                "crm_note"
                               ]
                             },
                             "id": {
@@ -22545,5 +22560,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "0c33495239d0609270e78ee2f7e7e05161f3c166fdc66e1a32b2d6b82e9bb5e8"
+  "x-outlit-contract-hash": "81641602d29fc9b54460f1d397b177ad782677cce17d5b7423074d615b36b755"
 }
