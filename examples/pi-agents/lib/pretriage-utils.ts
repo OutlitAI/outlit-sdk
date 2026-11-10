@@ -87,19 +87,40 @@ export function normalizeMaxPromptCustomers(value: unknown): number | undefined 
   return value
 }
 
+/** Rows per outlit_query page, its maximum. */
+const SQL_PAGE_ROWS = 1000
+/** A query keeps its first 10,000 rows, so at most this many pages exist. */
+const SQL_MAX_PAGES = 10
+
 export async function queryRows<TRow>(client: QueryClient, sql: string): Promise<TRow[]> {
-  const result = await client.callTool("outlit_query", { sql, limit: 10000 })
+  const rows: TRow[] = []
+  let cursor: string | undefined
 
-  if (!isRecord(result)) {
-    throw new Error("outlit_query returned an unexpected response")
+  for (let pageNumber = 0; pageNumber < SQL_MAX_PAGES; pageNumber++) {
+    const result = await client.callTool("outlit_query", {
+      sql,
+      limit: SQL_PAGE_ROWS,
+      ...(cursor ? { cursor } : {}),
+    })
+
+    if (!isRecord(result)) {
+      throw new Error("outlit_query returned an unexpected response")
+    }
+
+    const pageRows = result.rows
+    if (!Array.isArray(pageRows)) {
+      throw new Error("outlit_query response must include a rows array")
+    }
+    rows.push(...(pageRows as TRow[]))
+
+    const page = result.page
+    if (!isRecord(page) || page.hasMore !== true || typeof page.nextCursor !== "string") {
+      return rows
+    }
+    cursor = page.nextCursor
   }
 
-  const rows = result.data
-  if (!Array.isArray(rows)) {
-    throw new Error("outlit_query response must include a data array")
-  }
-
-  return rows as TRow[]
+  throw new Error("outlit_query returned more than 10,000 rows; narrow the query")
 }
 
 export function buildBillingScopeFilter(scope: BillingScope): BillingScopeFilter {

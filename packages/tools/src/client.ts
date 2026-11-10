@@ -6,6 +6,10 @@ import {
 } from "./generated/contracts.js"
 import type { JsonSchemaValue, PublicToolResult } from "./results.js"
 
+const toolDeprecationHeader = "outlit-deprecation"
+const toolNoticeHeader = "outlit-notice"
+const toolReplayedHeader = "idempotent-replayed"
+
 export const DEFAULT_OUTLIT_API_URL = "https://app.outlit.ai"
 
 export type OutlitToolsFetch = (
@@ -13,10 +17,31 @@ export type OutlitToolsFetch = (
   init?: RequestInit,
 ) => Promise<Response>
 
+/**
+ * What the gateway said about a call beside its result. Core sends a deprecation when the call used a
+ * retired tool name (`outlit-deprecation`, with `Deprecation` and `Sunset`), notices when it changed an
+ * old input spelling (`outlit-notice`, for example a limit clamped to the maximum), and marks a result
+ * it stored for a repeated request id (`idempotent-replayed`).
+ */
+export type OutlitToolsResponseInfo = {
+  tool: PublicToolName
+  status: number
+  /** Set when the call used a retired tool name: the tool to use and the last day the name works. */
+  deprecation?: { tool: string; use: string; until: string; message: string }
+  /** Core's `Sunset` header as sent (an HTTP date), when present. */
+  sunset?: string
+  /** What the gateway changed in the input, one sentence each. */
+  notices: string[]
+  /** True when the result was stored from an earlier call with the same request id. */
+  replayed: boolean
+}
+
 export type OutlitToolsClientOptions = {
   apiKey: string
   baseUrl?: string
   fetch?: OutlitToolsFetch
+  /** Called after every response with its deprecation, notices and replay marker. */
+  onResponse?: (info: OutlitToolsResponseInfo) => void
 }
 
 type ToolGatewayErrorProperties = typeof toolGatewayErrorSchema.properties
@@ -63,6 +88,7 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
   const key = options.apiKey.trim()
   const baseUrl = options.baseUrl ?? DEFAULT_OUTLIT_API_URL
   const fetchImpl = options.fetch ?? globalThis.fetch
+  const onResponse = options.onResponse
 
   if (!key) {
     throw new Error("apiKey is required")
@@ -97,6 +123,14 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
         ...(callOptions?.signal ? { signal: callOptions.signal } : {}),
       })
 
+      if (onResponse) {
+        try {
+          onResponse(readResponseInfo(toolName, response))
+        } catch {
+          // A reporting hook must not turn a received result into a failure.
+        }
+      }
+
       if (!response.ok) {
         const text = await response.text()
         throw new OutlitToolsApiError(response.status, text, parseGatewayError(text))
@@ -105,6 +139,52 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
       return (await response.json()) as PublicToolResult<TToolName>
     },
   }
+}
+
+function readResponseInfo(tool: PublicToolName, response: Response): OutlitToolsResponseInfo {
+  const info: OutlitToolsResponseInfo = {
+    tool,
+    status: response.status,
+    notices: parseNoticeHeader(response.headers.get(toolNoticeHeader)),
+    replayed: response.headers.get(toolReplayedHeader) === "true",
+  }
+  const deprecation = parseDeprecationHeader(response.headers.get(toolDeprecationHeader))
+  if (deprecation) info.deprecation = deprecation
+  const sunset = response.headers.get("sunset")
+  if (sunset) info.sunset = sunset
+  return info
+}
+
+function parseDeprecationHeader(value: string | null): OutlitToolsResponseInfo["deprecation"] {
+  if (!value) return undefined
+  try {
+    const parsed = JSON.parse(value) as Record<string, unknown>
+    if (
+      typeof parsed.tool === "string" &&
+      typeof parsed.use === "string" &&
+      typeof parsed.until === "string" &&
+      typeof parsed.message === "string"
+    ) {
+      return { tool: parsed.tool, use: parsed.use, until: parsed.until, message: parsed.message }
+    }
+  } catch {
+    // Not JSON: nothing to report beyond the Sunset header.
+  }
+  return undefined
+}
+
+function parseNoticeHeader(value: string | null): string[] {
+  if (!value) return []
+  try {
+    const parsed = JSON.parse(value) as unknown
+    if (Array.isArray(parsed)) {
+      return parsed.filter((notice): notice is string => typeof notice === "string")
+    }
+  } catch {
+    // A plain sentence is still a notice.
+    return [value]
+  }
+  return []
 }
 
 function parseGatewayError(text: string): ToolGatewayErrorEnvelope | undefined {
@@ -135,6 +215,9 @@ function withoutUnknownEnvelopeFields(value: unknown): unknown {
 }
 
 export type RuntimeJsonSchema = {
+  // A schema with only a description accepts any value (CRM field values do); naming the
+  // annotation keeps such a schema assignable instead of a weak type with no properties in common.
+  readonly description?: string
   readonly type?: string
   readonly const?: unknown
   readonly enum?: readonly unknown[]

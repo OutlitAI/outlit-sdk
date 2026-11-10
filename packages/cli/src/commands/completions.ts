@@ -60,6 +60,9 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--arr-above", desc: "ARR above threshold per year (minor units)" },
           { name: "--arr-below", desc: "ARR below threshold per year (minor units)" },
           { name: "--currency", desc: "Only customers whose ARR is in this currency" },
+          { name: "--renews-in", desc: "Renewal date within next_30d to next_365d" },
+          { name: "--renews-after", desc: "Renews on or after a UTC date (YYYY-MM-DD)" },
+          { name: "--renews-before", desc: "Renews before a UTC date (YYYY-MM-DD)" },
           { name: "--owner-id", desc: "Filter by owner user ID" },
           { name: "--owner-email", desc: "Filter by owner email" },
           { name: "--has-owner", desc: "Only customers with an owner" },
@@ -76,14 +79,13 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--timeframe", desc: "Metrics timeframe" },
           {
             name: "--subscriptions",
-            desc: "With revenue: live (default) or all, adding canceled ones",
+            desc: "With billing: live (default) or all, adding canceled ones",
           },
+          { name: "--weeks", desc: "With features or meters: weeks of history (1-53)" },
+          { name: "--weekly", desc: "With features or meters: add weekly usage" },
+          { name: "--limit", desc: "With features, meters or credits: items per page (1-100)" },
+          { name: "--cursor", desc: "With one paged section: its page.nextCursor" },
         ],
-      },
-      {
-        name: "relationship",
-        desc: "Get a bounded customer relationship",
-        flags: [...COMMON],
       },
       {
         name: "identity",
@@ -103,16 +105,6 @@ const COMMANDS: readonly CmdDef[] = [
         ],
       },
       { name: "merge-status", desc: "Read an admitted merge operation", flags: [...COMMON] },
-      {
-        name: "features",
-        desc: "Get event and metered Feature usage for a customer",
-        flags: [
-          ...COMMON,
-          { name: "--weeks", desc: "Historical usage window (1-53 weeks)" },
-          { name: "--weekly", desc: "Include ordered weekly usage" },
-        ],
-      },
-      { name: "credits", desc: "Get imported credit pools and burn summaries", flags: [...COMMON] },
       {
         name: "timeline",
         desc: "Show activity timeline",
@@ -228,18 +220,19 @@ const COMMANDS: readonly CmdDef[] = [
     ],
   },
   {
-    name: "users",
-    desc: "User operations",
+    name: "people",
+    desc: "People at your customers",
     subs: [
       {
         name: "list",
-        desc: "List and filter users",
+        desc: "List and filter people",
         flags: [
           ...PAGINATED,
           ...ACTIVITY_ORDER,
           { name: "--trait", desc: "Filter by trait key=value pairs" },
+          { name: "--customer", desc: "Only the people at this customer" },
           { name: "--journey-stage", desc: "Filter by journey stage" },
-          { name: "--customer-id", desc: "Filter by customer UUID" },
+          { name: "--role", desc: "Filter by role" },
           { name: "--search", desc: "Search name or email" },
         ],
       },
@@ -351,10 +344,15 @@ const COMMANDS: readonly CmdDef[] = [
     flags: [
       ...COMMON,
       { name: "--query-file", desc: "Path to .sql file" },
-      { name: "--limit", desc: "Max rows to return" },
+      { name: "--limit", desc: "Rows per page (1-1000)" },
+      { name: "--cursor", desc: "page.nextCursor from the previous page" },
     ],
   },
-  { name: "schema", desc: "Discover analytics view schemas", flags: [...COMMON] },
+  {
+    name: "schema",
+    desc: "Discover analytics views, event types and worked queries",
+    flags: [...COMMON],
+  },
   {
     name: "integrations",
     desc: "Manage platform integrations",

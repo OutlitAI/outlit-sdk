@@ -1,4 +1,3 @@
-import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
@@ -6,20 +5,14 @@ import { getClientOrExit, runTool } from "../../lib/api"
 import { requiredTrimmedString } from "../../lib/platform-input"
 import { parseBoundedInteger } from "../features/input"
 
+// The previous command for `customers get <customer> --include features,meters`, kept so scripts
+// keep working. Hidden from help and completions; the output is the get_customer result.
 export default defineCommand({
   meta: {
     name: "features",
+    hidden: true,
     description: [
-      "Read event-based and imported metered Feature usage for one authorized customer.",
-      "Unavailable source evidence remains distinct from no matches in the requested window.",
-      "Provider-defined units remain separate from linked event counts.",
-      "",
-      "The customer argument accepts a customer domain, UUID, or exact name.",
-      "",
-      "Examples:",
-      "  outlit customers features acme.com --json",
-      "  outlit customers features acme.com --weeks 6 --json",
-      "  outlit customers features acme.com --weeks 53 --weekly --json",
+      "Renamed: use `outlit customers get <customer> --include features,meters`.",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -35,7 +28,7 @@ export default defineCommand({
     weeks: { type: "string", description: "Historical usage window in weeks (1-53, default: 12)" },
     weekly: {
       type: "boolean",
-      description: "Include weekly event counts, metered quantities, and active days",
+      description: "Include weekly usage",
       default: false,
     },
   },
@@ -43,13 +36,17 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
+    const window = {
+      ...(args.weeks ? { weeks: parseBoundedInteger(args.weeks, 12, "--weeks", 1, 53, json) } : {}),
+      ...(args.weekly ? { weekly: true } : {}),
+    }
     return runTool(
       client,
-      publicToolContracts.outlit_get_customer_features.toolName,
+      "outlit_get_customer",
       {
         customer: requiredTrimmedString(args.customer, "<customer>", json),
-        weeks: parseBoundedInteger(args.weeks, 12, "--weeks", 1, 53, json),
-        ...(args.weekly ? { includeWeeklyUsage: true } : {}),
+        include: ["features", "meters"],
+        ...(Object.keys(window).length > 0 ? { features: window, meters: window } : {}),
       },
       json,
       { spinnerMessage: "Loading customer feature usage..." },

@@ -21,7 +21,7 @@ describe("runOutlitActivationPretriage", () => {
     const queryMock = vi
       .fn()
       .mockResolvedValueOnce({
-        data: [
+        rows: [
           {
             customerId: "cust_stalled",
             customerName: "Stalled Co",
@@ -39,7 +39,7 @@ describe("runOutlitActivationPretriage", () => {
         ],
       })
       .mockResolvedValueOnce({
-        data: [
+        rows: [
           {
             customerId: "cust_stalled",
             usersObserved: 2,
@@ -57,7 +57,7 @@ describe("runOutlitActivationPretriage", () => {
         ],
       })
       .mockResolvedValueOnce({
-        data: [
+        rows: [
           {
             customerId: "cust_stalled",
             firstProductEventAt: "2026-04-01T00:00:00Z",
@@ -157,7 +157,7 @@ describe("runOutlitActivationPretriage", () => {
     const queryMock = vi
       .fn()
       .mockResolvedValueOnce({
-        data: [
+        rows: [
           {
             customerId: "cust_a",
             customerName: "Alpha",
@@ -174,8 +174,8 @@ describe("runOutlitActivationPretriage", () => {
           },
         ],
       })
-      .mockResolvedValueOnce({ data: [] })
-      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
 
     await runOutlitActivationPretriage({
       client: { callTool: queryMock },
@@ -196,9 +196,9 @@ describe("createOutlitActivationPretriageTool", () => {
       client: {
         callTool: vi
           .fn()
-          .mockResolvedValueOnce({ data: [] })
-          .mockResolvedValueOnce({ data: [] })
-          .mockResolvedValueOnce({ data: [] }),
+          .mockResolvedValueOnce({ rows: [] })
+          .mockResolvedValueOnce({ rows: [] })
+          .mockResolvedValueOnce({ rows: [] }),
       },
       config: defaultActivationPretriageConfig,
       now: fixedNow,

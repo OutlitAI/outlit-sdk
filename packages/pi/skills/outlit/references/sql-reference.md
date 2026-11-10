@@ -2,14 +2,14 @@
 
 Use this when writing or debugging `outlit_query` queries.
 
-Always inspect schema first with `outlit_schema`.
+Always inspect schema first with `outlit_get_schema` (`topic: "examples"` has worked queries).
 
 ## Views
 
 - `activity`: product and communication activity
-- `customers`: customer attributes, billing, revenue (`arr_cents` with `arr_currency`; `mrr_cents` is deprecated)
+- `customers`: customer attributes, billing, revenue (`arr_amount` in minor units with `arr_currency` and `arr_decimals`; `arr_cents` and `mrr_cents` are deprecated)
 - `users`: user attributes and journey stages
-- `revenue`: daily MRR snapshots
+- `revenue`: ARR daily, one row per customer per UTC day since 2026-11-06 (`snapshot_date`, `arr_amount`, `arr_currency`, `arr_decimals`, `arr_estimated`, `revenue_lifecycle`, customer id, name, domain and status); a day with no row was not computed. It has no MRR columns
 
 ## Useful Patterns
 
@@ -20,7 +20,7 @@ toStartOfMonth(occurred_at)
 dateDiff('day', first_seen_at, now())
 occurred_at >= now() - INTERVAL 30 DAY
 countIf(billing_status = 'PAYING')
-sumIf(arr_cents, billing_status = 'PAYING' AND arr_currency = 'USD')
+sumIf(arr_amount, billing_status = 'PAYING' AND arr_currency = 'USD')
 JSONExtractString(properties, 'path')
 JSONExtractString(traits, 'plan')
 ```
@@ -35,7 +35,9 @@ Use the patterns above instead of unsupported date helpers like `DATE_SUB()`.
 - Add time filters for event queries.
 - Use `LIMIT`.
 - Prefer specific columns over `SELECT *`.
-- Divide cents by `100` for display.
+- Divide `arr_amount` by `10^arr_decimals` for display, and group by `arr_currency`: amounts in different currencies never add.
+- Count `activity` rows with `uniqExact(event_id)`, not `count()`.
+- Pages hold at most `limit` rows (default 100, max 1000); send `page.nextCursor` with the same SQL for the next page.
 
 ## Use SQL When
 

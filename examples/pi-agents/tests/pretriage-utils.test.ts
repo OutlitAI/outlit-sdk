@@ -1,5 +1,5 @@
 import { matchesGeneratedJsonSchema, publicToolContracts } from "@outlit/tools"
-import { describe, expect, test } from "vitest"
+import { describe, expect, test, vi } from "vitest"
 
 import {
   buildBillingScopeFilter,
@@ -13,12 +13,12 @@ import {
 } from "../lib/pretriage-utils.js"
 
 describe("pretriage utilities", () => {
-  test("reads SQL data through the current tool client contract", async () => {
-    const data = [{ customerId: "cust_123" }]
+  test("reads SQL rows through the current tool client contract", async () => {
+    const rows = [{ customerId: "cust_123" }]
     const response = {
-      success: true,
-      data,
-      metadata: { rowsReturned: 1, executionTimeMs: 1, truncated: false },
+      columns: [{ name: "customerId", type: "String" }],
+      rows,
+      page: { hasMore: false, nextCursor: null, total: 1 },
     }
     expect(
       matchesGeneratedJsonSchema(response, publicToolContracts.outlit_query.outputSchema),
@@ -31,7 +31,39 @@ describe("pretriage utilities", () => {
       "test",
     )
 
-    expect(await queryRows(client, "SELECT customer_id AS customerId FROM customers")).toEqual(data)
+    expect(await queryRows(client, "SELECT customer_id AS customerId FROM customers")).toEqual(rows)
+  })
+
+  test("reads every page of a result with the cursor of the page before", async () => {
+    const page = (rows: unknown[], nextCursor: string | null, total: number) => ({
+      columns: [{ name: "customerId", type: "String" }],
+      rows,
+      page: { hasMore: nextCursor !== null, nextCursor, total },
+    })
+    const callTool = vi
+      .fn()
+      .mockResolvedValueOnce(page([{ customerId: "a" }], "cursor_1", 2))
+      .mockResolvedValueOnce(page([{ customerId: "b" }], null, 2))
+
+    expect(await queryRows({ callTool } as never, "SELECT 1")).toEqual([
+      { customerId: "a" },
+      { customerId: "b" },
+    ])
+    expect(callTool.mock.calls).toEqual([
+      ["outlit_query", { sql: "SELECT 1", limit: 1000 }],
+      ["outlit_query", { sql: "SELECT 1", limit: 1000, cursor: "cursor_1" }],
+    ])
+  })
+
+  test("refuses a result that would need more than ten pages", async () => {
+    const callTool = vi.fn().mockResolvedValue({
+      columns: [],
+      rows: [],
+      page: { hasMore: true, nextCursor: "cursor_n", total: 20000 },
+    })
+
+    await expect(queryRows({ callTool } as never, "SELECT 1")).rejects.toThrow("10,000 rows")
+    expect(callTool).toHaveBeenCalledTimes(10)
   })
 
   test("normalizes event names for deterministic SQL filters", () => {

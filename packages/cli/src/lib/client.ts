@@ -7,6 +7,7 @@ import {
 } from "@outlit/tools"
 import type { ActivationPreviewInput, ActivationUpdateInput } from "./activation"
 import { DEFAULT_API_URL, OUTLIT_DASHBOARD_URL, resolveApiKey } from "./config"
+import { reportResponseNotices } from "./notices"
 
 export type SubmitFeedbackInput = {
   body: string
@@ -51,7 +52,11 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
 
   const baseUrl = process.env.OUTLIT_API_URL ?? DEFAULT_API_URL
   validateApiBaseUrl(baseUrl)
-  const toolsClient = createOutlitClient({ apiKey: credential.key, baseUrl })
+  const toolsClient = createOutlitClient({
+    apiKey: credential.key,
+    baseUrl,
+    onResponse: reportResponseNotices,
+  })
 
   return {
     key: credential.key,

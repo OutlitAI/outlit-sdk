@@ -6,8 +6,11 @@ import {
   getPublicToolContract,
   isPublicToolName,
   type OutlitToolsFetch,
+  type OutlitToolsResponseInfo,
   type PiToolName,
   piToolNames,
+  type ToolsetName,
+  toolNamesInToolsets,
 } from "@outlit/tools"
 import type { TSchema } from "@sinclair/typebox"
 
@@ -21,6 +24,11 @@ export type OutlitPiExtensionOptions = {
   baseUrl?: string
   fetch?: OutlitToolsFetch
   toolNames?: readonly PiToolName[]
+  /**
+   * Register every tool in these Core toolsets (core, work, identity, admin, meta). With `toolNames`
+   * too, both apply; with neither, the default read-only tools are registered.
+   */
+  toolsets?: readonly ToolsetName[]
 }
 
 export type OutlitPiRegistry = Pick<ExtensionAPI, "registerTool">
@@ -43,9 +51,7 @@ export function createOutlitPiExtension(options: OutlitPiExtensionOptions = {}) 
 export function createOutlitPiTools(
   options: OutlitPiExtensionOptions = {},
 ): OutlitPiToolDefinition[] {
-  return resolveToolNames(options.toolNames).map((toolName) =>
-    createOutlitPiTool(toolName, options),
-  )
+  return resolveToolNames(options).map((toolName) => createOutlitPiTool(toolName, options))
 }
 
 export function createOutlitPiTool(
@@ -69,14 +75,18 @@ export function createOutlitPiTool(
     promptSnippet: `${label}: ${firstLine(contract.description)}`,
     parameters: toPiToolParameters(contract.inputSchema),
     async execute(_toolCallId, params) {
+      let responseInfo: OutlitToolsResponseInfo | undefined
       const client = createOutlitClient({
         apiKey: resolveApiKey(options),
         baseUrl: resolveBaseUrl(options),
         fetch: options.fetch,
+        onResponse: (info) => {
+          responseInfo = info
+        },
       })
       const result = await client.callTool(toolName, normalizeToolInput(params))
 
-      return formatToolResult(toolName, result)
+      return formatToolResult(toolName, result, responseInfo)
     },
   }
 }
@@ -97,15 +107,18 @@ export function formatOutlitToolLabel(toolName: PiToolName): string {
     .join(" ")
 }
 
-function resolveToolNames(toolNames: readonly PiToolName[] | undefined): PiToolName[] {
-  const names = toolNames ?? defaultToolNames
+function resolveToolNames(options: OutlitPiExtensionOptions): PiToolName[] {
+  const names: readonly string[] = [
+    ...(options.toolNames ?? (options.toolsets ? [] : defaultToolNames)),
+    ...(options.toolsets ? toolNamesInToolsets(options.toolsets) : []),
+  ]
 
   return [...new Set(names)].map((name) => {
     if (!isPublicToolName(name)) {
       throw new Error(`Unknown Outlit public tool: ${name}`)
     }
 
-    return name
+    return name as PiToolName
   })
 }
 
@@ -144,12 +157,29 @@ function normalizeToolInput(params: unknown): Record<string, unknown> {
   return params as Record<string, unknown>
 }
 
+/** What the gateway said beside the result, as sentences for the agent: a deprecation, then notices. */
+function responseNotices(info: OutlitToolsResponseInfo | undefined): string[] {
+  if (!info) return []
+  return [
+    ...(info.deprecation ? [`${info.deprecation.message} (until ${info.deprecation.until})`] : []),
+    ...info.notices,
+  ]
+}
+
 function formatToolResult(
   toolName: PiToolName,
   result: unknown,
+  info?: OutlitToolsResponseInfo,
 ): AgentToolResult<OutlitPiToolDetails> {
+  const notices = responseNotices(info)
   return {
-    content: [{ type: "text", text: JSON.stringify(result, null, 2) ?? String(result) }],
+    content: [
+      { type: "text", text: JSON.stringify(result, null, 2) ?? String(result) },
+      // After the result, so a reader of the first block still gets the JSON alone.
+      ...(notices.length > 0
+        ? [{ type: "text" as const, text: `Notice: ${notices.join(" ")}` }]
+        : []),
+    ],
     details: {
       toolName,
       result,
@@ -164,12 +194,14 @@ function firstLine(value: string): string {
 export type { PiToolName } from "@outlit/tools"
 /** @deprecated Use PiToolName. */
 export type PublicToolName = PiToolName
+export type { ToolsetName } from "@outlit/tools"
 export {
   analyticalToolNames,
   defaultToolNames,
   piToolNames,
   piToolNames as allPublicToolNames,
   sqlToolNames,
+  toolsetNames,
 } from "@outlit/tools"
 
 export default createOutlitPiExtension()

@@ -1,12 +1,10 @@
 import { readFileSync } from "node:fs"
-import { publicToolContracts } from "@outlit/tools"
+import { schemaTables } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
 import { getClientOrExit, runTool } from "../lib/api"
 import { errorMessage, outputError } from "../lib/output"
-
-const publicSqlViews = ["activity", "customers", "users", "revenue"]
 
 export default defineCommand({
   meta: {
@@ -17,12 +15,17 @@ export default defineCommand({
       "Provide the query as a positional argument or via --query-file.",
       "When both are provided, --query-file takes precedence.",
       "",
-      `Available views: ${publicSqlViews.join(", ")}`,
+      "Run `outlit schema` first: it lists every column with its unit and currency, and worked queries.",
+      "The query runs once and its first 10,000 rows are kept for an hour; the result's page.nextCursor",
+      "reads the next page when sent back with --cursor and the same query.",
+      "",
+      `Available views: ${schemaTables.join(", ")}`,
       "",
       "Examples:",
       "  outlit sql 'SELECT * FROM activity LIMIT 10'",
       "  outlit sql --query-file ./my-query.sql",
       "  outlit sql 'SELECT count(*) FROM activity' --limit 1 --json",
+      "  outlit sql 'SELECT * FROM activity' --limit 500 --cursor <page.nextCursor>",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -41,8 +44,12 @@ export default defineCommand({
     },
     limit: {
       type: "string",
-      description: "Maximum number of rows to return. Default: 1000.",
-      default: "1000",
+      description: "Rows per page (1-1000). Default: 100.",
+      default: "100",
+    },
+    cursor: {
+      type: "string",
+      description: "page.nextCursor from the previous page of the same query",
     },
   },
   async run({ args }) {
@@ -73,13 +80,18 @@ export default defineCommand({
     }
 
     const limit = Number(args.limit)
-    if (!Number.isInteger(limit) || limit < 1 || limit > 10000) {
+    if (!Number.isInteger(limit) || limit < 1 || limit > 1000) {
       return outputError(
-        { message: "--limit must be an integer between 1 and 10000", code: "invalid_input" },
+        { message: "--limit must be an integer between 1 and 1000", code: "invalid_input" },
         json,
       )
     }
 
-    return runTool(client, publicToolContracts.outlit_query.toolName, { sql, limit }, json)
+    return runTool(
+      client,
+      "outlit_query",
+      { sql, limit, ...(args.cursor ? { cursor: args.cursor } : {}) },
+      json,
+    )
   },
 })

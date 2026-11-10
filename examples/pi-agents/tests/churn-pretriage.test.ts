@@ -149,7 +149,7 @@ describe("runOutlitChurnPretriage", () => {
     const queryMock = vi
       .fn()
       .mockResolvedValueOnce({
-        data: [
+        rows: [
           {
             customerId: "cust_a",
             customerName: "Alpha",
@@ -166,11 +166,11 @@ describe("runOutlitChurnPretriage", () => {
           },
         ],
       })
-      .mockResolvedValueOnce({ data: [] })
-      .mockResolvedValueOnce({ data: [] })
-      .mockResolvedValueOnce({ data: [] })
-      .mockResolvedValueOnce({ data: [] })
-      .mockResolvedValueOnce({ data: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
 
     await runOutlitChurnPretriage({
       client: { callTool: queryMock },
@@ -190,7 +190,7 @@ describe("runOutlitChurnPretriage", () => {
     const queryMock = vi
       .fn()
       .mockResolvedValueOnce({
-        data: [
+        rows: [
           {
             customerId: "cust_past_due",
             customerName: "Past Due Co",
@@ -229,7 +229,7 @@ describe("runOutlitChurnPretriage", () => {
         ],
       })
       .mockResolvedValueOnce({
-        data: [
+        rows: [
           {
             customerId: "cust_low_activity",
             firstMeaningfulActivityAt: "2026-02-01T00:00:00Z",
@@ -254,7 +254,7 @@ describe("runOutlitChurnPretriage", () => {
         ],
       })
       .mockResolvedValueOnce({
-        data: [
+        rows: [
           {
             customerId: "cust_drop",
             currentActiveDays: 1,
@@ -265,7 +265,7 @@ describe("runOutlitChurnPretriage", () => {
         ],
       })
       .mockResolvedValueOnce({
-        data: [
+        rows: [
           {
             customerId: "cust_user_stale",
             userId: "user_1",
@@ -287,7 +287,7 @@ describe("runOutlitChurnPretriage", () => {
         ],
       })
       .mockResolvedValueOnce({
-        data: [
+        rows: [
           {
             customerId: "cust_user_stale",
             userId: "user_1",
@@ -297,7 +297,7 @@ describe("runOutlitChurnPretriage", () => {
         ],
       })
       .mockResolvedValueOnce({
-        data: [
+        rows: [
           {
             customerId: "cust_all_inactive",
             userId: "user_2",
@@ -469,9 +469,9 @@ function createRotationQueryMock() {
 
   return vi
     .fn()
-    .mockResolvedValueOnce({ data: directoryRows })
+    .mockResolvedValueOnce({ rows: directoryRows })
     .mockResolvedValueOnce({
-      data: directoryRows.map((customer) => ({
+      rows: directoryRows.map((customer) => ({
         customerId: customer.customerId,
         firstMeaningfulActivityAt: "2026-01-01T00:00:00Z",
         lastMeaningfulActivityAt: "2026-02-01T00:00:00Z",
@@ -479,10 +479,10 @@ function createRotationQueryMock() {
         eventCount30d: 0,
       })),
     })
-    .mockResolvedValueOnce({ data: [] })
-    .mockResolvedValueOnce({ data: [] })
-    .mockResolvedValueOnce({ data: [] })
-    .mockResolvedValueOnce({ data: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
 }
 
 function createMixedDispositionQueryMock() {
@@ -500,7 +500,7 @@ function createMixedDispositionQueryMock() {
   return vi
     .fn()
     .mockResolvedValueOnce({
-      data: [
+      rows: [
         {
           customerId: "cust_likely",
           customerName: "Likely Co",
@@ -512,7 +512,7 @@ function createMixedDispositionQueryMock() {
       ],
     })
     .mockResolvedValueOnce({
-      data: investigateRows.map((customer) => ({
+      rows: investigateRows.map((customer) => ({
         customerId: customer.customerId,
         firstMeaningfulActivityAt: "2026-01-01T00:00:00Z",
         lastMeaningfulActivityAt: "2026-04-14T00:00:00Z",
@@ -521,7 +521,7 @@ function createMixedDispositionQueryMock() {
       })),
     })
     .mockResolvedValueOnce({
-      data: investigateRows.map((customer) => ({
+      rows: investigateRows.map((customer) => ({
         customerId: customer.customerId,
         currentActiveDays: 1,
         currentEventCount: 3,
@@ -529,9 +529,9 @@ function createMixedDispositionQueryMock() {
         baselineEventCount: 40,
       })),
     })
-    .mockResolvedValueOnce({ data: [] })
-    .mockResolvedValueOnce({ data: [] })
-    .mockResolvedValueOnce({ data: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
 }
 
 function createTiebreakerQueryMock() {
@@ -545,9 +545,9 @@ function createTiebreakerQueryMock() {
 
   return vi
     .fn()
-    .mockResolvedValueOnce({ data: directoryRows })
+    .mockResolvedValueOnce({ rows: directoryRows })
     .mockResolvedValueOnce({
-      data: directoryRows.map((customer) => ({
+      rows: directoryRows.map((customer) => ({
         customerId: customer.customerId,
         firstMeaningfulActivityAt: "2026-01-01T00:00:00Z",
         lastMeaningfulActivityAt: "2026-02-01T00:00:00Z",
@@ -555,10 +555,10 @@ function createTiebreakerQueryMock() {
         eventCount30d: 25,
       })),
     })
-    .mockResolvedValueOnce({ data: [] })
-    .mockResolvedValueOnce({ data: [] })
-    .mockResolvedValueOnce({ data: [] })
-    .mockResolvedValueOnce({ data: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
+    .mockResolvedValueOnce({ rows: [] })
 }
 
 describe("createOutlitChurnPretriageTool", () => {
@@ -567,12 +567,12 @@ describe("createOutlitChurnPretriageTool", () => {
       client: {
         callTool: vi
           .fn()
-          .mockResolvedValueOnce({ data: [] })
-          .mockResolvedValueOnce({ data: [] })
-          .mockResolvedValueOnce({ data: [] })
-          .mockResolvedValueOnce({ data: [] })
-          .mockResolvedValueOnce({ data: [] })
-          .mockResolvedValueOnce({ data: [] }),
+          .mockResolvedValueOnce({ rows: [] })
+          .mockResolvedValueOnce({ rows: [] })
+          .mockResolvedValueOnce({ rows: [] })
+          .mockResolvedValueOnce({ rows: [] })
+          .mockResolvedValueOnce({ rows: [] })
+          .mockResolvedValueOnce({ rows: [] }),
       },
       config: defaultChurnPretriageConfig,
       now: fixedNow,

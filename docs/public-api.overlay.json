@@ -43,12 +43,6 @@
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_users')]",
-      "update": {
-        "title": "List users"
-      }
-    },
-    {
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_workspace_users')]",
       "update": {
         "title": "List workspace users"
@@ -58,12 +52,6 @@
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer')]",
       "update": {
         "title": "Get customer"
-      }
-    },
-    {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_relationship')]",
-      "update": {
-        "title": "Get customer relationship"
       }
     },
     {
@@ -88,6 +76,12 @@
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_revoke_customer_access')]",
       "update": {
         "title": "Revoke customer access"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_people')]",
+      "update": {
+        "title": "List people"
       }
     },
     {
@@ -133,7 +127,7 @@
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_schema')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_schema')]",
       "update": {
         "title": "Inspect analytics schema"
       }
@@ -178,6 +172,24 @@
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_archive_destination')]",
       "update": {
         "title": "Archive destination"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_submit_feedback')]",
+      "update": {
+        "title": "Submit feedback"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_toolsets')]",
+      "update": {
+        "title": "List toolsets"
+      }
+    },
+    {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_load_toolset')]",
+      "update": {
+        "title": "Load toolset"
       }
     },
     {
@@ -259,18 +271,6 @@
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_features')]",
-      "update": {
-        "title": "Get customer features"
-      }
-    },
-    {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_credits')]",
-      "update": {
-        "title": "Get customer credits"
-      }
-    },
-    {
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_attention_items')]",
       "update": {
         "title": "List attention items"
@@ -337,12 +337,6 @@
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_submit_feedback')]",
-      "update": {
-        "title": "Submit feedback"
-      }
-    },
-    {
       "target": "$.components.schemas['ToolOutput_outlit_list_customers']",
       "update": {
         "title": "List customers"
@@ -355,12 +349,6 @@
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_list_users']",
-      "update": {
-        "title": "List users"
-      }
-    },
-    {
       "target": "$.components.schemas['ToolOutput_outlit_list_workspace_users']",
       "update": {
         "title": "List workspace users"
@@ -370,12 +358,6 @@
       "target": "$.components.schemas['ToolOutput_outlit_get_customer']",
       "update": {
         "title": "Get customer"
-      }
-    },
-    {
-      "target": "$.components.schemas['ToolOutput_outlit_get_customer_relationship']",
-      "update": {
-        "title": "Get customer relationship"
       }
     },
     {
@@ -400,6 +382,12 @@
       "target": "$.components.schemas['ToolOutput_outlit_revoke_customer_access']",
       "update": {
         "title": "Revoke customer access"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_people']",
+      "update": {
+        "title": "List people"
       }
     },
     {
@@ -445,7 +433,7 @@
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_schema']",
+      "target": "$.components.schemas['ToolOutput_outlit_get_schema']",
       "update": {
         "title": "Inspect analytics schema"
       }
@@ -490,6 +478,24 @@
       "target": "$.components.schemas['ToolOutput_outlit_archive_destination']",
       "update": {
         "title": "Archive destination"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_submit_feedback']",
+      "update": {
+        "title": "Submit feedback"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_list_toolsets']",
+      "update": {
+        "title": "List toolsets"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_load_toolset']",
+      "update": {
+        "title": "Load toolset"
       }
     },
     {
@@ -571,18 +577,6 @@
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_get_customer_features']",
-      "update": {
-        "title": "Get customer features"
-      }
-    },
-    {
-      "target": "$.components.schemas['ToolOutput_outlit_get_customer_credits']",
-      "update": {
-        "title": "Get customer credits"
-      }
-    },
-    {
       "target": "$.components.schemas['ToolOutput_outlit_list_attention_items']",
       "update": {
         "title": "List attention items"
@@ -646,12 +640,6 @@
       "target": "$.components.schemas['ToolOutput_outlit_get_customer_merge_status']",
       "update": {
         "title": "Get customer merge status"
-      }
-    },
-    {
-      "target": "$.components.schemas['ToolOutput_outlit_submit_feedback']",
-      "update": {
-        "title": "Submit feedback"
       }
     },
     {

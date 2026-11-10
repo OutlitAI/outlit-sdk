@@ -83,7 +83,7 @@ Once the skill is installed, OpenClaw learns how to use the full `outlit` CLI. Y
 | "Show me paying customers who went silent this month" | `outlit customers list --billing-status paying --no-activity-in 30d` |
 | "Get the full profile for acme.com" | `outlit customers get acme.com --include users,revenue,recentTimeline` |
 | "What's been happening across Acme's customer communications?" | `outlit customers timeline acme.com --channels COMMUNICATION --limit 50` |
-| "Find inactive users at Acme Corp" | `outlit users list --customer-id <customer-uuid> --journey-stage INACTIVE` |
+| "Find inactive users at Acme Corp" | `outlit people list --customer <customer-uuid> --journey-stage inactive` |
 | "Search for pricing concerns across all customers" | `outlit search "pricing concerns"` |
 | "What do we know about acme.com recently?" | `outlit facts list acme.com --status ACTIVE --limit 20` |
 | "Open the exact call behind that search result" | `outlit sources get --source-type CALL --source-id call_123` |
@@ -144,7 +144,7 @@ openclaw cron add \
   --name "Inactive Users" \
   --cron "0 9 * * 2,4" \
   --tz "America/New_York" \
-  --message "Run: outlit users list --journey-stage INACTIVE --limit 20. Summarize as an inactive users report, group by customer, show user emails and journey stage, and note any patterns." \
+  --message "Run: outlit people list --journey-stage inactive --limit 20. Summarize as an inactive users report, group by customer, show user emails and journey stage, and note any patterns." \
   --announce
 ```
 
@@ -157,7 +157,7 @@ openclaw cron add \
   --name "New Signups Overview" \
   --cron "0 10 * * 5" \
   --tz "America/New_York" \
-  --message "Run: outlit users list --journey-stage SIGNED_UP --order-by first_seen_at --limit 50. Summarize as a weekly new signups report, group users by customer, and note current activity level." \
+  --message "Run: outlit people list --journey-stage signed_up --order-by first_synced_at --limit 50. Summarize as a weekly new signups report, group users by customer, and note current activity level." \
   --announce
 ```
 

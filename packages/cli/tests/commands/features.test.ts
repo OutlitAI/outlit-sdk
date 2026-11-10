@@ -142,7 +142,7 @@ describe("Feature commands", () => {
     })
   })
 
-  test("reads customer feature usage with the canonical window", async () => {
+  test("the previous customers features command reads the features and meters sections", async () => {
     const { default: featureUsageCmd } = await import("../../src/commands/customers/features")
 
     await captureStdout(() =>
@@ -151,13 +151,15 @@ describe("Feature commands", () => {
       } as Parameters<NonNullable<typeof featureUsageCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer_features", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer", {
       customer: "acme.com",
-      weeks: 6,
+      include: ["features", "meters"],
+      features: { weeks: 6 },
+      meters: { weeks: 6 },
     })
   })
 
-  test("can request ordered weekly feature usage", async () => {
+  test("the previous customers features command can request weekly usage", async () => {
     const { default: featureUsageCmd } = await import("../../src/commands/customers/features")
 
     await captureStdout(() =>
@@ -166,10 +168,11 @@ describe("Feature commands", () => {
       } as Parameters<NonNullable<typeof featureUsageCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer_features", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer", {
       customer: "acme.com",
-      weeks: 53,
-      includeWeeklyUsage: true,
+      include: ["features", "meters"],
+      features: { weeks: 53, weekly: true },
+      meters: { weeks: 53, weekly: true },
     })
   })
 

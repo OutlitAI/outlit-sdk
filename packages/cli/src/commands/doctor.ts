@@ -205,7 +205,7 @@ const COMMAND_GRANTS: ReadonlyArray<{
   anyOf: readonly ApiKeyGrant[]
 }> = [
   {
-    commands: "customers (read), users, facts, sources, search, attention",
+    commands: "customers (read), people, facts, sources, search, attention",
     anyOf: ["customer_intelligence:read"],
   },
   { commands: "ws-users", anyOf: ["workspace_members:read"] },

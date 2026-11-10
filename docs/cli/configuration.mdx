@@ -255,6 +255,6 @@ outlit doctor --json | jq -e '.ok' > /dev/null || exit 1
 ### Filter inactive users
 
 ```bash
-outlit users list --journey-stage INACTIVE --no-activity-in 30d --json \
+outlit people list --journey-stage inactive --no-activity-in 30d --json \
   | jq '.items[] | {email, customer: .customerId, lastSeen: .lastActivityAt}'
 ```

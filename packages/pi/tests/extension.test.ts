@@ -1,4 +1,4 @@
-import { defaultToolNames, getPublicToolContract } from "@outlit/tools"
+import { defaultToolNames, getPublicToolContract, toolNamesInToolsets } from "@outlit/tools"
 import { describe, expect, test, vi } from "vitest"
 
 import {
@@ -74,7 +74,7 @@ describe("createOutlitPiExtension", () => {
     expect(defaultToolNames).toEqual([
       "outlit_list_customers",
       "outlit_list_customer_fields",
-      "outlit_list_users",
+      "outlit_list_people",
       "outlit_get_customer",
       "outlit_get_timeline",
       "outlit_list_facts",
@@ -113,13 +113,16 @@ describe("createOutlitPiExtension", () => {
 
   test("exposes only Pi-supported tools from the Pi package", () => {
     expect(allPublicToolNames).toEqual(piToolNames)
-    expect(allPublicToolNames).toContain("outlit_get_customer_relationship")
+    expect(allPublicToolNames).toContain("outlit_list_people")
+    expect(allPublicToolNames).toContain("outlit_list_toolsets")
+    expect(allPublicToolNames).toContain("outlit_load_toolset")
     expect(allPublicToolNames).toContain("outlit_list_attention_items")
     expect(allPublicToolNames).toContain("outlit_get_attention_item")
     expect(allPublicToolNames).toContain("outlit_list_features")
     expect(allPublicToolNames).toContain("outlit_create_feature")
     expect(allPublicToolNames).toContain("outlit_archive_feature")
-    expect(allPublicToolNames).toContain("outlit_get_customer_features")
+    expect(allPublicToolNames).not.toContain("outlit_get_customer_features")
+    expect(allPublicToolNames).not.toContain("outlit_list_users")
     expect(allPublicToolNames).not.toContain("outlit_list_behavior_metric_sources")
     expect(allPublicToolNames).not.toContain("outlit_list_behavior_metric_events")
     expect(allPublicToolNames).not.toContain("outlit_create_behavior_metric")
@@ -145,6 +148,67 @@ describe("createOutlitPiExtension", () => {
       "outlit_list_customers",
       "outlit_get_customer",
     ])
+  })
+
+  test("registers the tools of the chosen toolsets, beside any named tools", () => {
+    const registered = (options: Parameters<typeof createOutlitPiExtension>[0]) => {
+      const pi = createPiMock()
+      createOutlitPiExtension({
+        apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+        fetch: vi.fn(),
+        ...options,
+      })(pi)
+      return pi.registeredTools.map((tool) => tool.name)
+    }
+
+    expect(registered({ toolsets: ["meta"] })).toEqual([
+      "outlit_submit_feedback",
+      "outlit_list_toolsets",
+      "outlit_load_toolset",
+    ])
+    expect(registered({ toolsets: ["meta"], toolNames: ["outlit_get_customer"] })).toEqual([
+      "outlit_get_customer",
+      "outlit_submit_feedback",
+      "outlit_list_toolsets",
+      "outlit_load_toolset",
+    ])
+    expect(registered({ toolsets: ["core", "work"] })).toEqual(
+      toolNamesInToolsets(["core", "work"]),
+    )
+    expect(registered({ toolsets: [] })).toEqual([])
+  })
+
+  test("adds the gateway's deprecation and notices after the result", async () => {
+    const apiResult = { items: [] }
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(apiResult), {
+        status: 200,
+        headers: {
+          "outlit-deprecation": JSON.stringify({
+            tool: "outlit_list_users",
+            use: "outlit_list_people",
+            until: "2026-12-11",
+            message: "outlit_list_users is deprecated: use outlit_list_people.",
+          }),
+          "outlit-notice": JSON.stringify(["limit 500 was lowered to 100."]),
+        },
+      }),
+    )
+    const tool = createOutlitPiTool("outlit_list_people", {
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: fetchMock,
+    })
+
+    const result = await tool.execute("call_1", {}, undefined, undefined, undefined as never)
+
+    expect(result.content).toEqual([
+      { type: "text", text: JSON.stringify(apiResult, null, 2) },
+      {
+        type: "text",
+        text: "Notice: outlit_list_users is deprecated: use outlit_list_people. (until 2026-12-11) limit 500 was lowered to 100.",
+      },
+    ])
+    expect(result.details.result).toEqual(apiResult)
   })
 
   test("executes registered tools through the public Outlit tool client", async () => {

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
-import { userJourneyStages } from "@outlit/tools"
+import { getPublicToolContract } from "@outlit/tools"
 
 const packageRoot = join(import.meta.dir, "..", "..")
 
@@ -23,9 +23,12 @@ describe("public CLI surface", () => {
   test("uses current journey-stage values in root help examples", () => {
     const cliSource = readFileSync(join(packageRoot, "src", "cli.ts"), "utf8")
     const documentedStages = [
-      ...cliSource.matchAll(/outlit users list --journey-stage ([A-Z_]+)/g),
+      ...cliSource.matchAll(/outlit people list --journey-stage ([a-z_]+)/g),
     ].map((match) => match[1] ?? "")
-    const allowedStages = new Set<string>(userJourneyStages)
+    const allowedStages = new Set<string>(
+      getPublicToolContract("outlit_list_people").inputSchema.properties.filters.properties
+        .journeyStage.items.enum,
+    )
 
     expect(documentedStages.length).toBeGreaterThan(0)
     for (const stage of documentedStages) {
