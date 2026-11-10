@@ -1,21 +1,15 @@
 import { defineCommand } from "citty"
-import { AGENT_JSON_HINT } from "../../args/output"
 
+// The previous name of `outlit people`, kept so scripts that call `outlit users list` keep working.
+// Hidden from help and completions; the output is the people list.
 // IMPORTANT: No run() here — only meta + subCommands.
-// Adding run() causes citty to fire it before the subcommand, producing double output.
 export default defineCommand({
   meta: {
     name: "users",
-    description: [
-      "Query and filter users across your customer base.",
-      "",
-      "Subcommands:",
-      "  list  -- list users with filters",
-      "",
-      AGENT_JSON_HINT,
-    ].join("\n"),
+    hidden: true,
+    description: "Renamed to `outlit people`.",
   },
   subCommands: {
-    list: () => import("./list").then((m) => m.default),
+    list: () => import("../people/list").then((m) => m.default),
   },
 })

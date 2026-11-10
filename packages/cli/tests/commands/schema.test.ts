@@ -28,7 +28,7 @@ describe("schema", () => {
     mockCallTool.mockClear()
   })
 
-  test("sends table param for the requested view", async () => {
+  test("sends topic view and the view name for a requested view", async () => {
     const { default: schemaCmd } = await import("../../src/commands/schema")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -36,16 +36,56 @@ describe("schema", () => {
         args: { view: "activity", json: true },
       } as Parameters<NonNullable<typeof schemaCmd.run>>[0])
 
-      expect(mockCallTool).toHaveBeenCalledWith(
-        "outlit_schema",
-        expect.objectContaining({ table: "activity" }),
-      )
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_get_schema", {
+        topic: "view",
+        view: "activity",
+      })
     } finally {
       writeSpy.mockRestore()
     }
   })
 
-  test("omits table param when not provided", async () => {
+  test.each([
+    ["events", { topic: "event_types" }],
+    ["examples", { topic: "examples" }],
+    ["arr_history", { topic: "view", view: "arr_history" }],
+  ])("maps %s to its schema topic", async (view, expected) => {
+    const { default: schemaCmd } = await import("../../src/commands/schema")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await schemaCmd.run!({
+        args: { view, json: true },
+      } as Parameters<NonNullable<typeof schemaCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_get_schema", expected)
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("rejects a name that is neither a view nor a topic before calling Core", async () => {
+    const { default: schemaCmd } = await import("../../src/commands/schema")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await schemaCmd.run!({
+        args: { view: "orders", json: true },
+      } as Parameters<NonNullable<typeof schemaCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  })
+
+  test("sends no params when no view is given, so Core describes every view", async () => {
     const { default: schemaCmd } = await import("../../src/commands/schema")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -54,7 +94,7 @@ describe("schema", () => {
       } as Parameters<NonNullable<typeof schemaCmd.run>>[0])
 
       const [[, params]] = mockCallTool.mock.calls as [[string, Record<string, unknown>]]
-      expect(params).not.toHaveProperty("table")
+      expect(params).toEqual({})
     } finally {
       writeSpy.mockRestore()
     }

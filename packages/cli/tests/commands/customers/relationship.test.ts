@@ -10,16 +10,20 @@ const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
     domain: "acme.com",
   },
   relationship: {
-    summary: "Renewal needs attention",
-    items: [
-      {
-        category: "Renewal",
-        statement: "Security approval remains open.",
-        observedAt: "2026-08-13T00:00:00.000Z",
-        sourceLabels: ["Pylon"],
-      },
-    ],
-    updatedAt: "2026-08-13T00:00:00.000Z",
+    status: "available",
+    asOf: "2026-08-13T00:00:00.000Z",
+    data: {
+      summary: "Renewal needs attention",
+      items: [
+        {
+          category: "Renewal",
+          statement: "Security approval remains open.",
+          observedAt: "2026-08-13T00:00:00.000Z",
+          sourceLabels: ["Pylon"],
+        },
+      ],
+      updatedAt: "2026-08-13T00:00:00.000Z",
+    },
   },
 }))
 
@@ -31,7 +35,7 @@ mock.module("../../../src/lib/client", () => ({
   }),
 }))
 
-describe("customers relationship", () => {
+describe("customers relationship (previous command)", () => {
   useTempEnv("relationship-test")
 
   beforeEach(() => {
@@ -39,7 +43,7 @@ describe("customers relationship", () => {
     mockCallTool.mockClear()
   })
 
-  test("gets the bounded customer relationship without expanding the compact get command", async () => {
+  test("reads the relationship section of get_customer", async () => {
     const { default: relationshipCmd } = await import(
       "../../../src/commands/customers/relationship"
     )
@@ -50,32 +54,33 @@ describe("customers relationship", () => {
         args: { customer: "acme.com", json: true },
       } as Parameters<NonNullable<typeof relationshipCmd.run>>[0])
 
-      expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer_relationship", {
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer", {
         customer: "acme.com",
+        include: ["relationship"],
       })
 
       const written = (writeSpy.mock.calls[0]?.[0] as string) ?? ""
-      const result = JSON.parse(written) as { relationship: { updatedAt: string | null } }
-      expect(result.relationship.updatedAt).toBe("2026-08-13T00:00:00.000Z")
+      const result = JSON.parse(written) as {
+        relationship: { status: string; data: { updatedAt: string | null } }
+      }
+      expect(result.relationship.status).toBe("available")
+      expect(result.relationship.data.updatedAt).toBe("2026-08-13T00:00:00.000Z")
     } finally {
       writeSpy.mockRestore()
     }
   })
 
-  test("documents that relationship detail is bounded and separate from the chronological timeline", async () => {
+  test("is hidden from help, which advertises customers get --include relationship", async () => {
     const { default: relationshipCmd } = await import(
       "../../../src/commands/customers/relationship"
     )
-    const metaSource = relationshipCmd.meta
     const meta =
-      typeof metaSource === "function" ? await metaSource() : await Promise.resolve(metaSource)
-    const description = meta?.description ?? ""
+      typeof relationshipCmd.meta === "function"
+        ? await relationshipCmd.meta()
+        : await relationshipCmd.meta
 
-    expect(description).toContain("bounded")
-    expect(description).toContain("timeline")
-    expect(description).toContain("Exact customer name")
-    expect(description).not.toContain("partial match")
-    expect(description).not.toContain("--include")
+    expect(meta?.hidden).toBe(true)
+    expect(meta?.description).toContain("customers get <customer> --include relationship")
   })
 
   test("documents the public relationship field names accurately", () => {

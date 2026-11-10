@@ -48,6 +48,24 @@ describe("sql", () => {
     }
   })
 
+  test("sends the page size and the cursor of a later page", async () => {
+    const { default: sqlCmd } = await import("../../src/commands/sql")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await sqlCmd.run!({
+        args: { query: "SELECT 1", limit: "250", cursor: "cursor_abc", json: true },
+      } as Parameters<NonNullable<typeof sqlCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_query", {
+        sql: "SELECT 1",
+        limit: 250,
+        cursor: "cursor_abc",
+      })
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("--query-file reads file and sends contents as sql", async () => {
     const queryPath = join(testDir, "query.sql")
     writeFileSync(queryPath, "SELECT * FROM activity")
@@ -129,8 +147,8 @@ describe("sql", () => {
   })
 
   test.each([
-    ["1.5", "--limit must be an integer between 1 and 10000"],
-    ["10001", "--limit must be an integer between 1 and 10000"],
+    ["1.5", "--limit must be an integer between 1 and 1000"],
+    ["1001", "--limit must be an integer between 1 and 1000"],
   ])("invalid_input error when --limit is %s", async (limit, expectedMessage) => {
     const { default: sqlCmd } = await import("../../src/commands/sql")
     const exitSpy = mockExitThrow()

@@ -70,7 +70,7 @@ describe("completions command", () => {
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "ws-users" ]]`)
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "customers" ]]`)
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "list get relationship identity merge merge-status features credits timeline owner grant revoke" -- "$cur"))',
+      'COMPREPLY=($(compgen -W "list get identity merge merge-status timeline owner grant revoke" -- "$cur"))',
     )
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "attention" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "list get" -- "$cur"))')
@@ -255,8 +255,8 @@ describe("completions command", () => {
     expect(out).not.toContain("update-access")
     expect(out).not.toContain("revoke-access")
     expect(out).toContain("-n '__outlit_using_cmd auth login' -l key")
-    expect(out).toContain("-n '__outlit_using_cmd users list' -l journey-stage")
-    expect(out).toContain("-n '__outlit_using_cmd users list' -l trait")
+    expect(out).toContain("-n '__outlit_using_cmd people list' -l journey-stage")
+    expect(out).toContain("-n '__outlit_using_cmd people list' -l trait")
     expect(out).toContain("-n '__outlit_using_cmd ws-users list' -l role")
     expect(out).toContain("-n '__outlit_using_cmd ws-users list' -l has-owned-customers")
     expect(out).not.toContain("__outlit_using_cmd workspace-users")
@@ -280,9 +280,13 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd features list' -l candidate-limit")
     expect(out).toContain("-n '__outlit_using_cmd features create' -l property-filters")
     expect(out).toContain("-n '__outlit_using_cmd features archive' -l revision")
-    expect(out).toContain("-n '__outlit_using_cmd customers features' -l weeks")
-    expect(out).toContain("-n '__outlit_using_cmd customers features' -l weekly")
-    expect(out).toContain("-n '__outlit_using_cmd customers credits' -l json")
+    expect(out).toContain("-n '__outlit_using_cmd customers get' -l weeks")
+    expect(out).toContain("-n '__outlit_using_cmd customers get' -l weekly")
+    expect(out).toContain("-n '__outlit_using_cmd customers get' -l cursor")
+    // The retired spellings still run but are not advertised.
+    expect(out).not.toContain("__outlit_using_cmd customers credits")
+    expect(out).not.toContain("__outlit_using_cmd customers features")
+    expect(out).not.toContain("__outlit_using_cmd users")
     expect(out).not.toContain("__outlit_using_cmd metrics")
     expect(out).not.toContain("-n '__outlit_using_cmd settings report update'")
     expect(out).not.toContain("settings notifications")

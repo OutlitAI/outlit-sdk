@@ -1,21 +1,17 @@
-import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { requiredTrimmedString } from "../../lib/platform-input"
 
+// The previous command for `customers get <customer> --include credits`, kept so scripts keep
+// working. Hidden from help and completions; the output is the get_customer result.
 export default defineCommand({
   meta: {
     name: "credits",
+    hidden: true,
     description: [
-      "Read imported credit pools and burn summaries for one authorized customer.",
-      "Unavailable or stale observations remain distinct from a zero balance.",
-      "",
-      "The customer argument accepts a customer domain, UUID, or exact name.",
-      "",
-      "Example:",
-      "  outlit customers credits acme.com --json",
+      "Renamed: use `outlit customers get <customer> --include credits`.",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -35,8 +31,11 @@ export default defineCommand({
 
     return runTool(
       client,
-      publicToolContracts.outlit_get_customer_credits.toolName,
-      { customer: requiredTrimmedString(args.customer, "<customer>", json) },
+      "outlit_get_customer",
+      {
+        customer: requiredTrimmedString(args.customer, "<customer>", json),
+        include: ["credits"],
+      },
       json,
       { spinnerMessage: "Loading customer credits..." },
     )

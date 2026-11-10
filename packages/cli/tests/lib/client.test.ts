@@ -108,6 +108,54 @@ describe("createClient", () => {
     fetchSpy.mockRestore()
   })
 
+  test("prints the gateway's deprecation and notices to stderr, leaving the result alone", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ items: [] }), {
+        status: 200,
+        headers: {
+          "outlit-deprecation": JSON.stringify({
+            tool: "outlit_list_users",
+            use: "outlit_list_people",
+            until: "2026-12-11",
+            message: "outlit_list_users is deprecated: use outlit_list_people.",
+          }),
+          "outlit-notice": JSON.stringify(["limit 500 was lowered to 100."]),
+        },
+      }),
+    )
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    const client = await createClient()
+
+    try {
+      await expect(client.callTool("outlit_list_people", {})).resolves.toEqual({ items: [] })
+      expect(stderrSpy.mock.calls.map((call) => call[0])).toEqual([
+        "Warning: outlit_list_users is deprecated: use outlit_list_people. (until 2026-12-11)\n",
+        "Note: limit 500 was lowered to 100.\n",
+      ])
+    } finally {
+      stderrSpy.mockRestore()
+      fetchSpy.mockRestore()
+    }
+  })
+
+  test("writes nothing to stderr for a response without notices", async () => {
+    process.env.OUTLIT_API_KEY = TEST_API_KEY
+    const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ items: [] }), { status: 200 }),
+    )
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    const client = await createClient()
+
+    try {
+      await client.callTool("outlit_list_people", {})
+      expect(stderrSpy).not.toHaveBeenCalled()
+    } finally {
+      stderrSpy.mockRestore()
+      fetchSpy.mockRestore()
+    }
+  })
+
   test("surfaces the stable gateway error envelope", async () => {
     process.env.OUTLIT_API_KEY = TEST_API_KEY
     const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(

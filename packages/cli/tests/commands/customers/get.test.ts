@@ -87,6 +87,88 @@ describe("customers get", () => {
     }
   })
 
+  test("advertises the sections that fold the old relationship, features and credits tools", async () => {
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const args = typeof getCmd.args === "function" ? await getCmd.args() : await getCmd.args
+
+    for (const name of ["relationship", "features", "meters", "credits"]) {
+      expect(args?.include?.description).toContain(name)
+    }
+  })
+
+  test("sends the window and page to the sections that take them", async () => {
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await getCmd.run!({
+        args: {
+          customer: "acme.com",
+          include: "revenue,features,meters,credits",
+          weeks: "6",
+          weekly: true,
+          limit: "10",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof getCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_get_customer",
+        expect.objectContaining({
+          include: ["revenue", "features", "meters", "credits"],
+          features: { weeks: 6, weekly: true, limit: 10 },
+          meters: { weeks: 6, weekly: true, limit: 10 },
+          credits: { limit: 10 },
+        }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("continues one section with --cursor", async () => {
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await getCmd.run!({
+        args: { customer: "acme.com", include: "credits", cursor: "cursor_1", json: true },
+      } as Parameters<NonNullable<typeof getCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_get_customer",
+        expect.objectContaining({ credits: { cursor: "cursor_1" } }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test.each([
+    ["--cursor with two paged sections", { include: "features,credits", cursor: "c" }],
+    ["--weeks without features or meters", { include: "credits", weeks: "4" }],
+    ["--limit without a paged section", { include: "revenue", limit: "10" }],
+    ["--weeks out of range", { include: "features", weeks: "54" }],
+  ])("rejects %s before calling Core", async (_name, flags) => {
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await getCmd.run!({
+        args: { customer: "acme.com", json: true, ...flags },
+      } as Parameters<NonNullable<typeof getCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  })
+
   test("advertises established contract section names", async () => {
     const { default: getCmd } = await import("../../../src/commands/customers/get")
     const meta = typeof getCmd.meta === "function" ? await getCmd.meta() : await getCmd.meta

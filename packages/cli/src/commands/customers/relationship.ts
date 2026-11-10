@@ -1,28 +1,17 @@
-import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
+import { requiredTrimmedString } from "../../lib/platform-input"
 
+// The previous command for `customers get <customer> --include relationship`, kept so scripts keep
+// working. Hidden from help and completions; the output is the get_customer result.
 export default defineCommand({
   meta: {
     name: "relationship",
+    hidden: true,
     description: [
-      "Get the bounded relationship for a customer.",
-      "",
-      "Returns the durable customer-detail read model: a relationship summary, up to eight categorized",
-      "current statements, ISO observed-at timestamps when supported, source labels, and a compiled",
-      "summary timestamp when available. It does not expand the compact customer get response, expose",
-      "raw fact IDs or source quotes, or replace the chronological timeline.",
-      "",
-      "The customer argument accepts:",
-      "  - Customer domain (acme.com)",
-      "  - Customer ID (UUID)",
-      "  - Exact customer name",
-      "",
-      "Examples:",
-      "  outlit customers relationship acme.com",
-      "  outlit customers relationship acme.com --json",
+      "Renamed: use `outlit customers get <customer> --include relationship`.",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -42,8 +31,11 @@ export default defineCommand({
 
     return runTool(
       client,
-      publicToolContracts.outlit_get_customer_relationship.toolName,
-      { customer: args.customer },
+      "outlit_get_customer",
+      {
+        customer: requiredTrimmedString(args.customer, "<customer>", json),
+        include: ["relationship"],
+      },
       json,
     )
   },
