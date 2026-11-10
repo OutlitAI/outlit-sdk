@@ -104,7 +104,7 @@ describe("customer-surface documentation", () => {
     const cliDocs = readDoc("docs/cli/commands.mdx")
 
     expect(cliDocs).toContain(
-      "Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`, `INVOICE`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`",
+      "Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`, `INVOICE`, `CRM_NOTE`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`",
     )
     expect(cliDocs).toContain("### List sources")
     expect(cliDocs).toContain("outlit sources list [flags]")
