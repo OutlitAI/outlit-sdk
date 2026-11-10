@@ -134,4 +134,21 @@ describe("pollUntil", () => {
     expect(result).toEqual({ ready: true })
     expect(fn).toHaveBeenCalledTimes(1)
   })
+
+  test("waits as long as the last result asks before polling again", async () => {
+    const calls: number[] = []
+    const fn = mock(async () => {
+      calls.push(Date.now())
+      return { status: calls.length >= 2 ? "done" : "pending", waitMs: 120 }
+    })
+
+    await pollUntil(fn, (r) => r.status === "done", {
+      intervalMs: 5,
+      timeoutMs: 5000,
+      nextIntervalMs: (r) => r.waitMs,
+    })
+
+    expect(calls.length).toBe(2)
+    expect((calls[1] ?? 0) - (calls[0] ?? 0)).toBeGreaterThanOrEqual(100)
+  })
 })

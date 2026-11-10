@@ -8,6 +8,8 @@ type SetupSessionStatus = "expired" | "pending" | "connected" | "failed"
 interface SetupSessionStatusResponse {
   provider: string | null
   status: SetupSessionStatus
+  /** While pending, how long the server suggests waiting before checking again. */
+  pollAfterSeconds?: number
 }
 
 interface WaitForConnectionOptions {
@@ -49,6 +51,11 @@ export async function waitForIntegrationConnection({
     (response) => response.status !== "pending",
     {
       intervalMs: 2_000,
+      // The server's own hint, kept between one and ten seconds.
+      nextIntervalMs: (response) =>
+        typeof response.pollAfterSeconds === "number"
+          ? Math.min(10_000, Math.max(1_000, response.pollAfterSeconds * 1_000))
+          : undefined,
       timeoutMs: 300_000,
       spinner,
       spinnerMessage: `Waiting for ${displayName} authentication...`,
