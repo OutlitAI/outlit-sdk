@@ -42,6 +42,13 @@ describe("completions command", () => {
     expect(include).not.toContain("balances")
   })
 
+  test("customers list offers --part-of in zsh and fish (bash: the exact list below)", async () => {
+    expect(await captureCompletions("zsh")).toContain(
+      "'--part-of:Only direct subsidiaries of this customer (ID, domain or name)'",
+    )
+    expect(fishFlagsFor(await captureCompletions("fish"), "customers list")).toContain("part-of")
+  })
+
   test("bash — top-level commands", async () => {
     const out = await captureCompletions("bash")
     expect(out).toContain("complete -F _outlit_completions outlit")
@@ -123,7 +130,7 @@ describe("completions command", () => {
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --source-type --source-id"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --arr-above --arr-below --currency --renews-in --renews-after --renews-before --owner-id --owner-email --has-owner --activated-since --search"',
+      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --arr-above --arr-below --currency --renews-in --renews-after --renews-before --owner-id --owner-email --has-owner --activated-since --search --part-of"',
     )
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --customer-id"',

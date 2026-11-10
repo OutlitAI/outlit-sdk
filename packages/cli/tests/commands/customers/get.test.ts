@@ -125,6 +125,34 @@ describe("customers get", () => {
     }
   })
 
+  test("pages the hierarchy's children with --limit and --cursor", async () => {
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const args = typeof getCmd.args === "function" ? await getCmd.args() : await getCmd.args
+    expect(args?.include?.description).toContain("hierarchy")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await getCmd.run!({
+        args: {
+          customer: "sanofi.com",
+          include: "hierarchy",
+          limit: "50",
+          cursor: "cursor_1",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof getCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_get_customer",
+        expect.objectContaining({
+          include: ["hierarchy"],
+          hierarchy: { limit: 50, cursor: "cursor_1" },
+        }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("continues one section with --cursor", async () => {
     const { default: getCmd } = await import("../../../src/commands/customers/get")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
