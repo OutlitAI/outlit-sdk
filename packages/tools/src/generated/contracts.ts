@@ -391,6 +391,8 @@ export const publicToolContracts = {
                 "anyOf": [
                   {
                     "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                   },
                   {
                     "type": "null",
@@ -401,6 +403,8 @@ export const publicToolContracts = {
                 "anyOf": [
                   {
                     "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                   },
                   {
                     "type": "null",
@@ -677,6 +681,8 @@ export const publicToolContracts = {
                     "anyOf": [
                       {
                         "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                       },
                       {
                         "type": "null",
@@ -687,6 +693,8 @@ export const publicToolContracts = {
                     "anyOf": [
                       {
                         "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                       },
                       {
                         "type": "null",
@@ -1669,6 +1677,8 @@ export const publicToolContracts = {
               "anyOf": [
                 {
                   "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                 },
                 {
                   "type": "null",
@@ -1679,6 +1689,8 @@ export const publicToolContracts = {
               "anyOf": [
                 {
                   "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                 },
                 {
                   "type": "null",
@@ -1719,6 +1731,8 @@ export const publicToolContracts = {
                   "anyOf": [
                     {
                       "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                     },
                     {
                       "type": "null",
@@ -1729,6 +1743,8 @@ export const publicToolContracts = {
                   "anyOf": [
                     {
                       "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                     },
                     {
                       "type": "null",
@@ -4320,6 +4336,25 @@ export const publicToolContracts = {
                             ],
                             "description": "When the evidence for it was observed, ISO 8601; null when not recorded.",
                           },
+                          "evidence": {
+                            "maxItems": 4,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "factId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 191,
+                                },
+                              },
+                              "required": [
+                                "factId",
+                              ],
+                              "additionalProperties": false,
+                            },
+                            "description": "At most 4 facts the statement rests on. Each factId opens with outlit_get_fact, which returns its evidence.",
+                          },
                           "sourceLabels": {
                             "maxItems": 4,
                             "type": "array",
@@ -4335,6 +4370,7 @@ export const publicToolContracts = {
                           "category",
                           "statement",
                           "observedAt",
+                          "evidence",
                           "sourceLabels",
                         ],
                         "additionalProperties": false,
@@ -6628,7 +6664,7 @@ export const publicToolContracts = {
                 "within": {
                   "description": "Active in the last N days: product use or conversations. Example: 7d.",
                   "type": "string",
-                  "pattern": "^[1-9]\\d{0,2}d$",
+                  "pattern": "^[1-9]\\d{0,4}(d|h|m)$",
                   "examples": [
                     "7d",
                     "30d",
@@ -6638,7 +6674,7 @@ export const publicToolContracts = {
                 "notWithin": {
                   "description": "No activity in the last N days, including never active. Example: 30d.",
                   "type": "string",
-                  "pattern": "^[1-9]\\d{0,2}d$",
+                  "pattern": "^[1-9]\\d{0,4}(d|h|m)$",
                   "examples": [
                     "7d",
                     "30d",
@@ -13934,7 +13970,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "toolsets",
     "title": "Load Toolset",
-    "description": "Returns one toolset's tool definitions (name, description, input JSON Schema) and the MCP URL that lists them. Most MCP clients keep the tool list from when they connected, so reconnect with that URL to call the tools. Use after outlit_list_toolsets shows the toolset isn't listed. Don't use it for a toolset this connection already lists.",
+    "description": "Returns one toolset's tools (a one-line summary each; with tools, their full descriptions and input JSON Schemas) and the MCP URL that lists them. Most MCP clients keep the tool list from when they connected, so reconnect with that URL to call the tools. Use after outlit_list_toolsets shows the toolset isn't listed. Don't use it for a toolset this connection already lists.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -13955,6 +13991,16 @@ export const publicToolContracts = {
             "meta",
           ],
           "description": "The toolset to load, from outlit_list_toolsets.",
+        },
+        "tools": {
+          "description": "Tools of that toolset to return in full (description and input JSON Schema), at most 10. Omit for a one-line summary of every tool.",
+          "minItems": 1,
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^outlit_[a-z0-9_]+$",
+          },
         },
       },
       "required": [
@@ -13990,23 +14036,27 @@ export const publicToolContracts = {
               "title": {
                 "type": "string",
               },
+              "summary": {
+                "type": "string",
+                "description": "The description's first sentence.",
+              },
               "description": {
+                "description": "The full description; only for tools asked for.",
                 "type": "string",
               },
               "inputSchema": {
+                "description": "The tool's input as JSON Schema; only for tools asked for.",
                 "type": "object",
                 "propertyNames": {
                   "type": "string",
                 },
                 "additionalProperties": {},
-                "description": "The tool's input as JSON Schema.",
               },
             },
             "required": [
               "name",
               "title",
-              "description",
-              "inputSchema",
+              "summary",
             ],
             "additionalProperties": false,
           },
@@ -22345,4 +22395,4 @@ export const schemaTables = [
   "arr_history",
 ] as const
 
-export const sdkConsumerContractHash = "6206e36ecf74cace00b3104ae53635a0811c4c034aae6672d2f079e4e16f0a9d" as const
+export const sdkConsumerContractHash = "3dcdf32ebb8fd726a5ee42791ad13aba483fca19dd6e5d990594c2fc9adf2ca2" as const
