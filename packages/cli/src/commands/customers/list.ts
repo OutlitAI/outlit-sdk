@@ -87,6 +87,7 @@ export default defineCommand({
       "  outlit customers list --arr-above 1200000 --limit 50    # high-value at-risk",
       "  outlit customers list --renews-in next_90d --order-by renewal_date",
       "  outlit customers list --activated-since 2026-07-01T00:00:00Z",
+      "  outlit customers list --part-of sanofi.com --billing-status paying  # a parent's subsidiaries",
       "  outlit customers list --json | jq '.items[].domain'     # pipe-friendly",
       "",
       `Billing statuses: ${customerBillingStatuses.join(", ")}`,
@@ -164,6 +165,11 @@ export default defineCommand({
     search: {
       type: "string",
       description: "Search by customer name or domain",
+    },
+    "part-of": {
+      type: "string",
+      description:
+        "Only the direct subsidiaries of this customer (ID, domain or name), as its CRM's parent accounts record them",
     },
   },
   async run({ args, rawArgs }) {
@@ -279,6 +285,7 @@ export default defineCommand({
       }
     }
     if (args.search) filters.search = args.search
+    if (args["part-of"]) filters.partOf = args["part-of"]
     if (Object.keys(filters).length > 0) params.filters = filters
 
     if (args["order-by"]) params.orderBy = legacyOrderFields[args["order-by"]] ?? args["order-by"]

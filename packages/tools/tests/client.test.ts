@@ -699,6 +699,7 @@ describe("tool contracts", () => {
       "SLACK",
       "PERSON_PROFILE",
       "INVOICE",
+      "CRM_NOTE",
     ])
     expect(customerSourceTypeInputs).toEqual([
       "EMAIL",
@@ -709,6 +710,7 @@ describe("tool contracts", () => {
       "SLACK",
       "PERSON_PROFILE",
       "INVOICE",
+      "CRM_NOTE",
       "CRM",
       "CRM_OPPORTUNITY",
     ])
@@ -760,6 +762,7 @@ describe("tool contracts", () => {
       "slack",
       "person_profile",
       "invoice",
+      "crm_note",
     ])
     expect(toolTimelineChannels).toEqual([
       "product",
@@ -1134,7 +1137,7 @@ describe("resolveCustomerContextSearchInput", () => {
     ).toEqual({
       ok: false,
       message:
-        "Unknown source types: ZENDESK_TICKET. Allowed: email, call, calendar_event, support_ticket, opportunity, slack, person_profile, invoice",
+        "Unknown source types: ZENDESK_TICKET. Allowed: email, call, calendar_event, support_ticket, opportunity, slack, person_profile, invoice, crm_note",
     })
   })
 
