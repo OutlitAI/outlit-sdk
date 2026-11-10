@@ -3144,7 +3144,7 @@
                 "type": "object",
                 "properties": {
                   "within": {
-                    "description": "Active in the last N days: product use or conversations. Example: 7d.",
+                    "description": "Active in the last N minutes, hours or days (90m, 12h, 7d): product use or conversations.",
                     "type": "string",
                     "pattern": "^[1-9]\\d{0,4}(d|h|m)$",
                     "examples": [
@@ -3154,7 +3154,7 @@
                     ]
                   },
                   "notWithin": {
-                    "description": "No activity in the last N days, including never active. Example: 30d.",
+                    "description": "No activity in the last N minutes, hours or days (12h, 30d), including never active.",
                     "type": "string",
                     "pattern": "^[1-9]\\d{0,4}(d|h|m)$",
                     "examples": [
@@ -22098,5 +22098,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "3dcdf32ebb8fd726a5ee42791ad13aba483fca19dd6e5d990594c2fc9adf2ca2"
+  "x-outlit-contract-hash": "977bb34ea0a9ed3344ed78ac2fd51fb0d1f00b2e48ee4bdd07efdf516193eaf2"
 }
