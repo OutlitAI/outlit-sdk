@@ -48,7 +48,7 @@ describe("schema", () => {
   test.each([
     ["events", { topic: "event_types" }],
     ["examples", { topic: "examples" }],
-    ["arr_history", { topic: "view", view: "arr_history" }],
+    ["revenue", { topic: "view", view: "revenue" }],
   ])("maps %s to its schema topic", async (view, expected) => {
     const { default: schemaCmd } = await import("../../src/commands/schema")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
