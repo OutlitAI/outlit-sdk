@@ -1,17 +1,17 @@
 import {
-  customerSourceTypeAliases,
-  customerSourceTypes,
   publicToolContracts,
   resolveCustomerContextSearchInput,
+  sourceTypes as toolSourceTypes,
 } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
+import { rawFlagValue } from "../args/raw-flag"
 import { getClientOrExit, runTool } from "../lib/api"
 import { splitCsv } from "../lib/config"
 import { outputError } from "../lib/output"
 
-const sourceTypeDescription = `${customerSourceTypes.join(", ")} (aliases: ${customerSourceTypeAliases.join(", ")})`
+const sourceTypeDescription = toolSourceTypes.join(", ")
 
 export default defineCommand({
   meta: {
@@ -26,9 +26,9 @@ export default defineCommand({
       "Examples:",
       "  outlit search 'pricing objections last quarter'",
       "  outlit search 'churn risk signals' --customer acme.com",
-      "  outlit search 'expansion opportunities' --top-k 50 --json",
+      "  outlit search 'expansion opportunities' --limit 50 --json",
       "  outlit search 'support escalations' --after 2025-01-01T00:00:00Z --before 2025-03-31T23:59:59Z",
-      "  outlit search 'renewal opportunities' --source-types CALL,OPPORTUNITY",
+      "  outlit search 'renewal opportunities' --source-types call,opportunity",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -45,7 +45,7 @@ export default defineCommand({
       type: "string",
       description: "Scope search to a specific customer (UUID or domain)",
     },
-    "top-k": {
+    limit: {
       type: "string",
       description: "Maximum number of results to return (1–50). Default: 20.",
     },
@@ -64,17 +64,17 @@ export default defineCommand({
       description: `Comma-separated generic source type filter (${sourceTypeDescription})`,
     },
   },
-  async run({ args }) {
+  async run({ args, rawArgs }) {
     const json = !!args.json
 
-    // Validate arguments before authenticating
-    const topK = args["top-k"] ? Number(args["top-k"]) : undefined
-    if (
-      topK !== undefined &&
-      (!Number.isFinite(topK) || !Number.isInteger(topK) || topK < 1 || topK > 50)
-    ) {
+    // Validate arguments before authenticating. --top-k is the previously published spelling of
+    // --limit: still accepted from the raw arguments, but no longer declared or advertised.
+    const flag = args.limit === undefined ? "top-k" : "limit"
+    const rawLimit = args.limit ?? rawFlagValue(rawArgs, "top-k")
+    const limit = rawLimit === undefined ? undefined : Number(rawLimit)
+    if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 50)) {
       return outputError(
-        { message: "--top-k must be an integer between 1 and 50", code: "invalid_input" },
+        { message: `--${flag} must be an integer between 1 and 50`, code: "invalid_input" },
         json,
       )
     }
@@ -88,7 +88,7 @@ export default defineCommand({
     const resolved = resolveCustomerContextSearchInput({
       query: args.query,
       customer: args.customer,
-      topK,
+      limit,
       after: args.after,
       before: args.before,
       sourceTypes,

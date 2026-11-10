@@ -2671,36 +2671,6 @@
                   }
                 }
               },
-              "renewal": {
-                "description": "Customers with a stored renewal date in the window, as the Customers page counts it (the date outlit_get_customer include renewal shows from Outlit or the CRM). Customers with no stored renewal date are left out. Customers whose only renewal date comes from the billing period end may be missing; outlit_get_customer include renewal shows those. Example: {\"within\": \"next_90d\"} or {\"after\": \"2027-01-01\", \"before\": \"2027-04-01\"}.",
-                "type": "object",
-                "properties": {
-                  "within": {
-                    "description": "Renews from today through the last day of the window, in whole UTC days as the Customers page counts them: next_90d is today through 90 days from today.",
-                    "type": "string",
-                    "enum": [
-                      "next_30d",
-                      "next_60d",
-                      "next_90d",
-                      "next_180d",
-                      "next_365d"
-                    ]
-                  },
-                  "after": {
-                    "description": "Renews on or after this UTC date, YYYY-MM-DD, such as 2027-01-01.",
-                    "type": "string",
-                    "format": "date",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
-                  },
-                  "before": {
-                    "description": "Renews before this UTC date, YYYY-MM-DD (that day excluded).",
-                    "type": "string",
-                    "format": "date",
-                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
-                  }
-                },
-                "additionalProperties": false
-              },
               "search": {
                 "description": "Name or domain contains, ignoring case.",
                 "type": "string",
@@ -2749,19 +2719,18 @@
             "type": "string"
           },
           "orderBy": {
-            "description": "arr puts unknown ARR last when descending; arrCurrencies says if currencies mixed. renewal_date orders by the stored renewal date (the Customers page's), with ties by id; customers with no renewal date come last in either direction.",
+            "description": "arr puts unknown ARR last when descending; arrCurrencies says if currencies mixed.",
             "default": "last_activity_at",
             "type": "string",
             "enum": [
               "last_activity_at",
               "first_synced_at",
               "name",
-              "arr",
-              "renewal_date"
+              "arr"
             ]
           },
           "orderDirection": {
-            "description": "Default desc; asc with orderBy renewal_date, so the soonest renewal comes first.",
+            "default": "desc",
             "type": "string",
             "enum": [
               "asc",
@@ -3315,29 +3284,67 @@
           "customer": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 200,
-            "description": "Customer ID or domain"
+            "maxLength": 500,
+            "description": "Customer ID, domain, or name to look up"
           },
-          "channels": {
-            "description": "Filter by event channel. When omitted, defaults to the relationship channels COMMUNICATION, MEETING, SUPPORT, CRM, and BILLING. PRODUCT, IDENTITY, DOCUMENT, and SYSTEM are included only when listed here. Pass channels:[\"PRODUCT\"] to read the weekly product usage aggregate, and combine with productDetail to also return individual product events.",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "PRODUCT",
-                "COMMUNICATION",
-                "MEETING",
-                "CRM",
-                "BILLING",
-                "SUPPORT",
-                "IDENTITY",
-                "DOCUMENT",
-                "SYSTEM"
-              ]
-            }
+          "filters": {
+            "type": "object",
+            "properties": {
+              "channels": {
+                "description": "Default: communication, meeting, support, crm, billing. product adds the weekly usage aggregate; product, identity, document and system are read only when listed.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "product",
+                    "communication",
+                    "meeting",
+                    "crm",
+                    "billing",
+                    "support",
+                    "identity",
+                    "document",
+                    "system"
+                  ]
+                }
+              },
+              "eventTypes": {
+                "description": "Event types, any of, as events name them (e.g. \"note_added\").",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                }
+              },
+              "within": {
+                "description": "Window ending at before (or now). Default 30d unless after is given.",
+                "type": "string",
+                "enum": [
+                  "7d",
+                  "14d",
+                  "30d",
+                  "90d",
+                  "all"
+                ]
+              },
+              "after": {
+                "description": "ISO 8601 lower bound, inclusive.",
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "before": {
+                "description": "ISO 8601 upper bound, inclusive.",
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              }
+            },
+            "additionalProperties": false
           },
           "productDetail": {
-            "description": "Controls whether PRODUCT-channel rows appear in `events` when channels includes PRODUCT. \"none\" (default): product activity is returned only as the `product` weekly usage aggregate — no product telemetry rows. \"material\": also include individual product events that match the organization's configured value-feature event names (each keeps an `id` usable for citations); when the organization has no configured value features this returns no product rows, but the `product` aggregate is still returned. \"raw\": include every product event, including autocapture, pageview, feature-flag, and identity telemetry — large; request only when the aggregate and material events are insufficient.",
+            "description": "With channels product. none (default): the weekly aggregate only. material: also the events that match configured value features. raw: every product event (large).",
             "type": "string",
             "enum": [
               "none",
@@ -3346,54 +3353,27 @@
             ]
           },
           "includeMetadata": {
-            "description": "Include each event's raw metadata/properties payload. Default false: events return compact fields only, keeping the response small. Pass true only when a specific metadata field is needed.",
+            "description": "Include each event's raw properties. Only when a specific field is needed.",
             "type": "boolean"
           },
-          "eventTypes": {
-            "description": "Filter by event type",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "timeframe": {
-            "description": "Relative time window (default: 30d). Cannot be used with startDate/endDate.",
-            "type": "string",
-            "enum": [
-              "7d",
-              "14d",
-              "30d",
-              "90d",
-              "all"
-            ]
-          },
-          "startDate": {
-            "description": "Start of time window, inclusive (ISO 8601 UTC, e.g. '2025-01-01T00:00:00.000Z'). Cannot be used with timeframe.",
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-          },
-          "endDate": {
-            "description": "End of time window, inclusive of the instant it names (ISO 8601 UTC, e.g. '2025-01-31T23:59:59.999Z'). Use millisecond precision: timestamps are stored to the millisecond, so '...T23:59:59Z' includes only the first instant of that second and excludes the rest of it. Cannot be used with timeframe.",
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-          },
           "limit": {
-            "description": "Results per page (max 1000)",
-            "default": 50,
-            "type": "number",
+            "default": 25,
+            "description": "Items per page: default 25, max 100.",
+            "type": "integer",
             "minimum": 1,
-            "maximum": 1000
+            "maximum": 100
           },
           "cursor": {
-            "description": "Pagination cursor from previous response",
-            "type": "string"
+            "description": "nextCursor from the last page.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
           }
         },
         "required": [
           "customer"
-        ]
+        ],
+        "additionalProperties": false
       },
       "ToolInput_outlit_list_facts": {
         "type": "object",
@@ -3402,112 +3382,116 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 500,
-            "description": "Customer ID or domain"
+            "description": "Customer ID, domain, or name to look up"
           },
-          "status": {
-            "description": "Optional fact status filter",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "ACTIVE",
-                "ACKNOWLEDGED",
-                "RESOLVED",
-                "SNOOZED",
-                "CANDIDATE"
-              ]
-            }
-          },
-          "sourceTypes": {
-            "description": "Optional generic source types to restrict fact results to.",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "EMAIL",
-                "CALL",
-                "CALENDAR_EVENT",
-                "SUPPORT_TICKET",
-                "OPPORTUNITY",
-                "SLACK",
-                "PERSON_PROFILE",
-                "INVOICE",
-                "CRM",
-                "CRM_OPPORTUNITY"
-              ]
-            }
-          },
-          "factTypes": {
-            "description": "Optional customer-memory fact type filters; omit to retrieve across types. Choose types relevant to the question. Anomaly detector fact types are not supported.\nCUSTOM: A custom customer fact whose meaning is given by its content and supporting evidence.\nCOMPANY_CHANGE: Changes to the customer company, such as leadership, staffing, structure, or office location.\nFUNDING_REVENUE: The customer company's funding, revenue, financial health, or burn rate.\nTECHNOLOGY: Changes to the customer's technology stack, including migrations, adoption, or deprecation.\nSTRATEGY: The customer company's strategic direction, pivots, markets, or business priorities.\nCOMPETITIVE: The customer's consideration of competing products, including evaluations, switching intent, or RFPs.\nSENTIMENT: The customer's expressed satisfaction, frustration, praise, or complaints about the product.\nEXPANSION: Potential growth in the customer's use or purchase of the product through new use cases, users, or departments.\nCHURN_RISK: The customer reducing or ending use of the organization's product; exclude the customer's own customers churning, generic complaints without reduction intent, unrelated budget changes, and unrelated vendor notices\nTIMELINE: Stated dates or deadlines for customer decisions, launches, renewals, or other milestones.\nBUDGET: The customer's budget, spending approval status, or procurement process.\nDECISION_MAKER: Who influences or approves the customer's purchasing or implementation decisions.\nREQUIREMENTS: Specific product capabilities, features, or integrations the customer requests or requires.\nBLOCKER: An obstacle preventing the customer's launch, renewal, expansion, implementation, integration, or successful product use.\nCOMMITMENT: A promise, obligation, agreed next step, approval, or decision by the customer or vendor.\nSUCCESS_CRITERION: An explicitly customer-stated desired outcome or condition for getting value from the product, including qualitative outcomes without invented metrics or deadlines.\nPRODUCT_USAGE: How the customer uses, adopts, abandons, or works around specific product capabilities.\nCONTACT_INFO: A customer contact's title, professional responsibilities, team membership, or reporting chain.\nCONTACT_PREFERENCE: A customer contact's communication preferences, availability, timezone, or meeting style.\nCONTACT_DEPARTURE: A known customer contact explicitly left or is leaving the customer's company; exclude vacation, parental or medical leave, ordinary out-of-office notices, candidates, and people discussed as part of the customer's own business\nCONTACT_POSITION_CHANGE: A known customer contact changed title, department, team, or professional responsibility; do not use this for an Outlit relationship role change, and use CONTACT_DEPARTURE when the person left the company\nCONTACT_DISENGAGEMENT: A known customer contact explicitly stopped participating, organizing, responding, or owning the initiative; a single unanswered message, scheduling friction, or an out-of-office notice is insufficient\nCHAMPION_RISK: Historical broad relationship-risk fact retained for existing rows and occurrences; new extraction uses specific contact-transition Fact types",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "CUSTOM",
-                "COMPANY_CHANGE",
-                "FUNDING_REVENUE",
-                "TECHNOLOGY",
-                "STRATEGY",
-                "COMPETITIVE",
-                "SENTIMENT",
-                "EXPANSION",
-                "CHURN_RISK",
-                "TIMELINE",
-                "BUDGET",
-                "DECISION_MAKER",
-                "REQUIREMENTS",
-                "BLOCKER",
-                "COMMITMENT",
-                "SUCCESS_CRITERION",
-                "PRODUCT_USAGE",
-                "CONTACT_INFO",
-                "CONTACT_PREFERENCE",
-                "CONTACT_DEPARTURE",
-                "CONTACT_POSITION_CHANGE",
-                "CONTACT_DISENGAGEMENT",
-                "CHAMPION_RISK"
-              ]
-            }
-          },
-          "factCategories": {
-            "description": "Optional public fact category filters. Supported values: MEMORY, RELATIONSHIP, CUSTOM.",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "MEMORY",
-                "RELATIONSHIP",
-                "CUSTOM"
-              ]
-            }
-          },
-          "after": {
-            "description": "ISO 8601 datetime lower bound",
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-          },
-          "before": {
-            "description": "ISO 8601 datetime upper bound",
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+          "filters": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "acknowledged",
+                    "resolved",
+                    "snoozed",
+                    "candidate"
+                  ]
+                }
+              },
+              "sourceTypes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "call",
+                    "calendar_event",
+                    "support_ticket",
+                    "opportunity",
+                    "slack",
+                    "person_profile",
+                    "invoice"
+                  ]
+                }
+              },
+              "types": {
+                "description": "Omit for every type.\ncustom: A custom customer fact whose meaning is given by its content and supporting evidence.\ncompany_change: Changes to the customer company, such as leadership, staffing, structure, or office location.\nfunding_revenue: The customer company's funding, revenue, financial health, or burn rate.\ntechnology: Changes to the customer's technology stack, including migrations, adoption, or deprecation.\nstrategy: The customer company's strategic direction, pivots, markets, or business priorities.\ncompetitive: The customer's consideration of competing products, including evaluations, switching intent, or RFPs.\nsentiment: The customer's expressed satisfaction, frustration, praise, or complaints about the product.\nexpansion: Potential growth in the customer's use or purchase of the product through new use cases, users, or departments.\nchurn_risk: The customer reducing or ending use of the organization's product; exclude the customer's own customers churning, generic complaints without reduction intent, unrelated budget changes, and unrelated vendor notices\ntimeline: Stated dates or deadlines for customer decisions, launches, renewals, or other milestones.\nbudget: The customer's budget, spending approval status, or procurement process.\ndecision_maker: Who influences or approves the customer's purchasing or implementation decisions.\nrequirements: Specific product capabilities, features, or integrations the customer requests or requires.\nblocker: An obstacle preventing the customer's launch, renewal, expansion, implementation, integration, or successful product use.\ncommitment: A promise, obligation, agreed next step, approval, or decision by the customer or vendor.\nsuccess_criterion: An explicitly customer-stated desired outcome or condition for getting value from the product, including qualitative outcomes without invented metrics or deadlines.\nproduct_usage: How the customer uses, adopts, abandons, or works around specific product capabilities.\ncontact_info: A customer contact's title, professional responsibilities, team membership, or reporting chain.\ncontact_preference: A customer contact's communication preferences, availability, timezone, or meeting style.\ncontact_departure: A known customer contact explicitly left or is leaving the customer's company; exclude vacation, parental or medical leave, ordinary out-of-office notices, candidates, and people discussed as part of the customer's own business\ncontact_position_change: A known customer contact changed title, department, team, or professional responsibility; do not use this for an Outlit relationship role change, and use CONTACT_DEPARTURE when the person left the company\ncontact_disengagement: A known customer contact explicitly stopped participating, organizing, responding, or owning the initiative; a single unanswered message, scheduling friction, or an out-of-office notice is insufficient\nchampion_risk: Historical broad relationship-risk fact retained for existing rows and occurrences; new extraction uses specific contact-transition Fact types",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "custom",
+                    "company_change",
+                    "funding_revenue",
+                    "technology",
+                    "strategy",
+                    "competitive",
+                    "sentiment",
+                    "expansion",
+                    "churn_risk",
+                    "timeline",
+                    "budget",
+                    "decision_maker",
+                    "requirements",
+                    "blocker",
+                    "commitment",
+                    "success_criterion",
+                    "product_usage",
+                    "contact_info",
+                    "contact_preference",
+                    "contact_departure",
+                    "contact_position_change",
+                    "contact_disengagement",
+                    "champion_risk"
+                  ]
+                }
+              },
+              "categories": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "memory",
+                    "relationship",
+                    "custom"
+                  ]
+                }
+              },
+              "after": {
+                "description": "Facts said or observed on or after (occurredAt), e.g. \"2026-01-01T00:00:00.000Z\".",
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "before": {
+                "description": "Facts said or observed on or before.",
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              }
+            },
+            "additionalProperties": false
           },
           "limit": {
-            "description": "Results per page (max 100)",
-            "default": 50,
+            "default": 25,
+            "description": "Items per page: default 25, max 100.",
             "type": "integer",
             "minimum": 1,
             "maximum": 100
           },
           "cursor": {
-            "description": "Pagination cursor from previous response",
-            "type": "string"
+            "description": "nextCursor from the last page.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
           }
         },
         "required": [
           "customer"
-        ]
+        ],
+        "additionalProperties": false
       },
       "ToolInput_outlit_get_fact": {
         "type": "object",
@@ -3515,129 +3499,142 @@
           "factId": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 500,
-            "description": "Exact fact ID to retrieve"
+            "maxLength": 500
           },
           "include": {
-            "description": "Optional best-effort expansions. Use include=['evidence'] to request evidence when available; unsupported include values are ignored.",
             "type": "array",
             "items": {
               "type": "string",
-              "minLength": 1,
-              "maxLength": 100
+              "enum": [
+                "evidence"
+              ]
             }
           }
         },
         "required": [
           "factId"
-        ]
+        ],
+        "additionalProperties": false
       },
       "ToolInput_outlit_get_source": {
         "type": "object",
         "properties": {
-          "sourceType": {
-            "type": "string",
-            "enum": [
-              "EMAIL",
-              "CALL",
-              "CALENDAR_EVENT",
-              "SUPPORT_TICKET",
-              "OPPORTUNITY",
-              "SLACK",
-              "PERSON_PROFILE",
-              "INVOICE",
-              "CRM",
-              "CRM_OPPORTUNITY",
-              "STRIPE_INVOICE",
-              "EXTRACTED"
-            ]
-          },
-          "sourceId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 500
+          "source": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "email",
+                  "call",
+                  "calendar_event",
+                  "support_ticket",
+                  "opportunity",
+                  "slack",
+                  "person_profile",
+                  "invoice",
+                  "extracted"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ],
+            "description": "As another tool returned it; extracted names a memory entry."
           },
           "limit": {
-            "description": "Exact content segments per page (default 10, maximum 100).",
+            "description": "Content segments per page (default 10).",
             "type": "integer",
             "minimum": 1,
             "maximum": 100
           },
           "cursor": {
-            "description": "Opaque cursor returned by a previous exact lookup for the same source.",
+            "description": "nextCursor from the last page.",
             "type": "string",
             "minLength": 1,
             "maxLength": 2000
           }
         },
         "required": [
-          "sourceType",
-          "sourceId"
-        ]
+          "source"
+        ],
+        "additionalProperties": false
       },
       "ToolInput_outlit_list_sources": {
         "type": "object",
         "properties": {
-          "sourceType": {
-            "description": "Generic source type to list.",
-            "type": "string",
-            "enum": [
-              "EMAIL",
-              "CALL",
-              "CALENDAR_EVENT",
-              "SUPPORT_TICKET",
-              "OPPORTUNITY",
-              "SLACK",
-              "PERSON_PROFILE",
-              "INVOICE",
-              "CRM",
-              "CRM_OPPORTUNITY",
-              "STRIPE_INVOICE"
-            ]
-          },
           "customer": {
-            "description": "Customer ID, domain, or name to scope source listing.",
             "type": "string",
             "minLength": 1,
-            "maxLength": 200
+            "maxLength": 500,
+            "description": "Customer ID, domain, or name to look up"
           },
-          "after": {
-            "description": "ISO 8601 datetime lower bound.",
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-          },
-          "before": {
-            "description": "ISO 8601 datetime upper bound.",
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-          },
-          "participant": {
-            "description": "Participant email or name to filter source records.",
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 500
-          },
-          "provider": {
-            "description": "Provider identifier such as gmail, gong, or google-calendar.",
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "hasTranscript": {
-            "description": "Filter call sources by transcript presence.",
-            "type": "boolean"
+          "filters": {
+            "type": "object",
+            "properties": {
+              "sourceTypes": {
+                "description": "Any of. Default: all but slack and invoice; invoice needs a customer.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "call",
+                    "calendar_event",
+                    "support_ticket",
+                    "opportunity",
+                    "slack",
+                    "person_profile",
+                    "invoice"
+                  ]
+                }
+              },
+              "after": {
+                "description": "ISO 8601 lower bound, inclusive.",
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "before": {
+                "description": "ISO 8601 upper bound, inclusive.",
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "participant": {
+                "description": "Email or name.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "provider": {
+                "description": "e.g. gmail, gong, google-calendar.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "hasTranscript": {
+                "description": "Calls with or without a transcript.",
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
           },
           "limit": {
-            "description": "Results per page.",
-            "default": 50,
+            "default": 25,
+            "description": "Items per page: default 25, max 100.",
             "type": "integer",
             "minimum": 1,
             "maximum": 100
           },
           "cursor": {
-            "description": "Pagination cursor.",
+            "description": "nextCursor from the last page.",
             "type": "string",
             "minLength": 1,
             "maxLength": 2000
@@ -3649,12 +3646,13 @@
         "type": "object",
         "properties": {
           "customer": {
-            "description": "Customer ID, domain, or name. Omit to search across all customers.",
+            "description": "Omit to search every customer.",
             "anyOf": [
               {
                 "type": "string",
                 "minLength": 1,
-                "maxLength": 500
+                "maxLength": 500,
+                "description": "Customer ID, domain, or name to look up"
               },
               {
                 "type": "null"
@@ -3664,45 +3662,47 @@
           "query": {
             "type": "string",
             "minLength": 2,
-            "maxLength": 2000,
-            "description": "Natural language query or topic to search for."
+            "maxLength": 2000
           },
-          "topK": {
-            "description": "Maximum number of artifact results to return (default 20).",
+          "filters": {
+            "type": "object",
+            "properties": {
+              "sourceTypes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "call",
+                    "calendar_event",
+                    "support_ticket",
+                    "opportunity",
+                    "slack",
+                    "person_profile",
+                    "invoice"
+                  ]
+                }
+              },
+              "after": {
+                "description": "ISO 8601 lower bound, inclusive.",
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              },
+              "before": {
+                "description": "ISO 8601 upper bound, inclusive.",
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              }
+            },
+            "additionalProperties": false
+          },
+          "limit": {
+            "description": "Results (default 20).",
             "type": "integer",
             "minimum": 1,
             "maximum": 50
-          },
-          "after": {
-            "description": "ISO 8601 datetime lower bound",
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-          },
-          "before": {
-            "description": "ISO 8601 datetime upper bound",
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-          },
-          "sourceTypes": {
-            "description": "Optional generic source types to restrict the search to.",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "EMAIL",
-                "CALL",
-                "CALENDAR_EVENT",
-                "SUPPORT_TICKET",
-                "OPPORTUNITY",
-                "SLACK",
-                "PERSON_PROFILE",
-                "INVOICE",
-                "CRM",
-                "CRM_OPPORTUNITY"
-              ]
-            }
           }
         },
         "required": [
@@ -5521,38 +5521,6 @@
                   "additionalProperties": false,
                   "description": "Outlit's own times for its record, not facts about the customer."
                 },
-                "renewal": {
-                  "description": "The stored renewal date the Customers page shows, as outlit_get_customer include renewal does where both have one; null when none is stored (one that only comes from the billing period end may still show there). Always set by the server; absent only in results saved before it existed.",
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "date": {
-                          "type": "string",
-                          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
-                          "description": "Renewal date, YYYY-MM-DD (UTC)."
-                        },
-                        "source": {
-                          "type": "string",
-                          "enum": [
-                            "outlit",
-                            "crm",
-                            "billing"
-                          ],
-                          "description": "Set in Outlit, a CRM opportunity, or a stored billing renewal."
-                        }
-                      },
-                      "required": [
-                        "date",
-                        "source"
-                      ],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
                 "fields": {
                   "description": "With input fields, in order.",
                   "type": "array",
@@ -7353,7 +7321,7 @@
                               "properties": {
                                 "id": {
                                   "type": "string",
-                                  "description": "The invoice id (in_...); read it with outlit_get_source INVOICE."
+                                  "description": "The invoice id (in_...); read it with outlit_get_source, source type invoice."
                                 },
                                 "number": {
                                   "anyOf": [
@@ -11427,6 +11395,40 @@
       "ToolOutput_outlit_get_timeline": {
         "type": "object",
         "properties": {
+          "customer": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "domain": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "domain"
+            ],
+            "additionalProperties": false
+          },
           "events": {
             "type": "array",
             "items": {
@@ -11434,7 +11436,7 @@
               "properties": {
                 "id": {
                   "type": "string",
-                  "description": "Stable event identifier. Pass as timeline_event eventId when citing this event."
+                  "description": "Pass as timeline_event eventId when citing this event."
                 },
                 "eventType": {
                   "type": "string"
@@ -11445,15 +11447,15 @@
                 "channel": {
                   "type": "string",
                   "enum": [
-                    "PRODUCT",
-                    "COMMUNICATION",
-                    "MEETING",
-                    "CRM",
-                    "BILLING",
-                    "SUPPORT",
-                    "IDENTITY",
-                    "DOCUMENT",
-                    "SYSTEM"
+                    "product",
+                    "communication",
+                    "meeting",
+                    "crm",
+                    "billing",
+                    "support",
+                    "identity",
+                    "document",
+                    "system"
                   ]
                 },
                 "title": {
@@ -11475,12 +11477,20 @@
                       "type": "null"
                     }
                   ],
-                  "description": "Bounded display summary, truncated past roughly 2 KB. Use outlit_get_source on sourceType/sourceId for the full underlying content."
+                  "description": "Truncated past about 2 KB; read source for all of it."
                 },
                 "occurredAt": {
                   "type": "string",
                   "format": "date-time",
                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                },
+                "occurredAtBasis": {
+                  "description": "Present when occurredAt isn't the event's own time: record (dated from the record, e.g. a subscription's start) or first_observed (when Outlit first saw it).",
+                  "type": "string",
+                  "enum": [
+                    "record",
+                    "first_observed"
+                  ]
                 },
                 "contact": {
                   "anyOf": [
@@ -11492,54 +11502,49 @@
                     }
                   ]
                 },
-                "sourceType": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "sourceId": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "sourceRef": {
-                  "description": "Canonical source handle for this event, emitted only when outlit_get_source can retrieve the underlying record; omitted when the event is marked unreadable.",
+                "source": {
+                  "description": "Present when outlit_get_source can open it.",
                   "type": "object",
                   "properties": {
-                    "sourceType": {
-                      "type": "string"
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "email",
+                        "call",
+                        "calendar_event",
+                        "support_ticket",
+                        "opportunity",
+                        "slack",
+                        "person_profile",
+                        "invoice"
+                      ]
                     },
-                    "sourceId": {
-                      "type": "string"
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
                     }
                   },
                   "required": [
-                    "sourceType",
-                    "sourceId"
+                    "type",
+                    "id"
                   ],
                   "additionalProperties": false
                 },
                 "unreadable": {
-                  "description": "Present only when the event's underlying source record cannot be retrieved via outlit_get_source. Do not retry source lookups for this event.",
-                  "type": "boolean",
-                  "const": true
-                },
-                "unreadableReason": {
-                  "description": "Why the event's source is unreadable, e.g. unresolved_source or ambiguous_source.",
-                  "type": "string"
+                  "description": "Its source can't be opened; don't retry.",
+                  "type": "object",
+                  "properties": {
+                    "reason": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "reason"
+                  ],
+                  "additionalProperties": false
                 },
                 "metadata": {
-                  "description": "Raw event properties. Present only when the request set includeMetadata:true.",
                   "type": "object",
                   "propertyNames": {
                     "type": "string"
@@ -11555,14 +11560,12 @@
                 "title",
                 "summary",
                 "occurredAt",
-                "contact",
-                "sourceType",
-                "sourceId"
+                "contact"
               ],
               "additionalProperties": false
             }
           },
-          "pagination": {
+          "page": {
             "type": "object",
             "properties": {
               "hasMore": {
@@ -11578,118 +11581,248 @@
                   }
                 ]
               },
-              "effectiveLimit": {
+              "total": {
                 "type": "integer",
-                "minimum": 1,
+                "minimum": 0,
                 "maximum": 9007199254740991,
-                "description": "The maximum number of events a page of this response can contain. Responses can hold fewer events than requested when hosted response-size limits apply; callers should rely on pagination.hasMore/nextCursor rather than event count to detect truncation."
+                "description": "How many items match, over every page."
               }
             },
             "required": [
               "hasMore",
               "nextCursor",
-              "effectiveLimit"
+              "total"
             ],
             "additionalProperties": false
           },
           "product": {
-            "description": "Present when the request's channels include PRODUCT. Weekly product usage aggregate for the requested window: value-feature event counts and distinct active users per UTC week, plus the window's top value-feature event names. Individual product events appear in `events` only when productDetail is \"material\" or \"raw\".",
+            "description": "With channels product. Unavailable is never zero usage.",
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "const": "available"
+                  },
+                  "asOf": {
+                    "type": "string"
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "basis": {
+                        "type": "string",
+                        "enum": [
+                          "value_features",
+                          "all_events"
+                        ],
+                        "description": "What events counts: value_features (the configured ones), or all_events when none are configured."
+                      },
+                      "windowStartAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                        "description": "UTC week containing the window's start."
+                      },
+                      "windowEndAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                      },
+                      "weeklyBuckets": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "weekStartAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                            },
+                            "events": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                              "description": "Product events this week, on basis."
+                            },
+                            "activeUsers": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "weekStartAt",
+                            "events",
+                            "activeUsers"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "description": "Oldest first."
+                      },
+                      "topEventNames": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "eventName": {
+                              "type": "string"
+                            },
+                            "events": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "eventName",
+                            "events"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "basis",
+                      "windowStartAt",
+                      "windowEndAt",
+                      "weeklyBuckets",
+                      "topEventNames"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "status",
+                  "asOf",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "empty",
+                      "not_connected",
+                      "not_synced",
+                      "unavailable"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 300
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$"
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {}
+                      }
+                    },
+                    "required": [
+                      "instruction"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "status",
+                  "reason"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "coverage": {
             "type": "object",
             "properties": {
-              "windowStartAt": {
+              "searched": {
                 "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                "description": "Start of the aggregate coverage window: the UTC week containing the requested start (or the earliest retained week)."
-              },
-              "windowEndAt": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                "description": "End of the aggregate coverage window (the request end bound)"
-              },
-              "weeklyBuckets": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "weekStartAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                      "description": "Start of the bucket's UTC week (Monday 00:00:00Z)"
-                    },
-                    "events": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991,
-                      "description": "Events in this week matching the organization's configured value features"
-                    },
-                    "activeUsers": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991,
-                      "description": "Distinct users with product activity this week"
-                    }
-                  },
-                  "required": [
-                    "weekStartAt",
-                    "events",
-                    "activeUsers"
-                  ],
-                  "additionalProperties": false
-                },
-                "description": "UTC week buckets covering the requested window, oldest first"
-              },
-              "topEventNames": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "eventName": {
-                      "type": "string"
-                    },
-                    "events": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    }
-                  },
-                  "required": [
-                    "eventName",
-                    "events"
-                  ],
-                  "additionalProperties": false
-                },
-                "description": "Most frequent configured value-feature event names across the window"
+                "maxLength": 500
               }
             },
             "required": [
-              "windowStartAt",
-              "windowEndAt",
-              "weeklyBuckets",
-              "topEventNames"
+              "searched"
             ],
             "additionalProperties": false
           },
-          "productUnavailable": {
-            "description": "Present only when channels included PRODUCT but the weekly usage aggregate could not be computed. Report product usage as unavailable — never as zero or absent usage. When configured value-feature names are still known, material product events are returned in `events` instead of the aggregate.",
+          "truncation": {
             "type": "object",
             "properties": {
+              "truncated": {
+                "type": "boolean",
+                "const": true
+              },
               "reason": {
                 "type": "string",
-                "description": "Machine-readable reason the usage aggregate could not be computed"
+                "enum": [
+                  "byte_cap",
+                  "row_cap"
+                ]
+              },
+              "returned": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "next": {
+                "type": "object",
+                "properties": {
+                  "instruction": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  },
+                  "tool": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "pattern": "^outlit_[a-z0-9_]+$"
+                  },
+                  "input": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "instruction"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
-              "reason"
+              "truncated",
+              "reason",
+              "returned",
+              "next"
             ],
             "additionalProperties": false
           }
         },
         "required": [
+          "customer",
           "events",
-          "pagination"
+          "page"
         ],
         "additionalProperties": false
       },
@@ -11756,12 +11889,12 @@
                     }
                   ]
                 },
-                "factType": {
+                "type": {
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 200
                 },
-                "factCategory": {
+                "category": {
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 200
@@ -11769,27 +11902,11 @@
                 "status": {
                   "type": "string",
                   "enum": [
-                    "ACTIVE",
-                    "ACKNOWLEDGED",
-                    "RESOLVED",
-                    "SNOOZED",
-                    "CANDIDATE"
-                  ]
-                },
-                "confidence": {
-                  "type": "number",
-                  "minimum": 0,
-                  "maximum": 1
-                },
-                "priority": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "maxLength": 100
-                    },
-                    {
-                      "type": "null"
-                    }
+                    "active",
+                    "acknowledged",
+                    "resolved",
+                    "snoozed",
+                    "candidate"
                   ]
                 },
                 "occurredAt": {
@@ -11802,17 +11919,8 @@
                     {
                       "type": "null"
                     }
-                  ]
-                },
-                "detectedAt": {
-                  "type": "string",
-                  "format": "date-time",
-                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                },
-                "validFrom": {
-                  "type": "string",
-                  "format": "date-time",
-                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                  ],
+                  "description": "When it was said or happened."
                 },
                 "validUntil": {
                   "anyOf": [
@@ -11826,25 +11934,25 @@
                     }
                   ]
                 },
-                "linkedSourceRef": {
+                "source": {
                   "anyOf": [
                     {
                       "type": "object",
                       "properties": {
-                        "sourceType": {
+                        "type": {
                           "type": "string",
                           "enum": [
-                            "EMAIL",
-                            "CALL",
-                            "CALENDAR_EVENT",
-                            "SUPPORT_TICKET",
-                            "OPPORTUNITY",
-                            "SLACK",
-                            "PERSON_PROFILE",
-                            "INVOICE"
+                            "email",
+                            "call",
+                            "calendar_event",
+                            "support_ticket",
+                            "opportunity",
+                            "slack",
+                            "person_profile",
+                            "invoice"
                           ]
                         },
-                        "sourceId": {
+                        "id": {
                           "type": "string",
                           "minLength": 1,
                           "maxLength": 500
@@ -11861,80 +11969,7 @@
                             }
                           ]
                         },
-                        "permalink": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "maxLength": 2000
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      },
-                      "required": [
-                        "sourceType",
-                        "sourceId",
-                        "occurredAt",
-                        "permalink"
-                      ],
-                      "additionalProperties": false
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "sourceMetadata": {
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "sourceType": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "enum": [
-                                "EMAIL",
-                                "CALL",
-                                "CALENDAR_EVENT",
-                                "SUPPORT_TICKET",
-                                "OPPORTUNITY",
-                                "SLACK",
-                                "PERSON_PROFILE",
-                                "INVOICE"
-                              ]
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "sourceId": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "maxLength": 500
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "sourceOccurredAt": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "format": "date-time",
-                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "sourceQuote": {
+                        "quote": {
                           "anyOf": [
                             {
                               "type": "string",
@@ -11958,10 +11993,10 @@
                         }
                       },
                       "required": [
-                        "sourceType",
-                        "sourceId",
-                        "sourceOccurredAt",
-                        "sourceQuote",
+                        "type",
+                        "id",
+                        "occurredAt",
+                        "quote",
                         "permalink"
                       ],
                       "additionalProperties": false
@@ -11976,236 +12011,121 @@
                   "minimum": 0,
                   "maximum": 9007199254740991
                 },
-                "metricName": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "maxLength": 200
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "metricValue": {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "metricPreviousValue": {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "metricDelta": {
-                  "anyOf": [
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "metricUnit": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "maxLength": 100
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "periodStart": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "periodEnd": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "changePointDate": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
                 "occurrenceCount": {
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9007199254740991
                 },
-                "lastDetectedAt": {
-                  "anyOf": [
-                    {
+                "outlit": {
+                  "type": "object",
+                  "properties": {
+                    "recordedAt": {
                       "type": "string",
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                     },
-                    {
-                      "type": "null"
+                    "updatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
-                  ]
-                },
-                "severity": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "maxLength": 100
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
+                  },
+                  "required": [
+                    "recordedAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
                 },
                 "evidence": {
-                  "anyOf": [
-                    {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "maxLength": 500
-                          },
-                          "sourceType": {
-                            "anyOf": [
-                              {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      "source": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
                                 "type": "string",
                                 "enum": [
-                                  "EMAIL",
-                                  "CALL",
-                                  "CALENDAR_EVENT",
-                                  "SUPPORT_TICKET",
-                                  "OPPORTUNITY",
-                                  "SLACK",
-                                  "PERSON_PROFILE",
-                                  "INVOICE"
+                                  "email",
+                                  "call",
+                                  "calendar_event",
+                                  "support_ticket",
+                                  "opportunity",
+                                  "slack",
+                                  "person_profile",
+                                  "invoice"
                                 ]
                               },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "sourceId": {
-                            "anyOf": [
-                              {
+                              "id": {
                                 "type": "string",
+                                "minLength": 1,
                                 "maxLength": 500
-                              },
-                              {
-                                "type": "null"
                               }
-                            ]
+                            },
+                            "required": [
+                              "type",
+                              "id"
+                            ],
+                            "additionalProperties": false
                           },
-                          "excerpt": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "maxLength": 20000
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "metadata": {
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "propertyNames": {
-                                  "type": "string"
-                                },
-                                "additionalProperties": {}
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
+                          {
+                            "type": "null"
                           }
-                        },
-                        "required": [
-                          "id",
-                          "sourceType",
-                          "sourceId",
-                          "excerpt",
-                          "metadata"
-                        ],
-                        "additionalProperties": false
+                        ]
+                      },
+                      "excerpt": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 20000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
                     },
-                    {
-                      "type": "null"
-                    }
-                  ]
+                    "required": [
+                      "id",
+                      "source",
+                      "excerpt"
+                    ],
+                    "additionalProperties": false
+                  }
                 }
               },
               "required": [
                 "id",
                 "assertion",
                 "reasoning",
-                "factType",
-                "factCategory",
+                "type",
+                "category",
                 "status",
-                "confidence",
-                "priority",
                 "occurredAt",
-                "detectedAt",
-                "validFrom",
                 "validUntil",
+                "source",
                 "evidenceCount",
-                "metricName",
-                "metricValue",
-                "metricPreviousValue",
-                "metricDelta",
-                "metricUnit",
-                "periodStart",
-                "periodEnd",
-                "changePointDate",
                 "occurrenceCount",
-                "lastDetectedAt",
-                "severity"
+                "outlit"
               ],
               "additionalProperties": false
             }
           },
-          "pagination": {
+          "page": {
             "type": "object",
             "properties": {
               "hasMore": {
@@ -12220,11 +12140,92 @@
                     "type": "null"
                   }
                 ]
+              },
+              "total": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How many items match, over every page; null when counting them would cost a second full read."
               }
             },
             "required": [
               "hasMore",
-              "nextCursor"
+              "nextCursor",
+              "total"
+            ],
+            "additionalProperties": false
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "searched": {
+                "type": "string",
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "searched"
+            ],
+            "additionalProperties": false
+          },
+          "truncation": {
+            "type": "object",
+            "properties": {
+              "truncated": {
+                "type": "boolean",
+                "const": true
+              },
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "byte_cap",
+                  "row_cap"
+                ]
+              },
+              "returned": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "next": {
+                "type": "object",
+                "properties": {
+                  "instruction": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  },
+                  "tool": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "pattern": "^outlit_[a-z0-9_]+$"
+                  },
+                  "input": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "instruction"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "truncated",
+              "reason",
+              "returned",
+              "next"
             ],
             "additionalProperties": false
           }
@@ -12232,373 +12233,226 @@
         "required": [
           "customer",
           "facts",
-          "pagination"
+          "page"
         ],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_fact": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 500
+          "customer": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "domain": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "domain"
+            ],
+            "additionalProperties": false
           },
-          "assertion": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 20000
-          },
-          "reasoning": {
-            "anyOf": [
-              {
+          "fact": {
+            "type": "object",
+            "properties": {
+              "id": {
                 "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "assertion": {
+                "type": "string",
+                "minLength": 1,
                 "maxLength": 20000
               },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "factType": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "factCategory": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "ACTIVE",
-              "ACKNOWLEDGED",
-              "RESOLVED",
-              "SNOOZED",
-              "CANDIDATE"
-            ]
-          },
-          "confidence": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1
-          },
-          "priority": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 100
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "occurredAt": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "detectedAt": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-          },
-          "validFrom": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-          },
-          "validUntil": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "linkedSourceRef": {
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "sourceType": {
+              "reasoning": {
+                "anyOf": [
+                  {
                     "type": "string",
-                    "enum": [
-                      "EMAIL",
-                      "CALL",
-                      "CALENDAR_EVENT",
-                      "SUPPORT_TICKET",
-                      "OPPORTUNITY",
-                      "SLACK",
-                      "PERSON_PROFILE",
-                      "INVOICE"
-                    ]
+                    "maxLength": 20000
                   },
-                  "sourceId": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 500
-                  },
-                  "occurredAt": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "format": "date-time",
-                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "permalink": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 2000
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                  {
+                    "type": "null"
                   }
-                },
-                "required": [
-                  "sourceType",
-                  "sourceId",
-                  "occurredAt",
-                  "permalink"
-                ],
-                "additionalProperties": false
+                ]
               },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "sourceMetadata": {
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "sourceType": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "enum": [
-                          "EMAIL",
-                          "CALL",
-                          "CALENDAR_EVENT",
-                          "SUPPORT_TICKET",
-                          "OPPORTUNITY",
-                          "SLACK",
-                          "PERSON_PROFILE",
-                          "INVOICE"
-                        ]
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "sourceId": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 500
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "sourceOccurredAt": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "format": "date-time",
-                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "sourceQuote": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 20000
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "permalink": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 2000
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "sourceType",
-                  "sourceId",
-                  "sourceOccurredAt",
-                  "sourceQuote",
-                  "permalink"
-                ],
-                "additionalProperties": false
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "evidenceCount": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "metricName": {
-            "anyOf": [
-              {
+              "type": {
                 "type": "string",
+                "minLength": 1,
                 "maxLength": 200
               },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "metricValue": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "metricPreviousValue": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "metricDelta": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "metricUnit": {
-            "anyOf": [
-              {
+              "category": {
                 "type": "string",
-                "maxLength": 100
+                "minLength": 1,
+                "maxLength": 200
               },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "periodStart": {
-            "anyOf": [
-              {
+              "status": {
                 "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                "enum": [
+                  "active",
+                  "acknowledged",
+                  "resolved",
+                  "snoozed",
+                  "candidate"
+                ]
               },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "periodEnd": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              "occurredAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "When it was said or happened."
               },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "changePointDate": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              "validUntil": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "occurrenceCount": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "lastDetectedAt": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+              "source": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "email",
+                          "call",
+                          "calendar_event",
+                          "support_ticket",
+                          "opportunity",
+                          "slack",
+                          "person_profile",
+                          "invoice"
+                        ]
+                      },
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500
+                      },
+                      "occurredAt": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "quote": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 20000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "permalink": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 2000
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "id",
+                      "occurredAt",
+                      "quote",
+                      "permalink"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "severity": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 100
+              "evidenceCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
               },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "evidence": {
-            "anyOf": [
-              {
+              "occurrenceCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "outlit": {
+                "type": "object",
+                "properties": {
+                  "recordedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                  },
+                  "updatedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "recordedAt",
+                  "updatedAt"
+                ],
+                "additionalProperties": false
+              },
+              "evidence": {
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -12607,31 +12461,35 @@
                       "type": "string",
                       "maxLength": 500
                     },
-                    "sourceType": {
+                    "source": {
                       "anyOf": [
                         {
-                          "type": "string",
-                          "enum": [
-                            "EMAIL",
-                            "CALL",
-                            "CALENDAR_EVENT",
-                            "SUPPORT_TICKET",
-                            "OPPORTUNITY",
-                            "SLACK",
-                            "PERSON_PROFILE",
-                            "INVOICE"
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "sourceId": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "maxLength": 500
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "email",
+                                "call",
+                                "calendar_event",
+                                "support_ticket",
+                                "opportunity",
+                                "slack",
+                                "person_profile",
+                                "invoice"
+                              ]
+                            },
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 500
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "id"
+                          ],
+                          "additionalProperties": false
                         },
                         {
                           "type": "null"
@@ -12648,86 +12506,70 @@
                           "type": "null"
                         }
                       ]
-                    },
-                    "metadata": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "propertyNames": {
-                            "type": "string"
-                          },
-                          "additionalProperties": {}
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
                     }
                   },
                   "required": [
                     "id",
-                    "sourceType",
-                    "sourceId",
-                    "excerpt",
-                    "metadata"
+                    "source",
+                    "excerpt"
                   ],
                   "additionalProperties": false
                 }
-              },
-              {
-                "type": "null"
               }
-            ]
+            },
+            "required": [
+              "id",
+              "assertion",
+              "reasoning",
+              "type",
+              "category",
+              "status",
+              "occurredAt",
+              "validUntil",
+              "source",
+              "evidenceCount",
+              "occurrenceCount",
+              "outlit"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
-          "id",
-          "assertion",
-          "reasoning",
-          "factType",
-          "factCategory",
-          "status",
-          "confidence",
-          "priority",
-          "occurredAt",
-          "detectedAt",
-          "validFrom",
-          "validUntil",
-          "evidenceCount",
-          "metricName",
-          "metricValue",
-          "metricPreviousValue",
-          "metricDelta",
-          "metricUnit",
-          "periodStart",
-          "periodEnd",
-          "changePointDate",
-          "occurrenceCount",
-          "lastDetectedAt",
-          "severity"
+          "customer",
+          "fact"
         ],
         "additionalProperties": false
       },
       "ToolOutput_outlit_get_source": {
         "type": "object",
         "properties": {
-          "sourceType": {
-            "type": "string",
-            "enum": [
-              "EMAIL",
-              "CALL",
-              "CALENDAR_EVENT",
-              "SUPPORT_TICKET",
-              "OPPORTUNITY",
-              "SLACK",
-              "PERSON_PROFILE",
-              "INVOICE"
-            ]
-          },
-          "sourceId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 500
+          "source": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "email",
+                  "call",
+                  "calendar_event",
+                  "support_ticket",
+                  "opportunity",
+                  "slack",
+                  "person_profile",
+                  "invoice"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "type",
+              "id"
+            ],
+            "additionalProperties": false
           },
           "occurredAt": {
             "anyOf": [
@@ -12791,19 +12633,27 @@
                 "type": "object",
                 "properties": {
                   "id": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 500
+                    "type": "string"
                   },
                   "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 500
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "domain": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 500
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -12826,9 +12676,7 @@
                 "email": {
                   "anyOf": [
                     {
-                      "type": "string",
-                      "format": "email",
-                      "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                      "type": "string"
                     },
                     {
                       "type": "null"
@@ -12888,88 +12736,272 @@
             }
           },
           "record": {
-            "type": "object",
-            "propertyNames": {
-              "type": "string"
-            },
-            "additionalProperties": {}
-          },
-          "contentPage": {
-            "type": "object",
-            "properties": {
-              "sourceType": {
-                "type": "string",
-                "enum": [
-                  "EMAIL",
-                  "CALL",
-                  "CALENDAR_EVENT",
-                  "SUPPORT_TICKET",
-                  "OPPORTUNITY",
-                  "SLACK",
-                  "PERSON_PROFILE",
-                  "INVOICE"
-                ]
-              },
-              "sourceId": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 500
-              },
-              "contentKind": {
-                "type": "string",
-                "enum": [
-                  "email_body",
-                  "call_transcript",
-                  "support_thread",
-                  "slack_thread"
-                ]
-              },
-              "segments": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 1000
-                    },
-                    "occurredAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                    },
-                    "authorLabel": {
-                      "type": "string",
-                      "maxLength": 500
-                    },
-                    "text": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "text"
-                  ],
-                  "additionalProperties": false
-                }
-              },
-              "page": {
+            "anyOf": [
+              {
                 "type": "object",
                 "properties": {
-                  "returned": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 9007199254740991
+                  "kind": {
+                    "type": "string",
+                    "const": "invoice"
                   },
-                  "hasMore": {
-                    "type": "boolean"
-                  },
-                  "nextCursor": {
+                  "amountDue": {
                     "anyOf": [
                       {
-                        "type": "string",
-                        "maxLength": 2000
+                        "type": "object",
+                        "properties": {
+                          "amount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "currency": {
+                            "type": "string",
+                            "pattern": "^[A-Z]{3}$",
+                            "description": "ISO 4217 code."
+                          },
+                          "decimals": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4
+                          },
+                          "formatted": {
+                            "type": "string",
+                            "description": "For example \"$12,000.00\"."
+                          }
+                        },
+                        "required": [
+                          "amount",
+                          "currency",
+                          "decimals",
+                          "formatted"
+                        ],
+                        "additionalProperties": false,
+                        "description": "amount is in minor units; divide by 10^decimals, or read formatted."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "amountPaid": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "amount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "currency": {
+                            "type": "string",
+                            "pattern": "^[A-Z]{3}$",
+                            "description": "ISO 4217 code."
+                          },
+                          "decimals": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4
+                          },
+                          "formatted": {
+                            "type": "string",
+                            "description": "For example \"$12,000.00\"."
+                          }
+                        },
+                        "required": [
+                          "amount",
+                          "currency",
+                          "decimals",
+                          "formatted"
+                        ],
+                        "additionalProperties": false,
+                        "description": "amount is in minor units; divide by 10^decimals, or read formatted."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "amountRemaining": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "amount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "currency": {
+                            "type": "string",
+                            "pattern": "^[A-Z]{3}$",
+                            "description": "ISO 4217 code."
+                          },
+                          "decimals": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4
+                          },
+                          "formatted": {
+                            "type": "string",
+                            "description": "For example \"$12,000.00\"."
+                          }
+                        },
+                        "required": [
+                          "amount",
+                          "currency",
+                          "decimals",
+                          "formatted"
+                        ],
+                        "additionalProperties": false,
+                        "description": "amount is in minor units; divide by 10^decimals, or read formatted."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "lines": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "amount": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$",
+                                  "description": "ISO 4217 code."
+                                },
+                                "decimals": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 4
+                                },
+                                "formatted": {
+                                  "type": "string",
+                                  "description": "For example \"$12,000.00\"."
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency",
+                                "decimals",
+                                "formatted"
+                              ],
+                              "additionalProperties": false,
+                              "description": "amount is in minor units; divide by 10^decimals, or read formatted."
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "unitAmount": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$",
+                                  "description": "ISO 4217 code."
+                                },
+                                "decimals": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 4
+                                },
+                                "formatted": {
+                                  "type": "string",
+                                  "description": "For example \"$12,000.00\"."
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency",
+                                "decimals",
+                                "formatted"
+                              ],
+                              "additionalProperties": false,
+                              "description": "amount is in minor units; divide by 10^decimals, or read formatted."
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "amount",
+                        "unitAmount"
+                      ],
+                      "additionalProperties": {}
+                    }
+                  }
+                },
+                "required": [
+                  "kind",
+                  "amountDue",
+                  "amountPaid",
+                  "amountRemaining"
+                ],
+                "additionalProperties": {},
+                "description": "An invoice: every amount in Money."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "crm_opportunity"
+                  },
+                  "amount": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "amount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "currency": {
+                            "type": "string",
+                            "pattern": "^[A-Z]{3}$",
+                            "description": "ISO 4217 code."
+                          },
+                          "decimals": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4
+                          },
+                          "formatted": {
+                            "type": "string",
+                            "description": "For example \"$12,000.00\"."
+                          }
+                        },
+                        "required": [
+                          "amount",
+                          "currency",
+                          "decimals",
+                          "formatted"
+                        ],
+                        "additionalProperties": false,
+                        "description": "amount is in minor units; divide by 10^decimals, or read formatted."
                       },
                       {
                         "type": "null"
@@ -12978,56 +13010,198 @@
                   }
                 },
                 "required": [
-                  "returned",
-                  "hasMore",
-                  "nextCursor"
+                  "kind",
+                  "amount"
+                ],
+                "additionalProperties": {},
+                "description": "A deal: amount in Money, null when its currency is unknown."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "additionalProperties": {},
+                "description": "The type's own fields, by kind."
+              }
+            ],
+            "description": "The source's own fields, by kind."
+          },
+          "content": {
+            "description": "The full content, a page of segments at a time, on emails, calls, tickets and Slack.",
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "const": "available"
+                  },
+                  "asOf": {
+                    "type": "string"
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "email_body",
+                          "call_transcript",
+                          "support_thread",
+                          "slack_thread"
+                        ]
+                      },
+                      "segments": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1000
+                            },
+                            "occurredAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                            },
+                            "authorLabel": {
+                              "type": "string",
+                              "maxLength": 500
+                            },
+                            "text": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "text"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "page": {
+                        "type": "object",
+                        "properties": {
+                          "hasMore": {
+                            "type": "boolean"
+                          },
+                          "nextCursor": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "total": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "How many items match, over every page; null when counting them would cost a second full read."
+                          }
+                        },
+                        "required": [
+                          "hasMore",
+                          "nextCursor",
+                          "total"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "omittedFields": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 500
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "segments",
+                      "page",
+                      "omittedFields"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "status",
+                  "asOf",
+                  "data"
                 ],
                 "additionalProperties": false
               },
-              "completeness": {
+              {
                 "type": "object",
                 "properties": {
                   "status": {
                     "type": "string",
                     "enum": [
-                      "complete",
-                      "partial",
+                      "empty",
+                      "not_connected",
+                      "not_synced",
                       "unavailable"
                     ]
                   },
                   "reason": {
                     "type": "string",
-                    "maxLength": 1000
+                    "maxLength": 300
                   },
-                  "omittedFields": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "maxLength": 500
-                    }
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$"
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {}
+                      }
+                    },
+                    "required": [
+                      "instruction"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
                   "status",
-                  "omittedFields"
+                  "reason"
                 ],
                 "additionalProperties": false
               }
-            },
-            "required": [
-              "sourceType",
-              "sourceId",
-              "contentKind",
-              "segments",
-              "page",
-              "completeness"
-            ],
-            "additionalProperties": false
+            ]
           }
         },
         "required": [
-          "sourceType",
-          "sourceId",
+          "source",
           "occurredAt",
           "title",
           "summary",
@@ -13047,23 +13221,33 @@
             "items": {
               "type": "object",
               "properties": {
-                "sourceType": {
-                  "type": "string",
-                  "enum": [
-                    "EMAIL",
-                    "CALL",
-                    "CALENDAR_EVENT",
-                    "SUPPORT_TICKET",
-                    "OPPORTUNITY",
-                    "SLACK",
-                    "PERSON_PROFILE",
-                    "INVOICE"
-                  ]
-                },
-                "sourceId": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 500
+                "source": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "email",
+                        "call",
+                        "calendar_event",
+                        "support_ticket",
+                        "opportunity",
+                        "slack",
+                        "person_profile",
+                        "invoice"
+                      ]
+                    },
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "id"
+                  ],
+                  "additionalProperties": false
                 },
                 "occurredAt": {
                   "anyOf": [
@@ -13127,19 +13311,27 @@
                       "type": "object",
                       "properties": {
                         "id": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 500
+                          "type": "string"
                         },
                         "name": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 500
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
                         "domain": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 500
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
                       },
                       "required": [
@@ -13162,9 +13354,7 @@
                       "email": {
                         "anyOf": [
                           {
-                            "type": "string",
-                            "format": "email",
-                            "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                            "type": "string"
                           },
                           {
                             "type": "null"
@@ -13224,88 +13414,272 @@
                   }
                 },
                 "record": {
-                  "type": "object",
-                  "propertyNames": {
-                    "type": "string"
-                  },
-                  "additionalProperties": {}
-                },
-                "contentPage": {
-                  "type": "object",
-                  "properties": {
-                    "sourceType": {
-                      "type": "string",
-                      "enum": [
-                        "EMAIL",
-                        "CALL",
-                        "CALENDAR_EVENT",
-                        "SUPPORT_TICKET",
-                        "OPPORTUNITY",
-                        "SLACK",
-                        "PERSON_PROFILE",
-                        "INVOICE"
-                      ]
-                    },
-                    "sourceId": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 500
-                    },
-                    "contentKind": {
-                      "type": "string",
-                      "enum": [
-                        "email_body",
-                        "call_transcript",
-                        "support_thread",
-                        "slack_thread"
-                      ]
-                    },
-                    "segments": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 1000
-                          },
-                          "occurredAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                          },
-                          "authorLabel": {
-                            "type": "string",
-                            "maxLength": 500
-                          },
-                          "text": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "text"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "page": {
+                  "anyOf": [
+                    {
                       "type": "object",
                       "properties": {
-                        "returned": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
+                        "kind": {
+                          "type": "string",
+                          "const": "invoice"
                         },
-                        "hasMore": {
-                          "type": "boolean"
-                        },
-                        "nextCursor": {
+                        "amountDue": {
                           "anyOf": [
                             {
-                              "type": "string",
-                              "maxLength": 2000
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$",
+                                  "description": "ISO 4217 code."
+                                },
+                                "decimals": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 4
+                                },
+                                "formatted": {
+                                  "type": "string",
+                                  "description": "For example \"$12,000.00\"."
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency",
+                                "decimals",
+                                "formatted"
+                              ],
+                              "additionalProperties": false,
+                              "description": "amount is in minor units; divide by 10^decimals, or read formatted."
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "amountPaid": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$",
+                                  "description": "ISO 4217 code."
+                                },
+                                "decimals": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 4
+                                },
+                                "formatted": {
+                                  "type": "string",
+                                  "description": "For example \"$12,000.00\"."
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency",
+                                "decimals",
+                                "formatted"
+                              ],
+                              "additionalProperties": false,
+                              "description": "amount is in minor units; divide by 10^decimals, or read formatted."
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "amountRemaining": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$",
+                                  "description": "ISO 4217 code."
+                                },
+                                "decimals": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 4
+                                },
+                                "formatted": {
+                                  "type": "string",
+                                  "description": "For example \"$12,000.00\"."
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency",
+                                "decimals",
+                                "formatted"
+                              ],
+                              "additionalProperties": false,
+                              "description": "amount is in minor units; divide by 10^decimals, or read formatted."
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "lines": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "amount": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "amount": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "currency": {
+                                        "type": "string",
+                                        "pattern": "^[A-Z]{3}$",
+                                        "description": "ISO 4217 code."
+                                      },
+                                      "decimals": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 4
+                                      },
+                                      "formatted": {
+                                        "type": "string",
+                                        "description": "For example \"$12,000.00\"."
+                                      }
+                                    },
+                                    "required": [
+                                      "amount",
+                                      "currency",
+                                      "decimals",
+                                      "formatted"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "amount is in minor units; divide by 10^decimals, or read formatted."
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "unitAmount": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "amount": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "currency": {
+                                        "type": "string",
+                                        "pattern": "^[A-Z]{3}$",
+                                        "description": "ISO 4217 code."
+                                      },
+                                      "decimals": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 4
+                                      },
+                                      "formatted": {
+                                        "type": "string",
+                                        "description": "For example \"$12,000.00\"."
+                                      }
+                                    },
+                                    "required": [
+                                      "amount",
+                                      "currency",
+                                      "decimals",
+                                      "formatted"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "amount is in minor units; divide by 10^decimals, or read formatted."
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "amount",
+                              "unitAmount"
+                            ],
+                            "additionalProperties": {}
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "amountDue",
+                        "amountPaid",
+                        "amountRemaining"
+                      ],
+                      "additionalProperties": {},
+                      "description": "An invoice: every amount in Money."
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "const": "crm_opportunity"
+                        },
+                        "amount": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "pattern": "^[A-Z]{3}$",
+                                  "description": "ISO 4217 code."
+                                },
+                                "decimals": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 4
+                                },
+                                "formatted": {
+                                  "type": "string",
+                                  "description": "For example \"$12,000.00\"."
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "currency",
+                                "decimals",
+                                "formatted"
+                              ],
+                              "additionalProperties": false,
+                              "description": "amount is in minor units; divide by 10^decimals, or read formatted."
                             },
                             {
                               "type": "null"
@@ -13314,56 +13688,31 @@
                         }
                       },
                       "required": [
-                        "returned",
-                        "hasMore",
-                        "nextCursor"
+                        "kind",
+                        "amount"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": {},
+                      "description": "A deal: amount in Money, null when its currency is unknown."
                     },
-                    "completeness": {
+                    {
                       "type": "object",
                       "properties": {
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "complete",
-                            "partial",
-                            "unavailable"
-                          ]
-                        },
-                        "reason": {
-                          "type": "string",
-                          "maxLength": 1000
-                        },
-                        "omittedFields": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "maxLength": 500
-                          }
+                        "kind": {
+                          "type": "string"
                         }
                       },
                       "required": [
-                        "status",
-                        "omittedFields"
+                        "kind"
                       ],
-                      "additionalProperties": false
+                      "additionalProperties": {},
+                      "description": "The type's own fields, by kind."
                     }
-                  },
-                  "required": [
-                    "sourceType",
-                    "sourceId",
-                    "contentKind",
-                    "segments",
-                    "page",
-                    "completeness"
                   ],
-                  "additionalProperties": false
+                  "description": "The source's own fields, by kind."
                 }
               },
               "required": [
-                "sourceType",
-                "sourceId",
+                "source",
                 "occurredAt",
                 "title",
                 "summary",
@@ -13376,7 +13725,7 @@
               "additionalProperties": false
             }
           },
-          "pagination": {
+          "page": {
             "type": "object",
             "properties": {
               "hasMore": {
@@ -13391,18 +13740,99 @@
                     "type": "null"
                   }
                 ]
+              },
+              "total": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How many items match, over every page; null when counting them would cost a second full read."
               }
             },
             "required": [
               "hasMore",
-              "nextCursor"
+              "nextCursor",
+              "total"
+            ],
+            "additionalProperties": false
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "searched": {
+                "type": "string",
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "searched"
+            ],
+            "additionalProperties": false
+          },
+          "truncation": {
+            "type": "object",
+            "properties": {
+              "truncated": {
+                "type": "boolean",
+                "const": true
+              },
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "byte_cap",
+                  "row_cap"
+                ]
+              },
+              "returned": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "next": {
+                "type": "object",
+                "properties": {
+                  "instruction": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  },
+                  "tool": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "pattern": "^outlit_[a-z0-9_]+$"
+                  },
+                  "input": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "instruction"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "truncated",
+              "reason",
+              "returned",
+              "next"
             ],
             "additionalProperties": false
           }
         },
         "required": [
           "items",
-          "pagination"
+          "page"
         ],
         "additionalProperties": false
       },
@@ -13465,7 +13895,6 @@
                       "type": "number"
                     },
                     "customer": {
-                      "description": "The customer this result belongs to. Null when it can't be attributed to exactly one customer the caller can read.",
                       "anyOf": [
                         {
                           "type": "object",
@@ -13504,7 +13933,8 @@
                         {
                           "type": "null"
                         }
-                      ]
+                      ],
+                      "description": "Null when it can't be credited to exactly one customer you can read."
                     },
                     "matchCount": {
                       "type": "integer",
@@ -13556,12 +13986,12 @@
                             }
                           ]
                         },
-                        "factType": {
+                        "type": {
                           "type": "string",
                           "minLength": 1,
                           "maxLength": 200
                         },
-                        "factCategory": {
+                        "category": {
                           "type": "string",
                           "minLength": 1,
                           "maxLength": 200
@@ -13569,27 +13999,11 @@
                         "status": {
                           "type": "string",
                           "enum": [
-                            "ACTIVE",
-                            "ACKNOWLEDGED",
-                            "RESOLVED",
-                            "SNOOZED",
-                            "CANDIDATE"
-                          ]
-                        },
-                        "confidence": {
-                          "type": "number",
-                          "minimum": 0,
-                          "maximum": 1
-                        },
-                        "priority": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "maxLength": 100
-                            },
-                            {
-                              "type": "null"
-                            }
+                            "active",
+                            "acknowledged",
+                            "resolved",
+                            "snoozed",
+                            "candidate"
                           ]
                         },
                         "occurredAt": {
@@ -13602,17 +14016,8 @@
                             {
                               "type": "null"
                             }
-                          ]
-                        },
-                        "detectedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                        },
-                        "validFrom": {
-                          "type": "string",
-                          "format": "date-time",
-                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                          ],
+                          "description": "When it was said or happened."
                         },
                         "validUntil": {
                           "anyOf": [
@@ -13626,25 +14031,25 @@
                             }
                           ]
                         },
-                        "linkedSourceRef": {
+                        "source": {
                           "anyOf": [
                             {
                               "type": "object",
                               "properties": {
-                                "sourceType": {
+                                "type": {
                                   "type": "string",
                                   "enum": [
-                                    "EMAIL",
-                                    "CALL",
-                                    "CALENDAR_EVENT",
-                                    "SUPPORT_TICKET",
-                                    "OPPORTUNITY",
-                                    "SLACK",
-                                    "PERSON_PROFILE",
-                                    "INVOICE"
+                                    "email",
+                                    "call",
+                                    "calendar_event",
+                                    "support_ticket",
+                                    "opportunity",
+                                    "slack",
+                                    "person_profile",
+                                    "invoice"
                                   ]
                                 },
-                                "sourceId": {
+                                "id": {
                                   "type": "string",
                                   "minLength": 1,
                                   "maxLength": 500
@@ -13661,80 +14066,7 @@
                                     }
                                   ]
                                 },
-                                "permalink": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string",
-                                      "maxLength": 2000
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "sourceType",
-                                "sourceId",
-                                "occurredAt",
-                                "permalink"
-                              ],
-                              "additionalProperties": false
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "sourceMetadata": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "sourceType": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string",
-                                      "enum": [
-                                        "EMAIL",
-                                        "CALL",
-                                        "CALENDAR_EVENT",
-                                        "SUPPORT_TICKET",
-                                        "OPPORTUNITY",
-                                        "SLACK",
-                                        "PERSON_PROFILE",
-                                        "INVOICE"
-                                      ]
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ]
-                                },
-                                "sourceId": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string",
-                                      "maxLength": 500
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ]
-                                },
-                                "sourceOccurredAt": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string",
-                                      "format": "date-time",
-                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                                    },
-                                    {
-                                      "type": "null"
-                                    }
-                                  ]
-                                },
-                                "sourceQuote": {
+                                "quote": {
                                   "anyOf": [
                                     {
                                       "type": "string",
@@ -13758,10 +14090,10 @@
                                 }
                               },
                               "required": [
-                                "sourceType",
-                                "sourceId",
-                                "sourceOccurredAt",
-                                "sourceQuote",
+                                "type",
+                                "id",
+                                "occurredAt",
+                                "quote",
                                 "permalink"
                               ],
                               "additionalProperties": false
@@ -13776,231 +14108,116 @@
                           "minimum": 0,
                           "maximum": 9007199254740991
                         },
-                        "metricName": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "maxLength": 200
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "metricValue": {
-                          "anyOf": [
-                            {
-                              "type": "number"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "metricPreviousValue": {
-                          "anyOf": [
-                            {
-                              "type": "number"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "metricDelta": {
-                          "anyOf": [
-                            {
-                              "type": "number"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "metricUnit": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "maxLength": 100
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "periodStart": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "format": "date-time",
-                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "periodEnd": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "format": "date-time",
-                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "changePointDate": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "format": "date-time",
-                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
                         "occurrenceCount": {
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 9007199254740991
                         },
-                        "lastDetectedAt": {
-                          "anyOf": [
-                            {
+                        "outlit": {
+                          "type": "object",
+                          "properties": {
+                            "recordedAt": {
                               "type": "string",
                               "format": "date-time",
                               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                             },
-                            {
-                              "type": "null"
+                            "updatedAt": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             }
-                          ]
-                        },
-                        "severity": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "maxLength": 100
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
+                          },
+                          "required": [
+                            "recordedAt",
+                            "updatedAt"
+                          ],
+                          "additionalProperties": false
                         },
                         "evidence": {
-                          "anyOf": [
-                            {
-                              "type": "array",
-                              "items": {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string",
-                                    "maxLength": 500
-                                  },
-                                  "sourceType": {
-                                    "anyOf": [
-                                      {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "maxLength": 500
+                              },
+                              "source": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
                                         "type": "string",
                                         "enum": [
-                                          "EMAIL",
-                                          "CALL",
-                                          "CALENDAR_EVENT",
-                                          "SUPPORT_TICKET",
-                                          "OPPORTUNITY",
-                                          "SLACK",
-                                          "PERSON_PROFILE",
-                                          "INVOICE"
+                                          "email",
+                                          "call",
+                                          "calendar_event",
+                                          "support_ticket",
+                                          "opportunity",
+                                          "slack",
+                                          "person_profile",
+                                          "invoice"
                                         ]
                                       },
-                                      {
-                                        "type": "null"
-                                      }
-                                    ]
-                                  },
-                                  "sourceId": {
-                                    "anyOf": [
-                                      {
+                                      "id": {
                                         "type": "string",
+                                        "minLength": 1,
                                         "maxLength": 500
-                                      },
-                                      {
-                                        "type": "null"
                                       }
-                                    ]
+                                    },
+                                    "required": [
+                                      "type",
+                                      "id"
+                                    ],
+                                    "additionalProperties": false
                                   },
-                                  "excerpt": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string",
-                                        "maxLength": 20000
-                                      },
-                                      {
-                                        "type": "null"
-                                      }
-                                    ]
-                                  },
-                                  "metadata": {
-                                    "anyOf": [
-                                      {
-                                        "type": "object",
-                                        "propertyNames": {
-                                          "type": "string"
-                                        },
-                                        "additionalProperties": {}
-                                      },
-                                      {
-                                        "type": "null"
-                                      }
-                                    ]
+                                  {
+                                    "type": "null"
                                   }
-                                },
-                                "required": [
-                                  "id",
-                                  "sourceType",
-                                  "sourceId",
-                                  "excerpt",
-                                  "metadata"
-                                ],
-                                "additionalProperties": false
+                                ]
+                              },
+                              "excerpt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "maxLength": 20000
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
                               }
                             },
-                            {
-                              "type": "null"
-                            }
-                          ]
+                            "required": [
+                              "id",
+                              "source",
+                              "excerpt"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
                         "id",
                         "assertion",
                         "reasoning",
-                        "factType",
-                        "factCategory",
+                        "type",
+                        "category",
                         "status",
-                        "confidence",
-                        "priority",
                         "occurredAt",
-                        "detectedAt",
-                        "validFrom",
                         "validUntil",
+                        "source",
                         "evidenceCount",
-                        "metricName",
-                        "metricValue",
-                        "metricPreviousValue",
-                        "metricDelta",
-                        "metricUnit",
-                        "periodStart",
-                        "periodEnd",
-                        "changePointDate",
                         "occurrenceCount",
-                        "lastDetectedAt",
-                        "severity"
+                        "outlit"
                       ],
                       "additionalProperties": false
                     }
@@ -14008,6 +14225,7 @@
                   "required": [
                     "kind",
                     "score",
+                    "customer",
                     "matchCount",
                     "matches",
                     "fact"
@@ -14024,24 +14242,35 @@
                     "score": {
                       "type": "number"
                     },
-                    "sourceType": {
-                      "type": "string",
-                      "enum": [
-                        "EMAIL",
-                        "CALL",
-                        "CALENDAR_EVENT",
-                        "SUPPORT_TICKET",
-                        "OPPORTUNITY",
-                        "SLACK",
-                        "PERSON_PROFILE",
-                        "INVOICE"
-                      ]
-                    },
-                    "sourceId": {
-                      "type": "string"
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "email",
+                            "call",
+                            "calendar_event",
+                            "support_ticket",
+                            "opportunity",
+                            "slack",
+                            "person_profile",
+                            "invoice"
+                          ]
+                        },
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "id"
+                      ],
+                      "additionalProperties": false
                     },
                     "customer": {
-                      "description": "The customer this result belongs to. Null when it can't be attributed to exactly one customer the caller can read.",
                       "anyOf": [
                         {
                           "type": "object",
@@ -14080,7 +14309,8 @@
                         {
                           "type": "null"
                         }
-                      ]
+                      ],
+                      "description": "Null when it can't be credited to exactly one customer you can read."
                     },
                     "occurredAt": {
                       "anyOf": [
@@ -14146,27 +14376,38 @@
                         "text": {
                           "type": "string"
                         },
-                        "sourceRef": {
+                        "source": {
                           "type": "object",
                           "properties": {
-                            "sourceType": {
+                            "type": {
                               "type": "string",
-                              "const": "SLACK"
+                              "enum": [
+                                "email",
+                                "call",
+                                "calendar_event",
+                                "support_ticket",
+                                "opportunity",
+                                "slack",
+                                "person_profile",
+                                "invoice"
+                              ]
                             },
-                            "sourceId": {
-                              "type": "string"
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 500
                             }
                           },
                           "required": [
-                            "sourceType",
-                            "sourceId"
+                            "type",
+                            "id"
                           ],
                           "additionalProperties": false
                         }
                       },
                       "required": [
                         "text",
-                        "sourceRef"
+                        "source"
                       ],
                       "additionalProperties": false
                     }
@@ -14174,8 +14415,8 @@
                   "required": [
                     "kind",
                     "score",
-                    "sourceType",
-                    "sourceId",
+                    "source",
+                    "customer",
                     "occurredAt",
                     "title",
                     "permalink",
@@ -14186,6 +14427,73 @@
                 }
               ]
             }
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "searched": {
+                "type": "string",
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "searched"
+            ],
+            "additionalProperties": false
+          },
+          "truncation": {
+            "type": "object",
+            "properties": {
+              "truncated": {
+                "type": "boolean",
+                "const": true
+              },
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "byte_cap",
+                  "row_cap"
+                ]
+              },
+              "returned": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "next": {
+                "type": "object",
+                "properties": {
+                  "instruction": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  },
+                  "tool": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "pattern": "^outlit_[a-z0-9_]+$"
+                  },
+                  "input": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "instruction"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "truncated",
+              "reason",
+              "returned",
+              "next"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -22048,5 +22356,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "6206e36ecf74cace00b3104ae53635a0811c4c034aae6672d2f079e4e16f0a9d"
+  "x-outlit-contract-hash": "079e84d34bd716c8ea714ab9ee975c55206b01764765d0a8aac6bdf8c358fbeb"
 }

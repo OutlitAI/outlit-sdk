@@ -5,6 +5,7 @@ import {
   customerSourceTypes,
   publicToolContracts,
   publicToolNames,
+  sourceTypes,
 } from "./generated/contracts.js"
 
 export type JsonSchema = Readonly<Record<string, unknown>>
@@ -12,6 +13,8 @@ export type PublicToolName = (typeof publicToolNames)[number]
 export type PublicToolContract = (typeof publicToolContracts)[PublicToolName]
 export type CustomerSourceType = (typeof customerSourceTypes)[number]
 export type CustomerSourceTypeInput = (typeof customerSourceTypeInputs)[number]
+/** A source type as the v2 context tools take and return it: lowercase (`calendar_event`). */
+export type ToolSourceType = (typeof sourceTypes)[number]
 
 const publicToolNameSet = new Set<string>(publicToolNames)
 const customerSourceTypeSet = new Set<string>(customerSourceTypes)
@@ -36,6 +39,11 @@ export function normalizeCustomerSourceType(value: string): CustomerSourceType |
   )
 }
 
+/** The v2 wire spelling of a canonical source type: `CALENDAR_EVENT` is `calendar_event`. */
+export function toToolSourceType(value: CustomerSourceType): ToolSourceType {
+  return value.toLowerCase() as ToolSourceType
+}
+
 /**
  * Aliases the source tools (get and list) accept on input only. The timeline labels Stripe billing
  * rows STRIPE_INVOICE, so normalizeCustomerSourceType does not map them. Mirrors Core's
@@ -57,19 +65,24 @@ export function normalizeCustomerSourceToolInput(value: string): CustomerSourceT
 export type SearchArgsLike = {
   query?: string
   customer?: string | null
+  limit?: number
+  /** The previous spelling of `limit`, still read when `limit` is absent. */
   topK?: number
   after?: string
   before?: string
   sourceTypes?: string[]
 }
 
+/** The `outlit_search_customer_context` input: source types, `after` and `before` sit under `filters`. */
 export type CustomerContextSearchInput = {
   query: string
   customer?: string | null
-  topK?: number
-  after?: string
-  before?: string
-  sourceTypes?: CustomerSourceType[]
+  limit?: number
+  filters?: {
+    sourceTypes?: ToolSourceType[]
+    after?: string
+    before?: string
+  }
 }
 
 export function resolveCustomerContextSearchInput(
@@ -105,25 +118,34 @@ export function resolveCustomerContextSearchInput(
   if (invalidSourceTypes.length > 0) {
     return {
       ok: false,
-      message: `Unknown source types: ${invalidSourceTypes.join(", ")}. Allowed: ${customerSourceTypeInputs.join(", ")}`,
+      message: `Unknown source types: ${invalidSourceTypes.join(", ")}. Allowed: ${sourceTypes.join(", ")}`,
     }
   }
 
   const normalizedSourceTypes = value.sourceTypes
     ? Array.from(
-        new Set(value.sourceTypes.map((sourceType) => normalizeCustomerSourceType(sourceType))),
-      ).filter((sourceType): sourceType is CustomerSourceType => sourceType !== null)
+        new Set(
+          value.sourceTypes
+            .map((sourceType) => normalizeCustomerSourceType(sourceType))
+            .filter((sourceType): sourceType is CustomerSourceType => sourceType !== null)
+            .map(toToolSourceType),
+        ),
+      )
     : undefined
+  const filters: NonNullable<CustomerContextSearchInput["filters"]> = {
+    ...(normalizedSourceTypes ? { sourceTypes: normalizedSourceTypes } : {}),
+    ...(value.after !== undefined ? { after: value.after } : {}),
+    ...(value.before !== undefined ? { before: value.before } : {}),
+  }
+  const limit = value.limit ?? value.topK
 
   return {
     ok: true,
     request: {
       query: normalizedQuery,
-      customer: value.customer,
-      topK: value.topK,
-      after: value.after,
-      before: value.before,
-      sourceTypes: normalizedSourceTypes,
+      ...(value.customer !== undefined ? { customer: value.customer } : {}),
+      ...(limit !== undefined ? { limit } : {}),
+      ...(Object.keys(filters).length > 0 ? { filters } : {}),
     },
   }
 }

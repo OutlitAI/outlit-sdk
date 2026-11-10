@@ -1,4 +1,4 @@
-import { publicToolContracts, timelineChannels, timelineTimeframes } from "@outlit/tools"
+import { publicToolContracts, timelineTimeframes, toolTimelineChannels } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
@@ -6,22 +6,24 @@ import { applyPagination, paginationArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
 
+/** Previously published channel names, accepted and mapped to the current ones. */
 const legacyTimelineChannelMap = {
-  SDK: "PRODUCT",
-  EMAIL: "COMMUNICATION",
-  SLACK: "COMMUNICATION",
-  CALL: "MEETING",
-  CALENDAR: "MEETING",
-  INTERNAL: "SYSTEM",
+  sdk: "product",
+  email: "communication",
+  slack: "communication",
+  call: "meeting",
+  calendar: "meeting",
+  internal: "system",
 } as const
 
+/** Channels are lowercase on the wire; any case is accepted, and so are the old channel names. */
 function normalizeTimelineChannels(value: string): string[] {
   return [
     ...new Set(
       splitCsv(value)
         .filter((channel) => channel.length > 0)
         .map((channel) => {
-          const normalized = channel.toUpperCase()
+          const normalized = channel.toLowerCase()
           return (
             legacyTimelineChannelMap[normalized as keyof typeof legacyTimelineChannelMap] ??
             normalized
@@ -41,17 +43,17 @@ export default defineCommand({
       "  - Customer domain (acme.com)",
       "  - Customer ID (UUID)",
       "",
-      "Timeframe is used when no explicit date range is set.",
-      "When --start-date or --end-date is provided, --timeframe is ignored.",
-      `Channels: ${timelineChannels.join(", ")}`,
+      "--timeframe counts back from now, or from --end-date when that is set.",
+      "When --start-date is provided, --timeframe is ignored.",
+      `Channels: ${toolTimelineChannels.join(", ")}`,
       `Timeframes: ${timelineTimeframes.join(", ")}`,
       "",
       "Examples:",
       "  outlit customers timeline acme.com",
       "  outlit customers timeline acme.com --timeframe 90d",
-      "  outlit customers timeline acme.com --channels COMMUNICATION,MEETING",
+      "  outlit customers timeline acme.com --channels communication,meeting",
       "  outlit customers timeline acme.com --start-date 2025-01-01T00:00:00Z --end-date 2025-03-01T23:59:59.999Z",
-      "  outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50",
+      "  outlit customers timeline acme.com --event-types note_added,email_received --limit 50",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -60,6 +62,11 @@ export default defineCommand({
     ...authArgs,
     ...outputArgs,
     ...paginationArgs,
+    cursor: {
+      ...paginationArgs.cursor,
+      description:
+        "Pagination cursor from a previous response (page.nextCursor).\nUse this to fetch the next page of results.",
+    },
     customer: {
       type: "positional",
       description: "Customer ID or domain (acme.com)",
@@ -67,15 +74,15 @@ export default defineCommand({
     },
     channels: {
       type: "string",
-      description: `Comma-separated list of channels to filter (${timelineChannels.join(", ")})`,
+      description: `Comma-separated list of channels to filter (${toolTimelineChannels.join(", ")})`,
     },
     "event-types": {
       type: "string",
-      description: "Comma-separated list of event types to filter (e.g. PAGE_VIEW,MEETING)",
+      description: "Comma-separated list of event types to filter (e.g. note_added,email_received)",
     },
     timeframe: {
       type: "string",
-      description: `Timeframe for events (${timelineTimeframes.join(", ")}). Ignored when --start-date or --end-date is set.`,
+      description: `Timeframe for events (${timelineTimeframes.join(", ")}). Ignored when --start-date is set.`,
       default: "30d",
     },
     "start-date": {
@@ -86,31 +93,26 @@ export default defineCommand({
     "end-date": {
       type: "string",
       description:
-        "End datetime for the event range (ISO 8601, e.g. 2025-03-01T23:59:59.999Z). When set, --timeframe is ignored.",
+        "End datetime for the event range (ISO 8601, e.g. 2025-03-01T23:59:59.999Z). --timeframe counts back from it.",
     },
   },
   async run({ args }) {
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
-    const hasDateRange = !!args["start-date"] || !!args["end-date"]
-
     const params: Record<string, unknown> = { customer: args.customer }
 
-    // MUTUAL EXCLUSIVITY: send timeframe only when no date range is set
-    if (hasDateRange) {
-      if (args["start-date"]) params.startDate = args["start-date"]
-      if (args["end-date"]) params.endDate = args["end-date"]
-    } else {
-      params.timeframe = args.timeframe
-    }
-
-    if (args.channels) {
-      params.channels = normalizeTimelineChannels(args.channels)
-    }
+    // v2 puts the window under filters: `after` is an explicit start, otherwise `within` counts
+    // back from `before` (or from now). `--timeframe` and `--end-date` therefore work together.
+    const filters: Record<string, unknown> = {}
+    if (args["start-date"]) filters.after = args["start-date"]
+    else filters.within = args.timeframe.toLowerCase()
+    if (args["end-date"]) filters.before = args["end-date"]
+    if (args.channels) filters.channels = normalizeTimelineChannels(args.channels)
     if (args["event-types"]) {
-      params.eventTypes = splitCsv(args["event-types"])
+      filters.eventTypes = splitCsv(args["event-types"]).map((type) => type.toLowerCase())
     }
+    params.filters = filters
     applyPagination(params, args, json)
 
     return runTool(client, publicToolContracts.outlit_get_timeline.toolName, params, json)

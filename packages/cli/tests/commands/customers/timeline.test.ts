@@ -8,8 +8,8 @@ import {
 } from "../../helpers"
 
 const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
-  items: [],
-  pagination: { hasMore: false, nextCursor: null, total: 0 },
+  events: [],
+  page: { hasMore: false, nextCursor: null, total: 0 },
 }))
 
 mock.module("../../../src/lib/client", () => ({
@@ -29,7 +29,7 @@ describe("customers timeline", () => {
     mockCallTool.mockClear()
   })
 
-  test("sends timeframe when no dates provided", async () => {
+  test("sends the timeframe as filters.within when no dates are provided", async () => {
     const { default: timelineCmd } = await import("../../../src/commands/customers/timeline")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -37,19 +37,16 @@ describe("customers timeline", () => {
         args: { customer: "acme.com", timeframe: "30d", json: true },
       } as Parameters<NonNullable<typeof timelineCmd.run>>[0])
 
-      expect(mockCallTool).toHaveBeenCalledWith(
-        "outlit_get_timeline",
-        expect.objectContaining({ timeframe: "30d" }),
-      )
-      const [[, params]] = mockCallTool.mock.calls as [[string, Record<string, unknown>]]
-      expect(params).not.toHaveProperty("startDate")
-      expect(params).not.toHaveProperty("endDate")
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_get_timeline", {
+        customer: "acme.com",
+        filters: { within: "30d" },
+      })
     } finally {
       writeSpy.mockRestore()
     }
   })
 
-  test("omits timeframe when --start-date provided", async () => {
+  test("sends --start-date as filters.after and drops the timeframe", async () => {
     const { default: timelineCmd } = await import("../../../src/commands/customers/timeline")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -57,38 +54,90 @@ describe("customers timeline", () => {
         args: { customer: "acme.com", "start-date": "2025-01-01", timeframe: "30d", json: true },
       } as Parameters<NonNullable<typeof timelineCmd.run>>[0])
 
-      const [[, params]] = mockCallTool.mock.calls as [[string, Record<string, unknown>]]
-      expect(params).toHaveProperty("startDate", "2025-01-01")
-      expect(params).not.toHaveProperty("timeframe")
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_get_timeline", {
+        customer: "acme.com",
+        filters: { after: "2025-01-01" },
+      })
     } finally {
       writeSpy.mockRestore()
     }
   })
 
-  test("omits timeframe when --end-date provided", async () => {
-    const { default: timelineCmd } = await import("../../../src/commands/customers/timeline")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await timelineCmd.run!({
-        args: { customer: "acme.com", "end-date": "2025-03-01", timeframe: "30d", json: true },
-      } as Parameters<NonNullable<typeof timelineCmd.run>>[0])
-
-      const [[, params]] = mockCallTool.mock.calls as [[string, Record<string, unknown>]]
-      expect(params).toHaveProperty("endDate", "2025-03-01")
-      expect(params).not.toHaveProperty("timeframe")
-    } finally {
-      writeSpy.mockRestore()
-    }
-  })
-
-  test("splits canonical --channels on comma", async () => {
+  test("sends --start-date and --end-date as filters.after and filters.before", async () => {
     const { default: timelineCmd } = await import("../../../src/commands/customers/timeline")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await timelineCmd.run!({
         args: {
           customer: "acme.com",
-          channels: "COMMUNICATION,MEETING",
+          "start-date": "2025-01-01T00:00:00Z",
+          "end-date": "2025-03-01T23:59:59.999Z",
+          timeframe: "30d",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof timelineCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_get_timeline", {
+        customer: "acme.com",
+        filters: { after: "2025-01-01T00:00:00Z", before: "2025-03-01T23:59:59.999Z" },
+      })
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("counts --timeframe back from --end-date as within plus before", async () => {
+    const { default: timelineCmd } = await import("../../../src/commands/customers/timeline")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await timelineCmd.run!({
+        args: { customer: "acme.com", "end-date": "2025-03-01", timeframe: "90D", json: true },
+      } as Parameters<NonNullable<typeof timelineCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_get_timeline", {
+        customer: "acme.com",
+        filters: { within: "90d", before: "2025-03-01" },
+      })
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("sends lowercase filters.channels and filters.eventTypes for any input case", async () => {
+    const { default: timelineCmd } = await import("../../../src/commands/customers/timeline")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await timelineCmd.run!({
+        args: {
+          customer: "acme.com",
+          channels: "COMMUNICATION,meeting",
+          "event-types": "NOTE_ADDED,email_received",
+          timeframe: "30d",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof timelineCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_get_timeline", {
+        customer: "acme.com",
+        filters: {
+          within: "30d",
+          channels: ["communication", "meeting"],
+          eventTypes: ["note_added", "email_received"],
+        },
+      })
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("maps the old channel names to the current lowercase ones", async () => {
+    const { default: timelineCmd } = await import("../../../src/commands/customers/timeline")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await timelineCmd.run!({
+        args: {
+          customer: "acme.com",
+          channels: "EMAIL,SLACK,CALENDAR,SDK",
           timeframe: "30d",
           json: true,
         },
@@ -96,29 +145,11 @@ describe("customers timeline", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_get_timeline",
-        expect.objectContaining({ channels: ["COMMUNICATION", "MEETING"] }),
-      )
-    } finally {
-      writeSpy.mockRestore()
-    }
-  })
-
-  test("normalizes legacy --channels to canonical values", async () => {
-    const { default: timelineCmd } = await import("../../../src/commands/customers/timeline")
-    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
-    try {
-      await timelineCmd.run!({
-        args: {
-          customer: "acme.com",
-          channels: "EMAIL,SLACK,CALENDAR",
-          timeframe: "30d",
-          json: true,
-        },
-      } as Parameters<NonNullable<typeof timelineCmd.run>>[0])
-
-      expect(mockCallTool).toHaveBeenCalledWith(
-        "outlit_get_timeline",
-        expect.objectContaining({ channels: ["COMMUNICATION", "MEETING"] }),
+        expect.objectContaining({
+          filters: expect.objectContaining({
+            channels: ["communication", "meeting", "product"],
+          }),
+        }),
       )
     } finally {
       writeSpy.mockRestore()
@@ -132,7 +163,7 @@ describe("customers timeline", () => {
       await timelineCmd.run!({
         args: {
           customer: "acme.com",
-          channels: "COMMUNICATION,,MEETING,",
+          channels: "communication,,meeting,",
           timeframe: "30d",
           json: true,
         },
@@ -140,7 +171,9 @@ describe("customers timeline", () => {
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_get_timeline",
-        expect.objectContaining({ channels: ["COMMUNICATION", "MEETING"] }),
+        expect.objectContaining({
+          filters: expect.objectContaining({ channels: ["communication", "meeting"] }),
+        }),
       )
     } finally {
       writeSpy.mockRestore()

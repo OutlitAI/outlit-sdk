@@ -10,8 +10,8 @@ import {
 } from "../helpers"
 
 const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
-  items: [],
-  total: 0,
+  results: [],
+  coverage: { searched: "emails, calls and facts" },
 }))
 
 mock.module("../../src/lib/client", () => ({
@@ -31,7 +31,7 @@ describe("search", () => {
     mockCallTool.mockClear()
   })
 
-  test("sends query, topK, dates, and sourceTypes", async () => {
+  test("sends query, limit, and filters with lowercase source types", async () => {
     const { default: searchCmd } = await import("../../src/commands/search")
 
     await captureStdout(() =>
@@ -39,7 +39,7 @@ describe("search", () => {
         args: {
           query: "pricing objections",
           customer: "acme.com",
-          "top-k": "10",
+          limit: "10",
           after: "2025-01-01T00:00:00Z",
           before: "2025-03-31T23:59:59Z",
           "source-types": "CALL,CRM",
@@ -51,10 +51,28 @@ describe("search", () => {
     expect(mockCallTool).toHaveBeenCalledWith("outlit_search_customer_context", {
       query: "pricing objections",
       customer: "acme.com",
-      topK: 10,
-      after: "2025-01-01T00:00:00Z",
-      before: "2025-03-31T23:59:59Z",
-      sourceTypes: ["CALL", "OPPORTUNITY"],
+      limit: 10,
+      filters: {
+        after: "2025-01-01T00:00:00Z",
+        before: "2025-03-31T23:59:59Z",
+        sourceTypes: ["call", "opportunity"],
+      },
+    })
+  })
+
+  test("still accepts --top-k, the previous spelling of --limit", async () => {
+    const { default: searchCmd } = await import("../../src/commands/search")
+
+    await captureStdout(() =>
+      searchCmd.run!({
+        args: { query: "pricing", json: true },
+        rawArgs: ["pricing", "--top-k", "7", "--json"],
+      } as Parameters<NonNullable<typeof searchCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_search_customer_context", {
+      query: "pricing",
+      limit: 7,
     })
   })
 
@@ -85,15 +103,11 @@ describe("search", () => {
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_search_customer_context", {
       query: "renewal risks",
-      customer: undefined,
-      topK: undefined,
-      after: undefined,
-      before: undefined,
-      sourceTypes: ["CALL", "OPPORTUNITY"],
+      filters: { sourceTypes: ["call", "opportunity"] },
     })
   })
 
-  test("error when --top-k exceeds 50", async () => {
+  test("error when --limit exceeds 50", async () => {
     const { default: searchCmd } = await import("../../src/commands/search")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -101,7 +115,7 @@ describe("search", () => {
     let thrown: unknown
     try {
       await searchCmd.run!({
-        args: { query: "test", "top-k": "100", json: true },
+        args: { query: "test", limit: "100", json: true },
       } as Parameters<NonNullable<typeof searchCmd.run>>[0])
     } catch (error) {
       thrown = error
@@ -122,7 +136,7 @@ describe("search", () => {
     let thrown: unknown
     try {
       await searchCmd.run!({
-        args: { "top-k": "20", json: true },
+        args: { limit: "20", json: true },
       } as Parameters<NonNullable<typeof searchCmd.run>>[0])
     } catch (error) {
       thrown = error

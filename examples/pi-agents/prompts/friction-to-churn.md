@@ -11,7 +11,7 @@ Use Outlit tools to gather evidence before ranking:
 - Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.
 - Search customer context for support complaints, bugs, failed setup, failed integrations, missing integrations, blockers, negative sentiment, escalation, refund, cancel, downgrade, and no value.
 - Use customer details and timeline events to connect friction to product usage, billing status, recency, and account engagement.
-- Use facts to find known blockers, health notes, open issues, sentiment, and relationship context. Default to active facts for live reviews. Use filters such as `factTypes: ["CHURN_RISK", "SENTIMENT", "REQUIREMENTS", "PRODUCT_USAGE"]`; add `sourceTypes: ["SUPPORT_TICKET"]` when you need support-backed evidence.
+- Use facts to find known blockers, health notes, open issues, sentiment, and relationship context. Default to active facts for live reviews. Use filters such as `filters: { types: ["churn_risk", "sentiment", "requirements", "product_usage"] }`; add `sourceTypes: ["support_ticket"]` to `filters` when you need support-backed evidence.
 - Use source lookups when a fact or search result is important enough to cite.
 - Use stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
 - If you inspect users through the CLI, filter by stable customer ID.

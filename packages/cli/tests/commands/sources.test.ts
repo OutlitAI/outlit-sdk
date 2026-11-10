@@ -10,7 +10,7 @@ import {
 
 const mockCallTool = mock(
   async (_toolName: string, _params: unknown): Promise<unknown> => ({
-    source: { sourceType: "CALL", sourceId: "call_123" },
+    source: { type: "call", id: "call_123" },
   }),
 )
 
@@ -45,16 +45,15 @@ describe("sources get", () => {
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_get_source", {
-      sourceType: "CALL",
-      sourceId: "call_123",
+      source: { type: "call", id: "call_123" },
     })
   })
 
   test.each([
-    "SLACK",
-    "CALL",
+    "slack",
+    "call",
     "EMAIL",
-    "SUPPORT_TICKET",
+    "support_ticket",
   ])("sends %s content pagination to outlit_get_source", async (sourceType) => {
     const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
 
@@ -71,8 +70,7 @@ describe("sources get", () => {
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_get_source", {
-      sourceType,
-      sourceId: "thread_123",
+      source: { type: sourceType.toLowerCase(), id: "thread_123" },
       limit: 100,
       cursor: "cursor_123",
     })
@@ -97,13 +95,27 @@ describe("sources get", () => {
     expect(mockCallTool).not.toHaveBeenCalled()
   })
 
-  test("rejects EXTRACTED because it is not a CLI source type", async () => {
+  test("opens a memory entry with the extracted source type", async () => {
+    const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
+
+    await captureStdout(() =>
+      sourcesGetCmd.run!({
+        args: { "source-type": "EXTRACTED", "source-id": "source_123", json: true },
+      } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_source", {
+      source: { type: "extracted", id: "source_123" },
+    })
+  })
+
+  test("rejects a source type the tool does not know", async () => {
     const { default: sourcesGetCmd } = await import("../../src/commands/sources/get")
 
     await runExpectingError(
       () =>
         sourcesGetCmd.run!({
-          args: { "source-type": "EXTRACTED", "source-id": "source_123", json: true },
+          args: { "source-type": "zendesk_ticket", "source-id": "source_123", json: true },
         } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
       "invalid_input",
     )
@@ -124,8 +136,7 @@ describe("sources get", () => {
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_get_source", {
-      sourceType: "OPPORTUNITY",
-      sourceId: "opp_123",
+      source: { type: "opportunity", id: "opp_123" },
     })
   })
 
@@ -139,8 +150,7 @@ describe("sources get", () => {
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_get_source", {
-      sourceType: "INVOICE",
-      sourceId: "in_example",
+      source: { type: "invoice", id: "in_example" },
     })
   })
 
@@ -158,8 +168,7 @@ describe("sources get", () => {
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_get_source", {
-      sourceType: "OPPORTUNITY",
-      sourceId: "opp_456",
+      source: { type: "opportunity", id: "opp_456" },
     })
   })
 
@@ -177,8 +186,7 @@ describe("sources get", () => {
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_get_source", {
-      sourceType: "OPPORTUNITY",
-      sourceId: "opp_789",
+      source: { type: "opportunity", id: "opp_789" },
     })
   })
 })
@@ -219,10 +227,10 @@ describe("sources list", () => {
       } as Parameters<NonNullable<typeof sourcesListCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith(
-      "outlit_list_sources",
-      expect.objectContaining({ sourceType: "INVOICE", customer: "acme.com" }),
-    )
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_sources", {
+      customer: "acme.com",
+      filters: { sourceTypes: ["invoice"] },
+    })
   })
 
   test("sends source listing filters to outlit_list_sources", async () => {
@@ -247,15 +255,44 @@ describe("sources list", () => {
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_list_sources", {
       customer: "acme.com",
-      sourceType: "CALL",
-      participant: "buyer@acme.com",
-      provider: "gong",
-      hasTranscript: true,
-      after: "2025-01-01T00:00:00Z",
-      before: "2025-03-31T23:59:59Z",
+      filters: {
+        sourceTypes: ["call"],
+        participant: "buyer@acme.com",
+        provider: "gong",
+        hasTranscript: true,
+        after: "2025-01-01T00:00:00Z",
+        before: "2025-03-31T23:59:59Z",
+      },
       limit: 25,
       cursor: "cursor_123",
     })
+  })
+
+  test("sends several source types as one any-of filter", async () => {
+    const { default: sourcesListCmd } = await import("../../src/commands/sources/list")
+
+    await captureStdout(() =>
+      sourcesListCmd.run!({
+        args: { "source-type": "CALL, email,crm,call", json: true },
+      } as Parameters<NonNullable<typeof sourcesListCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_sources", {
+      filters: { sourceTypes: ["call", "email", "opportunity"] },
+    })
+  })
+
+  test("rejects --has-transcript without a call source type", async () => {
+    const { default: sourcesListCmd } = await import("../../src/commands/sources/list")
+
+    await runExpectingError(
+      () =>
+        sourcesListCmd.run!({
+          args: { "source-type": "email", "has-transcript": true, json: true },
+        } as Parameters<NonNullable<typeof sourcesListCmd.run>>[0]),
+      "invalid_input",
+    )
+    expect(mockCallTool).not.toHaveBeenCalled()
   })
 
   test("rejects non-UTC datetime filters before calling the API", async () => {
@@ -275,20 +312,20 @@ describe("sources list", () => {
     expect(mockCallTool).not.toHaveBeenCalled()
   })
 
-  test("renders TTY pagination without requiring a total", async () => {
+  test("renders TTY source type and id from source, and pagination from page", async () => {
     const { default: sourcesListCmd } = await import("../../src/commands/sources/list")
     mockCallTool.mockImplementationOnce(async () => ({
       items: [
         {
-          sourceType: "CALL",
-          sourceId: "call_123",
+          source: { type: "call", id: "call_123" },
           occurredAt: "2026-03-12T18:30:00.000Z",
           title: "QBR",
         },
       ],
-      pagination: {
+      page: {
         hasMore: true,
         nextCursor: "cursor_next",
+        total: null,
       },
     }))
     setInteractive()
@@ -302,8 +339,34 @@ describe("sources list", () => {
       } as Parameters<NonNullable<typeof sourcesListCmd.run>>[0])
 
       const output = logSpy.mock.calls.map((call) => String(call[0])).join("\n")
+      expect(output).toContain("call_123")
+      expect(output).toMatch(/call\s+│|call\s+\|/)
       expect(output).toContain("Next page: --cursor cursor_next")
       expect(output).not.toContain("undefined")
+    } finally {
+      setNonInteractive()
+      logSpy.mockRestore()
+    }
+  })
+
+  test("renders what an empty TTY list searched", async () => {
+    const { default: sourcesListCmd } = await import("../../src/commands/sources/list")
+    mockCallTool.mockImplementationOnce(async () => ({
+      items: [],
+      page: { hasMore: false, nextCursor: null, total: 0 },
+      coverage: { searched: "calls, emails and tickets for acme.com" },
+    }))
+    setInteractive()
+    const logSpy = spyOn(console, "log").mockImplementation(() => {})
+
+    try {
+      await sourcesListCmd.run!({
+        args: { json: false },
+      } as Parameters<NonNullable<typeof sourcesListCmd.run>>[0])
+
+      const output = logSpy.mock.calls.map((call) => String(call[0])).join("\n")
+      expect(output).toContain("(no results)")
+      expect(output).toContain("Searched: calls, emails and tickets for acme.com")
     } finally {
       setNonInteractive()
       logSpy.mockRestore()

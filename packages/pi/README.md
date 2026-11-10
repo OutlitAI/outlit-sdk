@@ -54,7 +54,7 @@ pi install npm:@outlit/pi
 
 The skill gives the model generic guidance for choosing between customer records, users, timelines, facts, search, sources, and SQL when SQL tools are enabled. It does not add CLI or MCP instructions; it assumes the Outlit tools registered by this package are the available interface.
 
-The facts tool supports `factTypes` filters for narrowing structured evidence. Public filters include customer-memory facts and relationship transitions such as `CONTACT_DEPARTURE`, `CONTACT_POSITION_CHANGE`, and `CONTACT_DISENGAGEMENT`. Anomaly detector fact types are not supported as public filters because customers may not have configured core actions, activation paths, or funnels.
+The facts tool supports `filters.types` for narrowing structured evidence (all filter values are lowercase). Public filters include customer-memory facts and relationship transitions such as `contact_departure`, `contact_position_change`, and `contact_disengagement`. Anomaly detector fact types are not supported as public filters because customers may not have configured core actions, activation paths, or funnels.
 
 ## Custom Toolsets
 

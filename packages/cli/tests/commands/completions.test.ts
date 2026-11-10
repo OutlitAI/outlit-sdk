@@ -106,7 +106,7 @@ describe("completions command", () => {
     const out = await captureCompletions("bash")
     expect(out).toContain(`[[ $COMP_CWORD -gt 1 && "${bashCompWord(1)}" == "search" ]]`)
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --customer --top-k --after --before --source-types"',
+      'COMPREPLY=($(compgen -W "--api-key --json --customer --limit --after --before --source-types"',
     )
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --source-types --fact-types --fact-categories --after --before"',

@@ -16,7 +16,7 @@ Process:
 1. Run `outlit schema` when you need view names or fields, then use `outlit sql` to find repeated friction patterns, event counts, affected customers, or high-ARR accounts with support/context signals.
 2. Search across customer context for complaints, bugs, blockers, failed setup, failed integrations, missing integrations, negative sentiment, escalation, refund, cancel, downgrade, and no value.
 3. For each candidate, gather customer details, recent timeline, facts, source evidence, billing context, and usage context.
-   Use active fact filters such as `outlit facts list <customer> --status ACTIVE --fact-types CHURN_RISK,SENTIMENT,REQUIREMENTS,PRODUCT_USAGE --source-types SUPPORT_TICKET --json` when you need support-backed customer-memory evidence.
+   Use active fact filters such as `outlit facts list <customer> --status active --fact-types churn_risk,sentiment,requirements,product_usage --source-types support_ticket --json` when you need support-backed customer-memory evidence.
    Use stable customer IDs or domains from SQL/search results for follow-up lookups. Avoid ambiguous display-name lookups when names share prefixes.
    If you inspect people through the CLI, filter by stable customer ID with `outlit people list --customer`.
 4. Keep the search bounded: inspect the strongest 20-30 candidates, deep-dive no more than 10, then rank the best 5-8.

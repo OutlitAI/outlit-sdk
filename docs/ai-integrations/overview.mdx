@@ -30,10 +30,10 @@ This is the evidence-first pattern the interfaces are designed around:
     `outlit customers get <customer> --include users,revenue,recentTimeline` returns a bounded profile. `outlit customers timeline` filters activity by channel and event type.
   </Step>
   <Step title="Find evidence">
-    `outlit facts list` returns structured facts with provenance (`sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, `permalink` when available). `outlit search "<natural language>"` returns grouped artifact-level `source` and `fact` results — not raw vector chunks.
+    `outlit facts list` returns structured facts with provenance (`source` with `type`, `id`, `occurredAt`, `quote`, and `permalink` when available). `outlit search "<natural language>"` returns grouped artifact-level `source` and `fact` results — not raw vector chunks.
   </Step>
   <Step title="Open the source">
-    `outlit sources get --source-type CALL --source-id <id>` returns the exact record. When a source offers `contentPage`, check `contentPage.completeness` before treating the content as complete — partial pages mean more content exists beyond what was returned.
+    `outlit sources get --source-type call --source-id <id>` returns the exact record. When a source offers `content`, check `content.status`, and `content.data.page.hasMore` before treating the content as complete — when it is true, more content exists beyond what was returned.
   </Step>
   <Step title="Answer with evidence">
     Cite the sources and facts you actually retrieved. An absent permalink or empty result set is **unavailable evidence**, not negative evidence — say so instead of inferring.
