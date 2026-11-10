@@ -3242,6 +3242,7 @@
                 "SLACK",
                 "PERSON_PROFILE",
                 "INVOICE",
+                "CRM_NOTE",
                 "CRM",
                 "CRM_OPPORTUNITY"
               ]
@@ -3356,6 +3357,7 @@
               "SLACK",
               "PERSON_PROFILE",
               "INVOICE",
+              "CRM_NOTE",
               "CRM",
               "CRM_OPPORTUNITY",
               "STRIPE_INVOICE",
@@ -3400,6 +3402,7 @@
               "SLACK",
               "PERSON_PROFILE",
               "INVOICE",
+              "CRM_NOTE",
               "CRM",
               "CRM_OPPORTUNITY",
               "STRIPE_INVOICE"
@@ -3509,6 +3512,7 @@
                 "SLACK",
                 "PERSON_PROFILE",
                 "INVOICE",
+                "CRM_NOTE",
                 "CRM",
                 "CRM_OPPORTUNITY"
               ]
@@ -9399,7 +9403,8 @@
                             "OPPORTUNITY",
                             "SLACK",
                             "PERSON_PROFILE",
-                            "INVOICE"
+                            "INVOICE",
+                            "CRM_NOTE"
                           ]
                         },
                         "sourceId": {
@@ -9461,7 +9466,8 @@
                                 "OPPORTUNITY",
                                 "SLACK",
                                 "PERSON_PROFILE",
-                                "INVOICE"
+                                "INVOICE",
+                                "CRM_NOTE"
                               ]
                             },
                             {
@@ -9673,7 +9679,8 @@
                                   "OPPORTUNITY",
                                   "SLACK",
                                   "PERSON_PROFILE",
-                                  "INVOICE"
+                                  "INVOICE",
+                                  "CRM_NOTE"
                                 ]
                               },
                               {
@@ -9903,7 +9910,8 @@
                       "OPPORTUNITY",
                       "SLACK",
                       "PERSON_PROFILE",
-                      "INVOICE"
+                      "INVOICE",
+                      "CRM_NOTE"
                     ]
                   },
                   "sourceId": {
@@ -9965,7 +9973,8 @@
                           "OPPORTUNITY",
                           "SLACK",
                           "PERSON_PROFILE",
-                          "INVOICE"
+                          "INVOICE",
+                          "CRM_NOTE"
                         ]
                       },
                       {
@@ -10177,7 +10186,8 @@
                             "OPPORTUNITY",
                             "SLACK",
                             "PERSON_PROFILE",
-                            "INVOICE"
+                            "INVOICE",
+                            "CRM_NOTE"
                           ]
                         },
                         {
@@ -10279,7 +10289,8 @@
               "OPPORTUNITY",
               "SLACK",
               "PERSON_PROFILE",
-              "INVOICE"
+              "INVOICE",
+              "CRM_NOTE"
             ]
           },
           "sourceId": {
@@ -10465,7 +10476,8 @@
                   "OPPORTUNITY",
                   "SLACK",
                   "PERSON_PROFILE",
-                  "INVOICE"
+                  "INVOICE",
+                  "CRM_NOTE"
                 ]
               },
               "sourceId": {
@@ -10615,7 +10627,8 @@
                     "OPPORTUNITY",
                     "SLACK",
                     "PERSON_PROFILE",
-                    "INVOICE"
+                    "INVOICE",
+                    "CRM_NOTE"
                   ]
                 },
                 "sourceId": {
@@ -10801,7 +10814,8 @@
                         "OPPORTUNITY",
                         "SLACK",
                         "PERSON_PROFILE",
-                        "INVOICE"
+                        "INVOICE",
+                        "CRM_NOTE"
                       ]
                     },
                     "sourceId": {
@@ -11199,7 +11213,8 @@
                                     "OPPORTUNITY",
                                     "SLACK",
                                     "PERSON_PROFILE",
-                                    "INVOICE"
+                                    "INVOICE",
+                                    "CRM_NOTE"
                                   ]
                                 },
                                 "sourceId": {
@@ -11261,7 +11276,8 @@
                                         "OPPORTUNITY",
                                         "SLACK",
                                         "PERSON_PROFILE",
-                                        "INVOICE"
+                                        "INVOICE",
+                                        "CRM_NOTE"
                                       ]
                                     },
                                     {
@@ -11473,7 +11489,8 @@
                                           "OPPORTUNITY",
                                           "SLACK",
                                           "PERSON_PROFILE",
-                                          "INVOICE"
+                                          "INVOICE",
+                                          "CRM_NOTE"
                                         ]
                                       },
                                       {
@@ -11592,7 +11609,8 @@
                         "OPPORTUNITY",
                         "SLACK",
                         "PERSON_PROFILE",
-                        "INVOICE"
+                        "INVOICE",
+                        "CRM_NOTE"
                       ]
                     },
                     "sourceId": {
@@ -20602,5 +20620,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "c492f9ded289b9812f2cc656f3dd4f536a8f8726c734645acd2733171f2b1bdf"
+  "x-outlit-contract-hash": "ebfa6cdf42bb7e063d65066d132576706f2073826b58cc6e98b4083493a597ac"
 }

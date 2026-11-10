@@ -5252,6 +5252,7 @@ export const publicToolContracts = {
               "SLACK",
               "PERSON_PROFILE",
               "INVOICE",
+              "CRM_NOTE",
               "CRM",
               "CRM_OPPORTUNITY",
             ],
@@ -5479,6 +5480,7 @@ export const publicToolContracts = {
                           "SLACK",
                           "PERSON_PROFILE",
                           "INVOICE",
+                          "CRM_NOTE",
                         ],
                       },
                       "sourceId": {
@@ -5541,6 +5543,7 @@ export const publicToolContracts = {
                               "SLACK",
                               "PERSON_PROFILE",
                               "INVOICE",
+                              "CRM_NOTE",
                             ],
                           },
                           {
@@ -5753,6 +5756,7 @@ export const publicToolContracts = {
                                 "SLACK",
                                 "PERSON_PROFILE",
                                 "INVOICE",
+                                "CRM_NOTE",
                               ],
                             },
                             {
@@ -6022,6 +6026,7 @@ export const publicToolContracts = {
                     "SLACK",
                     "PERSON_PROFILE",
                     "INVOICE",
+                    "CRM_NOTE",
                   ],
                 },
                 "sourceId": {
@@ -6084,6 +6089,7 @@ export const publicToolContracts = {
                         "SLACK",
                         "PERSON_PROFILE",
                         "INVOICE",
+                        "CRM_NOTE",
                       ],
                     },
                     {
@@ -6296,6 +6302,7 @@ export const publicToolContracts = {
                           "SLACK",
                           "PERSON_PROFILE",
                           "INVOICE",
+                          "CRM_NOTE",
                         ],
                       },
                       {
@@ -6391,7 +6398,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customer-context",
     "title": "Get Source",
-    "description": "Get one exact source record by generic sourceType and sourceId. Use this when you already know the concrete underlying source you want to inspect. For a Stripe invoice use sourceType INVOICE (STRIPE_INVOICE is accepted) with the Stripe invoice id (in_...): the record lists every stored line item, with amounts in the billing provider's minor units for the invoice's currency (cents for USD, EUR, GBP and CAD; other currencies follow the provider's amount rules). The lines are what that invoice billed for its period, not the subscription's item set: a yearly item is absent from its monthly invoices, and a metered item with no usage may be absent too. For a CRM opportunity (sourceType OPPORTUNITY) the record also lists the deal's own CRM fields as record.fields (each with key, label, value and custom, custom fields included) when the workspace has the CRM fields enabled; record.omittedFields names any left out to keep the response small.",
+    "description": "Get one exact source record by generic sourceType and sourceId. Use this when you already know the concrete underlying source you want to inspect. For a CRM note use sourceType CRM_NOTE. For a Stripe invoice use sourceType INVOICE (STRIPE_INVOICE is accepted) with the Stripe invoice id (in_...): the record lists every stored line item, with amounts in the billing provider's minor units for the invoice's currency (cents for USD, EUR, GBP and CAD; other currencies follow the provider's amount rules). The lines are what that invoice billed for its period, not the subscription's item set: a yearly item is absent from its monthly invoices, and a metered item with no usage may be absent too. For a CRM opportunity (sourceType OPPORTUNITY) the record also lists the deal's own CRM fields as record.fields (each with key, label, value and custom, custom fields included) when the workspace has the CRM fields enabled; record.omittedFields names any left out to keep the response small.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -6413,6 +6420,7 @@ export const publicToolContracts = {
             "SLACK",
             "PERSON_PROFILE",
             "INVOICE",
+            "CRM_NOTE",
             "CRM",
             "CRM_OPPORTUNITY",
             "STRIPE_INVOICE",
@@ -6457,6 +6465,7 @@ export const publicToolContracts = {
             "SLACK",
             "PERSON_PROFILE",
             "INVOICE",
+            "CRM_NOTE",
           ],
         },
         "sourceId": {
@@ -6643,6 +6652,7 @@ export const publicToolContracts = {
                 "SLACK",
                 "PERSON_PROFILE",
                 "INVOICE",
+                "CRM_NOTE",
               ],
             },
             "sourceId": {
@@ -6781,7 +6791,7 @@ export const publicToolContracts = {
     "commandVersion": 1,
     "ownerDomain": "customer-context",
     "title": "List Sources",
-    "description": "List concrete source records deterministically. Use this instead of semantic search when you need enumerated calls, emails, calendar events, support tickets, Slack conversations, or opportunities. Invoices are listed only when you pass sourceType INVOICE with a customer, newest first.",
+    "description": "List concrete source records deterministically. Use this instead of semantic search when you need enumerated calls, emails, calendar events, support tickets, Slack conversations, or opportunities. Invoices and CRM notes are listed only when you pass sourceType INVOICE or CRM_NOTE with a customer, newest first.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -6804,6 +6814,7 @@ export const publicToolContracts = {
             "SLACK",
             "PERSON_PROFILE",
             "INVOICE",
+            "CRM_NOTE",
             "CRM",
             "CRM_OPPORTUNITY",
             "STRIPE_INVOICE",
@@ -6879,6 +6890,7 @@ export const publicToolContracts = {
                   "SLACK",
                   "PERSON_PROFILE",
                   "INVOICE",
+                  "CRM_NOTE",
                 ],
               },
               "sourceId": {
@@ -7065,6 +7077,7 @@ export const publicToolContracts = {
                       "SLACK",
                       "PERSON_PROFILE",
                       "INVOICE",
+                      "CRM_NOTE",
                     ],
                   },
                   "sourceId": {
@@ -7296,6 +7309,7 @@ export const publicToolContracts = {
               "SLACK",
               "PERSON_PROFILE",
               "INVOICE",
+              "CRM_NOTE",
               "CRM",
               "CRM_OPPORTUNITY",
             ],
@@ -7544,6 +7558,7 @@ export const publicToolContracts = {
                                   "SLACK",
                                   "PERSON_PROFILE",
                                   "INVOICE",
+                                  "CRM_NOTE",
                                 ],
                               },
                               "sourceId": {
@@ -7606,6 +7621,7 @@ export const publicToolContracts = {
                                       "SLACK",
                                       "PERSON_PROFILE",
                                       "INVOICE",
+                                      "CRM_NOTE",
                                     ],
                                   },
                                   {
@@ -7818,6 +7834,7 @@ export const publicToolContracts = {
                                         "SLACK",
                                         "PERSON_PROFILE",
                                         "INVOICE",
+                                        "CRM_NOTE",
                                       ],
                                     },
                                     {
@@ -7937,6 +7954,7 @@ export const publicToolContracts = {
                       "SLACK",
                       "PERSON_PROFILE",
                       "INVOICE",
+                      "CRM_NOTE",
                     ],
                   },
                   "sourceId": {
@@ -20704,6 +20722,7 @@ export const customerSourceTypes = [
   "SLACK",
   "PERSON_PROFILE",
   "INVOICE",
+  "CRM_NOTE",
 ] as const
 
 export const customerSourceTypeAliasMap = {
@@ -20725,6 +20744,7 @@ export const customerSourceTypeInputs = [
   "SLACK",
   "PERSON_PROFILE",
   "INVOICE",
+  "CRM_NOTE",
   "CRM",
   "CRM_OPPORTUNITY",
 ] as const
@@ -20783,4 +20803,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "c492f9ded289b9812f2cc656f3dd4f536a8f8726c734645acd2733171f2b1bdf" as const
+export const sdkConsumerContractHash = "ebfa6cdf42bb7e063d65066d132576706f2073826b58cc6e98b4083493a597ac" as const
