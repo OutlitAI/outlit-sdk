@@ -396,6 +396,25 @@ describe("customers list", () => {
     }
   })
 
+  test("maps --part-of to filters.partOf, beside the other filters", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: { "part-of": "sanofi.com", "billing-status": "paying", json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({
+          filters: { billingStatus: ["paying"], partOf: "sanofi.com" },
+        }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("maps --search, --has-activity-in and the old first_seen_at sort", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
