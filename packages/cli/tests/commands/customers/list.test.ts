@@ -423,6 +423,59 @@ describe("customers list", () => {
     }
   })
 
+  test("maps the renewal window flags and sends no direction unless asked", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: {
+          "renews-in": "next_90d",
+          "renews-after": "2027-01-01",
+          "renews-before": "2027-04-01",
+          "order-by": "renewal_date",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      const [[, params]] = mockCallTool.mock.calls as [[string, Record<string, unknown>]]
+      expect(params).toMatchObject({
+        filters: {
+          renewal: { within: "next_90d", after: "2027-01-01", before: "2027-04-01" },
+        },
+        orderBy: "renewal_date",
+      })
+      expect(params).not.toHaveProperty("orderDirection")
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test.each([
+    ["--renews-in", { "renews-in": "next_7d" }],
+    ["--renews-after", { "renews-after": "next year" }],
+    ["--renews-before", { "renews-before": "2027-13-45" }],
+  ])("rejects an invalid %s before calling Core", async (_flag, flags) => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await listCmd.run!({
+        args: { json: true, ...flags },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  })
+
   test("advertises only the current sort names", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const meta = typeof listCmd.meta === "function" ? await listCmd.meta() : await listCmd.meta

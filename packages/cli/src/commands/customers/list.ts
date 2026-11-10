@@ -1,6 +1,7 @@
 import {
   customerBillingStatuses,
   customerListOrderFields,
+  getPublicToolContract,
   publicToolContracts,
 } from "@outlit/tools"
 import { defineCommand } from "citty"
@@ -53,11 +54,21 @@ function normalizeCustomerListResult(data: unknown): unknown {
   }
 }
 
+const renewalWindows =
+  getPublicToolContract("outlit_list_customers").inputSchema.properties.filters.properties.renewal
+    .properties.within.enum
+
 /** Previously published sort names, accepted and mapped to the current ones. */
 const legacyOrderFields: Record<string, (typeof customerListOrderFields)[number]> = {
   arr_cents: "arr",
   mrr_cents: "arr",
   first_seen_at: "first_synced_at",
+}
+
+function formatRenewal(value: unknown): string {
+  if (typeof value !== "object" || value === null) return "--"
+  const { date } = value as { date?: unknown }
+  return typeof date === "string" ? date : "--"
 }
 
 export default defineCommand({
@@ -74,6 +85,7 @@ export default defineCommand({
       "  outlit customers list --billing-status paying           # paying only",
       "  outlit customers list --no-activity-in 30d              # churning customers",
       "  outlit customers list --arr-above 1200000 --limit 50    # high-value at-risk",
+      "  outlit customers list --renews-in next_90d --order-by renewal_date",
       "  outlit customers list --activated-since 2026-07-01T00:00:00Z",
       "  outlit customers list --json | jq '.items[].domain'     # pipe-friendly",
       "",
@@ -91,6 +103,12 @@ export default defineCommand({
     ...activityFilterArgs,
     ...traitFilterArgs,
     ...orderArgs,
+    // Core's default direction is desc, but asc with --order-by renewal_date (soonest first), so the
+    // CLI leaves it unset unless asked.
+    "order-direction": {
+      type: "string",
+      description: "Sort direction (asc, desc). Default: desc; asc with --order-by renewal_date",
+    },
     cursor: {
       type: "string",
       description:
@@ -113,6 +131,18 @@ export default defineCommand({
       type: "string",
       description:
         "Only customers whose ARR is in this ISO 4217 currency (e.g. USD). ARR is never converted, so use it to rank or bound ARR within one currency",
+    },
+    "renews-in": {
+      type: "string",
+      description: `Only customers with a stored renewal date in this window from today (${renewalWindows.join(", ")})`,
+    },
+    "renews-after": {
+      type: "string",
+      description: "Only customers renewing on or after this UTC date (YYYY-MM-DD)",
+    },
+    "renews-before": {
+      type: "string",
+      description: "Only customers renewing before this UTC date (YYYY-MM-DD, that day excluded)",
     },
     "owner-id": {
       type: "string",
@@ -192,6 +222,35 @@ export default defineCommand({
     if (typeof args["has-owner"] === "boolean") owner.has = args["has-owner"]
     if (Object.keys(owner).length > 0) filters.owner = owner
 
+    const renewal: Record<string, unknown> = {}
+    if (args["renews-in"]) {
+      if (!(renewalWindows as readonly string[]).includes(args["renews-in"])) {
+        return outputError(
+          {
+            message: `--renews-in must be one of ${renewalWindows.join(", ")}`,
+            code: "invalid_input",
+          },
+          json,
+        )
+      }
+      renewal.within = args["renews-in"]
+    }
+    for (const [flag, key] of [
+      ["renews-after", "after"],
+      ["renews-before", "before"],
+    ] as const) {
+      const value = args[flag]
+      if (value === undefined) continue
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || Number.isNaN(Date.parse(`${value}T00:00:00Z`))) {
+        return outputError(
+          { message: `--${flag} must be a date such as 2027-01-01`, code: "invalid_input" },
+          json,
+        )
+      }
+      renewal[key] = value
+    }
+    if (Object.keys(renewal).length > 0) filters.renewal = renewal
+
     const { noActivityIn, hasActivityIn } = readActivityFilterArgs(args, rawArgs)
     const activity: Record<string, unknown> = {}
     if (hasActivityIn) activity.within = hasActivityIn
@@ -236,6 +295,7 @@ export default defineCommand({
           { header: "Domain", key: "domain" },
           { header: "Billing", key: "billingStatus" },
           { header: "ARR", key: "arr", format: formatArr },
+          { header: "Renews", key: "renewal", format: formatRenewal },
           { header: "Last Active", key: "lastActivityAt", format: relativeDate },
         ],
       },
