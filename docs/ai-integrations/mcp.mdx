@@ -79,22 +79,22 @@ For coding agents that run local commands, see [Agent skills](/ai-integrations/s
 
 | Tool | What it does |
 |---|---|
-| `outlit_get_customer_identity` | Read a customer's identity coverage and possible-split records |
-| `outlit_list_identity_merge_suggestions` | Browse saved identity merge suggestions and history |
-| `outlit_reject_identity_merge_suggestion` | Reject one saved suggestion by exact ID |
-| `outlit_merge_customers` | Preview then execute a two-phase customer merge by exact UUIDs |
-| `outlit_get_customer_merge_status` | Track a merge operation by its operation ID |
+| `outlit_get_identity` | Read a customer's possible duplicate records and the evidence behind each; `include: ["links"]` adds its records in other systems |
+| `outlit_list_merge_suggestions` | Browse saved merge suggestions and history; `include` adds impact, scope, Jev evidence and the cluster |
+| `outlit_reject_merge_suggestion` | Reject one saved suggestion by `id`, with a `requestId` so a retry never rejects twice |
+| `outlit_merge_customers` | Two-phase customer merge by exact IDs: `mode: "preview"` (default, read-only, with a linked-records diff and a `preview.token`), then `mode: "execute"` with that token and a `requestId` |
+| `outlit_get_merge` | Track a merge by its `operation.id`: status, phase and, after a failure, whether anything moved |
 
 ### Attention and access
 
 | Tool | What it does |
 |---|---|
-| `outlit_list_attention_items` | List authorized open or resolved attention items with priority and a prepared-action URL |
-| `outlit_get_attention_item` | Retrieve one attention item by exact UUID |
-| `outlit_list_inbox` | List one section of your Inbox (today, open, snoozed, done or pool) as tasks, each with its task `itemId` |
-| `outlit_get_inbox_item` | Retrieve one Inbox task by `itemId`, with its source preview, prepared reply and covered tasks |
-| `outlit_act_on_inbox_item` | Act on your own Inbox task (done, won't do, snooze, take and more), returning an `undoToken` |
-| `outlit_undo_inbox_action` | Undo an action with the `undoToken` it returned |
+| `outlit_list_cases` | List authorized open or resolved churn-risk cases with priority, owner, ARR at assessment and a prepared-action URL |
+| `outlit_get_case` | Retrieve one case by `id`: assessment, timeline and evidence, each piece naming the `source` `outlit_get_source` opens |
+| `outlit_list_tasks` | List one section of your Inbox (today, open, snoozed, done or pool) as tasks, each with its task `id` |
+| `outlit_get_task` | Retrieve one Inbox task by `id`; `include` adds its source, the prepared reply (`draft`, opt-in) and covered tasks |
+| `outlit_act_on_task` | Act on your own Inbox task (done, won't do, snooze, take and more), returning an `undo` to pass to `outlit_undo_task_action`; needs a `requestId` |
+| `outlit_undo_task_action` | Undo an action with the `undo.token` it returned (as `undoToken`), within `undo.until`; needs a `requestId` |
 | `outlit_assign_customer_owner` | Assign a customer's primary owner |
 | `outlit_grant_customer_access` | Share a customer with a workspace member as Viewer or Editor |
 | `outlit_update_customer_access` | Change an existing collaborator between Viewer and Editor |

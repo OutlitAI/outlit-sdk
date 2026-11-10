@@ -97,7 +97,7 @@ const COMMANDS: readonly CmdDef[] = [
       {
         name: "identity",
         desc: "Inspect customer identity and possible split records",
-        flags: [...COMMON],
+        flags: [...COMMON, { name: "--links", desc: "Also list records in other systems" }],
       },
       {
         name: "merge",
@@ -180,16 +180,21 @@ const COMMANDS: readonly CmdDef[] = [
             desc: "List complete suggestion details",
             flags: [
               ...PAGINATED,
-              { name: "--customer-id", desc: "Filter by exact customer ID" },
+              { name: "--customer-id", desc: "Only suggestions with this customer" },
               { name: "--suggestion-id", desc: "Retrieve one exact suggestion" },
               { name: "--status", desc: "suggested, processing, merged, or rejected" },
-              { name: "--confidence", desc: "HIGH, MEDIUM, or LOW" },
+              { name: "--confidence", desc: "high, medium, or low" },
+              { name: "--include", desc: "impact, scope, jev, cluster" },
             ],
           },
           {
             name: "reject",
             desc: "Reject a saved suggestion",
-            flags: [...COMMON, { name: "--review-notes", desc: "Optional reason for rejection" }],
+            flags: [
+              ...COMMON,
+              { name: "--review-notes", desc: "Optional reason for rejection" },
+              { name: "--request-id", desc: "Stable request ID for retries" },
+            ],
           },
         ],
       },

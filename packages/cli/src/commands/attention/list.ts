@@ -18,11 +18,11 @@ export default defineCommand({
   meta: {
     name: "list",
     description: [
-      "List authorized open or resolved Attention items.",
+      "List authorized open or resolved Attention cases.",
       "",
-      "The response is bounded and includes current priority, lifecycle, customer identity,",
-      "Core-owned ARR importance, and a prepared-action URL when review is available. It does not include email drafts,",
-      "evidence identifiers, raw source-quote fields, or internal agent state.",
+      "The response is bounded and includes current priority, status, the customer and its owner,",
+      "Core-owned ARR at assessment, and a prepared-action URL when review is available. It does not include email drafts,",
+      "evidence excerpts, raw source-quote fields, or internal agent state.",
       "",
       "Examples:",
       "  outlit attention list",
@@ -41,7 +41,7 @@ export default defineCommand({
     },
     "customer-id": {
       type: "string",
-      description: "Filter by exact customer UUID",
+      description: "Filter by customer (an ID; a domain or name also works)",
     },
     limit: {
       type: "string",
@@ -61,8 +61,8 @@ export default defineCommand({
       )
     }
     const params: Record<string, unknown> = {}
-    if (args.status) params.status = args.status
-    if (args["customer-id"]) params.customerId = args["customer-id"]
+    if (args.status) params.filters = { status: args.status }
+    if (args["customer-id"]) params.customer = args["customer-id"]
     if (args.limit) {
       const limit = Number(args.limit)
       if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
@@ -76,6 +76,6 @@ export default defineCommand({
     if (args.cursor) params.cursor = args.cursor
 
     const client = await getClientOrExit(args["api-key"], json)
-    return runTool(client, publicToolContracts.outlit_list_attention_items.toolName, params, json)
+    return runTool(client, publicToolContracts.outlit_list_cases.toolName, params, json)
   },
 })

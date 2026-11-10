@@ -15,45 +15,44 @@ const attentionItem = {
     id: "22222222-2222-4222-8222-222222222222",
     name: "Acme",
     domain: "acme.test",
-    ownerName: "Ada Lovelace",
   },
+  owner: { id: "user_1", name: "Ada Lovelace", email: "ada@example.test" },
   title: "Reporting usage collapsed",
-  priority: "HIGH",
+  priority: "high",
+  status: "open",
+  openedAt: "2026-08-01T00:00:00.000Z",
+  resolvedAt: null,
+  reopenedAt: null,
+  materialUpdateAt: null,
   evidenceCount: 1,
-  lifecycle: {
-    status: "open",
-    customerVisibleAt: "2026-08-01T00:00:00.000Z",
-    resolvedAt: null,
-    reopenedAt: null,
-    createdAt: "2026-08-01T00:00:00.000Z",
-    updatedAt: "2026-08-02T00:00:00.000Z",
-    materialUpdateAt: null,
-  },
-  accountImportance: {
-    arrCents: 1_200_000,
-    currency: "USD",
-    arrShareWithinCurrency: 0.12,
-    arrPercentileWithinCurrency: 95,
+  importance: {
+    arrAtAssessment: { amount: 1_200_000, currency: "USD", decimals: 2, formatted: "$12,000.00" },
+    shareWithinCurrency: 0.12,
+    percentileWithinCurrency: 95,
     segments: ["Enterprise"],
   },
-  preparedActionUrl: null,
+  preparedAction: null,
+  tasks: { instruction: "List this customer's open tasks.", tool: "outlit_list_tasks" },
+  outlit: { createdAt: "2026-08-01T00:00:00.000Z", updatedAt: "2026-08-02T00:00:00.000Z" },
 } as const
 
 const mockCallTool = mock(async (toolName: string) => {
-  if (toolName === "outlit_get_attention_item") {
+  if (toolName === "outlit_get_case") {
     return {
       ...attentionItem,
-      whatChanged: "Reporting exports fell.",
-      whyItMatters: "Reporting is a primary workflow.",
-      uncertainty: null,
-      priorityReason: "Renewal is close.",
+      assessment: {
+        whatChanged: "Reporting exports fell.",
+        whyItMatters: "Reporting is a primary workflow.",
+        uncertainty: null,
+        priorityReason: "Renewal is close.",
+        latestUpdate: null,
+      },
       timeline: [],
       evidence: [],
-      latestUpdate: null,
     }
   }
 
-  return { items: [attentionItem], pagination: { hasMore: false, total: 1, nextCursor: null } }
+  return { items: [attentionItem], page: { hasMore: false, total: 1, nextCursor: null } }
 })
 
 mock.module("../../src/lib/client", () => ({
@@ -72,7 +71,7 @@ describe("attention commands", () => {
     mockCallTool.mockClear()
   })
 
-  test("lists Attention with Core defaults and preserves Core-owned ARR values", async () => {
+  test("lists Attention with Core defaults and preserves Core-owned ARR at assessment", async () => {
     const { default: listCommand } = await import("../../src/commands/attention/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -80,10 +79,10 @@ describe("attention commands", () => {
         args: { json: true },
       } as Parameters<NonNullable<typeof listCommand.run>>[0])
 
-      expect(mockCallTool).toHaveBeenCalledWith("outlit_list_attention_items", {})
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_list_cases", {})
       const output = JSON.parse((writeSpy.mock.calls[0]?.[0] as string) ?? "{}")
-      expect(output.items[0].accountImportance).toEqual(attentionItem.accountImportance)
-      expect(output.pagination).toEqual({ hasMore: false, total: 1, nextCursor: null })
+      expect(output.items[0].importance).toEqual(attentionItem.importance)
+      expect(output.page).toEqual({ hasMore: false, total: 1, nextCursor: null })
       expect(JSON.stringify(output)).not.toContain("mrrCents")
     } finally {
       writeSpy.mockRestore()
@@ -104,9 +103,9 @@ describe("attention commands", () => {
         },
       } as Parameters<NonNullable<typeof listCommand.run>>[0])
 
-      expect(mockCallTool).toHaveBeenCalledWith("outlit_list_attention_items", {
-        status: "resolved",
-        customerId: "22222222-2222-4222-8222-222222222222",
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_list_cases", {
+        filters: { status: "resolved" },
+        customer: "22222222-2222-4222-8222-222222222222",
         limit: 50,
         cursor: "opaque-cursor",
       })
@@ -129,7 +128,7 @@ describe("attention commands", () => {
         args: { id: attentionItem.id, json: true },
       } as Parameters<NonNullable<typeof getCommand.run>>[0])
 
-      expect(mockCallTool).toHaveBeenCalledWith("outlit_get_attention_item", {
+      expect(mockCallTool).toHaveBeenCalledWith("outlit_get_case", {
         id: attentionItem.id,
       })
     } finally {
@@ -173,9 +172,9 @@ describe("attention commands", () => {
 
     expect(docs).toContain("outlit attention list")
     expect(docs).toContain("outlit attention get <id>")
-    expect(docs).toContain("arrCents")
-    expect(docs).toContain("arrShareWithinCurrency")
-    expect(docs).toContain("preparedActionUrl")
+    expect(docs).toContain("arrAtAssessment")
+    expect(docs).toContain("shareWithinCurrency")
+    expect(docs).toContain("preparedAction")
     expect(docs).not.toContain("outlit responsibilities")
     expect(docs).not.toContain("prepared email body")
   })
