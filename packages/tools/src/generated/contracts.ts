@@ -9656,7 +9656,7 @@ export const publicToolContracts = {
           "type": "object",
           "properties": {
             "sourceTypes": {
-              "description": "Any of. Default: all but slack and invoice; invoice needs a customer.",
+              "description": "Any of. Default: all but slack, invoice and crm_note; invoice and crm_note need a customer.",
               "type": "array",
               "items": {
                 "type": "string",
@@ -22939,4 +22939,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "81641602d29fc9b54460f1d397b177ad782677cce17d5b7423074d615b36b755" as const
+export const sdkConsumerContractHash = "628b6dcb1b699afeaaae1e5d8364cc7a67468612fafacdceb7ba7592ee88be8b" as const
