@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs"
 import { describe, expect, test } from "vitest"
 import {
-  customerFactCategories,
-  customerFactTypes,
-  customerSourceTypes,
-  timelineChannels,
+  sourceTypes,
+  toolFactCategories,
+  toolFactTypes,
+  toolTimelineChannels,
 } from "../../packages/tools/src/generated/contracts"
 import { piToolNames } from "../../packages/tools/src/toolsets"
 
@@ -20,9 +20,9 @@ const collaborationTools = [
 ] as const
 
 const contactTransitionFactTypes = [
-  "CONTACT_DEPARTURE",
-  "CONTACT_POSITION_CHANGE",
-  "CONTACT_DISENGAGEMENT",
+  "contact_departure",
+  "contact_position_change",
+  "contact_disengagement",
 ] as const
 
 describe("customer-surface documentation", () => {
@@ -62,9 +62,9 @@ describe("customer-surface documentation", () => {
     const piExamples = readDoc("examples/pi-agents/README.md")
     const piExtension = readDoc("examples/pi-agents/extensions/outlit-growth-agents.ts")
 
-    expect(customerFactCategories).toContain("RELATIONSHIP")
+    expect(toolFactCategories).toContain("relationship")
     for (const factType of contactTransitionFactTypes) {
-      expect(customerFactTypes).toContain(factType)
+      expect(toolFactTypes).toContain(factType)
       expect(cliDocs).toContain(`\`${factType}\``)
       expect(toolsDocs).toContain(`"${factType}"`)
       expect(piReadme).toContain(`\`${factType}\``)
@@ -73,16 +73,16 @@ describe("customer-surface documentation", () => {
       expect(piExtension).toContain(factType)
     }
 
-    for (const category of customerFactCategories) {
+    for (const category of toolFactCategories) {
       expect(cliDocs).toContain(`\`${category}\``)
     }
 
     for (const source of [cliDocs, cliSource]) {
-      expect(source).not.toContain("--fact-categories RELATIONSHIP")
+      expect(source).not.toMatch(/--fact-categories relationship/i)
     }
     for (const source of [toolsDocs, piSkill, piExamples, piExtension]) {
-      expect(source).not.toContain('factCategories: ["RELATIONSHIP"]')
-      expect(source).not.toContain('"factCategories": ["RELATIONSHIP"]')
+      expect(source).not.toMatch(/categories: \["relationship"\]/i)
+      expect(source).not.toMatch(/"categories": \["relationship"\]/i)
     }
   })
 
@@ -104,7 +104,7 @@ describe("customer-surface documentation", () => {
     const cliDocs = readDoc("docs/cli/commands.mdx")
 
     expect(cliDocs).toContain(
-      "Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`, `INVOICE`, `CRM_NOTE`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`",
+      "Comma-separated generic source type filter (`email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`",
     )
     expect(cliDocs).toContain("### List sources")
     expect(cliDocs).toContain("outlit sources list [flags]")
@@ -112,10 +112,10 @@ describe("customer-surface documentation", () => {
       "List enumerated calls, emails, calendar events, support tickets, Slack conversations, or opportunities.",
     )
     expect(cliDocs).toContain(
-      "outlit sources list --source-type SLACK --customer acme.com --limit 25 --json",
+      "outlit sources list --source-type slack --customer acme.com --limit 25 --json",
     )
-    expect(cliDocs).toContain("the paginated `items` and `pagination` response")
-    expect(cliDocs).toContain("`pagination.nextCursor`")
+    expect(cliDocs).toContain("the paginated `items` and `page` response")
+    expect(cliDocs).toContain("`page.nextCursor`")
   })
 
   test("keeps every CLI source-type flag reference aligned with canonical source types", () => {
@@ -125,25 +125,26 @@ describe("customer-surface documentation", () => {
 
     expect(rows).toHaveLength(4)
     for (const row of rows) {
-      for (const sourceType of customerSourceTypes) expect(row).toContain(`\`${sourceType}\``)
+      for (const sourceType of sourceTypes) expect(row).toContain(`\`${sourceType}\``)
     }
   })
 
-  test("leads CLI timeline documentation with canonical channels and aliases", () => {
+  test("leads CLI timeline documentation with lowercase channels and older names", () => {
     const cliDocs = readDoc("docs/cli/commands.mdx")
 
-    for (const channel of timelineChannels) expect(cliDocs).toContain(`\`${channel}\``)
+    for (const channel of toolTimelineChannels) expect(cliDocs).toContain(`\`${channel}\``)
     for (const [legacy, canonical] of [
-      ["SDK", "PRODUCT"],
-      ["EMAIL", "COMMUNICATION"],
-      ["SLACK", "COMMUNICATION"],
-      ["CALL", "MEETING"],
-      ["CALENDAR", "MEETING"],
-      ["INTERNAL", "SYSTEM"],
+      ["sdk", "product"],
+      ["email", "communication"],
+      ["slack", "communication"],
+      ["call", "meeting"],
+      ["calendar", "meeting"],
+      ["internal", "system"],
     ]) {
       expect(cliDocs).toMatch(new RegExp(String.raw`\x60${legacy}\x60\s*→\s*\x60${canonical}\x60`))
     }
-    expect(cliDocs).toContain('"channel": "PRODUCT"')
+    expect(cliDocs).toContain('"channel": "communication"')
     expect(cliDocs).not.toContain('"channel": "SDK"')
+    expect(cliDocs).not.toContain('"channel": "COMMUNICATION"')
   })
 })

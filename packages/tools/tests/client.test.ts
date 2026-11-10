@@ -49,11 +49,18 @@ import {
   publicOpenApiTransports,
   resolveCustomerContextSearchInput,
   sdkConsumerContractHash,
+  sourceTypes,
   sqlToolNames,
+  timelineOccurredAtBases,
+  toolFactCategories,
+  toolFactStatuses,
+  toolFactTypes,
   toolGatewayErrorCodes,
   toolGatewayErrorSchema,
   toolNamesInToolsets,
   toolsetNames,
+  toolTimelineChannels,
+  toToolSourceType,
 } from "../src/index.js"
 
 describe("matchesGeneratedJsonSchema", () => {
@@ -630,47 +637,56 @@ describe("tool contracts", () => {
     ).toBe(true)
   })
 
-  test("exposes fact type and category filters on facts listing", () => {
+  test("exposes lowercase fact type and category filters under filters on facts listing", () => {
     const contract = getPublicToolContract("outlit_list_facts")
     const properties = contract.inputSchema.properties as Record<string, unknown>
 
-    expect(properties.factTypes).toEqual(
+    expect(properties).not.toHaveProperty("factTypes")
+    expect(properties).not.toHaveProperty("factCategories")
+    const filters = (properties.filters as { properties: Record<string, unknown> }).properties
+
+    expect(filters.types).toEqual(
       expect.objectContaining({
         type: "array",
         items: expect.objectContaining({
           enum: expect.arrayContaining([
-            "CHURN_RISK",
-            "EXPANSION",
-            "CHAMPION_RISK",
-            "CONTACT_DEPARTURE",
-            "CONTACT_POSITION_CHANGE",
-            "CONTACT_DISENGAGEMENT",
+            "churn_risk",
+            "expansion",
+            "champion_risk",
+            "contact_departure",
+            "contact_position_change",
+            "contact_disengagement",
           ]),
         }),
       }),
     )
-    expect(properties.factCategories).toEqual(
+    expect(filters.categories).toEqual(
       expect.objectContaining({
         type: "array",
         items: expect.objectContaining({
-          enum: ["MEMORY", "RELATIONSHIP", "CUSTOM"],
+          enum: ["memory", "relationship", "custom"],
         }),
       }),
+    )
+    expect(filters.status).toEqual(
+      expect.objectContaining({ items: expect.objectContaining({ enum: [...toolFactStatuses] }) }),
     )
   })
 
   test("keeps anomaly detector filters out of the facts listing schema", () => {
     const contract = getPublicToolContract("outlit_list_facts")
-    const properties = contract.inputSchema.properties as Record<
-      string,
-      { items?: { enum?: readonly string[] } }
-    >
+    const filters = (
+      contract.inputSchema.properties as {
+        filters: { properties: Record<string, { items?: { enum?: readonly string[] } }> }
+      }
+    ).filters.properties
 
-    expect(properties.factTypes?.items?.enum).not.toContain("CORE_ACTION_DECAY")
-    expect(properties.factTypes?.items?.enum).not.toContain("ACTIVATION_RATE_DROP")
-    expect(properties.factTypes?.items?.enum).not.toContain("CHAMPION_AT_RISK")
-    expect(properties.factCategories?.items?.enum).not.toContain("CHURN")
-    expect(properties.factCategories?.items?.enum).not.toContain("JOURNEY")
+    expect(filters.types?.items?.enum).toEqual([...toolFactTypes])
+    expect(filters.types?.items?.enum).not.toContain("core_action_decay")
+    expect(filters.types?.items?.enum).not.toContain("activation_rate_drop")
+    expect(filters.types?.items?.enum).not.toContain("champion_at_risk")
+    expect(filters.categories?.items?.enum).not.toContain("churn")
+    expect(filters.categories?.items?.enum).not.toContain("journey")
   })
 
   test("exposes canonical source types while scoping EXTRACTED to exact lookups", () => {
@@ -718,22 +734,50 @@ describe("tool contracts", () => {
     const exactSourceContract = getPublicToolContract("outlit_get_source")
     const exactSourceProperties = exactSourceContract.inputSchema.properties as Record<
       string,
-      { enum?: readonly string[] }
+      { properties?: { type?: { enum?: readonly string[] } } }
     >
-    // Only the source tools accept the STRIPE_INVOICE alias; search and facts do not.
-    expect(exactSourceProperties.sourceType?.enum).toEqual([
-      ...customerSourceTypeInputs,
-      "STRIPE_INVOICE",
-      "EXTRACTED",
+    // get_source takes one source {type, id}; only it accepts `extracted` (a memory entry).
+    expect(exactSourceProperties.source?.properties?.type?.enum).toEqual([
+      ...sourceTypes,
+      "extracted",
     ])
 
     const searchContract = getPublicToolContract("outlit_search_customer_context")
-    const searchProperties = searchContract.inputSchema.properties as Record<
-      string,
-      { items?: { enum?: readonly string[] } }
-    >
-    expect(searchProperties.sourceTypes?.items?.enum).toEqual(customerSourceTypeInputs)
-    expect(searchProperties.sourceTypes?.items?.enum).not.toContain("EXTRACTED")
+    const searchFilters = (
+      searchContract.inputSchema.properties as {
+        filters: { properties: { sourceTypes?: { items?: { enum?: readonly string[] } } } }
+      }
+    ).filters.properties
+    expect(searchFilters.sourceTypes?.items?.enum).toEqual([...sourceTypes])
+    expect(searchFilters.sourceTypes?.items?.enum).not.toContain("extracted")
+  })
+
+  test("spells every context tool's enums in lowercase", () => {
+    expect(sourceTypes).toEqual([
+      "email",
+      "call",
+      "calendar_event",
+      "support_ticket",
+      "opportunity",
+      "slack",
+      "person_profile",
+      "invoice",
+      "crm_note",
+    ])
+    expect(toolTimelineChannels).toEqual([
+      "product",
+      "communication",
+      "meeting",
+      "crm",
+      "billing",
+      "support",
+      "identity",
+      "document",
+      "system",
+    ])
+    expect(toolFactCategories).toEqual(["memory", "relationship", "custom"])
+    expect(timelineOccurredAtBases).toEqual(["record", "first_observed"])
+    expect(toToolSourceType("CALENDAR_EVENT")).toBe("calendar_event")
   })
 })
 
@@ -1054,7 +1098,7 @@ describe("resolveCustomerContextSearchInput", () => {
     expect(customerSourceTypeInputs).not.toContain("STRIPE_INVOICE")
   })
 
-  test("normalizes source types and CRM aliases in search input", () => {
+  test("normalizes source types and CRM aliases into lowercase filters", () => {
     expect(
       resolveCustomerContextSearchInput({
         query: "renewal",
@@ -1062,14 +1106,7 @@ describe("resolveCustomerContextSearchInput", () => {
       }),
     ).toEqual({
       ok: true,
-      request: {
-        query: "renewal",
-        customer: undefined,
-        topK: undefined,
-        after: undefined,
-        before: undefined,
-        sourceTypes: ["SLACK"],
-      },
+      request: { query: "renewal", filters: { sourceTypes: ["slack"] } },
     })
 
     expect(
@@ -1079,14 +1116,7 @@ describe("resolveCustomerContextSearchInput", () => {
       }),
     ).toEqual({
       ok: true,
-      request: {
-        query: "renewal",
-        customer: undefined,
-        topK: undefined,
-        after: undefined,
-        before: undefined,
-        sourceTypes: ["CALL", "OPPORTUNITY"],
-      },
+      request: { query: "renewal", filters: { sourceTypes: ["call", "opportunity"] } },
     })
 
     expect(
@@ -1096,14 +1126,7 @@ describe("resolveCustomerContextSearchInput", () => {
       }),
     ).toEqual({
       ok: true,
-      request: {
-        query: "renewal",
-        customer: undefined,
-        topK: undefined,
-        after: undefined,
-        before: undefined,
-        sourceTypes: ["CALL", "OPPORTUNITY"],
-      },
+      request: { query: "renewal", filters: { sourceTypes: ["call", "opportunity"] } },
     })
 
     expect(
@@ -1114,7 +1137,32 @@ describe("resolveCustomerContextSearchInput", () => {
     ).toEqual({
       ok: false,
       message:
-        "Unknown source types: ZENDESK_TICKET. Allowed: EMAIL, CALL, CALENDAR_EVENT, SUPPORT_TICKET, OPPORTUNITY, SLACK, PERSON_PROFILE, INVOICE, CRM_NOTE, CRM, CRM_OPPORTUNITY",
+        "Unknown source types: ZENDESK_TICKET. Allowed: email, call, calendar_event, support_ticket, opportunity, slack, person_profile, invoice, crm_note",
+    })
+  })
+
+  test("sends limit, and dates under filters; topK is the previous spelling of limit", () => {
+    expect(
+      resolveCustomerContextSearchInput({
+        query: "pricing",
+        customer: "acme.com",
+        limit: 10,
+        after: "2025-01-01T00:00:00Z",
+        before: "2025-03-31T23:59:59Z",
+      }),
+    ).toEqual({
+      ok: true,
+      request: {
+        query: "pricing",
+        customer: "acme.com",
+        limit: 10,
+        filters: { after: "2025-01-01T00:00:00Z", before: "2025-03-31T23:59:59Z" },
+      },
+    })
+
+    expect(resolveCustomerContextSearchInput({ query: "pricing", topK: 7 })).toEqual({
+      ok: true,
+      request: { query: "pricing", limit: 7 },
     })
   })
 })

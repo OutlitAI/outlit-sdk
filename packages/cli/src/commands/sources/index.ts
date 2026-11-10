@@ -9,7 +9,7 @@ export default defineCommand({
       "",
       "Subcommands:",
       "  list -- list source records with deterministic filters",
-      "  get  -- fetch one exact source by sourceType and sourceId",
+      "  get  -- fetch one exact source by its source type and id",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),

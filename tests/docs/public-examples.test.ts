@@ -6,7 +6,10 @@ import * as vueSfcCompiler from "@vue/compiler-sfc"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
 import { matchesGeneratedJsonSchema } from "../../packages/tools/src/client"
-import { publicToolContracts, timelineChannels } from "../../packages/tools/src/generated/contracts"
+import {
+  publicToolContracts,
+  toolTimelineChannels,
+} from "../../packages/tools/src/generated/contracts"
 
 type FencedBlock = {
   code: string
@@ -233,7 +236,7 @@ describe("public documentation examples", () => {
 
     expect(response).toBeDefined()
     const output = JSON.parse(response?.code ?? "null")
-    expect(output?.contentPage).toBeDefined()
+    expect(output?.content?.status).toBe("available")
     expect(
       matchesGeneratedJsonSchema(output, publicToolContracts.outlit_get_source.outputSchema),
     ).toBe(true)
@@ -274,7 +277,7 @@ describe("public documentation examples", () => {
 
   test("keeps CLI timeline channel examples aligned with the generated contract", () => {
     const failures: string[] = []
-    const allowedChannels = new Set<string>(timelineChannels)
+    const allowedChannels = new Set<string>(toolTimelineChannels)
 
     for (const file of listPublicDocumentationFiles()) {
       const source = readFileSync(file, "utf8")
@@ -291,7 +294,7 @@ describe("public documentation examples", () => {
     for (const block of extractFencedBlocks(commandReference)) {
       if (block.language !== "json") continue
 
-      for (const match of block.code.matchAll(/"channel":\s*"([A-Z_]+)"/g)) {
+      for (const match of block.code.matchAll(/"channel":\s*"([A-Za-z_]+)"/g)) {
         const channel = match[1]
         if (channel && !allowedChannels.has(channel)) {
           failures.push(`${commandReference}:${block.line}: response uses ${channel}`)

@@ -1,30 +1,27 @@
-import {
-  customerSourceTypeAliases,
-  customerSourceTypeInputs,
-  customerSourceTypes,
-  normalizeCustomerSourceToolInput,
-  publicToolContracts,
-} from "@outlit/tools"
+import { publicToolContracts, sourceTypes as toolSourceTypes } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
+import { toWireSourceTypes } from "../../lib/source-types"
 
-const sourceTypeDescription = `${customerSourceTypes.join(", ")} (aliases: ${[...customerSourceTypeAliases, "STRIPE_INVOICE"].join(", ")})`
+/** A memory entry a fact cites; only the exact lookup opens it. */
+const EXTRACTED = "extracted"
+const sourceTypeDescription = [...toolSourceTypes, EXTRACTED].join(", ")
 
 export default defineCommand({
   meta: {
     name: "get",
     description: [
-      "Get one exact source by source type and source id.",
-      "Returns the same normalized source envelope as `sources list`, with more detailed source-specific fields when available.",
+      "Get one exact source by source type and source id: the `source {type, id}` another command returned.",
+      "Returns the same normalized source envelope as `sources list`, with its content a page of segments at a time.",
       "",
       "Examples:",
-      "  outlit sources get --source-type CALL --source-id call_123",
-      "  outlit sources get --source-type SLACK --source-id thread_123 --limit 50",
-      "  outlit sources get --source-type OPPORTUNITY --source-id opp_123",
-      "  outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json",
+      "  outlit sources get --source-type call --source-id call_123",
+      "  outlit sources get --source-type slack --source-id thread_123 --limit 50",
+      "  outlit sources get --source-type opportunity --source-id opp_123",
+      "  outlit sources get --source-type support_ticket --source-id ticket_456 --json",
       "",
       `Source types: ${sourceTypeDescription}`,
       "Use `outlit sources list` when you need deterministic enumeration rather than exact lookup.",
@@ -57,11 +54,19 @@ export default defineCommand({
   async run({ args }) {
     const json = !!args.json
 
-    const sourceType = normalizeCustomerSourceToolInput(args["source-type"])
+    // Any case is accepted, and the previously published aliases (CRM, STRIPE_INVOICE).
+    const requested = args["source-type"].trim()
+    const sourceType =
+      requested.toLowerCase() === EXTRACTED
+        ? EXTRACTED
+        : (() => {
+            const result = toWireSourceTypes([requested], { sourceTools: true })
+            return result.ok ? result.types[0] : undefined
+          })()
     if (!sourceType) {
       return outputError(
         {
-          message: `--source-type must be one of ${[...customerSourceTypeInputs, "STRIPE_INVOICE"].join(", ")}`,
+          message: `--source-type must be one of ${sourceTypeDescription}`,
           code: "invalid_input",
         },
         json,
@@ -85,8 +90,7 @@ export default defineCommand({
       client,
       publicToolContracts.outlit_get_source.toolName,
       {
-        sourceType,
-        sourceId: args["source-id"],
+        source: { type: sourceType, id: args["source-id"] },
         ...(limit !== undefined ? { limit } : {}),
         ...(args.cursor ? { cursor: args.cursor } : {}),
       },

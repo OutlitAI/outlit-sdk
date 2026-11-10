@@ -175,7 +175,7 @@ These launch examples use the default customer intelligence tools plus SQL/schem
 
 The base `@outlit/pi` default toolset does not include SQL, but these harder examples use `analyticalToolNames` because they benefit from cohorting, revenue filters, usage trends, activation gaps, and aggregate checks.
 
-Facts can also be narrowed with `factTypes`. Public filters include customer-memory facts such as `CHURN_RISK`, `EXPANSION`, and `PRODUCT_USAGE`, plus relationship transitions such as `CONTACT_DEPARTURE`, `CONTACT_POSITION_CHANGE`, and `CONTACT_DISENGAGEMENT`.
+Facts can also be narrowed with `filters.types`. Public filters include customer-memory facts such as `churn_risk`, `expansion`, and `product_usage`, plus relationship transitions such as `contact_departure`, `contact_position_change`, and `contact_disengagement`.
 
 The usage-decay and activation agents do not depend on behavioral/anomaly fact types like `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF`. Those fact types are not supported as public filters because many customers will not have configured core actions, activation paths, or funnels. The examples use SQL and customer/user/event evidence as the primary signal for those jobs.
 
@@ -203,7 +203,7 @@ Treat these agents as evidence reviewers, not label generators. They should:
 - Use SQL/schema for candidate discovery, then customer, timeline, fact, source, and search tools for account-level evidence.
 - Return a JSON-compatible structured report after evidence review for these growth-agent commands.
 - Keep the report keys stable and include both a human-readable summary and machine-readable findings.
-- Use `factTypes` to narrow facts, but do not request behavioral/anomaly fact types as filters.
+- Use `filters.types` to narrow facts, but do not request behavioral/anomaly fact types as filters.
 - Keep usage decay, product/support friction, activation failure, expansion readiness, and renewal/procurement risk separate.
 - Return fewer accounts when the evidence is weak.
 - Account for reviewed, ranked, and excluded candidates instead of padding a top-5 list.

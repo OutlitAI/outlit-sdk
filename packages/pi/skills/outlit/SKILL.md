@@ -19,12 +19,12 @@ Do not invent customer state when Outlit can answer it. Call out sparse or messy
 - Use `outlit_get_customer` before deep analysis of a named customer or account.
   Each included section reports a `status`: only `available` has `data`; `empty`, `not_connected`, `not_synced` and `unavailable` say why there is none, which is not the same as zero. Money values carry `formatted` text; show it as is.
   Ask for what the answer needs with `include`: `relationship` (a summary and up to eight current statements), `features` (product-event features), `meters` (Autumn metered quantities) and `credits` (credit pools with balance and burn rate). `hierarchy` is the parent company and direct subsidiaries the CRM records. `features`, `meters`, `credits` and `hierarchy`'s children come in pages of 25; page one with its own `limit` and `cursor`.
-- Use `outlit_get_timeline` when order, recency, activity sequence, meetings, messages, product usage, support, or billing chronology matters.
-- Use `outlit_list_facts` to browse structured account facts, known signals, open issues, health indicators, relationship notes, activation, billing, or renewal context. Narrow with `status`, `sourceTypes`, and `factTypes` when you know what evidence class you need.
-- Use `outlit_get_fact` when you already have a fact id and need the canonical fact payload.
+- Use `outlit_get_timeline` when order, recency, activity sequence, meetings, messages, product usage, support, or billing chronology matters. Filters live under `filters`: `channels` (lowercase, such as `communication` or `product`), `eventTypes`, and a window as `within` or `after` with an optional `before`. Page with `page.nextCursor`.
+- Use `outlit_list_facts` to browse structured account facts, known signals, open issues, health indicators, relationship notes, activation, billing, or renewal context. Narrow with `filters.status`, `filters.sourceTypes`, `filters.types`, and `filters.categories` when you know what evidence class you need; all values are lowercase.
+- Use `outlit_get_fact` when you already have a fact id and need the canonical fact payload; it returns `{ customer, fact }`, and `include: ["evidence"]` lists every source the fact cites.
 - Use `outlit_search_customer_context` for fuzzy or thematic questions such as pricing concern, blocked integration, not using, renewal, champion left, negative sentiment, expansion, implementation, or support escalation.
-- Use `outlit_list_sources` to discover the source artifacts available for a customer before retrieving one in full.
-- Use `outlit_get_source` when a fact or search result needs stronger evidence from the underlying source artifact.
+- Use `outlit_list_sources` to discover the source artifacts available for a customer before retrieving one in full. Narrow with `filters` (`sourceTypes`, `after`, `before`, `participant`, `provider`, `hasTranscript`).
+- Use `outlit_get_source` when a fact or search result needs stronger evidence from the underlying source artifact. Pass the `source { type, id }` that the timeline event, fact, search result or source listing returned, as it came. Content is `content.data.segments`, a page at a time (`content.data.page`).
 - Use `outlit_get_customer` with `include: ["features"]` for exact, customer-level Feature observations. Treat unavailable coverage as unknown, not zero usage.
 - Use `outlit_list_features` to inspect the confirmed workspace taxonomy, historical evidence, eligible sources, and event candidates.
 - Use `outlit_create_feature` only when the user explicitly asks to configure one confirmed product capability from one exact event rule. Outlit creates the supporting usage metrics internally.
@@ -37,9 +37,9 @@ Use customer lookups before SQL. SQL is for aggregates, joins, cohorts, time-ser
 ## Facts vs Search vs Timeline
 
 - Use `outlit_list_facts` to list what Outlit already knows about an account.
-- Use `factTypes` for specific public fact classes such as `CHURN_RISK`, `EXPANSION`, `PRODUCT_USAGE`, `CONTACT_DEPARTURE`, `CONTACT_POSITION_CHANGE`, or `CONTACT_DISENGAGEMENT` when those are relevant. Do not request anomaly detector fact types such as `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF` as filters.
+- Use `filters.types` for specific public fact classes such as `churn_risk`, `expansion`, `product_usage`, `contact_departure`, `contact_position_change`, or `contact_disengagement` when those are relevant. Do not request anomaly detector fact types such as `core_action_decay`, `cadence_break`, `quiet_account`, `activation_rate_drop`, or `funnel_dropoff` as filters.
 - Use `outlit_get_fact` when you already have a fact id and need that exact fact.
-- Use `outlit_search_customer_context` for a specific question or theme, including cross-customer questions.
+- Use `outlit_search_customer_context` for a specific question or theme, including cross-customer questions. `limit` caps the results; `filters` take `sourceTypes`, `after` and `before`. An empty result carries `coverage.searched`, which says what was searched.
 - Use `outlit_get_source` when you need the exact email, call, calendar event, ticket, or other source artifact behind a fact or search hit.
 - Use `outlit_get_timeline` when order and sequence matter.
 

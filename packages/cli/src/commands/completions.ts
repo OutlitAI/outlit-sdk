@@ -339,7 +339,7 @@ const COMMANDS: readonly CmdDef[] = [
     flags: [
       ...COMMON,
       { name: "--customer", desc: "Scope to customer (UUID or domain)" },
-      { name: "--top-k", desc: "Max results" },
+      { name: "--limit", desc: "Max results" },
       { name: "--after", desc: "Events after date (ISO 8601)" },
       { name: "--before", desc: "Events before date (ISO 8601)" },
       { name: "--source-types", desc: "Broad source type filter" },

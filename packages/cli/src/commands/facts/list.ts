@@ -1,28 +1,25 @@
 import {
-  type CustomerSourceType,
-  customerFactCategories,
-  customerFactStatuses,
-  customerFactTypes,
-  customerSourceTypeAliases,
-  customerSourceTypeInputs,
-  customerSourceTypes,
-  normalizeCustomerSourceType,
   publicToolContracts,
+  toolFactCategories,
+  toolFactStatuses,
+  toolFactTypes,
+  sourceTypes as toolSourceTypes,
   unsupportedCustomerFactTypes,
 } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { applyPagination, paginationArgs } from "../../args/pagination"
+import { applyPagination, pageSizeArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
 import { outputError } from "../../lib/output"
+import { toWireSourceTypes } from "../../lib/source-types"
 
 function parseCsvArg(value?: string): string[] | undefined {
   if (!value) return undefined
 
   const items = splitCsv(value)
-    .map((item) => item.trim())
+    .map((item) => item.trim().toLowerCase())
     .filter(Boolean)
 
   return items.length > 0 ? items : undefined
@@ -33,15 +30,10 @@ function invalidValues(values: string[] | undefined, allowed: readonly string[])
   return values.filter((value) => !allowed.includes(value))
 }
 
-function normalizeSourceTypes(values: string[] | undefined): CustomerSourceType[] | undefined {
-  if (!values) return undefined
-
-  return Array.from(new Set(values.map((value) => normalizeCustomerSourceType(value)))).filter(
-    (sourceType): sourceType is CustomerSourceType => sourceType !== null,
-  )
-}
-
-const sourceTypeDescription = `${customerSourceTypes.join(", ")} (aliases: ${customerSourceTypeAliases.join(", ")})`
+const sourceTypeDescription = toolSourceTypes.join(", ")
+const unsupportedFactTypes: readonly string[] = unsupportedCustomerFactTypes.map((value) =>
+  value.toLowerCase(),
+)
 
 function isOneOf(values: readonly string[], value: unknown): value is string {
   return typeof value === "string" && values.includes(value)
@@ -68,10 +60,8 @@ function annotateFactFilterability(data: unknown): unknown {
       return {
         ...factRecord,
         filterability: {
-          factType: isOneOf(customerFactTypes, factRecord.factType) ? "public" : "internal",
-          factCategory: isOneOf(customerFactCategories, factRecord.factCategory)
-            ? "public"
-            : "internal",
+          type: isOneOf(toolFactTypes, factRecord.type) ? "public" : "internal",
+          category: isOneOf(toolFactCategories, factRecord.category) ? "public" : "internal",
         },
       }
     }),
@@ -84,18 +74,18 @@ export default defineCommand({
     description: [
       "List structured facts for a customer.",
       "",
-      "Filter by fact status, source type, or occurrence date range.",
+      "Filter by fact status, type, category, source type, or occurrence date range.",
       "",
       "Examples:",
       "  outlit facts list acme.com",
-      "  outlit facts list acme.com --status ACTIVE",
-      "  outlit facts list acme.com --fact-types CHURN_RISK,EXPANSION",
-      "  outlit facts list acme.com --source-types CALL,OPPORTUNITY --after 2025-01-01T00:00:00Z",
+      "  outlit facts list acme.com --status active",
+      "  outlit facts list acme.com --fact-types churn_risk,expansion",
+      "  outlit facts list acme.com --source-types call,opportunity --after 2025-01-01T00:00:00Z",
       "  outlit facts list acme.com --limit 50 --json",
       "",
-      `Statuses: ${customerFactStatuses.join(", ")}`,
+      `Statuses: ${toolFactStatuses.join(", ")}`,
       `Source types: ${sourceTypeDescription}`,
-      `Fact categories: ${customerFactCategories.join(", ")}`,
+      `Fact categories: ${toolFactCategories.join(", ")}`,
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -103,7 +93,7 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    ...paginationArgs,
+    ...pageSizeArgs,
     customer: {
       type: "positional",
       description: "Customer UUID or domain to retrieve facts for",
@@ -111,7 +101,7 @@ export default defineCommand({
     },
     status: {
       type: "string",
-      description: `Comma-separated fact statuses (${customerFactStatuses.join(", ")})`,
+      description: `Comma-separated fact statuses (${toolFactStatuses.join(", ")})`,
     },
     "source-types": {
       type: "string",
@@ -120,11 +110,11 @@ export default defineCommand({
     "fact-types": {
       type: "string",
       description:
-        "Comma-separated public fact type filter, such as CHURN_RISK, CONTACT_DEPARTURE, or CONTACT_POSITION_CHANGE",
+        "Comma-separated public fact type filter, such as churn_risk, contact_departure, or contact_position_change",
     },
     "fact-categories": {
       type: "string",
-      description: `Comma-separated fact category filter (${customerFactCategories.join(", ")})`,
+      description: `Comma-separated fact category filter (${toolFactCategories.join(", ")})`,
     },
     after: {
       type: "string",
@@ -142,55 +132,49 @@ export default defineCommand({
     const factTypes = parseCsvArg(args["fact-types"])
     const factCategories = parseCsvArg(args["fact-categories"])
 
-    const invalidStatuses = invalidValues(statuses, customerFactStatuses)
+    const invalidStatuses = invalidValues(statuses, toolFactStatuses)
     if (invalidStatuses.length > 0) {
       return outputError(
         {
-          message: `Unknown fact statuses: ${invalidStatuses.join(", ")}. Allowed: ${customerFactStatuses.join(", ")}`,
+          message: `Unknown fact statuses: ${invalidStatuses.join(", ")}. Allowed: ${toolFactStatuses.join(", ")}`,
           code: "invalid_input",
         },
         json,
       )
     }
 
-    const invalidSourceTypes =
-      sourceTypes?.filter((value) => !normalizeCustomerSourceType(value)) ?? []
-    if (invalidSourceTypes.length > 0) {
+    const sourceTypeResult = sourceTypes
+      ? toWireSourceTypes(sourceTypes, { sourceTools: false })
+      : undefined
+    if (sourceTypeResult && !sourceTypeResult.ok) {
       return outputError(
         {
-          message: `Unknown source types: ${invalidSourceTypes.join(", ")}. Allowed: ${customerSourceTypeInputs.join(", ")}`,
+          message: `Unknown source types: ${sourceTypeResult.invalid.join(", ")}. Allowed: ${toolSourceTypes.join(", ")}`,
           code: "invalid_input",
         },
         json,
       )
     }
 
-    const normalizedSourceTypes = normalizeSourceTypes(sourceTypes)
-
-    const invalidFactTypes = invalidValues(factTypes, customerFactTypes)
+    const invalidFactTypes = invalidValues(factTypes, toolFactTypes)
     if (invalidFactTypes.length > 0) {
       const anomalyFactTypes = invalidFactTypes.filter((value) =>
-        unsupportedCustomerFactTypes.includes(
-          value as (typeof unsupportedCustomerFactTypes)[number],
-        ),
+        unsupportedFactTypes.includes(value),
       )
       const unknownFactTypes = invalidFactTypes.filter(
-        (value) =>
-          !unsupportedCustomerFactTypes.includes(
-            value as (typeof unsupportedCustomerFactTypes)[number],
-          ),
+        (value) => !unsupportedFactTypes.includes(value),
       )
       const messageParts: string[] = []
 
       if (anomalyFactTypes.length > 0) {
         messageParts.push(
-          `Anomaly detector fact types are not supported as public filters: ${anomalyFactTypes.join(", ")}. Use public fact types such as CHURN_RISK, PRODUCT_USAGE, CONTACT_DEPARTURE, or CONTACT_POSITION_CHANGE.`,
+          `Anomaly detector fact types are not supported as public filters: ${anomalyFactTypes.join(", ")}. Use public fact types such as churn_risk, product_usage, contact_departure, or contact_position_change.`,
         )
       }
 
       if (unknownFactTypes.length > 0) {
         messageParts.push(
-          `Unknown fact types: ${unknownFactTypes.join(", ")}. Allowed: ${customerFactTypes.join(", ")}`,
+          `Unknown fact types: ${unknownFactTypes.join(", ")}. Allowed: ${toolFactTypes.join(", ")}`,
         )
       }
 
@@ -203,11 +187,11 @@ export default defineCommand({
       )
     }
 
-    const invalidFactCategories = invalidValues(factCategories, customerFactCategories)
+    const invalidFactCategories = invalidValues(factCategories, toolFactCategories)
     if (invalidFactCategories.length > 0) {
       return outputError(
         {
-          message: `Unsupported fact categories: ${invalidFactCategories.join(", ")}. Allowed: ${customerFactCategories.join(", ")}`,
+          message: `Unsupported fact categories: ${invalidFactCategories.join(", ")}. Allowed: ${toolFactCategories.join(", ")}`,
           code: "invalid_input",
         },
         json,
@@ -249,15 +233,16 @@ export default defineCommand({
 
     const client = await getClientOrExit(args["api-key"], json)
 
-    const params: Record<string, unknown> = {
-      customer: args.customer,
-    }
-    if (statuses) params.status = statuses
-    if (normalizedSourceTypes) params.sourceTypes = normalizedSourceTypes
-    if (factTypes) params.factTypes = factTypes
-    if (factCategories) params.factCategories = factCategories
-    if (args.after) params.after = args.after
-    if (args.before) params.before = args.before
+    // v2 puts every filter under `filters`, in lowercase.
+    const filters: Record<string, unknown> = {}
+    if (statuses) filters.status = statuses
+    if (sourceTypeResult?.ok) filters.sourceTypes = sourceTypeResult.types
+    if (factTypes) filters.types = factTypes
+    if (factCategories) filters.categories = factCategories
+    if (args.after) filters.after = args.after
+    if (args.before) filters.before = args.before
+    const params: Record<string, unknown> = { customer: args.customer }
+    if (Object.keys(filters).length > 0) params.filters = filters
     applyPagination(params, args, json)
 
     return runTool(client, publicToolContracts.outlit_list_facts.toolName, params, json, {

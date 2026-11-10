@@ -33,7 +33,7 @@ Connect sources in the [Outlit app](/integrations/overview). Churn monitoring ne
 
 [Identity resolution](/concepts/identity-resolution) links an anonymous visitor to a known person after they identify. A company email domain, explicit `customerId`, or connected account records can link that person to a customer. Ambiguous matches wait for review rather than being merged automatically. A customer's **Coverage** tab shows which sources support its profile.
 
-The activity timeline records events in time order. Each source can also support a **fact**, such as declining usage, a support escalation, a competitor mention, or a change in a key contact. Public fact results include `occurredAt`, `status`, and available provenance fields such as `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink`. Read the source time and status before relying on an older finding.
+The activity timeline records events in time order. Each source can also support a **fact**, such as declining usage, a support escalation, a competitor mention, or a change in a key contact. Public fact results include `occurredAt`, `status`, and a `source` with `type`, `id`, `occurredAt`, `quote`, and `permalink` when available. Read the source time and status before relying on an older finding.
 
 ## Customer journey and billing
 

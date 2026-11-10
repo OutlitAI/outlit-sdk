@@ -104,12 +104,12 @@ For coding agents that run local commands, see [Agent skills](/ai-integrations/s
 
 | Tool | What it does |
 |---|---|
-| `outlit_get_timeline` | Get the activity timeline for a customer, filtered by channel and event type |
-| `outlit_list_facts` | Retrieve structured customer facts with status, source type, public fact type and category, occurrence time filters, pagination, and source provenance (`sourceMetadata` includes `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink`) |
-| `outlit_get_fact` | Retrieve one exact fact by ID, optionally expanding best-effort related data like evidence |
-| `outlit_get_source` | Retrieve one exact source record by generic `sourceType` and `sourceId` |
+| `outlit_get_timeline` | Get the activity timeline for a customer, with `filters` for channel, event type and a time window (`within`, or `after` and `before`) |
+| `outlit_list_facts` | Retrieve structured customer facts with `filters` for status, source type, public fact type and category and occurrence time, `page` pagination, and the `source` each fact came from (`type`, `id`, `occurredAt`, `quote`, and `permalink`) |
+| `outlit_get_fact` | Retrieve one exact fact by ID as `{ customer, fact }`; `include: ["evidence"]` lists every source it cites |
+| `outlit_get_source` | Retrieve one exact source record by the `source` (`type` and `id`) another tool returned |
 | `outlit_list_sources` | List concrete source records such as calls, emails, calendar events, support tickets, Slack conversations, or opportunities |
-| `outlit_search_customer_context` | Search across customer facts, emails, calls, calendar events, support tickets, Slack conversations, and CRM opportunities using natural language. Returns grouped artifact-level matches for `source` and `fact` results, with `sourceTypes` and time-range filters |
+| `outlit_search_customer_context` | Search across customer facts, emails, calls, calendar events, support tickets, Slack conversations, and CRM opportunities using natural language. Returns grouped artifact-level matches for `source` and `fact` results, with `filters` for source types and a time range, and `coverage` when nothing matches |
 | `outlit_query` | Run read-only SQL queries against your customer data |
 | `outlit_get_schema` | Get the analytics views with column units and currencies, view rules, event types and worked queries |
 

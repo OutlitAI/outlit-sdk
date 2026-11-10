@@ -20,6 +20,7 @@ import { renderPaginationHint, renderTable } from "./table"
 
 export interface TableColumn {
   header: string
+  /** Property of each item; a dot-separated path reads a nested one (`source.type`). */
   key: string
   format?: (value: unknown) => string
 }
@@ -30,7 +31,7 @@ export interface RunToolOptions {
     columns: TableColumn[]
     /** Dot-separated key path to the items array in the response (default: "items"). */
     itemsKey?: string
-    /** Dot-separated key path to pagination metadata in the response (default: "pagination"). */
+    /** Dot-separated key path to pagination metadata in the response (default: "pagination"; v2 tools use "page"). */
     paginationKey?: string
   }
   /** Spinner message shown during the API call (TTY only). */
@@ -193,13 +194,16 @@ function renderApiTable(data: unknown, table: NonNullable<RunToolOptions["table"
 
   if (!items || items.length === 0) {
     console.log("(no results)")
+    // An empty v2 list says what it searched, so "nothing found" is not read as "not looked".
+    const searched = readPath(record, "coverage.searched")
+    if (typeof searched === "string" && searched.length > 0) console.log(`Searched: ${searched}`)
     return
   }
 
   const headers = table.columns.map((c) => c.header)
   const rows = items.map((item) =>
     table.columns.map((col) => {
-      const raw = item[col.key]
+      const raw = readPath(item, col.key)
       return col.format ? col.format(raw) : raw == null ? "--" : String(raw)
     }),
   )

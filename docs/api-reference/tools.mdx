@@ -166,13 +166,13 @@ const result = await outlit.callTool(
   {
     query: "What pricing concerns came up recently?",
     customer: "acme.com",
-    sourceTypes: ["CALL", "EMAIL", "SUPPORT_TICKET", "OPPORTUNITY"],
-    topK: 5,
+    limit: 5,
+    filters: { sourceTypes: ["call", "email", "support_ticket", "opportunity"] },
   },
 )
 ```
 
-The package also exports `publicToolContracts`, `publicToolNames`, server-defined `consumerToolPolicies`, `defaultToolNames`, `analyticalToolNames`, `piToolNames`, `cliToolNames`, `allPublicToolNames`, `publicOpenApiTransports`, `toolGatewayTransport`, `apiKeyValidationTransport`, `toolGatewayErrorCodes`, `toolGatewayErrorSchema`, `ingestTransport`, and enum lists such as `customerSourceTypes`. `OPPORTUNITY` is the canonical CRM opportunity source type; `CRM` and `CRM_OPPORTUNITY` are accepted input aliases. `INVOICE` is the canonical Stripe invoice source type; `outlit_get_source` and `outlit_list_sources` also accept `STRIPE_INVOICE` as an input alias, but search and `outlit_list_facts` do not.
+The package also exports `publicToolContracts`, `publicToolNames`, server-defined `consumerToolPolicies`, `defaultToolNames`, `analyticalToolNames`, `piToolNames`, `cliToolNames`, `allPublicToolNames`, `publicOpenApiTransports`, `toolGatewayTransport`, `apiKeyValidationTransport`, `toolGatewayErrorCodes`, `toolGatewayErrorSchema`, `ingestTransport`, and enum lists such as `sourceTypes`. The context tools take and return lowercase values (`email`, `calendar_event`, `churn_risk`). `opportunity` is the source type for CRM opportunities; `CRM` and `CRM_OPPORTUNITY` are older input spellings. `invoice` is the Stripe invoice source type; `outlit_get_source` and `outlit_list_sources` also accept `STRIPE_INVOICE` as an older spelling, but search and `outlit_list_facts` do not.
 
 ## Examples
 
@@ -206,14 +206,13 @@ curl -X POST https://app.outlit.ai/api/tools/call \
 
 ### Read a Stripe invoice
 
-Use `INVOICE` (`outlit_get_source` and `outlit_list_sources` also accept `STRIPE_INVOICE` as an alias) with the Stripe invoice ID. The record lists every stored line item: amounts, quantity, price, product, service period, whether it recurs or is one-off, and proration. Amounts are in the billing provider's minor units for the invoice's currency.
+Use `invoice` (`outlit_get_source` and `outlit_list_sources` also accept `STRIPE_INVOICE` as an older spelling) with the Stripe invoice ID. The record lists every stored line item: amounts, quantity, price, product, service period, whether it recurs or is one-off, and proration. Every amount is a Money value (`{ amount, currency, decimals, formatted }`).
 
 ```json
 {
   "tool": "outlit_get_source",
   "input": {
-    "sourceType": "INVOICE",
-    "sourceId": "in_1PqExample"
+    "source": { "type": "invoice", "id": "in_1PqExample" }
   }
 }
 ```
@@ -266,7 +265,7 @@ Returns `crm.data`: one entry per CRM or support tool account linked to the cust
 
 ### Read a contact's or deal's CRM fields
 
-`outlit_list_people` with `"include": ["crm"]` (or `outlit_get_customer` with `"include": ["users", "crm"]`) adds `crm` to each user: the CRM contacts linked to them, with `fields` in the same shape as account fields. `outlit_get_source` on an `OPPORTUNITY` adds the deal's `fields`. The same size limit applies: fields left out are counted in `omittedFieldCount`, and contacts left out are counted in `omittedCrmContacts`. A user has no `crm` when the section is not enabled for the workspace or when the size limit left no room for them; ask for fewer users or `crmFields` to get it.
+`outlit_list_people` with `"include": ["crm"]` (or `outlit_get_customer` with `"include": ["users", "crm"]`) adds `crm` to each user: the CRM contacts linked to them, with `fields` in the same shape as account fields. `outlit_get_source` on an `opportunity` adds the deal's `fields`. The same size limit applies: fields left out are counted in `omittedFieldCount`, and contacts left out are counted in `omittedCrmContacts`. A user has no `crm` when the section is not enabled for the workspace or when the size limit left no room for them; ask for fewer users or `crmFields` to get it.
 
 ### Search customer context
 
@@ -276,9 +275,11 @@ Returns `crm.data`: one entry per CRM or support tool account linked to the cust
   "input": {
     "customer": "acme.com",
     "query": "What renewal concerns came up recently?",
-    "sourceTypes": ["EMAIL", "CALL", "SUPPORT_TICKET", "OPPORTUNITY"],
-    "after": "2026-01-01T00:00:00Z",
-    "topK": 5
+    "filters": {
+      "sourceTypes": ["email", "call", "support_ticket", "opportunity"],
+      "after": "2026-01-01T00:00:00Z"
+    },
+    "limit": 5
   }
 }
 ```
@@ -287,15 +288,23 @@ Omit `customer` to search across all customers. The top-level `customer` is the
 customer you scoped to, or `null` for a search across customers. Each `source` and
 `fact` result also carries a `customer` (`id`, `name`, `domain`) naming the customer
 it belongs to. A result's `customer` is `null` when it can't be attributed to exactly
-one customer you can read. Servers that predate the field omit it, so treat a missing
-`customer` like `null`.
+one customer you can read. When nothing matches, `results` is empty and
+`coverage.searched` says what was searched.
+
+`customer` takes an ID, a domain or a name, the same on every context tool. The
+earlier top-level `topK`, `sourceTypes`, `after` and `before` (and `sourceType` on
+`outlit_list_sources`, `startDate`/`endDate`/`timeframe`/`channels`/`eventTypes` on
+`outlit_get_timeline`, `status`/`factTypes`/`factCategories` on `outlit_list_facts`, and
+`sourceType`/`sourceId` on `outlit_get_source`), uppercase values, and the source aliases
+`CRM`, `CRM_OPPORTUNITY` and `STRIPE_INVOICE` are mapped to the new ones until 2026-12-11,
+and refused with the new name after that.
 
 ```json
 {
   "tool": "outlit_search_customer_context",
   "input": {
     "query": "Who raised security concerns?",
-    "topK": 5
+    "limit": 5
   }
 }
 ```
@@ -309,8 +318,7 @@ Example response with two source results:
     {
       "kind": "source",
       "score": 0.91,
-      "sourceType": "EMAIL",
-      "sourceId": "email_123",
+      "source": { "type": "email", "id": "email_123" },
       "customer": { "id": "cust_123", "name": "Acme", "domain": "acme.com" },
       "occurredAt": "2026-08-12T14:05:00Z",
       "title": "Security review before renewal",
@@ -321,8 +329,7 @@ Example response with two source results:
     {
       "kind": "source",
       "score": 0.87,
-      "sourceType": "CALL",
-      "sourceId": "call_456",
+      "source": { "type": "call", "id": "call_456" },
       "customer": { "id": "cust_789", "name": "Globex", "domain": "globex.com" },
       "occurredAt": "2026-08-20T16:00:00Z",
       "title": "Q3 business review",
@@ -341,10 +348,12 @@ Example response with two source results:
   "tool": "outlit_list_facts",
   "input": {
     "customer": "acme.com",
-    "status": ["ACTIVE"],
-    "sourceTypes": ["CALL", "OPPORTUNITY"],
-    "factTypes": ["CONTACT_DEPARTURE", "CONTACT_POSITION_CHANGE", "CONTACT_DISENGAGEMENT"],
-    "after": "2026-01-01T00:00:00Z",
+    "filters": {
+      "status": ["active"],
+      "sourceTypes": ["call", "opportunity"],
+      "types": ["contact_departure", "contact_position_change", "contact_disengagement"],
+      "after": "2026-01-01T00:00:00Z"
+    },
     "limit": 20
   }
 }
@@ -356,26 +365,24 @@ Example response with two source results:
 {
   "tool": "outlit_get_source",
   "input": {
-    "sourceType": "OPPORTUNITY",
-    "sourceId": "opp_123"
+    "source": { "type": "opportunity", "id": "opp_123" }
   }
 }
 ```
 
 ### Read exact source content
 
-Exact lookup can include a `contentPage` with bounded content segments. The default
-page size is 10 segments, with a maximum of 100. Pass the returned
-`contentPage.page.nextCursor` with the same source type and ID when
-`contentPage.page.hasMore` is true. Check `contentPage.completeness` before treating
-the content as complete.
+Exact lookup can include `content`, a section with bounded content segments. Only
+`content.status: "available"` has `data`. The default page size is 10 segments, with a
+maximum of 100. Pass the returned `content.data.page.nextCursor` with the same source
+when `content.data.page.hasMore` is true; until then the content is partial.
+`content.data.omittedFields` names record fields left out.
 
 ```json
 {
   "tool": "outlit_get_source",
   "input": {
-    "sourceType": "CALL",
-    "sourceId": "call_123",
+    "source": { "type": "call", "id": "call_123" },
     "limit": 10
   }
 }
@@ -385,8 +392,7 @@ Example response with complete content:
 
 ```json
 {
-  "sourceType": "CALL",
-  "sourceId": "call_123",
+  "source": { "type": "call", "id": "call_123" },
   "occurredAt": "2026-09-01T12:00:00Z",
   "title": "Renewal discussion",
   "summary": "The customer asked for a renewal proposal.",
@@ -394,29 +400,30 @@ Example response with complete content:
   "provider": "gong",
   "customer": { "id": "cust_123", "name": "Acme", "domain": "acme.com" },
   "participants": [],
-  "record": {},
-  "contentPage": {
-    "sourceType": "CALL",
-    "sourceId": "call_123",
-    "contentKind": "call_transcript",
-    "segments": [{ "id": "segment_1", "text": "Please send the renewal proposal." }],
-    "page": { "returned": 1, "hasMore": false, "nextCursor": null },
-    "completeness": { "status": "complete", "omittedFields": [] }
+  "record": { "kind": "call" },
+  "content": {
+    "status": "available",
+    "asOf": "2026-09-01T12:05:00Z",
+    "data": {
+      "kind": "call_transcript",
+      "segments": [{ "id": "segment_1", "text": "Please send the renewal proposal." }],
+      "page": { "hasMore": false, "nextCursor": null, "total": 1 },
+      "omittedFields": []
+    }
   }
 }
 ```
 
 ### Follow person profile evidence
 
-When a fact or search result references a `PERSON_PROFILE` source, use its source ID
+When a fact or search result references a `person_profile` source, pass its `source`
 for exact lookup. Replace the example ID with the ID from that reference.
 
 ```json
 {
   "tool": "outlit_get_source",
   "input": {
-    "sourceType": "PERSON_PROFILE",
-    "sourceId": "snapshot_123"
+    "source": { "type": "person_profile", "id": "snapshot_123" }
   }
 }
 ```
@@ -460,7 +467,7 @@ Returns `{ "id": "10000000-0000-4000-8000-000000000004", "createdAt": "2026-09-2
 
 ## Response
 
-The response is the selected tool's JSON result. List tools return paginated collections; exact lookup tools return the matched record or an error when the record cannot be found. Search returns grouped artifact-level `source` and `fact` results, not raw vector chunks. Fact results include provenance fields such as `sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, and `permalink` when available.
+The response is the selected tool's JSON result. List tools return paginated collections; exact lookup tools return the matched record or an error when the record cannot be found. Search returns grouped artifact-level `source` and `fact` results, not raw vector chunks. Every source is a `source` of `{ type, id }` that `outlit_get_source` opens as it is; a fact's `source` also carries `occurredAt`, `quote` and `permalink` when available.
 
 Money is always `{ "amount", "currency", "decimals", "formatted" }`: `amount` is an integer in the billing provider's minor units for the currency, `decimals` is how many digits follow the decimal point (so `amount / 10^decimals` is the major-unit value), and `formatted` is ready to display (for example 1234500 is "$12,345.00" in USD). Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). Customer `arr` is the annualized revenue run rate, the same figure the Outlit app shows: `arr.value` is the money, and `estimated` is `true` when the amount includes a usage or per-seat estimate. `arr.value.amount` is `0` for a churned, paused, or trialing customer, and `arr` is `null` when the app shows none. `outlit_get_customer` returns `revenue.data.arr` with the customer's `lifecycle` and the `parts` it is counted from. Attention items return the currency alongside `arrCents`. The example below is for a customer billed in USD, so `"amount": 300000` is $3,000.00 ARR.
 

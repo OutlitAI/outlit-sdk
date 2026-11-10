@@ -9,10 +9,12 @@ import {
   useTempEnv,
 } from "../helpers"
 
-const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
-  items: [],
-  pagination: { hasMore: false, nextCursor: null, total: 0 },
-}))
+const mockCallTool = mock(
+  async (_toolName: string, _params: unknown): Promise<unknown> => ({
+    facts: [],
+    page: { hasMore: false, nextCursor: null, total: 0 },
+  }),
+)
 
 mock.module("../../src/lib/client", () => ({
   createClient: async () => ({
@@ -52,7 +54,7 @@ describe("facts commands", () => {
           customer: "acme.com",
           status: "ACTIVE",
           "source-types": "CALL,CRM_OPPORTUNITY",
-          "fact-types": "CHURN_RISK,EXPANSION",
+          "fact-types": "CHURN_RISK,expansion",
           "fact-categories": "MEMORY",
           after: "2025-01-01T00:00:00Z",
           before: "2025-03-31T23:59:59Z",
@@ -62,44 +64,54 @@ describe("facts commands", () => {
       } as Parameters<NonNullable<typeof factsListCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith(
-      "outlit_list_facts",
-      expect.objectContaining({
-        customer: "acme.com",
-        status: ["ACTIVE"],
-        sourceTypes: ["CALL", "OPPORTUNITY"],
-        factTypes: ["CHURN_RISK", "EXPANSION"],
-        factCategories: ["MEMORY"],
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_facts", {
+      customer: "acme.com",
+      filters: {
+        status: ["active"],
+        sourceTypes: ["call", "opportunity"],
+        types: ["churn_risk", "expansion"],
+        categories: ["memory"],
         after: "2025-01-01T00:00:00Z",
         before: "2025-03-31T23:59:59Z",
-        limit: 50,
-      }),
+      },
+      limit: 50,
+    })
+  })
+
+  test("list sends no filters object when none are given", async () => {
+    const { default: factsListCmd } = await import("../../src/commands/facts/list")
+
+    await captureStdout(() =>
+      factsListCmd.run!({
+        args: { customer: "acme.com", json: true },
+      } as Parameters<NonNullable<typeof factsListCmd.run>>[0]),
     )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_facts", { customer: "acme.com" })
   })
 
   test("list annotates whether returned fact type and category values are public filters", async () => {
     mockCallTool.mockImplementationOnce(async () => ({
-      items: [],
-      customer: { id: "cust_1", domain: "acme.com" },
+      customer: { id: "cust_1", name: "Acme", domain: "acme.com" },
       facts: [
         {
           id: "fact_1",
-          factType: "CADENCE_BREAK",
-          factCategory: "CHURN",
+          type: "cadence_break",
+          category: "churn",
         },
         {
           id: "fact_2",
-          factType: "CHURN_RISK",
-          factCategory: "MEMORY",
+          type: "churn_risk",
+          category: "memory",
         },
       ],
-      pagination: { hasMore: false, nextCursor: null, total: 0 },
+      page: { hasMore: false, nextCursor: null, total: 0 },
     }))
 
     const { default: factsListCmd } = await import("../../src/commands/facts/list")
     const parsed = await captureStdout<{
       facts: Array<{
-        filterability: { factType: "public" | "internal"; factCategory: "public" | "internal" }
+        filterability: { type: "public" | "internal"; category: "public" | "internal" }
       }>
     }>(() =>
       factsListCmd.run!({
@@ -111,12 +123,12 @@ describe("facts commands", () => {
     )
 
     expect(parsed.facts[0]?.filterability).toEqual({
-      factType: "internal",
-      factCategory: "internal",
+      type: "internal",
+      category: "internal",
     })
     expect(parsed.facts[1]?.filterability).toEqual({
-      factType: "public",
-      factCategory: "public",
+      type: "public",
+      category: "public",
     })
   })
 
@@ -224,8 +236,8 @@ describe("facts commands", () => {
 
       expectErrorExit(thrown, stderrOutput, "invalid_input")
       expect(stderrOutput).toContain("Anomaly detector fact types are not supported")
-      expect(stderrOutput).toContain("CORE_ACTION_DECAY")
-      expect(stderrOutput).toContain("Unknown fact types: NOT_A_FACT")
+      expect(stderrOutput).toContain("core_action_decay")
+      expect(stderrOutput).toContain("Unknown fact types: not_a_fact")
       expect(mockCallTool).not.toHaveBeenCalled()
     }
   })
@@ -257,14 +269,26 @@ describe("facts commands", () => {
     }
   })
 
-  test("get sends fact id and include list to outlit_get_fact", async () => {
+  test("list rejects a status the tool does not take", async () => {
+    const { default: factsListCmd } = await import("../../src/commands/facts/list")
+
+    await runExpectingError(async () => {
+      await factsListCmd.run!({
+        args: { customer: "acme.com", status: "open", json: true },
+      } as Parameters<NonNullable<typeof factsListCmd.run>>[0])
+    }, "invalid_input")
+
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("get sends fact id and a lowercase include list to outlit_get_fact", async () => {
     const { default: factsGetCmd } = await import("../../src/commands/facts/get")
 
     await captureStdout(() =>
       factsGetCmd.run!({
         args: {
           "fact-id": "fact_123",
-          include: "evidence,ignored",
+          include: "Evidence",
           json: true,
         },
       } as Parameters<NonNullable<typeof factsGetCmd.run>>[0]),
@@ -272,7 +296,19 @@ describe("facts commands", () => {
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_get_fact", {
       factId: "fact_123",
-      include: ["evidence", "ignored"],
+      include: ["evidence"],
     })
+  })
+
+  test("get rejects an include value the tool does not take", async () => {
+    const { default: factsGetCmd } = await import("../../src/commands/facts/get")
+
+    await runExpectingError(async () => {
+      await factsGetCmd.run!({
+        args: { "fact-id": "fact_123", include: "evidence,ignored", json: true },
+      } as Parameters<NonNullable<typeof factsGetCmd.run>>[0])
+    }, "invalid_input")
+
+    expect(mockCallTool).not.toHaveBeenCalled()
   })
 })

@@ -715,19 +715,21 @@ outlit customers timeline <customer> [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--timeframe` | string | `30d` | Lookback window: `7d`, `14d`, `30d`, `90d`, `all` |
+| `--timeframe` | string | `30d` | Lookback window: `7d`, `14d`, `30d`, `90d`, `all`. Counts back from now, or from `--end-date` when that is set |
 | `--start-date` | string | — | Start datetime (ISO 8601, for example `2025-01-01T00:00:00Z`) — overrides `--timeframe` |
-| `--end-date` | string | — | End datetime (ISO 8601, for example `2025-03-01T23:59:59.999Z`) — overrides `--timeframe` |
-| `--channels` | string | — | Comma-separated canonical channels: `PRODUCT`, `COMMUNICATION`, `MEETING`, `CRM`, `BILLING`, `SUPPORT`, `IDENTITY`, `DOCUMENT`, `SYSTEM` |
-| `--event-types` | string | — | Comma-separated types: `PAGE_VIEW`, `MEETING`, `SUPPORT_TICKET`, etc. |
-| `--limit` | number | `20` | Results per page (1–100) |
+| `--end-date` | string | — | End datetime (ISO 8601, for example `2025-03-01T23:59:59.999Z`); `--timeframe` counts back from it |
+| `--channels` | string | — | Comma-separated channels: `product`, `communication`, `meeting`, `crm`, `billing`, `support`, `identity`, `document`, `system` |
+| `--event-types` | string | — | Comma-separated lowercase types, such as `note_added` or `email_received` |
+| `--limit` | number | `25` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor |
 
-When `--start-date` or `--end-date` is provided, `--timeframe` is ignored.
+When `--start-date` is provided, `--timeframe` is ignored. The CLI sends these as the tool's
+`filters`: `within` (the timeframe), `after` (the start), `before` (the end), `channels` and
+`eventTypes`. Values are lowercase on the wire; any case works on the command line.
 
-The CLI also accepts and normalizes these legacy aliases: `SDK` → `PRODUCT`, `EMAIL` →
-`COMMUNICATION`, `SLACK` → `COMMUNICATION`, `CALL` → `MEETING`, `CALENDAR` → `MEETING`, and
-`INTERNAL` → `SYSTEM`.
+The CLI also accepts and normalizes these older channel names: `sdk` → `product`, `email` →
+`communication`, `slack` → `communication`, `call` → `meeting`, `calendar` → `meeting`, and
+`internal` → `system`.
 
 ### Examples
 
@@ -736,46 +738,50 @@ The CLI also accepts and normalizes these legacy aliases: `SDK` → `PRODUCT`, `
 outlit customers timeline acme.com
 
 # Last 90 days, communication and meeting activity
-outlit customers timeline acme.com --timeframe 90d --channels COMMUNICATION,MEETING
+outlit customers timeline acme.com --timeframe 90d --channels communication,meeting
 
 # Custom date range
 outlit customers timeline acme.com --start-date 2025-01-01T00:00:00Z --end-date 2025-03-01T23:59:59.999Z
 
-# Page views and meetings only
-outlit customers timeline acme.com --event-types PAGE_VIEW,MEETING --limit 50
+# Notes and received emails only
+outlit customers timeline acme.com --event-types note_added,email_received --limit 50
 ```
 
 ### JSON response
 
 ```json
 {
+  "customer": {
+    "id": "cust_123",
+    "name": "Acme",
+    "domain": "acme.com"
+  },
   "events": [
     {
       "id": "event-uuid",
-      "eventType": "PAGE_VIEW",
-      "eventName": "pricing_page_viewed",
-      "channel": "PRODUCT",
-      "title": "Pricing page viewed",
-      "summary": "Jane viewed the pricing page",
+      "eventType": "email_received",
+      "eventName": "email_received",
+      "channel": "communication",
+      "title": "Re: Pricing for the annual plan",
+      "summary": "Jane asked whether the annual plan can start in April.",
       "occurredAt": "2025-02-10T15:30:00Z",
+      "occurredAtBasis": "record",
       "contact": "jane@acme.com",
-      "sourceType": null,
-      "sourceId": null,
-      "metadata": {
-        "url": "https://acme.com/pricing",
-        "title": "Pricing Page"
+      "source": {
+        "type": "email",
+        "id": "email_123"
       }
     }
   ],
-  "pagination": {
+  "page": {
     "hasMore": false,
     "nextCursor": null,
-    "effectiveLimit": 20
+    "total": 1
   }
 }
 ```
 
-Older CLI and tool versions may omit `pagination.effectiveLimit`, per-event `unreadable`/`unreadableReason`, and the `product` weekly usage aggregate (`channels:"PRODUCT"`). Check for their presence before using them.
+`events[].source` is the `{ type, id }` that `outlit sources get --source-type <type> --source-id <id>` opens. An event whose source cannot be opened carries `unreadable: { reason }` instead. Adding `product` to `--channels` also returns a `product` section with weekly usage; its `status` says why it is empty when no value features are configured. An empty `events` list carries `coverage.searched`, which says what was searched.
 
 ## People list
 
@@ -889,13 +895,13 @@ outlit facts get --fact-id <id> [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--status` | string | — | Comma-separated fact status filter: `ACTIVE`, `ACKNOWLEDGED`, `RESOLVED`, `SNOOZED`, `CANDIDATE` |
-| `--source-types` | string | — | Comma-separated generic source type filter: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`, `INVOICE`, `CRM_NOTE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
-| `--fact-types` | string | — | Comma-separated public fact type filter, including `CHURN_RISK`, `PRODUCT_USAGE`, `CONTACT_DEPARTURE`, `CONTACT_POSITION_CHANGE`, and `CONTACT_DISENGAGEMENT` |
-| `--fact-categories` | string | — | Comma-separated fact category filter: `MEMORY`, `RELATIONSHIP`, `CUSTOM` |
+| `--status` | string | — | Comma-separated fact status filter: `active`, `acknowledged`, `resolved`, `snoozed`, `candidate` |
+| `--source-types` | string | — | Comma-separated generic source type filter: `email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--fact-types` | string | — | Comma-separated public fact type filter, including `churn_risk`, `product_usage`, `contact_departure`, `contact_position_change`, and `contact_disengagement` |
+| `--fact-categories` | string | — | Comma-separated fact category filter: `memory`, `relationship`, `custom` |
 | `--after` | string | — | Lower bound on fact occurrence time (ISO 8601 datetime) |
 | `--before` | string | — | Upper bound on fact occurrence time (ISO 8601 datetime) |
-| `--limit` | number | `20` | Results per page (1–100) |
+| `--limit` | number | `25` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor |
 
 ### `facts get` flags
@@ -903,7 +909,7 @@ outlit facts get --fact-id <id> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--fact-id` | string | — | Exact fact identifier |
-| `--include` | string | — | Comma-separated best-effort expansions. `evidence` requests evidence details when available |
+| `--include` | string | — | Comma-separated expansions. `evidence` lists every source the fact cites; any other value is rejected |
 
 ### Examples
 
@@ -912,15 +918,15 @@ outlit facts get --fact-id <id> [flags]
 outlit facts list acme.com
 
 # Filter by status and source type
-outlit facts list acme.com --status ACTIVE --source-types CALL,OPPORTUNITY --after 2025-01-01T00:00:00Z
+outlit facts list acme.com --status active --source-types call,opportunity --after 2025-01-01T00:00:00Z
 
 # Filter customer-memory facts by public fact type
-outlit facts list acme.com --fact-types CHURN_RISK,PRODUCT_USAGE
+outlit facts list acme.com --fact-types churn_risk,product_usage
 
 # Pipe for processing
-outlit facts list acme.com --json | jq '.facts[] | select(.severity == "HIGH")'
+outlit facts list acme.com --json | jq '.facts[] | select(.type == "churn_risk")'
 
-# Fetch one exact fact with best-effort evidence expansion
+# Fetch one exact fact with the sources it cites
 outlit facts get --fact-id fact_123 --include evidence
 ```
 
@@ -938,50 +944,35 @@ outlit facts get --fact-id fact_123 --include evidence
       "id": "fact-uuid",
       "assertion": "Budget concerns raised",
       "reasoning": "The customer explicitly deferred the purchase because of budget timing.",
-      "factType": "BUDGET",
-      "factCategory": "MEMORY",
-      "status": "ACTIVE",
-      "confidence": 0.92,
-      "priority": "HIGH",
-      "severity": "HIGH",
+      "type": "budget",
+      "category": "memory",
+      "status": "active",
       "occurredAt": "2025-02-10T14:00:00Z",
-      "detectedAt": "2025-02-10T15:30:00Z",
-      "validFrom": "2025-02-10T14:00:00Z",
       "validUntil": null,
-      "linkedSourceRef": {
-        "sourceType": "CALL",
-        "sourceId": "call_123",
+      "source": {
+        "type": "call",
+        "id": "call_123",
         "occurredAt": "2025-02-10T14:00:00Z",
-        "permalink": "https://granola.ai/notes/call_123"
-      },
-      "sourceMetadata": {
-        "sourceType": "CALL",
-        "sourceId": "call_123",
-        "sourceOccurredAt": "2025-02-10T14:00:00Z",
-        "sourceQuote": "Budget is blocked until next quarter.",
+        "quote": "Budget is blocked until next quarter.",
         "permalink": "https://granola.ai/notes/call_123"
       },
       "evidenceCount": 1,
-      "metricName": null,
-      "metricValue": null,
-      "metricPreviousValue": null,
-      "metricDelta": null,
-      "metricUnit": null,
-      "periodStart": null,
-      "periodEnd": null,
-      "changePointDate": null,
       "occurrenceCount": 1,
-      "lastDetectedAt": "2025-02-10T15:30:00Z"
+      "outlit": {
+        "recordedAt": "2025-02-10T15:30:00Z",
+        "updatedAt": null
+      }
     }
   ],
-  "pagination": {
+  "page": {
     "hasMore": false,
-    "nextCursor": null
+    "nextCursor": null,
+    "total": 1
   }
 }
 ```
 
-`facts get` returns the same canonical fact shape as `facts list`. Passing `--include evidence` requests a best-effort evidence expansion; unsupported include values are ignored.
+`facts list` returns each fact with the `source` it came from (`null` when it has none); `outlit.recordedAt` is when Outlit stored it. `facts get` returns `{ customer, fact }`, where `fact` has the same shape; `--include evidence` adds `fact.evidence`, one `{ id, source, excerpt }` per cited source. An unknown `--include` value is rejected rather than ignored. An empty `facts` list carries `coverage.searched`.
 
 ## Search
 
@@ -1002,10 +993,12 @@ outlit search <query> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--customer` | string | — | Scope to a specific customer (domain or UUID) |
-| `--top-k` | number | `20` | Maximum results to return (1–50) |
+| `--limit` | number | `20` | Maximum results to return (1–50) |
 | `--after` | string | — | Filter to events after this ISO 8601 datetime |
 | `--before` | string | — | Filter to events before this ISO 8601 datetime |
-| `--source-types` | string | — | Comma-separated generic source type filter (`EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`, `INVOICE`, `CRM_NOTE`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-types` | string | — | Comma-separated generic source type filter (`email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+
+The CLI sends `--source-types`, `--after` and `--before` as the tool's `filters`, with lowercase source types.
 
 ### Examples
 
@@ -1020,10 +1013,10 @@ outlit search "budget concerns" --customer acme.com
 outlit search "expansion opportunities" --after 2025-01-01T00:00:00Z --before 2025-03-31T23:59:59Z
 
 # Filter by source type
-outlit search "renewal opportunities" --source-types CALL,OPPORTUNITY
+outlit search "renewal opportunities" --source-types call,opportunity
 
 # More results (max 50)
-outlit search "churn risk" --top-k 50 --json
+outlit search "churn risk" --limit 50 --json
 ```
 
 ### JSON response
@@ -1040,8 +1033,10 @@ outlit search "churn risk" --top-k 50 --json
       "kind": "source",
       "score": 0.92,
       "matchCount": 2,
-      "sourceType": "CALL",
-      "sourceId": "call_456",
+      "source": {
+        "type": "call",
+        "id": "call_456"
+      },
       "customer": {
         "id": "cust_123",
         "name": "Acme",
@@ -1062,11 +1057,11 @@ outlit search "churn risk" --top-k 50 --json
 
 Search returns both matching `source` and `fact` artifacts when both are relevant. Multiple chunk hits from the same source are grouped into one source result.
 
-The top-level `customer` is the `--customer` you scoped to, or `null` for an organization-wide search. Each result's `customer` names the customer it belongs to, so an organization-wide search tells you whose call or fact matched. It is `null` when the result can't be attributed to exactly one customer you can read, and older servers omit it; treat a missing `customer` like `null`.
+The top-level `customer` is the `--customer` you scoped to, or `null` for an organization-wide search. Each result's `customer` names the customer it belongs to, so an organization-wide search tells you whose call or fact matched. It is `null` when the result can't be attributed to exactly one customer you can read. When nothing matches, `results` is empty and `coverage.searched` says what was searched, so "not found" is not read as "not looked".
 
 ## Sources
 
-List concrete source records deterministically or fetch one exact source by generic `sourceType` and `sourceId`.
+List concrete source records deterministically or fetch one exact source by its source type and id.
 
 ### List sources
 
@@ -1080,24 +1075,25 @@ outlit sources list [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Generic source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`, `INVOICE`, `CRM_NOTE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`, `STRIPE_INVOICE` |
+| `--source-type` | string | — | Generic source type, or several separated by commas: `email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`, `STRIPE_INVOICE` |
 | `--customer` | string | — | Customer UUID, domain, or name to scope source listing |
 | `--participant` | string | — | Participant email or name to filter source records |
 | `--provider` | string | — | Provider identifier such as `gmail`, `gong`, or `google-calendar` |
-| `--has-transcript` | boolean | `false` | Only list call sources with a finalized transcript; when combined with `--source-type`, that type must be `CALL` |
+| `--has-transcript` | boolean | `false` | Only list call sources with a finalized transcript; when combined with `--source-type`, that type must include `call` |
 | `--after` | string | — | Filter to sources occurring after this ISO 8601 UTC datetime |
 | `--before` | string | — | Filter to sources occurring before this ISO 8601 UTC datetime |
-| `--limit` | number | `50` | Results per page (1–100) |
-| `--cursor` | string | — | Pagination cursor from a previous response (`pagination.nextCursor`) |
+| `--limit` | number | `25` | Results per page (1–100) |
+| `--cursor` | string | — | Pagination cursor from a previous response (`page.nextCursor`) |
 
-Source-type aliases are normalized to their canonical values before the request. With `--json`, the command returns the paginated `items` and `pagination` response. In interactive output, rows show `TYPE`, `OCCURRED`, `TITLE`, and `SOURCE ID`; when more results are available, the next cursor is printed for the following `--cursor` request.
+Source-type aliases are normalized to their lowercase tool values before the request, and the filters are sent under the tool's `filters`. With `--json`, the command returns the paginated `items` and `page` response; each item's `source` is the `{ type, id }` that `sources get` opens. In interactive output, rows show `TYPE`, `OCCURRED`, `TITLE`, and `SOURCE ID`; when more results are available, the next cursor is printed for the following `--cursor` request.
 
 ### Examples
 
 ```bash
-outlit sources list --customer acme.com --source-type CALL
-outlit sources list --participant alice@acme.com --source-type CALENDAR_EVENT --json
-outlit sources list --source-type SLACK --customer acme.com --limit 25 --json
+outlit sources list --customer acme.com --source-type call
+outlit sources list --participant alice@acme.com --source-type calendar_event --json
+outlit sources list --source-type slack --customer acme.com --limit 25 --json
+outlit sources list --source-type call,email --customer acme.com
 outlit sources list --after 2026-01-01T00:00:00Z --limit 25
 ```
 
@@ -1111,7 +1107,7 @@ outlit sources get --source-type <type> --source-id <id> [--limit <count>] [--cu
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Source type: `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, `SLACK`, `PERSON_PROFILE`, `INVOICE`, `CRM_NOTE`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`, `STRIPE_INVOICE` |
+| `--source-type` | string | — | Source type: `email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`, `extracted` (a memory entry). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`, `STRIPE_INVOICE` |
 | `--source-id` | string | — | Exact source identifier |
 | `--limit` | number | `10` | Exact content segments per page (1–100). |
 | `--cursor` | string | — | Opaque cursor returned by a previous exact lookup for the same source. |
@@ -1119,30 +1115,28 @@ outlit sources get --source-type <type> --source-id <id> [--limit <count>] [--cu
 ### Examples
 
 ```bash
-outlit sources get --source-type CALL --source-id call_123 --limit 10 --json
-outlit sources get --source-type CALL --source-id call_123 --cursor "$CURSOR" --json
-outlit sources get --source-type SLACK --source-id thread_123 --limit 50
-outlit sources get --source-type SLACK --source-id thread_123 --cursor "$CURSOR"
-outlit sources get --source-type OPPORTUNITY --source-id opp_123
-outlit sources get --source-type SUPPORT_TICKET --source-id ticket_456 --json
-outlit sources get --source-type INVOICE --source-id in_1PqExample --json
+outlit sources get --source-type call --source-id call_123 --limit 10 --json
+outlit sources get --source-type call --source-id call_123 --cursor "$CURSOR" --json
+outlit sources get --source-type slack --source-id thread_123 --limit 50
+outlit sources get --source-type slack --source-id thread_123 --cursor "$CURSOR"
+outlit sources get --source-type opportunity --source-id opp_123
+outlit sources get --source-type support_ticket --source-id ticket_456 --json
+outlit sources get --source-type invoice --source-id in_1PqExample --json
 ```
 
-`INVOICE` is a Stripe invoice (`sources get` and `sources list` also accept `STRIPE_INVOICE` as an alias; `search` and `facts list` do not): pass its Stripe invoice ID (`in_...`) to read every stored line item with amounts, quantity, price, product, service period, whether it recurs or is one-off, and proration. Amounts are in the billing provider's minor units for the invoice's currency.
+`invoice` is a Stripe invoice (`sources get` and `sources list` also accept `STRIPE_INVOICE` as an alias; `search` and `facts list` do not): pass its Stripe invoice ID (`in_...`) to read every stored line item with amounts, quantity, price, product, service period, whether it recurs or is one-off, and proration. Every amount is a Money value (`{ amount, currency, decimals, formatted }`, with `amount` in minor units); show `formatted` as is.
 
-`EXTRACTED` is accepted by the exact-source tool API but is currently rejected by
-`outlit sources get`. Use one of the source types listed above in the CLI.
+The `source {type, id}` on a timeline event, fact, search result or source listing is what `--source-type` and `--source-id` take. `extracted` opens a memory entry a fact cites.
 
-When a response includes `contentPage`, read `contentPage.segments` and check
-`contentPage.completeness` for partial or unavailable content. If
-`contentPage.page.hasMore` is true, pass `contentPage.page.nextCursor` as `--cursor`
-with the same source type and ID. Use `--json` to inspect these fields.
+When a response includes `content`, check its `status`: only `available` has `data`. Read `content.data.segments`; if
+`content.data.page.hasMore` is true, pass `content.data.page.nextCursor` as `--cursor`
+with the same source type and ID. `content.data.omittedFields` lists record fields left out of the page. Use `--json` to inspect these fields.
 
-When a fact or search result references a `PERSON_PROFILE` source, pass that source
+When a fact or search result references a `person_profile` source, pass that source
 ID to exact lookup to inspect its evidence:
 
 ```bash
-outlit sources get --source-type PERSON_PROFILE --source-id "$SOURCE_ID" --json
+outlit sources get --source-type person_profile --source-id "$SOURCE_ID" --json
 ```
 
 ## Destinations
