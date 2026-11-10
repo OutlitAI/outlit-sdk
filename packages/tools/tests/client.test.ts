@@ -653,6 +653,7 @@ describe("tool contracts", () => {
       "SLACK",
       "PERSON_PROFILE",
       "INVOICE",
+      "CRM_NOTE",
     ])
     expect(customerSourceTypeInputs).toEqual([
       "EMAIL",
@@ -663,6 +664,7 @@ describe("tool contracts", () => {
       "SLACK",
       "PERSON_PROFILE",
       "INVOICE",
+      "CRM_NOTE",
       "CRM",
       "CRM_OPPORTUNITY",
     ])
@@ -1004,7 +1006,7 @@ describe("resolveCustomerContextSearchInput", () => {
     ).toEqual({
       ok: false,
       message:
-        "Unknown source types: ZENDESK_TICKET. Allowed: EMAIL, CALL, CALENDAR_EVENT, SUPPORT_TICKET, OPPORTUNITY, SLACK, PERSON_PROFILE, INVOICE, CRM, CRM_OPPORTUNITY",
+        "Unknown source types: ZENDESK_TICKET. Allowed: EMAIL, CALL, CALENDAR_EVENT, SUPPORT_TICKET, OPPORTUNITY, SLACK, PERSON_PROFILE, INVOICE, CRM_NOTE, CRM, CRM_OPPORTUNITY",
     })
   })
 })
