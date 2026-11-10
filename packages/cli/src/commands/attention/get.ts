@@ -8,11 +8,11 @@ export default defineCommand({
   meta: {
     name: "get",
     description: [
-      "Get one authorized Attention item by exact ID.",
+      "Get one authorized Attention case by exact ID.",
       "",
-      "Returns the bounded current assessment, timeline, evidence summaries, Core-owned ARR",
-      "importance, and a prepared-action URL when review is available. It does not expose email drafts, evidence IDs,",
-      "raw source-quote fields, or internal agent state.",
+      "Returns the bounded current assessment, timeline, evidence summaries (each with the source",
+      "outlit sources get opens, when there is one), Core-owned ARR at assessment, and a prepared-action URL when review",
+      "is available. It does not expose email drafts, evidence excerpts, raw source-quote fields, or internal agent state.",
       "",
       "Examples:",
       "  outlit attention get 550e8400-e29b-41d4-a716-446655440000",
@@ -33,11 +33,6 @@ export default defineCommand({
   async run({ args }) {
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
-    return runTool(
-      client,
-      publicToolContracts.outlit_get_attention_item.toolName,
-      { id: args.id },
-      json,
-    )
+    return runTool(client, publicToolContracts.outlit_get_case.toolName, { id: args.id }, json)
   },
 })

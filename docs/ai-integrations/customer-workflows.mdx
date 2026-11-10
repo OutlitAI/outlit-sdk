@@ -72,10 +72,10 @@ Read the review queue Outlit's agents produced.
 ```bash
 outlit attention list --json
 outlit attention list --status resolved --customer-id '<uuid>' --json
-outlit attention get '<attention-item-uuid>' --json
+outlit attention get '<case-id>' --json
 ```
 
-Items can include a `preparedActionUrl` for review in the app. The public surface is **read-only** — no resolve, send, or act tool exists; review happens in the product.
+Cases can include a `preparedAction.url` for review in the app. The public surface is **read-only** — no resolve, send, or act tool exists; review happens in the product.
 
 ## Recipe: hand a customer to a teammate
 
@@ -106,7 +106,7 @@ outlit customers merge '<survivor-uuid>' '<duplicate-uuid>' --json
 outlit customers merge '<survivor-uuid>' '<duplicate-uuid>' --execute --preview-token '<token>' --request-id merge-acme-001 --json
 
 # 3. Check progress (status reads never re-execute)
-outlit customers merge-status '<operationId>' --json
+outlit customers merge-status '<operation-id>' --json
 ```
 
 Reuse the same `--request-id` for an identical retry — it makes the execution idempotent. A different request ID on the same pair is a new execution attempt.
