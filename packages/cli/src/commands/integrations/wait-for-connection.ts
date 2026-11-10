@@ -44,7 +44,7 @@ export async function waitForIntegrationConnection({
   const result = await pollUntil<SetupSessionStatusResponse>(
     (signal) =>
       client
-        .callTool("outlit_get_integration_setup_status", { sessionId }, { signal })
+        .callTool("outlit_get_setup_session", { sessionId }, { signal })
         .then((response) => response as SetupSessionStatusResponse),
     (response) => response.status !== "pending",
     {

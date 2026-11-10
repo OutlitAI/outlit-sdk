@@ -302,12 +302,12 @@ async function checkIntegrations(
       setTimeout(() => reject(new Error("Integrations check timed out")), 10_000),
     )
     const data = (await Promise.race([
-      client.callTool("outlit_get_integration_status", {}),
+      client.callTool("outlit_list_integrations", {}),
       timeout,
     ])) as {
-      integrations?: Array<{ status: string }>
+      items?: Array<{ status: string }>
     }
-    const items = data.integrations ?? []
+    const items = data.items ?? []
     const ready = items.filter((item) => item.status === "ready").length
     const requiringIntervention = items.filter(
       (item) => item.status === "requires_intervention",

@@ -18,6 +18,8 @@ const JSON_F: Flag = { name: "--json", desc: "Force JSON output" }
 const API_KEY_F: Flag = { name: "--api-key", desc: "Outlit API key" }
 const LIMIT_F: Flag = { name: "--limit", desc: "Max results (1-100)" }
 const CURSOR_F: Flag = { name: "--cursor", desc: "Pagination cursor" }
+const YES_F: Flag = { name: "--yes", desc: "Confirm without asking" }
+const MEMBER_F: Flag = { name: "--member", desc: "Workspace member user ID or email" }
 
 const COMMON = [API_KEY_F, JSON_F] as const
 const PAGINATED = [...COMMON, LIMIT_F, CURSOR_F] as const
@@ -124,7 +126,7 @@ const COMMANDS: readonly CmdDef[] = [
           {
             name: "set",
             desc: "Assign the primary customer owner",
-            flags: [...COMMON, { name: "--target-user-id", desc: "Required workspace-user ID" }],
+            flags: [...COMMON, YES_F, MEMBER_F],
           },
         ],
       },
@@ -133,14 +135,15 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "Grant or change Viewer or Editor customer access",
         flags: [
           ...COMMON,
-          { name: "--target-user-id", desc: "Required workspace-user ID" },
-          { name: "--role", desc: "Required access role (VIEWER, EDITOR)" },
+          YES_F,
+          MEMBER_F,
+          { name: "--role", desc: "Required access role (viewer, editor)" },
         ],
       },
       {
         name: "revoke",
         desc: "Revoke explicit customer access",
-        flags: [...COMMON, { name: "--target-user-id", desc: "Required workspace-user ID" }],
+        flags: [...COMMON, YES_F, MEMBER_F],
       },
     ],
   },
@@ -251,7 +254,7 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--role", desc: "Filter by role metadata" },
           { name: "--manager-email", desc: "Filter by manager email" },
           { name: "--has-owned-customers", desc: "Only members who own customers" },
-          { name: "--order-by", desc: "Sort field" },
+          { name: "--order-by", desc: "Sort field (owned_customers, name)" },
           { name: "--order-direction", desc: "Sort direction (asc, desc)" },
         ],
       },
@@ -377,7 +380,7 @@ const COMMANDS: readonly CmdDef[] = [
     name: "destinations",
     desc: "Inspect automation destinations",
     subs: [
-      { name: "list", desc: "List configured destinations", flags: [...COMMON] },
+      { name: "list", desc: "List configured destinations", flags: [...PAGINATED] },
       { name: "get", desc: "Get one configured destination", flags: [...COMMON] },
       {
         name: "create",
@@ -396,7 +399,6 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "Update a Slack channel destination",
         flags: [
           ...COMMON,
-          { name: "--type", desc: "Destination type" },
           { name: "--label", desc: "Slack channel label" },
           { name: "--default", desc: "Make this the default destination" },
           { name: "--enabled", desc: "Enable the destination after update" },
@@ -405,7 +407,7 @@ const COMMANDS: readonly CmdDef[] = [
       },
       { name: "enable", desc: "Enable a configured destination", flags: [...COMMON] },
       { name: "disable", desc: "Disable a configured destination", flags: [...COMMON] },
-      { name: "archive", desc: "Archive a configured destination", flags: [...COMMON] },
+      { name: "archive", desc: "Archive a configured destination", flags: [...COMMON, YES_F] },
     ],
   },
   {
@@ -432,6 +434,10 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--source", desc: "Optional product-event source key" },
           { name: "--weeks", desc: "Historical usage window (1-53 weeks)" },
           { name: "--candidate-limit", desc: "Maximum event candidates (1-100)" },
+          { name: "--include", desc: "Sections to read: usage, candidates" },
+          { name: "--search", desc: "Only candidates whose event name contains this" },
+          LIMIT_F,
+          CURSOR_F,
         ],
       },
       {
@@ -449,7 +455,7 @@ const COMMANDS: readonly CmdDef[] = [
       {
         name: "archive",
         desc: "Archive a non-final Feature",
-        flags: [...COMMON, { name: "--revision", desc: "Current opaque feature revision" }],
+        flags: [...COMMON, YES_F, { name: "--revision", desc: "Current opaque feature revision" }],
       },
     ],
   },

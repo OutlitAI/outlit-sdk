@@ -1,5 +1,6 @@
 import * as p from "@clack/prompts"
 import { matchesGeneratedJsonSchema, publicToolContracts } from "@outlit/tools"
+import { newRequestId } from "../../lib/request-id"
 
 export type SetupToolInput = Record<string, unknown> & { provider: string }
 
@@ -46,7 +47,8 @@ export function parseSetupConfig(text: string, provider: string): SetupToolInput
 
   const input: SetupToolInput = { provider, ...config }
   const schema = publicToolContracts.outlit_setup_integration.inputSchema
-  if (!matchesGeneratedJsonSchema(input, schema)) {
+  // The retry key is added to each call; the contract needs one to accept the input.
+  if (!matchesGeneratedJsonSchema({ ...input, requestId: newRequestId() }, schema)) {
     throw new SetupInputError("--config-stdin does not match this provider's setup contract.")
   }
 

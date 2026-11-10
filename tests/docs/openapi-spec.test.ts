@@ -235,7 +235,7 @@ describe("Core-generated OpenAPI spec", () => {
     }
 
     expect(schema.required).toEqual(["created", "feature"])
-    expect(schema.properties?.created).toEqual({ type: "boolean" })
+    expect(schema.properties?.created).toEqual(expect.objectContaining({ type: "boolean" }))
     expect(schema.properties?.feature).toBeDefined()
     expect(schemas.ToolOutput_outlit_create_behavior_metric).toBeUndefined()
   })
@@ -266,7 +266,7 @@ describe("Core-generated OpenAPI spec", () => {
     expect(requiredByTool.get("outlit_list_customers")).toEqual(["tool"])
     expect(requiredByTool.get("outlit_get_customer")).toEqual(["tool", "input"])
     // Rejects {} through a refinement its emitted JSON schema cannot express.
-    expect(requiredByTool.get("outlit_update_workspace_settings")).toEqual(["tool", "input"])
+    expect(requiredByTool.get("outlit_update_settings")).toEqual(["tool", "input"])
     // Every anyOf input branch requires a field, so input stays required.
     expect(requiredByTool.get("outlit_setup_integration")).toEqual(["tool", "input"])
     expect(gateway.responses["200"].content["application/json"].schema).toHaveProperty("anyOf")

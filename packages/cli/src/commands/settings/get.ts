@@ -7,7 +7,7 @@ export default defineCommand({
   meta: {
     name: "get",
     description: [
-      "Get Outlit workspace settings.",
+      "Get Outlit workspace settings: the default timezone and customer owner, and the activation event.",
       "",
       "Examples:",
       "  outlit settings get --json",
@@ -23,7 +23,7 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, "outlit_get_workspace_settings", {}, json, {
+    return runTool(client, "outlit_get_settings", {}, json, {
       spinnerMessage: "Fetching settings...",
     })
   },

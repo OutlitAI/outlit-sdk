@@ -15,10 +15,10 @@ const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
       email: "kevin@nooks.ai",
       name: "Kevin Kim",
       role: "CSM",
-      ownedCustomerCount: 7,
+      ownedCustomers: 7,
     },
   ],
-  pagination: { hasMore: false, nextCursor: null, total: 1 },
+  page: { hasMore: false, nextCursor: null, total: 1 },
 }))
 
 mock.module("../../../src/lib/client", () => ({
@@ -79,7 +79,7 @@ describe("ws-users list", () => {
     }
   }
 
-  test("maps list flags to outlit_list_workspace_users params", async () => {
+  test("maps list flags to outlit_list_members params", async () => {
     const { default: listCmd } = await import("../../../src/commands/ws-users/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
@@ -98,13 +98,15 @@ describe("ws-users list", () => {
       } as Parameters<NonNullable<typeof listCmd.run>>[0])
 
       expect(mockCallTool).toHaveBeenCalledWith(
-        "outlit_list_workspace_users",
+        "outlit_list_members",
         expect.objectContaining({
-          search: "enterprise",
-          role: "CSM",
-          managerEmail: "sandy@nooks.ai",
-          hasOwnedCustomers: true,
-          orderBy: "owned_customer_count",
+          filters: {
+            search: "enterprise",
+            role: "CSM",
+            managerEmail: "sandy@nooks.ai",
+            hasOwnedCustomers: true,
+          },
+          orderBy: "owned_customers",
           orderDirection: "desc",
           limit: 25,
           cursor: "next-page-cursor",
@@ -127,9 +129,9 @@ describe("ws-users list", () => {
       } as Parameters<NonNullable<typeof listCmd.run>>[0])
 
       expect(mockCallTool).toHaveBeenCalledWith(
-        "outlit_list_workspace_users",
+        "outlit_list_members",
         expect.objectContaining({
-          hasOwnedCustomers: false,
+          filters: { hasOwnedCustomers: false },
         }),
       )
     } finally {
@@ -141,9 +143,56 @@ describe("ws-users list", () => {
     await expectInvalidSortArgs({ "order-by": "last_activity_at" })
   })
 
+  test("email is no longer a sort field", async () => {
+    await expectInvalidSortArgs({ "order-by": "email" })
+  })
+
+  test("reads the previous owned_customer_count spelling as owned_customers", async () => {
+    const { default: listCmd } = await import("../../../src/commands/ws-users/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: { "order-by": "owned_customer_count", json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_members",
+        expect.objectContaining({ orderBy: "owned_customers" }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("the sort field is sent under its v2 spelling", async () => {
+    const { default: listCmd } = await import("../../../src/commands/ws-users/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: { "order-by": "owned_customers", json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+      await listCmd.run!({
+        args: { "order-by": "name", json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenNthCalledWith(
+        1,
+        "outlit_list_members",
+        expect.objectContaining({ orderBy: "owned_customers" }),
+      )
+      expect(mockCallTool).toHaveBeenNthCalledWith(
+        2,
+        "outlit_list_members",
+        expect.objectContaining({ orderBy: "name" }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("invalid order-direction returns invalid_input before calling the tool", async () => {
     await expectInvalidSortArgs({
-      "order-by": "owned_customer_count",
+      "order-by": "owned_customers",
       "order-direction": "sideways",
     })
   })

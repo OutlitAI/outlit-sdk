@@ -51,7 +51,7 @@ Tool availability depends on the MCP server or Pi tool policy. If a named tool i
 |------|-------------------|-----|
 | Browse customers | `outlit_list_customers` | `outlit customers list` |
 | Browse customer-associated users | `outlit_list_users` | `outlit users list` |
-| Browse workspace users | `outlit_list_workspace_users` | `outlit ws-users list` |
+| Browse workspace members | `outlit_list_members` | `outlit ws-users list` |
 | Single account profile | `outlit_get_customer` | `outlit customers get` |
 | Current customer relationship | `outlit_get_customer_relationship` | `outlit customers relationship` |
 | Chronology | `outlit_get_timeline` | `outlit customers timeline` |
@@ -59,13 +59,13 @@ Tool availability depends on the MCP server or Pi tool policy. If a named tool i
 | Source enumeration and retrieval | `outlit_list_sources`, `outlit_get_source` | `outlit sources list/get` |
 | Thematic or fuzzy question | `outlit_search_customer_context` | `outlit search` |
 | Custom analytics | `outlit_schema`, then `outlit_query` | `outlit schema`, then `outlit sql` |
-| Customer ownership and access | `outlit_assign_customer_owner`, `outlit_grant_customer_access`, `outlit_update_customer_access`, `outlit_revoke_customer_access` | `outlit customers owner set`, `outlit customers grant/revoke` |
-| Browse automation destinations | `outlit_list_destinations`, `outlit_get_destination` | `outlit destinations list/get` |
+| Customer ownership and access | `outlit_set_customer_owner`, `outlit_set_customer_access` | `outlit customers owner set`, `outlit customers grant/revoke` |
+| Browse automation destinations | `outlit_list_destinations` (`ids` for one) | `outlit destinations list/get` |
 | Configure automation destinations | `outlit_create_destination`, `outlit_update_destination` | `outlit destinations create/update` |
-| Destination lifecycle | `outlit_enable_destination`, `outlit_disable_destination`, `outlit_archive_destination` | `outlit destinations enable/disable/archive` |
-| Integration readiness or setup | `outlit_get_integration_capabilities`, `outlit_begin_integration_setup`, `outlit_get_integration_setup_status`, `outlit_get_integration_status`, `outlit_setup_integration` | `outlit integrations setup/status` |
-| Activation setting | `outlit_get_customer_activation`, `outlit_preview_customer_activation`, `outlit_update_customer_activation` | `outlit activation get/preview/update/disable` |
-| Workspace timezone | `outlit_get_workspace_settings`, `outlit_update_workspace_settings` | `outlit settings get/update` |
+| Destination lifecycle | `outlit_update_destination` (`enabled`), `outlit_archive_destination` | `outlit destinations enable/disable/archive` |
+| Integration readiness or setup | `outlit_list_integrations`, `outlit_setup_integration`, `outlit_get_setup_session` | `outlit integrations setup/status` |
+| Activation setting | `outlit_get_settings`, `outlit_preview_activation`, `outlit_update_settings` (`activationEvent`) | `outlit activation get/preview/update/disable` |
+| Workspace timezone | `outlit_get_settings`, `outlit_update_settings` | `outlit settings get/update` |
 | Workspace Features | `outlit_list_features`, `outlit_create_feature`, `outlit_archive_feature` | `outlit features list/create/archive` |
 | Customer Feature usage | `outlit_get_customer_features` | `outlit customers features` |
 | Review current Attention items | `outlit_list_attention_items`, `outlit_get_attention_item` | `outlit attention list/get` |
@@ -75,7 +75,7 @@ Tool availability depends on the MCP server or Pi tool policy. If a named tool i
 | Preview or execute a customer merge | `outlit_merge_customers` | `outlit customers merge <survivorId> <duplicateId>` |
 | Track a merge operation | `outlit_get_customer_merge_status` | `outlit customers merge-status <operationId>` |
 
-`outlit customers grant` also updates an existing collaborator's role; access commands are siblings of `owner`, not subcommands of it.
+`outlit customers grant` also updates an existing collaborator's role; access commands are siblings of `owner`, not subcommands of it. Archives (`destinations archive`, `features archive`) and `customers owner set` preview before they apply: in a terminal the CLI asks, and without one it needs `--yes` or it changes nothing and exits 1. Owner and access changes return an `undo` token. In the tool calls, send a fresh `requestId` with every write that takes one.
 
 Customer-associated users belong to customer accounts. Workspace users are internal Outlit members used for ownership and access actions. Do not substitute one ID type for the other.
 

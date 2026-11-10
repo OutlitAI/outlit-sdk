@@ -15,51 +15,65 @@ const EVENT_NAME = "integration_connected"
 const activationCommandPath = (fileName: string) =>
   path.resolve(import.meta.dir, "../../src/commands/activation", fileName)
 
-const activation = {
-  eventName: EVENT_NAME,
+const activationSection = {
+  status: "available",
+  asOf: "2026-07-28T00:00:00.000Z",
+  data: { event: EVENT_NAME },
 } as const
 
+const settingsResponse = {
+  settings: {
+    general: {
+      status: "available",
+      asOf: "2026-07-28T00:00:00.000Z",
+      data: { timezone: "America/Los_Angeles", defaultOwner: null },
+    },
+    activation: activationSection,
+  },
+  revision: "settings_revision_1",
+}
+
+// What `activation get` prints: the activation part of the settings read.
 const getResponse = {
-  activation,
+  activation: activationSection,
+  revision: "settings_revision_1",
 }
 
 const previewResponse = {
-  preview: {
-    eventName: EVENT_NAME,
-    evaluatedFrom: "2026-06-28T00:00:00.000Z",
-    evaluatedTo: "2026-07-28T00:00:00.000Z",
-    evaluatedEventCount: 40,
-    matchedCustomerCount: 12,
-    alreadyActivatedCustomerCount: 9,
-    wouldActivateCustomerCount: 3,
-    evaluatedContactOccurrenceCount: 44,
-    matchedContactCount: 18,
-    alreadyActivatedContactCount: 11,
-    wouldActivateContactCount: 7,
-    contactTruncated: false,
-    customerTruncated: false,
+  event: EVENT_NAME,
+  window: { from: "2026-06-28T00:00:00.000Z", to: "2026-07-28T00:00:00.000Z" },
+  evaluatedEvents: 40,
+  customers: { matched: 12, alreadyActivated: 9, wouldActivate: 3, truncated: false },
+  contacts: {
+    matched: 18,
+    alreadyActivated: 11,
+    wouldActivate: 7,
     truncated: false,
-    examples: [
-      {
-        customer: { id: "customer_123", name: "Acme", domain: "acme.com" },
-        activatedAt: null,
-        firstMatchedAt: "2026-07-20T12:00:00.000Z",
-        eventId: "10000000-0000-4000-8000-000000000001",
-      },
-    ],
+    occurrences: 44,
   },
+  examples: [
+    {
+      customer: { id: "customer_123", name: "Acme", domain: "acme.com" },
+      activatedAt: null,
+      firstMatchedAt: "2026-07-20T12:00:00.000Z",
+      eventId: "10000000-0000-4000-8000-000000000001",
+    },
+  ],
 }
 
 const updateResponse = {
-  activation,
-  changed: true,
+  settings: settingsResponse.settings,
+  revision: "settings_revision_2",
+  changed: ["activationEvent"],
 }
 
-const mockCallTool = mock(async (toolName: string, _params: unknown) => {
-  if (toolName === "outlit_preview_customer_activation") return previewResponse
-  if (toolName === "outlit_update_customer_activation") return updateResponse
-  return getResponse
-})
+function respond(toolName: string) {
+  if (toolName === "outlit_preview_activation") return previewResponse
+  if (toolName === "outlit_update_settings") return updateResponse
+  return settingsResponse
+}
+
+const mockCallTool = mock(async (toolName: string, _params: unknown) => respond(toolName))
 
 mock.module("../../src/lib/client", () => ({
   createClient: async () => ({
@@ -75,19 +89,15 @@ describe("activation commands", () => {
   beforeEach(() => {
     setNonInteractive()
     mockCallTool.mockClear()
-    mockCallTool.mockImplementation(async (toolName: string) => {
-      if (toolName === "outlit_preview_customer_activation") return previewResponse
-      if (toolName === "outlit_update_customer_activation") return updateResponse
-      return getResponse
-    })
+    mockCallTool.mockImplementation(async (toolName: string) => respond(toolName))
   })
 
   test("keeps authored activation commands bound to catalog tool names", async () => {
     const commands = [
-      ["get.ts", "outlit_get_customer_activation"],
-      ["preview.ts", "outlit_preview_customer_activation"],
-      ["update.ts", "outlit_update_customer_activation"],
-      ["disable.ts", "outlit_update_customer_activation"],
+      ["get.ts", "outlit_get_settings"],
+      ["preview.ts", "outlit_preview_activation"],
+      ["update.ts", "outlit_update_settings"],
+      ["disable.ts", "outlit_update_settings"],
     ] as const
 
     for (const [fileName, toolName] of commands) {
@@ -117,7 +127,7 @@ describe("activation commands", () => {
       } as Parameters<NonNullable<typeof getCommand.run>>[0])
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer_activation", {})
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_settings", {})
     expect(result).toEqual(getResponse)
   })
 
@@ -153,15 +163,12 @@ describe("activation commands", () => {
     })
 
     expect(mockCallTool).toHaveBeenCalledTimes(1)
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_preview_customer_activation", {
-      eventName: EVENT_NAME,
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_preview_activation", {
+      event: EVENT_NAME,
       lookbackDays: 45,
       exampleLimit: 12,
     })
-    expect(mockCallTool).not.toHaveBeenCalledWith(
-      "outlit_update_customer_activation",
-      expect.anything(),
-    )
+    expect(mockCallTool).not.toHaveBeenCalledWith("outlit_update_settings", expect.anything())
     expect(result).toEqual(previewResponse)
   })
 
@@ -182,8 +189,8 @@ describe("activation commands", () => {
       })
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_preview_customer_activation", {
-      eventName: EVENT_NAME,
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_preview_activation", {
+      event: EVENT_NAME,
       lookbackDays: 90,
       exampleLimit: 20,
     })
@@ -201,8 +208,8 @@ describe("activation commands", () => {
       } as Parameters<NonNullable<typeof updateCommand.run>>[0])
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_update_customer_activation", {
-      eventName: EVENT_NAME,
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_update_settings", {
+      activationEvent: EVENT_NAME,
     })
   })
 
@@ -215,8 +222,8 @@ describe("activation commands", () => {
       } as Parameters<NonNullable<typeof disableCommand.run>>[0])
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_update_customer_activation", {
-      eventName: null,
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_update_settings", {
+      activationEvent: null,
     })
   })
 
@@ -281,37 +288,36 @@ describe("activation commands", () => {
     ) as {
       components: {
         schemas: {
-          ToolOutput_outlit_preview_customer_activation: {
+          ToolOutput_outlit_preview_activation: {
             properties: {
-              preview: {
-                required: string[]
-                properties: Record<string, unknown>
-              }
+              customers: { required: string[]; properties: Record<string, unknown> }
+              contacts: { required: string[]; properties: Record<string, unknown> }
             }
           }
         }
       }
     }
-    const schema =
-      openApi.components.schemas.ToolOutput_outlit_preview_customer_activation.properties.preview
+    const { customers, contacts } =
+      openApi.components.schemas.ToolOutput_outlit_preview_activation.properties
 
-    expect(schema.required).toEqual(
+    expect(customers.required).toEqual(
+      expect.arrayContaining(["matched", "alreadyActivated", "wouldActivate", "truncated"]),
+    )
+    expect(contacts.required).toEqual(
       expect.arrayContaining([
-        "evaluatedContactOccurrenceCount",
-        "matchedContactCount",
-        "alreadyActivatedContactCount",
-        "wouldActivateContactCount",
-        "contactTruncated",
-        "customerTruncated",
+        "matched",
+        "alreadyActivated",
+        "wouldActivate",
+        "truncated",
+        "occurrences",
       ]),
     )
-    expect(schema.properties).toMatchObject({
-      evaluatedContactOccurrenceCount: { type: "integer", minimum: 0 },
-      matchedContactCount: { type: "integer", minimum: 0 },
-      alreadyActivatedContactCount: { type: "integer", minimum: 0 },
-      wouldActivateContactCount: { type: "integer", minimum: 0 },
-      contactTruncated: { type: "boolean" },
-      customerTruncated: { type: "boolean" },
+    expect(contacts.properties).toMatchObject({
+      matched: { type: "integer", minimum: 0 },
+      alreadyActivated: { type: "integer", minimum: 0 },
+      wouldActivate: { type: "integer", minimum: 0 },
+      occurrences: { type: "integer", minimum: 0 },
+      truncated: { type: "boolean" },
     })
   })
 })

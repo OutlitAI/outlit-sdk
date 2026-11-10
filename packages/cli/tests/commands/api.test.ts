@@ -119,12 +119,7 @@ describe("runTool()", () => {
     let thrown: unknown
     let written = ""
     try {
-      await runTool(
-        client,
-        "outlit_update_workspace_settings",
-        { defaultTimezone: "America/Los_Angeles" },
-        true,
-      )
+      await runTool(client, "outlit_update_settings", { timezone: "America/Los_Angeles" }, true)
     } catch (e) {
       thrown = e
     } finally {
@@ -155,7 +150,7 @@ describe("runTool()", () => {
     setInteractive()
     let written = ""
     try {
-      await runTool(client, "outlit_get_integration_status", {}, true, {
+      await runTool(client, "outlit_list_integrations", {}, true, {
         spinnerMessage: "Loading integration status...",
       })
     } catch {

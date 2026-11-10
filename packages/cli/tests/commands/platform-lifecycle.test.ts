@@ -8,7 +8,9 @@ import {
 } from "../helpers"
 
 const mockResult = { destination: { id: "destination_123" } }
-const mockCallTool = mock(async (_toolName: string, _params: Record<string, unknown>) => mockResult)
+const mockCallTool = mock(
+  async (_toolName: string, _params: Record<string, unknown>): Promise<unknown> => mockResult,
+)
 
 mock.module("../../src/lib/client", () => ({
   createClient: async () => ({
@@ -65,21 +67,20 @@ describe("platform lifecycle commands", () => {
     )
 
     expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_create_destination", {
-      type: "SLACK_CHANNEL",
+      type: "slack_channel",
       channelId: "C0123456789",
       label: "#customer-ops",
       enabled: true,
       isDefault: true,
+      requestId: expect.any(String),
     })
     expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_update_destination", {
       id: destinationId,
-      type: "SLACK_CHANNEL",
       label: "#updated-ops",
       enabled: false,
     })
     expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_update_destination", {
       id: destinationId,
-      type: "SLACK_CHANNEL",
       isDefault: true,
     })
   })
@@ -101,21 +102,138 @@ describe("platform lifecycle commands", () => {
     expect(mockCallTool).not.toHaveBeenCalled()
   })
 
-  test("requires an explicit destination update type", async () => {
+  test("updates without a destination type, which Core knows", async () => {
     const { default: updateDestinationCmd } = await import("../../src/commands/destinations/update")
+
+    await captureStdout(() =>
+      updateDestinationCmd.run!({
+        args: {
+          id: "10000000-0000-4000-8000-000000000003",
+          label: "#updated-ops",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_update_destination", {
+      id: "10000000-0000-4000-8000-000000000003",
+      label: "#updated-ops",
+    })
+  })
+
+  test("enable and disable are updates of one destination's enabled state", async () => {
+    const { default: enableCmd } = await import("../../src/commands/destinations/enable")
+    const { default: disableCmd } = await import("../../src/commands/destinations/disable")
+    const id = "10000000-0000-4000-8000-000000000003"
+
+    await captureStdout(() =>
+      enableCmd.run!({ args: { id, json: true } } as Parameters<
+        NonNullable<typeof enableCmd.run>
+      >[0]),
+    )
+    await captureStdout(() =>
+      disableCmd.run!({
+        args: { id, json: true },
+      } as Parameters<NonNullable<typeof disableCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_update_destination", {
+      id,
+      enabled: true,
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_update_destination", {
+      id,
+      enabled: false,
+    })
+  })
+
+  test("get reads one destination through the list and prints it", async () => {
+    const destination = { id: "destination_123", name: "#customer-ops" }
+    mockCallTool.mockImplementationOnce(async () => ({
+      items: [destination],
+      page: { hasMore: false, nextCursor: null, total: 1 },
+    }))
+    const { default: getCmd } = await import("../../src/commands/destinations/get")
+
+    const result = await captureStdout(() =>
+      getCmd.run!({
+        args: { id: "destination_123", json: true },
+      } as Parameters<NonNullable<typeof getCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_destinations", {
+      ids: ["destination_123"],
+    })
+    expect(result).toEqual({ destination })
+  })
+
+  test("get reports an id Core does not show as not found", async () => {
+    mockCallTool.mockImplementationOnce(async () => ({
+      items: [],
+      missing: ["destination_404"],
+      page: { hasMore: false, nextCursor: null, total: 0 },
+    }))
+    const { default: getCmd } = await import("../../src/commands/destinations/get")
 
     await runExpectingError(
       () =>
-        updateDestinationCmd.run!({
-          args: {
-            id: "10000000-0000-4000-8000-000000000003",
-            label: "#updated-ops",
-            json: true,
-          },
-        } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
-      "missing_input",
+        getCmd.run!({
+          args: { id: "destination_404", json: true },
+        } as Parameters<NonNullable<typeof getCmd.run>>[0]),
+      "not_found",
     )
-    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("archive previews, then confirms with the preview token under --yes", async () => {
+    const id = "10000000-0000-4000-8000-000000000003"
+    mockCallTool.mockImplementationOnce(async () => ({
+      archived: false,
+      preview: { token: "preview_token_1", expiresAt: "2026-07-28T00:15:00.000Z" },
+      impact: { destination: { name: "#customer-ops" }, routes: 2 },
+      next: { instruction: "Nothing was archived; to do it, call again with this input" },
+    }))
+    mockCallTool.mockImplementationOnce(async () => ({
+      archived: true,
+      destination: { id, archivedAt: "2026-07-28T00:00:00.000Z" },
+    }))
+    const { default: archiveCmd } = await import("../../src/commands/destinations/archive")
+
+    const result = await captureStdout(() =>
+      archiveCmd.run!({
+        args: { id, yes: true, json: true },
+      } as Parameters<NonNullable<typeof archiveCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_archive_destination", {
+      id,
+      requestId: expect.any(String),
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_archive_destination", {
+      id,
+      mode: "execute",
+      previewToken: "preview_token_1",
+      requestId: expect.any(String),
+    })
+    expect(result).toMatchObject({ archived: true })
+  })
+
+  test("archive without --yes outside a terminal archives nothing and exits with the preview", async () => {
+    mockCallTool.mockImplementationOnce(async () => ({
+      archived: false,
+      preview: { token: "preview_token_1", expiresAt: "2026-07-28T00:15:00.000Z" },
+      impact: { destination: { name: "#customer-ops" }, routes: 0 },
+      next: { instruction: "Nothing was archived; to do it, call again with this input" },
+    }))
+    const { default: archiveCmd } = await import("../../src/commands/destinations/archive")
+
+    await runExpectingError(
+      () =>
+        archiveCmd.run!({
+          args: { id: "10000000-0000-4000-8000-000000000003", json: true },
+        } as Parameters<NonNullable<typeof archiveCmd.run>>[0]),
+      "confirmation_required",
+    )
+    expect(mockCallTool).toHaveBeenCalledTimes(1)
   })
 
   test("rejects unsupported destination update types", async () => {

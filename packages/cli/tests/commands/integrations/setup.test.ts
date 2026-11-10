@@ -68,26 +68,14 @@ mock.module("@clack/prompts", () => ({
   log: { info: () => {}, warn: () => {} },
 }))
 
-function capability(provider: string) {
-  const humanControlled = provider === "pylon"
-  return {
-    provider,
-    name: provider === "stripe" ? "Stripe" : humanControlled ? "Pylon" : "HubSpot",
-    category: provider === "stripe" ? "billing" : humanControlled ? "support" : "crm",
-    authType: humanControlled ? "api_key" : "oauth",
-    setupMode: humanControlled ? "human_controlled" : "browser_handoff",
-    browserHandoffAvailable: !humanControlled,
-  }
-}
-
 function setupResult(
   overrides: Partial<{
     provider: string
     name: string
     category: string
     status: string
-    next: unknown
-    error: unknown
+    step: unknown
+    problem: unknown
   }> = {},
 ) {
   return {
@@ -95,8 +83,8 @@ function setupResult(
     name: "HubSpot",
     category: "crm",
     status: "ready",
-    next: null,
-    error: null,
+    step: null,
+    problem: null,
     ...overrides,
   }
 }
@@ -130,10 +118,6 @@ async function captureJsonError(fn: () => Promise<void>): Promise<Record<string,
 }
 
 const mockCallTool = mock(async (toolName: string, input: ToolInput): Promise<unknown> => {
-  if (toolName === "outlit_get_integration_capabilities") {
-    const provider = String(input.provider)
-    return { providers: [capability(provider)], preferredSetupVersion: 1 }
-  }
   if (toolName === "outlit_setup_integration")
     return setupResult({ provider: String(input.provider) })
   throw new Error(`unexpected tool ${toolName}`)
@@ -165,10 +149,6 @@ describe("integrations setup", () => {
     mockSpinnerFail.mockClear()
     mockSpinnerFail.mockImplementation(() => {})
     mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        const provider = String(input.provider)
-        return { providers: [capability(provider)], preferredSetupVersion: 1 }
-      }
       if (toolName === "outlit_setup_integration") {
         return setupResult({ provider: String(input.provider) })
       }
@@ -176,36 +156,28 @@ describe("integrations setup", () => {
     })
   })
 
-  test("probes preferred setup support before making a secretless setup call", async () => {
+  test("makes a secretless setup call with its own retry key", async () => {
     const { default: setup } = await import("../../../src/commands/integrations/setup")
     const result = await captureStdout(() =>
       setup.run!({ args: { provider: "hubspot", json: true } } as never),
     )
 
-    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_get_integration_capabilities", {
+    expect(mockCallTool).toHaveBeenCalledTimes(1)
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_setup_integration", {
       provider: "hubspot",
-    })
-    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_setup_integration", {
-      provider: "hubspot",
+      requestId: expect.any(String),
     })
     expect(result).toEqual(setupResult())
   })
 
-  test("preserves an authorization envelope from the capability probe", async () => {
-    const envelope = {
-      code: "TOOL_CALL_FORBIDDEN" as const,
-      message: "API key is missing the required integration grant.",
-      retryable: false,
-      requestId: "request_capability_denied",
-    }
-    mockCallTool.mockRejectedValueOnce(gatewayError(envelope, 403))
-
+  test("rejects an unknown provider before any network call", async () => {
     const { default: setup } = await import("../../../src/commands/integrations/setup")
-    const error = await captureJsonError(() =>
-      setup.run!({ args: { provider: "hubspot", json: true } } as never),
+    await runExpectingError(
+      () => setup.run!({ args: { provider: "not-a-provider", json: true } } as never),
+      "unknown_provider",
     )
 
-    expect(error).toEqual(envelope)
+    expect(mockCallTool).not.toHaveBeenCalled()
   })
 
   test("preserves a validation envelope from preferred setup", async () => {
@@ -215,10 +187,7 @@ describe("integrations setup", () => {
       retryable: false,
       requestId: "request_setup_invalid",
     }
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
+    mockCallTool.mockImplementation(async (toolName: string, _input: ToolInput) => {
       if (toolName === "outlit_setup_integration") throw gatewayError(envelope, 400)
       throw new Error(`unexpected tool ${toolName}`)
     })
@@ -238,10 +207,7 @@ describe("integrations setup", () => {
       retryable: true,
       requestId: "request_setup_retryable",
     }
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
+    mockCallTool.mockImplementation(async (toolName: string, _input: ToolInput) => {
       if (toolName === "outlit_setup_integration") throw gatewayError(envelope)
       throw new Error(`unexpected tool ${toolName}`)
     })
@@ -254,203 +220,13 @@ describe("integrations setup", () => {
     expect(error).toEqual(envelope)
   })
 
-  test("uses the old-Core browser fallback without sending provider configuration", async () => {
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))] }
-      }
-      if (toolName === "outlit_begin_integration_setup") {
-        return {
-          provider: input.provider,
-          state: "handoff_ready",
-          sessionId: "00000000-0000-4000-8000-000000000001",
-          connectUrl: "https://app.outlit.ai/integrations/connect",
-          expiresAt: "2026-08-04T22:00:00.000Z",
-        }
-      }
-      throw new Error(`unexpected tool ${toolName}`)
-    })
-
-    const { default: setup } = await import("../../../src/commands/integrations/setup")
-    await captureStdout(() => setup.run!({ args: { provider: "hubspot", json: true } } as never))
-
-    expect(mockCallTool).toHaveBeenCalledTimes(2)
-    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_begin_integration_setup", {
-      provider: "hubspot",
-    })
-  })
-
-  test("preserves a legacy setup gateway envelope in JSON mode", async () => {
-    const envelope = {
-      code: "TOOL_CALL_FORBIDDEN" as const,
-      message: "API key is missing the required grant.",
-      requestId: "request_legacy_denied_123",
-      retryable: false,
-    }
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))] }
-      }
-      if (toolName === "outlit_begin_integration_setup") throw gatewayError(envelope)
-      throw new Error(`unexpected tool ${toolName}`)
-    })
-
-    const { default: setup } = await import("../../../src/commands/integrations/setup")
-    const error = await captureJsonError(() =>
-      setup.run!({ args: { provider: "hubspot", json: true } } as never),
-    )
-
-    expect(error).toEqual(envelope)
-  })
-
-  test.each([
-    ["--config-stdin", { "config-stdin": true }],
-    ["--accept-recommended", { "accept-recommended": true }],
-  ])("rejects %s on old Core before reading or transmitting input", async (_flag, flagArgs) => {
-    const secret = "synthetic-legacy-secret-never-read"
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))] }
-      }
-      if (toolName === "outlit_begin_integration_setup") {
-        return {
-          provider: input.provider,
-          state: "handoff_ready",
-          sessionId: "00000000-0000-4000-8000-000000000001",
-          connectUrl: "https://app.outlit.ai/integrations/connect",
-          expiresAt: "2026-08-04T22:00:00.000Z",
-        }
-      }
-      throw new Error(`unexpected tool ${toolName}`)
-    })
-
-    const { default: setup } = await import("../../../src/commands/integrations/setup")
-    const stdinSpy = spyOn(Bun.stdin, "text").mockResolvedValue(
-      JSON.stringify({ credentials: { apiKey: secret } }),
-    )
-    const exitSpy = mockExitThrow()
-    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
-    let thrown: unknown
-    let stderrWritten = ""
-    try {
-      await setup.run!({
-        args: { provider: "hubspot", json: true, ...flagArgs },
-      } as never)
-    } catch (error) {
-      thrown = error
-      stderrWritten = (stderrSpy.mock.calls[0]?.[0] as string) ?? ""
-    } finally {
-      stdinSpy.mockRestore()
-      exitSpy.mockRestore()
-      stderrSpy.mockRestore()
-    }
-
-    expect(thrown).toBeInstanceOf(ExitError)
-    expect(JSON.parse(stderrWritten)).toMatchObject({ code: "unsupported_core_version" })
-    expect(stderrWritten).not.toContain(secret)
-    expect(stdinSpy).not.toHaveBeenCalled()
-    expect(mockCallTool).toHaveBeenCalledTimes(1)
-    expect(mockOpenBrowser).not.toHaveBeenCalled()
-  })
-
-  test.each([
-    ["a missing handoff URL", null],
-    ["an untrusted handoff URL", "https://untrusted.example/connect"],
-  ])("fails the legacy spinner before reporting %s", async (_case, connectUrl) => {
-    setInteractive()
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))] }
-      }
-      if (toolName === "outlit_begin_integration_setup") {
-        return {
-          provider: input.provider,
-          state: "handoff_ready",
-          sessionId: null,
-          connectUrl,
-          expiresAt: null,
-        }
-      }
-      throw new Error(`unexpected tool ${toolName}`)
-    })
-
-    const events: string[] = []
-    mockSpinnerFail.mockImplementationOnce(() => {
-      events.push("spinner.fail")
-    })
-    const errorSpy = spyOn(console, "error").mockImplementation(() => {
-      events.push("outputError")
-    })
-    const exitSpy = mockExitThrow()
-    let thrown: unknown
-    try {
-      const { default: setup } = await import("../../../src/commands/integrations/setup")
-      await setup.run!({ args: { provider: "hubspot" } } as never)
-    } catch (error) {
-      thrown = error
-    } finally {
-      errorSpy.mockRestore()
-      exitSpy.mockRestore()
-    }
-
-    expect(thrown).toBeInstanceOf(ExitError)
-    expect(events).toEqual(["spinner.fail", "outputError"])
-  })
-
-  test.each([
-    ["timeout", new MockIntegrationAuthTimeoutError(), "AUTH_TIMEOUT"],
-    ["expired", new MockIntegrationAuthError("expired"), "AUTH_TIMEOUT"],
-    ["failed", new MockIntegrationAuthError("failed"), "AUTH_FAILED"],
-    ["unexpected error", new Error("unexpected poll failure"), "AUTH_FAILED"],
-  ])("maps a legacy %s poll outcome conservatively", async (_case, pollError, expectedCode) => {
-    setInteractive()
-    mockWaitForIntegrationConnection.mockImplementationOnce(async () => {
-      throw pollError
-    })
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))] }
-      }
-      if (toolName === "outlit_begin_integration_setup") {
-        return {
-          provider: input.provider,
-          state: "handoff_ready",
-          sessionId: "00000000-0000-4000-8000-000000000001",
-          connectUrl: "https://app.outlit.ai/integrations/connect",
-          expiresAt: "2026-08-04T22:00:00.000Z",
-        }
-      }
-      throw new Error(`unexpected tool ${toolName}`)
-    })
-
-    const outputModule = await import("../../../src/lib/output")
-    let capturedError: { message: string; code?: string } | undefined
-    const outputErrorSpy = spyOn(outputModule, "outputError").mockImplementation(((error: {
-      message: string
-      code?: string
-    }) => {
-      capturedError = error
-      throw new ExitError(1)
-    }) as typeof outputModule.outputError)
-    try {
-      const { default: setup } = await import("../../../src/commands/integrations/setup")
-      await expect(setup.run!({ args: { provider: "hubspot" } } as never)).rejects.toBeInstanceOf(
-        ExitError,
-      )
-    } finally {
-      outputErrorSpy.mockRestore()
-    }
-
-    expect(capturedError?.code).toBe(expectedCode)
-  })
-
   test("returns an OAuth handoff unchanged in JSON without opening or polling", async () => {
     const handoff = setupResult({
       provider: "stripe",
       name: "Stripe",
       category: "billing",
       status: "awaiting_auth",
-      next: {
+      step: {
         kind: "browser_handoff",
         purpose: "authentication",
         url: "https://app.outlit.ai/integrations/connect",
@@ -458,10 +234,7 @@ describe("integrations setup", () => {
         expiresAt: "2026-08-04T22:00:00.000Z",
       },
     })
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
+    mockCallTool.mockImplementation(async (toolName: string, _input: ToolInput) => {
       if (toolName === "outlit_setup_integration") return handoff
       throw new Error(`unexpected tool ${toolName}`)
     })
@@ -477,18 +250,15 @@ describe("integrations setup", () => {
   })
 
   test("never prompts when JSON setup requires credentials", async () => {
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
+    mockCallTool.mockImplementation(async (toolName: string, _input: ToolInput) => {
       if (toolName === "outlit_setup_integration") {
         return setupResult({
           provider: "fireflies",
           name: "Fireflies",
           category: "calls",
           status: "not_connected",
-          error: {
-            code: "CREDENTIAL_REQUIRED",
+          problem: {
+            code: "credential_required",
             message: "Provider credentials are required to continue setup.",
             retryable: false,
           },
@@ -500,7 +270,7 @@ describe("integrations setup", () => {
     const { default: setup } = await import("../../../src/commands/integrations/setup")
     await runExpectingError(
       () => setup.run!({ args: { provider: "fireflies", json: true } } as never),
-      "CREDENTIAL_REQUIRED",
+      "credential_required",
     )
 
     expect(mockPassword).not.toHaveBeenCalled()
@@ -532,10 +302,14 @@ describe("integrations setup", () => {
       stdinSpy.mockRestore()
     }
 
-    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_setup_integration", {
-      provider: "mixpanel",
-      ...config,
-    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(
+      1,
+      "outlit_setup_integration",
+      expect.objectContaining({
+        provider: "mixpanel",
+        ...config,
+      }),
+    )
     expect(mockPassword).not.toHaveBeenCalled()
   })
 
@@ -544,17 +318,14 @@ describe("integrations setup", () => {
       {
         pipelineId: "default",
         pipelineName: "Sales",
-        mappings: [{ outlitStage: "Won", crmStages: [{ id: "closedwon", name: "Closed Won" }] }],
+        mappings: [{ outlitStage: "won", crmStages: [{ id: "closedwon", name: "Closed Won" }] }],
       },
     ]
     mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
       if (toolName === "outlit_setup_integration" && !input.configuration) {
         return setupResult({
           status: "setup_required",
-          next: { kind: "crm_mapping", recommendation },
+          step: { kind: "crm_mapping", recommendation },
         })
       }
       if (toolName === "outlit_setup_integration") return setupResult()
@@ -568,10 +339,14 @@ describe("integrations setup", () => {
       } as never),
     )
 
-    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_setup_integration", {
-      provider: "hubspot",
-      configuration: { kind: "crm_mapping", mappings: recommendation, confirm: true },
-    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(
+      2,
+      "outlit_setup_integration",
+      expect.objectContaining({
+        provider: "hubspot",
+        configuration: { kind: "crm_mapping", mappings: recommendation, confirm: true },
+      }),
+    )
     expect(result).toEqual(setupResult())
   })
 
@@ -581,17 +356,14 @@ describe("integrations setup", () => {
       {
         pipelineId: "default",
         pipelineName: "Sales",
-        mappings: [{ outlitStage: "Won", crmStages: [] }],
+        mappings: [{ outlitStage: "won", crmStages: [] }],
       },
     ]
     mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
       if (toolName === "outlit_setup_integration" && !input.configuration) {
         return setupResult({
           status: "setup_required",
-          next: { kind: "crm_mapping", recommendation },
+          step: { kind: "crm_mapping", recommendation },
         })
       }
       if (toolName === "outlit_setup_integration") return setupResult()
@@ -604,10 +376,14 @@ describe("integrations setup", () => {
     } as never)
 
     expect(mockConfirm).not.toHaveBeenCalled()
-    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_setup_integration", {
-      provider: "hubspot",
-      configuration: { kind: "crm_mapping", mappings: recommendation, confirm: true },
-    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(
+      2,
+      "outlit_setup_integration",
+      expect.objectContaining({
+        provider: "hubspot",
+        configuration: { kind: "crm_mapping", mappings: recommendation, confirm: true },
+      }),
+    )
   })
 
   test("bounds an interactive OAuth to post-auth CRM flow at three setup calls", async () => {
@@ -616,20 +392,17 @@ describe("integrations setup", () => {
       {
         pipelineId: "default",
         pipelineName: "Sales",
-        mappings: [{ outlitStage: "Created", crmStages: [] }],
+        mappings: [{ outlitStage: "created", crmStages: [] }],
       },
     ]
     let setupCalls = 0
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
+    mockCallTool.mockImplementation(async (toolName: string, _input: ToolInput) => {
       if (toolName !== "outlit_setup_integration") throw new Error(`unexpected tool ${toolName}`)
       setupCalls += 1
       if (setupCalls === 1) {
         return setupResult({
           status: "awaiting_auth",
-          next: {
+          step: {
             kind: "browser_handoff",
             purpose: "authentication",
             url: "https://app.outlit.ai/integrations/connect",
@@ -641,7 +414,7 @@ describe("integrations setup", () => {
       if (setupCalls === 2) {
         return setupResult({
           status: "setup_required",
-          next: { kind: "crm_mapping", recommendation },
+          step: { kind: "crm_mapping", recommendation },
         })
       }
       return setupResult()
@@ -654,6 +427,12 @@ describe("integrations setup", () => {
     expect(mockWaitForIntegrationConnection).toHaveBeenCalledTimes(1)
     expect(mockConfirm).toHaveBeenCalledTimes(1)
     expect(setupCalls).toBe(3)
+    // Each call is its own action with its own retry key; a shared key would replay the first answer.
+    const requestIds = mockCallTool.mock.calls.map(
+      (call) => (call[1] as { requestId?: string }).requestId,
+    )
+    expect(requestIds).toHaveLength(3)
+    expect(new Set(requestIds).size).toBe(3)
   })
 
   test("preserves a supplied CRM mapping through an OAuth continuation", async () => {
@@ -666,7 +445,7 @@ describe("integrations setup", () => {
           pipelineName: "Sales",
           mappings: [
             {
-              outlitStage: "Won",
+              outlitStage: "won",
               crmStages: [{ id: "closedwon", name: "Closed Won" }],
             },
           ],
@@ -675,16 +454,13 @@ describe("integrations setup", () => {
       confirm: true,
     }
     let setupCalls = 0
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
+    mockCallTool.mockImplementation(async (toolName: string, _input: ToolInput) => {
       if (toolName !== "outlit_setup_integration") throw new Error(`unexpected tool ${toolName}`)
       setupCalls += 1
       if (setupCalls === 1) {
         return setupResult({
           status: "awaiting_auth",
-          next: {
+          step: {
             kind: "browser_handoff",
             purpose: "authentication",
             url: "https://app.outlit.ai/integrations/connect",
@@ -706,10 +482,14 @@ describe("integrations setup", () => {
       stdinSpy.mockRestore()
     }
 
-    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_setup_integration", {
-      provider: "hubspot",
-      configuration,
-    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(
+      2,
+      "outlit_setup_integration",
+      expect.objectContaining({
+        provider: "hubspot",
+        configuration,
+      }),
+    )
   })
 
   test("treats external setup handoff as terminal and never polls", async () => {
@@ -718,7 +498,7 @@ describe("integrations setup", () => {
       name: "Pylon",
       category: "support",
       status: "setup_required",
-      next: {
+      step: {
         kind: "browser_handoff",
         purpose: "external_setup",
         url: "https://app.outlit.ai/integrations/pylon",
@@ -726,10 +506,7 @@ describe("integrations setup", () => {
         expiresAt: null,
       },
     })
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
+    mockCallTool.mockImplementation(async (toolName: string, _input: ToolInput) => {
       if (toolName === "outlit_setup_integration") return handoff
       throw new Error(`unexpected tool ${toolName}`)
     })
@@ -741,7 +518,7 @@ describe("integrations setup", () => {
 
     expect(result).toEqual(handoff)
     expect(mockWaitForIntegrationConnection).not.toHaveBeenCalled()
-    expect(mockCallTool).toHaveBeenCalledTimes(2)
+    expect(mockCallTool).toHaveBeenCalledTimes(1)
   })
 
   test("stalls instead of prompting twice for credentials", async () => {
@@ -751,16 +528,13 @@ describe("integrations setup", () => {
       name: "Fireflies",
       category: "calls",
       status: "not_connected",
-      error: {
-        code: "CREDENTIAL_REQUIRED",
+      problem: {
+        code: "credential_required",
         message: "Provider credentials are required to continue setup.",
         retryable: false,
       },
     })
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
+    mockCallTool.mockImplementation(async (toolName: string, _input: ToolInput) => {
       if (toolName === "outlit_setup_integration") return credentialRequired
       throw new Error(`unexpected tool ${toolName}`)
     })
@@ -772,7 +546,7 @@ describe("integrations setup", () => {
     )
 
     expect(mockPassword).toHaveBeenCalledTimes(1)
-    expect(mockCallTool).toHaveBeenCalledTimes(3)
+    expect(mockCallTool).toHaveBeenCalledTimes(2)
   })
 
   test.each([
@@ -805,18 +579,15 @@ describe("integrations setup", () => {
   test("exits nonzero when a credential prompt is cancelled", async () => {
     setInteractive()
     mockPassword.mockResolvedValueOnce(promptCancelled as never)
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
+    mockCallTool.mockImplementation(async (toolName: string, _input: ToolInput) => {
       if (toolName === "outlit_setup_integration") {
         return setupResult({
           provider: "fireflies",
           name: "Fireflies",
           category: "calls",
           status: "not_connected",
-          error: {
-            code: "CREDENTIAL_REQUIRED",
+          problem: {
+            code: "credential_required",
             message: "Provider credentials are required to continue setup.",
             retryable: false,
           },
@@ -831,26 +602,23 @@ describe("integrations setup", () => {
       "Integration setup was cancelled.",
     )
 
-    expect(mockCallTool).toHaveBeenCalledTimes(2)
+    expect(mockCallTool).toHaveBeenCalledTimes(1)
   })
 
   test("exits nonzero when CRM mapping confirmation is cancelled", async () => {
     setInteractive()
     mockConfirm.mockResolvedValueOnce(promptCancelled as never)
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
+    mockCallTool.mockImplementation(async (toolName: string, _input: ToolInput) => {
       if (toolName === "outlit_setup_integration") {
         return setupResult({
           status: "setup_required",
-          next: {
+          step: {
             kind: "crm_mapping",
             recommendation: [
               {
                 pipelineId: "default",
                 pipelineName: "Sales",
-                mappings: [{ outlitStage: "Won", crmStages: [] }],
+                mappings: [{ outlitStage: "won", crmStages: [] }],
               },
             ],
           },
@@ -865,7 +633,7 @@ describe("integrations setup", () => {
       "Integration setup was cancelled.",
     )
 
-    expect(mockCallTool).toHaveBeenCalledTimes(2)
+    expect(mockCallTool).toHaveBeenCalledTimes(1)
   })
 
   test("stalls when Mixpanel requests a second mapping transition", async () => {
@@ -876,7 +644,7 @@ describe("integrations setup", () => {
       name: "Mixpanel",
       category: "analytics",
       status: "setup_required",
-      next: {
+      step: {
         kind: "mixpanel_mapping",
         preview: {
           sampleSize: 1,
@@ -893,10 +661,7 @@ describe("integrations setup", () => {
         },
       },
     })
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
+    mockCallTool.mockImplementation(async (toolName: string, _input: ToolInput) => {
       if (toolName === "outlit_setup_integration") return mappingRequired
       throw new Error(`unexpected tool ${toolName}`)
     })
@@ -907,7 +672,7 @@ describe("integrations setup", () => {
       "Integration setup did not reach a terminal state.",
     )
 
-    expect(mockCallTool).toHaveBeenCalledTimes(3)
+    expect(mockCallTool).toHaveBeenCalledTimes(2)
   })
 
   test("displays the returned Mixpanel preview before asking for a mapping", async () => {
@@ -926,10 +691,7 @@ describe("integrations setup", () => {
       warnings: ["Synthetic preview warning"],
     }
     let setupCalls = 0
-    mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
+    mockCallTool.mockImplementation(async (toolName: string, _input: ToolInput) => {
       if (toolName !== "outlit_setup_integration") throw new Error(`unexpected tool ${toolName}`)
       setupCalls += 1
       if (setupCalls === 1) {
@@ -938,7 +700,7 @@ describe("integrations setup", () => {
           name: "Mixpanel",
           category: "analytics",
           status: "setup_required",
-          next: { kind: "mixpanel_mapping", preview },
+          step: { kind: "mixpanel_mapping", preview },
         })
       }
       return setupResult({
@@ -975,7 +737,7 @@ describe("integrations setup", () => {
       name: "Stripe",
       category: "billing",
       status: "ready",
-      next: {
+      step: {
         kind: "stripe_renewal_date_field",
         selectedKey: null,
         liveSubscriptionCount: 5,
@@ -989,9 +751,6 @@ describe("integrations setup", () => {
     function mockStripeSetup(onSetup: (input: ToolInput, call: number) => unknown) {
       let setupCalls = 0
       mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-        if (toolName === "outlit_get_integration_capabilities") {
-          return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-        }
         if (toolName !== "outlit_setup_integration") throw new Error(`unexpected tool ${toolName}`)
         setupCalls += 1
         return onSetup(input, setupCalls)
@@ -1025,11 +784,15 @@ describe("integrations setup", () => {
         { value: "renews_at", label: "renews_at" },
         { value: "", label: "Skip" },
       ])
-      expect(mockCallTool).toHaveBeenCalledTimes(3)
-      expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_setup_integration", {
-        provider: "stripe",
-        configuration: { kind: "stripe_renewal_date_field", key: "renews_at" },
-      })
+      expect(mockCallTool).toHaveBeenCalledTimes(2)
+      expect(mockCallTool).toHaveBeenNthCalledWith(
+        2,
+        "outlit_setup_integration",
+        expect.objectContaining({
+          provider: "stripe",
+          configuration: { kind: "stripe_renewal_date_field", key: "renews_at" },
+        }),
+      )
       expect(output).toContain("Stripe: ready")
     })
 
@@ -1048,7 +811,7 @@ describe("integrations setup", () => {
         logSpy.mockRestore()
       }
 
-      expect(mockCallTool).toHaveBeenCalledTimes(2)
+      expect(mockCallTool).toHaveBeenCalledTimes(1)
       expect(printed).toContain("Stripe: ready")
     })
 
@@ -1058,7 +821,7 @@ describe("integrations setup", () => {
         setupResult({
           provider: "stripe",
           name: "Stripe",
-          next: {
+          step: {
             kind: "stripe_renewal_date_field",
             selectedKey: null,
             liveSubscriptionCount: 1,
@@ -1076,7 +839,7 @@ describe("integrations setup", () => {
       }
 
       expect(mockSelect).not.toHaveBeenCalled()
-      expect(mockCallTool).toHaveBeenCalledTimes(2)
+      expect(mockCallTool).toHaveBeenCalledTimes(1)
     })
 
     test("returns the step unchanged in JSON mode without prompting", async () => {
@@ -1089,7 +852,7 @@ describe("integrations setup", () => {
 
       expect(result).toEqual(renewalStep)
       expect(mockSelect).not.toHaveBeenCalled()
-      expect(mockCallTool).toHaveBeenCalledTimes(2)
+      expect(mockCallTool).toHaveBeenCalledTimes(1)
     })
 
     test("sends a supplied key through stdin and returns the response", async () => {
@@ -1107,10 +870,14 @@ describe("integrations setup", () => {
         stdinSpy.mockRestore()
       }
 
-      expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_setup_integration", {
-        provider: "stripe",
-        ...config,
-      })
+      expect(mockCallTool).toHaveBeenNthCalledWith(
+        1,
+        "outlit_setup_integration",
+        expect.objectContaining({
+          provider: "stripe",
+          ...config,
+        }),
+      )
     })
 
     test("exits nonzero when the key prompt is cancelled", async () => {
@@ -1135,16 +902,13 @@ describe("integrations setup", () => {
         () => setup.run!({ args: { provider: "stripe" } } as never),
         "Integration setup did not reach a terminal state.",
       )
-      expect(mockCallTool).toHaveBeenCalledTimes(3)
+      expect(mockCallTool).toHaveBeenCalledTimes(2)
     })
   })
 
   test("fails with the stable Core setup error without echoing submitted secrets", async () => {
     const secret = "synthetic-provider-secret-never-echo"
     mockCallTool.mockImplementation(async (toolName: string, input: ToolInput) => {
-      if (toolName === "outlit_get_integration_capabilities") {
-        return { providers: [capability(String(input.provider))], preferredSetupVersion: 1 }
-      }
       if (toolName === "outlit_setup_integration") {
         expect(JSON.stringify(input)).toContain(secret)
         return setupResult({
@@ -1152,8 +916,8 @@ describe("integrations setup", () => {
           name: "Fireflies",
           category: "calls",
           status: "not_connected",
-          error: {
-            code: "CREDENTIAL_REJECTED",
+          problem: {
+            code: "credential_rejected",
             message: "Provider rejected the submitted credentials.",
             retryable: false,
           },
@@ -1172,7 +936,7 @@ describe("integrations setup", () => {
           setup.run!({
             args: { provider: "fireflies", json: true, "config-stdin": true },
           } as never),
-        "CREDENTIAL_REJECTED",
+        "credential_rejected",
       )
     } finally {
       stdinSpy.mockRestore()

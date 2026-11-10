@@ -1,9 +1,11 @@
-import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { getClientOrExit, runTool } from "../../lib/api"
-import { customerCollaborationIdArgs, parseCustomerCollaborationIds } from "./collaboration-input"
+import { getClientOrExit } from "../../lib/api"
+import { runConfirmedWrite, yesArg } from "../../lib/confirm"
+import { newRequestId } from "../../lib/request-id"
+import { readAccessConfirmation } from "./access-confirmation"
+import { customerCollaborationArgs, parseCustomerCollaboration } from "./collaboration-input"
 
 export default defineCommand({
   meta: {
@@ -11,10 +13,13 @@ export default defineCommand({
     description: [
       "Remove a collaborator's explicit access to a customer.",
       "The primary owner cannot be removed.",
-      "Both IDs must be exact; discover them with customer and workspace-user list commands.",
+      "The customer is an ID, domain, or exact name; the member is a user ID or email.",
+      "",
+      "Removing your own access, or a former member's, is shown first. In a terminal you are",
+      "asked to confirm; otherwise pass --yes, or nothing changes and the command exits 1.",
       "",
       "Example:",
-      "  outlit customers revoke 10000000-0000-4000-8000-000000000000 --target-user-id user_123 --json",
+      "  outlit customers revoke acme.com --member user_123 --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -22,19 +27,29 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    ...customerCollaborationIdArgs,
+    ...yesArg,
+    ...customerCollaborationArgs,
   },
   async run({ args }) {
     const json = !!args.json
-    const input = parseCustomerCollaborationIds(args, json)
+    const target = parseCustomerCollaboration(args, json)
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(
-      client,
-      publicToolContracts.outlit_revoke_customer_access.toolName,
-      input,
+    return runConfirmedWrite(client, "outlit_set_customer_access", {
+      input: { ...target, role: "none", requestId: newRequestId() },
       json,
-      { spinnerMessage: "Revoking customer access..." },
-    )
+      yes: args.yes === true,
+      spinnerMessage: "Revoking customer access...",
+      pending: readAccessConfirmation,
+      confirmed: (previewToken) => ({
+        ...target,
+        role: "none",
+        mode: "execute",
+        previewToken,
+        requestId: newRequestId(),
+      }),
+      question: "Remove this access?",
+      unchanged: "Access was not changed",
+    })
   },
 })

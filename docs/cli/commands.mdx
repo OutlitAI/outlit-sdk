@@ -26,7 +26,8 @@ not send a synthetic activation event or change lifecycle state directly.
 outlit activation get --json
 ```
 
-The command returns the configured `eventName`.
+The command returns the `activation` part of the workspace settings read: the configured
+`event` (`null` when matching is off) in `activation.data`, with the settings `revision`.
 
 ### Preview
 
@@ -41,16 +42,16 @@ outlit activation preview \
 ```
 
 Preview is always read-only. It never saves the event setting, changes `activatedAt`, or
-records activation. The response reports separate contact and company totals:
-matching people and companies, those already activated, and those that would activate if this
-event were configured. `evaluatedContactOccurrenceCount` counts matching contact-event
-occurrences, while `evaluatedEventCount` counts matching events attributed to resolved
-companies. Contact identities are not returned as preview examples.
+records activation. The response reports separate contact and company totals in `contacts` and
+`customers`: matching (`matched`), already activated (`alreadyActivated`), and those that would
+activate if this event were configured (`wouldActivate`). `contacts.occurrences` counts matching
+contact-event occurrences, while `evaluatedEvents` counts matching events attributed to resolved
+companies. `window` gives the evaluated `from` and `to`. Contact identities are not returned as
+preview examples.
 
-Both sides are bounded independently for query safety. If `contactTruncated` is `true`,
-treat contact totals as lower bounds. If `customerTruncated` is `true`, treat company totals
-as lower bounds. The legacy `truncated` flag can also mean that `exampleLimit` omitted company
-examples, so it does not by itself make aggregate totals a lower bound.
+Both sides are bounded independently for query safety. If `contacts.truncated` is `true`,
+treat contact totals as lower bounds. If `customers.truncated` is `true`, treat company totals
+as lower bounds.
 
 | Flag | Required | Description |
 |------|----------|-------------|
@@ -69,7 +70,8 @@ outlit activation update \
 ```
 
 Saving the event name changes future matching only. It does not scan historical events or
-backfill activation.
+backfill activation. `update` and `disable` are writes of the workspace settings'
+`activationEvent`; the result lists the settings that changed.
 
 ### Disable
 
@@ -505,16 +507,22 @@ outlit features create [flags]
 outlit features archive <id> --revision <revision>
 ```
 
-`features list` returns eligible product-event sources, the selected source, active
-features with exact historical evidence, and candidate discovery. Candidate discovery is a
-discriminated result: `ready` and `partial` contain `items` and `truncated`, while `unavailable`
-contains a reason. Outlit auto-selects a source only when exactly one is eligible.
+`features list` returns eligible product-event sources (`sources`, with the `selected` one), the
+active features as `items` with their `usage` over the window, `workspaceActiveFeatures`, and
+candidate discovery. `usage` and `candidates` are each a section: when one cannot be read, it
+says why (`source_blocked`, `source_not_ready` or `query_failed`) instead of reading as zero.
+Candidates carry their `coverage` (`complete` or `partial`) and `truncated`; when more events
+exist than `--candidate-limit`, narrow them with `--search`. Outlit auto-selects a source only
+when exactly one is eligible.
 
 | Workspace flag | Default | Description |
 |----------------|---------|-------------|
 | `--source` | auto-select when unambiguous | Exact source key returned by the workspace command |
 | `--weeks` | `12` | Historical evidence window from 1 to 53 weeks |
-| `--candidate-limit` | `100` | Maximum event candidates from 1 to 100 |
+| `--candidate-limit` | `25` | Maximum event candidates from 1 to 100 |
+| `--include` | `usage,candidates` | Which sections to read: `usage`, `candidates`, or both |
+| `--search` | none | Only candidates whose event name contains this text |
+| `--limit`, `--cursor` | 20 | Page through the features (1 to 100) |
 
 Create one feature from one exact event rule:
 
@@ -531,12 +539,15 @@ Use `--property-filters` with a JSON array of generated exact or exists filter o
 event alone is too broad. Event names are preserved exactly; use the candidate returned by the
 workspace command.
 
-Archive requires both opaque values returned by Outlit:
+Archive requires both opaque values returned by Outlit. Outlit first shows the Feature and how
+many active Features remain; in a terminal you are asked to confirm. Without a terminal, pass
+`--yes`, or the command prints the preview, archives nothing and exits with code 1:
 
 ```bash
 outlit features archive \
   value_feature_v1_0123456789abcdef0123456789abcdef \
   --revision value_feature_revision_v1_fedcba9876543210fedcba9876543210 \
+  --yes \
   --json
 ```
 
@@ -624,27 +635,21 @@ read-only: there is no resolve, reopen, send, or review operation.
 
 ## Customer ownership and access
 
-Assign a primary owner or manage a workspace member's explicit Viewer or Editor access.
-These write commands require exact IDs and never resolve customer names, domains, or user
-emails on your behalf.
+Assign a primary owner or manage a workspace member's explicit Viewer or Editor access. A
+customer is named by its UUID, its domain (`acme.com`), or its exact name; a name that matches more
+than one customer is refused rather than guessed. A member is named by user ID or email.
 
 For API keys, workspace-member discovery and customer mutations are independent capabilities.
 `outlit ws-users list` requires `workspace_members:read`; setting an owner, granting or changing
 access, and revoking access require `customer_access:manage`. The complete discover-then-mutate
-flow needs both grants, while scripts and agents that already know exact IDs may use
+flow needs both grants, while scripts and agents that already know the member may use
 `customer_access:manage` alone. API keys are independent workspace principals and do not inherit
 their creator's human permissions or customer access. **Read only** includes discovery but not
 mutation, **Full workspace access** includes both grants, and **Custom** includes only the grants you
 select; there is no separate customer-collaboration preset.
 
-First discover the customer UUID. Use JSON output because the interactive table is optimized
-for scanning rather than copying identifiers:
-
-```bash
-outlit customers list --search "acme" --json
-```
-
-Copy the exact `items[].id` for the intended customer. Then discover the target workspace user:
+Discover the member when you do not already know the ID or email. Use JSON output because the
+interactive table is optimized for scanning rather than copying identifiers:
 
 ```bash
 outlit ws-users list --search "alex@example.com" --json
@@ -654,47 +659,65 @@ Without `--has-owned-customers`, this command lists all active workspace members
 local Outlit users, including members who own no customers. Use `--has-owned-customers` only when
 you intentionally want to restrict discovery to current owners.
 
-Copy the exact workspace-user `items[].id` as `--target-user-id`. Review multiple matches before
-writing; the ownership and access commands intentionally do not perform fuzzy name matching.
+| `ws-users list` flag | Description |
+|------|-------------|
+| `--search` | Search name, email, title, role, or territory |
+| `--role`, `--manager-email` | Filter by role or manager email metadata |
+| `--has-owned-customers` | Only members who own customers |
+| `--order-by` | `owned_customers` (default, descending) or `name` (ascending). `owned_customer_count` is still read as `owned_customers`; `email` is no longer a sort field |
+| `--order-direction` | `asc` or `desc` |
+| `--limit`, `--cursor` | Page through members (1–100, default 20) |
+
+Each item has `id`, `name`, `email`, `title`, `role`, `managerEmail`, `territory` and `ownedCustomers`.
+
+Copy the member's `items[].id` or email as `--member` (`--target-user-id` is still read). Review
+multiple matches before writing; these commands intentionally do not perform fuzzy name matching.
 
 ### Set owner
 
 ```bash
-outlit customers owner set \
-  10000000-0000-4000-8000-000000000000 \
-  --target-user-id user_123 \
-  --json
+outlit customers owner set acme.com --member user_123 --json
 ```
 
-The target must be an active workspace member. When ownership changes, the former owner keeps
-Editor access.
+The member must be an active workspace member. When ownership changes, the former owner keeps
+Editor access. Outlit first shows the change, including whether you could undo it (you cannot
+if you would stop owning the customer and do not read all customers). In a terminal you are asked
+to confirm. Without a terminal, pass `--yes`, or the command prints the preview, changes nothing and
+exits with code 1:
+
+```bash
+outlit customers owner set acme.com --member user_123 --yes --json
+```
+
+A change returns `outcome` (`changed` or `unchanged`), the new `owner`, the `previousOwner` and an
+`undo` token good for 24 hours.
 
 ### Grant or change access
 
 ```bash
-outlit customers grant \
-  10000000-0000-4000-8000-000000000000 \
-  --target-user-id user_123 \
-  --role VIEWER \
-  --json
+outlit customers grant acme.com --member user_123 --role viewer --json
 ```
 
 Run the same `grant` command again with the other role to change an existing collaborator
-between Viewer and Editor.
+between Viewer and Editor. The result has `outcome`, the `role` and `previousRole`, and an `undo`
+token.
 
 ### Revoke access
 
 ```bash
-outlit customers revoke \
-  10000000-0000-4000-8000-000000000000 \
-  --target-user-id user_123 \
-  --json
+outlit customers revoke acme.com --member user_123 --json
 ```
 
-`--role` accepts only `VIEWER` or `EDITOR`; `OWNER` is represented by the separate primary-owner
-assignment. Malformed customer IDs, missing or oversized target-user IDs, and invalid roles fail
-locally without sending a request. Permission, conflict, and other gateway failures retain Outlit's
-structured `code`, `message`, `retryable`, and `requestId` fields in JSON output.
+`--role` accepts `viewer` or `editor` in any case (`VIEWER` still works); `OWNER` is represented by
+the separate primary-owner assignment. A missing or oversized member, a blank customer, and an
+invalid role fail locally without sending a request.
+
+Most access changes apply at once. Outlit asks first when you could not undo the change: when you
+remove or reduce your own access without reading all customers, or when the member has left the
+workspace. Those commands show the reason and ask in a terminal; without one, they need `--yes`,
+or they print the reason, change nothing and exit with code 1. Permission, conflict, and other
+gateway failures retain Outlit's structured `code`, `message`, `retryable`, and `requestId` fields
+in JSON output.
 
 ## Customers timeline
 
@@ -1158,17 +1181,21 @@ outlit destinations archive <id> [flags]
 outlit destinations list --json
 outlit destinations get 10000000-0000-4000-8000-000000000003 --json
 outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --default --json
-outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --default --json
+outlit destinations update 10000000-0000-4000-8000-000000000003 --default --json
 outlit destinations enable 10000000-0000-4000-8000-000000000003 --json
 outlit destinations disable 10000000-0000-4000-8000-000000000003 --json
-outlit destinations archive 10000000-0000-4000-8000-000000000003 --json
+outlit destinations archive 10000000-0000-4000-8000-000000000003 --yes --json
 ```
 
-Destination creation and update are Slack-channel backed. Use `--default` on `destinations create` or `destinations update` to make a destination the default fallback. `destinations update` patches only the fields you pass. Raw destination secrets and unmasked provider configuration are not returned.
+Destination creation and update are Slack-channel backed. Use `--default` on `destinations create` or `destinations update` to make a destination the default fallback. `destinations update` patches only the fields you pass; `--type` is no longer needed there. `enable` and `disable` set the destination's `enabled` state. Raw destination secrets and unmasked provider configuration are not returned.
+
+`destinations list` pages its results (`--limit` up to 100, `--cursor` from the previous `page.nextCursor`). `destinations get` reads one destination by ID and reports an ID it cannot show as `not_found`.
+
+`destinations archive` first shows the destination and how many automation routes deliver to it. In a terminal you are asked to confirm. Without a terminal, pass `--yes`, or the command prints the preview, archives nothing and exits with code 1.
 
 ## Settings
 
-Read and update the workspace timezone. Configure delivery and reports in the Outlit app.
+Read and update the workspace timezone. `settings get` also returns the default customer owner and the activation event. Configure delivery and reports in the Outlit app.
 
 ```text
 outlit settings get [flags]
@@ -1183,7 +1210,7 @@ outlit settings update --default-timezone America/Los_Angeles --json
 outlit destinations list --json
 ```
 
-The public workspace settings capability returns and updates the default IANA timezone. Default delivery destination selection is handled by `outlit destinations create --default` or `outlit destinations update --default`.
+The result carries the settings in `settings.general` (`timezone`, `defaultOwner`) and `settings.activation` (`event`), with a `revision`. `settings update` returns which settings changed. A part you may not read says which permission it needs. The command updates the default IANA timezone; change the activation event with `outlit activation update`. Default delivery destination selection is handled by `outlit destinations create --default` or `outlit destinations update --default`.
 
 ## SQL
 
