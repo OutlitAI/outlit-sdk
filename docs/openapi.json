@@ -2822,7 +2822,7 @@
                   "within": {
                     "description": "Active in the last N days: product use or conversations. Example: 7d.",
                     "type": "string",
-                    "pattern": "^[1-9]\\d{0,2}d$",
+                    "pattern": "^[1-9]\\d{0,4}(d|h|m)$",
                     "examples": [
                       "7d",
                       "30d",
@@ -2832,7 +2832,7 @@
                   "notWithin": {
                     "description": "No activity in the last N days, including never active. Example: 30d.",
                     "type": "string",
-                    "pattern": "^[1-9]\\d{0,2}d$",
+                    "pattern": "^[1-9]\\d{0,4}(d|h|m)$",
                     "examples": [
                       "7d",
                       "30d",
@@ -3566,10 +3566,11 @@
             "additionalProperties": false
           },
           "limit": {
-            "description": "Results (default 20).",
+            "default": 25,
+            "description": "Items per page: default 25, max 100.",
             "type": "integer",
             "minimum": 1,
-            "maximum": 50
+            "maximum": 100
           }
         },
         "required": [
@@ -3827,6 +3828,16 @@
               "meta"
             ],
             "description": "The toolset to load, from outlit_list_toolsets."
+          },
+          "tools": {
+            "description": "Tools of that toolset to return in full (description and input JSON Schema), at most 10. Omit for a one-line summary of every tool.",
+            "minItems": 1,
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^outlit_[a-z0-9_]+$"
+            }
           }
         },
         "required": [
@@ -5293,7 +5304,9 @@
                 "activatedAt": {
                   "anyOf": [
                     {
-                      "type": "string"
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                     },
                     {
                       "type": "null"
@@ -5303,7 +5316,9 @@
                 "lastActivityAt": {
                   "anyOf": [
                     {
-                      "type": "string"
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                     },
                     {
                       "type": "null"
@@ -5579,7 +5594,9 @@
                     "firstSyncedAt": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                         },
                         {
                           "type": "null"
@@ -5589,7 +5606,9 @@
                     "updatedAt": {
                       "anyOf": [
                         {
-                          "type": "string"
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                         },
                         {
                           "type": "null"
@@ -6149,7 +6168,9 @@
               "activatedAt": {
                 "anyOf": [
                   {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                   },
                   {
                     "type": "null"
@@ -6159,7 +6180,9 @@
               "lastActivityAt": {
                 "anyOf": [
                   {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                   },
                   {
                     "type": "null"
@@ -6199,7 +6222,9 @@
                   "firstSyncedAt": {
                     "anyOf": [
                       {
-                        "type": "string"
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                       },
                       {
                         "type": "null"
@@ -6209,7 +6234,9 @@
                   "updatedAt": {
                     "anyOf": [
                       {
-                        "type": "string"
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                       },
                       {
                         "type": "null"
@@ -8801,6 +8828,25 @@
                               ],
                               "description": "When the evidence for it was observed, ISO 8601; null when not recorded."
                             },
+                            "evidence": {
+                              "maxItems": 4,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "factId": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 191
+                                  }
+                                },
+                                "required": [
+                                  "factId"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "description": "At most 4 facts the statement rests on. Each factId opens with outlit_get_fact, which returns its evidence."
+                            },
                             "sourceLabels": {
                               "maxItems": 4,
                               "type": "array",
@@ -8816,6 +8862,7 @@
                             "category",
                             "statement",
                             "observedAt",
+                            "evidence",
                             "sourceLabels"
                           ],
                           "additionalProperties": false
@@ -12335,10 +12382,17 @@
                 ]
               },
               "total": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991,
-                "description": "How many items match, over every page."
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How many items match, over every page; null when counting them would cost a second full read."
               }
             },
             "required": [
@@ -17000,23 +17054,27 @@
                 "title": {
                   "type": "string"
                 },
+                "summary": {
+                  "type": "string",
+                  "description": "The description's first sentence."
+                },
                 "description": {
+                  "description": "The full description; only for tools asked for.",
                   "type": "string"
                 },
                 "inputSchema": {
+                  "description": "The tool's input as JSON Schema; only for tools asked for.",
                   "type": "object",
                   "propertyNames": {
                     "type": "string"
                   },
-                  "additionalProperties": {},
-                  "description": "The tool's input as JSON Schema."
+                  "additionalProperties": {}
                 }
               },
               "required": [
                 "name",
                 "title",
-                "description",
-                "inputSchema"
+                "summary"
               ],
               "additionalProperties": false
             }
@@ -22864,5 +22922,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "0615caa4953804b34fb3095c597aa10520f1cf00cae5157785712dcd837e4ef7"
+  "x-outlit-contract-hash": "ac7dc0816989dbdba59b1fa1532c7f3a5ccf23c0455b8758a1443c6f0517273c"
 }

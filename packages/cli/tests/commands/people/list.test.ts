@@ -79,6 +79,25 @@ describe("people list", () => {
     }
   })
 
+  test("accepts activity windows in minutes, hours and days", async () => {
+    const { default: listCmd } = await import("../../../src/commands/people/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: { "has-activity-in": "12h", "no-activity-in": "90m", json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_list_people",
+        expect.objectContaining({
+          filters: { activity: { within: "12h", notWithin: "90m" } },
+        }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
   test("accepts the previous --customer-id and first_seen_at spellings", async () => {
     const { default: listCmd } = await import("../../../src/commands/people/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
@@ -140,7 +159,7 @@ describe("people list", () => {
   test.each([
     ["--journey-stage", { "journey-stage": "CHAMPION" }],
     ["--role", { role: "boss" }],
-    ["--has-activity-in", { "has-activity-in": "12h" }],
+    ["--has-activity-in", { "has-activity-in": "last week" }],
   ])("rejects an invalid %s before calling Core", async (_flag, flags) => {
     const { default: listCmd } = await import("../../../src/commands/people/list")
     const exitSpy = mockExitThrow()
