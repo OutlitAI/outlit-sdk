@@ -1,5 +1,269 @@
 # @outlit/cli
 
+## 4.0.0
+
+### Major Changes
+
+- [#301](https://github.com/OutlitAI/outlit-sdk/pull/301) [`dc04f36`](https://github.com/OutlitAI/outlit-sdk/commit/dc04f369ba82111041564e06ababf3619e7d4a0b) Thanks [@leo-paz](https://github.com/leo-paz)! - The admin tools move to the Agent API v2 shapes: 25 tools become 16, with previews, undo and retry keys. This ships in the same release as the customer and context tools (`customer-tools-v2`, `context-tools-v2`), so there is one major bump. Each retired name and input spelling keeps answering through the gateway until 2026-12-11, then is refused with the new name; `@outlit/tools`, the CLI and Pi expose only the new names.
+
+  **Tools.**
+
+  - Destinations (7 to 4): `outlit_get_destination` is `outlit_list_destinations { ids: [id] }`. `outlit_enable_destination` and `outlit_disable_destination` are `outlit_update_destination { id, enabled }`. `outlit_create_destination`, `outlit_update_destination` and `outlit_archive_destination` stay.
+  - Owner, access and members (5 to 3): `outlit_assign_customer_owner` is `outlit_set_customer_owner`. `outlit_grant_customer_access`, `outlit_update_customer_access` and `outlit_revoke_customer_access` are `outlit_set_customer_access { role: "viewer" | "editor" | "none" }`. `outlit_list_workspace_users` is `outlit_list_members`.
+  - Integrations (5 and a compatibility list to 3): `outlit_get_integration_capabilities`, `outlit_get_integration_status` and the compatibility `outlit_list_integrations { connectedOnly }` are one `outlit_list_integrations`, with one entry per provider. `outlit_begin_integration_setup` is `outlit_setup_integration { handoff: true }`. `outlit_get_integration_setup_status` is `outlit_get_setup_session`. External API keys calling `outlit_list_integrations` get the new shape.
+  - Settings and activation (6 to 3): `outlit_get_workspace_settings` and `outlit_get_customer_activation` are `outlit_get_settings`. `outlit_update_workspace_settings` and `outlit_update_customer_activation` are `outlit_update_settings`. `outlit_preview_customer_activation` is `outlit_preview_activation`.
+  - Features: `outlit_list_features`, `outlit_create_feature` and `outlit_archive_feature` stay, on the v2 shapes.
+
+  **Shared rules.**
+
+  - Archives and the owner change preview first: `outlit_archive_destination`, `outlit_archive_feature` and `outlit_set_customer_owner` change nothing on the first call, and return `preview { token, expiresAt }`, what the change affects, and `next`. Confirm with `mode: "execute"` and `previewToken`. A v1 call `{ id }` is a preview, so an old script that archived in one call now archives nothing.
+  - Undo: `outlit_set_customer_owner` and `outlit_set_customer_access` return `undo { token, until } | null`; call the same tool with `{ undoToken, requestId }`. A change the caller could not undo (removing their own access, or a former member's) returns `outcome: "needs_confirmation"` with the reason, a `preview` and `next`.
+  - `requestId` is required on `outlit_create_destination`, `outlit_archive_destination`, `outlit_set_customer_owner`, `outlit_set_customer_access`, `outlit_setup_integration`, `outlit_create_feature` and `outlit_archive_feature`. A retry with the same id and input returns the first result.
+  - `outlit_update_destination` and `outlit_update_settings` take the end state and an optional `revision`; a stale revision is refused with `stale_revision`, unless every field already holds its value.
+  - Lists return `items` and `page { hasMore, nextCursor, total }`, 25 per page by default and at most 100, and `coverage` when empty. People are `MemberRef { id, name, email }` and customers `CustomerRef`. Enums are lowercase (`SLACK_CHANNEL` is `slack_channel`, `VIEWER` is `viewer`, `READY` is `ready`). A missing permission is `TOOL_CALL_FORBIDDEN` with `missingPermission`.
+  - `customerId` and `targetUserId` become `customer` (an ID, a domain or an exact name) and `member` (a user ID or an email). Windows `{ startAt, endAt }` become `{ from, to }`.
+
+  **Fields.**
+
+  - `outlit_list_destinations`: `destinations` is `items`; `pagination` is `page`; `maskedConfig` is `config`; `syncStatus` and `lastSyncedAt` are `delivery { status, lastSyncedAt }`; each destination has a `revision`; `ids` and `filters { enabled, includeArchived }` are new, and ids that are not visible are listed in `missing`.
+  - `outlit_create_destination`: `type: "SLACK_CHANNEL"` is `"slack_channel"`; the result is `{ created, destination }`, and `created: false` says the channel already was a destination and now has these settings.
+  - `outlit_update_destination`: `type` is dropped; `revision`, `label`, `isDefault` (only `true`) and `enabled` are the fields; `isDefault: true` with `enabled: false` is invalid.
+  - `outlit_set_customer_owner`: output `{ customerId, ownerId, previousOwnerId }` is `{ outcome, customer, owner, previousOwner, previousOwnerRole, undo }` (`outcome` is `previewed`, `changed`, `unchanged` or `undone`).
+  - `outlit_set_customer_access`: output `{ access { customerId, userId, role, grantedById } }` is `{ outcome, customer, member, role, previousRole, undo }` (`outcome` is `changed`, `unchanged`, `undone` or `needs_confirmation`).
+  - `outlit_list_members`: `search`, `role`, `managerEmail` and `hasOwnedCustomers` move under `filters`; `orderBy` is `owned_customers` or `name` (`owned_customer_count` is `owned_customers`; ordering by `email` is gone); `limit` is at most 100 (was 1000); `ownedCustomerCount` is `ownedCustomers`.
+  - `outlit_list_integrations`: `providers[].authType` and `setupMode` are `items[].setup { auth, mode }`; `browserHandoffAvailable` and `preferredSetupVersion` are gone; `status` has the five agent states; `connection` is a section with `lastDataReceivedAt`, `syncStatus` and `hasSyncError`; the input `connectedOnly` is `filters.connected`.
+  - `outlit_setup_integration`: the output `next` is `step`, so `next` always names the next call; `error { code: "OWNER_REQUIRED" }` is `problem { code: "owner_required", message, retryable, next? }` (codes are lowercase); CRM stage names are lowercase (`outlitStage: "won"`); `handoff: true` starts only the browser sign-in and refuses credentials and configuration.
+  - `outlit_begin_integration_setup` output `{ state, sessionId, connectUrl, expiresAt }` is `step { kind: "browser_handoff", url, sessionId, expiresAt }`. `outlit_get_setup_session` returns `{ sessionId, provider, status, pollAfterSeconds?, next? }`.
+  - `outlit_get_settings`: `{ settings { defaultTimezone, customerOwnership { defaultOwnerUserId } } }` and `{ activation { eventName } }` are `{ settings { general { timezone, defaultOwner }, activation { event } }, revision }`; each part is a section, and a part the caller cannot read says which permission it needs.
+  - `outlit_update_settings`: `{ defaultTimezone, customerOwnership }` and `{ eventName }` are `{ revision?, timezone?, defaultOwner?, activationEvent? }`; the result is `{ settings, revision, changed }`.
+  - `outlit_preview_activation`: `eventName` is `event`; `{ preview { ...Count } }` is `{ event, window { from, to }, evaluatedEvents, customers { matched, alreadyActivated, wouldActivate, truncated }, contacts { ..., occurrences }, examples }`, with `examples[].customer` a `CustomerRef`.
+  - `outlit_list_features`: `sourceKey` moves to `filters.sourceKey`, and `filters.eventSearch` is new; `include: ["usage", "candidates"]` is new, and usage and candidates are read only when asked for; `candidateLimit` defaults to 25 (was 100); `features` is `items`; `evidence` is `usage` (a section, with `source_blocked`, `source_not_ready` or `query_failed` when unavailable); `selectedSourceKey` is `sources[].selected`; `workspaceActiveFeatureCount` is `workspaceActiveFeatures`; candidates are a section with `sourceKey`, `coverage` (`complete` or `partial`), `items` and `truncated`.
+  - `outlit_create_feature` takes `requestId`. `outlit_archive_feature` previews first and returns `{ archived: false, preview, impact, next }` or `{ archived: true, feature }`.
+
+  **`@outlit/tools`.** The exported result types follow the new tools: `Feature` is an item of `FeatureListResult["items"]`, and `FeatureRef` is the archived feature in `FeatureArchiveResult`.
+
+  **`@outlit/cli`.** Every command and flag stays; the CLI maps them to the new tools and sends a fresh `requestId` with each write.
+
+  - `destinations get <id>` reads `outlit_list_destinations { ids: [id] }` and prints `{ destination }`; an id Core does not show is `not_found`. `destinations list` takes `--limit` and `--cursor`. `destinations enable` and `disable` send `outlit_update_destination { id, enabled }`. `destinations update` no longer needs `--type` (a value is still checked).
+  - `destinations archive`, `features archive` and `customers owner set` show Core's preview, then ask in a terminal. New `--yes` confirms without asking. Without a terminal and without `--yes` they print the preview, change nothing and exit 1 with `confirmation_required`; a script that relied on one-call archiving needs `--yes`. `customers grant` and `revoke` ask only when Core says the change could not be undone, with the same `--yes`.
+  - `customers grant`, `revoke` and `owner set` take the customer as an ID, a domain or an exact name (no longer a UUID only) and the member as `--member` (a user ID or an email). `--target-user-id` is still read. `--role` is `viewer` or `editor` in any case; `revoke` sends role `none`.
+  - `ws-users list` reads `outlit_list_members`. `--order-by` is `owned_customers` or `name`; `owned_customer_count` is still read, and `email` is refused. The default page stays 20 and the maximum is 100.
+  - `activation get` prints the activation section of `outlit_get_settings` with the `revision`. `activation update` and `disable` send `outlit_update_settings { activationEvent }`. `activation preview` sends `outlit_preview_activation { event }`. `settings get` and `settings update --default-timezone` use `outlit_get_settings` and `outlit_update_settings { timezone }`.
+  - `features list` still reads usage and candidates by default, and takes `--include` (`usage`, `candidates`), `--search`, `--limit` and `--cursor`; `--candidate-limit` defaults to 25. `features create` sends a `requestId`.
+  - `integrations status` reads `outlit_list_integrations` (and `doctor` and `onboard` use it for readiness). `integrations setup` validates the provider locally, sends one `requestId` per setup call, reads `step` and `problem`, and polls `outlit_get_setup_session`. It no longer falls back to the older browser-handoff flow, so the error code `unsupported_core_version` is gone. Problem codes in JSON errors are lowercase (`credential_required`, `credential_rejected`).
+  - `completions` lists the new flags.
+
+  **`@outlit/pi`.** `piToolNames` carries the 16 admin tools in place of the 25.
+
+- [#297](https://github.com/OutlitAI/outlit-sdk/pull/297) [`2930edd`](https://github.com/OutlitAI/outlit-sdk/commit/2930edd1a83cd20af335cde1f6a6b519428feadb) Thanks [@leo-paz](https://github.com/leo-paz)! - Agent API v2, slice A: people, toolsets, folded customer sections, a schema tool, paged SQL, and a 64 KiB response cap.
+
+  **Removed and renamed tools.** The old names answer through the API until 2026-12-11 (each response says so in `outlit-deprecation`), but `@outlit/tools`, the CLI and Pi no longer offer them.
+
+  - `outlit_list_users` is `outlit_list_people`.
+  - `outlit_schema` is `outlit_get_schema`.
+  - `outlit_get_customer_relationship`, `outlit_get_customer_features` and `outlit_get_customer_credits` are gone: they are `outlit_get_customer` with `include: ["relationship"]`, `["features", "meters"]` and `["credits"]`. `customerIncludeSections` gains `relationship`, `features`, `meters` and `credits`.
+  - `outlit_list_crm_fields` was already `outlit_list_customer_fields` (Phase 1).
+  - New: `outlit_list_toolsets` and `outlit_load_toolset`. Every tool contract now carries its `toolset` (`core`, `work`, `identity`, `admin` or `meta`); a tool may also carry `sizeHint`, `seeAlso` and `aliases` (`[{ name, until }]`, its retired names with their last day).
+  - The payload enum `userListOrderFields` is now `personOrderFields` (`last_activity_at`, `first_synced_at`, `email`; `first_seen_at` is now `first_synced_at`).
+
+  **`outlit_list_people`** (was `outlit_list_users`).
+
+  - Inputs: `customerId` is `customer` (ID, domain or name); `journeyStage` is `filters.journeyStage`, an array of lowercase stages (`discovered`, `signed_up`, `activated`, `engaged`, `inactive`); `hasActivityInLast` and `noActivityInLast` are `filters.activity.within` and `notWithin`, in whole minutes, hours or days (`90m`, `12h`, `7d`; at most `3650d`); `traitFilters` is `filters.fields` (`{ field: { source: "traits", key }, op, value }`); `search` is `filters.search`; `filters.role` is new. `orderBy` takes `last_activity_at`, `first_synced_at` or `email`. `limit` is 25 by default and at most 100 (was up to 1000).
+  - Output: `pagination` is `page`. Each person has `customer: { id, name, domain }` in place of `customerId`, `customerName` and `customerDomain`; `title` in place of `jobTitle`; `role` (`champion`, `decision_maker` or `primary_contact`, or `null`) in place of `relationshipRole`; a lowercase `journeyStage`; `association` (`domain` or `crm`); `lastCommunication` (`{ occurredAt, kind }` of the latest conversation they took part in, never product use); and `outlit.firstSyncedAt`. `daysSinceActivity` is gone.
+  - With `customer` it also lists people at other customers who are CRM contacts of that customer's companies, and counts CRM contacts with no person in `crmContactsWithoutPerson`.
+  - The `users` section of `outlit_get_customer` is the same person shape without `customer` and `association`.
+
+  **`outlit_get_customer`.**
+
+  - New sections `relationship` (`{ summary, items[≤ 8] { category, statement, observedAt, sourceLabels, evidence: [{ factId }] }, updatedAt }`; read a fact with `outlit_get_fact`), `features` (product-event features), `meters` (Autumn metered quantities that are not credits) and `credits` (`{ items, page, complete }`). Each is a section like the others: `{ status: "available", asOf, data }`, or a status and reason.
+  - `features`, `meters` and `credits` come in pages. New inputs `features`, `meters` (`{ weeks, weekly, limit, cursor }`) and `credits` (`{ limit, cursor }`) set the window and page; `weeks` (1 to 53) and `weekly` replace `weeks` and `includeWeeklyUsage`. `limit` is 25 by default and at most 100.
+  - The old `outlit_get_customer_features` result's flat `features` array of `event` and `metered` items is now two sections: `features.data.items` are the event items and `meters.data.items` the metered ones. Its `events` and `sources` fields are gone; a section's `status` and `reason` say what is missing.
+  - Result types: `CustomerRelationshipResult`, `CustomerFeaturesResult` and `CustomerCreditsResult` are gone. `CustomerRelationshipSection`, `CustomerFeaturesSection`, `CustomerMetersSection` and `CustomerCreditsSection` are the sections, and `CustomerRelationship`, `CustomerFeature`, `CustomerMeter` and `CustomerCredit` are their data and items. `Person` and `PersonListResult` are new.
+
+  **`outlit_query` and `outlit_get_schema`.**
+
+  - `outlit_query`: `sql` may be 20,000 characters (was 10,000). `limit` is the rows per page, 100 by default and at most 1000 (was 1000 and 10000). `cursor` is new: the same `sql` with the previous `page.nextCursor` reads the next page of a result kept for an hour. The result is `{ columns: [{ name, type }], rows, page }` in place of `{ success, data, metadata }`, with `truncation` when the result was cut (`row_cap` past 10,000 rows, or `byte_cap`).
+  - `outlit_get_schema` takes `topic` (`views`, `view`, `event_types` or `examples`) and `view` in place of `table`. Columns carry `nullable`, `unit`, `currencyColumn`, `decimalsColumn`, `timeZone` and `values`, and each view states its `rowsAre`, `excludes`, `freshness`, `duplicates` and `coverage`. The `customers` view gains `arr_amount` and `arr_decimals` beside `arr_currency`; `arr_cents` is deprecated until 2026-12-11. **Breaking SQL change:** the `revenue` view's columns move from MRR to ARR. It is now one row per customer per UTC day since 2026-11-06 with `snapshot_date`, `arr_amount`, `arr_currency`, `arr_decimals`, `arr_estimated`, `revenue_lifecycle` and the customer's id, name, domain and status; the MRR columns (`mrr_cents`, `mrr_status` and the rest) are gone, and a day with no row was not computed.
+
+  **Toolsets.** `outlit_load_toolset` takes optional `tools` (at most 10 names of that toolset) and returns for each tool `{ name, title, summary, description?, inputSchema? }`: the definitions come only for the tools you name, otherwise a one-line summary of each.
+
+  **Times and cursors.** A customer's `lastActivityAt` and `outlit.firstSyncedAt` are ISO 8601 UTC datetimes, checked by the schema. A `truncation` on a list now carries `next.input.cursor`. Invalid cursors are refused as `INVALID_TOOL_INPUT` with a `next`.
+
+  **Other contract changes.** `outlit_list_customers` gains `filters.renewal` (`within`: `next_30d`, `next_60d`, `next_90d`, `next_180d` or `next_365d`; or `after` and `before` as `YYYY-MM-DD` UTC dates), the `orderBy` value `renewal_date` (`customerListOrderFields` has it), and `renewal: { date, source } | null` on each customer (`source` is `outlit`, `crm` or `billing`); `orderDirection` no longer has a schema default, because the default is `desc` except `asc` with `renewal_date`. `outlit_list_customers` and `outlit_list_customer_fields` return at most 100 items per page (`outlit_list_customers` `limit` was up to 1000 with a default of 50, now 25; `outlit_list_customer_fields` was up to 50 with a default of 20, now 25). A list that would not fit in 64 KiB returns the items that fit with a `truncation` field whose `next` names the call for the rest; any other result over the cap is a `413` `TOOL_RESULT_TOO_LARGE`. The error code `IDEMPOTENCY_CONFLICT` (`409`) joins `toolGatewayErrorCodes`.
+
+  **Client.** `createOutlitClient` takes an optional `onResponse` that receives, after each response, the gateway's `outlit-deprecation` (`{ tool, use, until, message }`), `Sunset`, `outlit-notice` (sentences about an old input spelling it changed) and `idempotent-replayed` headers as `{ tool, status, deprecation?, sunset?, notices, replayed }`. `ToolsetName`, `toolsetNames`, `getToolset` and `toolNamesInToolsets` are new.
+
+  **CLI.**
+
+  - `outlit people list` replaces `outlit users list`. Its flags: `--customer` (was `--customer-id`), `--journey-stage` (lowercase, comma-separated), `--role`, `--no-activity-in` and `--has-activity-in` (whole minutes, hours or days such as `90m`, `12h` or `30d`), `--trait`, `--search`, `--order-by` (`last_activity_at`, `first_synced_at`, `email`), `--limit` and `--cursor`. Table output adds title, customer and last contact.
+  - `customers get` takes `--include relationship,features,meters,credits` with `--weeks`, `--weekly`, `--limit` and `--cursor`. The `customers relationship`, `customers features` and `customers credits` commands now call `customers get` and print its result; their old output shapes are gone.
+  - `customers list` takes `--renews-in` (`next_30d` to `next_365d`), `--renews-after` and `--renews-before` (dates), sorts by `--order-by renewal_date`, and prints a Renews column. `--order-direction` is sent only when given.
+  - `sql` takes `--cursor`; `--limit` is 1 to 1000 (default 100, was 1 to 10000, default 1000), and the result is `{ columns, rows, page }`. `schema` takes a view name, `events` or `examples`.
+  - The gateway's deprecation and notices print to stderr. Root help groups the commands by toolset.
+  - Still accepted, no longer advertised: `users list`, `customers relationship|features|credits`, `--customer-id` and `--order-by first_seen_at`.
+
+  **Pi.**
+
+  - The default, analytical and full Pi tool sets follow the contract (`outlit_list_people`, `outlit_get_schema`, `outlit_list_toolsets`, `outlit_load_toolset`; the removed tools are gone).
+  - New `toolsets` option registers every tool in the toolsets you name, beside any `toolNames`.
+  - A tool result that comes with a deprecation or an input notice has it as a second text block after the JSON.
+  - The Pi skill describes the new sections, `outlit_list_people` and `outlit_get_schema`.
+
+- [#296](https://github.com/OutlitAI/outlit-sdk/pull/296) [`2f8582a`](https://github.com/OutlitAI/outlit-sdk/commit/2f8582a349fc9ccd8044fd6ea7578cb0be23056a) Thanks [@leo-paz](https://github.com/leo-paz)! - The context tools move to the Agent API v2 shapes: `outlit_get_timeline`, `outlit_get_source`, `outlit_list_sources`, `outlit_search_customer_context`, `outlit_list_facts` and `outlit_get_fact`. This ships in the same release as the customer tools (`customer-tools-v2`), so there is one major bump. A source has one reference everywhere, enum values are lowercase, and lists page and report coverage one way.
+
+  **Shared shapes.**
+
+  - Source reference: `sourceType` + `sourceId`, `sourceRef { sourceType, sourceId }`, `linkedSourceRef` and `sourceMetadata` become `source { type, id }`. `type` is lowercase (`email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`; `extracted` for a memory entry, in `outlit_get_source` only). Pass a `source` from any tool to `outlit_get_source` as it is.
+  - Source types: `CRM`, `CRM_OPPORTUNITY` (aliases of `OPPORTUNITY`) and `STRIPE_INVOICE` (alias of `INVOICE`) are now `opportunity` and `invoice`; `sourceTypes` (new export) lists the lowercase values.
+  - Pagination: `pagination { hasMore, nextCursor, effectiveLimit? }`, `contentPage.page { returned, ... }` and Slack `pageInfo` become `page { hasMore, nextCursor, total }` (`total` is `null` when unknown). `effectiveLimit` is gone.
+  - Customers: `customer` is `CustomerRef { id, name, domain }` everywhere, and `customer` input takes an ID, a domain or a name on every tool (up to 500 characters).
+  - Page size: `limit` on `outlit_get_timeline`, `outlit_list_sources` and `outlit_list_facts` defaults to 25 and caps at 100 (the timeline allowed 1000). The CLI sends 25 unless `--limit` is given.
+  - Empty lists keep `[]` and add `coverage { searched }`, which says what was searched.
+  - Sections: a result part that can be missing or empty is `{ status: "available", asOf, data }` or `{ status: "empty" | "not_connected" | "not_synced" | "unavailable", reason, next? }`, as on the customer tools.
+  - Enum values are lowercase in inputs and outputs: channels, event types, fact status, fact types and categories, source types.
+
+  **`outlit_get_timeline`.**
+
+  - Input `channels`, `eventTypes`, `timeframe` and `startDate`/`endDate` move under `filters`: `filters.channels` (lowercase, such as `product`), `filters.eventTypes` (lowercase, such as `note_added`), `filters.within` (was `timeframe`), `filters.after` (was `startDate`) and `filters.before` (was `endDate`). `within` and `before` can now be sent together (`within` counts back from `before`); `within` and `after` cannot. `productDetail`, `includeMetadata`, `limit` and `cursor` are unchanged.
+  - Output: `customer` is new (who the timeline is for). `events[].channel` and `events[].eventType` are lowercase (`communication`, `email_received`). `events[].sourceType`, `sourceId` and `sourceRef` are `events[].source { type, id }`, present when `outlit_get_source` can open it; `unreadable` and `unreadableReason` are `events[].unreadable { reason }` when it cannot. `occurredAtBasis` (`record` or `first_observed`) says what an event's `occurredAt` is. `pagination` is `page` (with `total`), and `effectiveLimit` is gone.
+  - `product { ... }` and `productUnavailable { reason }` become one section, `product: { status, asOf, data: { windowStartAt, windowEndAt, weeklyBuckets, topEventNames } }`; it is `empty` with a reason when no value features are configured.
+  - `timelineChannels` and `timelineTimeframes` keep their values; `toolTimelineChannels` (new) lists the lowercase channels, and `timelineOccurredAtBases` the event time bases.
+
+  **`outlit_get_source`.**
+
+  - Input `sourceType` + `sourceId` become `source { type, id }`. `limit` and `cursor` are unchanged.
+  - Output: `sourceType` + `sourceId` are `source { type, id }`; `customer` is `CustomerRef | null`. `contentPage { contentKind, segments, page, completeness }` is `content`, a section: `content.data { kind, segments, page, omittedFields }`. Content is partial while `content.data.page.hasMore` is true; `completeness` is gone.
+  - Invoice records: `record.amountDue`, `amountPaid` and `amountRemaining`, and each line's `amount` and `unitAmount`, are Money (`{ amount, currency, decimals, formatted }`) instead of minor-unit numbers, and `record.currency` is gone. Opportunity `record.amount` is Money, or `null` when no currency is known (it was a CRM number with an inferred currency). Slack `record.pageInfo` is `record.page`.
+
+  **`outlit_list_sources`.**
+
+  - Input `sourceType` (one) is `filters.sourceTypes` (any of). `after`, `before`, `participant`, `provider` and `hasTranscript` move under `filters`. `customer`, `limit` and `cursor` are unchanged.
+  - Output: `pagination` is `page`; each item's `sourceType` and `sourceId` are `source { type, id }`, its `customer` is `CustomerRef | null`, and its record fields use the Money shapes above. An empty list carries `coverage`.
+
+  **`outlit_search_customer_context`.**
+
+  - Input `topK` is `limit`; `sourceTypes`, `after` and `before` are `filters.sourceTypes`, `filters.after` and `filters.before`.
+  - Output: source results' `sourceType` and `sourceId` are `source { type, id }`, and `context.sourceRef` is `context.source`. An empty `results` carries `coverage`.
+
+  **`outlit_list_facts` and `outlit_get_fact`.**
+
+  - `outlit_list_facts` input: `status`, `sourceTypes`, `factTypes`, `factCategories`, `after` and `before` move under `filters` as `status`, `sourceTypes`, `types`, `categories`, `after` and `before`, all lowercase (`"ACTIVE"` is `"active"`, `"CHURN_RISK"` is `"churn_risk"`, `"MEMORY"` is `"memory"`). `customerFactStatuses`, `customerFactTypes` and `customerFactCategories` keep their uppercase values; `toolFactStatuses`, `toolFactTypes` and `toolFactCategories` (new) list the lowercase ones.
+  - Fact output: `factType` and `factCategory` are `type` and `category`, and `status` is lowercase. `linkedSourceRef` and `sourceMetadata` (`sourceType`, `sourceId`, `sourceOccurredAt`, `sourceQuote`, `permalink`) are `source { type, id, occurredAt, quote, permalink } | null`. `detectedAt`, `validFrom` and `lastDetectedAt` are `outlit { recordedAt, updatedAt }` (`validFrom` equals `recordedAt`). `evidence[].sourceType` and `sourceId` are `evidence[].source`. `pagination` is `page`, and an empty list carries `coverage`.
+  - Dropped (constant or null since facts moved to memory): `confidence`, `priority`, `severity`, `metricName`, `metricValue`, `metricPreviousValue`, `metricDelta`, `metricUnit`, `periodStart`, `periodEnd` and `changePointDate`.
+  - `outlit_get_fact` returns `{ customer, fact }` (it returned the fact). `include` is `["evidence"]` and is strict: an unknown value is refused (it was ignored).
+
+  **Old spellings.** The gateway maps the earlier inputs (top-level `topK`, `sourceTypes`, `after`, `before`, `sourceType`, `sourceId`, `startDate`, `endDate`, `timeframe`, `channels`, `eventTypes`, `status`, `factTypes`, `factCategories`), uppercase values and the source aliases to the new ones until 2026-12-11, and refuses them with the new name after that. Output fields are not mapped.
+
+  **CLI.** The commands keep their flags and map them to the new input. `outlit search` takes `--limit` in place of `--top-k`; `--top-k`, uppercase values (`--status ACTIVE`, `--fact-types CHURN_RISK`, `--channels COMMUNICATION`, `--source-type CALL`), the older channel names (`EMAIL`, `SLACK`, `CALL`, `CALENDAR`, `SDK`, `INTERNAL`) and the source aliases are still accepted but no longer advertised. `customers timeline --end-date` now works with `--timeframe` (the window counts back from the end date) instead of replacing it; `--start-date` still replaces it. `sources list --source-type` takes several types separated by commas, and `sources get --source-type` takes `extracted`. `facts get --include` refuses a value other than `evidence`. Table output (`sources list`) reads `source.type`, `source.id` and `page`, and prints what an empty list searched. JSON output is the v2 result.
+
+  **`@outlit/tools` helpers.** `resolveCustomerContextSearchInput` returns the v2 input (`limit` and `filters`) with lowercase source types and reads `limit` (or `topK`, the earlier name); `CustomerContextSearchInput` and `SearchArgsLike` change with it. New exports: `sourceTypes`, `ToolSourceType`, `toToolSourceType`, `toolTimelineChannels`, `timelineOccurredAtBases`, `toolFactStatuses`, `toolFactTypes` and `toolFactCategories`.
+
+  **Pi and skills.** The Pi skill and README describe the `filters` shapes, lowercase values, `source` references and `coverage`.
+
+- [#294](https://github.com/OutlitAI/outlit-sdk/pull/294) [`8be61f9`](https://github.com/OutlitAI/outlit-sdk/commit/8be61f92a94452c1e2595805960fc644e9b6a57e) Thanks [@leo-paz](https://github.com/leo-paz)! - Customer tools move to the Agent API v2 shapes (`outlit_get_customer`, `outlit_list_customers`, `outlit_list_customer_fields`). Money, ARR, billing statuses, pagination and section results have one shape each.
+
+  **Tool rename.** `outlit_list_crm_fields` is now `outlit_list_customer_fields` (still the same command). It lists the fields Outlit holds about customers: CRM and support tool account fields and SDK traits. Its default-toolset and Pi entries change with it. Input `provider` is now `source` (which can also be `traits`). Output: `provider` is `source` inside `items[].field`, which is now `{ source, key }`; `observedValues` is `values`; `accounts` is `customers`; `pagination` is `page`; `items[].type`, `options` and `label` are unchanged; `coverage` is new on an empty list.
+
+  **Shared shapes.**
+
+  - Money is `{ amount, currency, decimals, formatted }` everywhere it appears (`amount` in minor units). ARR is `{ value: Money, estimated, lifecycle, parts?, basis? }`: the old `arr.amount` and `arr.currency` are now `arr.value.amount` and `arr.value.currency`, and `arr.parts.subscriptions`, `usage` and `invoicedLast12Months` are Money or `null` instead of numbers.
+  - Billing statuses are lowercase in inputs and outputs: `none`, `trialing`, `paying`, `past_due`, `churned` (were `NONE`, `TRIALING`, `PAYING`, `PAST_DUE`, `CHURNED`). `customerBillingStatuses` is lowercase.
+  - Lists return `page: { hasMore, nextCursor, total }` instead of `pagination`.
+  - A customer's `firstSeenAt` is `customer.outlit.firstSyncedAt` (and `outlit.firstSyncedAt` on list rows).
+  - Sort values are `last_activity_at`, `first_synced_at`, `name`, `arr` (were `last_activity_at`, `first_seen_at`, `name`, `arr_cents`, `mrr_cents`). `customerListOrderFields` changes with them.
+
+  **`outlit_get_customer`.**
+
+  - Every `include` result is a section: `{ status: "available", asOf, data }`, or `{ status: "empty" | "not_connected" | "not_synced" | "unavailable", reason, next? }`. The sections are `users`, `revenue`, `billing`, `recentTimeline`, `behaviorMetrics`, `enrichment`, `renewal`, `crm` and `links`; read `users.data`, `revenue.data` and so on (`renewal` was `{ date, source } | null`, `links` was `{ records, omitted }`). `crmSummary` stays top level.
+  - `revenue.data` is `{ arr, lifetimeRevenue: Money[], activeSubscriptions }`. `lifetimeRevenue` (a number) and `lifetimeRevenueCurrency` become the Money array.
+  - New include `billing` (and `customerIncludeSections` has it): `billing.data` is `{ accounts, subscriptions, overdueInvoices }`. `revenue.subscriptions`, `revenue.overdueInvoices` and `revenue.billingAccounts` moved there; `billingAccounts[]` is `accounts[]` with a `status` (`active` or `ended`) and `endedAt`. The `subscriptions: "live" | "all"` input now applies to `include billing`.
+  - Subscription items' `unitAmount` is Money or `null` and the item's `currency` is gone; overdue invoices' `amountRemaining` is Money or `null` and `currency` is gone.
+  - `enrichment.data` drops `status` and `error` (the section's own status says it) and gains `freshness` (`fresh`, `stale` or `input_changed`).
+
+  **`outlit_list_customers`.**
+
+  - Inputs move under `filters`: `billingStatus` is `filters.billingStatus` (an array of lowercase statuses), `arrAbove`/`arrBelow`/`arrCurrency` are `filters.arr.above`/`below`/`currency` (minor units), `traitFilters` and `crm` are `filters.fields` (`{ field: { source, key }, op, value }`, with `source: "traits"` for traits), `search` is `filters.search`, `ownerId`/`ownerEmail`/`hasOwner` are `filters.owner.id`/`email`/`has`, and `hasActivityInLast`/`noActivityInLast`/`activatedSince` are `filters.activity.within`/`notWithin`/`activatedSince`. `crmFields` is the top-level `fields` (`{ source, key }[]`). `mrrAbove` and `mrrBelow` are gone.
+  - Output: `pagination` is `page`; each row's `arr` is the ARR measure above, `firstSeenAt` is `outlit.firstSyncedAt`, and `crm` is `fields: [{ field: { source, key }, label, values }]`; `totals: { arr: Money[] }` is new (total ARR of every match, per currency).
+  - `limit` still accepts up to 1000; the CLI still caps `--limit` at 100.
+
+  **CLI.** `customers list` keeps its flags and maps them to the new input; `customers get --subscriptions` now goes with `--include billing`. `--billing-status` takes lowercase statuses (comma-separate several); the old uppercase spelling, the old sort names `arr_cents`, `mrr_cents` and `first_seen_at`, and `--mrr-above`/`--mrr-below` are still accepted but no longer advertised. Table output prints `arr.value.formatted` (for example `$60,000.00`, `~` for an estimate) and the lowercase status. JSON output is the v2 result, with `page` in place of `pagination`.
+
+  **Pi and skills.** The default Pi toolset has `outlit_list_customer_fields` in place of `outlit_list_crm_fields`; the Pi skill describes sections and the new filters.
+
+- [#302](https://github.com/OutlitAI/outlit-sdk/pull/302) [`74678fa`](https://github.com/OutlitAI/outlit-sdk/commit/74678fa27c5979390c236b44c7e50f7fbb64d905) Thanks [@leo-paz](https://github.com/leo-paz)! - The churn case tools are hidden from external callers. This ships in the same Agent API v2 release as the work tools (`work-identity-tools-v2`), so there is one major bump. The work toolset is your tasks (Inbox), and acting on them, with undo.
+
+  - `outlit_list_cases` and `outlit_get_case` are gone from `@outlit/tools`, the default and Pi toolsets and the generated contracts, and so are their retired names `outlit_list_attention_items` and `outlit_get_attention_item`. The gateway refuses all four with 403 `TOOL_CALL_FORBIDDEN`.
+  - The `AttentionListResult`, `AttentionItemSummary`, `AttentionItemResult` and `AttentionItem` types are removed from `@outlit/tools`.
+  - The CLI has no `outlit attention` commands: `attention list` and `attention get` are removed, along with their shell completions.
+  - Tasks no longer carry `partOf.case`. `outlit_list_tasks` items keep `partOf.work`, `partOf.title` and `partOf.renewalId`.
+
+- [#298](https://github.com/OutlitAI/outlit-sdk/pull/298) [`7957ab8`](https://github.com/OutlitAI/outlit-sdk/commit/7957ab883b080705898bfea640cacb60863dee45) Thanks [@leo-paz](https://github.com/leo-paz)! - The work and identity tools move to the Agent API v2 shapes. This ships in the same release as the customer and context tools (`customer-tools-v2`, `context-tools-v2`), so there is one major bump. Nine tools change; their commands are unchanged. Core maps the old tool names and input spellings until 2026-12-11, and the old outputs are gone.
+
+  **Tool renames** (the default-toolset and Pi entries change with them):
+
+  | Was                                       | Is                               |
+  | ----------------------------------------- | -------------------------------- |
+  | `outlit_list_inbox`                       | `outlit_list_tasks`              |
+  | `outlit_get_inbox_item`                   | `outlit_get_task`                |
+  | `outlit_act_on_inbox_item`                | `outlit_act_on_task`             |
+  | `outlit_undo_inbox_action`                | `outlit_undo_task_action`        |
+  | `outlit_get_customer_identity`            | `outlit_get_identity`            |
+  | `outlit_list_identity_merge_suggestions`  | `outlit_list_merge_suggestions`  |
+  | `outlit_reject_identity_merge_suggestion` | `outlit_reject_merge_suggestion` |
+  | `outlit_get_customer_merge_status`        | `outlit_get_merge`               |
+  | `outlit_merge_customers`                  | same name, new input and output  |
+
+  The case tools are not part of this release: see `hide-case-tools`.
+
+  **Shared shapes.**
+
+  - One resource id input: a task's `itemId`, a suggestion's `suggestionId` and a merge's `operationId` are `id` on that resource's own tools. `customerId` on reads is `customer`, which takes an ID, a domain or a name.
+  - Customers are `CustomerRef { id, name, domain }`; extra facts sit beside it (`owner: { id, name, email } | null`, `type`). Lists return `{ items, page }` in place of `pagination` or `{ suggestions, nextCursor }`, plus `coverage { searched }` when empty. Merge suggestions have no total, so their `page.total` is `null`.
+  - Enum values are lowercase in inputs and outputs: priority (`urgent`, `high`, `normal`), customer type (`company`, `individual`), merge confidence (`high`, `medium`, `low`), suggestion status (`suggested`, `processing`, `merged`, `rejected`; the `filters.status` input on `outlit_list_merge_suggestions`), output `proposalStatus` (`proposed`, `staged`, `stale`, `rejected`, `applied`), job status (`queued`, `running`, `completed`, `failed`).
+  - `undoToken` + `undoUntil` are `undo: { token, until } | null`. `previewToken` + `evaluatedAt` (output) are `preview: { token, expiresAt }` plus `evaluatedAt`; `expiresAt` is `null` because the token has no clock expiry.
+  - Source references on identity reasons (`sourceType: "CALL"` + `sourceId`) are `source { type: "call", id }`.
+  - `act_on_task`, `undo_task_action` and `reject_merge_suggestion` require `requestId`; a retry with the same id never acts twice.
+
+  **Tasks.**
+
+  - `outlit_list_tasks`: `owner` input is `filters.owner`. Output `owner` is a member (`{ id, name, email }`); `items[].itemId` is `items[].id`; `items[].customer` is a `CustomerRef`; `items[].partOf` is `{ work, title, renewalId }` (`caseId` is gone); `items[].actions` is the actions `outlit_act_on_task` accepts now, or `null` when they could not be read in time; `complete` is `incomplete { reason, next } | null`; `pagination` is `page`.
+  - `outlit_get_task`: `itemId` is `id`. New `include` (`source`, `draft`, `covered`; default `source` and `covered`; the prepared reply is opt-in). Output is `{ task, source?, draft?, covered? }`, each a section; `sourcePreview` is `source.data` (without `channel`) and `coveredSteps` is `covered.data.steps`.
+  - `outlit_act_on_task`: `itemId` is `id`; `requestId` is required. `until` (snooze only) and `reason` (`wont_do` only) on another action are ignored and named in `ignored[]` instead of refusing the call. Output `itemIds` is `affected.taskIds`; `undoToken` and `undoUntil` are `undo`; `next` is new. An action the task cannot take is `INVALID_TOOL_INPUT` with that task's valid actions.
+  - `outlit_undo_task_action`: `requestId` is required. Output `itemIds` is `affected.taskIds`; `next` is new. A token that is invalid or past `undo.until` is `INVALID_TOOL_INPUT` on `undoToken`.
+
+  **Identity.**
+
+  - `outlit_get_identity`: `customerId` is `customer`; new `include: ["links"]` (the customer's records in other systems, the same section as `outlit_get_customer`; unavailable for a read bound to a past moment). Output `coverage { status, reasons }` is `completeness`, and `coverage { searched }` appears when there are no candidates; `evidenceCutoffAt` + `basis` are `cutoff { at, basis } | null`; `candidates[]` are `{ customer: CustomerRef, type, reasons[] { kind, domain, source, field } }`; `next` is new.
+  - `outlit_list_merge_suggestions`: `customerId` is `customer`; `suggestionId`, `status` and `confidence` are `filters.id`, `filters.status` and `filters.confidence` (lowercase, one value each). `limit` defaults to 25 (was 50) and caps at 100. `impact`, `scope`, `jevEvidence` and the cluster fields (`candidateCustomers`, `reviewedPairOptions`, `impactScope`) are left out unless `include` asks for `impact`, `scope`, `jev` or `cluster`. Output `suggestions` is `items`; `canManageIdentityMerges` is `canManage`; `survivor` and `duplicate` are `{ customer, type, status, billingStatus, identifiers, contacts }`; `latestJob.operationId` is `latestJob.operation { id } | null`; `reviewedByName` and `appliedByName` are `reviewedBy { name }` and `appliedBy { name }`.
+  - `outlit_reject_merge_suggestion`: `suggestionId` is `id`; `reviewNotes` is `note`; `requestId` is required. Output `{ suggestionId, status: "REJECTED" }` is `{ suggestion { id, status: "rejected" }, next }`.
+  - `outlit_merge_customers`: `dryRun` is `mode: "preview" | "execute"` (default `preview`); `survivingCustomerId` and `duplicateCustomerId` are `survivor` and `duplicate` (exact IDs only); `reviewNotes` is `note` (execute only). Keys a mode does not take are ignored and named in `ignored[]`. A preview returns `{ mode, survivor, duplicate, preview { token, expiresAt }, evaluatedAt, impact, warnings, links, next }`, where `links` compares the two customers' linked records (`shared`, `conflicting`, `survivorOnly`, `duplicateOnly`, `complete`). An execute returns `{ mode, operation, next }`.
+  - `outlit_get_merge`: `operationId` is `id`. Output `{ kind, operationId, survivingCustomerId, duplicateCustomerId, status, phase, error }` is `{ operation { id, survivor, duplicate, status, phase, failure }, next }`. `failure.code` is `not_started` (nothing moved: preview the pair again) or `incomplete` (Outlit is recovering it: keep polling, never execute again).
+
+  **CLI.** Command paths and flag names are unchanged; the CLI maps them to the new inputs. `customers merge` maps `--execute` to `mode` and `--review-notes` to `note` (sent with `--execute` only); `--preview-token` and `--request-id` stay required with `--execute`. `identity suggestions list` maps `--customer-id` to `customer` and `--suggestion-id`, `--status` and `--confidence` to `filters`, with `--confidence` lowercase (the uppercase spelling is still accepted but no longer advertised), and `--limit` defaults to 25. `--include impact,scope,jev,cluster` is new there, and `customers identity --links` is new. `identity suggestions reject` sends a new `requestId` each run; pass `--request-id` to reuse one on a retry. `customers merge-status <operationId>` sends it as `id`. JSON output is the v2 result (`page`, `owner`, `importance`, `operation`, `undo`).
+
+  **Pi and skills.** The Pi toolset and skills use the new tool names.
+
+### Minor Changes
+
+- [#299](https://github.com/OutlitAI/outlit-sdk/pull/299) [`6ff7152`](https://github.com/OutlitAI/outlit-sdk/commit/6ff71524f0c51910bec9e6fc4de24112e77f99a0) Thanks [@leo-paz](https://github.com/leo-paz)! - Customer hierarchy: a customer's parent company and its direct subsidiaries, as parent accounts in the organization's HubSpot or Salesforce CRM record them.
+
+  - `outlit_get_customer` takes `include: ["hierarchy"]`: `{ parent, children, page }`, each a customer (`id`, `name`, `domain`) with `source` (`crm`) and `since`. Children come in pages of 25 (at most 100) with `hierarchy: { limit, cursor }`. `customerIncludeSections` gains `hierarchy`.
+  - `outlit_list_customers` takes `filters.partOf`, a customer by ID, domain or name: only its direct subsidiaries, with every other filter and the ARR totals.
+  - CLI: `outlit customers get <customer> --include hierarchy` (with `--limit` and `--cursor`), and `outlit customers list --part-of <customer>`.
+
+### Patch Changes
+
+- [#295](https://github.com/OutlitAI/outlit-sdk/pull/295) [`59e7ccd`](https://github.com/OutlitAI/outlit-sdk/commit/59e7ccdf6885e1e9e4e936038e2eea8ed6b00ae7) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit_get_source`, `outlit_list_sources` and `outlit_search_customer_context` accept the `CRM_NOTE` source type: the notes reps log in the CRM (HubSpot first). `outlit_list_sources` lists them only for a customer and only when `sourceType` is `CRM_NOTE`. It is behind a per-workspace flag.
+
+- [#291](https://github.com/OutlitAI/outlit-sdk/pull/291) [`b313b17`](https://github.com/OutlitAI/outlit-sdk/commit/b313b17c34102356ed4e65cd907392ae0467365e) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit_list_customers` rows can carry `crmSummary`: the customer's CRM and support tool accounts at a glance, by field label (the stage and the first custom picklists, numbers and yes/no fields, at most 4 per account from 3 accounts). It is behind a per-workspace flag and absent when `crmFields` is given.
+
+- [#291](https://github.com/OutlitAI/outlit-sdk/pull/291) [`b313b17`](https://github.com/OutlitAI/outlit-sdk/commit/b313b17c34102356ed4e65cd907392ae0467365e) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit_get_customer` can return `crmSummary` in its base response: each linked CRM and support tool account at a glance, with its stage and the custom picklists, numbers and yes/no fields that system holds, at most 8 per account. It is behind a per-workspace flag and absent when `include crm` is requested.
+
+- [#293](https://github.com/OutlitAI/outlit-sdk/pull/293) [`fe602ce`](https://github.com/OutlitAI/outlit-sdk/commit/fe602ce69d400e7c237dcade88608931aafd40b3) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit_assign_customer_owner`, `outlit_create_destination`, `outlit_update_destination`, `outlit_enable_destination`, `outlit_disable_destination`, `outlit_update_customer_activation`, `outlit_update_workspace_settings`, `outlit_setup_integration`, `outlit_act_on_inbox_item` and `outlit_undo_inbox_action` are now `destructiveHint: true`, since each can overwrite an existing value (the owner, a destination's settings or enabled state, the activation event, workspace defaults, an integration's credentials and configuration, or an Inbox task's state). Clients that act on MCP annotations can use this to ask before running them, depending on their own policy.
+
+- Updated dependencies [[`dc04f36`](https://github.com/OutlitAI/outlit-sdk/commit/dc04f369ba82111041564e06ababf3619e7d4a0b), [`2930edd`](https://github.com/OutlitAI/outlit-sdk/commit/2930edd1a83cd20af335cde1f6a6b519428feadb), [`2f8582a`](https://github.com/OutlitAI/outlit-sdk/commit/2f8582a349fc9ccd8044fd6ea7578cb0be23056a), [`59e7ccd`](https://github.com/OutlitAI/outlit-sdk/commit/59e7ccdf6885e1e9e4e936038e2eea8ed6b00ae7), [`b313b17`](https://github.com/OutlitAI/outlit-sdk/commit/b313b17c34102356ed4e65cd907392ae0467365e), [`b313b17`](https://github.com/OutlitAI/outlit-sdk/commit/b313b17c34102356ed4e65cd907392ae0467365e), [`6ff7152`](https://github.com/OutlitAI/outlit-sdk/commit/6ff71524f0c51910bec9e6fc4de24112e77f99a0), [`8be61f9`](https://github.com/OutlitAI/outlit-sdk/commit/8be61f92a94452c1e2595805960fc644e9b6a57e), [`74678fa`](https://github.com/OutlitAI/outlit-sdk/commit/74678fa27c5979390c236b44c7e50f7fbb64d905), [`fe602ce`](https://github.com/OutlitAI/outlit-sdk/commit/fe602ce69d400e7c237dcade88608931aafd40b3), [`7957ab8`](https://github.com/OutlitAI/outlit-sdk/commit/7957ab883b080705898bfea640cacb60863dee45)]:
+  - @outlit/tools@3.0.0
+
 ## 3.4.0
 
 ### Minor Changes
