@@ -56,9 +56,9 @@ against the shared `@outlit/tools` contract before the tool runs.
 
 | Tool | Purpose |
 |---|---|
-| `outlit_list_tasks` | List one section of your Inbox (today, open, snoozed, done or pool), as tasks in the Inbox page's order, each with its task `id`, type, what it is part of and what it answers |
+| `outlit_list_tasks` | List one section of your Inbox (today, open, snoozed, done or pool), as tasks in the To do page's order, each with its task `id`, type, what it is part of and what it answers |
 | `outlit_get_task` | Retrieve one Inbox task by `id`; `include` adds `source`, `draft` (opt-in) and `covered` |
-| `outlit_act_on_task` | Act on your own Inbox task by `id` (done, won't do, wrong, reopen, snooze, unsnooze, take, put back, not covered), as you would on the Inbox page; needs a `requestId`; returns an `undo` |
+| `outlit_act_on_task` | Act on your own Inbox task by `id` (done, won't do, wrong, reopen, snooze, unsnooze, take, put back, not covered, recover cover), as you would on the To do page; needs a `requestId`; returns an `undo` |
 | `outlit_undo_task_action` | Undo an action with its `undo.token` (as `undoToken`); needs a `requestId` |
 
 ### Access
