@@ -45,13 +45,6 @@ against the shared `@outlit/tools` contract before the tool runs.
 | `outlit_merge_customers` | Two-phase customer merge by exact IDs: `mode: "preview"` (default, read-only) returns the impact, a linked-records diff and a `preview.token`; `mode: "execute"` needs that token and a `requestId` |
 | `outlit_get_merge` | Track a merge by its `operation.id` |
 
-### Attention
-
-| Tool | Purpose |
-|---|---|
-| `outlit_list_cases` | List authorized open or resolved churn-risk cases (bounded fields, `preparedAction`, ARR at assessment as Money) |
-| `outlit_get_case` | Retrieve one case by `id`, with evidence that names its `source` |
-
 ### Inbox
 
 | Tool | Purpose |
@@ -97,7 +90,7 @@ against the shared `@outlit/tools` contract before the tool runs.
 
 ### Toolsets
 
-Tools belong to a toolset: `core` (customers, people, facts, sources, search, SQL), `work` (attention and inbox), `identity` (merges), `admin` (access, destinations, integrations, settings, Features) and `meta` (feedback and these two tools).
+Tools belong to a toolset: `core` (customers, people, facts, sources, search, SQL), `work` (your tasks, the Inbox, and acting on them, with undo), `identity` (merges), `admin` (access, destinations, integrations, settings, Features) and `meta` (feedback and these two tools).
 
 | Tool | Purpose |
 |---|---|
@@ -507,7 +500,7 @@ Returns `{ "id": "10000000-0000-4000-8000-000000000004", "createdAt": "2026-09-2
 
 The response is the selected tool's JSON result. List tools return paginated collections; exact lookup tools return the matched record or an error when the record cannot be found. Search returns grouped artifact-level `source` and `fact` results, not raw vector chunks. Every source is a `source` of `{ type, id }` that `outlit_get_source` opens as it is; a fact's `source` also carries `occurredAt`, `quote` and `permalink` when available.
 
-Money is always `{ "amount", "currency", "decimals", "formatted" }`: `amount` is an integer in the billing provider's minor units for the currency, `decimals` is how many digits follow the decimal point (so `amount / 10^decimals` is the major-unit value), and `formatted` is ready to display (for example 1234500 is "$12,345.00" in USD). Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). Customer `arr` is the annualized revenue run rate, the same figure the Outlit app shows: `arr.value` is the money, and `estimated` is `true` when the amount includes a usage or per-seat estimate. `arr.value.amount` is `0` for a churned, paused, or trialing customer, and `arr` is `null` when the app shows none. `outlit_get_customer` returns `revenue.data.arr` with the customer's `lifecycle` and the `parts` it is counted from. Cases return `importance.arrAtAssessment` as Money. The example below is for a customer billed in USD, so `"amount": 300000` is $3,000.00 ARR.
+Money is always `{ "amount", "currency", "decimals", "formatted" }`: `amount` is an integer in the billing provider's minor units for the currency, `decimals` is how many digits follow the decimal point (so `amount / 10^decimals` is the major-unit value), and `formatted` is ready to display (for example 1234500 is "$12,345.00" in USD). Other currencies follow the provider's amount rules (see [Stripe's currency docs](https://docs.stripe.com/currencies)). Customer `arr` is the annualized revenue run rate, the same figure the Outlit app shows: `arr.value` is the money, and `estimated` is `true` when the amount includes a usage or per-seat estimate. `arr.value.amount` is `0` for a churned, paused, or trialing customer, and `arr` is `null` when the app shows none. `outlit_get_customer` returns `revenue.data.arr` with the customer's `lifecycle` and the `parts` it is counted from. The example below is for a customer billed in USD, so `"amount": 300000` is $3,000.00 ARR.
 
 The legacy monthly `currentMrr` and `mrrCalculationStatus` fields are removed from customer results. Customer lists and reads use lowercase billing statuses (`none`, `trialing`, `paying`, `past_due`, `churned`), `page` for pagination, and `outlit.firstSyncedAt` for when Outlit first synced the customer (formerly `firstSeenAt`). Each section `outlit_get_customer` includes is `{ "status": "available", "asOf", "data" }`, or a `status` of `empty`, `not_connected`, `not_synced` or `unavailable` with a `reason`.
 

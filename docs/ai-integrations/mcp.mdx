@@ -85,12 +85,10 @@ For coding agents that run local commands, see [Agent skills](/ai-integrations/s
 | `outlit_merge_customers` | Two-phase customer merge by exact IDs: `mode: "preview"` (default, read-only, with a linked-records diff and a `preview.token`), then `mode: "execute"` with that token and a `requestId` |
 | `outlit_get_merge` | Track a merge by its `operation.id`: status, phase and, after a failure, whether anything moved |
 
-### Attention and access
+### Tasks and access
 
 | Tool | What it does |
 |---|---|
-| `outlit_list_cases` | List authorized open or resolved churn-risk cases with priority, owner, ARR at assessment and a prepared-action URL |
-| `outlit_get_case` | Retrieve one case by `id`: assessment, timeline and evidence, each piece naming the `source` `outlit_get_source` opens |
 | `outlit_list_tasks` | List one section of your Inbox (today, open, snoozed, done or pool) as tasks, each with its task `id` |
 | `outlit_get_task` | Retrieve one Inbox task by `id`; `include` adds its source, the prepared reply (`draft`, opt-in) and covered tasks |
 | `outlit_act_on_task` | Act on your own Inbox task (done, won't do, snooze, take and more), returning an `undo` to pass to `outlit_undo_task_action`; needs a `requestId` |

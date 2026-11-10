@@ -25,7 +25,7 @@ outlit customers timeline acme.com --timeframe 90d --json
 outlit facts list acme.com --status active --json
 ```
 
-**Then:** open the sources behind facts (`outlit sources get --source-type call --source-id <id>`) and check `outlit attention list --customer-id <uuid>` for review items Outlit already prepared.
+**Then:** open the sources behind facts (`outlit sources get --source-type call --source-id <id>`).
 
 ## Recipe: renewal preparation
 
@@ -64,18 +64,6 @@ outlit people list --customer '<uuid>' --journey-stage engaged --json
 ```
 
 An `unavailable` state means a source did not report; it does not mean usage is zero.
-
-## Recipe: investigate attention items
-
-Read the review queue Outlit's agents produced.
-
-```bash
-outlit attention list --json
-outlit attention list --status resolved --customer-id '<uuid>' --json
-outlit attention get '<case-id>' --json
-```
-
-Cases can include a `preparedAction.url` for review in the app. The public surface is **read-only** — no resolve, send, or act tool exists; review happens in the product.
 
 ## Recipe: hand a customer to a teammate
 

@@ -86,17 +86,17 @@ describe("feedback", () => {
       command.run!({
         args: {
           json: true,
-          body: "Add an export for attention items",
-          area: "  attention  ",
-          context: '{"surface":"cli","command":"attention list"}',
+          body: "Add an export for fact lists",
+          area: "  facts  ",
+          context: '{"surface":"cli","command":"facts list"}',
         },
       } as never),
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_submit_feedback", {
-      body: "Add an export for attention items",
-      area: "attention",
-      context: { surface: "cli", command: "attention list" },
+      body: "Add an export for fact lists",
+      area: "facts",
+      context: { surface: "cli", command: "facts list" },
     })
   })
 

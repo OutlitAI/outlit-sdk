@@ -39,7 +39,7 @@ describe("customer-surface documentation", () => {
 
     for (const toolName of collaborationTools) expect(piTools.has(toolName)).toBe(true)
 
-    expect(piDocs).toContain("Attention reads, the toolset tools")
+    expect(piDocs).toContain("SQL, the toolset tools")
     expect(piDocs).toContain("customer ownership and access actions")
     expect(piReadme).toContain("customer ownership and access actions")
     expect(piExamples).toContain("createOutlitPiExtension, piToolNames")

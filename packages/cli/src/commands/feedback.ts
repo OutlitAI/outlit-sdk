@@ -116,7 +116,7 @@ export default defineCommand({
       "",
       "Examples:",
       "  outlit feedback --body 'The customers merge preview did not list the losing record traits' --json",
-      "  outlit feedback --body 'Add a way to export attention items' --area attention --json",
+      "  outlit feedback --body 'Add a way to export facts' --area facts --json",
       '  outlit feedback --body \'SQL tool rejected a valid LIMIT clause\' --context \'{"surface":"cli","command":"sql"}\' --json',
       "  outlit feedback --body-file report.md --context-file diagnostics.json --json",
       "",

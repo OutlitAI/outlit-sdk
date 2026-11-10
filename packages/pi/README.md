@@ -32,7 +32,7 @@ The default extension registers the default customer intelligence tools from `@o
 - `outlit_list_sources`
 - `outlit_search_customer_context`
 
-SQL and the other Pi-supported Platform capabilities are available from `@outlit/tools`, but the default Pi policy intentionally stays focused on customer intelligence. A custom Pi extension can opt into every Pi-supported tool with `piToolNames`, including Attention reads, customer ownership and access actions, product-facing Feature list, create and archive tools, `outlit_list_toolsets` and `outlit_load_toolset`, plus safe integration setup, destination, activation, workspace-settings actions, and `outlit_submit_feedback` product feedback intake. The default and analytical policies remain unchanged.
+SQL and the other Pi-supported Platform capabilities are available from `@outlit/tools`, but the default Pi policy intentionally stays focused on customer intelligence. A custom Pi extension can opt into every Pi-supported tool with `piToolNames`, including task reads and actions, customer ownership and access actions, product-facing Feature list, create and archive tools, `outlit_list_toolsets` and `outlit_load_toolset`, plus safe integration setup, destination, activation, workspace-settings actions, and `outlit_submit_feedback` product feedback intake. The default and analytical policies remain unchanged.
 
 For analytical agents that need cohorts, usage trends, revenue filters, activation gaps, or aggregate checks, import `analyticalToolNames`. It combines the default customer intelligence tools with `outlit_get_schema` and `outlit_query` without exposing every customer tool:
 

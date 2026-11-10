@@ -4,9 +4,6 @@ import { describe, expect, expectTypeOf, test, vi } from "vitest"
 
 import {
   type ApiKeyValidationSuccessV2,
-  type AttentionItemResult,
-  type AttentionItemSummary,
-  type AttentionListResult,
   allPublicToolNames,
   analyticalToolNames,
   apiKeyContractHeader,
@@ -124,8 +121,6 @@ describe("toolsets", () => {
       "outlit_list_features",
       "outlit_create_feature",
       "outlit_archive_feature",
-      "outlit_list_cases",
-      "outlit_get_case",
       "outlit_list_tasks",
       "outlit_get_task",
       "outlit_act_on_task",
@@ -136,7 +131,7 @@ describe("toolsets", () => {
       "outlit_merge_customers",
       "outlit_get_merge",
     ])
-    expect(allPublicToolNames).toHaveLength(42)
+    expect(allPublicToolNames).toHaveLength(40)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -157,12 +152,6 @@ describe("toolsets", () => {
     expect(sqlToolNames).toEqual(["outlit_query", "outlit_get_schema"])
     expect(piToolNames).toEqual(allPublicToolNames)
     expect(cliToolNames).toEqual(allPublicToolNames)
-    for (const toolName of ["outlit_list_cases", "outlit_get_case"] as const) {
-      expect(defaultToolNames).not.toContain(toolName)
-      expect(analyticalToolNames).not.toContain(toolName)
-      expect(piToolNames).toContain(toolName)
-      expect(cliToolNames).toContain(toolName)
-    }
     for (const toolName of [
       "outlit_list_features",
       "outlit_create_feature",
@@ -288,16 +277,6 @@ describe("tool contracts", () => {
     expectTypeOf<CustomerListItem["activatedAt"]>().toEqualTypeOf<string | null>()
     expectTypeOf<CustomerDetail["activatedAt"]>().toEqualTypeOf<string | null>()
     expect(analyticsRow.activated_at).toBeNull()
-  })
-
-  test("exports generated case result types with Core-owned ARR at assessment as Money", () => {
-    expectTypeOf<AttentionListResult["items"][number]>().toEqualTypeOf<AttentionItemSummary>()
-    expectTypeOf<
-      NonNullable<AttentionItemResult["importance"]["arrAtAssessment"]>["amount"]
-    >().toEqualTypeOf<number>()
-    expectTypeOf<AttentionItemSummary["importance"]["shareWithinCurrency"]>().toEqualTypeOf<
-      number | null
-    >()
   })
 
   test("projects the product-facing Feature lifecycle and customer usage contracts", () => {
