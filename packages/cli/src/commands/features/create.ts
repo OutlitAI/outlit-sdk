@@ -4,6 +4,7 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { requiredString, requiredTrimmedString } from "../../lib/platform-input"
+import { newRequestId } from "../../lib/request-id"
 import { parsePropertyFilters } from "./input"
 
 export default defineCommand({
@@ -45,6 +46,7 @@ export default defineCommand({
         featureKey: requiredTrimmedString(args.key, "--key", json),
         name: requiredTrimmedString(args.name, "--name", json),
         propertyFilters: parsePropertyFilters(args["property-filters"], json),
+        requestId: newRequestId(),
       },
       json,
       { spinnerMessage: "Creating Feature..." },

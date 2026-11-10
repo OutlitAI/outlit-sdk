@@ -4,7 +4,7 @@ import { join } from "node:path"
 import { ExitError, mockExitThrow, setNonInteractive, TEST_API_KEY, useTempEnv } from "../helpers"
 
 const mockCallTool = mock(async (_toolName: string, _params: unknown) => ({
-  integrations: [],
+  items: [],
 }))
 
 mock.module("../../src/lib/client", () => ({
@@ -116,7 +116,7 @@ describe("doctor command", () => {
     const checks = parsed.checks as Array<Record<string, unknown>>
     expect(Array.isArray(checks)).toBe(true)
     expect(checks.every((c) => c.name && c.status && c.message)).toBe(true)
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_status", {})
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_integrations", {})
   })
 
   test("reports detected coding agents as missing until the outlit skill is installed", async () => {
@@ -529,7 +529,7 @@ describe("doctor command", () => {
     const parsed = JSON.parse(written) as { checks: Array<Record<string, string>> }
     const integrations = parsed.checks.find((check) => check.name === "Integrations")
     expect(integrations?.status).toBe("pass")
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_status", {})
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_integrations", {})
   })
 
   test("treats connect_own keys without a creator as unable to read integrations", async () => {
@@ -667,7 +667,7 @@ describe("doctor command", () => {
     // Unavailable validation means grants are unknown — no permission claims.
     expect(parsed.checks.find((check) => check.name === "Permissions")).toBeUndefined()
     // The integrations check still runs against the live API.
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_status", {})
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_integrations", {})
   })
 
   test("reports all families available for a full-access key", async () => {

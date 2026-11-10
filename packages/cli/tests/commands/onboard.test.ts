@@ -33,32 +33,24 @@ import {
 
 setNonInteractive()
 
-const capabilitiesPayload = {
-  providers: [
+const integrationsPayload = {
+  items: [
     {
       provider: "hubspot",
       name: "HubSpot",
       category: "crm",
-      authType: "oauth",
-      setupMode: "browser_handoff",
-      browserHandoffAvailable: true,
+      status: "not_connected",
+      setup: { auth: "oauth", mode: "browser_handoff" },
     },
     {
       provider: "pylon",
       name: "Pylon",
       category: "support",
-      authType: "api_key",
-      setupMode: "human_controlled",
-      browserHandoffAvailable: false,
+      status: "ready",
+      setup: { auth: "api_key", mode: "human_controlled" },
     },
   ],
-}
-
-const integrationsPayload = {
-  integrations: [
-    { provider: "pylon", name: "Pylon", category: "support", status: "ready" },
-    { provider: "hubspot", name: "HubSpot", category: "crm", status: "not_connected" },
-  ],
+  page: { hasMore: false, nextCursor: null, total: 2 },
 }
 
 describe("onboard", () => {
@@ -80,7 +72,6 @@ describe("onboard", () => {
           { status: 200 },
         ),
       )
-      .mockResolvedValueOnce(new Response(JSON.stringify(capabilitiesPayload), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(integrationsPayload), { status: 200 }))
   })
 
@@ -114,7 +105,6 @@ describe("onboard", () => {
     })
     expect(fetchUrls(fetchSpy)).toEqual([
       "https://app.outlit.ai/api/validate-api-key",
-      "https://app.outlit.ai/api/tools/call",
       "https://app.outlit.ai/api/tools/call",
     ])
     expect(mockExecFileSync.mock.calls.length).toBe(2)
@@ -162,8 +152,7 @@ describe("onboard", () => {
           JSON.parse(String((call[1] as RequestInit | undefined)?.body)) as { tool: string },
       )
     expect(toolBodies.map((body: { tool: string }) => body.tool)).toEqual([
-      "outlit_get_integration_capabilities",
-      "outlit_get_integration_status",
+      "outlit_list_integrations",
     ])
   })
 
@@ -209,7 +198,6 @@ describe("onboard", () => {
           { status: 200 },
         ),
       )
-      .mockResolvedValueOnce(new Response(JSON.stringify(capabilitiesPayload), { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(integrationsPayload), { status: 200 }))
 
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -228,7 +216,6 @@ describe("onboard", () => {
         "https://app.outlit.ai/api/cli-auth/start",
         "https://app.outlit.ai/api/cli-auth/poll",
         "https://app.outlit.ai/api/validate-api-key",
-        "https://app.outlit.ai/api/tools/call",
         "https://app.outlit.ai/api/tools/call",
       ])
       expect(parsed.status).toBe("ready")

@@ -43,9 +43,9 @@
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_workspace_users')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_members')]",
       "update": {
-        "title": "List workspace users"
+        "title": "List members"
       }
     },
     {
@@ -55,27 +55,15 @@
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_assign_customer_owner')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_set_customer_owner')]",
       "update": {
-        "title": "Assign customer owner"
+        "title": "Set customer owner"
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_grant_customer_access')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_set_customer_access')]",
       "update": {
-        "title": "Grant customer access"
-      }
-    },
-    {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_update_customer_access')]",
-      "update": {
-        "title": "Update customer access"
-      }
-    },
-    {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_revoke_customer_access')]",
-      "update": {
-        "title": "Revoke customer access"
+        "title": "Set customer access"
       }
     },
     {
@@ -139,12 +127,6 @@
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_destination')]",
-      "update": {
-        "title": "Get destination"
-      }
-    },
-    {
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_create_destination')]",
       "update": {
         "title": "Create destination"
@@ -154,18 +136,6 @@
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_update_destination')]",
       "update": {
         "title": "Update destination"
-      }
-    },
-    {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_enable_destination')]",
-      "update": {
-        "title": "Enable destination"
-      }
-    },
-    {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_disable_destination')]",
-      "update": {
-        "title": "Disable destination"
       }
     },
     {
@@ -193,27 +163,15 @@
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_integration_capabilities')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_integrations')]",
       "update": {
-        "title": "Get integration capabilities"
+        "title": "List integrations"
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_begin_integration_setup')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_setup_session')]",
       "update": {
-        "title": "Begin integration setup"
-      }
-    },
-    {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_integration_setup_status')]",
-      "update": {
-        "title": "Get integration setup status"
-      }
-    },
-    {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_integration_status')]",
-      "update": {
-        "title": "Get integration status"
+        "title": "Get setup session"
       }
     },
     {
@@ -223,33 +181,21 @@
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_customer_activation')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_settings')]",
       "update": {
-        "title": "Get customer activation"
+        "title": "Get settings"
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_preview_customer_activation')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_preview_activation')]",
       "update": {
-        "title": "Preview customer activation"
+        "title": "Preview activation"
       }
     },
     {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_update_customer_activation')]",
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_update_settings')]",
       "update": {
-        "title": "Update customer activation"
-      }
-    },
-    {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_workspace_settings')]",
-      "update": {
-        "title": "Get workspace settings"
-      }
-    },
-    {
-      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_update_workspace_settings')]",
-      "update": {
-        "title": "Update workspace settings"
+        "title": "Update settings"
       }
     },
     {
@@ -349,9 +295,9 @@
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_list_workspace_users']",
+      "target": "$.components.schemas['ToolOutput_outlit_list_members']",
       "update": {
-        "title": "List workspace users"
+        "title": "List members"
       }
     },
     {
@@ -361,27 +307,15 @@
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_assign_customer_owner']",
+      "target": "$.components.schemas['ToolOutput_outlit_set_customer_owner']",
       "update": {
-        "title": "Assign customer owner"
+        "title": "Set customer owner"
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_grant_customer_access']",
+      "target": "$.components.schemas['ToolOutput_outlit_set_customer_access']",
       "update": {
-        "title": "Grant customer access"
-      }
-    },
-    {
-      "target": "$.components.schemas['ToolOutput_outlit_update_customer_access']",
-      "update": {
-        "title": "Update customer access"
-      }
-    },
-    {
-      "target": "$.components.schemas['ToolOutput_outlit_revoke_customer_access']",
-      "update": {
-        "title": "Revoke customer access"
+        "title": "Set customer access"
       }
     },
     {
@@ -445,12 +379,6 @@
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_get_destination']",
-      "update": {
-        "title": "Get destination"
-      }
-    },
-    {
       "target": "$.components.schemas['ToolOutput_outlit_create_destination']",
       "update": {
         "title": "Create destination"
@@ -460,18 +388,6 @@
       "target": "$.components.schemas['ToolOutput_outlit_update_destination']",
       "update": {
         "title": "Update destination"
-      }
-    },
-    {
-      "target": "$.components.schemas['ToolOutput_outlit_enable_destination']",
-      "update": {
-        "title": "Enable destination"
-      }
-    },
-    {
-      "target": "$.components.schemas['ToolOutput_outlit_disable_destination']",
-      "update": {
-        "title": "Disable destination"
       }
     },
     {
@@ -499,27 +415,15 @@
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_get_integration_capabilities']",
+      "target": "$.components.schemas['ToolOutput_outlit_list_integrations']",
       "update": {
-        "title": "Get integration capabilities"
+        "title": "List integrations"
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_begin_integration_setup']",
+      "target": "$.components.schemas['ToolOutput_outlit_get_setup_session']",
       "update": {
-        "title": "Begin integration setup"
-      }
-    },
-    {
-      "target": "$.components.schemas['ToolOutput_outlit_get_integration_setup_status']",
-      "update": {
-        "title": "Get integration setup status"
-      }
-    },
-    {
-      "target": "$.components.schemas['ToolOutput_outlit_get_integration_status']",
-      "update": {
-        "title": "Get integration status"
+        "title": "Get setup session"
       }
     },
     {
@@ -529,33 +433,21 @@
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_get_customer_activation']",
+      "target": "$.components.schemas['ToolOutput_outlit_get_settings']",
       "update": {
-        "title": "Get customer activation"
+        "title": "Get settings"
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_preview_customer_activation']",
+      "target": "$.components.schemas['ToolOutput_outlit_preview_activation']",
       "update": {
-        "title": "Preview customer activation"
+        "title": "Preview activation"
       }
     },
     {
-      "target": "$.components.schemas['ToolOutput_outlit_update_customer_activation']",
+      "target": "$.components.schemas['ToolOutput_outlit_update_settings']",
       "update": {
-        "title": "Update customer activation"
-      }
-    },
-    {
-      "target": "$.components.schemas['ToolOutput_outlit_get_workspace_settings']",
-      "update": {
-        "title": "Get workspace settings"
-      }
-    },
-    {
-      "target": "$.components.schemas['ToolOutput_outlit_update_workspace_settings']",
-      "update": {
-        "title": "Update workspace settings"
+        "title": "Update settings"
       }
     },
     {

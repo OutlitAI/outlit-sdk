@@ -5,7 +5,7 @@ import {
   isPublicToolName,
   type PublicToolName,
 } from "@outlit/tools"
-import type { ActivationPreviewInput, ActivationUpdateInput } from "./activation"
+import type { ActivationPreviewInput } from "./activation"
 import { DEFAULT_API_URL, OUTLIT_DASHBOARD_URL, resolveApiKey } from "./config"
 import { reportResponseNotices } from "./notices"
 
@@ -16,15 +16,11 @@ export type SubmitFeedbackInput = {
 }
 
 export type OutlitToolParams<TToolName extends CliToolName> =
-  TToolName extends "outlit_get_customer_activation"
-    ? Record<string, never>
-    : TToolName extends "outlit_preview_customer_activation"
-      ? ActivationPreviewInput
-      : TToolName extends "outlit_update_customer_activation"
-        ? ActivationUpdateInput
-        : TToolName extends "outlit_submit_feedback"
-          ? SubmitFeedbackInput
-          : Record<string, unknown>
+  TToolName extends "outlit_preview_activation"
+    ? ActivationPreviewInput
+    : TToolName extends "outlit_submit_feedback"
+      ? SubmitFeedbackInput
+      : Record<string, unknown>
 
 export interface OutlitClient {
   key: string

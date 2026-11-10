@@ -10,7 +10,7 @@ import {
 
 const mockCallTool = mock(
   async (_toolName: string, _params: unknown): Promise<unknown> => ({
-    integrations: [
+    items: [
       {
         provider: "slack",
         name: "Slack",
@@ -36,7 +36,7 @@ describe("integrations status", () => {
     setNonInteractive()
     mockCallTool.mockClear()
     mockCallTool.mockImplementation(async () => ({
-      integrations: [
+      items: [
         {
           provider: "slack",
           name: "Slack",
@@ -53,7 +53,7 @@ describe("integrations status", () => {
       statusCmd.run!({ args: { json: true } } as Parameters<NonNullable<typeof statusCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_status", {})
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_integrations", {})
   })
 
   test("calls the preferred status tool for one provider", async () => {
@@ -64,7 +64,7 @@ describe("integrations status", () => {
       >[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_status", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_integrations", {
       provider: "slack",
     })
   })
@@ -82,14 +82,14 @@ describe("integrations status", () => {
       >[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_integration_status", {
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_integrations", {
       provider: "google-mail",
     })
   })
 
   test("preserves the concise canonical status in JSON", async () => {
     mockCallTool.mockImplementationOnce(async () => ({
-      integrations: [
+      items: [
         {
           provider: "hubspot",
           name: "HubSpot",
@@ -107,7 +107,7 @@ describe("integrations status", () => {
     )
 
     expect(parsed).toEqual({
-      integrations: [
+      items: [
         expect.objectContaining({
           status: "setup_required",
         }),
@@ -157,7 +157,7 @@ describe("integrations status", () => {
     "requires_intervention",
   ])("returns raw JSON and exits successfully for valid state %s", async (status) => {
     mockCallTool.mockImplementationOnce(async () => ({
-      integrations: [{ provider: "hubspot", name: "HubSpot", category: "crm", status }],
+      items: [{ provider: "hubspot", name: "HubSpot", category: "crm", status }],
     }))
 
     const { default: statusCmd } = await import("../../../src/commands/integrations/status")
@@ -168,7 +168,7 @@ describe("integrations status", () => {
     )
 
     expect(result).toEqual({
-      integrations: [{ provider: "hubspot", name: "HubSpot", category: "crm", status }],
+      items: [{ provider: "hubspot", name: "HubSpot", category: "crm", status }],
     })
   })
 })

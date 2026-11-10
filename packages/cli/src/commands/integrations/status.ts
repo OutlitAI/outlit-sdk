@@ -36,10 +36,10 @@ export default defineCommand({
     const client = await getClientOrExit(args["api-key"], json)
     const provider = args.provider ? normalizeProviderInput(args.provider) : undefined
 
-    return runTool(client, "outlit_get_integration_status", provider ? { provider } : {}, json, {
+    return runTool(client, "outlit_list_integrations", provider ? { provider } : {}, json, {
       spinnerMessage: "Fetching integration status...",
       table: {
-        itemsKey: "integrations",
+        paginationKey: "page",
         columns: [
           { header: "Name", key: "name", format: (value) => truncate(value, 24) },
           { header: "Category", key: "category", format: capitalize },

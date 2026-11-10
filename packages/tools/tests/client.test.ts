@@ -95,13 +95,11 @@ describe("toolsets", () => {
     expect(allPublicToolNames).toEqual([
       "outlit_list_customers",
       "outlit_list_customer_fields",
-      "outlit_list_workspace_users",
       "outlit_get_customer",
-      "outlit_assign_customer_owner",
-      "outlit_grant_customer_access",
-      "outlit_update_customer_access",
-      "outlit_revoke_customer_access",
       "outlit_list_people",
+      "outlit_list_members",
+      "outlit_set_customer_owner",
+      "outlit_set_customer_access",
       "outlit_get_timeline",
       "outlit_list_facts",
       "outlit_get_fact",
@@ -111,25 +109,18 @@ describe("toolsets", () => {
       "outlit_query",
       "outlit_get_schema",
       "outlit_list_destinations",
-      "outlit_get_destination",
       "outlit_create_destination",
       "outlit_update_destination",
-      "outlit_enable_destination",
-      "outlit_disable_destination",
       "outlit_archive_destination",
       "outlit_submit_feedback",
       "outlit_list_toolsets",
       "outlit_load_toolset",
-      "outlit_get_integration_capabilities",
-      "outlit_begin_integration_setup",
-      "outlit_get_integration_setup_status",
-      "outlit_get_integration_status",
+      "outlit_list_integrations",
       "outlit_setup_integration",
-      "outlit_get_customer_activation",
-      "outlit_preview_customer_activation",
-      "outlit_update_customer_activation",
-      "outlit_get_workspace_settings",
-      "outlit_update_workspace_settings",
+      "outlit_get_setup_session",
+      "outlit_preview_activation",
+      "outlit_get_settings",
+      "outlit_update_settings",
       "outlit_list_features",
       "outlit_create_feature",
       "outlit_archive_feature",
@@ -145,7 +136,7 @@ describe("toolsets", () => {
       "outlit_merge_customers",
       "outlit_get_merge",
     ])
-    expect(allPublicToolNames).toHaveLength(51)
+    expect(allPublicToolNames).toHaveLength(42)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -316,49 +307,50 @@ describe("tool contracts", () => {
     const customer = getPublicToolContract("outlit_get_customer")
 
     expect(workspace.commandId).toBe("value_feature_workspace.get")
-    expect(workspace.inputSchema.properties).toEqual(
+    const filters = workspace.inputSchema.properties.filters as unknown as {
+      properties: Record<string, unknown>
+    }
+    expect(filters.properties).toEqual(
       expect.objectContaining({
-        sourceKey: expect.objectContaining({ pattern: "^metric_source_v1_[a-f0-9]{32}$" }),
-        weeks: expect.objectContaining({ default: 12, minimum: 1, maximum: 53 }),
-        candidateLimit: expect.objectContaining({ default: 100, minimum: 1, maximum: 100 }),
+        sourceKey: expect.objectContaining({ type: "string" }),
+        eventSearch: expect.objectContaining({ type: "string" }),
       }),
     )
-    expect(workspace.outputSchema.properties.candidates.oneOf).toEqual([
+    expect(workspace.inputSchema.properties).toEqual(
       expect.objectContaining({
-        properties: expect.objectContaining({
-          status: { type: "string", const: "ready" },
-          items: expect.objectContaining({ type: "array", maxItems: 100 }),
-          truncated: { type: "boolean" },
-        }),
-        required: ["status", "items", "truncated"],
+        weeks: expect.objectContaining({ default: 12, minimum: 1, maximum: 53 }),
+        candidateLimit: expect.objectContaining({ default: 25, minimum: 1, maximum: 100 }),
+        include: expect.objectContaining({ type: "array" }),
       }),
+    )
+    expect(workspace.outputSchema.properties).not.toHaveProperty("features")
+    expect(workspace.outputSchema.properties).toEqual(
       expect.objectContaining({
-        properties: expect.objectContaining({
-          status: { type: "string", const: "partial" },
-          items: expect.objectContaining({ type: "array", maxItems: 100 }),
-          truncated: { type: "boolean" },
-        }),
-        required: ["status", "items", "truncated"],
+        items: expect.objectContaining({ type: "array" }),
+        workspaceActiveFeatures: expect.anything(),
+        sources: expect.objectContaining({ type: "array" }),
+        candidates: expect.anything(),
       }),
-      expect.objectContaining({
-        properties: expect.objectContaining({
-          status: { type: "string", const: "unavailable" },
-          reason: {
-            type: "string",
-            enum: ["SOURCE_BLOCKED", "SOURCE_NOT_READY", "QUERY_FAILED"],
-          },
-        }),
-        required: ["status", "reason"],
-      }),
-    ])
-    expect(workspace.outputSchema.properties).not.toHaveProperty("candidatesTruncated")
+    )
     expect(create.commandId).toBe("value_feature.create")
-    expect(create.inputSchema.required).toEqual(["sourceKey", "eventName", "featureKey", "name"])
+    expect(create.inputSchema.required).toEqual([
+      "sourceKey",
+      "eventName",
+      "featureKey",
+      "name",
+      "requestId",
+    ])
     expect(create.inputSchema.properties.propertyFilters).toEqual(
       expect.objectContaining({ default: [], maxItems: 5 }),
     )
     expect(archive.commandId).toBe("value_feature.archive")
-    expect(archive.inputSchema.required).toEqual(["id", "revision"])
+    expect(archive.inputSchema.required).toEqual(["id", "revision", "requestId"])
+    expect(archive.inputSchema.properties).toEqual(
+      expect.objectContaining({
+        mode: expect.objectContaining({ enum: ["preview", "execute"] }),
+        previewToken: expect.objectContaining({ type: "string" }),
+      }),
+    )
     expect(archive.inputSchema.properties).not.toHaveProperty("restore")
     expect(customer.inputSchema.required).toEqual(["customer"])
     expect(customer.inputSchema.properties.include.items.enum).toEqual(
@@ -380,21 +372,18 @@ describe("tool contracts", () => {
   })
 
   test("exports generated Feature and customer usage result aliases", () => {
-    type WorkspaceCandidates = FeatureListResult["candidates"]
-    type ReadyCandidates = Extract<WorkspaceCandidates, { status: "ready" }>
-    type PartialCandidates = Extract<WorkspaceCandidates, { status: "partial" }>
-    type UnavailableCandidates = Extract<WorkspaceCandidates, { status: "unavailable" }>
+    type ArchivedFeature = Extract<FeatureArchiveResult, { archived: true }>
+    type FeatureUsage = NonNullable<Feature["usage"]>
+    type CandidatesSection = NonNullable<FeatureListResult["candidates"]>
+    type Candidates = Extract<CandidatesSection, { status: "available" }>["data"]
 
-    expectTypeOf<FeatureListResult["features"][number]>().toEqualTypeOf<Feature>()
-    expectTypeOf<ReadyCandidates["items"][number]["eventName"]>().toEqualTypeOf<string>()
-    expectTypeOf<ReadyCandidates["truncated"]>().toEqualTypeOf<boolean>()
-    expectTypeOf<PartialCandidates["items"][number]["eventName"]>().toEqualTypeOf<string>()
-    expectTypeOf<PartialCandidates["truncated"]>().toEqualTypeOf<boolean>()
-    expectTypeOf<UnavailableCandidates["reason"]>().toEqualTypeOf<
-      "SOURCE_BLOCKED" | "SOURCE_NOT_READY" | "QUERY_FAILED"
-    >()
+    expectTypeOf<FeatureListResult["items"][number]>().toEqualTypeOf<Feature>()
+    expectTypeOf<Candidates["items"][number]["eventName"]>().toEqualTypeOf<string>()
+    expectTypeOf<Candidates["truncated"]>().toEqualTypeOf<boolean>()
+    expectTypeOf<Candidates["coverage"]>().toEqualTypeOf<"complete" | "partial">()
+    expectTypeOf<FeatureUsage["status"]>().toExtend<string>()
     expectTypeOf<FeatureCreateResult["feature"]>().toEqualTypeOf<FeatureDefinition>()
-    expectTypeOf<FeatureArchiveResult["feature"]>().toEqualTypeOf<FeatureRef>()
+    expectTypeOf<ArchivedFeature["feature"]>().toEqualTypeOf<FeatureRef>()
     expectTypeOf<CustomerFeature["kind"]>().toEqualTypeOf<"event">()
     expectTypeOf<CustomerFeature["evidence"]["coverage"]>().toEqualTypeOf<
       "complete" | "partial" | "unavailable"
@@ -501,23 +490,23 @@ describe("tool contracts", () => {
   })
 
   test("exposes workspace users and customer owner filters", () => {
-    const workspaceUsersContract = getPublicToolContract("outlit_list_workspace_users")
-    const workspaceProperties = workspaceUsersContract.inputSchema.properties as Record<
+    const membersContract = getPublicToolContract("outlit_list_members")
+    const memberProperties = membersContract.inputSchema.properties as Record<
       string,
-      { type?: string; enum?: readonly string[] }
+      { type?: string; enum?: readonly string[]; properties?: Record<string, unknown> }
     >
 
-    expect(workspaceProperties.search).toEqual(
+    expect(memberProperties.filters?.properties?.search).toEqual(
       expect.objectContaining({
         type: "string",
       }),
     )
-    expect(workspaceProperties.hasOwnedCustomers).toEqual(
+    expect(memberProperties.filters?.properties?.hasOwnedCustomers).toEqual(
       expect.objectContaining({
         type: "boolean",
       }),
     )
-    expect(workspaceProperties.orderBy?.enum).toEqual(["name", "email", "owned_customer_count"])
+    expect(memberProperties.orderBy?.enum).toEqual(["owned_customers", "name"])
 
     const customerContract = getPublicToolContract("outlit_list_customers")
     type ObjectSchema = { properties: Record<string, Record<string, unknown>> }
@@ -631,7 +620,11 @@ describe("tool contracts", () => {
 
     expect(
       matchesGeneratedJsonSchema(
-        { provider: "autumn", credentials: { apiKey: "am_sk_test_example" } },
+        {
+          provider: "autumn",
+          credentials: { apiKey: "am_sk_test_example" },
+          requestId: "request_autumn_1",
+        },
         contract.inputSchema,
       ),
     ).toBe(true)
@@ -807,7 +800,7 @@ describe("createOutlitClient", () => {
       fetch: fetchMock,
     })
 
-    await client.callTool("outlit_get_integration_status", {}, { signal: controller.signal })
+    await client.callTool("outlit_list_integrations", {}, { signal: controller.signal })
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://app.outlit.ai/api/tools/call",

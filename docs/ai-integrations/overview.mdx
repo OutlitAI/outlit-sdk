@@ -46,7 +46,7 @@ Most of the catalog is read-only customer intelligence. Writes are bounded and e
 
 | Write family | Examples | Notes |
 |--------------|----------|-------|
-| Customer collaboration | `customers owner set`, `customers grant`, `customers revoke` | Requires `customer_access:manage`; writes need **exact UUIDs** — the CLI never fuzzy-matches names, domains, or emails for mutations |
+| Customer collaboration | `customers owner set`, `customers grant`, `customers revoke` | Requires `customer_access:manage`; writes take a customer ID, domain, or exact name and a member user ID or email — the CLI never fuzzy-matches for mutations; owner changes and archives preview first (`--yes` confirms without a terminal) |
 | Destinations | `destinations create/update/enable/disable/archive` | Configuration is masked in reads; secrets are never returned |
 | Features | `features create`, `features archive` | Create maps one product event to a Feature; archive requires the current opaque revision |
 | Workspace config | `activation update`, `settings update` | Narrow, enumerated settings — not arbitrary config |

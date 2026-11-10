@@ -13,6 +13,11 @@ export interface PollOptions {
   shouldRetry?: (error: unknown) => boolean
 }
 
+export interface PollOptionsFor<T> extends PollOptions {
+  /** The wait before the next poll, in milliseconds, when the last result names one. */
+  nextIntervalMs?: (result: T) => number | undefined
+}
+
 /**
  * Polls a function until a predicate is satisfied or the timeout elapses.
  *
@@ -22,19 +27,21 @@ export interface PollOptions {
 export async function pollUntil<T>(
   fn: (signal?: AbortSignal) => Promise<T>,
   predicate: (result: T) => boolean,
-  opts: PollOptions = {},
+  opts: PollOptionsFor<T> = {},
 ): Promise<T | null> {
-  const intervalMs = opts.intervalMs ?? 2_000
+  const defaultIntervalMs = opts.intervalMs ?? 2_000
   const timeoutMs = opts.timeoutMs ?? 300_000
   const start = Date.now()
 
   while (Date.now() - start < timeoutMs) {
+    let intervalMs = defaultIntervalMs
     const remainingMs = timeoutMs - (Date.now() - start)
     const controller = new AbortController()
     const deadline = setTimeout(() => controller.abort(), remainingMs)
     try {
       const result = await fn(controller.signal)
       if (predicate(result)) return result
+      intervalMs = opts.nextIntervalMs?.(result) ?? defaultIntervalMs
     } catch (error) {
       if (controller.signal.aborted && Date.now() - start >= timeoutMs) return null
       if (opts.shouldRetry?.(error) === false) throw error

@@ -12,12 +12,7 @@ function readDoc(path: string): string {
   return readFileSync(path, "utf8")
 }
 
-const collaborationTools = [
-  "outlit_assign_customer_owner",
-  "outlit_grant_customer_access",
-  "outlit_update_customer_access",
-  "outlit_revoke_customer_access",
-] as const
+const collaborationTools = ["outlit_set_customer_owner", "outlit_set_customer_access"] as const
 
 const contactTransitionFactTypes = [
   "contact_departure",

@@ -13,11 +13,11 @@ outlit integrations setup hubspot
 outlit integrations setup hubspot --json
 ```
 
-Setup checks the provider capabilities without sending credentials. If the response includes `preferredSetupVersion: 1`, the CLI uses `outlit_setup_integration`. Older server versions use a browser handoff; the CLI does not send credentials or provider settings to that flow.
+Setup checks the provider name locally, then calls `outlit_setup_integration` without credentials. Each call carries its own `requestId`, so a retried call returns the first answer instead of repeating the write. The CLI no longer falls back to an older browser-handoff flow.
 
 Interactive setup can:
 
-- Prompt for a provider credential only after the Outlit server returns `CREDENTIAL_REQUIRED`. Secret prompts
+- Prompt for a provider credential only after the Outlit server reports the problem `credential_required`. Secret prompts
   disable terminal echo.
 - Open a validated browser handoff on the configured Outlit origin. Authentication handoffs are
   polled for at most five minutes. Recovery and external setup open in the browser; the CLI does not wait for them to finish.
@@ -46,7 +46,7 @@ printf '%s\n' '{"credentials":{"apiKey":"<fireflies-api-key>"}}' \
 An explicit HubSpot CRM mapping is likewise supplied as the generated CRM mapping shape:
 
 ```bash
-printf '%s\n' '{"configuration":{"kind":"crm_mapping","mappings":[{"pipelineId":"default","pipelineName":"Sales","mappings":[{"outlitStage":"Won","crmStages":[{"id":"closedwon","name":"Closed Won"}]}]}],"confirm":true}}' \
+printf '%s\n' '{"configuration":{"kind":"crm_mapping","mappings":[{"pipelineId":"default","pipelineName":"Sales","mappings":[{"outlitStage":"won","crmStages":[{"id":"closedwon","name":"Closed Won"}]}]}],"confirm":true}}' \
   | outlit integrations setup hubspot --config-stdin --json
 ```
 
@@ -58,7 +58,7 @@ printf '%s\n' '{"configuration":{"kind":"stripe_renewal_date_field","key":"renew
 ```
 
 In JSON mode, run setup first without `--config-stdin`: a connected Stripe account returns the step
-as `next`, with each key's subscription count and a sample date (`null` when the key does not hold
+as `step`, with each key's subscription count and a sample date (`null` when the key does not hold
 dates, which makes it unusable). Then rerun with the key you chose.
 
 The provider remains the positional CLI argument and is rejected inside the stdin document. Unknown
@@ -66,7 +66,7 @@ top-level fields are also rejected. `--config-stdin` is explicit; ordinary piped
 
 JSON mode never prompts, opens a browser, or polls. It returns the raw setup result for handoffs and
 configuration previews. If credentials are required but were not supplied through `--config-stdin`,
-the command exits nonzero with Outlit's stable `CREDENTIAL_REQUIRED` error.
+the command exits nonzero with the problem `credential_required`. Problem codes are lowercase (`owner_required`, `credential_rejected`, and so on).
 
 For a CRM recommendation, `--accept-recommended` submits the exact recommendation from the current
 response. It conflicts with a custom CRM mapping supplied through stdin. A Mixpanel mapping must be
@@ -83,8 +83,8 @@ outlit integrations status
 outlit integrations status hubspot --json
 ```
 
-`status` calls `outlit_get_integration_status` and returns one of five configuration-readiness
-states:
+`status` calls `outlit_list_integrations`, one entry per provider, and returns one of five
+configuration-readiness states:
 
 | State | Meaning |
 | --- | --- |
@@ -95,6 +95,8 @@ states:
 | `requires_intervention` | Setup needs human attention or repair. |
 
 `ready` describes configuration readiness only. It does not promise that a sync or backfill has
-finished, that customer data is present, or that provider data is current. The status command does
-not expose browser-session, raw provider-state, sync, or action metadata. `gmail` is accepted as a
+finished, that customer data is present, or that provider data is current. For a connected provider
+the JSON output adds a `connection` section with `lastDataReceivedAt`, `syncStatus` and
+`hasSyncError`, and `setup` says whether the provider signs in with OAuth, an API key or basic auth.
+The status command does not expose browser-session or raw provider-state metadata. `gmail` is accepted as a
 CLI alias for `google-mail`.

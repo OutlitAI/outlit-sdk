@@ -33,7 +33,7 @@ export default defineCommand({
       json,
     )
 
-    return runTool(client, "outlit_update_workspace_settings", { defaultTimezone }, json, {
+    return runTool(client, "outlit_update_settings", { timezone: defaultTimezone }, json, {
       spinnerMessage: "Updating settings...",
     })
   },

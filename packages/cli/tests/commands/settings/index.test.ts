@@ -50,9 +50,9 @@ describe("settings command", () => {
       } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_get_workspace_settings", {})
-    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_update_workspace_settings", {
-      defaultTimezone: "America/Los_Angeles",
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_get_settings", {})
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_update_settings", {
+      timezone: "America/Los_Angeles",
     })
   })
 })

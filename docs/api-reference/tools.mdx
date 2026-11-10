@@ -65,11 +65,9 @@ against the shared `@outlit/tools` contract before the tool runs.
 
 | Tool | Purpose |
 |---|---|
-| `outlit_list_workspace_users` | Browse internal workspace users such as CSMs, managers, account owners, and admins |
-| `outlit_assign_customer_owner` | Assign an active workspace member as the customer's primary owner |
-| `outlit_grant_customer_access` | Share a customer with an active workspace member as a Viewer or Editor |
-| `outlit_update_customer_access` | Change an existing customer collaborator between Viewer and Editor |
-| `outlit_revoke_customer_access` | Remove a collaborator's explicit access to a customer |
+| `outlit_list_members` | Browse internal workspace members such as CSMs, managers, account owners, and admins |
+| `outlit_set_customer_owner` | Assign an active workspace member as the customer's primary owner; previews first, and returns an undo token |
+| `outlit_set_customer_access` | Set a member's access to a customer to viewer, editor, or none; returns an undo token |
 
 ### Timeline and sources
 
@@ -93,9 +91,9 @@ against the shared `@outlit/tools` contract before the tool runs.
 
 | Tool | Purpose |
 |---|---|
-| `outlit_list_features` | Read configured Features, exact historical usage, eligible sources, and ready, partial, or unavailable candidate discovery |
+| `outlit_list_features` | Read configured Features, eligible sources, and on request exact historical usage and event candidates, each with its own coverage |
 | `outlit_create_feature` | Create or idempotently return one Feature observed by one event rule |
-| `outlit_archive_feature` | Archive a Feature using its opaque id and current revision when another active feature remains |
+| `outlit_archive_feature` | Preview, then archive a Feature using its opaque id and current revision when another active feature remains |
 
 ### Toolsets
 
@@ -110,23 +108,16 @@ Tools belong to a toolset: `core` (customers, people, facts, sources, search, SQ
 
 | Tool | Purpose |
 |---|---|
-| `outlit_list_destinations` | List destinations with masked configuration |
-| `outlit_get_destination` | Read one destination with masked configuration |
+| `outlit_list_destinations` | List destinations with masked configuration, or read some by `ids` |
 | `outlit_create_destination` | Create a delivery destination |
-| `outlit_update_destination` | Update a destination |
-| `outlit_enable_destination` | Enable a destination |
-| `outlit_disable_destination` | Disable a destination |
-| `outlit_archive_destination` | Archive a destination |
-| `outlit_get_integration_capabilities` | Check supported setup steps without sending credentials |
+| `outlit_update_destination` | Update a destination, including enabling or disabling it |
+| `outlit_archive_destination` | Preview, then archive a destination |
+| `outlit_list_integrations` | List every provider with its readiness, how it signs in, and its connection |
 | `outlit_setup_integration` | Complete a supported credential, mapping, or browser handoff step |
-| `outlit_get_integration_status` | Read whether an integration is configured and ready |
-| `outlit_begin_integration_setup` | Start an older browser handoff without sending credentials |
-| `outlit_get_integration_setup_status` | Check the status of an older authentication handoff |
-| `outlit_get_customer_activation` | Read the configured activation event |
-| `outlit_preview_customer_activation` | Preview an event against past activity without changing activation |
-| `outlit_update_customer_activation` | Set the ordinary activation event |
-| `outlit_get_workspace_settings` | Read supported workspace settings |
-| `outlit_update_workspace_settings` | Update a supported workspace setting |
+| `outlit_get_setup_session` | Check the status of a browser sign-in started by setup |
+| `outlit_get_settings` | Read the workspace timezone, default customer owner, and activation event |
+| `outlit_update_settings` | Update the timezone, default customer owner, or activation event |
+| `outlit_preview_activation` | Preview an event against past activity without changing activation |
 
 ### Feedback
 
@@ -448,6 +439,53 @@ no matches in the requested window, or unavailable source evidence. Unavailable 
 converted to zero. Archive is the available self-service lifecycle action.
 Creating a Feature also creates the supporting weekly event-count and active-days metrics inside
 Outlit; those metrics are not separate public resources.
+
+### Admin tools
+
+The admin tools change a workspace, so they share a few rules.
+
+- **Retries.** Writes that can be sent twice take a `requestId`, any unique string (`outlit_create_destination`, `outlit_archive_destination`, `outlit_set_customer_owner`, `outlit_set_customer_access`, `outlit_setup_integration`, `outlit_create_feature`, `outlit_archive_feature`). A retry with the same `requestId` and input returns the first result; a changed input with the same id is refused.
+- **Previews.** `outlit_archive_destination`, `outlit_archive_feature` and `outlit_set_customer_owner` change nothing on the first call. They return `preview.token`, what the change would affect, and `next`, the exact call to confirm. Confirm with the same target, `"mode": "execute"` and `"previewToken"`. A token lasts 15 minutes; a token that no longer matches the current state is refused with `preview_stale` and a fresh preview.
+- **Undo.** `outlit_set_customer_owner` and `outlit_set_customer_access` return `undo: { token, until }` (24 hours), or `null` when the change cannot be undone. Call the same tool with `{ "undoToken", "requestId" }` to put the earlier state back. When the caller could not undo a change, such as removing their own access, the first call returns `outcome: "needs_confirmation"` with the reason, a preview and `next`.
+- **Set state.** `outlit_update_destination` and `outlit_update_settings` take the end state; only the fields you send are written. `revision` is optional: when it is stale the call is refused with `stale_revision`, unless every field you asked for already holds its value.
+- **Shapes.** Lists return `items` and `page { hasMore, nextCursor, total }` (25 per page by default, at most 100), and `coverage` when empty. People are `{ id, name, email }`; customers `{ id, name, domain }`. Enums are lowercase. A missing permission is `TOOL_CALL_FORBIDDEN` with `missingPermission`.
+
+```json
+{
+  "tool": "outlit_set_customer_access",
+  "input": {
+    "customer": "acme.com",
+    "member": "alex@example.com",
+    "role": "viewer",
+    "requestId": "6d1c8a6e-5c0b-4c0e-9d6a-2f5f6a2c9d11"
+  }
+}
+```
+
+#### Moving from the earlier admin tools
+
+| Earlier | Now |
+|---|---|
+| `outlit_get_destination {id}`, `outlit_list_destinations` → `{destinations}` | `outlit_list_destinations {ids: [id]}` → `{items, missing}`; `maskedConfig` is `config`, `syncStatus` and `lastSyncedAt` are `delivery`; each has a `revision` |
+| `outlit_enable_destination`, `outlit_disable_destination` | `outlit_update_destination {id, enabled}` |
+| `outlit_update_destination {id, type, label?, isDefault?}` | `{id, revision?, label?, isDefault?, enabled?}`; `type` is dropped |
+| `outlit_create_destination {type: "SLACK_CHANNEL", ...}` → `{destination}` | `{type: "slack_channel", ..., requestId}` → `{created, destination}` |
+| `outlit_archive_destination {id}` archives at once | `{id, requestId}` previews; `{..., mode: "execute", previewToken}` archives |
+| `outlit_assign_customer_owner {customerId, targetUserId}` | `outlit_set_customer_owner {customer, member, requestId}` |
+| `outlit_grant_customer_access`, `outlit_update_customer_access` `{customerId, targetUserId, role: "VIEWER" \| "EDITOR"}` | `outlit_set_customer_access {customer, member, role: "viewer" \| "editor", requestId}` |
+| `outlit_revoke_customer_access` | `outlit_set_customer_access {..., role: "none"}` |
+| `outlit_list_workspace_users {search, role, ..., orderBy: "owned_customer_count"}`, up to 1000 per page | `outlit_list_members {filters: {search, role, managerEmail, hasOwnedCustomers}, orderBy: "owned_customers" \| "name"}`, up to 100 per page; `ownedCustomerCount` is `ownedCustomers` |
+| `outlit_get_integration_capabilities`, `outlit_get_integration_status`, the earlier `outlit_list_integrations {connectedOnly}` | `outlit_list_integrations {provider?, filters: {connected?}}` → `items[]` with `status`, `setup {auth, mode}`, `connection` |
+| `outlit_begin_integration_setup {provider}` | `outlit_setup_integration {provider, handoff: true, requestId}` → `step: {kind: "browser_handoff", url, sessionId, expiresAt}` |
+| `outlit_setup_integration` → `next`, `error {code: "OWNER_REQUIRED"}`; `outlitStage: "Won"` | `step`, `problem {code: "owner_required", ...}`; `next` is a next call; `outlitStage: "won"` |
+| `outlit_get_integration_setup_status {sessionId}` | `outlit_get_setup_session {sessionId}` → `{sessionId, provider, status, pollAfterSeconds?, next?}` |
+| `outlit_get_workspace_settings`, `outlit_get_customer_activation` | `outlit_get_settings` → `{settings: {general, activation}, revision}` |
+| `outlit_update_workspace_settings {defaultTimezone, customerOwnership}`, `outlit_update_customer_activation {eventName}` | `outlit_update_settings {revision?, timezone?, defaultOwner?, activationEvent?}` → `{settings, revision, changed}` |
+| `outlit_preview_customer_activation {eventName}` → `{preview: {...Count}}` | `outlit_preview_activation {event}` → `{customers, contacts, examples}` |
+| `outlit_list_features {sourceKey, weeks, candidateLimit: 100}`, always with evidence and candidates | `{filters: {sourceKey, eventSearch}, include: ["usage", "candidates"], weeks, candidateLimit: 25, limit, cursor}`; `features` is `items`, `evidence` is `usage`, `selectedSourceKey` is `sources[].selected`, `workspaceActiveFeatureCount` is `workspaceActiveFeatures`, candidates are a section |
+| `outlit_create_feature`, `outlit_archive_feature {id, revision}` | `requestId` added; archive previews first |
+
+Each earlier name and input spelling keeps working until 2026-12-11.
 
 ### Submit product feedback
 

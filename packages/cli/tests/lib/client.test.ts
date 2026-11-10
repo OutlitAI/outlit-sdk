@@ -82,10 +82,10 @@ describe("createClient", () => {
       new Response(JSON.stringify({ integrations: [] }), { status: 200 }),
     )
     const client = await createClient()
-    await client.callTool("outlit_get_integration_status", { provider: "slack" })
+    await client.callTool("outlit_list_integrations", { provider: "slack" })
 
     expect(JSON.parse(String(fetchSpy.mock.calls[0]?.[1]?.body))).toEqual({
-      tool: "outlit_get_integration_status",
+      tool: "outlit_list_integrations",
       input: { provider: "slack" },
     })
     fetchSpy.mockRestore()
@@ -171,7 +171,7 @@ describe("createClient", () => {
     )
     const client = await createClient()
 
-    await expect(client.callTool("outlit_update_workspace_settings", {})).rejects.toThrow(
+    await expect(client.callTool("outlit_update_settings", {})).rejects.toThrow(
       "API key is missing a required grant.",
     )
     fetchSpy.mockRestore()

@@ -29,7 +29,7 @@ export default defineCommand({
     const eventName = parseActivationEvent(args, json)
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, "outlit_update_customer_activation", { eventName }, json, {
+    return runTool(client, "outlit_update_settings", { activationEvent: eventName }, json, {
       spinnerMessage: "Updating activation event...",
     })
   },

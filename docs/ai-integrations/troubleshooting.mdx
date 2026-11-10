@@ -19,7 +19,8 @@ description: "Auth, permissions, identity, JSON output, MCP, and SDK delivery fa
 - **`TOOL_CALL_FORBIDDEN` with `retryable: false`** — the key or member lacks the underlying grant. Add the grant on the key (or use an OAuth session with permission); retrying the identical call won't help.
 - **`ws-users list` works but `owner set`/`grant` fails** — discovery needs `workspace_members:read`; collaboration writes need `customer_access:manage`. They are separate grants and the full flow needs both.
 - **A key can't see what its creator sees** — API keys are independent principals and do not inherit the creator's permissions or customer access.
-- **Writes reject names/domains** — mutations take exact UUIDs (`customers owner set <uuid> --target-user-id user_…`). Resolve IDs with `customers get` / `ws-users list` first.
+- **Writes reject a name** — mutations take a customer ID, domain or exact name, and refuse a name that matches several customers (`customers owner set acme.com --member user_…`). Resolve the ID with `customers get` first, and the member with `ws-users list`.
+- **`owner set` or an archive prints a preview and exits 1** — nothing was changed. Outside a terminal these commands need `--yes` to confirm.
 
 ## Empty or partial results
 

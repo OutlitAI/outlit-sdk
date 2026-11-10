@@ -1,13 +1,9 @@
 import { outputError } from "./output"
 
 export interface ActivationPreviewInput {
-  eventName: string
+  event: string
   lookbackDays?: number
   exampleLimit?: number
-}
-
-export interface ActivationUpdateInput {
-  eventName: string | null
 }
 
 export interface ActivationEventArgs {
@@ -77,7 +73,7 @@ export function parseActivationEvent(args: ActivationEventArgs, json: boolean): 
 export function parseActivationPreviewOptions(
   args: ActivationPreviewArgs,
   json: boolean,
-): Omit<ActivationPreviewInput, "eventName"> {
+): Omit<ActivationPreviewInput, "event"> {
   const lookbackDays = parseBoundedInteger(args["lookback-days"], "--lookback-days", 1, 90, json)
   const exampleLimit = parseBoundedInteger(args["example-limit"], "--example-limit", 1, 20, json)
 

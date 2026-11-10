@@ -122,7 +122,7 @@ describe("completions command", () => {
     expect(out).toContain(
       `[[ $COMP_CWORD -gt 2 && "${bashCompWord(1)}" == "customers" && "${bashCompWord(2)}" == "grant" ]]`,
     )
-    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --target-user-id --role"')
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --yes --member --role"')
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --source-type --customer --participant --provider --has-transcript --after --before"',
     )
@@ -149,18 +149,18 @@ describe("completions command", () => {
     expect(out).not.toContain("--client-request-id")
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --default-timezone"')
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --source --weeks --candidate-limit"',
+      'COMPREPLY=($(compgen -W "--api-key --json --source --weeks --candidate-limit --include --search --limit --cursor"',
     )
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --source --event --key --name --property-filters"',
     )
-    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --revision"')
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --yes --revision"')
     expect(out).not.toContain("--slack-channel-name")
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --type --channel-id --label --default --disabled"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --type --label --default --enabled --disabled"',
+      'COMPREPLY=($(compgen -W "--api-key --json --label --default --enabled --disabled"',
     )
     expect(out).toContain("--customer-id --suggestion-id --status --confidence")
     expect(out).toContain("--preview-token --request-id --suggestion-id --review-notes")
@@ -219,8 +219,8 @@ describe("completions command", () => {
     expect(out).toContain("'--owner-id:Filter by owner user ID'")
     expect(out).toContain("'--owner-email:Filter by owner email'")
     expect(out).toContain("'--has-owner:Only customers with an owner'")
-    expect(out).toContain("'--target-user-id:Required workspace-user ID'")
-    expect(out).toContain("'--role:Required access role (VIEWER, EDITOR)'")
+    expect(out).toContain("'--member:Workspace member user ID or email'")
+    expect(out).toContain("'--role:Required access role (viewer, editor)'")
     expect(out).toContain('[[ "$words[2]" == "customers" && "$words[3]" == "grant" ]]')
     expect(out).toContain(
       '[[ "$words[2]" == "customers" && "$words[3]" == "owner" && "$words[4]" == "set" ]]',
@@ -253,10 +253,10 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-email")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l has-owner")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l trait")
-    expect(out).toContain("-n '__outlit_using_cmd customers owner set' -l target-user-id")
-    expect(out).toContain("-n '__outlit_using_cmd customers grant' -l target-user-id")
+    expect(out).toContain("-n '__outlit_using_cmd customers owner set' -l member")
+    expect(out).toContain("-n '__outlit_using_cmd customers grant' -l member")
     expect(out).toContain("-n '__outlit_using_cmd customers grant' -l role")
-    expect(out).toContain("-n '__outlit_using_cmd customers revoke' -l target-user-id")
+    expect(out).toContain("-n '__outlit_using_cmd customers revoke' -l member")
     expect(out).not.toContain("assign-owner")
     expect(out).not.toContain("grant-access")
     expect(out).not.toContain("update-access")

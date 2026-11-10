@@ -2,23 +2,25 @@ import { publicToolContracts } from "@outlit/tools"
 import { outputError } from "../../lib/output"
 import { requiredString } from "../../lib/platform-input"
 
-const customerIdSchema =
-  publicToolContracts.outlit_assign_customer_owner.inputSchema.properties.customerId
-const targetUserIdSchema =
-  publicToolContracts.outlit_assign_customer_owner.inputSchema.properties.targetUserId
+const memberMaxLength =
+  publicToolContracts.outlit_set_customer_access.inputSchema.properties.member.maxLength
 
-export const customerAccessRoles =
-  publicToolContracts.outlit_grant_customer_access.inputSchema.properties.role.enum
+/** What `outlit customers grant` sets; `revoke` is the same write with role none. */
+export const customerAccessRoles = ["viewer", "editor"] as const
 
-export const customerCollaborationIdArgs = {
-  "customer-id": {
+export const customerCollaborationArgs = {
+  customer: {
     type: "positional",
-    description: "Exact customer UUID",
+    description: "Customer ID, domain (acme.com), or exact name",
     required: true,
+  },
+  member: {
+    type: "string",
+    description: "Workspace member's user ID or email, from `outlit ws-users list --json`",
   },
   "target-user-id": {
     type: "string",
-    description: "Required exact workspace-user ID from `outlit ws-users list --json`",
+    description: "Previous spelling of --member",
   },
 } as const
 
@@ -29,38 +31,32 @@ export const customerAccessRoleArg = {
   },
 } as const
 
-export function parseCustomerCollaborationIds(
-  args: { "customer-id"?: string; "target-user-id"?: string },
+/** The customer and member a collaboration write names, as the tool takes them. */
+export function parseCustomerCollaboration(
+  args: { customer?: string; member?: string; "target-user-id"?: string },
   json: boolean,
-): { customerId: string; targetUserId: string } {
-  const customerId = requiredString(args["customer-id"], "<customer-id>", json)
-  const customerIdPattern = new RegExp(customerIdSchema.pattern)
-  if (!customerIdPattern.test(customerId)) {
+): { customer: string; member: string } {
+  const customer = requiredString(args.customer, "<customer>", json).trim()
+  const member = (args.member ?? args["target-user-id"])?.trim()
+  if (!member) {
+    return outputError({ message: "Provide --member", code: "missing_input" }, json)
+  }
+  if (member.length > memberMaxLength) {
     return outputError(
-      { message: "<customer-id> must be an exact customer UUID", code: "invalid_input" },
+      { message: `--member must be at most ${memberMaxLength} characters`, code: "invalid_input" },
       json,
     )
   }
 
-  const targetUserId = requiredString(args["target-user-id"], "--target-user-id", json)
-  if (targetUserId.length > targetUserIdSchema.maxLength) {
-    return outputError(
-      {
-        message: `--target-user-id must be at most ${targetUserIdSchema.maxLength} characters`,
-        code: "invalid_input",
-      },
-      json,
-    )
-  }
-
-  return { customerId, targetUserId }
+  return { customer, member }
 }
 
+/** Reads --role in any case (VIEWER, Editor), the way it has always been typed. */
 export function parseCustomerAccessRole(
   value: string | undefined,
   json: boolean,
 ): (typeof customerAccessRoles)[number] {
-  const input = requiredString(value, "--role", json)
+  const input = requiredString(value, "--role", json).trim().toLowerCase()
   const role = customerAccessRoles.find((candidate) => candidate === input)
   if (!role) {
     return outputError(

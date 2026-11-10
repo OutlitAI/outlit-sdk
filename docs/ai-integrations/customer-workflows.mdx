@@ -3,7 +3,7 @@ title: "Customer workflows"
 description: "Evidence-first workflows for churn, renewals, expansion, and customer collaboration using the Outlit CLI or MCP tools."
 ---
 
-These recipes are written for agents and automation scripts. The CLI, MCP, and `POST /api/tools/call` expose **corresponding capabilities** — but not identical names or shapes. `outlit sql` maps to `outlit_query`, `customers owner set` maps to `outlit_assign_customer_owner`, and kebab-case flags map to camelCase schema fields (`--billing-status` → `billingStatus`). MCP/API readers should follow tool names and input schemas, not CLI spellings.
+These recipes are written for agents and automation scripts. The CLI, MCP, and `POST /api/tools/call` expose **corresponding capabilities** — but not identical names or shapes. `outlit sql` maps to `outlit_query`, `customers owner set` maps to `outlit_set_customer_owner`, and kebab-case flags map to camelCase schema fields (`--billing-status` → `billingStatus`). MCP/API readers should follow tool names and input schemas, not CLI spellings.
 
 **Evidence rules that apply to every recipe:** cite what you retrieved, check `content.status` and `content.data.page.hasMore` before treating source content as complete, and treat missing fields, empty results, and absent permalinks as *unavailable evidence* — never as negative evidence.
 
@@ -79,20 +79,20 @@ Cases can include a `preparedAction.url` for review in the app. The public surfa
 
 ## Recipe: hand a customer to a teammate
 
-Exact-ID writes; discover the IDs first.
+Writes name one customer and one member; discover the member first.
 
 ```bash
 # 1. Find the member's user ID (requires workspace_members:read)
 outlit ws-users list --search alex --json
 
 # 2. Assign ownership (requires customer_access:manage)
-outlit customers owner set '<customer-uuid>' --target-user-id user_123 --json
+outlit customers owner set '<customer>' --member user_123 --yes --json
 
 # Or share without transferring ownership
-outlit customers grant '<customer-uuid>' --target-user-id user_123 --role VIEWER --json
+outlit customers grant '<customer>' --member user_123 --role viewer --json
 ```
 
-Write commands accept **exact identifiers only**: a customer UUID and a `user_*` workspace-member ID. The CLI does not fuzzy-match names, emails, or domains for mutations. Discovering members requires `workspace_members:read`; changing customer access requires `customer_access:manage`.
+Write commands take a customer ID, domain or exact name and a workspace member's `user_*` ID or email. The CLI does not fuzzy-match for mutations: a name that matches several customers is refused. `owner set` previews first; `--yes` confirms without a terminal. Discovering members requires `workspace_members:read`; changing customer access requires `customer_access:manage`.
 
 ## Recipe: merge a duplicate customer
 

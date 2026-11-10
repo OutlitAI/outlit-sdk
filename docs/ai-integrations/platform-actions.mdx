@@ -9,9 +9,9 @@ Use `POST /api/tools/call` or the CLI to manage delivery destinations, the activ
 
 | Area | Tools |
 |------|-------|
-| Destinations | List, get, create, update, enable, disable, and archive |
-| Activation | Get, preview, and update the ordinary customer activation event |
-| Workspace settings | Get and update the workspace timezone |
+| Destinations | List, get, create, update, enable, disable, and archive (archive previews first) |
+| Activation | Get, preview, and update the ordinary customer activation event (part of workspace settings) |
+| Workspace settings | Get and update the workspace timezone, default customer owner, and activation event |
 | Features | List, create, and archive product capabilities observed through exact event rules |
 | Integrations | List integrations, complete supported setup steps, and check readiness |
 
@@ -25,7 +25,7 @@ outlit activation preview --event activated --json
 outlit settings update --default-timezone America/Los_Angeles --json
 outlit features list --json
 outlit features create --source metric_source_v1_0123456789abcdef0123456789abcdef --event report_exported --key reports_exported --name "Reports exported" --json
-outlit features archive value_feature_v1_0123456789abcdef0123456789abcdef --revision value_feature_revision_v1_fedcba9876543210fedcba9876543210 --json
+outlit features archive value_feature_v1_0123456789abcdef0123456789abcdef --revision value_feature_revision_v1_fedcba9876543210fedcba9876543210 --yes --json
 ```
 
 Use the generated [OpenAPI specification](/openapi.json) for the exact request, output, and stable gateway error schemas.

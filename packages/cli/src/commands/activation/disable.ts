@@ -25,7 +25,7 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, "outlit_update_customer_activation", { eventName: null }, json, {
+    return runTool(client, "outlit_update_settings", { activationEvent: null }, json, {
       spinnerMessage: "Disabling activation matching...",
     })
   },

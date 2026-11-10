@@ -6,7 +6,7 @@ import { getClientOrExit, outputApiError } from "../../lib/api"
 import type { OutlitClient } from "../../lib/client"
 import { isJsonMode, outputError, outputResult } from "../../lib/output"
 import { normalizeProviderInput } from "../../lib/providers"
-import { createSpinner } from "../../lib/spinner"
+import { newRequestId } from "../../lib/request-id"
 import { openBrowser } from "../../lib/tty"
 import {
   collectMixpanelMapping,
@@ -25,23 +25,6 @@ import {
   IntegrationAuthTimeoutError,
   waitForIntegrationConnection,
 } from "./wait-for-connection"
-
-type SetupCapability = {
-  provider: string
-  name: string
-  category: string
-  authType: "oauth" | "api_key" | "basic_auth"
-  setupMode: "browser_handoff" | "human_controlled"
-  browserHandoffAvailable: boolean
-}
-
-type LegacySetupResponse = {
-  provider: string
-  state: "handoff_ready" | "already_connected"
-  sessionId: string | null
-  connectUrl: string | null
-  expiresAt: string | null
-}
 
 type BrowserHandoff = {
   kind: "browser_handoff"
@@ -73,11 +56,15 @@ type SetupResponse = {
   name: string
   category: string
   status: "not_connected" | "awaiting_auth" | "setup_required" | "ready" | "requires_intervention"
-  next: BrowserHandoff | CrmMappingNext | MixpanelMappingNext | StripeRenewalDateFieldNext | null
-  error: null | { code: string; message: string; retryable: boolean }
+  /** What the person or agent does next: a sign-in, a mapping to confirm, a field to choose. */
+  step: BrowserHandoff | CrmMappingNext | MixpanelMappingNext | StripeRenewalDateFieldNext | null
+  /** A state of the integration (a rejected key, an owner required); the call itself succeeded. */
+  problem: null | { code: string; message: string; retryable: boolean }
 }
 
 const setupOutputSchema = publicToolContracts.outlit_setup_integration.outputSchema
+const knownProviders: readonly string[] =
+  publicToolContracts.outlit_list_integrations.inputSchema.properties.provider.enum
 const STALLED_MESSAGE = "Integration setup did not reach a terminal state."
 
 export default defineCommand({
@@ -133,30 +120,17 @@ export default defineCommand({
     const provider = normalizeProviderInput(args.provider)
     const client = await getClientOrExit(args["api-key"], json)
 
-    const { capability, preferredSetupVersion } = await fetchProviderCapability(
-      client,
-      provider,
-      json,
-    )
-
-    if (preferredSetupVersion !== 1) {
-      if (args["config-stdin"] || args["accept-recommended"]) {
-        return outputError(
-          {
-            message:
-              "This Outlit deployment does not support negotiated setup; --config-stdin and --accept-recommended are unavailable.",
-            code: "unsupported_core_version",
-          },
-          json,
-        )
-      }
-      return runLegacySetup(client, capability, json, machineMode)
+    if (!knownProviders.includes(provider)) {
+      return outputError(
+        { message: `Unknown integration: "${provider}"`, code: "unknown_provider" },
+        json,
+      )
     }
 
-    let initialInput: SetupToolInput = { provider: capability.provider }
+    let initialInput: SetupToolInput = { provider }
     if (args["config-stdin"]) {
       try {
-        initialInput = parseSetupConfig(await readSetupConfigText(), capability.provider)
+        initialInput = parseSetupConfig(await readSetupConfigText(), provider)
       } catch (error) {
         if (error instanceof SetupInputError) {
           return outputError({ message: error.message, code: error.code }, json)
@@ -211,7 +185,11 @@ async function runPreferredSetup(options: {
   while (setupCalls < 3) {
     let response: SetupResponse
     try {
-      const raw = await client.callTool("outlit_setup_integration", input)
+      // Each call is its own action, so each gets its own retry key.
+      const raw = await client.callTool("outlit_setup_integration", {
+        ...input,
+        requestId: newRequestId(),
+      })
       setupCalls += 1
       if (!matchesGeneratedJsonSchema(raw, setupOutputSchema)) {
         return invalidSetupResponse(json)
@@ -224,15 +202,15 @@ async function runPreferredSetup(options: {
       })
     }
 
-    if (response.error) {
-      if (response.error.code !== "CREDENTIAL_REQUIRED") {
-        return outputError({ message: response.error.message, code: response.error.code }, json)
+    if (response.problem) {
+      if (response.problem.code !== "credential_required") {
+        return outputError({ message: response.problem.message, code: response.problem.code }, json)
       }
 
       if (continuationUsed || transitions.has("credential")) return stalled(json)
 
       if (machineMode || suppliedConfig) {
-        return outputError({ message: response.error.message, code: response.error.code }, json)
+        return outputError({ message: response.problem.message, code: response.problem.code }, json)
       }
 
       transitions.add("credential")
@@ -257,7 +235,7 @@ async function runPreferredSetup(options: {
       continue
     }
 
-    if (!response.next) {
+    if (!response.step) {
       if (response.status === "ready") return finishSetup(response, machineMode)
       return outputError(
         {
@@ -268,10 +246,10 @@ async function runPreferredSetup(options: {
       )
     }
 
-    if (response.next.kind === "browser_handoff") {
+    if (response.step.kind === "browser_handoff") {
       let handoffUrl: string
       try {
-        handoffUrl = validateHandoffUrl(response.next.url, client.baseUrl)
+        handoffUrl = validateHandoffUrl(response.step.url, client.baseUrl)
       } catch {
         return invalidSetupResponse(json)
       }
@@ -281,7 +259,7 @@ async function runPreferredSetup(options: {
       const opened = openBrowser(handoffUrl)
       if (!opened) console.log(`Open this URL to continue: ${handoffUrl}`)
 
-      if (response.next.purpose !== "authentication" || response.next.sessionId === null) {
+      if (response.step.purpose !== "authentication" || response.step.sessionId === null) {
         return finishSetup(response, false)
       }
 
@@ -291,7 +269,7 @@ async function runPreferredSetup(options: {
       try {
         await waitForIntegrationConnection({
           client,
-          sessionId: response.next.sessionId,
+          sessionId: response.step.sessionId,
           displayName: response.name,
         })
       } catch (error) {
@@ -320,8 +298,8 @@ async function runPreferredSetup(options: {
       continue
     }
 
-    if (response.next.kind === "crm_mapping") {
-      printRecommendation(response.next.recommendation, machineMode)
+    if (response.step.kind === "crm_mapping") {
+      printRecommendation(response.step.recommendation, machineMode)
       if (mappingUsed || transitions.has("crm_mapping")) return stalled(json)
 
       let shouldApply = acceptRecommended
@@ -346,21 +324,21 @@ async function runPreferredSetup(options: {
         provider,
         configuration: {
           kind: "crm_mapping",
-          mappings: response.next.recommendation,
+          mappings: response.step.recommendation,
           confirm: true,
         },
       }
       continue
     }
 
-    if (response.next.kind === "mixpanel_mapping") {
+    if (response.step.kind === "mixpanel_mapping") {
       if (mappingUsed || transitions.has("mixpanel_mapping")) return stalled(json)
-      printMixpanelPreview(response.next.preview, machineMode)
+      printMixpanelPreview(response.step.preview, machineMode)
       if (machineMode || suppliedConfig) return finishSetup(response, machineMode)
 
       let mapping: Record<string, string>
       try {
-        mapping = await collectMixpanelMapping(response.next.preview.candidateAccountKeys ?? [])
+        mapping = await collectMixpanelMapping(response.step.preview.candidateAccountKeys ?? [])
       } catch (error) {
         if (error instanceof SetupCancelledError) {
           return outputError({ message: error.message, code: "SETUP_CANCELLED" }, json)
@@ -379,15 +357,15 @@ async function runPreferredSetup(options: {
       continue
     }
 
-    if (response.next.kind === "stripe_renewal_date_field") {
+    if (response.step.kind === "stripe_renewal_date_field") {
       if (mappingUsed || transitions.has("stripe_renewal_date_field")) return stalled(json)
-      printStripeRenewalDateField(response.next, machineMode)
+      printStripeRenewalDateField(response.step, machineMode)
       if (machineMode || suppliedConfig) return finishSetup(response, machineMode)
 
       let key: string | null
       try {
         key = await collectStripeRenewalDateKey(
-          response.next.keys.filter((candidate) => candidate.sampleDate !== null),
+          response.step.keys.filter((candidate) => candidate.sampleDate !== null),
         )
       } catch (error) {
         if (error instanceof SetupCancelledError) {
@@ -411,94 +389,6 @@ async function runPreferredSetup(options: {
   }
 
   return stalled(json)
-}
-
-async function runLegacySetup(
-  client: OutlitClient,
-  capability: SetupCapability,
-  json: boolean,
-  machineMode: boolean,
-): Promise<void> {
-  if (!capability.browserHandoffAvailable || capability.setupMode === "human_controlled") {
-    const controlPlaneUrl = validateHandoffUrl("/integrations", client.baseUrl)
-    return outputResult({
-      status: "human_controlled",
-      provider: capability.provider,
-      controlPlaneUrl,
-      capabilities: capability,
-    })
-  }
-
-  const spinner = machineMode ? null : createSpinner(`Starting ${capability.name} setup...`)
-  let setup: LegacySetupResponse
-  try {
-    setup = (await client.callTool("outlit_begin_integration_setup", {
-      provider: capability.provider,
-    })) as LegacySetupResponse
-  } catch (error) {
-    spinner?.fail(`Failed to start ${capability.name} setup`)
-    return outputApiError(error, json, {
-      message: "Failed to start setup flow.",
-      code: "api_error",
-    })
-  }
-
-  if (setup.state === "already_connected") {
-    spinner?.stop(`${capability.name} is already connected`)
-    return outputResult({ status: "already_connected", ...setup, capabilities: capability })
-  }
-
-  if (!setup.connectUrl) {
-    spinner?.fail(`Failed to start ${capability.name} setup`)
-    return invalidSetupResponse(json)
-  }
-  let connectUrl: string
-  try {
-    connectUrl = validateHandoffUrl(setup.connectUrl, client.baseUrl)
-  } catch {
-    spinner?.fail(`Failed to start ${capability.name} setup`)
-    return invalidSetupResponse(json)
-  }
-
-  if (!machineMode) {
-    const opened = openBrowser(connectUrl)
-    spinner?.stop(opened ? `Browser opened for ${capability.name}` : "Could not open browser")
-    if (!opened) console.log(`Open this URL to continue: ${connectUrl}`)
-    if (setup.sessionId) {
-      try {
-        await waitForIntegrationConnection({
-          client,
-          sessionId: setup.sessionId,
-          displayName: capability.name,
-        })
-      } catch (error) {
-        if (
-          error instanceof IntegrationAuthTimeoutError ||
-          (error instanceof IntegrationAuthError && error.status === "expired")
-        ) {
-          return outputError(
-            {
-              message: "Integration authentication timed out after 5 minutes.",
-              code: "AUTH_TIMEOUT",
-            },
-            json,
-          )
-        }
-        return outputError(
-          { message: "Integration authentication failed.", code: "AUTH_FAILED" },
-          json,
-        )
-      }
-      return
-    }
-  }
-
-  return outputResult({
-    status: "awaiting_auth",
-    ...setup,
-    connectUrl,
-    capabilities: capability,
-  })
 }
 
 function getUnsupportedSetupArgument(rawArgs: string[]): string | null {
@@ -538,31 +428,6 @@ function getUnsupportedSetupArgument(rawArgs: string[]): string | null {
   }
 
   return null
-}
-
-async function fetchProviderCapability(
-  client: OutlitClient,
-  provider: string,
-  json: boolean,
-): Promise<{ capability: SetupCapability; preferredSetupVersion?: number }> {
-  try {
-    const result = (await client.callTool("outlit_get_integration_capabilities", {
-      provider,
-    })) as { providers?: SetupCapability[]; preferredSetupVersion?: number }
-    const capability = result.providers?.find((candidate) => candidate.provider === provider)
-    if (capability) {
-      return { capability, preferredSetupVersion: result.preferredSetupVersion }
-    }
-    return outputError(
-      { message: `Unknown integration: "${provider}"`, code: "unknown_provider" },
-      json,
-    )
-  } catch (error) {
-    return outputApiError(error, json, {
-      message: "Failed to fetch integration capabilities.",
-      code: "api_error",
-    })
-  }
 }
 
 export function validateHandoffUrl(value: string, configuredBaseUrl: string): string {

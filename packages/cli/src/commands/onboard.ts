@@ -18,11 +18,9 @@ interface OnboardCheck {
   runner?: string
 }
 
-interface IntegrationProviderCapability {
-  setupMode?: string
-}
-
-interface IntegrationStatusItem {
+/** One entry of `outlit_list_integrations`: what a provider can do and where it stands. */
+interface IntegrationListItem {
+  setup?: { mode?: string }
   status?: string
 }
 
@@ -217,15 +215,15 @@ async function checkIntegrationReadiness(
 
   try {
     const client = await createClient(apiKey)
-    const capabilities = (await client.callTool("outlit_get_integration_capabilities", {})) as {
-      providers?: IntegrationProviderCapability[]
+    const listed = (await client.callTool("outlit_list_integrations", {})) as {
+      items?: IntegrationListItem[]
     }
-    const providers = Array.isArray(capabilities.providers) ? capabilities.providers : []
+    const providers = Array.isArray(listed.items) ? listed.items : []
 
     summary.capabilitiesAvailable = true
     summary.providerCount = providers.length
     summary.setupModes = providers.reduce<Record<string, number>>((acc, provider) => {
-      const setupMode = provider.setupMode ?? "unknown"
+      const setupMode = provider.setup?.mode ?? "unknown"
       acc[setupMode] = (acc[setupMode] ?? 0) + 1
       return acc
     }, {})
@@ -235,10 +233,7 @@ async function checkIntegrationReadiness(
       message: `${providers.length} provider setup capabilities available`,
     })
 
-    const integrations = (await client.callTool("outlit_get_integration_status", {})) as {
-      integrations?: IntegrationStatusItem[]
-    }
-    const items = Array.isArray(integrations.integrations) ? integrations.integrations : []
+    const items = providers
     summary.connectedCount = items.filter((item) => item.status === "ready").length
     summary.errorCount = items.filter((item) => item.status === "requires_intervention").length
 

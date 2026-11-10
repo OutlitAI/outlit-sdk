@@ -8,42 +8,55 @@ import {
   useTempEnv,
 } from "../../helpers"
 
-const customerId = "10000000-0000-4000-8000-000000000000"
-const targetUserId = "user_target_123"
-const assignOwnerResponse = {
-  customerId,
-  ownerId: targetUserId,
-  previousOwnerId: "user_previous_owner_123",
-} satisfies PublicToolResult<"outlit_assign_customer_owner">
-const grantAccessResponse = {
-  access: {
-    customerId,
-    userId: targetUserId,
-    role: "VIEWER",
-    grantedById: "user_actor_123",
-  },
-} satisfies PublicToolResult<"outlit_grant_customer_access">
-const changedAccessResponse = {
-  access: {
-    customerId,
-    userId: targetUserId,
-    role: "EDITOR",
-    grantedById: "user_actor_123",
-  },
-} satisfies PublicToolResult<"outlit_grant_customer_access">
-const revokeAccessResponse = {
-  customerId,
-  userId: targetUserId,
-} satisfies PublicToolResult<"outlit_revoke_customer_access">
+const customer = "acme.com"
+const customerRef = { id: "10000000-0000-4000-8000-000000000000", name: "Acme", domain: "acme.com" }
+const member = "user_target_123"
+const memberRef = { id: member, name: "Target User", email: "target@example.com" }
+const previousOwner = { id: "user_previous_owner_123", name: "Previous", email: "prev@example.com" }
+
+const ownerPreview = {
+  outcome: "previewed",
+  customer: customerRef,
+  owner: previousOwner,
+  newOwner: memberRef,
+  previousOwnerRole: null,
+  undo: { available: true },
+  preview: { token: "owner_preview_token", expiresAt: "2026-07-28T00:15:00.000Z" },
+  next: { instruction: "Nothing was changed; to do it, call again with this input" },
+} satisfies PublicToolResult<"outlit_set_customer_owner">
+const ownerChanged = {
+  outcome: "changed",
+  customer: customerRef,
+  owner: memberRef,
+  previousOwner,
+  previousOwnerRole: "editor",
+  undo: { token: "owner_undo_token", until: "2026-07-29T00:00:00.000Z" },
+} satisfies PublicToolResult<"outlit_set_customer_owner">
+const accessChanged = {
+  outcome: "changed",
+  customer: customerRef,
+  member: memberRef,
+  role: "viewer",
+  previousRole: "none",
+  undo: { token: "access_undo_token", until: "2026-07-29T00:00:00.000Z" },
+} satisfies PublicToolResult<"outlit_set_customer_access">
+const accessNeedsConfirmation = {
+  outcome: "needs_confirmation",
+  customer: customerRef,
+  member: memberRef,
+  role: "none",
+  previousRole: "editor",
+  reason: "This removes your own access, and you could not give it back.",
+  preview: { token: "access_preview_token", expiresAt: "2026-07-28T00:15:00.000Z" },
+  next: { instruction: "Nothing was changed; to do it, call again with this input" },
+} satisfies PublicToolResult<"outlit_set_customer_access">
 
 const mockCallTool = mock(async (toolName: string, _params: unknown): Promise<unknown> => {
   switch (toolName) {
-    case "outlit_assign_customer_owner":
-      return assignOwnerResponse
-    case "outlit_grant_customer_access":
-      return grantAccessResponse
-    case "outlit_revoke_customer_access":
-      return revokeAccessResponse
+    case "outlit_set_customer_owner":
+      return ownerPreview
+    case "outlit_set_customer_access":
+      return accessChanged
     default:
       throw new Error(`Unexpected tool call: ${toolName}`)
   }
@@ -112,167 +125,228 @@ describe("customer collaboration commands", () => {
   beforeEach(() => {
     mockCreateClient.mockClear()
     mockCallTool.mockClear()
+    mockCallTool.mockImplementation(async (toolName: string) => {
+      if (toolName === "outlit_set_customer_owner") return ownerPreview
+      if (toolName === "outlit_set_customer_access") return accessChanged
+      throw new Error(`Unexpected tool call: ${toolName}`)
+    })
   })
 
-  test("owner set sends the canonical owner assignment payload", async () => {
+  test("owner set previews first, then confirms with the preview token under --yes", async () => {
+    mockCallTool.mockResolvedValueOnce(ownerPreview)
+    mockCallTool.mockResolvedValueOnce(ownerChanged)
     const stdout = await runCommand(import("../../../src/commands/customers/owner/set"), {
-      "customer-id": customerId,
-      "target-user-id": targetUserId,
+      customer,
+      member,
+      yes: true,
       json: true,
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_assign_customer_owner", {
-      customerId,
-      targetUserId,
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_set_customer_owner", {
+      customer,
+      member,
+      requestId: expect.any(String),
     })
-    expect(stdout).toBe(`${JSON.stringify(assignOwnerResponse, null, 2)}\n`)
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_set_customer_owner", {
+      customer,
+      member,
+      mode: "execute",
+      previewToken: "owner_preview_token",
+      requestId: expect.any(String),
+    })
+    expect(stdout).toBe(`${JSON.stringify(ownerChanged, null, 2)}\n`)
   })
 
-  test("grant sends the canonical access grant payload", async () => {
+  test("owner set sends two different request IDs, one per call", async () => {
+    mockCallTool.mockResolvedValueOnce(ownerPreview)
+    mockCallTool.mockResolvedValueOnce(ownerChanged)
+    await runCommand(import("../../../src/commands/customers/owner/set"), {
+      customer,
+      member,
+      yes: true,
+      json: true,
+    })
+
+    const ids = mockCallTool.mock.calls.map((call) => (call[1] as { requestId: string }).requestId)
+    expect(new Set(ids).size).toBe(2)
+  })
+
+  test("owner set without --yes outside a terminal changes nothing and exits with the preview", async () => {
+    const command = (await import("../../../src/commands/customers/owner/set")).default
+    const exitSpy = mockExitThrow()
+    const stdoutSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    let thrown: unknown
+    let stdoutOutput = ""
+    let stderrOutput = ""
+    try {
+      await command.run?.({ args: { customer, member, json: true } } as never)
+    } catch (error) {
+      thrown = error
+    } finally {
+      stdoutOutput = stdoutSpy.mock.calls.map((call) => call[0] as string).join("")
+      stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
+      stdoutSpy.mockRestore()
+      stderrSpy.mockRestore()
+      exitSpy.mockRestore()
+    }
+
+    expectErrorExit(thrown, stderrOutput, "confirmation_required")
+    expect(JSON.parse(stdoutOutput)).toEqual(ownerPreview)
+    expect(mockCallTool).toHaveBeenCalledTimes(1)
+  })
+
+  test("grant sends the access write in one call and reads the old spellings", async () => {
     const stdout = await runCommand(import("../../../src/commands/customers/grant"), {
-      "customer-id": customerId,
-      "target-user-id": targetUserId,
+      customer,
+      "target-user-id": member,
       role: "VIEWER",
       json: true,
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_grant_customer_access", {
-      customerId,
-      targetUserId,
-      role: "VIEWER",
+    expect(mockCallTool).toHaveBeenCalledTimes(1)
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_set_customer_access", {
+      customer,
+      member,
+      role: "viewer",
+      requestId: expect.any(String),
     })
-    expect(stdout).toBe(`${JSON.stringify(grantAccessResponse, null, 2)}\n`)
+    expect(stdout).toBe(`${JSON.stringify(accessChanged, null, 2)}\n`)
   })
 
-  test("grant changes an existing collaborator by reusing the canonical upsert", async () => {
-    mockCallTool.mockResolvedValueOnce(changedAccessResponse)
-    const stdout = await runCommand(import("../../../src/commands/customers/grant"), {
-      "customer-id": customerId,
-      "target-user-id": targetUserId,
-      role: "EDITOR",
+  test("grant changes an existing collaborator's role through the same write", async () => {
+    await runCommand(import("../../../src/commands/customers/grant"), {
+      customer,
+      member,
+      role: "editor",
       json: true,
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_grant_customer_access", {
-      customerId,
-      targetUserId,
-      role: "EDITOR",
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_set_customer_access", {
+      customer,
+      member,
+      role: "editor",
+      requestId: expect.any(String),
     })
-    expect(stdout).toBe(`${JSON.stringify(changedAccessResponse, null, 2)}\n`)
   })
 
-  test("revoke sends the canonical access revocation payload", async () => {
+  test("revoke is a write of role none", async () => {
     const stdout = await runCommand(import("../../../src/commands/customers/revoke"), {
-      "customer-id": customerId,
-      "target-user-id": targetUserId,
+      customer,
+      member,
       json: true,
     })
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_revoke_customer_access", {
-      customerId,
-      targetUserId,
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_set_customer_access", {
+      customer,
+      member,
+      role: "none",
+      requestId: expect.any(String),
     })
-    expect(stdout).toBe(`${JSON.stringify(revokeAccessResponse, null, 2)}\n`)
+    expect(stdout).toBe(`${JSON.stringify(accessChanged, null, 2)}\n`)
   })
 
-  for (const [name, load] of [
-    ["owner set", () => import("../../../src/commands/customers/owner/set")],
-    ["grant", () => import("../../../src/commands/customers/grant")],
-    ["revoke", () => import("../../../src/commands/customers/revoke")],
-  ] as const) {
-    test(`${name} rejects a non-UUID customer ID before any network call`, async () => {
-      await expectLocalValidationError(load(), {
-        "customer-id": "acme.com",
-        "target-user-id": targetUserId,
-        role: "VIEWER",
+  test("revoke asks to be confirmed when Core says the caller could not undo it", async () => {
+    mockCallTool.mockResolvedValueOnce(accessNeedsConfirmation)
+    mockCallTool.mockResolvedValueOnce({ ...accessChanged, role: "none", undo: null })
+    await runCommand(import("../../../src/commands/customers/revoke"), {
+      customer,
+      member,
+      yes: true,
+      json: true,
+    })
+
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_set_customer_access", {
+      customer,
+      member,
+      role: "none",
+      mode: "execute",
+      previewToken: "access_preview_token",
+      requestId: expect.any(String),
+    })
+  })
+
+  test("a needs_confirmation answer without --yes outside a terminal changes nothing", async () => {
+    mockCallTool.mockResolvedValueOnce(accessNeedsConfirmation)
+    const command = (await import("../../../src/commands/customers/revoke")).default
+    const exitSpy = mockExitThrow()
+    const stdoutSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    let thrown: unknown
+    let stderrOutput = ""
+    try {
+      await command.run?.({ args: { customer, member, json: true } } as never)
+    } catch (error) {
+      thrown = error
+    } finally {
+      stderrOutput = stderrSpy.mock.calls.map((call) => call[0] as string).join("")
+      stdoutSpy.mockRestore()
+      stderrSpy.mockRestore()
+      exitSpy.mockRestore()
+    }
+
+    expectErrorExit(thrown, stderrOutput, "confirmation_required")
+    expect(mockCallTool).toHaveBeenCalledTimes(1)
+  })
+
+  test("takes a customer by id, domain or name", async () => {
+    await runCommand(import("../../../src/commands/customers/grant"), {
+      customer: "Acme Inc",
+      member,
+      role: "viewer",
+      json: true,
+    })
+
+    expect(mockCallTool).toHaveBeenCalledWith(
+      "outlit_set_customer_access",
+      expect.objectContaining({ customer: "Acme Inc" }),
+    )
+  })
+
+  test("grant rejects OWNER and NONE before any network call", async () => {
+    for (const role of ["OWNER", "none"]) {
+      await expectLocalValidationError(import("../../../src/commands/customers/grant"), {
+        customer,
+        member,
+        role,
         json: true,
       })
-    })
+      mockCallTool.mockClear()
+      mockCreateClient.mockClear()
+    }
+  })
 
-    test(`${name} rejects a whitespace-padded customer ID before any network call`, async () => {
-      await expectLocalValidationError(load(), {
-        "customer-id": ` ${customerId} `,
-        "target-user-id": targetUserId,
-        role: "VIEWER",
-        json: true,
-      })
-    })
-  }
-
-  for (const [name, load] of [
-    ["grant", () => import("../../../src/commands/customers/grant")],
-  ] as const) {
-    test(`${name} rejects OWNER before any network call`, async () => {
-      await expectLocalValidationError(load(), {
-        "customer-id": customerId,
-        "target-user-id": targetUserId,
-        role: "OWNER",
-        json: true,
-      })
-    })
-
-    test(`${name} rejects a lowercase role before any network call`, async () => {
-      await expectLocalValidationError(
-        load(),
-        {
-          "customer-id": customerId,
-          "target-user-id": targetUserId,
-          role: "viewer",
-          json: true,
-        },
-        "invalid_input",
-      )
-    })
-
-    test(`${name} rejects a whitespace-padded role before any network call`, async () => {
-      await expectLocalValidationError(
-        load(),
-        {
-          "customer-id": customerId,
-          "target-user-id": targetUserId,
-          role: " VIEWER ",
-          json: true,
-        },
-        "invalid_input",
-      )
-    })
-  }
-
-  test("rejects a blank target user ID before any network call", async () => {
+  test("grant rejects a missing role before any network call", async () => {
     await expectLocalValidationError(
-      import("../../../src/commands/customers/owner/set"),
-      {
-        "customer-id": customerId,
-        "target-user-id": "   ",
-        json: true,
-      },
+      import("../../../src/commands/customers/grant"),
+      { customer, member, json: true },
       "missing_input",
     )
   })
 
-  test("rejects an oversized target user ID before any network call", async () => {
+  test("rejects a blank member before any network call", async () => {
+    await expectLocalValidationError(
+      import("../../../src/commands/customers/owner/set"),
+      { customer, member: "   ", json: true },
+      "missing_input",
+    )
+  })
+
+  test("rejects an oversized member before any network call", async () => {
     await expectLocalValidationError(import("../../../src/commands/customers/owner/set"), {
-      "customer-id": customerId,
-      "target-user-id": `${"u".repeat(500)} `,
+      customer,
+      member: `${"u".repeat(501)} `,
       json: true,
     })
   })
 
-  for (const [name, load] of [
-    ["grant", () => import("../../../src/commands/customers/grant")],
-  ] as const) {
-    test(`${name} rejects a missing role before any network call`, async () => {
-      await expectLocalValidationError(
-        load(),
-        {
-          "customer-id": customerId,
-          "target-user-id": targetUserId,
-          json: true,
-        },
-        "missing_input",
-      )
-    })
-  }
+  test("rejects a blank customer before any network call", async () => {
+    await expectLocalValidationError(
+      import("../../../src/commands/customers/revoke"),
+      { customer: "  ", member, json: true },
+      "missing_input",
+    )
+  })
 
   test("preserves Core's structured permission error envelope", async () => {
     const envelope = {
@@ -292,8 +366,8 @@ describe("customer collaboration commands", () => {
     try {
       await command.run?.({
         args: {
-          "customer-id": customerId,
-          "target-user-id": targetUserId,
+          customer,
+          member,
           role: "VIEWER",
           json: true,
         },
@@ -328,8 +402,8 @@ describe("customer collaboration commands", () => {
     try {
       await command.run?.({
         args: {
-          "customer-id": customerId,
-          "target-user-id": targetUserId,
+          customer,
+          member,
           json: true,
         },
       } as Parameters<NonNullable<typeof command.run>>[0])

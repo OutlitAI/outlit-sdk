@@ -3,15 +3,15 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
-import { optionalTrimmedString, requiredTrimmedString } from "../../lib/platform-input"
+import { optionalTrimmedString } from "../../lib/platform-input"
 
-function parseDestinationType(type: string, json: boolean): "SLACK_CHANNEL" {
-  const normalized = type.trim().toLowerCase()
-  if (normalized === "slack" || normalized === "slack_channel") {
-    return "SLACK_CHANNEL"
-  }
+/** --type is optional now (Core knows the destination's type); a value, when given, must still be slack. */
+function checkDestinationType(type: string | undefined, json: boolean): void {
+  const normalized = optionalTrimmedString(type)?.toLowerCase()
+  if (!normalized) return
+  if (normalized === "slack" || normalized === "slack_channel") return
 
-  return outputError({ message: "--type must be slack", code: "invalid_input" }, json)
+  outputError({ message: "--type must be slack", code: "invalid_input" }, json)
 }
 
 function parseEnabledFlag(args: { enabled?: boolean; disabled?: boolean }, json: boolean) {
@@ -34,12 +34,12 @@ export default defineCommand({
     description: [
       "Update an Outlit Slack channel automation destination.",
       "",
-      "Provide --type slack plus one or more fields to patch.",
+      "Provide one or more fields to patch.",
       "",
       "Examples:",
-      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --label '#customer-ops' --json",
-      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --default --json",
-      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --type slack --disabled --json",
+      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --label '#customer-ops' --json",
+      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --default --json",
+      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --disabled --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -54,7 +54,7 @@ export default defineCommand({
     },
     type: {
       type: "string",
-      description: "Required destination type: slack",
+      description: "Optional; destinations are Slack channels, so only slack is accepted",
     },
     label: { type: "string", description: "Slack channel label" },
     default: { type: "boolean", description: "Make this the default destination" },
@@ -64,7 +64,7 @@ export default defineCommand({
   async run({ args }) {
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
-    const type = parseDestinationType(requiredTrimmedString(args.type, "--type", json), json)
+    checkDestinationType(args.type, json)
     const enabled = parseEnabledFlag(
       {
         enabled: args.enabled,
@@ -81,7 +81,6 @@ export default defineCommand({
     const label = optionalTrimmedString(args.label)
     const input = {
       id: args.id,
-      type,
       ...(label ? { label } : {}),
       ...(enabled !== undefined ? { enabled } : {}),
       ...(args.default === true ? { isDefault: true } : {}),

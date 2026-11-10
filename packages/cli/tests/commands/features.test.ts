@@ -8,7 +8,15 @@ import {
 } from "../helpers"
 
 const mockResult = { ok: true }
-const mockCallTool = mock(async (_toolName: string, _params: Record<string, unknown>) => mockResult)
+const featureArchivePreview = {
+  archived: false,
+  preview: { token: "preview_token_1", expiresAt: "2026-07-28T00:15:00.000Z" },
+  impact: { feature: { name: "Reports exported" }, activeFeaturesRemaining: 2 },
+  next: { instruction: "Nothing was archived; to do it, call again with this input" },
+}
+const mockCallTool = mock(
+  async (_toolName: string, _params: Record<string, unknown>): Promise<unknown> => mockResult,
+)
 
 mock.module("../../src/lib/client", () => ({
   createClient: async () => ({
@@ -41,7 +49,8 @@ describe("Feature commands", () => {
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_list_features", {
-      sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef",
+      filters: { sourceKey: "metric_source_v1_0123456789abcdef0123456789abcdef" },
+      include: ["usage", "candidates"],
       weeks: 4,
       candidateLimit: 20,
     })
@@ -57,8 +66,26 @@ describe("Feature commands", () => {
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_list_features", {
+      include: ["usage", "candidates"],
       weeks: 12,
-      candidateLimit: 100,
+    })
+  })
+
+  test("narrows the sections, the candidates and the page", async () => {
+    const { default: workspaceCmd } = await import("../../src/commands/features/list")
+
+    await captureStdout(() =>
+      workspaceCmd.run!({
+        args: { include: "candidates", search: " export ", limit: "5", cursor: "abc", json: true },
+      } as Parameters<NonNullable<typeof workspaceCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_features", {
+      filters: { eventSearch: "export" },
+      include: ["candidates"],
+      weeks: 12,
+      limit: 5,
+      cursor: "abc",
     })
   })
 
@@ -96,6 +123,7 @@ describe("Feature commands", () => {
           value: { type: "string", value: "production" },
         },
       ],
+      requestId: expect.any(String),
     })
   })
 
@@ -120,26 +148,65 @@ describe("Feature commands", () => {
       featureKey: "reports_exported",
       name: "Reports exported",
       propertyFilters: [],
+      requestId: expect.any(String),
     })
   })
 
-  test("archives only with the opaque feature id and current revision", async () => {
+  test("archive previews with the opaque feature id and current revision, and archives nothing without a yes", async () => {
+    mockCallTool.mockImplementationOnce(async () => featureArchivePreview)
     const { default: archiveCmd } = await import("../../src/commands/features/archive")
 
-    await captureStdout(() =>
+    await runExpectingError(
+      () =>
+        archiveCmd.run!({
+          args: {
+            id: "value_feature_v1_0123456789abcdef0123456789abcdef",
+            revision: " value_feature_revision_v1_fedcba9876543210fedcba9876543210 ",
+            json: true,
+          },
+        } as Parameters<NonNullable<typeof archiveCmd.run>>[0]),
+      "confirmation_required",
+    )
+
+    expect(mockCallTool).toHaveBeenCalledTimes(1)
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_archive_feature", {
+      id: "value_feature_v1_0123456789abcdef0123456789abcdef",
+      revision: "value_feature_revision_v1_fedcba9876543210fedcba9876543210",
+      requestId: expect.any(String),
+    })
+  })
+
+  test("archive --yes sends the preview token back to confirm", async () => {
+    mockCallTool.mockImplementationOnce(async () => featureArchivePreview)
+    mockCallTool.mockImplementationOnce(async () => ({
+      archived: true,
+      feature: {
+        id: "value_feature_v1_0123456789abcdef0123456789abcdef",
+        archivedAt: "2026-07-28T00:00:00.000Z",
+      },
+    }))
+    const { default: archiveCmd } = await import("../../src/commands/features/archive")
+
+    const result = await captureStdout(() =>
       archiveCmd.run!({
         args: {
           id: "value_feature_v1_0123456789abcdef0123456789abcdef",
-          revision: " value_feature_revision_v1_fedcba9876543210fedcba9876543210 ",
+          revision: "value_feature_revision_v1_fedcba9876543210fedcba9876543210",
+          yes: true,
           json: true,
         },
       } as Parameters<NonNullable<typeof archiveCmd.run>>[0]),
     )
 
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_archive_feature", {
+    expect(mockCallTool).toHaveBeenCalledTimes(2)
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_archive_feature", {
       id: "value_feature_v1_0123456789abcdef0123456789abcdef",
       revision: "value_feature_revision_v1_fedcba9876543210fedcba9876543210",
+      mode: "execute",
+      previewToken: "preview_token_1",
+      requestId: expect.any(String),
     })
+    expect(result).toMatchObject({ archived: true })
   })
 
   test("the previous customers features command reads the features and meters sections", async () => {

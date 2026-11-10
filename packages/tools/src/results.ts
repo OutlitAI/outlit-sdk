@@ -98,11 +98,12 @@ export type AttentionItemSummary = AttentionListResult["items"][number]
 export type AttentionItemResult = PublicToolResult<"outlit_get_case">
 export type AttentionItem = AttentionItemResult
 export type FeatureListResult = PublicToolResult<"outlit_list_features">
-export type Feature = FeatureListResult["features"][number]
+export type Feature = FeatureListResult["items"][number]
 export type FeatureCreateResult = PublicToolResult<"outlit_create_feature">
 export type FeatureDefinition = FeatureCreateResult["feature"]
 export type FeatureArchiveResult = PublicToolResult<"outlit_archive_feature">
-export type FeatureRef = FeatureArchiveResult["feature"]
+/** The archived feature, once the archive has been confirmed (a preview carries `impact` instead). */
+export type FeatureRef = Extract<FeatureArchiveResult, { archived: true }>["feature"]
 export type FeedbackSubmitResult = PublicToolResult<"outlit_submit_feedback">
 
 export interface CustomerAnalyticsRow {

@@ -3,6 +3,12 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 
+/** The activation part of the settings read; the rest of the workspace settings is not this command's. */
+function activationOnly(data: unknown): unknown {
+  const { settings, revision } = data as { settings?: { activation?: unknown }; revision?: string }
+  return { activation: settings?.activation, revision }
+}
+
 export default defineCommand({
   meta: {
     name: "get",
@@ -25,8 +31,9 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
 
-    return runTool(client, "outlit_get_customer_activation", {}, json, {
+    return runTool(client, "outlit_get_settings", {}, json, {
       spinnerMessage: "Fetching activation event...",
+      transform: activationOnly,
     })
   },
 })

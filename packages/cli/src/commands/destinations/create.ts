@@ -4,11 +4,12 @@ import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
 import { optionalTrimmedString, requiredTrimmedString } from "../../lib/platform-input"
+import { newRequestId } from "../../lib/request-id"
 
-function parseDestinationType(type: string | undefined, json: boolean): "SLACK_CHANNEL" {
+function parseDestinationType(type: string | undefined, json: boolean): "slack_channel" {
   const normalized = optionalTrimmedString(type)?.toLowerCase()
   if (normalized === "slack" || normalized === "slack_channel") {
-    return "SLACK_CHANNEL"
+    return "slack_channel"
   }
 
   return outputError(
@@ -58,6 +59,7 @@ export default defineCommand({
         label: requiredTrimmedString(args.label, "--label", json),
         enabled: args.default === true ? true : !args.disabled,
         isDefault: args.default === true,
+        requestId: newRequestId(),
       },
       json,
       { spinnerMessage: "Creating destination..." },
