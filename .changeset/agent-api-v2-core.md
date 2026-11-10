@@ -13,7 +13,7 @@ Agent API v2, slice A: people, toolsets, folded customer sections, a schema tool
 - `outlit_get_customer_relationship`, `outlit_get_customer_features` and `outlit_get_customer_credits` are gone: they are `outlit_get_customer` with `include: ["relationship"]`, `["features", "meters"]` and `["credits"]`. `customerIncludeSections` gains `relationship`, `features`, `meters` and `credits`.
 - `outlit_list_crm_fields` was already `outlit_list_customer_fields` (Phase 1).
 - New: `outlit_list_toolsets` and `outlit_load_toolset`. Every tool contract now carries its `toolset` (`core`, `work`, `identity`, `admin` or `meta`); a tool may also carry `sizeHint`, `seeAlso` and `aliases` (`[{ name, until }]`, its retired names with their last day).
-- The payload enum `userListOrderFields` is now `personOrderFields` (`last_activity_at`, `first_synced_at`, `email`; `first_seen_at` is now `first_synced_at`). `schemaTables` gains `arr_history`.
+- The payload enum `userListOrderFields` is now `personOrderFields` (`last_activity_at`, `first_synced_at`, `email`; `first_seen_at` is now `first_synced_at`).
 
 **`outlit_list_people`** (was `outlit_list_users`).
 
@@ -32,7 +32,7 @@ Agent API v2, slice A: people, toolsets, folded customer sections, a schema tool
 **`outlit_query` and `outlit_get_schema`.**
 
 - `outlit_query`: `sql` may be 20,000 characters (was 10,000). `limit` is the rows per page, 100 by default and at most 1000 (was 1000 and 10000). `cursor` is new: the same `sql` with the previous `page.nextCursor` reads the next page of a result kept for an hour. The result is `{ columns: [{ name, type }], rows, page }` in place of `{ success, data, metadata }`, with `truncation` when the result was cut (`row_cap` past 10,000 rows, or `byte_cap`).
-- `outlit_get_schema` takes `topic` (`views`, `view`, `event_types` or `examples`) and `view` in place of `table`. Columns carry `nullable`, `unit`, `currencyColumn`, `decimalsColumn`, `timeZone` and `values`, and each view states its `rowsAre`, `excludes`, `freshness`, `duplicates` and `coverage`. The `customers` view gains `arr_amount` and `arr_decimals` beside `arr_currency`; `arr_cents` is deprecated until 2026-12-11. The new `arr_history` view has one row per customer per UTC day of ARR.
+- `outlit_get_schema` takes `topic` (`views`, `view`, `event_types` or `examples`) and `view` in place of `table`. Columns carry `nullable`, `unit`, `currencyColumn`, `decimalsColumn`, `timeZone` and `values`, and each view states its `rowsAre`, `excludes`, `freshness`, `duplicates` and `coverage`. The `customers` view gains `arr_amount` and `arr_decimals` beside `arr_currency`; `arr_cents` is deprecated until 2026-12-11. **Breaking SQL change:** the `revenue` view's columns move from MRR to ARR. It is now one row per customer per UTC day since 2026-11-06 with `snapshot_date`, `arr_amount`, `arr_currency`, `arr_decimals`, `arr_estimated`, `revenue_lifecycle` and the customer's id, name, domain and status; the MRR columns (`mrr_cents`, `mrr_status` and the rest) are gone, and a day with no row was not computed.
 
 **Toolsets.** `outlit_load_toolset` takes optional `tools` (at most 10 names of that toolset) and returns for each tool `{ name, title, summary, description?, inputSchema? }`: the definitions come only for the tools you name, otherwise a one-line summary of each.
 

@@ -26,11 +26,10 @@ const legacyOrderFields: Record<string, (typeof personOrderFields)[number]> = {
   first_seen_at: "first_synced_at",
 }
 
-// The window's spelling comes from the contract: a whole number of minutes, hours or days.
-const activityWindow = new RegExp(
-  getPublicToolContract("outlit_list_people").inputSchema.properties.filters.properties.activity
-    .properties.within.pattern,
-)
+// A whole number of minutes, hours or days. The CLI owns this check instead of reading the contract's
+// pattern: that pattern comes from the built @outlit/tools, which can be older than this source and
+// would then reject a unit the help text names. Core enforces the upper bound (3650 days).
+const activityWindow = /^[1-9]\d{0,4}[dhm]$/
 
 /** The names of a CSV flag that the contract's enum accepts, case-insensitively. */
 function parseEnumList(
