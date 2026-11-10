@@ -12,6 +12,7 @@ The context tools move to the Agent API v2 shapes: `outlit_get_timeline`, `outli
 - Source types: `CRM`, `CRM_OPPORTUNITY` (aliases of `OPPORTUNITY`) and `STRIPE_INVOICE` (alias of `INVOICE`) are now `opportunity` and `invoice`; `sourceTypes` (new export) lists the lowercase values.
 - Pagination: `pagination { hasMore, nextCursor, effectiveLimit? }`, `contentPage.page { returned, ... }` and Slack `pageInfo` become `page { hasMore, nextCursor, total }` (`total` is `null` when unknown). `effectiveLimit` is gone.
 - Customers: `customer` is `CustomerRef { id, name, domain }` everywhere, and `customer` input takes an ID, a domain or a name on every tool (up to 500 characters).
+- Page size: `limit` on `outlit_get_timeline`, `outlit_list_sources` and `outlit_list_facts` defaults to 25 and caps at 100 (the timeline allowed 1000). The CLI sends 25 unless `--limit` is given.
 - Empty lists keep `[]` and add `coverage { searched }`, which says what was searched.
 - Sections: a result part that can be missing or empty is `{ status: "available", asOf, data }` or `{ status: "empty" | "not_connected" | "not_synced" | "unavailable", reason, next? }`, as on the customer tools.
 - Enum values are lowercase in inputs and outputs: channels, event types, fact status, fact types and categories, source types.

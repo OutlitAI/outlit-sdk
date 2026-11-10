@@ -719,7 +719,7 @@ outlit customers timeline <customer> [flags]
 | `--end-date` | string | — | End datetime (ISO 8601, for example `2025-03-01T23:59:59.999Z`); `--timeframe` counts back from it |
 | `--channels` | string | — | Comma-separated channels: `product`, `communication`, `meeting`, `crm`, `billing`, `support`, `identity`, `document`, `system` |
 | `--event-types` | string | — | Comma-separated lowercase types, such as `note_added` or `email_received` |
-| `--limit` | number | `20` | Results per page (1–100) |
+| `--limit` | number | `25` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor |
 
 When `--start-date` is provided, `--timeframe` is ignored. The CLI sends these as the tool's
@@ -900,7 +900,7 @@ outlit facts get --fact-id <id> [flags]
 | `--fact-categories` | string | — | Comma-separated fact category filter: `memory`, `relationship`, `custom` |
 | `--after` | string | — | Lower bound on fact occurrence time (ISO 8601 datetime) |
 | `--before` | string | — | Upper bound on fact occurrence time (ISO 8601 datetime) |
-| `--limit` | number | `20` | Results per page (1–100) |
+| `--limit` | number | `25` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor |
 
 ### `facts get` flags
@@ -1081,7 +1081,7 @@ outlit sources list [flags]
 | `--has-transcript` | boolean | `false` | Only list call sources with a finalized transcript; when combined with `--source-type`, that type must include `call` |
 | `--after` | string | — | Filter to sources occurring after this ISO 8601 UTC datetime |
 | `--before` | string | — | Filter to sources occurring before this ISO 8601 UTC datetime |
-| `--limit` | number | `50` | Results per page (1–100) |
+| `--limit` | number | `25` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor from a previous response (`page.nextCursor`) |
 
 Source-type aliases are normalized to their lowercase tool values before the request, and the filters are sent under the tool's `filters`. With `--json`, the command returns the paginated `items` and `page` response; each item's `source` is the `{ type, id }` that `sources get` opens. In interactive output, rows show `TYPE`, `OCCURRED`, `TITLE`, and `SOURCE ID`; when more results are available, the next cursor is printed for the following `--cursor` request.

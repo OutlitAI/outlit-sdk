@@ -9,7 +9,7 @@ import {
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { applyPagination, paginationArgs } from "../../args/pagination"
+import { applyPagination, pageSizeArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
 import { outputError } from "../../lib/output"
@@ -93,12 +93,7 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    ...paginationArgs,
-    cursor: {
-      ...paginationArgs.cursor,
-      description:
-        "Pagination cursor from a previous response (page.nextCursor).\nUse this to fetch the next page of results.",
-    },
+    ...pageSizeArgs,
     customer: {
       type: "positional",
       description: "Customer UUID or domain to retrieve facts for",

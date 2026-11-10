@@ -2,6 +2,7 @@ import { publicToolContracts, sourceTypes as toolSourceTypes } from "@outlit/too
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
+import { PAGE_SIZE } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
 import { outputError } from "../../lib/output"
@@ -109,7 +110,7 @@ export default defineCommand({
     },
     limit: {
       type: "string",
-      description: "Results per page (1-100). Default: 50.",
+      description: `Results per page (1-${PAGE_SIZE.max}). Default: ${PAGE_SIZE.default}.`,
     },
     cursor: {
       type: "string",

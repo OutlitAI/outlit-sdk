@@ -14,6 +14,23 @@ export const paginationArgs = {
   },
 } satisfies ArgsDef
 
+/** Page size of the v2 list tools (timeline, sources, facts): default 25, max 100. */
+export const PAGE_SIZE = { default: 25, max: 100 } as const
+
+/** Pagination flags for the v2 list tools, which return `page.nextCursor`. */
+export const pageSizeArgs = {
+  limit: {
+    type: "string",
+    description: `Max results to return (1-${PAGE_SIZE.max}). Default: ${PAGE_SIZE.default}.`,
+    default: String(PAGE_SIZE.default),
+  },
+  cursor: {
+    type: "string",
+    description:
+      "Pagination cursor from a previous response (page.nextCursor).\nUse this to fetch the next page of results.",
+  },
+} satisfies ArgsDef
+
 /** Applies pagination args (limit, cursor) to an API params object. */
 export function applyPagination(
   params: Record<string, unknown>,
