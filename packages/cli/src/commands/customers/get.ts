@@ -14,9 +14,9 @@ type SectionArgs = {
   cursor?: string
 }
 
-type Section = "features" | "meters" | "credits"
+type Section = "features" | "meters" | "credits" | "hierarchy"
 const usageSections: readonly Section[] = ["features", "meters"]
-const pagedSections: readonly Section[] = ["features", "meters", "credits"]
+const pagedSections: readonly Section[] = ["features", "meters", "credits", "hierarchy"]
 
 /**
  * The page and window options for the sections that take them, from --weeks, --weekly, --limit and
@@ -46,7 +46,7 @@ export function readSectionOptions(
   if ((args.limit || args.cursor) && paged.length === 0) {
     return outputError(
       {
-        message: "--limit and --cursor go with --include features, meters or credits",
+        message: "--limit and --cursor go with --include features, meters, credits or hierarchy",
         code: "invalid_input",
       },
       json,
@@ -91,8 +91,10 @@ export default defineCommand({
       "",
       'The primary record is returned under "customer". Each included section (such as "users")',
       "is {status, asOf, data}, or a status and reason when there is nothing to show.",
-      "features, meters and credits come in pages: --limit sets the page size, and --cursor",
-      "continues one of them (the section's page.nextCursor).",
+      "features, meters, credits and hierarchy's children come in pages: --limit sets the page",
+      "size, and --cursor continues one of them (the section's page.nextCursor).",
+      "hierarchy is the parent company and direct subsidiaries the CRM records; to list the",
+      "subsidiaries with ARR and filters, use `outlit customers list --part-of <customer>`.",
       "",
       `Available include sections: ${customerIncludeSections.join(", ")}`,
       `Timeframes: ${customerTimeframes.join(", ")}`,
@@ -104,6 +106,7 @@ export default defineCommand({
       "  outlit customers get acme.com --include billing --subscriptions all",
       "  outlit customers get acme.com --include relationship,credits",
       "  outlit customers get acme.com --include features,meters --weeks 6 --weekly",
+      "  outlit customers get opella.com --include hierarchy",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -146,12 +149,12 @@ export default defineCommand({
     limit: {
       type: "string",
       description:
-        "With --include features, meters or credits: items per page (1-100, default: 25)",
+        "With --include features, meters, credits or hierarchy: items per page (1-100, default: 25)",
     },
     cursor: {
       type: "string",
       description:
-        "With one of --include features, meters or credits: the section's page.nextCursor",
+        "With one of --include features, meters, credits or hierarchy: the section's page.nextCursor",
     },
   },
   async run({ args }) {

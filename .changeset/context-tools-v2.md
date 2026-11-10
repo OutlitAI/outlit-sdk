@@ -8,7 +8,7 @@ The context tools move to the Agent API v2 shapes: `outlit_get_timeline`, `outli
 
 **Shared shapes.**
 
-- Source reference: `sourceType` + `sourceId`, `sourceRef { sourceType, sourceId }`, `linkedSourceRef` and `sourceMetadata` become `source { type, id }`. `type` is lowercase (`email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`; `extracted` for a memory entry, in `outlit_get_source` only). Pass a `source` from any tool to `outlit_get_source` as it is.
+- Source reference: `sourceType` + `sourceId`, `sourceRef { sourceType, sourceId }`, `linkedSourceRef` and `sourceMetadata` become `source { type, id }`. `type` is lowercase (`email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`; `extracted` for a memory entry, in `outlit_get_source` only). Pass a `source` from any tool to `outlit_get_source` as it is.
 - Source types: `CRM`, `CRM_OPPORTUNITY` (aliases of `OPPORTUNITY`) and `STRIPE_INVOICE` (alias of `INVOICE`) are now `opportunity` and `invoice`; `sourceTypes` (new export) lists the lowercase values.
 - Pagination: `pagination { hasMore, nextCursor, effectiveLimit? }`, `contentPage.page { returned, ... }` and Slack `pageInfo` become `page { hasMore, nextCursor, total }` (`total` is `null` when unknown). `effectiveLimit` is gone.
 - Customers: `customer` is `CustomerRef { id, name, domain }` everywhere, and `customer` input takes an ID, a domain or a name on every tool (up to 500 characters).

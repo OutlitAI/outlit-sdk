@@ -919,7 +919,7 @@ outlit facts get --fact-id <id> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--status` | string | — | Comma-separated fact status filter: `active`, `acknowledged`, `resolved`, `snoozed`, `candidate` |
-| `--source-types` | string | — | Comma-separated generic source type filter: `email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-types` | string | — | Comma-separated generic source type filter: `email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 | `--fact-types` | string | — | Comma-separated public fact type filter, including `churn_risk`, `product_usage`, `contact_departure`, `contact_position_change`, and `contact_disengagement` |
 | `--fact-categories` | string | — | Comma-separated fact category filter: `memory`, `relationship`, `custom` |
 | `--after` | string | — | Lower bound on fact occurrence time (ISO 8601 datetime) |
@@ -1019,7 +1019,7 @@ outlit search <query> [flags]
 | `--limit` | number | `20` | Maximum results to return (1–50) |
 | `--after` | string | — | Filter to events after this ISO 8601 datetime |
 | `--before` | string | — | Filter to events before this ISO 8601 datetime |
-| `--source-types` | string | — | Comma-separated generic source type filter (`email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--source-types` | string | — | Comma-separated generic source type filter (`email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
 
 The CLI sends `--source-types`, `--after` and `--before` as the tool's `filters`, with lowercase source types.
 
@@ -1098,7 +1098,7 @@ outlit sources list [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Generic source type, or several separated by commas: `email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`, `STRIPE_INVOICE` |
+| `--source-type` | string | — | Generic source type, or several separated by commas: `email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`. Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`, `STRIPE_INVOICE` |
 | `--customer` | string | — | Customer UUID, domain, or name to scope source listing |
 | `--participant` | string | — | Participant email or name to filter source records |
 | `--provider` | string | — | Provider identifier such as `gmail`, `gong`, or `google-calendar` |
@@ -1130,7 +1130,7 @@ outlit sources get --source-type <type> --source-id <id> [--limit <count>] [--cu
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Source type: `email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `extracted` (a memory entry). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`, `STRIPE_INVOICE` |
+| `--source-type` | string | — | Source type: `email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`, `extracted` (a memory entry). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`, `STRIPE_INVOICE` |
 | `--source-id` | string | — | Exact source identifier |
 | `--limit` | number | `10` | Exact content segments per page (1–100). |
 | `--cursor` | string | — | Opaque cursor returned by a previous exact lookup for the same source. |

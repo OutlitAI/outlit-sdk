@@ -70,6 +70,10 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--has-owner", desc: "Only customers with an owner" },
           { name: "--activated-since", desc: "Activated at or after ISO-8601 datetime" },
           { name: "--search", desc: "Search name or domain" },
+          {
+            name: "--part-of",
+            desc: "Only direct subsidiaries of this customer (ID, domain or name)",
+          },
         ],
       },
       {
@@ -85,7 +89,10 @@ const COMMANDS: readonly CmdDef[] = [
           },
           { name: "--weeks", desc: "With features or meters: weeks of history (1-53)" },
           { name: "--weekly", desc: "With features or meters: add weekly usage" },
-          { name: "--limit", desc: "With features, meters or credits: items per page (1-100)" },
+          {
+            name: "--limit",
+            desc: "With features, meters, credits or hierarchy: items per page (1-100)",
+          },
           { name: "--cursor", desc: "With one paged section: its page.nextCursor" },
         ],
       },
