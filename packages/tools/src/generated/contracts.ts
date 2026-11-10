@@ -64,7 +64,7 @@ export const publicToolContracts = {
     "commandVersion": 2,
     "ownerDomain": "customers",
     "title": "List Customers",
-    "description": "Browse and filter customers by billing status, ARR, owner, activity, name or any customer field (CRM, support tool or SDK trait; find them with outlit_list_customer_fields). Returns a page of customers with ARR, last activity and status, total ARR per currency, and with fields each customer's values for the fields asked for, e.g. segment and health across the book.",
+    "description": "Browse and filter customers by billing status, ARR, owner, activity, renewal window, name or any customer field (CRM, support tool or SDK trait; find them with outlit_list_customer_fields). Returns a page of customers with ARR, last activity, status and stored renewal date, total ARR per currency, and with fields each customer's values for the fields asked for, e.g. segment and health across the book. filters.renewal (within next_30d to next_365d, or after and before) and orderBy renewal_date read the same stored renewal dates as the Customers page, at most 5,000 customers at a time; add filters if it says the window is too broad. Customers whose only renewal date comes from the billing period end may be missing from that filter and order; outlit_get_customer include renewal shows those.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -246,6 +246,36 @@ export const publicToolContracts = {
                 },
               },
             },
+            "renewal": {
+              "description": "Customers with a stored renewal date in the window, as the Customers page counts it (the date outlit_get_customer include renewal shows from Outlit or the CRM). Customers with no stored renewal date are left out. Customers whose only renewal date comes from the billing period end may be missing; outlit_get_customer include renewal shows those. Example: {\"within\": \"next_90d\"} or {\"after\": \"2027-01-01\", \"before\": \"2027-04-01\"}.",
+              "type": "object",
+              "properties": {
+                "within": {
+                  "description": "Renews from today through the last day of the window, in whole UTC days as the Customers page counts them: next_90d is today through 90 days from today.",
+                  "type": "string",
+                  "enum": [
+                    "next_30d",
+                    "next_60d",
+                    "next_90d",
+                    "next_180d",
+                    "next_365d",
+                  ],
+                },
+                "after": {
+                  "description": "Renews on or after this UTC date, YYYY-MM-DD, such as 2027-01-01.",
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                },
+                "before": {
+                  "description": "Renews before this UTC date, YYYY-MM-DD (that day excluded).",
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                },
+              },
+              "additionalProperties": false,
+            },
             "search": {
               "description": "Name or domain contains, ignoring case.",
               "type": "string",
@@ -294,7 +324,7 @@ export const publicToolContracts = {
           "type": "string",
         },
         "orderBy": {
-          "description": "arr puts unknown ARR last when descending; arrCurrencies says if currencies mixed.",
+          "description": "arr puts unknown ARR last when descending; arrCurrencies says if currencies mixed. renewal_date orders by the stored renewal date (the Customers page's), with ties by id; customers with no renewal date come last in either direction.",
           "default": "last_activity_at",
           "type": "string",
           "enum": [
@@ -302,10 +332,11 @@ export const publicToolContracts = {
             "first_synced_at",
             "name",
             "arr",
+            "renewal_date",
           ],
         },
         "orderDirection": {
-          "default": "desc",
+          "description": "Default desc; asc with orderBy renewal_date, so the soonest renewal comes first.",
           "type": "string",
           "enum": [
             "asc",
@@ -668,6 +699,38 @@ export const publicToolContracts = {
                 ],
                 "additionalProperties": false,
                 "description": "Outlit's own times for its record, not facts about the customer.",
+              },
+              "renewal": {
+                "description": "The stored renewal date the Customers page shows, as outlit_get_customer include renewal does where both have one; null when none is stored (one that only comes from the billing period end may still show there). Always set by the server; absent only in results saved before it existed.",
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "date": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                        "description": "Renewal date, YYYY-MM-DD (UTC).",
+                      },
+                      "source": {
+                        "type": "string",
+                        "enum": [
+                          "outlit",
+                          "crm",
+                          "billing",
+                        ],
+                        "description": "Set in Outlit, a CRM opportunity, or a stored billing renewal.",
+                      },
+                    },
+                    "required": [
+                      "date",
+                      "source",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  {
+                    "type": "null",
+                  },
+                ],
               },
               "fields": {
                 "description": "With input fields, in order.",
@@ -22174,6 +22237,7 @@ export const customerListOrderFields = [
   "first_synced_at",
   "name",
   "arr",
+  "renewal_date",
 ] as const
 
 export const customerIncludeSections = [
@@ -22281,4 +22345,4 @@ export const schemaTables = [
   "arr_history",
 ] as const
 
-export const sdkConsumerContractHash = "3e2199076cd7331df8f23806546377b59bd85442cecec27e0a17962ce3f319fd" as const
+export const sdkConsumerContractHash = "6206e36ecf74cace00b3104ae53635a0811c4c034aae6672d2f079e4e16f0a9d" as const
