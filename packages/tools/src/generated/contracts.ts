@@ -6291,7 +6291,7 @@ export const publicToolContracts = {
     "seeAlso": [
       {
         "tool": "outlit_query",
-        "text": "For counts, trends and custom aggregates use outlit_query: one customer's ARR over time is worked query customer_arr_history, and its product events by name is product_events_by_name (outlit_get_schema topic examples).",
+        "text": "For counts, trends and custom aggregates use outlit_query: one customer's ARR over time is worked query customer_arr_by_day, and its product events by name is product_events_by_name (outlit_get_schema topic examples).",
       },
     ],
     "aliases": [
@@ -11738,7 +11738,7 @@ export const publicToolContracts = {
                     "type": "string",
                     "enum": [
                       "arr_by_currency",
-                      "customer_arr_history",
+                      "customer_arr_by_day",
                       "product_events_by_name",
                       "paying_without_inbound_email",
                       "champions_inactive_30d",
@@ -22921,4 +22921,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "4f2d899620d3bb59c2106f251679ed92c2dbdf46f204db96f8cd03132df5ab8a" as const
+export const sdkConsumerContractHash = "0c33495239d0609270e78ee2f7e7e05161f3c166fdc66e1a32b2d6b82e9bb5e8" as const

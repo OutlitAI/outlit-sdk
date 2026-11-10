@@ -15242,7 +15242,7 @@
                       "type": "string",
                       "enum": [
                         "arr_by_currency",
-                        "customer_arr_history",
+                        "customer_arr_by_day",
                         "product_events_by_name",
                         "paying_without_inbound_email",
                         "champions_inactive_30d",
@@ -22545,5 +22545,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "4f2d899620d3bb59c2106f251679ed92c2dbdf46f204db96f8cd03132df5ab8a"
+  "x-outlit-contract-hash": "0c33495239d0609270e78ee2f7e7e05161f3c166fdc66e1a32b2d6b82e9bb5e8"
 }
