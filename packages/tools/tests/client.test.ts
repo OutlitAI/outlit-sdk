@@ -17,15 +17,16 @@ import {
   type CustomerAnalyticsRow,
   type CustomerContextSearchInput,
   type CustomerCredit,
-  type CustomerCreditsResult,
+  type CustomerCreditsSection,
   type CustomerDetail,
   type CustomerDetailResult,
   type CustomerFeature,
-  type CustomerFeaturesResult,
+  type CustomerFeaturesSection,
   type CustomerListItem,
   type CustomerListResult,
+  type CustomerMeter,
   type CustomerRelationship,
-  type CustomerRelationshipResult,
+  type CustomerRelationshipSection,
   cliToolNames,
   createOutlitClient,
   customerIncludeSections,
@@ -39,6 +40,7 @@ import {
   type FeatureListResult,
   type FeatureRef,
   getPublicToolContract,
+  getToolset,
   isOutlitToolsApiError,
   matchesGeneratedJsonSchema,
   normalizeCustomerSourceToolInput,
@@ -50,6 +52,8 @@ import {
   sqlToolNames,
   toolGatewayErrorCodes,
   toolGatewayErrorSchema,
+  toolNamesInToolsets,
+  toolsetNames,
 } from "../src/index.js"
 
 describe("matchesGeneratedJsonSchema", () => {
@@ -84,14 +88,13 @@ describe("toolsets", () => {
     expect(allPublicToolNames).toEqual([
       "outlit_list_customers",
       "outlit_list_customer_fields",
-      "outlit_list_users",
       "outlit_list_workspace_users",
       "outlit_get_customer",
-      "outlit_get_customer_relationship",
       "outlit_assign_customer_owner",
       "outlit_grant_customer_access",
       "outlit_update_customer_access",
       "outlit_revoke_customer_access",
+      "outlit_list_people",
       "outlit_get_timeline",
       "outlit_list_facts",
       "outlit_get_fact",
@@ -99,7 +102,7 @@ describe("toolsets", () => {
       "outlit_list_sources",
       "outlit_search_customer_context",
       "outlit_query",
-      "outlit_schema",
+      "outlit_get_schema",
       "outlit_list_destinations",
       "outlit_get_destination",
       "outlit_create_destination",
@@ -108,6 +111,8 @@ describe("toolsets", () => {
       "outlit_disable_destination",
       "outlit_archive_destination",
       "outlit_submit_feedback",
+      "outlit_list_toolsets",
+      "outlit_load_toolset",
       "outlit_get_integration_capabilities",
       "outlit_begin_integration_setup",
       "outlit_get_integration_setup_status",
@@ -121,8 +126,6 @@ describe("toolsets", () => {
       "outlit_list_features",
       "outlit_create_feature",
       "outlit_archive_feature",
-      "outlit_get_customer_features",
-      "outlit_get_customer_credits",
       "outlit_list_attention_items",
       "outlit_get_attention_item",
       "outlit_list_inbox",
@@ -135,7 +138,7 @@ describe("toolsets", () => {
       "outlit_merge_customers",
       "outlit_get_customer_merge_status",
     ])
-    expect(allPublicToolNames).toHaveLength(52)
+    expect(allPublicToolNames).toHaveLength(51)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -144,7 +147,7 @@ describe("toolsets", () => {
     expect(defaultToolNames).toEqual([
       "outlit_list_customers",
       "outlit_list_customer_fields",
-      "outlit_list_users",
+      "outlit_list_people",
       "outlit_get_customer",
       "outlit_get_timeline",
       "outlit_list_facts",
@@ -153,7 +156,7 @@ describe("toolsets", () => {
       "outlit_list_sources",
       "outlit_search_customer_context",
     ])
-    expect(sqlToolNames).toEqual(["outlit_query", "outlit_schema"])
+    expect(sqlToolNames).toEqual(["outlit_query", "outlit_get_schema"])
     expect(piToolNames).toEqual(allPublicToolNames)
     expect(cliToolNames).toEqual(allPublicToolNames)
     for (const toolName of ["outlit_list_attention_items", "outlit_get_attention_item"] as const) {
@@ -166,8 +169,8 @@ describe("toolsets", () => {
       "outlit_list_features",
       "outlit_create_feature",
       "outlit_archive_feature",
-      "outlit_get_customer_features",
-      "outlit_get_customer_credits",
+      "outlit_list_toolsets",
+      "outlit_load_toolset",
     ] as const) {
       expect(defaultToolNames).not.toContain(toolName)
       expect(analyticalToolNames).not.toContain(toolName)
@@ -176,8 +179,24 @@ describe("toolsets", () => {
     }
   })
 
+  test("groups every public tool into one of Core's toolsets", () => {
+    expect(toolsetNames).toEqual(["core", "work", "identity", "admin", "meta"])
+    for (const toolName of allPublicToolNames) {
+      expect(toolsetNames).toContain(getToolset(toolName))
+    }
+    expect(toolNamesInToolsets(["core"])).toEqual(
+      expect.arrayContaining([...defaultToolNames, ...sqlToolNames]),
+    )
+    expect(toolNamesInToolsets(["core", "work", "meta"])).toHaveLength(
+      toolNamesInToolsets(["core"]).length +
+        toolNamesInToolsets(["work"]).length +
+        toolNamesInToolsets(["meta"]).length,
+    )
+    expect(toolNamesInToolsets([])).toEqual([])
+  })
+
   test("exposes an analytical agent toolset with only default tools plus SQL", () => {
-    expect(analyticalToolNames).toEqual([...defaultToolNames, "outlit_query", "outlit_schema"])
+    expect(analyticalToolNames).toEqual([...defaultToolNames, "outlit_query", "outlit_get_schema"])
   })
 })
 
@@ -287,7 +306,7 @@ describe("tool contracts", () => {
     const workspace = getPublicToolContract("outlit_list_features")
     const create = getPublicToolContract("outlit_create_feature")
     const archive = getPublicToolContract("outlit_archive_feature")
-    const customerUsage = getPublicToolContract("outlit_get_customer_features")
+    const customer = getPublicToolContract("outlit_get_customer")
 
     expect(workspace.commandId).toBe("value_feature_workspace.get")
     expect(workspace.inputSchema.properties).toEqual(
@@ -334,24 +353,20 @@ describe("tool contracts", () => {
     expect(archive.commandId).toBe("value_feature.archive")
     expect(archive.inputSchema.required).toEqual(["id", "revision"])
     expect(archive.inputSchema.properties).not.toHaveProperty("restore")
-    expect(customerUsage.commandId).toBe("customer_feature_usage.get")
-    expect(customerUsage.inputSchema.required).toEqual(["customer"])
-    expect(customerUsage.outputSchema.required).toEqual([
-      "customer",
-      "events",
-      "features",
-      "sources",
-    ])
-    expect(customerUsage.outputSchema.properties.features.items.oneOf).toEqual([
-      expect.objectContaining({
-        properties: expect.objectContaining({ kind: { type: "string", const: "event" } }),
-      }),
-      expect.objectContaining({
-        properties: expect.objectContaining({ kind: { type: "string", const: "metered" } }),
-      }),
-    ])
+    expect(customer.inputSchema.required).toEqual(["customer"])
+    expect(customer.inputSchema.properties.include.items.enum).toEqual(
+      expect.arrayContaining(["features", "meters", "credits", "relationship"]),
+    )
+    // Event features and Autumn meters are separate sections, each paged on its own.
+    expect(customer.inputSchema.properties.features.properties.limit).toEqual(
+      expect.objectContaining({ default: 25, minimum: 1, maximum: 100 }),
+    )
+    expect(customer.inputSchema.properties.meters.properties.weeks).toEqual(
+      expect.objectContaining({ default: 12, minimum: 1, maximum: 53 }),
+    )
+    expect(customer.inputSchema.properties.credits.properties).not.toHaveProperty("weeks")
 
-    const publicContractText = JSON.stringify([workspace, create, archive, customerUsage])
+    const publicContractText = JSON.stringify([workspace, create, archive])
     expect(publicContractText).not.toMatch(
       /Behavior Metric|metric pair|Churn clock|Stripe|entitlement/i,
     )
@@ -373,34 +388,41 @@ describe("tool contracts", () => {
     >()
     expectTypeOf<FeatureCreateResult["feature"]>().toEqualTypeOf<FeatureDefinition>()
     expectTypeOf<FeatureArchiveResult["feature"]>().toEqualTypeOf<FeatureRef>()
-    expectTypeOf<CustomerFeaturesResult["features"][number]>().toEqualTypeOf<CustomerFeature>()
-    expectTypeOf<CustomerFeaturesResult["events"]>().toEqualTypeOf<"available" | "unavailable">()
-    expectTypeOf<
-      Extract<CustomerFeature, { kind: "event" }>["evidence"]["coverage"]
-    >().toEqualTypeOf<"complete" | "partial" | "unavailable">()
-    expectTypeOf<
-      Extract<CustomerFeature, { kind: "metered" }>["unit"]
-    >().toEqualTypeOf<"provider_defined">()
+    expectTypeOf<CustomerFeature["kind"]>().toEqualTypeOf<"event">()
+    expectTypeOf<CustomerFeature["evidence"]["coverage"]>().toEqualTypeOf<
+      "complete" | "partial" | "unavailable"
+    >()
+    expectTypeOf<CustomerMeter["kind"]>().toEqualTypeOf<"metered">()
+    expectTypeOf<CustomerMeter["unit"]>().toEqualTypeOf<"provider_defined">()
   })
 
-  test("distinguishes empty event results from unavailable event reads", () => {
-    const contract = getPublicToolContract("outlit_get_customer_features")
-    const result = {
-      customer: { id: "customer_1", name: "Acme" },
-      events: "available",
-      features: [],
-      sources: [{ provider: "autumn", status: "not_connected", truncated: false }],
-    } satisfies CustomerFeaturesResult
+  test("says why a feature section has no data instead of returning an empty list", () => {
+    const contract = getPublicToolContract("outlit_get_customer")
+    const features = contract.outputSchema.properties.features
+    const available = {
+      status: "available",
+      asOf: "2026-11-10T00:00:00.000Z",
+      data: {
+        window: { startAt: "2026-08-18T00:00:00.000Z", endAt: "2026-11-10T00:00:00.000Z" },
+        items: [],
+        page: { hasMore: false, nextCursor: null, total: 0 },
+      },
+    } satisfies CustomerFeaturesSection
 
-    expect(matchesGeneratedJsonSchema(result, contract.outputSchema)).toBe(true)
+    expect(matchesGeneratedJsonSchema(available, features)).toBe(true)
     expect(
-      matchesGeneratedJsonSchema({ ...result, events: "unavailable" }, contract.outputSchema),
+      matchesGeneratedJsonSchema(
+        { status: "not_connected", reason: "No product-event source is connected." },
+        features,
+      ),
     ).toBe(true)
-    expect(
-      matchesGeneratedJsonSchema({ ...result, events: "unknown" }, contract.outputSchema),
-    ).toBe(false)
-    const { events: _events, ...missingEvents } = result
-    expect(matchesGeneratedJsonSchema(missingEvents, contract.outputSchema)).toBe(false)
+    // An unavailable read carries its reason; a bare status or an unknown one is not a section.
+    expect(matchesGeneratedJsonSchema({ status: "unavailable" }, features)).toBe(false)
+    expect(matchesGeneratedJsonSchema({ status: "unknown", reason: "invented" }, features)).toBe(
+      false,
+    )
+    const { data: _data, ...missingData } = available
+    expect(matchesGeneratedJsonSchema(missingData, features)).toBe(false)
   })
 
   test("infers activatedAt on typed customer list and get client results", async () => {
@@ -451,8 +473,9 @@ describe("tool contracts", () => {
     })
 
     const listResult = await client.callTool("outlit_list_customers")
-    const relationshipResult = await client.callTool("outlit_get_customer_relationship", {
+    const relationshipResult = await client.callTool("outlit_get_customer", {
       customer: "acme.com",
+      include: ["relationship"],
     })
     const detailResult = await client.callTool("outlit_get_customer", {
       customer: "acme.com",
@@ -461,8 +484,13 @@ describe("tool contracts", () => {
     expectTypeOf(listResult).toEqualTypeOf<CustomerListResult>()
     expectTypeOf(detailResult).toEqualTypeOf<CustomerDetailResult>()
     expectTypeOf(detailResult.customer).toEqualTypeOf<CustomerDetail>()
-    expectTypeOf(relationshipResult).toEqualTypeOf<CustomerRelationshipResult>()
-    expectTypeOf(relationshipResult.relationship).toEqualTypeOf<CustomerRelationship>()
+    expectTypeOf(relationshipResult).toEqualTypeOf<CustomerDetailResult>()
+    expectTypeOf(relationshipResult.relationship).toEqualTypeOf<
+      CustomerRelationshipSection | undefined
+    >()
+    expectTypeOf<
+      Extract<CustomerRelationshipSection, { status: "available" }>["data"]
+    >().toEqualTypeOf<CustomerRelationship>()
   })
 
   test("exposes workspace users and customer owner filters", () => {
@@ -535,8 +563,9 @@ describe("tool contracts", () => {
     expect(JSON.stringify(section("billing"))).toContain("overdueInvoices")
   })
 
-  test("validates the dedicated customer credits contract and result aliases", () => {
-    const contract = getPublicToolContract("outlit_get_customer_credits")
+  test("validates the customer credits and meters sections and their result aliases", () => {
+    const contract = getPublicToolContract("outlit_get_customer")
+    const credits = contract.outputSchema.properties.credits
     const credit = {
       id: "credit_1",
       name: "API credits",
@@ -566,25 +595,26 @@ describe("tool contracts", () => {
       },
     } satisfies CustomerCredit
     const result = {
-      customer: { id: "customer_1", name: "Acme" },
       status: "available",
-      credits: [credit],
-      truncated: false,
-    } satisfies CustomerCreditsResult
+      asOf: "2026-09-12T00:00:00.000Z",
+      data: {
+        items: [credit],
+        page: { hasMore: false, nextCursor: null, total: 1 },
+        complete: true,
+      },
+    } satisfies CustomerCreditsSection
 
-    expect(contract.commandId).toBe("customer.credits.get")
-    expect(contract.inputSchema.required).toEqual(["customer"])
+    expect(contract.commandId).toBe("customer.get")
+    expect(contract.inputSchema.properties.include.items.enum).toContain("credits")
     expect(customerIncludeSections).not.toContain("featureBalances")
     expectTypeOf<CustomerCredit["burn"]["rate"]>().toEqualTypeOf<number | null>()
     expectTypeOf<CustomerCredit["scope"]>().toEqualTypeOf<"customer">()
-    expect(matchesGeneratedJsonSchema(result, contract.outputSchema)).toBe(true)
-    expect(
-      matchesGeneratedJsonSchema({ ...result, status: "invented" }, contract.outputSchema),
-    ).toBe(false)
+    expect(matchesGeneratedJsonSchema(result, credits)).toBe(true)
+    expect(matchesGeneratedJsonSchema({ ...result, status: "invented" }, credits)).toBe(false)
     expect(
       matchesGeneratedJsonSchema(
-        { ...result, credits: [{ ...credit, scope: "account" }] },
-        contract.outputSchema,
+        { ...result, data: { ...result.data, items: [{ ...credit, scope: "account" }] } },
+        credits,
       ),
     ).toBe(false)
   })
@@ -771,6 +801,84 @@ describe("createOutlitClient", () => {
     if (!isOutlitToolsApiError(error)) throw new Error("expected OutlitToolsApiError")
     expect(error.status).toBe(403)
     expect(error.envelope).toEqual(envelope)
+  })
+
+  test("keeps an idempotency conflict with the call that resolves it", async () => {
+    const envelope = {
+      code: "IDEMPOTENCY_CONFLICT",
+      message: "This request id was used with different input.",
+      retryable: false,
+      requestId: "request_456",
+      next: { instruction: "Send a new request id, or repeat the original input." },
+    }
+    const client = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockResolvedValue(new Response(JSON.stringify(envelope), { status: 409 })),
+    })
+
+    const error = await client.callTool("outlit_list_customers").catch((value: unknown) => value)
+    if (!isOutlitToolsApiError(error)) throw new Error("expected OutlitToolsApiError")
+    expect(toolGatewayErrorCodes).toContain("IDEMPOTENCY_CONFLICT")
+    expect(error.envelope).toEqual(envelope)
+  })
+
+  test("reports a deprecation, notices and a replay marker from the response headers", async () => {
+    const deprecation = {
+      tool: "outlit_list_users",
+      use: "outlit_list_people",
+      until: "2026-12-11",
+      message: "outlit_list_users is deprecated: use outlit_list_people.",
+    }
+    const onResponse = vi.fn()
+    const client = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      onResponse,
+      fetch: vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ items: [] }), {
+          status: 200,
+          headers: {
+            "outlit-deprecation": JSON.stringify(deprecation),
+            Deprecation: "true",
+            Sunset: "Fri, 11 Dec 2026 00:00:00 GMT",
+            "outlit-notice": JSON.stringify(["limit 500 was lowered to 100."]),
+            "idempotent-replayed": "true",
+          },
+        }),
+      ),
+    })
+
+    await client.callTool("outlit_list_people")
+
+    expect(onResponse).toHaveBeenCalledWith({
+      tool: "outlit_list_people",
+      status: 200,
+      deprecation,
+      sunset: "Fri, 11 Dec 2026 00:00:00 GMT",
+      notices: ["limit 500 was lowered to 100."],
+      replayed: true,
+    })
+  })
+
+  test("reports plain responses with no notices, and a throwing hook cannot fail the call", async () => {
+    const seen: unknown[] = []
+    const plain = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      onResponse: (info) => seen.push(info),
+      fetch: vi.fn().mockResolvedValue(new Response("{}", { status: 200 })),
+    })
+    await plain.callTool("outlit_list_people")
+    expect(seen).toEqual([
+      { tool: "outlit_list_people", status: 200, notices: [], replayed: false },
+    ])
+
+    const throwing = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      onResponse: () => {
+        throw new Error("hook failed")
+      },
+      fetch: vi.fn().mockResolvedValue(new Response('{"items":[]}', { status: 200 })),
+    })
+    await expect(throwing.callTool("outlit_list_people")).resolves.toEqual({ items: [] })
   })
 
   test("preserves non-retryable missing-resource feedback from Core", async () => {

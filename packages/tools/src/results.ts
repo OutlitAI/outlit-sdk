@@ -74,8 +74,25 @@ export type CustomerListResult = PublicToolResult<"outlit_list_customers">
 export type CustomerListItem = CustomerListResult["items"][number]
 export type CustomerDetailResult = PublicToolResult<"outlit_get_customer">
 export type CustomerDetail = CustomerDetailResult["customer"]
-export type CustomerRelationshipResult = PublicToolResult<"outlit_get_customer_relationship">
-export type CustomerRelationship = CustomerRelationshipResult["relationship"]
+
+type CustomerSection<TKey extends "relationship" | "features" | "meters" | "credits"> = NonNullable<
+  CustomerDetailResult[TKey]
+>
+type AvailableSectionData<TSection> = TSection extends { status: "available"; data: infer TData }
+  ? TData
+  : never
+
+/** A get_customer section: `{ status: "available", asOf, data }`, or a status with a reason. */
+export type CustomerRelationshipSection = CustomerSection<"relationship">
+export type CustomerRelationship = AvailableSectionData<CustomerRelationshipSection>
+export type CustomerFeaturesSection = CustomerSection<"features">
+export type CustomerFeature = AvailableSectionData<CustomerFeaturesSection>["items"][number]
+export type CustomerMetersSection = CustomerSection<"meters">
+export type CustomerMeter = AvailableSectionData<CustomerMetersSection>["items"][number]
+export type CustomerCreditsSection = CustomerSection<"credits">
+export type CustomerCredit = AvailableSectionData<CustomerCreditsSection>["items"][number]
+export type PersonListResult = PublicToolResult<"outlit_list_people">
+export type Person = PersonListResult["items"][number]
 export type AttentionListResult = PublicToolResult<"outlit_list_attention_items">
 export type AttentionItemSummary = AttentionListResult["items"][number]
 export type AttentionItemResult = PublicToolResult<"outlit_get_attention_item">
@@ -86,10 +103,6 @@ export type FeatureCreateResult = PublicToolResult<"outlit_create_feature">
 export type FeatureDefinition = FeatureCreateResult["feature"]
 export type FeatureArchiveResult = PublicToolResult<"outlit_archive_feature">
 export type FeatureRef = FeatureArchiveResult["feature"]
-export type CustomerFeaturesResult = PublicToolResult<"outlit_get_customer_features">
-export type CustomerFeature = CustomerFeaturesResult["features"][number]
-export type CustomerCreditsResult = PublicToolResult<"outlit_get_customer_credits">
-export type CustomerCredit = CustomerCreditsResult["credits"][number]
 export type FeedbackSubmitResult = PublicToolResult<"outlit_submit_feedback">
 
 export interface CustomerAnalyticsRow {
