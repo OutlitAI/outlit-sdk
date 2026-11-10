@@ -1274,8 +1274,7 @@ Use `outlit schema` to discover all views and their columns. Common views:
 | `activity` | Event stream (page views, meetings, emails, etc.) |
 | `customers` | Denormalized customer attributes and metrics |
 | `users` | Denormalized user attributes |
-| `revenue` | Daily MRR snapshots (deprecated) |
-| `arr_history` | One row per customer per UTC day of ARR; a day with no row was not computed |
+| `revenue` | ARR daily: one row per customer per UTC day since 2026-11-06 (`snapshot_date`, `arr_amount`, `arr_currency`, `arr_decimals`, `arr_estimated`, `revenue_lifecycle`, and the customer's id, name, domain and status); a day with no row was not computed |
 
 ## Schema
 
@@ -1289,7 +1288,7 @@ outlit schema [view | events | examples]
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `view` | No | A view name (`activity`, `customers`, `users`, `revenue`, `arr_history`) for that view alone; `events` for the activity channels, event types and your most frequent event names; `examples` for worked queries that run as written. Omit it for every view |
+| `view` | No | A view name (`activity`, `customers`, `users`, `revenue`) for that view alone; `events` for the activity channels, event types and your most frequent event names; `examples` for worked queries that run as written. Omit it for every view |
 
 ### Examples
 

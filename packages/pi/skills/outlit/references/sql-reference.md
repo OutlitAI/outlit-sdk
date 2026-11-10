@@ -9,8 +9,7 @@ Always inspect schema first with `outlit_get_schema` (`topic: "examples"` has wo
 - `activity`: product and communication activity
 - `customers`: customer attributes, billing, revenue (`arr_amount` in minor units with `arr_currency` and `arr_decimals`; `arr_cents` and `mrr_cents` are deprecated)
 - `users`: user attributes and journey stages
-- `revenue`: daily MRR snapshots (deprecated)
-- `arr_history`: one row per customer per UTC day of ARR (`arr_amount`, `arr_currency`, `arr_decimals`); a day with no row was not computed
+- `revenue`: ARR daily, one row per customer per UTC day since 2026-11-06 (`snapshot_date`, `arr_amount`, `arr_currency`, `arr_decimals`, `arr_estimated`, `revenue_lifecycle`, customer id, name, domain and status); a day with no row was not computed. It has no MRR columns
 
 ## Useful Patterns
 

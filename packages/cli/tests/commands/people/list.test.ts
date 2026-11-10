@@ -79,22 +79,61 @@ describe("people list", () => {
     }
   })
 
-  test("accepts activity windows in minutes, hours and days", async () => {
+  test.each([
+    ["12h", "hours"],
+    ["30d", "days"],
+    ["90m", "minutes"],
+    ["3650d", "the largest day count"],
+    ["99999m", "five digits"],
+  ])("accepts %s (%s) for both activity flags", async (window) => {
     const { default: listCmd } = await import("../../../src/commands/people/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await listCmd.run!({
-        args: { "has-activity-in": "12h", "no-activity-in": "90m", json: true },
+        args: { "has-activity-in": window, "no-activity-in": window, json: true },
       } as Parameters<NonNullable<typeof listCmd.run>>[0])
 
       expect(mockCallTool).toHaveBeenCalledWith(
         "outlit_list_people",
         expect.objectContaining({
-          filters: { activity: { within: "12h", notWithin: "90m" } },
+          filters: { activity: { within: window, notWithin: window } },
         }),
       )
     } finally {
       writeSpy.mockRestore()
+    }
+  })
+
+  test.each([
+    "12",
+    "0d",
+    "12x",
+    "1.5h",
+    "-3d",
+    "100000d",
+    "h",
+    "12H",
+    " 12h",
+  ])("rejects %j with invalid_input and never lets process.exit escape the test", async (window) => {
+    const { default: listCmd } = await import("../../../src/commands/people/list")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await listCmd.run!({
+        args: { "has-activity-in": window, json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(stderrOutput).toContain("12h")
+      expect(mockCallTool).not.toHaveBeenCalled()
     }
   })
 
