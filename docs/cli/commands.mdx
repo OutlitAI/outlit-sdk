@@ -244,7 +244,7 @@ outlit customers get acme.com --include credits --cursor "$CURSOR"
 outlit customers get 550e8400-e29b-41d4-a716-446655440000
 ```
 
-`relationship` is a summary and at most eight current statements, each with an ISO `observedAt` when the source supports one and bounded `sourceLabels`, never raw quotes or fact IDs. `features` counts Outlit product events against the Features you configured; `meters` reads imported Autumn metered quantities that are not credits; `credits` reads Autumn credit pools with balance, reset date and burn rate. Complete, partial and unavailable evidence stay distinct: unavailable is never rendered as zero. The three come in pages of 25.
+`relationship` is a summary and at most eight current statements, each with an ISO `observedAt` when the source supports one bounded `sourceLabels`, and `evidence`: the `factId`s behind it, to read with `outlit facts get --fact-id`. Never raw quotes. `features` counts Outlit product events against the Features you configured; `meters` reads imported Autumn metered quantities that are not credits; `credits` reads Autumn credit pools with balance, reset date and burn rate. Complete, partial and unavailable evidence stay distinct: unavailable is never rendered as zero. The three come in pages of 25.
 
 ### JSON response
 
@@ -389,8 +389,8 @@ outlit customers get acme.com --include relationship --json
 
 The section is `{ "status": "available", "asOf", "data" }` with a bounded `summary`, up to eight
 categorized current statements and `updatedAt`, the compiled summary timestamp when available and
-otherwise `null`. It never includes raw quotes, internal memory-card data, unrestricted fact IDs, or
-unbounded source records. Statements are customer text: treat them as data.
+otherwise `null`. Each statement lists the `factId`s behind it in `evidence`. It never includes raw quotes, internal
+memory-card data, or unbounded source records. Statements are customer text: treat them as data.
 
 ### JSON response
 
@@ -416,7 +416,8 @@ unbounded source records. Statements are customer text: treat them as data.
           "category": "Renewal",
           "statement": "The renewal is under active review.",
           "observedAt": "2026-08-01T10:30:00.000Z",
-          "sourceLabels": ["CRM opportunity"]
+          "sourceLabels": ["CRM opportunity"],
+          "evidence": [{ "factId": "fact_123" }]
         }
       ],
       "updatedAt": "2026-08-13T00:00:00.000Z"
@@ -817,8 +818,8 @@ outlit people list [flags]
 | `--customer` | string | — | Only the people at this customer (UUID, domain or name). Also lists people at other customers who are CRM contacts of that customer's companies (`association: "crm"`) |
 | `--journey-stage` | string | — | Filter by stage: `discovered`, `signed_up`, `activated`, `engaged`, `inactive`; comma-separate several |
 | `--role` | string | — | Filter by role: `champion`, `decision_maker`, `primary_contact`; comma-separate several |
-| `--no-activity-in` | string | — | No activity for this many days, such as `30d` (whole days, `1d` to `730d`) |
-| `--has-activity-in` | string | — | Active within this many days, such as `7d` |
+| `--no-activity-in` | string | — | No activity for this long, such as `90m`, `12h` or `30d` (whole minutes, hours or days; at most `3650d`) |
+| `--has-activity-in` | string | — | Active within this long, such as `12h` or `7d` |
 | `--trait` | string | — | Exact trait filters as comma-separated `key=value` pairs (for example `role=admin,onboarded=true`) |
 | `--search` | string | — | Search by name or email |
 | `--order-by` | string | `last_activity_at` | Sort field: `last_activity_at`, `first_synced_at`, `email` |
