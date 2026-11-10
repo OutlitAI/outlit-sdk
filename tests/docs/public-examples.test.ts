@@ -204,7 +204,7 @@ describe("public documentation examples", () => {
       ["Open one source record", "outlit_get_source"],
       ["Read exact source content", "outlit_get_source"],
       ["Follow person profile evidence", "outlit_get_source"],
-      ["Read customer features", "outlit_get_customer_features"],
+      ["Read customer features", "outlit_get_customer"],
     ] as const
     const failures: string[] = []
 
@@ -244,14 +244,14 @@ describe("public documentation examples", () => {
     const cases = [
       ["Customers list", "outlit_list_customers"],
       ["Customers get", "outlit_get_customer"],
-      ["Customers relationship", "outlit_get_customer_relationship"],
+      ["Customers get: relationship", "outlit_get_customer"],
       ["Attention", "outlit_list_attention_items"],
       ["Customers timeline", "outlit_get_timeline"],
-      ["Users list", "outlit_list_users"],
+      ["People list", "outlit_list_people"],
       ["Facts", "outlit_list_facts"],
       ["Search", "outlit_search_customer_context"],
       ["SQL", "outlit_query"],
-      ["Schema", "outlit_schema"],
+      ["Schema", "outlit_get_schema"],
     ] as const
     const failures: string[] = []
 

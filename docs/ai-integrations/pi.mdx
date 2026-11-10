@@ -26,7 +26,7 @@ The default Pi extension exposes the customer intelligence tools that are read-o
 |------|--------------|
 | `outlit_list_customers` | Browse customers by billing status, activity, revenue, owner, customer fields, or name |
 | `outlit_list_customer_fields` | List the fields Outlit holds about customers (CRM and support tool account fields, SDK traits), with the values customers hold, for filtering customers |
-| `outlit_list_users` | Browse contacts by journey stage, activity, customer, traits, email, or name |
+| `outlit_list_people` | Browse the people at customers by journey stage, role, activity, customer, traits, email, or name |
 | `outlit_get_customer` | Retrieve one complete customer profile |
 | `outlit_get_timeline` | Retrieve customer activity across product, billing, support, and conversation channels |
 | `outlit_list_facts` | List structured facts with status, source type, date, and provenance filters |
@@ -51,7 +51,7 @@ The extension reads `OUTLIT_API_KEY` from the environment and uses `https://app.
 
 ## Custom toolsets
 
-Pass `toolNames` when you want a narrower or broader toolset:
+Pass `toolNames` when you want a narrower or broader toolset, or `toolsets` to register every tool in Core's toolsets (`core`, `work`, `identity`, `admin`, `meta`); both apply when you pass both:
 
 ```ts
 import { createOutlitPiExtension, piToolNames } from "@outlit/pi"
@@ -61,7 +61,13 @@ export default createOutlitPiExtension({
 })
 ```
 
-Use the default policy for ten read-only customer tools. Use `analyticalToolNames` when the agent also needs `outlit_schema` and read-only `outlit_query` (12 tools total). `piToolNames` is broader: it includes SQL, customer relationship and Attention reads, customer ownership and access actions, Feature tools, workspace configuration, and `outlit_submit_feedback` for product feedback intake. Choose the smallest set your Pi agent needs.
+```ts
+export default createOutlitPiExtension({
+  toolsets: ["core", "work"],
+})
+```
+
+Use the default policy for ten read-only customer tools. Use `analyticalToolNames` when the agent also needs `outlit_get_schema` and read-only `outlit_query` (12 tools total). `piToolNames` is broader: it includes SQL, Attention reads, the toolset tools, customer ownership and access actions, Feature tools, workspace configuration, and `outlit_submit_feedback` for product feedback intake. Choose the smallest set your Pi agent needs.
 
 ## Growth agent examples
 

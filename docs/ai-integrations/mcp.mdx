@@ -71,11 +71,9 @@ For coding agents that run local commands, see [Agent skills](/ai-integrations/s
 | Tool | What it does |
 |---|---|
 | `outlit_list_customers` | Filter customers by billing status, activity recency, revenue, owner, and customer fields such as CRM fields or exact trait values |
-| `outlit_list_users` | Filter users by journey stage, activity, customer, and exact trait values |
+| `outlit_list_people` | Filter the people at customers by journey stage, role, activity, customer, and exact trait values; each carries when they last took part in a conversation |
 | `outlit_list_workspace_users` | Browse internal workspace users such as CSMs, managers, account owners, and admins |
-| `outlit_get_customer` | Get a complete customer profile with users, revenue, timeline, and metrics |
-| `outlit_get_customer_relationship` | Get the bounded relationship summary with categorized statements and source labels |
-| `outlit_get_customer_credits` | Read imported credit pools, remaining credits, burn rate, and runway |
+| `outlit_get_customer` | Get a customer profile and, with `include`, its users, revenue, billing, timeline, metrics, relationship summary, product-event features, Autumn meters and credit pools, each as a section with a status |
 
 ### Identity
 
@@ -113,7 +111,7 @@ For coding agents that run local commands, see [Agent skills](/ai-integrations/s
 | `outlit_list_sources` | List concrete source records such as calls, emails, calendar events, support tickets, Slack conversations, or opportunities |
 | `outlit_search_customer_context` | Search across customer facts, emails, calls, calendar events, support tickets, Slack conversations, and CRM opportunities using natural language. Returns grouped artifact-level matches for `source` and `fact` results, with `sourceTypes` and time-range filters |
 | `outlit_query` | Run read-only SQL queries against your customer data |
-| `outlit_schema` | Get view schemas to help write accurate SQL queries |
+| `outlit_get_schema` | Get the analytics views with column units and currencies, view rules, event types and worked queries |
 
 ### Features
 
@@ -122,7 +120,6 @@ For coding agents that run local commands, see [Agent skills](/ai-integrations/s
 | `outlit_list_features` | Read configured Features, historical evidence, sources, and ready, partial, or unavailable candidate discovery |
 | `outlit_create_feature` | Create one Feature from an exact product-event rule |
 | `outlit_archive_feature` | Archive a non-final Feature using its current opaque revision |
-| `outlit_get_customer_features` | Read exact Feature usage for one authorized customer |
 
 ### Feedback
 

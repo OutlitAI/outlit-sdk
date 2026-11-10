@@ -32,10 +32,8 @@ against the shared `@outlit/tools` contract before the tool runs.
 |---|---|
 | `outlit_list_customers` | Browse and filter customers by billing status, activity recency, ARR, owner, customer fields (CRM, support tool or SDK traits), or name |
 | `outlit_list_customer_fields` | List the fields Outlit holds about customers (CRM and support tool account fields, SDK traits), with their values, to filter customers on |
-| `outlit_list_users` | Browse and filter users by journey stage, activity recency, customer, traits, email, or name |
-| `outlit_get_customer` | Get full details for one customer, with optional related sections |
-| `outlit_get_customer_relationship` | Bounded relationship read model: categorized statements with source labels (no raw fact IDs or quotes) |
-| `outlit_get_customer_credits` | Read imported credit pools, remaining credits, burn rate, and runway for one customer |
+| `outlit_list_people` | Browse and filter the people at customers by journey stage, role, activity recency, customer, traits, email, or name, each with when they last took part in a conversation |
+| `outlit_get_customer` | Get one customer, with optional sections: users, revenue, billing, relationship (a bounded summary with source labels), features, meters, credits and more |
 
 ### Identity
 
@@ -89,7 +87,7 @@ against the shared `@outlit/tools` contract before the tool runs.
 | Tool | Purpose |
 |---|---|
 | `outlit_query` | Run SQL against customer intelligence views |
-| `outlit_schema` | Inspect available analytics views |
+| `outlit_get_schema` | Inspect the analytics views: columns with units and currencies, view rules, event types and worked queries |
 
 ### Features
 
@@ -98,7 +96,15 @@ against the shared `@outlit/tools` contract before the tool runs.
 | `outlit_list_features` | Read configured Features, exact historical usage, eligible sources, and ready, partial, or unavailable candidate discovery |
 | `outlit_create_feature` | Create or idempotently return one Feature observed by one event rule |
 | `outlit_archive_feature` | Archive a Feature using its opaque id and current revision when another active feature remains |
-| `outlit_get_customer_features` | Read exact historical Feature usage for one authorized customer |
+
+### Toolsets
+
+Tools belong to a toolset: `core` (customers, people, facts, sources, search, SQL), `work` (attention and inbox), `identity` (merges), `admin` (access, destinations, integrations, settings, Features) and `meta` (feedback and these two tools).
+
+| Tool | Purpose |
+|---|---|
+| `outlit_list_toolsets` | List the toolsets with their purpose and tools, whether this connection lists them, and the MCP URL that adds one (`null` outside MCP) |
+| `outlit_load_toolset` | Return one toolset's tool definitions and the MCP URL that lists them |
 
 ### Configuration
 
@@ -256,11 +262,11 @@ Returns `crm.data`: one entry per CRM or support tool account linked to the cust
 
 `filters.fields` filters by customer fields: up to 10 filters, all of which must hold. A field's `source` is `hubspot`, `salesforce`, `attio`, `pylon` (the fields of the customers' CRM and support tool accounts, any linked account counting) or `traits` (traits sent with the Outlit SDK). `eq` and `in` compare text ignoring case; `gte` and `lte` compare numbers or ISO dates. `fields` (up to 5) adds `fields` to each customer: each field with its `label` and its `values`. Find a field's `source` and `key`, its picklist `options` and the values customers hold with `outlit_list_customer_fields`. Filters matching more than 5,000 customers are refused; add a narrower one.
 
-`outlit_list_customers` filters are grouped under `filters`: `billingStatus` (an array of lowercase statuses), `arr` (`above`, `below`, `currency`; minor units), `fields`, `owner` (`id`, `email`, `has`), `activity` (`within`, `notWithin`, `activatedSince`) and `search`. The earlier top-level spellings (`billingStatus`, `arrAbove`, `arrBelow`, `arrCurrency`, `mrrAbove`, `mrrBelow`, `traitFilters`, `crm`, `crmFields`, `search`, `ownerId`, `ownerEmail`, `hasOwner`, `hasActivityInLast`, `noActivityInLast`, `activatedSince`), uppercase billing statuses and the `orderBy` values `arr_cents`, `mrr_cents` and `first_seen_at` are mapped to the new ones until 2026-12-11, and refused with the new name after that. `outlit_list_crm_fields` is now `outlit_list_customer_fields`, with `provider` renamed `source`.
+`outlit_list_customers` filters are grouped under `filters`: `billingStatus` (an array of lowercase statuses), `arr` (`above`, `below`, `currency`; minor units), `fields`, `owner` (`id`, `email`, `has`), `activity` (`within`, `notWithin`, `activatedSince`), `renewal` (`within` one of `next_30d` to `next_365d`, or `after` and `before` as `YYYY-MM-DD` UTC dates; customers with no stored renewal date never match) and `search`. `orderBy` `renewal_date` sorts by the stored renewal date (ascending by default, customers with none last), and each customer carries `renewal: { date, source } | null`. The earlier top-level spellings (`billingStatus`, `arrAbove`, `arrBelow`, `arrCurrency`, `mrrAbove`, `mrrBelow`, `traitFilters`, `crm`, `crmFields`, `search`, `ownerId`, `ownerEmail`, `hasOwner`, `hasActivityInLast`, `noActivityInLast`, `activatedSince`), uppercase billing statuses and the `orderBy` values `arr_cents`, `mrr_cents` and `first_seen_at` are mapped to the new ones until 2026-12-11, and refused with the new name after that. `outlit_list_crm_fields` is now `outlit_list_customer_fields`, with `provider` renamed `source`.
 
 ### Read a contact's or deal's CRM fields
 
-`outlit_list_users` with `"include": ["crm"]` (or `outlit_get_customer` with `"include": ["users", "crm"]`) adds `crm` to each user: the CRM contacts linked to them, with `fields` in the same shape as account fields. `outlit_get_source` on an `OPPORTUNITY` adds the deal's `fields`. The same size limit applies: fields left out are counted in `omittedFieldCount`, and contacts left out are counted in `omittedCrmContacts`. A user has no `crm` when the section is not enabled for the workspace or when the size limit left no room for them; ask for fewer users or `crmFields` to get it.
+`outlit_list_people` with `"include": ["crm"]` (or `outlit_get_customer` with `"include": ["users", "crm"]`) adds `crm` to each user: the CRM contacts linked to them, with `fields` in the same shape as account fields. `outlit_get_source` on an `OPPORTUNITY` adds the deal's `fields`. The same size limit applies: fields left out are counted in `omittedFieldCount`, and contacts left out are counted in `omittedCrmContacts`. A user has no `crm` when the section is not enabled for the workspace or when the size limit left no room for them; ask for fewer users or `crmFields` to get it.
 
 ### Search customer context
 
@@ -419,13 +425,16 @@ for exact lookup. Replace the example ID with the ID from that reference.
 
 ```json
 {
-  "tool": "outlit_get_customer_features",
+  "tool": "outlit_get_customer",
   "input": {
     "customer": "acme.com",
-    "weeks": 12
+    "include": ["features", "meters"],
+    "features": { "weeks": 12 }
   }
 }
 ```
+
+`include` also takes `relationship` (a summary and at most eight current statements), `meters` (Autumn metered quantities that are not credits) and `credits` (Autumn credit pools). `features`, `meters` and `credits` come in pages of 25 by default, at most 100: pass `features`, `meters` or `credits` with `limit` and `cursor` to page one of them.
 
 Feature usage is factual historical evidence. A feature can report complete or partial counts,
 no matches in the requested window, or unavailable source evidence. Unavailable evidence is not
@@ -505,3 +514,17 @@ Invalid JSON, unknown tool names, or invalid tool inputs return `400`:
 ```
 
 Invalid credentials return `401`. Plan API-call limits can return `402` or `429` with a stable billing `code`.
+
+A request id that was already used with different input returns `409` with the code `IDEMPOTENCY_CONFLICT`; send a new request id, or repeat the original input. A result larger than 64 KiB is never returned whole: a list returns the items that fit with a `truncation` field whose `next` names the call for the rest, and anything else returns `413` with the code `TOOL_RESULT_TOO_LARGE` and a `next` saying how to ask for less.
+
+### Response headers
+
+Beside the result, the gateway can send these headers. `@outlit/tools` reports them through the client's `onResponse` option, the CLI prints deprecations and notices to stderr, and Pi adds them as a second text block after the result.
+
+| Header | Meaning |
+|---|---|
+| `outlit-deprecation` | The call used a retired tool name. JSON `{ "tool", "use", "until", "message" }`: the name you called, the tool to call instead, and the last day the old name works. `Deprecation` and `Sunset` carry the same information as standard headers |
+| `outlit-notice` | A JSON array of sentences about an old input spelling the gateway changed, such as a limit lowered to the maximum or a 12-hour window rounded up to one day |
+| `idempotent-replayed` | `true` when the result was stored from an earlier call with the same request id |
+
+Retired tool names answer until the date in their `outlit-deprecation` header, then return `INVALID_TOOL_INPUT` with the issue code `renamed_tool` and the new name in `next.tool`.

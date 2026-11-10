@@ -33,7 +33,7 @@ Assemble the account's current state and evidence before a renewal conversation.
 
 ```bash
 # Bounded relationship summary: categorized statements with source labels
-outlit customers relationship acme.com --json
+outlit customers get acme.com --include relationship --json
 
 # Billing position
 outlit customers get acme.com --include revenue,billing --json
@@ -46,7 +46,7 @@ outlit facts list acme.com --status ACTIVE --json
 outlit customers get acme.com --json
 ```
 
-`customers relationship` returns categorized current statements — not raw fact IDs or source quotes. Use `facts list` / `sources get` when you need the underlying records.
+`--include relationship` returns categorized current statements — not raw fact IDs or source quotes. Use `facts list` / `sources get` when you need the underlying records.
 
 ## Recipe: expansion candidates
 
@@ -57,10 +57,10 @@ Accounts that are healthy enough to expand.
 outlit customers list --billing-status paying --has-activity-in 7d --order-by arr --json
 
 # Feature adoption for one account (1-53 weeks, optional weekly breakdown)
-outlit customers features acme.com --weeks 12 --weekly --json
+outlit customers get acme.com --include features,meters --weeks 12 --weekly --json
 
 # Seat-by-seat engagement inside the account
-outlit users list --customer-id '<uuid>' --journey-stage ENGAGED --json
+outlit people list --customer '<uuid>' --journey-stage engaged --json
 ```
 
 An `unavailable` state means a source did not report; it does not mean usage is zero.

@@ -161,7 +161,7 @@ function buildCustomerDirectorySql(sqlParts: SqlParts): string {
       any(name) AS customerName,
       any(domain) AS domain,
       any(billing_status) AS billingStatus,
-      any(arr_cents) AS arrCents
+      any(arr_amount) AS arrCents
     FROM customers
     WHERE customer_id != ''
       AND ${sqlParts.customerScopeFilter}
