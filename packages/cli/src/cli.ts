@@ -16,16 +16,19 @@ async function startCli() {
   }
 
   // Prints the embedded skill: no auth, no network, no update check.
-  const skillFlag = process.argv.slice(2).indexOf("--skill")
-  if (skillFlag !== -1) {
-    const { OUTLIT_SKILL } = await import("./lib/skill")
-    const requested = process.argv.slice(2)[skillFlag + 1]
-    if (requested && !requested.startsWith("-") && requested !== "outlit") {
-      process.stderr.write(`Unknown skill "${requested}". Available: outlit\n`)
-      process.exit(1)
+  // Only a leading `--skill` counts, so `outlit search -- --skill` stays search data.
+  // Return instead of process.exit so piped stdout drains fully under Node.
+  const [firstArg, skillName] = process.argv.slice(2)
+  if (firstArg === "--skill") {
+    if (skillName && !skillName.startsWith("-") && skillName !== "outlit") {
+      process.stderr.write(`Unknown skill "${skillName}". Available: outlit\n`)
+      process.exitCode = 1
+      return
     }
+    const { OUTLIT_SKILL } = await import("./lib/skill")
     process.stdout.write(OUTLIT_SKILL.endsWith("\n") ? OUTLIT_SKILL : `${OUTLIT_SKILL}\n`)
-    process.exit(0)
+    process.exitCode = 0
+    return
   }
 
   if (process.argv.includes(INTERNAL_UPDATE_FLAG)) {

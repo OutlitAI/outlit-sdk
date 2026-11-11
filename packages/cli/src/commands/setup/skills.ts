@@ -58,8 +58,13 @@ export function detectPackageRunner(): PackageRunner | null {
 // Writes the stub skill to a temp directory the `skills` installer can add from.
 function writeStubSource(): string {
   const dir = mkdtempSync(join(tmpdir(), "outlit-skill-"))
-  mkdirSync(join(dir, SKILL_STUB_NAME))
-  writeFileSync(join(dir, SKILL_STUB_NAME, "SKILL.md"), OUTLIT_SKILL_STUB)
+  try {
+    mkdirSync(join(dir, SKILL_STUB_NAME))
+    writeFileSync(join(dir, SKILL_STUB_NAME, "SKILL.md"), OUTLIT_SKILL_STUB)
+  } catch (err) {
+    rmSync(dir, { recursive: true, force: true })
+    throw err
+  }
   return dir
 }
 
