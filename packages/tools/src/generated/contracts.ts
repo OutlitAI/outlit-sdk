@@ -16060,7 +16060,7 @@ export const publicToolContracts = {
     "description": "Add a Slack channel as a destination for alerts and agent messages; an archived channel is restored (created true). Use when the channel isn't a destination yet. Refused with CONFLICT when it already is an active one. Not for changing an existing destination.",
     "annotations": {
       "readOnlyHint": false,
-      "destructiveHint": false,
+      "destructiveHint": true,
       "idempotentHint": true,
       "openWorldHint": true,
     },
@@ -28905,4 +28905,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "20acd5f6366d7773d8bb007718529f9d695ea0ec1e8b435ecb4e30d74427e6d8" as const
+export const sdkConsumerContractHash = "fe2d384ce7fabbebb91ebd353f369f941e7fa7ea871e81310d55c714b3de94e0" as const
