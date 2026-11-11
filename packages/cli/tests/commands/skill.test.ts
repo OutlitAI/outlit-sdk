@@ -40,11 +40,11 @@ describe("outlit --skill", () => {
     expect(result.stdout.toString()).not.toContain("# Outlit")
   })
 
-  const hasPython = Bun.spawnSync(["python3", "--version"]).exitCode === 0
+  const canSmallPipe = process.platform === "linux" && Bun.which("python3") !== null
 
   // process.exit() after a write can cut off output Node has not flushed to a pipe.
   // A 4 KB pipe read late (F_SETPIPE_SZ, Linux) reproduces it: the old code delivered 4096 bytes.
-  test.skipIf(!hasPython || process.platform !== "linux")(
+  test.skipIf(!canSmallPipe)(
     "built Node bundle delivers every byte through a small backed-up pipe",
     () => {
       const out = mkdtempSync(join(tmpdir(), "outlit-skill-build-"))
