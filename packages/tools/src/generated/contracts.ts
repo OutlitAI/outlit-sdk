@@ -1074,10 +1074,17 @@ export const publicToolContracts = {
               ],
             },
             "total": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991,
-              "description": "How many items match, over every page.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+              "description": "How many items match, over every page; null when it isn't counted.",
             },
           },
           "required": [
@@ -1441,10 +1448,17 @@ export const publicToolContracts = {
               ],
             },
             "total": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991,
-              "description": "How many items match, over every page.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+              "description": "How many items match, over every page; null when it isn't counted.",
             },
           },
           "required": [
@@ -5762,10 +5776,17 @@ export const publicToolContracts = {
                           ],
                         },
                         "total": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991,
-                          "description": "How many items match, over every page.",
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "How many items match, over every page; null when it isn't counted.",
                         },
                       },
                       "required": [
@@ -6610,10 +6631,17 @@ export const publicToolContracts = {
                           ],
                         },
                         "total": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991,
-                          "description": "How many items match, over every page.",
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "How many items match, over every page; null when it isn't counted.",
                         },
                       },
                       "required": [
@@ -7145,10 +7173,17 @@ export const publicToolContracts = {
                           ],
                         },
                         "total": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991,
-                          "description": "How many items match, over every page.",
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "How many items match, over every page; null when it isn't counted.",
                         },
                       },
                       "required": [
@@ -7422,10 +7457,17 @@ export const publicToolContracts = {
                           ],
                         },
                         "total": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991,
-                          "description": "How many items match, over every page.",
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                          "description": "How many items match, over every page; null when it isn't counted.",
                         },
                       },
                       "required": [
@@ -8218,10 +8260,17 @@ export const publicToolContracts = {
               ],
             },
             "total": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991,
-              "description": "How many items match, over every page.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+              "description": "How many items match, over every page; null when it isn't counted.",
             },
           },
           "required": [
@@ -8752,10 +8801,17 @@ export const publicToolContracts = {
               ],
             },
             "total": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991,
-              "description": "How many items match, over every page.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+              "description": "How many items match, over every page; null when it isn't counted.",
             },
           },
           "required": [
@@ -10895,10 +10951,17 @@ export const publicToolContracts = {
                         ],
                       },
                       "total": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991,
-                        "description": "How many items match, over every page.",
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                        "description": "How many items match, over every page; null when it isn't counted.",
                       },
                     },
                     "required": [
@@ -11507,10 +11570,17 @@ export const publicToolContracts = {
                       ],
                     },
                     "total": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991,
-                      "description": "How many items match, over every page.",
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                      "description": "How many items match, over every page; null when it isn't counted.",
                     },
                   },
                   "required": [
@@ -13867,10 +13937,17 @@ export const publicToolContracts = {
                                 ],
                               },
                               "total": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "maximum": 9007199254740991,
-                                "description": "How many items match, over every page.",
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991,
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                                "description": "How many items match, over every page; null when it isn't counted.",
                               },
                             },
                             "required": [
@@ -14377,10 +14454,17 @@ export const publicToolContracts = {
               ],
             },
             "total": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991,
-              "description": "How many items match, over every page.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+              "description": "How many items match, over every page; null when it isn't counted.",
             },
           },
           "required": [
@@ -15333,10 +15417,17 @@ export const publicToolContracts = {
               ],
             },
             "total": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991,
-              "description": "How many items match, over every page.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+              "description": "How many items match, over every page; null when it isn't counted.",
             },
           },
           "required": [
@@ -17099,10 +17190,17 @@ export const publicToolContracts = {
               ],
             },
             "total": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991,
-              "description": "How many items match, over every page.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+              "description": "How many items match, over every page; null when it isn't counted.",
             },
           },
           "required": [
@@ -20144,10 +20242,17 @@ export const publicToolContracts = {
               ],
             },
             "total": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991,
-              "description": "How many items match, over every page.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+              "description": "How many items match, over every page; null when it isn't counted.",
             },
           },
           "required": [
@@ -21620,10 +21725,17 @@ export const publicToolContracts = {
               ],
             },
             "total": {
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 9007199254740991,
-              "description": "How many items match, over every page.",
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                {
+                  "type": "null",
+                },
+              ],
+              "description": "How many items match, over every page; null when it isn't counted.",
             },
           },
           "required": [
@@ -26978,6 +27090,9 @@ export const toolGatewayErrorCodes = [
   "TOOL_RESULT_TOO_LARGE",
   "TOOL_GATEWAY_ERROR",
   "IDEMPOTENCY_CONFLICT",
+  "CONFLICT",
+  "RATE_LIMITED",
+  "INTERNAL_ERROR",
   "plan_api_limit_exceeded",
   "plan_billing_action_required",
 ] as const
@@ -27001,6 +27116,9 @@ export const toolGatewayErrorSchema = {
         "TOOL_RESULT_TOO_LARGE",
         "TOOL_GATEWAY_ERROR",
         "IDEMPOTENCY_CONFLICT",
+        "CONFLICT",
+        "RATE_LIMITED",
+        "INTERNAL_ERROR",
         "plan_api_limit_exceeded",
         "plan_billing_action_required",
       ],
@@ -27024,6 +27142,16 @@ export const toolGatewayErrorSchema = {
       "anyOf": [
         {
           "type": "number",
+        },
+        {
+          "type": "null",
+        },
+      ],
+    },
+    "resetsAt": {
+      "anyOf": [
+        {
+          "type": "string",
         },
         {
           "type": "null",
@@ -28195,4 +28323,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "aecc84d347d223b988b4d277d19e35b2ea9be9790b428d2f327198efdf1ffd28" as const
+export const sdkConsumerContractHash = "d5eae86fed4acdc6cf8f058968efb65eea37fb88767fa26ffde167d063fa81dc" as const

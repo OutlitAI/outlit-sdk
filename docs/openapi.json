@@ -1132,6 +1132,9 @@
               "TOOL_RESULT_TOO_LARGE",
               "TOOL_GATEWAY_ERROR",
               "IDEMPOTENCY_CONFLICT",
+              "CONFLICT",
+              "RATE_LIMITED",
+              "INTERNAL_ERROR",
               "plan_api_limit_exceeded",
               "plan_billing_action_required"
             ]
@@ -1155,6 +1158,16 @@
             "anyOf": [
               {
                 "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resetsAt": {
+            "anyOf": [
+              {
+                "type": "string"
               },
               {
                 "type": "null"
@@ -6140,10 +6153,17 @@
                 ]
               },
               "total": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991,
-                "description": "How many items match, over every page."
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How many items match, over every page; null when it isn't counted."
               }
             },
             "required": [
@@ -6451,10 +6471,17 @@
                 ]
               },
               "total": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991,
-                "description": "How many items match, over every page."
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How many items match, over every page; null when it isn't counted."
               }
             },
             "required": [
@@ -10531,10 +10558,17 @@
                             ]
                           },
                           "total": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 9007199254740991,
-                            "description": "How many items match, over every page."
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "How many items match, over every page; null when it isn't counted."
                           }
                         },
                         "required": [
@@ -11379,10 +11413,17 @@
                             ]
                           },
                           "total": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 9007199254740991,
-                            "description": "How many items match, over every page."
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "How many items match, over every page; null when it isn't counted."
                           }
                         },
                         "required": [
@@ -11914,10 +11955,17 @@
                             ]
                           },
                           "total": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 9007199254740991,
-                            "description": "How many items match, over every page."
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "How many items match, over every page; null when it isn't counted."
                           }
                         },
                         "required": [
@@ -12191,10 +12239,17 @@
                             ]
                           },
                           "total": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 9007199254740991,
-                            "description": "How many items match, over every page."
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "How many items match, over every page; null when it isn't counted."
                           }
                         },
                         "required": [
@@ -12717,10 +12772,17 @@
                 ]
               },
               "total": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991,
-                "description": "How many items match, over every page."
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How many items match, over every page; null when it isn't counted."
               }
             },
             "required": [
@@ -13161,10 +13223,17 @@
                 ]
               },
               "total": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991,
-                "description": "How many items match, over every page."
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How many items match, over every page; null when it isn't counted."
               }
             },
             "required": [
@@ -14841,10 +14910,17 @@
                           ]
                         },
                         "total": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991,
-                          "description": "How many items match, over every page."
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "How many items match, over every page; null when it isn't counted."
                         }
                       },
                       "required": [
@@ -15386,10 +15462,17 @@
                         ]
                       },
                       "total": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991,
-                        "description": "How many items match, over every page."
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "How many items match, over every page; null when it isn't counted."
                       }
                     },
                     "required": [
@@ -17481,10 +17564,17 @@
                                   ]
                                 },
                                 "total": {
-                                  "type": "integer",
-                                  "minimum": 0,
-                                  "maximum": 9007199254740991,
-                                  "description": "How many items match, over every page."
+                                  "anyOf": [
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "How many items match, over every page; null when it isn't counted."
                                 }
                               },
                               "required": [
@@ -17946,10 +18036,17 @@
                 ]
               },
               "total": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991,
-                "description": "How many items match, over every page."
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How many items match, over every page; null when it isn't counted."
               }
             },
             "required": [
@@ -18791,10 +18888,17 @@
                 ]
               },
               "total": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991,
-                "description": "How many items match, over every page."
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How many items match, over every page; null when it isn't counted."
               }
             },
             "required": [
@@ -20174,10 +20278,17 @@
                 ]
               },
               "total": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991,
-                "description": "How many items match, over every page."
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How many items match, over every page; null when it isn't counted."
               }
             },
             "required": [
@@ -22136,10 +22247,17 @@
                 ]
               },
               "total": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991,
-                "description": "How many items match, over every page."
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How many items match, over every page; null when it isn't counted."
               }
             },
             "required": [
@@ -23300,10 +23418,17 @@
                 ]
               },
               "total": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991,
-                "description": "How many items match, over every page."
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How many items match, over every page; null when it isn't counted."
               }
             },
             "required": [
@@ -27506,5 +27631,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "aecc84d347d223b988b4d277d19e35b2ea9be9790b428d2f327198efdf1ffd28"
+  "x-outlit-contract-hash": "d5eae86fed4acdc6cf8f058968efb65eea37fb88767fa26ffde167d063fa81dc"
 }
