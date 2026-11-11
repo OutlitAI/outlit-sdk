@@ -2,14 +2,7 @@ import { beforeEach, describe, expect, mock, test } from "bun:test"
 import { readFile } from "node:fs/promises"
 import path from "node:path"
 import { runCommand } from "citty"
-import {
-  captureStdout,
-  runExpectingError,
-  setInteractive,
-  setNonInteractive,
-  TEST_API_KEY,
-  useTempEnv,
-} from "../helpers"
+import { captureStdout, setNonInteractive, TEST_API_KEY, useTempEnv } from "../helpers"
 
 const EVENT_NAME = "integration_connected"
 const activationSection = {
