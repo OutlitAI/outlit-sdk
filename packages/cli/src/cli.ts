@@ -9,6 +9,28 @@ import {
 } from "./lib/update"
 
 async function startCli() {
+  // Prints the embedded skill: no auth, no network, no update check.
+  // Only a leading `--skill` counts, so `outlit search -- --skill` stays search data.
+  // Return instead of process.exit so piped stdout drains fully under Node.
+  const [firstArg, ...skillArgs] = process.argv.slice(2)
+  if (firstArg === "--skill") {
+    const [skillName, ...extra] = skillArgs
+    if ((skillName !== undefined && skillName !== "outlit") || extra.length > 0) {
+      const bad = skillName !== undefined && skillName !== "outlit" ? skillName : extra[0]
+      process.stderr.write(
+        bad?.startsWith("-")
+          ? `Unknown option "${bad}" for --skill. Usage: outlit --skill [outlit]\n`
+          : `Unknown skill "${bad}". Available: outlit\n`,
+      )
+      process.exitCode = 1
+      return
+    }
+    const { OUTLIT_SKILL } = await import("./lib/skill")
+    process.stdout.write(OUTLIT_SKILL.endsWith("\n") ? OUTLIT_SKILL : `${OUTLIT_SKILL}\n`)
+    process.exitCode = 0
+    return
+  }
+
   // citty only handles --version; support -v as a short alias
   if (process.argv.includes("-v")) {
     console.log(CLI_VERSION)
@@ -57,6 +79,7 @@ async function startCli() {
         "  outlit customers get acme.com --include features,meters --weekly --json",
         "  outlit feedback submit --body 'The merge preview dropped trait history' --area customers --json",
         "  outlit doctor --json",
+        "  outlit --skill                  # print the Outlit skill for your agent (no auth)",
         "",
         "Toolsets (how Outlit groups its agent tools):",
         "  core      customers, customer-fields, people, facts, sources, timeline, search, query, schema",
@@ -66,7 +89,7 @@ async function startCli() {
         "            setup-sessions, settings, activation, features",
         "  meta      feedback",
         "",
-        "For AI agents: commands auto-output JSON when stdout is piped. No --json flag needed.",
+        "For AI agents: run `outlit --skill` for the full instructions. Commands auto-output JSON when stdout is piped. No --json flag needed.",
       ].join("\n"),
     },
     subCommands: {

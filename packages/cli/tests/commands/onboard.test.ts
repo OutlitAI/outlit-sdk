@@ -116,7 +116,7 @@ describe("onboard", () => {
       "-y",
       "skills",
       "add",
-      "https://github.com/OutlitAI/outlit-agent-skills",
+      expect.stringContaining("outlit-skill-"),
       "--skill",
       "outlit",
       "--agent",

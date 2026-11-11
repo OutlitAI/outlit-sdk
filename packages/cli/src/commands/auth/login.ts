@@ -159,6 +159,8 @@ export default defineCommand({
       return outputResult({ success: true, config_path: credPath })
     }
 
-    p.outro(`Stored at ${credPath}\n\n  Next: outlit customers list`)
+    p.outro(
+      `Stored at ${credPath}\n\n  Next: outlit customers list\n  Agents: run \`outlit --skill\` for the Outlit skill`,
+    )
   },
 })
