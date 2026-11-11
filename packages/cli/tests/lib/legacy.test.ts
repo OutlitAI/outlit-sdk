@@ -268,6 +268,20 @@ describe("legacy spellings", () => {
     ])
   })
 
+  test("hoisted options stay before a -- terminator and before later options", () => {
+    expect(rewriteLegacyArgs(["schema", "--api-key", "K", "get", "--", "activity"])?.argv).toEqual([
+      "schema",
+      "get",
+      "--api-key",
+      "K",
+      "--",
+      "activity",
+    ])
+    expect(
+      rewriteLegacyArgs(["schema", "--api-key", "EARLY", "get", "--api-key", "LATE"])?.argv,
+    ).toEqual(["schema", "get", "--api-key", "EARLY", "--api-key", "LATE"])
+  })
+
   test("an explicit --enabled value is the current spelling and is left alone", () => {
     expect(rewriteLegacyArgs(["destinations", "update", "d1", "--enabled", "false"])).toBeNull()
     expect(rewriteLegacyArgs(["destinations", "update", "d1", "--enabled", "FALSE"])).toBeNull()

@@ -343,7 +343,8 @@ function hoistGlobalOptions(argv: readonly string[]): string[] {
     words.push(arg)
     i++
   }
-  return [...words, ...argv.slice(i), ...hoisted]
+  // Hoisted options come before the rest, so a later option (and a `--` terminator) keeps its place.
+  return [...words, ...hoisted, ...argv.slice(i)]
 }
 
 export function rewriteLegacyArgs(input: readonly string[]): LegacyRewrite | null {
