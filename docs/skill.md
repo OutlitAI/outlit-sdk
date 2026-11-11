@@ -40,7 +40,7 @@ Use the highest-level interface already available:
 2. Otherwise, if the `outlit` CLI is installed, use it.
 3. Otherwise, guide setup:
    - Coding agents: run `outlit onboard --agent <agent> --json`. Outside CI, it can start browser approval when no key is available, install this skill, validate access, and return next actions.
-   - Skills only: run `outlit setup --yes` or `outlit setup skills`.
+   - Skills only: run `outlit --skill` to print this skill with no install, or `outlit setup --yes` / `outlit setup skills` to install a stub that points at it.
    - MCP clients: use the workspace URL from **Settings > CLI & MCP** and complete OAuth in the client. Do not hardcode a shared endpoint, bearer header, or API key into remote MCP configuration.
 
 ## Quick Chooser
@@ -126,7 +126,7 @@ When calls or other communications exist but product usage is absent, use `outli
 
 Merging is dangerous and has no supported undo. Only execute when the user authorized it and the records are certainly the same customer. Similar names, related domains, shared participants, a suggested match, or parent/subsidiary relationships are insufficient. The merge command defaults to preview; execution requires explicit permission, the reviewed preview token, and a stable request ID. Any pair involving an `INDIVIDUAL` requires an eligible saved suggestion.
 
-Read [the identity and merge workflow](https://raw.githubusercontent.com/OutlitAI/skills/9ddc33aa087de3f141cd7a40b05fe11881303b6e/skills/outlit/references/identity.md) before previewing, rejecting, executing, retrying, or tracking a merge. It includes the five tool contracts, CLI examples, and asynchronous status handling.
+Read [the identity and merge workflow](https://raw.githubusercontent.com/OutlitAI/skills/bda641e1f0cc9b53dd2235aaf2cc4916d05dfd33/skills/outlit/references/identity.md) before previewing, rejecting, executing, retrying, or tracking a merge. It includes the five tool contracts, CLI examples, and asynchronous status handling.
 
 Outlit-owned Churn and Renewal agents receive only the identity diagnostic for their assigned customer. Outlit-owned agents, including the Slack assistant acting for an admin, cannot reject suggestions or execute merges. Do not switch to CLI, API keys, or another identity to bypass an agent's tool policy or permissions. Customer-controlled agents may use the public tools within their granted authority.
 
@@ -169,7 +169,7 @@ Call schema before writing SQL.
 - Inspect JSON or trait column shapes before filtering nested values.
 - Keep SQL read-only.
 
-For ClickHouse syntax and query patterns, read [references/sql-reference.md](https://raw.githubusercontent.com/OutlitAI/skills/9ddc33aa087de3f141cd7a40b05fe11881303b6e/skills/outlit/references/sql-reference.md).
+For ClickHouse syntax and query patterns, read [references/sql-reference.md](https://raw.githubusercontent.com/OutlitAI/skills/bda641e1f0cc9b53dd2235aaf2cc4916d05dfd33/skills/outlit/references/sql-reference.md).
 
 ## CLI Setup
 
@@ -192,9 +192,9 @@ outlit auth whoami
 outlit doctor --json
 ```
 
-Plain `outlit auth login` automatically selects browser approval in a noninteractive agent shell outside CI. CI requires a key. `outlit setup --yes` and `outlit setup skills` install skills but do not configure MCP clients or integrations.
+Plain `outlit auth login` automatically selects browser approval in a noninteractive agent shell outside CI. CI requires a key. `outlit --skill` prints the current skill with no auth or network. `outlit setup --yes` and `outlit setup skills` install a stub skill that runs it, but do not configure MCP clients or integrations.
 
-If `onboard` is unavailable, run `outlit upgrade`, then use `outlit setup <agent>` or `outlit setup skills`.
+If `onboard` is unavailable, run `outlit upgrade`, then run `outlit --skill`, or use `outlit setup <agent>` / `outlit setup skills` to install the stub.
 
 ## CLI Output Behavior
 
