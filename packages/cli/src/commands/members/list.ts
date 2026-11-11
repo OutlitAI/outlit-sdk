@@ -2,7 +2,7 @@ import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { applyPagination, paginationArgs } from "../../args/pagination"
+import { applyPagination, pageSizeArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { truncate } from "../../lib/format"
 import { outputError } from "../../lib/output"
@@ -59,7 +59,7 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    ...paginationArgs,
+    ...pageSizeArgs,
     ...workspaceUserOrderArgs,
     search: {
       type: "string",

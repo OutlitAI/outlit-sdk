@@ -1,7 +1,7 @@
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { applyPagination, paginationArgs } from "../../args/pagination"
+import { applyPagination, pageSizeArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { relativeDate, truncate } from "../../lib/format"
 import { parseCsvList } from "../../lib/platform-input"
@@ -23,7 +23,7 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    ...paginationArgs,
+    ...pageSizeArgs,
     ids: { type: "string", description: "Comma-separated destination IDs to read" },
   },
   async run({ args }) {

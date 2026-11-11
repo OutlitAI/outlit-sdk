@@ -2,6 +2,7 @@ import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
+import { PAGE_SIZE } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { optionalTrimmedString, parseCsvList, parseIntegerFlag } from "../../lib/platform-input"
 
@@ -34,12 +35,15 @@ export default defineCommand({
       description: "Comma-separated extras: impact, scope, jev, cluster (default: none)",
     },
     cursor: { type: "string", description: "Continuation cursor from the previous response" },
-    limit: { type: "string", description: "Maximum results (1-100, default 25)" },
+    limit: {
+      type: "string",
+      description: `Maximum results (1-${PAGE_SIZE.max}, default ${PAGE_SIZE.default})`,
+    },
   },
   async run({ args }) {
     const json = !!args.json
     const input: Record<string, unknown> = {
-      limit: parseIntegerFlag(args.limit, 25, "--limit", json),
+      limit: parseIntegerFlag(args.limit, PAGE_SIZE.default, "--limit", json),
     }
     const filters: Record<string, string> = {}
     const customer = optionalTrimmedString(args.customer)

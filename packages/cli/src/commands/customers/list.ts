@@ -16,7 +16,7 @@ import {
   traitFilterArgs,
 } from "../../args/filters"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { applyPagination, paginationArgs } from "../../args/pagination"
+import { applyPagination, pageSizeArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
 import { formatArr, formatCredits, formatMeter, relativeDate, truncate } from "../../lib/format"
@@ -103,7 +103,7 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    ...paginationArgs,
+    ...pageSizeArgs,
     ...activityFilterArgs,
     ...traitFilterArgs,
     ...orderArgs,

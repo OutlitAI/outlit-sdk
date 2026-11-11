@@ -2,6 +2,7 @@ import { customerIncludeSections, customerTimeframes, publicToolContracts } from
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
+import { PAGE_SIZE } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
 import { outputError } from "../../lib/output"
@@ -65,7 +66,7 @@ export function readSectionOptions(
 
   const weeks = args.weeks ? parseBoundedInteger(args.weeks, 12, "--weeks", 1, 53, json) : undefined
   const limit = args.limit
-    ? parseBoundedInteger(args.limit, 25, "--limit", 1, 100, json)
+    ? parseBoundedInteger(args.limit, PAGE_SIZE.default, "--limit", 1, PAGE_SIZE.max, json)
     : undefined
   const options: Record<string, Record<string, unknown>> = {}
   for (const section of paged) {
@@ -154,8 +155,7 @@ export default defineCommand({
     },
     limit: {
       type: "string",
-      description:
-        "With --include features, meters, credits or hierarchy: items per page (1-100, default: 25)",
+      description: `With --include features, meters, credits or hierarchy: items per page (1-${PAGE_SIZE.max}, default: ${PAGE_SIZE.default})`,
     },
     cursor: {
       type: "string",

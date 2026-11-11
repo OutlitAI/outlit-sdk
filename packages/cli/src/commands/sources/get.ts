@@ -2,6 +2,7 @@ import { publicToolContracts, sourceTypes as toolSourceTypes } from "@outlit/too
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
+import { PAGE_SIZE } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
 import { toWireSourceTypes } from "../../lib/source-types"
@@ -74,10 +75,10 @@ export default defineCommand({
     }
 
     const limit = args.limit ? Number(args.limit) : undefined
-    if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 100)) {
+    if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > PAGE_SIZE.max)) {
       return outputError(
         {
-          message: `--limit must be an integer between 1 and 100 (got: ${args.limit})`,
+          message: `--limit must be an integer between 1 and ${PAGE_SIZE.max} (got: ${args.limit})`,
           code: "invalid_input",
         },
         json,

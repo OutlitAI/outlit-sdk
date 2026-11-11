@@ -116,7 +116,7 @@ outlit customers list [flags]
 | `--search` | string | — | Search by name or domain |
 | `--order-by` | string | `last_activity_at` | Sort field: `last_activity_at`, `first_synced_at`, `name`, `meter_usage` (needs `--meter`), `arr` (customers with unknown ARR sort last when descending), `renewal_date` (the stored renewal date the Customers page shows; customers with none sort last) |
 | `--order-direction` | string | `desc` | Sort direction: `asc`, `desc`. `asc` when sorting by `renewal_date`, so the soonest renewal comes first |
-| `--limit` | number | `20` | Results per page (1–100) |
+| `--limit` | number | `25` | Results per page (1–100) |
 | `--cursor` | string | — | Cursor from a previous response (`page.nextCursor`) |
 
 ### Examples
@@ -534,7 +534,7 @@ when exactly one is eligible.
 | `--candidate-limit` | `25` | Maximum event candidates from 1 to 100 |
 | `--include` | `usage,candidates` | Which sections to read: `usage`, `candidates`, or both |
 | `--search` | none | Only candidates whose event name contains this text |
-| `--limit`, `--cursor` | 20 | Page through the features (1 to 100) |
+| `--limit`, `--cursor` | 25 | Page through the features (1 to 100) |
 
 Create one feature from one exact event rule:
 
@@ -601,7 +601,7 @@ you intentionally want to restrict discovery to current owners.
 | `--has-owned-customers` | Only members who own customers |
 | `--order-by` | `owned_customers` (default, descending) or `name` (ascending). `owned_customer_count` is still read as `owned_customers`; `email` is no longer a sort field |
 | `--order-direction` | `asc` or `desc` |
-| `--limit`, `--cursor` | Page through members (1–100, default 20) |
+| `--limit`, `--cursor` | Page through members (1–100, default 25) |
 
 Each item has `id`, `name`, `email`, `title`, `role`, `managerEmail`, `territory` and `ownedCustomers`.
 
@@ -784,7 +784,7 @@ outlit people list [flags]
 | `--search` | string | — | Search by name or email |
 | `--order-by` | string | `last_activity_at` | Sort field: `last_activity_at`, `first_synced_at`, `email` |
 | `--order-direction` | string | `desc` | Sort direction: `asc`, `desc` |
-| `--limit` | number | `20` | Results per page (1–100) |
+| `--limit` | number | `25` | Results per page (1–100) |
 | `--cursor` | string | — | `page.nextCursor` from a previous response |
 
 ### Examples
@@ -1010,7 +1010,7 @@ outlit search <query> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--customer` | string | — | Scope to a specific customer (domain or UUID) |
-| `--limit` | number | `20` | Maximum results to return (1–50) |
+| `--limit` | number | `25` | Maximum results to return (1–100) |
 | `--after` | string | — | Filter to events after this ISO 8601 datetime |
 | `--before` | string | — | Filter to events before this ISO 8601 datetime |
 | `--source-types` | string | — | Comma-separated generic source type filter (`email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
