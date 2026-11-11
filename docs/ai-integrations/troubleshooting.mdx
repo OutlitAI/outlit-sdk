@@ -11,7 +11,7 @@ description: "Auth, permissions, identity, JSON output, MCP, and SDK delivery fa
 | `invalid_key_format` | Key doesn't start with `ok_` | Re-copy the key from [**Settings → API keys**](https://app.outlit.ai/settings/workspace/api-keys) |
 | `invalid_key` / `validation_failed` | Server rejected the key | Verify with `outlit auth status`; rotate the key if revoked |
 | `401` on the tool gateway | Missing/expired bearer | `POST /api/validate-api-key` confirms whether the key authenticates at all |
-| MCP client never prompts to sign in | OAuth flow didn't start | Re-add the workspace URL `https://mcp.outlit.ai/w/<slug>/mcp`; headless clients must send an API key as bearer instead |
+| MCP client never prompts to sign in | OAuth flow didn't start | Re-add the workspace URL `https://mcp.outlit.ai/w/<slug>/mcp?toolsets=core,work,meta`; headless clients must send an API key as bearer instead |
 | `unsupported_core_version` | Workspace runs an older Outlit server | Upgrade the CLI; if the workspace is still behind, the capability isn't available there yet |
 
 ## Permissions and authorization
@@ -41,7 +41,8 @@ description: "Auth, permissions, identity, JSON output, MCP, and SDK delivery fa
 
 ## MCP setup
 
-- **Wrong URL shape** — it is workspace-scoped: `https://mcp.outlit.ai/w/<workspace-slug>/mcp`, copied from Settings → CLI & MCP. A bare `mcp.outlit.ai` URL is not valid.
+- **Wrong URL shape** — it is workspace-scoped: `https://mcp.outlit.ai/w/<workspace-slug>/mcp?toolsets=core,work,meta`, copied from Settings → CLI & MCP. Loads core, work and meta. Add admin or identity, or use `?toolsets=all` for every tool. Without `?toolsets` the URL loads every tool. A bare `mcp.outlit.ai` URL with no workspace is not valid.
+- **An admin or identity tool is missing** — the slim URL leaves those toolsets out. Add them (`?toolsets=core,work,meta,admin`) or use `?toolsets=all`; `outlit_list_toolsets` names the URL that adds one.
 - **Tools visible but calls forbidden** — OAuth runs as the signed-in member; API-key calls use the key's grants. The catalog is identical either way; authorization is not.
 - **This is not the docs search MCP** — the docs site hosts a separate search-only MCP endpoint. It has no customer tools; use the workspace URL above for product data.
 

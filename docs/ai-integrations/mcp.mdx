@@ -30,8 +30,10 @@ Headless clients that cannot complete OAuth may send an Outlit API key as their 
     It looks like:
 
     ```text
-    https://mcp.outlit.ai/w/<workspace-slug>/mcp
+    https://mcp.outlit.ai/w/<workspace-slug>/mcp?toolsets=core,work,meta
     ```
+
+    Loads core, work and meta. Add admin or identity, or use `?toolsets=all` for every tool. The bare URL without `?toolsets` loads every tool, which is a long list for a client to carry; the slim URL keeps it short, and `outlit_list_toolsets` tells an agent how to add the rest.
   </Step>
   <Step title="Add the URL to your MCP client">
     Use your client's remote MCP / connector / server settings and add the Outlit URL directly.
@@ -42,7 +44,7 @@ Headless clients that cannot complete OAuth may send an Outlit API key as their 
     {
       "mcpServers": {
         "outlit": {
-          "url": "https://mcp.outlit.ai/w/<workspace-slug>/mcp"
+          "url": "https://mcp.outlit.ai/w/<workspace-slug>/mcp?toolsets=core,work,meta"
         }
       }
     }

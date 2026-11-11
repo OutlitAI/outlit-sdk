@@ -227,7 +227,7 @@ Returns `"renewal": { "status": "available", "asOf": "...", "data": { "date": "2
 }
 ```
 
-Returns `crm.data`: one entry per CRM or support tool account linked to the customer, with `provider`, `connectionId`, `accountId`, `name`, the `owner` as that system records it, `recordUpdatedAt`, and `fields`: every non-empty field as stored, each with its `key`, `label`, `value` and whether it is `custom`. `contacts` lists the people that system associates with the account, whatever their email domain, most recently modified first: up to 25, each with `contactId`, `name`, `email`, `title` and `userId`, the customer's user with that contact or email (`null` when the person is not one of its users). More are counted in `omittedContactCount`. Fields past the response's size limit are counted in `omittedFieldCount` and named in `omittedFields` while they fit; ask for them with `crmFields`, by key or label. The section is enabled per workspace, and is absent until it is.
+Returns `crm.data`: one entry per CRM or support tool account linked to the customer, with `provider`, `connectionId`, `accountId`, `name`, the `owner` as that system records it, `recordUpdatedAt`, and `fields`: every non-empty field as stored, each with its `key`, `label`, `value` and whether it is `custom`. `contacts` lists the people that system associates with the account, whatever their email domain, most recently modified first: up to 25, each with `contactId`, `name`, `email`, `title` and `userId`, the customer's user with that contact or email (`null` when the person is not one of its users). More are counted in `omittedContactCount`, and `contactsNext` is the call that reads the next 25: `crmContacts: { connectionId, accountId, cursor? }`. Fields past the response's size limit are counted in `omittedFieldCount` and named in `omittedFields` while they fit; ask for them with `fields` (selectors `{ "key": "hs_lead_status" }`, optionally with a `source`; selectors that match nothing come back in `unmatchedFields`). The section is enabled per workspace, and is absent until it is.
 
 ### Filter and list customers by customer fields
 
@@ -249,7 +249,7 @@ Returns `crm.data`: one entry per CRM or support tool account linked to the cust
 
 ### Read a contact's or deal's CRM fields
 
-`outlit_list_people` with `"include": ["crm"]` (or `outlit_get_customer` with `"include": ["users", "crm"]`) adds `crm` to each user: the CRM contacts linked to them, with `fields` in the same shape as account fields. `outlit_get_source` on an `opportunity` adds the deal's `fields`. The same size limit applies: fields left out are counted in `omittedFieldCount`, and contacts left out are counted in `omittedCrmContacts`. A user has no `crm` when the section is not enabled for the workspace or when the size limit left no room for them; ask for fewer users or `crmFields` to get it.
+`outlit_list_people` with `"include": ["crm"]` (or `outlit_get_customer` with `"include": ["users", "crm"]`) adds `crm` to each user: the CRM contacts linked to them, with `fields` in the same shape as account fields. `outlit_get_source` on an `opportunity` adds the deal's `fields`. The same size limit applies: fields left out are counted in `omittedFieldCount`, and contacts left out are counted in `omittedCrmContacts`. A user has no `crm` when the section is not enabled for the workspace or when the size limit left no room for them; ask for fewer users or `fields` to get it.
 
 ### Search customer context
 
@@ -342,6 +342,10 @@ Example response with two source results:
   }
 }
 ```
+
+### Read a fact's reasoning, quote and evidence
+
+A fact from `outlit_list_facts` or `outlit_search_customer_context` is concise: it has no `reasoning` or `source.quote` unless the call asks with `"include": ["reasoning", "quote", "evidence"]`. With `evidence` a fact carries its first three cited excerpts as `evidence: { items, page, more }`. `outlit_get_fact { "id": "fact_123" }` returns the whole fact; `"part": { "field": "reasoning" }` (`assertion`, `reasoning`, `quote` or `evidence`) reads one long field a page at a time, and `part.cursor` continues it with the previous page's `nextCursor`.
 
 ### Open one source record
 
@@ -471,7 +475,7 @@ The admin tools change a workspace, so they share a few rules.
 | `outlit_get_integration_capabilities`, `outlit_get_integration_status`, the earlier `outlit_list_integrations {connectedOnly}` | `outlit_list_integrations {provider?, filters: {connected?}}` → `items[]` with `status`, `setup {auth, mode}`, `connection` |
 | `outlit_begin_integration_setup {provider}` | `outlit_setup_integration {provider, handoff: true, requestId}` → `step: {kind: "browser_handoff", url, sessionId, expiresAt}` |
 | `outlit_setup_integration` → `next`, `error {code: "OWNER_REQUIRED"}`; `outlitStage: "Won"` | `step`, `problem {code: "owner_required", ...}`; `next` is a next call; `outlitStage: "won"` |
-| `outlit_get_integration_setup_status {sessionId}` | `outlit_get_setup_session {sessionId}` → `{sessionId, provider, status, pollAfterSeconds?, next?}` |
+| `outlit_get_integration_setup_status {sessionId}` | `outlit_get_setup_session {id}` → `{sessionId, provider, status, pollAfterSeconds?, next?}` |
 | `outlit_get_workspace_settings`, `outlit_get_customer_activation` | `outlit_get_settings` → `{settings: {general, activation}, revision}` |
 | `outlit_update_workspace_settings {defaultTimezone, customerOwnership}`, `outlit_update_customer_activation {eventName}` | `outlit_update_settings {revision?, timezone?, defaultOwner?, activationEvent?}` → `{settings, revision, changed}` |
 | `outlit_preview_customer_activation {eventName}` → `{preview: {...Count}}` | `outlit_preview_activation {event}` → `{customers, contacts, examples}` |
@@ -553,6 +557,8 @@ Invalid JSON, unknown tool names, or invalid tool inputs return `400`:
 
 Invalid credentials return `401`. Plan API-call limits can return `402` or `429` with a stable billing `code`.
 
+A validation issue in `validationIssues` carries `path`, `code` and a `message` saying what to fix, written from the schema's own bounds and never from the received value; an enum or literal mismatch also lists `validValues`. A `429` carries `retryAfterSeconds` (and a `Retry-After` header): the whole seconds to wait. A key whose every grant is a read grant is refused for a write with `TOOL_CALL_FORBIDDEN`, "This key can only read" and the `missingPermission` the tool needs; previews of a write and `outlit_submit_feedback` still run. Reading destinations, behavior metrics and integrations takes the grants `destinations:read`, `behavior_metrics:read` and `integrations:read`.
+
 A request id that was already used with different input returns `409` with the code `IDEMPOTENCY_CONFLICT`; send a new request id, or repeat the original input. A result larger than 64 KiB is never returned whole: a list returns the items that fit with a `truncation` field whose `next` names the call for the rest, and anything else returns `413` with the code `TOOL_RESULT_TOO_LARGE` and a `next` saying how to ask for less.
 
 ### Response headers
@@ -564,5 +570,7 @@ Beside the result, the gateway can send these headers. `@outlit/tools` reports t
 | `outlit-deprecation` | The call used a retired tool name. JSON `{ "tool", "use", "until", "message" }`: the name you called, the tool to call instead, and the last day the old name works. `Deprecation` and `Sunset` carry the same information as standard headers |
 | `outlit-notice` | A JSON array of sentences about an old input spelling the gateway changed, such as a limit lowered to the maximum or a 12-hour window rounded up to one day |
 | `idempotent-replayed` | `true` when the result was stored from an earlier call with the same request id |
+
+Every call from `@outlit/tools`, `@outlit/cli` and `@outlit/pi` sends `x-outlit-client: <package>/<version>`, for example `@outlit/cli/4.1.0`. The gateway uses it to add a deprecation notice to the response of a client below the minimum version for a release; see [Compatibility](/api-reference/compatibility). Send it from your own client too, naming your own package and version.
 
 Retired tool names answer until the date in their `outlit-deprecation` header, then return `INVALID_TOOL_INPUT` with the issue code `renamed_tool` and the new name in `next.tool`.

@@ -82,6 +82,8 @@ When running in an interactive terminal, the CLI outputs:
 - **Spinners** on stderr during API calls
 - **Colored output** with green checkmarks for success
 - **Pagination hints** showing total count and next cursor
+- **More-of-this hints** on stderr when a result holds only the first part of a section, such as `users: 12 more: outlit people list --customer cust_1 --limit 10`
+- **Error details** under the message: each invalid field as `path: what to fix`, `Retry in 12s.` on a rate limit, and `Missing permission: <grant>` when a key lacks one
 
 Example:
 

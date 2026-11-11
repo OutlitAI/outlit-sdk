@@ -64,7 +64,7 @@ Outlit manages its monitoring rules and schedules. Public tools do not configure
 
 ## Distinguish the MCP servers
 
-- **Product MCP** — `https://mcp.outlit.ai/w/<workspace-slug>/mcp`: customer intelligence tools described here.
+- **Product MCP** — `https://mcp.outlit.ai/w/<workspace-slug>/mcp?toolsets=core,work,meta`: customer intelligence tools described here. Loads core, work and meta. Add admin or identity, or use `?toolsets=all` for every tool; the bare URL loads every tool.
 - **Docs search MCP** — the documentation-site search endpoint Mintlify hosts for this docs site. It searches these docs only; it has no customer data and no product tools.
 
 Do not point customer-intelligence workloads at the docs endpoint, and do not expect product tools there.

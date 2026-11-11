@@ -1,0 +1,59 @@
+---
+title: "Compatibility"
+description: "How Outlit changes the tool API: when outputs switch, how long old inputs keep working, and the minimum client versions for each Core release."
+---
+
+The tool API ([Call a tool](/api-reference/tools)) is shared by the CLI, `@outlit/tools`, `@outlit/pi`, the MCP server and your own clients. This page says how it changes and what each release changed.
+
+## Policy
+
+- **Outputs switch on a Core release.** A new output shape replaces the old one the day the release is live. The gateway does not return both. Each release below lists the output shapes it changed, so you can update a parser before you upgrade the client that reads it.
+- **Old input spellings and retired tool names keep working for 30 days.** The gateway maps an old spelling to the current one and answers normally, with `Deprecation` and `Sunset` response headers (and the `outlit-deprecation` and `outlit-notice` headers described in [Response headers](/api-reference/tools#response-headers)) that state the last day it works. After that date the call is refused with `INVALID_TOOL_INPUT` and an issue that names the current spelling. Both clients print these notices; a custom client should read the headers.
+- **Clients say who they are.** `@outlit/tools`, `@outlit/cli` and `@outlit/pi` send `x-outlit-client: <package>/<version>` on every request, for example `x-outlit-client: @outlit/cli/4.1.0`. When a call comes from a client below the minimum version for the current release, the gateway adds a deprecation notice to the response saying which version to upgrade to. If you call the gateway directly, send the header with your own package name and version.
+
+## Minimum client versions
+
+| Core release | `@outlit/cli` | `@outlit/tools` | `@outlit/pi` |
+|---|---|---|---|
+| Agent API v2 polish (this release) | 4.1.0 | 3.1.0 | 3.1.0 |
+| Agent API v2 | 4.0.0 | 3.0.0 | 3.0.0 |
+
+A client below the minimum keeps working for the input windows below, then fails on the inputs it still sends the old way. Upgrade with `outlit upgrade` or your package manager.
+
+## Agent API v2 polish
+
+Old input spellings below work until **2026-12-12**.
+
+### Inputs
+
+| Tool | Now | Earlier |
+|---|---|---|
+| `outlit_get_fact` | `id` | `factId` |
+| `outlit_get_setup_session` | `id` | `sessionId` |
+| `outlit_get_customer` | `fields`: selectors `{ source?, key }` | `crmFields`: an array of keys |
+| `outlit_list_people` | `fields`: selectors `{ source?, key }` | `fields`: an array of keys |
+
+New inputs: `part` on `outlit_get_fact`; `include` (`reasoning`, `quote`, `evidence`) on `outlit_list_facts` and `outlit_search_customer_context`; `crmContacts` on `outlit_get_customer`; `filters.credits`, `orderBy: "meter_usage"` and `meter` on `outlit_list_customers`. The CLI spells these `facts get <id> --part`, `--include`, `customers get --fields` (was `--crm-fields`) and `--crm-contacts <connectionId>:<accountId>`, and `customers list --runs-out-within` and `--meter`.
+
+### Output shapes
+
+- **Facts.** A fact from `outlit_list_facts` and `outlit_search_customer_context` has no `reasoning` or `source.quote` unless `include` asks for it; `outlit_get_fact` still returns both. `evidence` is `{ items, page, more }` (the first three excerpts) instead of an array. `outlit_get_fact` with `part` returns `{ customer, part }` and no `fact`.
+- **CRM summary.** `crmSummary` is an array of accounts `{ provider, connectionId, accountId, name, fields }` on list rows and on `outlit_get_customer`. List rows used a map of label to value.
+- **Enrichment.** In `enrichment`, `fundingSummary.totalInvestment` and `fundingSummary.lastRoundAmount` are money objects (`{ amount, currency, decimals, formatted }`) or `null`. They were `totalInvestmentUsd` and `lastRoundAmountUsd` numbers.
+- **Partial sections.** A section that holds only its first part, such as `users` and `recentTimeline`, carries `more: { omitted, next }`. `recentTimeline` entries carry `id` and `source`. A CRM account with more contacts than listed carries `contactsNext`, and `outlit_list_people` lists `accounts[]` (each with a `next`) under `crmContactsWithoutPerson`, and `connectionId` on `crmContactsTruncated` entries.
+- **Customer lists.** Rows carry `credits` with `filters.credits` and `meter` with `orderBy: "meter_usage"`. `coverage` can carry `stale`, `withoutMeter` and `ambiguous` counts when those leave customers out.
+- **Destinations.** `outlit_create_destination` refuses a channel that is already an active destination with `CONFLICT`; `created: true` means the channel is a destination now, new or restored from the archive. It no longer updates an existing one.
+- **Toolsets.** Each toolset from `outlit_list_toolsets` carries `cost`, the input tokens its tool definitions use, or `null`.
+- **Text fields.** `truncation.clipped` names text fields cut because one item alone was over the size cap, with the call that reads each whole. `outlit_get_source` can carry `truncation`.
+
+### Errors and keys
+
+- A validation issue carries a `message` saying what to fix, beside `path`, `code` and `validValues`.
+- A `429` carries `retryAfterSeconds` (and a `Retry-After` header).
+- A key whose every grant is a read grant is refused for a write with `TOOL_CALL_FORBIDDEN` and the `missingPermission` it needs. Previews of a write and `outlit_submit_feedback` still run.
+- New grants: `destinations:read`, `behavior_metrics:read` and `integrations:read`. The v1 API key validation response leaves them out; ask for the v2 response to see them.
+- MCP transport failures come back as typed errors.
+
+## Agent API v2
+
+Old input spellings and retired tool names work until **2026-12-11**. The [admin tool table](/api-reference/tools#moving-from-the-earlier-admin-tools) lists the renamed tools and inputs, and the CLI prints `Renamed: use \`outlit …\`` once to stderr when you use an earlier command or flag.
