@@ -24,16 +24,16 @@ This is the evidence-first pattern the interfaces are designed around:
 
 <Steps>
   <Step title="Discover">
-    `outlit schema` lists analytics views and columns. `outlit customers list` / `outlit people list` filter by billing status, journey stage, activity recency, and traits.
+    `outlit schema get` lists analytics views and columns. `outlit customers list` / `outlit people list` filter by billing status, journey stage, activity recency, and traits.
   </Step>
   <Step title="Get context">
-    `outlit customers get <customer> --include users,revenue,recentTimeline` returns a bounded profile. `outlit customers timeline` filters activity by channel and event type.
+    `outlit customers get <customer> --include users,revenue,recentTimeline` returns a bounded profile. `outlit timeline get` filters activity by channel and event type.
   </Step>
   <Step title="Find evidence">
     `outlit facts list` returns structured facts with provenance (`source` with `type`, `id`, `occurredAt`, `quote`, and `permalink` when available). `outlit search "<natural language>"` returns grouped artifact-level `source` and `fact` results — not raw vector chunks.
   </Step>
   <Step title="Open the source">
-    `outlit sources get --source-type call --source-id <id>` returns the exact record. When a source offers `content`, check `content.status`, and `content.data.page.hasMore` before treating the content as complete — when it is true, more content exists beyond what was returned.
+    `outlit sources get call <id>` returns the exact record. When a source offers `content`, check `content.status`, and `content.data.page.hasMore` before treating the content as complete — when it is true, more content exists beyond what was returned.
   </Step>
   <Step title="Answer with evidence">
     Cite the sources and facts you actually retrieved. An absent permalink or empty result set is **unavailable evidence**, not negative evidence — say so instead of inferring.
@@ -46,11 +46,11 @@ Most of the catalog is read-only customer intelligence. Writes are bounded and e
 
 | Write family | Examples | Notes |
 |--------------|----------|-------|
-| Customer collaboration | `customers owner set`, `customers grant`, `customers revoke` | Requires `customer_access:manage`; writes take a customer ID, domain, or exact name and a member user ID or email — the CLI never fuzzy-matches for mutations; owner changes and archives preview first (`--yes` confirms without a terminal) |
+| Customer collaboration | `customers set-owner`, `customers set-access` | Requires `customer_access:manage`; writes take a customer ID, domain, or exact name and a member user ID or email — the CLI never fuzzy-matches for mutations; owner changes and archives preview first (`--yes` confirms without a terminal) |
 | Destinations | `destinations create/update/enable/disable/archive` | Configuration is masked in reads; secrets are never returned |
 | Features | `features create`, `features archive` | Create maps one product event to a Feature; archive requires the current opaque revision |
-| Workspace config | `activation update`, `settings update` | Narrow, enumerated settings — not arbitrary config |
-| Identity resolution | `customers merge`, `identity merge` | Exact IDs only; merges are auditable and reportable via `merge-status` |
+| Workspace config | `settings update` | Narrow, enumerated settings — not arbitrary config |
+| Identity resolution | `customers merge`, `merges get` | Exact IDs only; merges are auditable and reportable via `merges get` |
 | Product feedback | `feedback`, `outlit_submit_feedback` | One-way product intake for bugs, ideas, and agent friction; authenticated with a dedicated rate limit, no paid quota, and no support-ticket or reply guarantee |
 
 Outlit manages its monitoring rules and schedules. Public tools do not configure agents or signals, store or reveal credentials, disconnect integrations, or send arbitrary notifications.

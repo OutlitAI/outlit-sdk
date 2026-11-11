@@ -1374,39 +1374,3 @@ outlit feedback submit --body-file report.md --context-file diagnostics.json
   "createdAt": "2026-09-28T12:00:00.000Z"
 }
 ```
-
-## Renamed commands
-
-Commands now follow the Agent API: a tool `outlit_<verb>_<noun>` is `outlit <noun> <verb>`, and
-flags are the tool's input names in kebab-case. The previous spellings keep working until
-2026-12-11. Each runs the new command and prints one line to stderr, `Renamed: use \`outlit …\``.
-They are left out of help and shell completions.
-
-| Previous | Now |
-|----------|-----|
-| `customers timeline <customer>` | `timeline get <customer>` |
-| `customers identity <customer> --links` | `identity get <customer> --include links` |
-| `identity suggestions list --customer-id` | `merge-suggestions list --customer` |
-| `identity suggestions reject --review-notes` | `merge-suggestions reject --note` |
-| `customers merge … --execute`, `--review-notes` | `customers merge … --mode execute`, `--note` |
-| `customers merge-status <id>` | `merges get <id>` |
-| `customers credits`, `features`, `relationship` | `customers get <customer> --include credits`, `features`, `relationship` |
-| `customers owner set` | `customers set-owner` |
-| `customers grant`, `customers revoke` | `customers set-access --role viewer\|editor`, `--role none` |
-| `ws-users list` | `members list` |
-| `users list` | `people list` |
-| `sql` | `query` |
-| `schema [view]` | `schema get [view]` |
-| `facts get --fact-id <id>` | `facts get <id>` |
-| `sources get --source-type <type> --source-id <id>` | `sources get <type> <id>` |
-| `destinations get <id>` | `destinations list --ids <id>` |
-| `destinations enable`, `disable` | `destinations update <id> --enabled true`, `false` |
-| `destinations create --default`, `--disabled` | `--is-default`, `--enabled false` |
-| `features create --source --event --key` | `--source-key --event-name --feature-key` |
-| `activation get` | `settings get` |
-| `activation update --event <event>` | `settings update --activation-event <event>` |
-| `activation disable` | `settings update --activation-event none` |
-| `settings update --default-timezone` | `settings update --timezone` |
-| `integrations status` | `integrations list` |
-| `feedback --body …` | `feedback submit --body …` |
-
