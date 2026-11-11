@@ -35,6 +35,17 @@ describe("outlit --skill", () => {
     expect(unknown.stderr.toString()).toContain('Unknown skill "nope"')
   })
 
+  test("--skill rejects unknown options and extra arguments", () => {
+    for (const args of [
+      ["--skill", "--bogus"],
+      ["--skill", "outlit", "extra"],
+    ]) {
+      const result = runCli(args)
+      expect(result.exitCode).toBe(1)
+      expect(result.stdout.toString()).toBe("")
+    }
+  })
+
   test("--skill after -- or a subcommand is data, not the flag", () => {
     const result = runCli(["search", "--", "--skill"])
     expect(result.stdout.toString()).not.toContain("# Outlit")

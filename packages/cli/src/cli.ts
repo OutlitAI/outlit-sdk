@@ -18,10 +18,16 @@ async function startCli() {
   // Prints the embedded skill: no auth, no network, no update check.
   // Only a leading `--skill` counts, so `outlit search -- --skill` stays search data.
   // Return instead of process.exit so piped stdout drains fully under Node.
-  const [firstArg, skillName] = process.argv.slice(2)
+  const [firstArg, ...skillArgs] = process.argv.slice(2)
   if (firstArg === "--skill") {
-    if (skillName && !skillName.startsWith("-") && skillName !== "outlit") {
-      process.stderr.write(`Unknown skill "${skillName}". Available: outlit\n`)
+    const [skillName, ...extra] = skillArgs
+    if ((skillName !== undefined && skillName !== "outlit") || extra.length > 0) {
+      const bad = skillName !== undefined && skillName !== "outlit" ? skillName : extra[0]
+      process.stderr.write(
+        bad?.startsWith("-")
+          ? `Unknown option "${bad}" for --skill. Usage: outlit --skill [outlit]\n`
+          : `Unknown skill "${bad}". Available: outlit\n`,
+      )
       process.exitCode = 1
       return
     }
