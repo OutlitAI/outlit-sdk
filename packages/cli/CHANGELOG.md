@@ -1,5 +1,45 @@
 # @outlit/cli
 
+## 5.0.0
+
+### Major Changes
+
+- [#307](https://github.com/OutlitAI/outlit-sdk/pull/307) [`73e9f87`](https://github.com/OutlitAI/outlit-sdk/commit/73e9f8796984f2ca04226c8381ffab9d70dab7e2) Thanks [@leo-paz](https://github.com/leo-paz)! - Breaking: output shapes change, so these are major releases (`@outlit/cli` 5.0.0, `@outlit/tools` 4.0.0, `@outlit/pi` 4.0.0). A parser written for the earlier majors misreads: a fact's `evidence` is `{ items, page, more }` instead of an array; a fact from `outlit_list_facts` and `outlit_search_customer_context` has no `reasoning` or `source.quote` unless `include` asks (`outlit_get_fact` still returns both); enrichment funding totals are money objects (`fundingSummary.totalInvestment`, `fundingSummary.lastRoundAmount`), with the earlier `totalInvestmentUsd` and `lastRoundAmountUsd` kept beside them, deprecated, until 2026-12-12; `crmSummary` is an array of accounts instead of a map of label to value on list rows. `docs/api-reference/compatibility.mdx` lists each change and the minimum versions.
+
+  The contracts are regenerated from Core for output version 2026-11-12: 26 output shapes change from 3.0.0 (`page.total` can be `null`, `lifetimeRevenue` can be `null`, `reasoning` and `source.quote` are optional, `evidence` is an object, `crmSummary` fields are `{ field, label, values }`). Writes take `idempotencyKey`; `requestId` is still accepted by the gateway until 2026-12-12. New tool `outlit_get_skill`; new error codes `CONFLICT`, `RATE_LIMITED` and `INTERNAL_ERROR` (`TOOL_IMPLEMENTATION_ERROR` is still accepted); a spent plan allowance is not retryable and carries `resetsAt`.
+
+  `@outlit/tools` sends `Outlit-Version` when `createOutlitClient({ version })` is set, and exposes Core's `outlit-request-id` and `outlit-version` through `client.callToolWithMeta()` (`meta.requestId`, `meta.version`), `OutlitToolsApiError.requestId` and `.version`, and `onResponse`. `@outlit/cli` replaces `--request-id` with `--idempotency-key` (the old flag keeps working as a hidden alias that prints `Renamed: use ...` once), adds `--verbose` to print the request id and version, shows when a plan allowance resets, and takes `--idempotency-key` on `feedback submit`. `@outlit/pi` puts `requestId` and `version` in each result's `details`.
+
+  Matches the Agent API v2 polish release of Core. Core switches its outputs on release; the old input spellings below keep working for 30 days, until 2026-12-12.
+
+  The tool contracts are regenerated. Inputs: `outlit_get_fact` takes `id` (was `factId`) and `part`, which reads one long field a page at a time; `outlit_get_setup_session` takes `id` (was `sessionId`); `outlit_get_customer` takes `fields`, selectors `{ source?, key }` (was `crmFields`), and `crmContacts`; `outlit_list_people` `fields` are selectors; `outlit_list_facts` and `outlit_search_customer_context` take `include` (`reasoning`, `quote`, `evidence`); `outlit_list_customers` takes `filters.credits`, `orderBy: "meter_usage"` and `meter`. Outputs: facts have no `reasoning` or `source.quote` unless `include` asks, and `evidence` is `{ items, page, more }`; `crmSummary` is an array of accounts on list rows and `outlit_get_customer`; enrichment funding totals are money; sections that hold only their first part (`users`, `recentTimeline`) carry `more`; `recentTimeline` entries carry `id` and `source`; customer list rows carry `credits` and `meter`; `outlit_create_destination` refuses an existing active channel; toolsets carry `cost`. Validation issues carry `message`, a 429 carries `retryAfterSeconds`, and the grants `destinations:read`, `behavior_metrics:read` and `integrations:read` exist.
+
+  `@outlit/tools` sends `x-outlit-client: <package>/<version>` on every request (`createOutlitClient` takes `client` for a package that wraps it), and keeps a 429's `retryAfterSeconds` on the error envelope. `@outlit/cli` and `@outlit/pi` send their own name and version, so Core can tell a client below a release's minimum version to upgrade.
+
+  CLI: `facts get <id>` and `setup-sessions get <id>` send `id`. `facts get` takes `--part <field>` and `--cursor`; `facts list` and `search` take `--include reasoning,quote,evidence`; `customers get` takes `--fields <key,system:key>` and `--crm-contacts <connectionId>:<accountId>` (with `--cursor`); `customers list` takes `--runs-out-within`, `--meter` and `--meter-connection`, and shows Credits and Meter columns when the rows carry them. `--crm-fields` keeps working as `--fields` until 2026-12-12 and prints `Renamed: use …` once to stderr. At a terminal, an error shows each invalid field with what to fix, `Retry in Ns.` on a rate limit and the missing permission, and a result that holds only the first part of a section prints the command that reads the rest.
+
+  `@outlit/tools` adds `collectionOf(toolName, output)`, which returns `{ key, items, page?, truncation? }` for any list tool whatever it names its rows (`items`, `facts`, `events`, `results`, `rows`), with `collectionKeys` and `isCollectionTool`. The CLI tables and its fact and customer list JSON use it.
+  `@outlit/pi` returns a failed call (a gateway error, a rate limit, a dropped connection) as the tool result `{ error: { code, message, retryable, requestId, next, missingPermission, validationIssues, retryAfterSeconds, status } }`, with `details.error` holding the same object, instead of throwing, so the agent can fix its input, wait or report the missing permission. The default extension also registers `outlit_list_toolsets` and `outlit_load_toolset` (`piDefaultToolNames`), and the skill describes the fact depth correctly: a listed fact is concise, `include` adds `reasoning`, `quote` and the first three `evidence` excerpts, and `outlit_get_fact` `part` reads the rest. The CLI prints `Cut to fit the response size` with the command for the rest when the gateway cut a list.
+
+### Minor Changes
+
+- [#304](https://github.com/OutlitAI/outlit-sdk/pull/304) [`f0509f9`](https://github.com/OutlitAI/outlit-sdk/commit/f0509f9e0f761c18d638e555eb10bf57f9e3c420) Thanks [@leo-paz](https://github.com/leo-paz)! - The CLI now matches the Agent API v2: a tool `outlit_<verb>_<noun>` is `outlit <noun> <verb>`, flags are the tool's input names in kebab-case, and the required target is positional.
+
+  New commands: `customer-fields list`, `tasks list|get|act|undo`, `setup-sessions get`, `timeline get`, `identity get`, `merge-suggestions list|reject`, `merges get`, `members list`, `query` and `schema get`, `feedback submit`, `integrations list`. `customers set-owner` and `customers set-access` (`--role none` removes access) replace `owner set`, `grant` and `revoke`, and take `--mode`, `--preview-token`, `--request-id` and `--undo-token`. `customers merge` takes `--mode preview|execute` and `--note`. `settings update` takes `--timezone`, `--default-owner`, `--activation-event` (`none` turns it off) and `--revision`, replacing `activation get|update|disable`. `destinations list --ids` and `destinations update --enabled true|false` replace `get`, `enable` and `disable`. `facts get <id>` and `sources get <type> <id>` take their target as arguments.
+
+  Every previous spelling keeps working until 2026-12-11. It runs the new command and prints `Renamed: use `outlit …`` once to stderr. Help, shell completions and the docs show only the new names.
+
+- [#306](https://github.com/OutlitAI/outlit-sdk/pull/306) [`cb7a3e5`](https://github.com/OutlitAI/outlit-sdk/commit/cb7a3e54f2d32627e1418a7a9492207eed541d76) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit --skill` prints the Outlit skill to stdout, so an agent gets the instructions from the CLI it already has. It needs no API key and no network, and it always matches the installed CLI version. The text is embedded at build time in both the npm package and the compiled binaries.
+
+  `outlit setup skills`, `outlit setup <agent>` and `outlit onboard` now install a small stub skill that tells the agent to run `outlit --skill`, instead of copying the full text, so installed skills no longer go stale. Top-level help and the `outlit auth login` output mention `outlit --skill`.
+
+### Patch Changes
+
+- [#307](https://github.com/OutlitAI/outlit-sdk/pull/307) [`73e9f87`](https://github.com/OutlitAI/outlit-sdk/commit/73e9f8796984f2ca04226c8381ffab9d70dab7e2) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit search --limit` takes 1 to 100 with a default of 25, as the tool's contract says (help and validation said 1 to 50 and 20). The list commands that defaulted to 20 (`customers list`, `people list`, `members list`, `destinations list`, `features list`) now default to 25. The page sizes are read from the generated contracts.
+
+- Updated dependencies [[`73e9f87`](https://github.com/OutlitAI/outlit-sdk/commit/73e9f8796984f2ca04226c8381ffab9d70dab7e2)]:
+  - @outlit/tools@4.0.0
+
 ## 4.0.0
 
 ### Major Changes
