@@ -4,11 +4,13 @@ import {
   DEFAULT_OUTLIT_API_URL,
   defaultToolNames,
   getPublicToolContract,
+  isOutlitToolsApiError,
   isPublicToolName,
   type OutlitToolsFetch,
   type OutlitToolsResponseInfo,
   type PiToolName,
   piToolNames,
+  type ToolGatewayErrorEnvelope,
   type ToolsetName,
   toolNamesInToolsets,
 } from "@outlit/tools"
@@ -22,6 +24,18 @@ export const OUTLIT_API_URL_ENV = "OUTLIT_API_URL"
 export const OUTLIT_PI_CLIENT = `@outlit/pi/${pkg.version}`
 
 const piToolNameSet = new Set<string>(piToolNames)
+
+/**
+ * What the extension registers with no options: Core's default customer intelligence tools, plus the
+ * two read-only toolset tools, so an agent that needs a tool outside this list can find out which
+ * toolset holds it and tell the user to enable it (the `toolsets` option below). Pi registers tools
+ * when the session starts, so loading a toolset never adds callable tools mid-session.
+ */
+export const piDefaultToolNames: readonly PiToolName[] = [
+  ...defaultToolNames,
+  "outlit_list_toolsets",
+  "outlit_load_toolset",
+]
 
 export type OutlitPiExtensionOptions = {
   apiKey?: string
@@ -37,9 +51,24 @@ export type OutlitPiExtensionOptions = {
 
 export type OutlitPiRegistry = Pick<ExtensionAPI, "registerTool">
 
+/**
+ * What a failed call hands the agent: the gateway's whole error envelope (`code`, `message`,
+ * `retryable`, `requestId`, and when present `next`, `missingPermission`, `validationIssues`,
+ * `retryAfterSeconds`), plus the HTTP `status` when there was a response. A failure with no envelope
+ * (a proxy's HTML error page, a dropped connection) carries a `message` and `retryable` only.
+ */
+export type OutlitPiToolError = Partial<ToolGatewayErrorEnvelope> & {
+  message: string
+  retryable: boolean
+  status?: number
+}
+
 export type OutlitPiToolDetails = {
   toolName: PiToolName
+  /** The tool's result; `{ error }` when the call failed (see `error`). */
   result: unknown
+  /** Set when the call failed at the gateway or the network; the agent sees it as the tool result. */
+  error?: OutlitPiToolError
 }
 
 export type OutlitPiToolDefinition = ToolDefinition<TSchema, OutlitPiToolDetails>
@@ -89,9 +118,14 @@ export function createOutlitPiTool(
           responseInfo = info
         },
       })
-      const result = await client.callTool(toolName, normalizeToolInput(params))
-
-      return formatToolResult(toolName, result, responseInfo)
+      const input = normalizeToolInput(params)
+      try {
+        const result = await client.callTool(toolName, input)
+        return formatToolResult(toolName, result, responseInfo)
+      } catch (error) {
+        // A failed call is something the agent can act on, not a crash: hand it the envelope.
+        return formatToolError(toolName, toToolError(error), responseNotices(responseInfo))
+      }
     },
   }
 }
@@ -114,7 +148,7 @@ export function formatOutlitToolLabel(toolName: PiToolName): string {
 
 function resolveToolNames(options: OutlitPiExtensionOptions): PiToolName[] {
   const names: readonly string[] = [
-    ...(options.toolNames ?? (options.toolsets ? [] : defaultToolNames)),
+    ...(options.toolNames ?? (options.toolsets ? [] : piDefaultToolNames)),
     ...(options.toolsets ? toolNamesInToolsets(options.toolsets) : []),
   ]
 
@@ -169,6 +203,36 @@ function responseNotices(info: OutlitToolsResponseInfo | undefined): string[] {
     ...(info.deprecation ? [`${info.deprecation.message} (until ${info.deprecation.until})`] : []),
     ...info.notices,
   ]
+}
+
+function toToolError(error: unknown): OutlitPiToolError {
+  if (isOutlitToolsApiError(error)) {
+    if (error.envelope) return { ...error.envelope, status: error.status }
+    return {
+      message: error.message,
+      retryable: error.status === 429 || error.status >= 500,
+      status: error.status,
+    }
+  }
+  // fetch rejecting (offline, DNS, reset) or a 200 whose body was not JSON.
+  return { message: error instanceof Error ? error.message : String(error), retryable: true }
+}
+
+function formatToolError(
+  toolName: PiToolName,
+  error: OutlitPiToolError,
+  notices: string[],
+): AgentToolResult<OutlitPiToolDetails> {
+  const result = { error }
+  return {
+    content: [
+      { type: "text", text: JSON.stringify(result, null, 2) },
+      ...(notices.length > 0
+        ? [{ type: "text" as const, text: `Notice: ${notices.join(" ")}` }]
+        : []),
+    ],
+    details: { toolName, result, error },
+  }
 }
 
 function formatToolResult(
