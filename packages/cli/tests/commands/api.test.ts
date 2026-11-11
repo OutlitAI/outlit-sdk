@@ -164,9 +164,9 @@ describe("runTool()", () => {
     expect(JSON.parse(written)).toEqual(gatewayEnvelope)
   })
 
-  test("renders table rows from nested response paths", async () => {
+  test("renders table rows from the tool's collection key", async () => {
     mockCallTool.mockResolvedValueOnce({
-      destinations: [{ id: "dest_123", label: "#customer-ops" }],
+      items: [{ id: "dest_123", label: "#customer-ops" }],
     })
     const { getClientOrExit, runTool } = await import("../../src/lib/api")
     const client = await getClientOrExit(TEST_API_KEY, false)
@@ -176,7 +176,6 @@ describe("runTool()", () => {
     try {
       await runTool(client, "outlit_list_destinations", {}, false, {
         table: {
-          itemsKey: "destinations",
           columns: [
             { header: "ID", key: "id" },
             { header: "Label", key: "label" },
@@ -265,7 +264,6 @@ describe("runTool()", () => {
     const { getClientOrExit, runTool } = await import("../../src/lib/api")
     const client = await getClientOrExit(TEST_API_KEY, false)
     const table = {
-      paginationKey: "page",
       columns: [
         { header: "Name", key: "name" },
         { header: "Credits", key: "credits", optional: true },
@@ -298,6 +296,47 @@ describe("runTool()", () => {
     expect(withCredits).toContain(
       "Not listed: 3 left out: Autumn scan over 3 hours old; 1 left out: email matches several Autumn accounts.",
     )
+  })
+
+  test("renders a list from the tool's own collection key and says when the gateway cut it", async () => {
+    const { getClientOrExit, runTool } = await import("../../src/lib/api")
+    const client = await getClientOrExit(TEST_API_KEY, false)
+    mockCallTool.mockResolvedValueOnce({
+      customer: { id: "cust_1" },
+      events: [{ id: "evt_1", title: "Call with Acme" }],
+      page: { hasMore: true, nextCursor: "cur_2", total: null },
+      truncation: {
+        truncated: true,
+        reason: "byte_cap",
+        returned: 1,
+        next: {
+          instruction: "Read the rest",
+          tool: "outlit_get_timeline",
+          input: { customer: "cust_1", cursor: "cur_2" },
+        },
+      },
+    })
+    const logSpy = spyOn(console, "log").mockImplementation(() => {})
+    setInteractive()
+    try {
+      await runTool(client, "outlit_get_timeline", { customer: "cust_1" }, false, {
+        table: {
+          columns: [
+            { header: "ID", key: "id" },
+            { header: "Title", key: "title" },
+          ],
+        },
+      })
+      const output = logSpy.mock.calls.map((call) => call[0] as string).join("\n")
+      expect(output).toContain("Call with Acme")
+      expect(output).toContain("Next page: --cursor cur_2")
+      expect(output).toContain(
+        "Cut to fit the response size: 1 rows kept. outlit timeline get cust_1 --cursor cur_2",
+      )
+    } finally {
+      setNonInteractive()
+      logSpy.mockRestore()
+    }
   })
 
   test("prints the command that reads each part a result only holds the first of", async () => {

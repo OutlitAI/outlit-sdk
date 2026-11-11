@@ -183,7 +183,6 @@ export default defineCommand({
 
     return runTool(client, publicToolContracts.outlit_list_sources.toolName, params, json, {
       table: {
-        paginationKey: "page",
         columns: [
           { header: "TYPE", key: "source.type" },
           { header: "OCCURRED", key: "occurredAt" },

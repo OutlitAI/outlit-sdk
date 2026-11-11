@@ -38,7 +38,6 @@ export default defineCommand({
     return runTool(client, "outlit_list_destinations", params, json, {
       spinnerMessage: "Fetching destinations...",
       table: {
-        paginationKey: "page",
         columns: [
           { header: "ID", key: "id", format: (v) => truncate(v, 22) },
           { header: "Name", key: "name", format: (v) => truncate(v, 32) },

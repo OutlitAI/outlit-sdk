@@ -189,7 +189,6 @@ export default defineCommand({
     return runTool(client, "outlit_list_people", params, json, {
       spinnerMessage: "Fetching people...",
       table: {
-        paginationKey: "page",
         columns: [
           { header: "Email", key: "email", format: (v) => truncate(v, 30) },
           { header: "Name", key: "name", format: (v) => truncate(v, 20) },

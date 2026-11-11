@@ -39,7 +39,6 @@ export default defineCommand({
     return runTool(client, "outlit_list_integrations", provider ? { provider } : {}, json, {
       spinnerMessage: "Fetching integration status...",
       table: {
-        paginationKey: "page",
         columns: [
           { header: "Name", key: "name", format: (value) => truncate(value, 24) },
           { header: "Category", key: "category", format: capitalize },

@@ -7,6 +7,8 @@ import {
   apiKeyValidationSuccessSchemaV2,
   apiKeyValidationTransport,
   type CliToolName,
+  type Collection,
+  collectionOf,
   isOutlitToolsApiError,
   matchesGeneratedJsonSchema,
 } from "@outlit/tools"
@@ -16,7 +18,7 @@ import { CLI_CLIENT, CLIENT_HEADER } from "./client-id"
 import { DEFAULT_API_URL } from "./config"
 import { envelopeLines } from "./error-lines"
 import { warnIfKeyExpiresSoon } from "./key-expiry"
-import { moreLines } from "./next-command"
+import { moreLines, nextCommand } from "./next-command"
 import { errorMessage, isJsonMode, outputError, outputResult } from "./output"
 import { createSpinner } from "./spinner"
 import { renderPaginationHint, renderTable } from "./table"
@@ -34,10 +36,6 @@ export interface RunToolOptions {
   /** Column definitions for TTY table rendering. */
   table?: {
     columns: TableColumn[]
-    /** Dot-separated key path to the items array in the response (default: "items"). */
-    itemsKey?: string
-    /** Dot-separated key path to pagination metadata in the response (default: "pagination"; v2 tools use "page"). */
-    paginationKey?: string
   }
   /** Spinner message shown during the API call (TTY only). */
   spinnerMessage?: string
@@ -195,14 +193,18 @@ export function outputApiError(
 }
 
 /** Renders API response data as a TTY table with optional pagination hint. */
-function renderApiTable(data: unknown, table: NonNullable<RunToolOptions["table"]>): void {
+function renderApiTable(
+  toolName: string,
+  data: unknown,
+  table: NonNullable<RunToolOptions["table"]>,
+): void {
   const record =
     typeof data === "object" && data !== null && !Array.isArray(data)
       ? (data as Record<string, unknown>)
       : {}
-  const itemsKey = table.itemsKey ?? "items"
-  const rawItems = readPath(record, itemsKey)
-  const items = Array.isArray(rawItems) ? (rawItems as Array<Record<string, unknown>>) : undefined
+  // The tool's own collection key (items, facts, events, results), page and truncation.
+  const collection = collectionOf(toolName, data)
+  const items = collection?.items as Array<Record<string, unknown>> | undefined
 
   if (!items || items.length === 0) {
     console.log("(no results)")
@@ -227,15 +229,23 @@ function renderApiTable(data: unknown, table: NonNullable<RunToolOptions["table"
 
   console.log(renderTable(headers, rows))
 
-  const pagination = readPath(record, table.paginationKey ?? "pagination") as
-    | { hasMore: boolean; nextCursor: string | null; total?: number }
-    | undefined
-  if (pagination) {
-    const hint = renderPaginationHint(pagination, items.length)
+  if (collection?.page) {
+    const hint = renderPaginationHint(collection.page, items.length)
     if (hint) console.log(`\n${hint}`)
   }
+  const cut = truncationNote(collection?.truncation)
+  if (cut) console.log(`\n${cut}`)
   const notes = coverageNotes(readPath(record, "coverage"))
   if (notes) console.log(`\n${notes}`)
+}
+
+/** What a list the gateway cut to fit its size cap says: how many rows it kept and how to read the rest. */
+function truncationNote(truncation: Collection["truncation"]): string | undefined {
+  if (!truncation) return undefined
+  const kept = typeof truncation.returned === "number" ? `${truncation.returned} rows kept. ` : ""
+  const next = truncation.next
+  const how = next ? (nextCommand(next.tool, next.input) ?? next.instruction) : ""
+  return `Cut to fit the response size: ${kept}${how}`.trim()
 }
 
 /** Customers a credits or meter call could not rank, by why, so a short list is not read as complete. */
@@ -300,7 +310,7 @@ export async function runTool<TToolName extends CliToolName>(
       return
     }
 
-    renderApiTable(data, table)
+    renderApiTable(toolName, data, table)
   } catch (err) {
     spinner?.fail("Failed")
     return outputApiError(err, json, {

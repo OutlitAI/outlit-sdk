@@ -68,7 +68,7 @@ export function renderTable(
  * Returns empty string when there are no items.
  */
 export function renderPaginationHint(
-  pagination: { hasMore: boolean; nextCursor: string | null; total?: number },
+  pagination: { hasMore: boolean; nextCursor: string | null; total?: number | null },
   itemCount: number,
 ): string {
   if (itemCount === 0) return ""

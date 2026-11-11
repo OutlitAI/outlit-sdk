@@ -1,4 +1,5 @@
 import {
+  collectionOf,
   publicToolContracts,
   toolFactCategories,
   toolFactStatuses,
@@ -41,18 +42,14 @@ function isOneOf(values: readonly string[], value: unknown): value is string {
 }
 
 function annotateFactFilterability(data: unknown): unknown {
-  if (typeof data !== "object" || data === null || Array.isArray(data)) {
-    return data
-  }
-
-  const record = data as Record<string, unknown>
-  if (!Array.isArray(record.facts)) {
+  const collection = collectionOf("outlit_list_facts", data)
+  if (!collection || !Array.isArray((data as Record<string, unknown>)[collection.key])) {
     return data
   }
 
   return {
-    ...record,
-    facts: record.facts.map((fact) => {
+    ...(data as Record<string, unknown>),
+    [collection.key]: collection.items.map((fact) => {
       if (typeof fact !== "object" || fact === null || Array.isArray(fact)) {
         return fact
       }

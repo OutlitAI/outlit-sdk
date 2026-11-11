@@ -16,6 +16,13 @@ export {
   outlitClientHeader,
 } from "./client.js"
 export type {
+  Collection,
+  CollectionPage,
+  CollectionToolName,
+  CollectionTruncation,
+} from "./collections.js"
+export { collectionKeys, collectionOf, isCollectionTool } from "./collections.js"
+export type {
   CustomerContextSearchInput,
   CustomerSourceType,
   CustomerSourceTypeInput,

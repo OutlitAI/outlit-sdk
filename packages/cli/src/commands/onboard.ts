@@ -1,3 +1,4 @@
+import { collectionOf } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
@@ -215,10 +216,9 @@ async function checkIntegrationReadiness(
 
   try {
     const client = await createClient(apiKey)
-    const listed = (await client.callTool("outlit_list_integrations", {})) as {
-      items?: IntegrationListItem[]
-    }
-    const providers = Array.isArray(listed.items) ? listed.items : []
+    const listed = await client.callTool("outlit_list_integrations", {})
+    const providers = (collectionOf("outlit_list_integrations", listed)?.items ??
+      []) as IntegrationListItem[]
 
     summary.capabilitiesAvailable = true
     summary.providerCount = providers.length

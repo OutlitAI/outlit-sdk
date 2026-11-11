@@ -1,4 +1,5 @@
 import {
+  collectionOf,
   customerBillingStatuses,
   customerListOrderFields,
   getPublicToolContract,
@@ -23,18 +24,14 @@ import { outputError } from "../../lib/output"
 import { isIso8601DateTime } from "../../lib/platform-input"
 
 function normalizeCustomerListResult(data: unknown): unknown {
-  if (typeof data !== "object" || data === null || Array.isArray(data)) {
-    return data
-  }
-
-  const record = data as Record<string, unknown>
-  if (!Array.isArray(record.items)) {
+  const collection = collectionOf("outlit_list_customers", data)
+  if (!collection || !Array.isArray((data as Record<string, unknown>)[collection.key])) {
     return data
   }
 
   return {
-    ...record,
-    items: record.items.map((item) => {
+    ...(data as Record<string, unknown>),
+    [collection.key]: collection.items.map((item) => {
       if (typeof item !== "object" || item === null || Array.isArray(item)) {
         return item
       }
@@ -346,7 +343,6 @@ export default defineCommand({
       spinnerMessage: "Fetching customers...",
       transform: normalizeCustomerListResult,
       table: {
-        paginationKey: "page",
         columns: [
           { header: "Name", key: "name", format: (v) => truncate(v, 24) },
           { header: "Domain", key: "domain" },

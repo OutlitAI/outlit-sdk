@@ -116,7 +116,6 @@ export default defineCommand({
     return runTool(client, publicToolContracts.outlit_list_members.toolName, params, json, {
       spinnerMessage: "Fetching workspace users...",
       table: {
-        paginationKey: "page",
         columns: [
           { header: "Email", key: "email", format: (v) => truncate(v, 30) },
           { header: "Name", key: "name", format: (v) => truncate(v, 24) },
