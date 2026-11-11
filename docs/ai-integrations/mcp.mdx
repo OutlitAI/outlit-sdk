@@ -64,9 +64,17 @@ Headless clients that cannot complete OAuth may send an Outlit API key as their 
   </Step>
 </Steps>
 
-For coding agents that run local commands, see [Agent skills](/ai-integrations/skills).
+Before multi-step work, have your agent call `outlit_get_skill`. It returns the Outlit skill: when to use each tool, the order to call them in, and worked examples. For coding agents that run local commands, see [Agent skills](/ai-integrations/skills).
 
 ## Available tools
+
+### Toolsets and the guide
+
+| Tool | What it does |
+|---|---|
+| `outlit_get_skill` | Return the Outlit skill, the full guide to these tools. Read it once per session |
+| `outlit_list_toolsets` | List the toolsets, their tools, and the MCP URL that adds one |
+| `outlit_load_toolset` | Summarize a toolset's tools, or return the full descriptions and input schemas of up to 10 named tools |
 
 ### Customers and people
 
