@@ -34,7 +34,7 @@
   "scripts": {
     "dev": "bun run src/cli.ts",
     "dev:watch": "bun --watch src/cli.ts",
-    "build": "bun build ./src/cli.ts --outdir ./dist --target node",
+    "build": "bun build ./src/cli.ts --outdir ./dist --target node && bun scripts/strip-bun-pragma.ts dist/cli.js",
     "build:binary": "bun build --compile --minify --sourcemap --bytecode src/cli.ts --outfile dist/outlit",
     "build:all": "bun run build.ts",
     "test": "bun test",
