@@ -7,6 +7,7 @@
     },
     "@outlit/cli#build": {
       "dependsOn": ["@outlit/tools#build"],
+      "inputs": ["$TURBO_DEFAULT$", "../../docs/skill.md"],
       "outputs": ["dist/**"]
     },
     "@outlit/pi#build": {

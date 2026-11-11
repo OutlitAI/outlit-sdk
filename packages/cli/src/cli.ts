@@ -15,6 +15,19 @@ async function startCli() {
     process.exit(0)
   }
 
+  // Prints the embedded skill: no auth, no network, no update check.
+  const skillFlag = process.argv.slice(2).indexOf("--skill")
+  if (skillFlag !== -1) {
+    const { OUTLIT_SKILL } = await import("./lib/skill")
+    const requested = process.argv.slice(2)[skillFlag + 1]
+    if (requested && !requested.startsWith("-") && requested !== "outlit") {
+      process.stderr.write(`Unknown skill "${requested}". Available: outlit\n`)
+      process.exit(1)
+    }
+    process.stdout.write(OUTLIT_SKILL.endsWith("\n") ? OUTLIT_SKILL : `${OUTLIT_SKILL}\n`)
+    process.exit(0)
+  }
+
   if (process.argv.includes(INTERNAL_UPDATE_FLAG)) {
     await runInternalUpdateCheck()
     process.exit(0)
@@ -57,6 +70,7 @@ async function startCli() {
         "  outlit customers get acme.com --include features,meters --weekly --json",
         "  outlit feedback submit --body 'The merge preview dropped trait history' --area customers --json",
         "  outlit doctor --json",
+        "  outlit --skill                  # print the Outlit skill for your agent (no auth)",
         "",
         "Toolsets (how Outlit groups its agent tools):",
         "  core      customers, customer-fields, people, facts, sources, timeline, search, query, schema",
@@ -66,7 +80,7 @@ async function startCli() {
         "            setup-sessions, settings, activation, features",
         "  meta      feedback",
         "",
-        "For AI agents: commands auto-output JSON when stdout is piped. No --json flag needed.",
+        "For AI agents: run `outlit --skill` for the full instructions. Commands auto-output JSON when stdout is piped. No --json flag needed.",
       ].join("\n"),
     },
     subCommands: {

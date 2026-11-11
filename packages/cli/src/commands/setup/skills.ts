@@ -1,10 +1,13 @@
 import { execFileSync } from "node:child_process"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { defineCommand } from "citty"
 import { outputArgs } from "../../args/output"
 import { isEnoentError, TICK } from "../../lib/config"
 import { errorMessage, isJsonMode, outputError, outputResult } from "../../lib/output"
+import { OUTLIT_SKILL_STUB, SKILL_STUB_NAME } from "../../lib/skill"
 
-export const SKILLS_REPO_URL = "https://github.com/OutlitAI/outlit-agent-skills"
 const DEFAULT_SKILL_NAME = "outlit"
 
 type PackageRunner = "npx" | "bunx" | "pnpx"
@@ -52,9 +55,18 @@ export function detectPackageRunner(): PackageRunner | null {
   return null
 }
 
+// Writes the stub skill to a temp directory the `skills` installer can add from.
+function writeStubSource(): string {
+  const dir = mkdtempSync(join(tmpdir(), "outlit-skill-"))
+  mkdirSync(join(dir, SKILL_STUB_NAME))
+  writeFileSync(join(dir, SKILL_STUB_NAME, "SKILL.md"), OUTLIT_SKILL_STUB)
+  return dir
+}
+
 function buildRunnerArgs(
   runner: PackageRunner,
   opts: {
+    source: string
     agents?: SkillAgentId[]
     skillNames?: string[]
     autoConfirm?: boolean
@@ -62,7 +74,7 @@ function buildRunnerArgs(
   },
 ): string[] {
   const args = runner === "npx" ? ["-y"] : []
-  args.push("skills", "add", SKILLS_REPO_URL)
+  args.push("skills", "add", opts.source)
 
   for (const skillName of opts.skillNames ?? []) {
     args.push("--skill", skillName)
@@ -121,11 +133,14 @@ export function runSkillsInstall(opts: {
     !autoConfirm &&
     !isJsonMode(json)
 
+  let source: string | undefined
   try {
-    execFileSync(runner, buildRunnerArgs(runner, { agents, skillNames, autoConfirm }), {
+    source = writeStubSource()
+    execFileSync(runner, buildRunnerArgs(runner, { source, agents, skillNames, autoConfirm }), {
       stdio: isInteractiveInstall ? "inherit" : "pipe",
     })
   } catch (err) {
+    if (source) rmSync(source, { recursive: true, force: true })
     if (exitOnError) {
       if (isEnoentError(err)) {
         return outputError({ message: `${runner} not found`, code: "runner_not_found" }, json)
@@ -144,6 +159,8 @@ export function runSkillsInstall(opts: {
       error: errorMessage(err, `${runner} skills add failed`),
     }
   }
+
+  if (source) rmSync(source, { recursive: true, force: true })
 
   if (exitOnError) {
     if (isJsonMode(json)) {
@@ -180,9 +197,10 @@ export default defineCommand({
   meta: {
     name: "skills",
     description: [
-      "Launch the interactive Skills installer for Outlit.",
+      "Install a small Outlit skill for your coding agents (optional).",
       "",
-      "Uses the Outlit skills repo and lets you choose `outlit` and optional extras like `outlit-sdk`.",
+      "The installed skill tells the agent to run `outlit --skill`, so its instructions always match this CLI.",
+      "Agents can also run `outlit --skill` directly; no install is needed.",
       "No API key required.",
     ].join("\n"),
   },

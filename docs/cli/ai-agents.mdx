@@ -5,7 +5,9 @@ description: "Install Outlit skills for Claude Code, Codex, Gemini CLI, Droid, O
 
 The `outlit onboard` command is the first command for coding agents. It bootstraps CLI auth, installs the `outlit` skill for the selected agent, checks integration setup readiness, and prints next actions.
 
-`outlit setup` remains available when you only want to install skills. It does not configure MCP clients.
+Any agent can also get the skill straight from the CLI, with no install: run `outlit --skill` to print the full `outlit` skill. It needs no API key or network and always matches the installed CLI version.
+
+`outlit setup` is optional. It installs a small stub skill that tells the agent to run `outlit --skill`. It does not configure MCP clients.
 
 If you want Cursor, VS Code, Claude, or another MCP client, use the direct [MCP integration](/ai-integrations/mcp) guide instead.
 
@@ -55,15 +57,15 @@ Without `--yes`, the CLI lists detected agents before installing.
 }
 ```
 
-## Interactive skills installer
+## Skills installer
 
-Use this when you want to pick agents manually or optionally add `outlit-sdk`:
+Use this when you want to pick agents manually:
 
 ```bash
 outlit setup skills
 ```
 
-This opens the interactive `skills add` flow scoped to `github.com/OutlitAI/outlit-agent-skills`.
+This runs the `skills add` flow for a stub `outlit` skill that points the agent at `outlit --skill`. To also add the `outlit-sdk` tracking skill, see [Agent skills](/ai-integrations/skills).
 
 ## Diagnostics
 
