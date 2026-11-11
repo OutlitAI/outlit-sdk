@@ -132,10 +132,10 @@ describe("customer collaboration commands", () => {
     })
   })
 
-  test("owner set previews first, then confirms with the preview token under --yes", async () => {
+  test("set-owner previews first, then confirms with the preview token under --yes", async () => {
     mockCallTool.mockResolvedValueOnce(ownerPreview)
     mockCallTool.mockResolvedValueOnce(ownerChanged)
-    const stdout = await runCommand(import("../../../src/commands/customers/owner/set"), {
+    const stdout = await runCommand(import("../../../src/commands/customers/set-owner"), {
       customer,
       member,
       yes: true,
@@ -157,10 +157,10 @@ describe("customer collaboration commands", () => {
     expect(stdout).toBe(`${JSON.stringify(ownerChanged, null, 2)}\n`)
   })
 
-  test("owner set sends two different request IDs, one per call", async () => {
+  test("set-owner sends two different request IDs, one per call", async () => {
     mockCallTool.mockResolvedValueOnce(ownerPreview)
     mockCallTool.mockResolvedValueOnce(ownerChanged)
-    await runCommand(import("../../../src/commands/customers/owner/set"), {
+    await runCommand(import("../../../src/commands/customers/set-owner"), {
       customer,
       member,
       yes: true,
@@ -171,8 +171,8 @@ describe("customer collaboration commands", () => {
     expect(new Set(ids).size).toBe(2)
   })
 
-  test("owner set without --yes outside a terminal changes nothing and exits with the preview", async () => {
-    const command = (await import("../../../src/commands/customers/owner/set")).default
+  test("set-owner without --yes outside a terminal changes nothing and exits with the preview", async () => {
+    const command = (await import("../../../src/commands/customers/set-owner")).default
     const exitSpy = mockExitThrow()
     const stdoutSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -196,10 +196,10 @@ describe("customer collaboration commands", () => {
     expect(mockCallTool).toHaveBeenCalledTimes(1)
   })
 
-  test("grant sends the access write in one call and reads the old spellings", async () => {
-    const stdout = await runCommand(import("../../../src/commands/customers/grant"), {
+  test("set-access sends the access write in one call", async () => {
+    const stdout = await runCommand(import("../../../src/commands/customers/set-access"), {
       customer,
-      "target-user-id": member,
+      member,
       role: "VIEWER",
       json: true,
     })
@@ -214,8 +214,8 @@ describe("customer collaboration commands", () => {
     expect(stdout).toBe(`${JSON.stringify(accessChanged, null, 2)}\n`)
   })
 
-  test("grant changes an existing collaborator's role through the same write", async () => {
-    await runCommand(import("../../../src/commands/customers/grant"), {
+  test("set-access changes an existing collaborator's role through the same write", async () => {
+    await runCommand(import("../../../src/commands/customers/set-access"), {
       customer,
       member,
       role: "editor",
@@ -230,10 +230,11 @@ describe("customer collaboration commands", () => {
     })
   })
 
-  test("revoke is a write of role none", async () => {
-    const stdout = await runCommand(import("../../../src/commands/customers/revoke"), {
+  test("set-access none is a write of role none", async () => {
+    const stdout = await runCommand(import("../../../src/commands/customers/set-access"), {
       customer,
       member,
+      role: "none",
       json: true,
     })
 
@@ -246,12 +247,13 @@ describe("customer collaboration commands", () => {
     expect(stdout).toBe(`${JSON.stringify(accessChanged, null, 2)}\n`)
   })
 
-  test("revoke asks to be confirmed when Core says the caller could not undo it", async () => {
+  test("set-access none asks to be confirmed when Core says the caller could not undo it", async () => {
     mockCallTool.mockResolvedValueOnce(accessNeedsConfirmation)
     mockCallTool.mockResolvedValueOnce({ ...accessChanged, role: "none", undo: null })
-    await runCommand(import("../../../src/commands/customers/revoke"), {
+    await runCommand(import("../../../src/commands/customers/set-access"), {
       customer,
       member,
+      role: "none",
       yes: true,
       json: true,
     })
@@ -268,14 +270,14 @@ describe("customer collaboration commands", () => {
 
   test("a needs_confirmation answer without --yes outside a terminal changes nothing", async () => {
     mockCallTool.mockResolvedValueOnce(accessNeedsConfirmation)
-    const command = (await import("../../../src/commands/customers/revoke")).default
+    const command = (await import("../../../src/commands/customers/set-access")).default
     const exitSpy = mockExitThrow()
     const stdoutSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
     let thrown: unknown
     let stderrOutput = ""
     try {
-      await command.run?.({ args: { customer, member, json: true } } as never)
+      await command.run?.({ args: { customer, member, role: "none", json: true } } as never)
     } catch (error) {
       thrown = error
     } finally {
@@ -290,7 +292,7 @@ describe("customer collaboration commands", () => {
   })
 
   test("takes a customer by id, domain or name", async () => {
-    await runCommand(import("../../../src/commands/customers/grant"), {
+    await runCommand(import("../../../src/commands/customers/set-access"), {
       customer: "Acme Inc",
       member,
       role: "viewer",
@@ -303,9 +305,9 @@ describe("customer collaboration commands", () => {
     )
   })
 
-  test("grant rejects OWNER and NONE before any network call", async () => {
-    for (const role of ["OWNER", "none"]) {
-      await expectLocalValidationError(import("../../../src/commands/customers/grant"), {
+  test("set-access rejects OWNER before any network call", async () => {
+    for (const role of ["OWNER"]) {
+      await expectLocalValidationError(import("../../../src/commands/customers/set-access"), {
         customer,
         member,
         role,
@@ -316,9 +318,9 @@ describe("customer collaboration commands", () => {
     }
   })
 
-  test("grant rejects a missing role before any network call", async () => {
+  test("set-access rejects a missing role before any network call", async () => {
     await expectLocalValidationError(
-      import("../../../src/commands/customers/grant"),
+      import("../../../src/commands/customers/set-access"),
       { customer, member, json: true },
       "missing_input",
     )
@@ -326,14 +328,14 @@ describe("customer collaboration commands", () => {
 
   test("rejects a blank member before any network call", async () => {
     await expectLocalValidationError(
-      import("../../../src/commands/customers/owner/set"),
+      import("../../../src/commands/customers/set-owner"),
       { customer, member: "   ", json: true },
       "missing_input",
     )
   })
 
   test("rejects an oversized member before any network call", async () => {
-    await expectLocalValidationError(import("../../../src/commands/customers/owner/set"), {
+    await expectLocalValidationError(import("../../../src/commands/customers/set-owner"), {
       customer,
       member: `${"u".repeat(501)} `,
       json: true,
@@ -342,8 +344,8 @@ describe("customer collaboration commands", () => {
 
   test("rejects a blank customer before any network call", async () => {
     await expectLocalValidationError(
-      import("../../../src/commands/customers/revoke"),
-      { customer: "  ", member, json: true },
+      import("../../../src/commands/customers/set-access"),
+      { customer: "  ", member, role: "none", json: true },
       "missing_input",
     )
   })
@@ -358,7 +360,7 @@ describe("customer collaboration commands", () => {
     mockCallTool.mockRejectedValueOnce(
       new OutlitToolsApiError(403, JSON.stringify(envelope), envelope),
     )
-    const command = (await import("../../../src/commands/customers/grant")).default
+    const command = (await import("../../../src/commands/customers/set-access")).default
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
     const exitSpy = mockExitThrow()
     let thrown: unknown
@@ -394,7 +396,7 @@ describe("customer collaboration commands", () => {
     mockCallTool.mockRejectedValueOnce(
       new OutlitToolsApiError(409, JSON.stringify(envelope), envelope),
     )
-    const command = (await import("../../../src/commands/customers/revoke")).default
+    const command = (await import("../../../src/commands/customers/set-access")).default
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
     const exitSpy = mockExitThrow()
     let thrown: unknown
@@ -404,6 +406,7 @@ describe("customer collaboration commands", () => {
         args: {
           customer,
           member,
+          role: "none",
           json: true,
         },
       } as Parameters<NonNullable<typeof command.run>>[0])

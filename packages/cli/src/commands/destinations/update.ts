@@ -3,7 +3,7 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
-import { optionalTrimmedString } from "../../lib/platform-input"
+import { optionalTrimmedString, parseBooleanFlag } from "../../lib/platform-input"
 
 /** --type is optional now (Core knows the destination's type); a value, when given, must still be slack. */
 function checkDestinationType(type: string | undefined, json: boolean): void {
@@ -12,20 +12,6 @@ function checkDestinationType(type: string | undefined, json: boolean): void {
   if (normalized === "slack" || normalized === "slack_channel") return
 
   outputError({ message: "--type must be slack", code: "invalid_input" }, json)
-}
-
-function parseEnabledFlag(args: { enabled?: boolean; disabled?: boolean }, json: boolean) {
-  if (args.enabled === true && args.disabled === true) {
-    return outputError(
-      { message: "Use either --enabled or --disabled, not both", code: "invalid_input" },
-      json,
-    )
-  }
-
-  if (args.enabled === true) return true
-  if (args.disabled === true) return false
-
-  return undefined
 }
 
 export default defineCommand({
@@ -38,8 +24,8 @@ export default defineCommand({
       "",
       "Examples:",
       "  outlit destinations update 10000000-0000-4000-8000-000000000003 --label '#customer-ops' --json",
-      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --default --json",
-      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --disabled --json",
+      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --is-default --json",
+      "  outlit destinations update 10000000-0000-4000-8000-000000000003 --enabled false --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -57,33 +43,32 @@ export default defineCommand({
       description: "Optional; destinations are Slack channels, so only slack is accepted",
     },
     label: { type: "string", description: "Slack channel label" },
-    default: { type: "boolean", description: "Make this the default destination" },
-    enabled: { type: "boolean", description: "Enable the destination after update" },
-    disabled: { type: "boolean", description: "Disable the destination" },
+    "is-default": { type: "boolean", description: "Make this the default destination" },
+    enabled: { type: "string", description: "true or false: enable or disable the destination" },
+    revision: {
+      type: "string",
+      description: "Destination revision from a read; refuses the change if it changed since",
+    },
   },
   async run({ args }) {
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
     checkDestinationType(args.type, json)
-    const enabled = parseEnabledFlag(
-      {
-        enabled: args.enabled,
-        disabled: args.disabled,
-      },
-      json,
-    )
-    if (args.default === true && args.disabled === true) {
+    const enabled = parseBooleanFlag(args.enabled, "--enabled", json)
+    if (args["is-default"] === true && enabled === false) {
       return outputError(
-        { message: "Use either --default or --disabled, not both", code: "invalid_input" },
+        { message: "A default destination cannot be disabled", code: "invalid_input" },
         json,
       )
     }
+    const revision = optionalTrimmedString(args.revision)
     const label = optionalTrimmedString(args.label)
     const input = {
       id: args.id,
       ...(label ? { label } : {}),
       ...(enabled !== undefined ? { enabled } : {}),
-      ...(args.default === true ? { isDefault: true } : {}),
+      ...(args["is-default"] === true ? { isDefault: true } : {}),
+      ...(revision ? { revision } : {}),
     }
 
     if (!("label" in input) && !("enabled" in input) && !("isDefault" in input)) {

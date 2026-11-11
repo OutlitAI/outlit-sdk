@@ -260,6 +260,6 @@ function buildNextActions(): string[] {
   return [
     "outlit doctor --json",
     "outlit integrations setup <provider> --json",
-    "outlit integrations status --json",
+    "outlit integrations list --json",
   ]
 }

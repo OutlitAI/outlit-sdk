@@ -8,6 +8,7 @@ export default defineCommand({
     name: "get",
     description: [
       "Get Outlit workspace settings: the default timezone and customer owner, and the activation event.",
+      "Use the returned revision with `outlit settings update --revision`.",
       "",
       "Examples:",
       "  outlit settings get --json",

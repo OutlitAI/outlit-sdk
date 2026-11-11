@@ -221,20 +221,6 @@ describe("people list", () => {
     }
   })
 
-  test("the previous `users` command runs the same list but is hidden from help", async () => {
-    const { default: usersCmd } = await import("../../../src/commands/users/index")
-    const { default: listCmd } = await import("../../../src/commands/people/list")
-    const meta = typeof usersCmd.meta === "function" ? await usersCmd.meta() : await usersCmd.meta
-    const subCommands =
-      typeof usersCmd.subCommands === "function"
-        ? await usersCmd.subCommands()
-        : await usersCmd.subCommands
-    const list = await (subCommands?.list as () => Promise<unknown>)()
-
-    expect(meta?.hidden).toBe(true)
-    expect(list).toBe(listCmd)
-  })
-
   test("auth_required error on createClient failure", async () => {
     const clientModule = await import("../../../src/lib/client")
     const createClientSpy = spyOn(clientModule, "createClient").mockRejectedValue(

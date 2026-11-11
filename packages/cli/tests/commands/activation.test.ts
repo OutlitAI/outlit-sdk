@@ -12,9 +12,6 @@ import {
 } from "../helpers"
 
 const EVENT_NAME = "integration_connected"
-const activationCommandPath = (fileName: string) =>
-  path.resolve(import.meta.dir, "../../src/commands/activation", fileName)
-
 const activationSection = {
   status: "available",
   asOf: "2026-07-28T00:00:00.000Z",
@@ -30,12 +27,6 @@ const settingsResponse = {
     },
     activation: activationSection,
   },
-  revision: "settings_revision_1",
-}
-
-// What `activation get` prints: the activation part of the settings read.
-const getResponse = {
-  activation: activationSection,
   revision: "settings_revision_1",
 }
 
@@ -92,60 +83,10 @@ describe("activation commands", () => {
     mockCallTool.mockImplementation(async (toolName: string) => respond(toolName))
   })
 
-  test("keeps authored activation commands bound to catalog tool names", async () => {
-    const commands = [
-      ["get.ts", "outlit_get_settings"],
-      ["preview.ts", "outlit_preview_activation"],
-      ["update.ts", "outlit_update_settings"],
-      ["disable.ts", "outlit_update_settings"],
-    ] as const
-
-    for (const [fileName, toolName] of commands) {
-      const source = await readFile(activationCommandPath(fileName), "utf8")
-
-      expect(source).toContain(`runTool(client, "${toolName}"`)
-    }
-  })
-
   test("uses the conventional activation resource vocabulary", async () => {
     const { default: activationCommand } = await import("../../src/commands/activation")
 
-    expect(Object.keys(activationCommand.subCommands ?? {})).toEqual([
-      "get",
-      "preview",
-      "update",
-      "disable",
-    ])
-  })
-
-  test("get returns the catalog-projected activation result", async () => {
-    const { default: getCommand } = await import("../../src/commands/activation/get")
-
-    const result = await captureStdout(async () => {
-      await getCommand.run!({
-        args: { json: true },
-      } as Parameters<NonNullable<typeof getCommand.run>>[0])
-    })
-
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_settings", {})
-    expect(result).toEqual(getResponse)
-  })
-
-  test("interactive output preserves the same activation result", async () => {
-    const { default: getCommand } = await import("../../src/commands/activation/get")
-    setInteractive()
-
-    try {
-      const result = await captureStdout(async () => {
-        await getCommand.run!({
-          args: {},
-        } as Parameters<NonNullable<typeof getCommand.run>>[0])
-      })
-
-      expect(result).toEqual(getResponse)
-    } finally {
-      setNonInteractive()
-    }
+    expect(Object.keys(activationCommand.subCommands ?? {})).toEqual(["preview"])
   })
 
   test("preview sends one event name through the read-only operation", async () => {
@@ -196,68 +137,9 @@ describe("activation commands", () => {
     })
   })
 
-  test("update sends one exact event name", async () => {
-    const { default: updateCommand } = await import("../../src/commands/activation/update")
-
-    await captureStdout(async () => {
-      await updateCommand.run!({
-        args: {
-          event: EVENT_NAME,
-          json: true,
-        },
-      } as Parameters<NonNullable<typeof updateCommand.run>>[0])
-    })
-
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_update_settings", {
-      activationEvent: EVENT_NAME,
-    })
-  })
-
-  test("disable explicitly sends a null event name", async () => {
-    const { default: disableCommand } = await import("../../src/commands/activation/disable")
-
-    await captureStdout(async () => {
-      await disableCommand.run!({
-        args: { json: true },
-      } as Parameters<NonNullable<typeof disableCommand.run>>[0])
-    })
-
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_update_settings", {
-      activationEvent: null,
-    })
-  })
-
-  test("invalid update input exits before any API mutation", async () => {
-    const { default: updateCommand } = await import("../../src/commands/activation/update")
-
-    await runExpectingError(async () => {
-      await updateCommand.run!({
-        args: { event: "e".repeat(192), json: true },
-      } as Parameters<NonNullable<typeof updateCommand.run>>[0])
-    }, "invalid_input")
-
-    expect(mockCallTool).not.toHaveBeenCalled()
-  })
-
-  test("API failures retain the existing api_error envelope and exit code", async () => {
-    mockCallTool.mockImplementationOnce(async () => {
-      throw new Error("API error (503): unavailable")
-    })
-    const { default: getCommand } = await import("../../src/commands/activation/get")
-
-    await runExpectingError(async () => {
-      await getCommand.run!({
-        args: { json: true },
-      } as Parameters<NonNullable<typeof getCommand.run>>[0])
-    }, "api_error")
-  })
-
   test("all command help describes the shared contact and company setting", async () => {
     const commands = await Promise.all([
-      import("../../src/commands/activation/get").then((module) => module.default),
       import("../../src/commands/activation/preview").then((module) => module.default),
-      import("../../src/commands/activation/update").then((module) => module.default),
-      import("../../src/commands/activation/disable").then((module) => module.default),
     ])
     const descriptions: string[] = []
 
@@ -272,12 +154,7 @@ describe("activation commands", () => {
       expect(description.toLowerCase()).toContain("compan")
     }
 
-    const updateDescription = descriptions[2]
-    expect(updateDescription).toContain("Core")
-    expect(updateDescription).toContain("monotonic")
-    expect(updateDescription).toContain("product event")
-
-    const previewDescription = descriptions[1]
+    const previewDescription = descriptions[0]
     expect(previewDescription).toContain("separate impact counts")
     expect(previewDescription).toContain("read-only")
   })

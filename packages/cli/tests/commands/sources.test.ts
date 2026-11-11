@@ -37,8 +37,8 @@ describe("sources get", () => {
     await captureStdout(() =>
       sourcesGetCmd.run!({
         args: {
-          "source-type": "CALL",
-          "source-id": "call_123",
+          type: "CALL",
+          id: "call_123",
           json: true,
         },
       } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
@@ -60,8 +60,8 @@ describe("sources get", () => {
     await captureStdout(() =>
       sourcesGetCmd.run!({
         args: {
-          "source-type": sourceType,
-          "source-id": "thread_123",
+          type: sourceType,
+          id: "thread_123",
           limit: "100",
           cursor: "cursor_123",
           json: true,
@@ -83,8 +83,8 @@ describe("sources get", () => {
       () =>
         sourcesGetCmd.run!({
           args: {
-            "source-type": "SLACK",
-            "source-id": "thread_123",
+            type: "SLACK",
+            id: "thread_123",
             limit,
             json: true,
           },
@@ -100,7 +100,7 @@ describe("sources get", () => {
 
     await captureStdout(() =>
       sourcesGetCmd.run!({
-        args: { "source-type": "EXTRACTED", "source-id": "source_123", json: true },
+        args: { type: "EXTRACTED", id: "source_123", json: true },
       } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
     )
 
@@ -115,7 +115,7 @@ describe("sources get", () => {
     await runExpectingError(
       () =>
         sourcesGetCmd.run!({
-          args: { "source-type": "zendesk_ticket", "source-id": "source_123", json: true },
+          args: { type: "zendesk_ticket", id: "source_123", json: true },
         } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
       "invalid_input",
     )
@@ -128,8 +128,8 @@ describe("sources get", () => {
     await captureStdout(() =>
       sourcesGetCmd.run!({
         args: {
-          "source-type": "CRM_OPPORTUNITY",
-          "source-id": "opp_123",
+          type: "CRM_OPPORTUNITY",
+          id: "opp_123",
           json: true,
         },
       } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
@@ -145,7 +145,7 @@ describe("sources get", () => {
 
     await captureStdout(() =>
       sourcesGetCmd.run!({
-        args: { "source-type": "stripe_invoice", "source-id": "in_example", json: true },
+        args: { type: "stripe_invoice", id: "in_example", json: true },
       } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
     )
 
@@ -160,8 +160,8 @@ describe("sources get", () => {
     await captureStdout(() =>
       sourcesGetCmd.run!({
         args: {
-          "source-type": "CRM",
-          "source-id": "opp_456",
+          type: "CRM",
+          id: "opp_456",
           json: true,
         },
       } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),
@@ -178,8 +178,8 @@ describe("sources get", () => {
     await captureStdout(() =>
       sourcesGetCmd.run!({
         args: {
-          "source-type": " crm ",
-          "source-id": "opp_789",
+          type: " crm ",
+          id: "opp_789",
           json: true,
         },
       } as Parameters<NonNullable<typeof sourcesGetCmd.run>>[0]),

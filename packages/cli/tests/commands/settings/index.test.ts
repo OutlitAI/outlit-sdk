@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test"
-import { captureStdout, setNonInteractive, TEST_API_KEY, useTempEnv } from "../../helpers"
+import {
+  captureStdout,
+  runExpectingError,
+  setNonInteractive,
+  TEST_API_KEY,
+  useTempEnv,
+} from "../../helpers"
 
 const mockResult = { settings: { defaultTimezone: "America/Los_Angeles" } }
 
@@ -46,7 +52,7 @@ describe("settings command", () => {
     )
     await captureStdout(() =>
       updateCmd.run!({
-        args: { "default-timezone": "America/Los_Angeles", json: true },
+        args: { timezone: "America/Los_Angeles", json: true },
       } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
     )
 
@@ -54,5 +60,44 @@ describe("settings command", () => {
     expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_update_settings", {
       timezone: "America/Los_Angeles",
     })
+  })
+
+  test("update sends the activation event, a default owner, a revision, and none as null", async () => {
+    const { default: updateCmd } = await import("../../../src/commands/settings/update")
+    const run = (args: Record<string, unknown>) =>
+      captureStdout(() =>
+        updateCmd.run!({ args: { json: true, ...args } } as Parameters<
+          NonNullable<typeof updateCmd.run>
+        >[0]),
+      )
+
+    await run({ "activation-event": " integration_connected ", revision: "settings_revision_v1_x" })
+    await run({ "activation-event": "none", "default-owner": "NONE" })
+    await run({ "default-owner": "sandy@example.com" })
+
+    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_update_settings", {
+      activationEvent: "integration_connected",
+      revision: "settings_revision_v1_x",
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_update_settings", {
+      activationEvent: null,
+      defaultOwner: null,
+    })
+    expect(mockCallTool).toHaveBeenNthCalledWith(3, "outlit_update_settings", {
+      defaultOwner: "sandy@example.com",
+    })
+  })
+
+  test("update with nothing to change exits before calling Core", async () => {
+    const { default: updateCmd } = await import("../../../src/commands/settings/update")
+
+    await runExpectingError(
+      () =>
+        updateCmd.run!({ args: { json: true } } as Parameters<
+          NonNullable<typeof updateCmd.run>
+        >[0]),
+      "missing_input",
+    )
+    expect(mockCallTool).not.toHaveBeenCalled()
   })
 })

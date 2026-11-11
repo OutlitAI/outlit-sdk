@@ -13,21 +13,21 @@ Most commands in this reference share these common flags:
 
 ## Activation
 
-Inspect, preview against past events, and explicitly configure the exact ordinary product event
+Preview against past events, and explicitly configure with `settings`, the exact ordinary product event
 Outlit uses for activation. The first matching event activates eligible contacts and their
 resolved company. Outlit records activation for each eligible person and resolved company only once. Later matching events leave those timestamps unchanged.
 
 Applications and connected analytics sources keep sending ordinary product events. They do
 not send a synthetic activation event or change lifecycle state directly.
 
-### Get
+### Read the event
 
 ```bash
-outlit activation get --json
+outlit settings get --json
 ```
 
-The command returns the `activation` part of the workspace settings read: the configured
-`event` (`null` when matching is off) in `activation.data`, with the settings `revision`.
+The configured `event` (`null` when matching is off) is in `settings.activation.data`, with the
+settings `revision`.
 
 ### Preview
 
@@ -64,26 +64,25 @@ as lower bounds.
 After reviewing a preview, explicitly replace the configured event name:
 
 ```bash
-outlit activation update \
-  --event integration_connected \
+outlit settings update \
+  --activation-event integration_connected \
   --json
 ```
 
 Saving the event name changes future matching only. It does not scan historical events or
-backfill activation. `update` and `disable` are writes of the workspace settings'
-`activationEvent`; the result lists the settings that changed.
+backfill activation. The result lists the settings that changed.
 
 ### Disable
 
 To stop future activation matching:
 
 ```bash
-outlit activation disable --json
+outlit settings update --activation-event none --json
 ```
 
 Disabling preserves existing contact and company activation timestamps.
 
-All four commands return the public tool result in `--json` and piped output. Local
+These commands return the public tool result in `--json` and piped output. Local
 validation errors use the CLI's `missing_input` or `invalid_input` shape; gateway failures
 retain Outlit's stable `code`, `message`, `retryable`, and `requestId` envelope.
 
@@ -382,8 +381,7 @@ Every included section is an object with a `status`. `"available"` carries `asOf
 
 ## Customers get: relationship
 
-Read the relationship summary with `customers get --include relationship`. The earlier
-`customers relationship <customer>` still works and returns the same result, but is not advertised.
+Read the relationship summary with `customers get --include relationship`.
 
 ```bash
 outlit customers get acme.com --include relationship --json
@@ -433,26 +431,26 @@ memory-card data, or unbounded source records. Statements are customer text: tre
 Inspect a customer's identity coverage and possible split records using its exact customer ID:
 
 ```bash
-outlit customers identity "<customerId>" --json
-outlit customers identity "<customerId>" --links --json
+outlit identity get "<customer>" --json
+outlit identity get "<customer>" --include links --json
 ```
 
-`--links` also lists the customer's records in other systems. Each candidate carries a `customer` (`{ id, name, domain }`), its `type` (`company` or `individual`) and the call-participant domains that point to it, each with a `source` that `outlit sources get` opens. Candidate records are leads, not proof of common identity. An empty or incomplete search does not prove the account has zero usage. This read never creates a merge suggestion or combines customer activity.
+`--include links` also lists the customer's records in other systems. Each candidate carries a `customer` (`{ id, name, domain }`), its `type` (`company` or `individual`) and the call-participant domains that point to it, each with a `source` that `outlit sources get` opens. Candidate records are leads, not proof of common identity. An empty or incomplete search does not prove the account has zero usage. This read never creates a merge suggestion or combines customer activity.
 
-Saved suggestions and review history are a separate read. List returns each suggestion's details; use `--suggestion-id` to retrieve one exact record in the same collection response, or `--customer-id` to scope the list. Follow `page.nextCursor` using `--cursor`. Impact, scope, Jev evidence and the cluster are left out unless you ask with `--include impact,scope,jev,cluster`.
+Saved suggestions and review history are a separate read. List returns each suggestion's details; use `--suggestion-id` to retrieve one exact record in the same collection response, or `--customer` to scope the list. Follow `page.nextCursor` using `--cursor`. Impact, scope, Jev evidence and the cluster are left out unless you ask with `--include impact,scope,jev,cluster`.
 
 ```bash
-outlit identity suggestions list --customer-id "<customerId>" --limit 20 --json
-outlit identity suggestions list --suggestion-id "<suggestionId>" --json
-outlit identity suggestions reject "<suggestionId>" --review-notes "Different companies" --json
+outlit merge-suggestions list --customer "<customer>" --limit 20 --json
+outlit merge-suggestions list --suggestion-id "<suggestionId>" --json
+outlit merge-suggestions reject "<id>" --note "Different companies" --json
 ```
 
 List also accepts `--status suggested|processing|merged|rejected` and `--confidence high|medium|low` (the uppercase spelling still works). `--limit` defaults to 25. Rejection requires identity review authority and does not authorize merging. Each run sends a new request ID; pass `--request-id` to make a retry safe. It returns `{ "suggestion": { "id": "…", "status": "rejected" }, "next": … }`; read the suggestion list again for updated details.
 
-The merge command previews by default. Both positional arguments are exact IDs; the first is the surviving record. Without `--suggestion-id`, both records must be company customers. A pair involving an individual requires an eligible saved suggestion for that exact pair. An optional `--suggestion-id` links an existing suggestion to the exact pair, and `--review-notes` records the review explanation.
+The merge command previews by default. Both positional arguments are exact IDs; the first is the surviving record. Without `--suggestion-id`, both records must be company customers. A pair involving an individual requires an eligible saved suggestion for that exact pair. An optional `--suggestion-id` links an existing suggestion to the exact pair, and `--note` records the review explanation.
 
 ```bash
-outlit customers merge "<survivorId>" "<duplicateId>" --json
+outlit customers merge "<survivor>" "<duplicate>" --json
 ```
 
 The preview returns `preview.token` (pass it as `--preview-token`), the impact and warnings, and `links`: the two customers' linked records, split into `shared`, `conflicting` (the same kind of record in the same system with different IDs), `survivorOnly` and `duplicateOnly`. When `links.complete` is false, only `shared` is definitive.
@@ -461,23 +459,21 @@ The preview returns `preview.token` (pass it as `--preview-token`), the impact a
 Merge execution is dangerous and has no supported undo. It moves customer data and access relationships into the survivor. Execute only when authorized and certain that the records represent the same customer; two company records must represent the same company. Similar names, related domains, shared participants, and parent/subsidiary relationships do not establish that identity. If uncertain, do not execute.
 </Warning>
 
-Execution requires an explicit `--execute`, the reviewed preview's token, a stable request ID, and dedicated merge authority. A read-only credential can preview but cannot execute. A merge API key must include an explicitly selected `customer_identity:merge` grant; ordinary full-access and personal CLI presets exclude it. Use the same pair, token, request ID, and review inputs when retrying an execution. The result is `operation`: `{ id, survivor, duplicate, status, phase, failure }`.
+Execution requires an explicit `--mode execute`, the reviewed preview's token, a stable request ID, and dedicated merge authority. A read-only credential can preview but cannot execute. A merge API key must include an explicitly selected `customer_identity:merge` grant; ordinary full-access and personal CLI presets exclude it. Use the same pair, token, request ID, and review inputs when retrying an execution. The result is `operation`: `{ id, survivor, duplicate, status, phase, failure }`.
 
 ```bash
-outlit customers merge "<survivorId>" "<duplicateId>" --execute --preview-token "<token>" --request-id "<stableId>" --json
-outlit customers merge-status "<operationId>" --json
+outlit customers merge "<survivor>" "<duplicate>" --mode execute --preview-token "<token>" --request-id "<stableId>" --json
+outlit merges get "<id>" --json
 ```
 
-An execution's `operation.id`, or a saved suggestion's `latestJob.operation.id` when present, can be passed to `customers merge-status`. A null `latestJob.operation` means that job has no public operation attached. A `failure` with code `not_started` means nothing moved: preview the pair again. Code `incomplete` means the merge began and Outlit is recovering it: keep polling and never execute it again.
+An execution's `operation.id`, or a saved suggestion's `latestJob.operation.id` when present, can be passed to `merges get`. A null `latestJob.operation` means that job has no public operation attached. A `failure` with code `not_started` means nothing moved: preview the pair again. Code `incomplete` means the merge began and Outlit is recovering it: keep polling and never execute it again.
 
 A queued or running merge has not finished. Reading status does not run the merge again, including after a partial failure. The workspace must support these commands, and the API key needs the required permission.
 
 ## Customers get: features, meters and credits
 
 Read a customer's product-event Features, Autumn metered quantities and credit pools with
-`customers get --include features,meters,credits`. The earlier `customers features` (features and
-meters) and `customers credits` commands still work and return the `customers get` result, but are not
-advertised.
+`customers get --include features,meters,credits`.
 
 ```bash
 outlit customers get acme.com --include features,meters --json
@@ -532,9 +528,9 @@ Create one feature from one exact event rule:
 
 ```bash
 outlit features create \
-  --source metric_source_v1_0123456789abcdef0123456789abcdef \
-  --event report_exported \
-  --key reports_exported \
+  --source-key metric_source_v1_0123456789abcdef0123456789abcdef \
+  --event-name report_exported \
+  --feature-key reports_exported \
   --name "Reports exported" \
   --json
 ```
@@ -567,7 +563,7 @@ customer is named by its UUID, its domain (`acme.com`), or its exact name; a nam
 than one customer is refused rather than guessed. A member is named by user ID or email.
 
 For API keys, workspace-member discovery and customer mutations are independent capabilities.
-`outlit ws-users list` requires `workspace_members:read`; setting an owner, granting or changing
+`outlit members list` requires `workspace_members:read`; setting an owner, granting or changing
 access, and revoking access require `customer_access:manage`. The complete discover-then-mutate
 flow needs both grants, while scripts and agents that already know the member may use
 `customer_access:manage` alone. API keys are independent workspace principals and do not inherit
@@ -579,14 +575,14 @@ Discover the member when you do not already know the ID or email. Use JSON outpu
 interactive table is optimized for scanning rather than copying identifiers:
 
 ```bash
-outlit ws-users list --search "alex@example.com" --json
+outlit members list --search "alex@example.com" --json
 ```
 
 Without `--has-owned-customers`, this command lists all active workspace members that resolve to
 local Outlit users, including members who own no customers. Use `--has-owned-customers` only when
 you intentionally want to restrict discovery to current owners.
 
-| `ws-users list` flag | Description |
+| `members list` flag | Description |
 |------|-------------|
 | `--search` | Search name, email, title, role, or territory |
 | `--role`, `--manager-email` | Filter by role or manager email metadata |
@@ -597,13 +593,13 @@ you intentionally want to restrict discovery to current owners.
 
 Each item has `id`, `name`, `email`, `title`, `role`, `managerEmail`, `territory` and `ownedCustomers`.
 
-Copy the member's `items[].id` or email as `--member` (`--target-user-id` is still read). Review
+Copy the member's `items[].id` or email as `--member`. Review
 multiple matches before writing; these commands intentionally do not perform fuzzy name matching.
 
 ### Set owner
 
 ```bash
-outlit customers owner set acme.com --member user_123 --json
+outlit customers set-owner acme.com --member user_123 --json
 ```
 
 The member must be an active workspace member. When ownership changes, the former owner keeps
@@ -613,29 +609,28 @@ to confirm. Without a terminal, pass `--yes`, or the command prints the preview,
 exits with code 1:
 
 ```bash
-outlit customers owner set acme.com --member user_123 --yes --json
+outlit customers set-owner acme.com --member user_123 --yes --json
 ```
 
 A change returns `outcome` (`changed` or `unchanged`), the new `owner`, the `previousOwner` and an
-`undo` token good for 24 hours.
+`undo` token good for 24 hours. Pass that token as `--undo-token` to reverse the change
+(`outlit customers set-owner --undo-token <token>`). For two explicit steps instead of a prompt, run
+with `--mode preview`, then `--mode execute --preview-token <token>`; `--request-id` makes a retry
+return the first result.
 
-### Grant or change access
-
-```bash
-outlit customers grant acme.com --member user_123 --role viewer --json
-```
-
-Run the same `grant` command again with the other role to change an existing collaborator
-between Viewer and Editor. The result has `outcome`, the `role` and `previousRole`, and an `undo`
-token.
-
-### Revoke access
+### Grant, change or remove access
 
 ```bash
-outlit customers revoke acme.com --member user_123 --json
+outlit customers set-access acme.com --member user_123 --role viewer --json
+outlit customers set-access acme.com --member user_123 --role none --json
 ```
 
-`--role` accepts `viewer` or `editor` in any case (`VIEWER` still works); `OWNER` is represented by
+Run the same `set-access` command again with the other role to change an existing collaborator
+between Viewer and Editor; `--role none` removes explicit access. The result has `outcome`, the
+`role` and `previousRole`, and an `undo` token for `--undo-token`. `--mode`, `--preview-token` and
+`--request-id` work as for `set-owner`.
+
+`--role` accepts `viewer`, `editor` or `none` in any case; `OWNER` is represented by
 the separate primary-owner assignment. A missing or oversized member, a blank customer, and an
 invalid role fail locally without sending a request.
 
@@ -646,12 +641,12 @@ or they print the reason, change nothing and exit with code 1. Permission, confl
 gateway failures retain Outlit's structured `code`, `message`, `retryable`, and `requestId` fields
 in JSON output.
 
-## Customers timeline
+## Timeline
 
 View the activity timeline for a customer, filtered by channel and event type.
 
 ```text
-outlit customers timeline <customer> [flags]
+outlit timeline get <customer> [flags]
 ```
 
 ### Arguments
@@ -684,16 +679,16 @@ The CLI also accepts and normalizes these older channel names: `sdk` → `produc
 
 ```bash
 # Last 30 days (default)
-outlit customers timeline acme.com
+outlit timeline get acme.com
 
 # Last 90 days, communication and meeting activity
-outlit customers timeline acme.com --timeframe 90d --channels communication,meeting
+outlit timeline get acme.com --timeframe 90d --channels communication,meeting
 
 # Custom date range
-outlit customers timeline acme.com --start-date 2025-01-01T00:00:00Z --end-date 2025-03-01T23:59:59.999Z
+outlit timeline get acme.com --start-date 2025-01-01T00:00:00Z --end-date 2025-03-01T23:59:59.999Z
 
 # Notes and received emails only
-outlit customers timeline acme.com --event-types note_added,email_received --limit 50
+outlit timeline get acme.com --event-types note_added,email_received --limit 50
 ```
 
 ### JSON response
@@ -730,7 +725,29 @@ outlit customers timeline acme.com --event-types note_added,email_received --lim
 }
 ```
 
-`events[].source` is the `{ type, id }` that `outlit sources get --source-type <type> --source-id <id>` opens. An event whose source cannot be opened carries `unreadable: { reason }` instead. Adding `product` to `--channels` also returns a `product` section with weekly usage; its `status` says why it is empty when no value features are configured. An empty `events` list carries `coverage.searched`, which says what was searched.
+`events[].source` is the `{ type, id }` that `outlit sources get <type> <id>` opens. An event whose source cannot be opened carries `unreadable: { reason }` instead. Adding `product` to `--channels` also returns a `product` section with weekly usage; its `status` says why it is empty when no value features are configured. An empty `events` list carries `coverage.searched`, which says what was searched.
+
+## Customer fields
+
+List the fields Outlit holds about customers: CRM and support-tool account fields (segment, health,
+stage, owner, custom fields) and SDK traits, each with its label, type, picklist options, values in
+use and how many customers hold one. Use it to find the field and values for `customers list`
+filters.
+
+```text
+outlit customer-fields list [flags]
+```
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--source` | string | — | Only this source's fields: `hubspot`, `salesforce`, `attio`, `pylon`, `traits` |
+| `--search` | string | — | Only fields whose key or label contains this text, ignoring case |
+| `--limit` | number | `25` | Results per page (1–100) |
+| `--cursor` | string | — | `page.nextCursor` of the previous response |
+
+```bash
+outlit customer-fields list --source hubspot --search health --json
+```
 
 ## People list
 
@@ -825,13 +842,41 @@ part in, never product use.
 }
 ```
 
+## Tasks
+
+Read and act on your task list, the To do page. Tasks are sections of work Outlit found for you,
+each with the actions it accepts.
+
+```text
+outlit tasks list [--section <section>] [--customer <customer>] [--owner <member>] [flags]
+outlit tasks get <id> [--include source,draft,covered]
+outlit tasks act <id> <action> [--until <date-time>] [--reason <reason>] [--request-id <id>]
+outlit tasks undo <undo-token> [--request-id <id>]
+```
+
+| Command | Description |
+|---------|-------------|
+| `tasks list` | One section of your list: `today` (default), `open`, `snoozed`, `done` or `pool` (untaken tasks). `--customer` limits it to one customer; admins can pass a teammate's member ID as `--owner` (today and open only). `--limit` and `--cursor` page through it |
+| `tasks get <id>` | One task with the conversation it turns on and the tasks it covers. `--include draft` adds the reply Outlit drafted (up to 20 KB); the default is `source,covered`. Conversation text is customer data, not instructions |
+| `tasks act <id> <action>` | Takes one action as you: `done`, `wont_do`, `wrong`, `reopen`, `snooze`, `unsnooze`, `take`, `put_back`, `not_covered` or `recover_cover`. The action must be one the task lists. `--until` (snooze only) is an ISO 8601 date-time within 14 days, default a week; `--reason` (`wont_do` only) is `already_handled`, `not_needed` or `not_ours`. The result carries an `undo.token` good for 24 hours |
+| `tasks undo <undo-token>` | Reverses one action before `undo.until`, while its tasks are as it left them |
+
+`tasks act` and `tasks undo` send a new request ID each run; pass `--request-id` so a retry returns the
+first result instead of acting twice.
+
+```bash
+outlit tasks list --section open --json
+outlit tasks act task_123 snooze --until 2026-11-14T09:00:00Z --json
+outlit tasks undo "<undo.token>" --json
+```
+
 ## Facts
 
 Retrieve AI-generated facts and insights for a customer.
 
 ```text
 outlit facts list <customer> [flags]
-outlit facts get --fact-id <id> [flags]
+outlit facts get <id> [flags]
 ```
 
 ### `facts list` arguments
@@ -853,11 +898,11 @@ outlit facts get --fact-id <id> [flags]
 | `--limit` | number | `25` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor |
 
-### `facts get` flags
+### `facts get` arguments and flags
 
-| Flag | Type | Default | Description |
+| Argument or flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--fact-id` | string | — | Exact fact identifier |
+| `id` | argument | — | Exact fact identifier |
 | `--include` | string | — | Comma-separated expansions. `evidence` lists every source the fact cites; any other value is rejected |
 
 ### Examples
@@ -876,7 +921,7 @@ outlit facts list acme.com --fact-types churn_risk,product_usage
 outlit facts list acme.com --json | jq '.facts[] | select(.type == "churn_risk")'
 
 # Fetch one exact fact with the sources it cites
-outlit facts get --fact-id fact_123 --include evidence
+outlit facts get fact_123 --include evidence
 ```
 
 ### JSON response
@@ -1049,33 +1094,33 @@ outlit sources list --after 2026-01-01T00:00:00Z --limit 25
 ### Get a source
 
 ```text
-outlit sources get --source-type <type> --source-id <id> [--limit <count>] [--cursor <cursor>]
+outlit sources get <type> <id> [--limit <count>] [--cursor <cursor>]
 ```
 
-### Flags
+### Arguments and flags
 
-| Flag | Type | Default | Description |
+| Argument or flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--source-type` | string | — | Source type: `email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`, `extracted` (a memory entry). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`, `STRIPE_INVOICE` |
-| `--source-id` | string | — | Exact source identifier |
+| `type` | argument | — | Source type: `email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`, `extracted` (a memory entry). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY`, `STRIPE_INVOICE` |
+| `id` | argument | — | Exact source identifier |
 | `--limit` | number | `10` | Exact content segments per page (1–100). |
 | `--cursor` | string | — | Opaque cursor returned by a previous exact lookup for the same source. |
 
 ### Examples
 
 ```bash
-outlit sources get --source-type call --source-id call_123 --limit 10 --json
-outlit sources get --source-type call --source-id call_123 --cursor "$CURSOR" --json
-outlit sources get --source-type slack --source-id thread_123 --limit 50
-outlit sources get --source-type slack --source-id thread_123 --cursor "$CURSOR"
-outlit sources get --source-type opportunity --source-id opp_123
-outlit sources get --source-type support_ticket --source-id ticket_456 --json
-outlit sources get --source-type invoice --source-id in_1PqExample --json
+outlit sources get call call_123 --limit 10 --json
+outlit sources get call call_123 --cursor "$CURSOR" --json
+outlit sources get slack thread_123 --limit 50
+outlit sources get slack thread_123 --cursor "$CURSOR"
+outlit sources get opportunity opp_123
+outlit sources get support_ticket ticket_456 --json
+outlit sources get invoice in_1PqExample --json
 ```
 
 `invoice` is a Stripe invoice (`sources get` and `sources list` also accept `STRIPE_INVOICE` as an alias; `search` and `facts list` do not): pass its Stripe invoice ID (`in_...`) to read every stored line item with amounts, quantity, price, product, service period, whether it recurs or is one-off, and proration. Every amount is a Money value (`{ amount, currency, decimals, formatted }`, with `amount` in minor units); show `formatted` as is.
 
-The `source {type, id}` on a timeline event, fact, search result or source listing is what `--source-type` and `--source-id` take. `extracted` opens a memory entry a fact cites.
+The `source {type, id}` on a timeline event, fact, search result or source listing is what the `<type>` and `<id>` arguments take. `extracted` opens a memory entry a fact cites.
 
 When a response includes `content`, check its `status`: only `available` has `data`. Read `content.data.segments`; if
 `content.data.page.hasMore` is true, pass `content.data.page.nextCursor` as `--cursor`
@@ -1085,7 +1130,7 @@ When a fact or search result references a `person_profile` source, pass that sou
 ID to exact lookup to inspect its evidence:
 
 ```bash
-outlit sources get --source-type person_profile --source-id "$SOURCE_ID" --json
+outlit sources get person_profile "$SOURCE_ID" --json
 ```
 
 ## Destinations
@@ -1094,11 +1139,8 @@ Inspect and manage configured delivery destinations (for example Slack channels)
 
 ```text
 outlit destinations list [flags]
-outlit destinations get <id> [flags]
 outlit destinations create [flags]
 outlit destinations update <id> [flags]
-outlit destinations enable <id> [flags]
-outlit destinations disable <id> [flags]
 outlit destinations archive <id> [flags]
 ```
 
@@ -1106,46 +1148,47 @@ outlit destinations archive <id> [flags]
 
 ```bash
 outlit destinations list --json
-outlit destinations get 10000000-0000-4000-8000-000000000003 --json
-outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --default --json
-outlit destinations update 10000000-0000-4000-8000-000000000003 --default --json
-outlit destinations enable 10000000-0000-4000-8000-000000000003 --json
-outlit destinations disable 10000000-0000-4000-8000-000000000003 --json
+outlit destinations list --ids 10000000-0000-4000-8000-000000000003 --json
+outlit destinations create --type slack --channel-id C0123456789 --label "#customer-ops" --is-default --json
+outlit destinations update 10000000-0000-4000-8000-000000000003 --is-default --json
+outlit destinations update 10000000-0000-4000-8000-000000000003 --enabled false --json
 outlit destinations archive 10000000-0000-4000-8000-000000000003 --yes --json
 ```
 
-Destination creation and update are Slack-channel backed. Use `--default` on `destinations create` or `destinations update` to make a destination the default fallback. `destinations update` patches only the fields you pass; `--type` is no longer needed there. `enable` and `disable` set the destination's `enabled` state. Raw destination secrets and unmasked provider configuration are not returned.
+Destination creation and update are Slack-channel backed. Use `--is-default` on `destinations create` or `destinations update` to make a destination the default fallback. `--enabled true|false` enables or disables it (on create, it defaults to `true`). `destinations update` patches only the fields you pass, and `--revision` refuses the change if the destination changed since you read it. Raw destination secrets and unmasked provider configuration are not returned.
 
-`destinations list` pages its results (`--limit` up to 100, `--cursor` from the previous `page.nextCursor`). `destinations get` reads one destination by ID and reports an ID it cannot show as `not_found`.
+`destinations list` pages its results (`--limit` up to 100, `--cursor` from the previous `page.nextCursor`). `destinations list --ids <id>,<id>` reads specific destinations and lists an ID it cannot show under `missing`. `--request-id` on `create` and `archive` makes a retry return the first result.
 
-`destinations archive` first shows the destination and how many automation routes deliver to it. In a terminal you are asked to confirm. Without a terminal, pass `--yes`, or the command prints the preview, archives nothing and exits with code 1.
+`destinations archive` first shows the destination and how many automation routes deliver to it. In a terminal you are asked to confirm. Without a terminal, pass `--yes`, or the command prints the preview, archives nothing and exits with code 1. For two explicit steps, use `--mode preview` and then `--mode execute --preview-token <token>`.
 
 ## Settings
 
-Read and update the workspace timezone. `settings get` also returns the default customer owner and the activation event. Configure delivery and reports in the Outlit app.
+Read and update the workspace timezone, the default customer owner and the activation event. Configure delivery and reports in the Outlit app.
 
 ```text
 outlit settings get [flags]
-outlit settings update --default-timezone <iana-timezone> [flags]
+outlit settings update [--timezone <iana-timezone>] [--default-owner <member|none>] [--activation-event <event|none>] [--revision <revision>] [flags]
 ```
 
 ### Examples
 
 ```bash
 outlit settings get --json
-outlit settings update --default-timezone America/Los_Angeles --json
+outlit settings update --timezone America/Los_Angeles --json
+outlit settings update --default-owner sandy@example.com --json
+outlit settings update --activation-event integration_connected --json
 outlit destinations list --json
 ```
 
-The result carries the settings in `settings.general` (`timezone`, `defaultOwner`) and `settings.activation` (`event`), with a `revision`. `settings update` returns which settings changed. A part you may not read says which permission it needs. The command updates the default IANA timezone; change the activation event with `outlit activation update`. Default delivery destination selection is handled by `outlit destinations create --default` or `outlit destinations update --default`.
+The result carries the settings in `settings.general` (`timezone`, `defaultOwner`) and `settings.activation` (`event`), with a `revision`. `settings update` returns which settings changed. A part you may not read says which permission it needs. Pass only what you change. `--default-owner` takes a member's user ID or email, and `--activation-event` the exact product event; `none` clears either. `--revision` (from `settings get`) refuses the change if settings changed since. Default delivery destination selection is handled by `outlit destinations create --is-default` or `outlit destinations update --is-default`.
 
-## SQL
+## Query
 
 Execute read-only SQL queries against Outlit analytics views.
 
 ```text
-outlit sql <query> [flags]
-outlit sql --query-file <path> [flags]
+outlit query <query> [flags]
+outlit query --query-file <path> [flags]
 ```
 
 ### Arguments
@@ -1166,19 +1209,19 @@ outlit sql --query-file <path> [flags]
 
 ```bash
 # Inline query
-outlit sql "SELECT event_type, COUNT(*) as cnt FROM activity GROUP BY 1 ORDER BY cnt DESC"
+outlit query "SELECT event_type, COUNT(*) as cnt FROM activity GROUP BY 1 ORDER BY cnt DESC"
 
 # From a file
-outlit sql --query-file ./queries/monthly-activity.sql
+outlit query --query-file ./queries/monthly-activity.sql
 
 # Pipe to jq
-outlit sql "SELECT domain, arr_amount, arr_currency, arr_decimals FROM customers WHERE arr_currency = 'USD' ORDER BY arr_amount DESC LIMIT 10" | jq
+outlit query "SELECT domain, arr_amount, arr_currency, arr_decimals FROM customers WHERE arr_currency = 'USD' ORDER BY arr_amount DESC LIMIT 10" | jq
 
 # The next page of the same query (CURSOR is the previous page's page.nextCursor)
-outlit sql "SELECT event_name FROM activity WHERE occurred_at >= now() - INTERVAL 7 DAY" --limit 500 --cursor "$CURSOR"
+outlit query "SELECT event_name FROM activity WHERE occurred_at >= now() - INTERVAL 7 DAY" --limit 500 --cursor "$CURSOR"
 ```
 
-Run `outlit schema` first: it lists every column with its unit, currency and time zone, and worked queries (`outlit schema examples`). The query runs once and its first 10,000 rows are kept for an hour; send the same SQL with `--cursor` for the next page. Past 10,000 rows, `truncation` says to aggregate or filter.
+Run `outlit schema get` first: it lists every column with its unit, currency and time zone, and worked queries (`outlit schema get examples`). The query runs once and its first 10,000 rows are kept for an hour; send the same SQL with `--cursor` for the next page. Past 10,000 rows, `truncation` says to aggregate or filter.
 
 ### JSON response
 
@@ -1202,7 +1245,7 @@ Run `outlit schema` first: it lists every column with its unit, currency and tim
 
 ### Available views
 
-Use `outlit schema` to discover all views and their columns. Common views:
+Use `outlit schema get` to discover all views and their columns. Common views:
 
 | View | Description |
 |-------|-------------|
@@ -1213,10 +1256,10 @@ Use `outlit schema` to discover all views and their columns. Common views:
 
 ## Schema
 
-Discover what `outlit sql` can read: views, columns, event types and worked queries.
+Discover what `outlit query` can read: views, columns, event types and worked queries.
 
 ```bash
-outlit schema [view | events | examples]
+outlit schema get [view | events | examples]
 ```
 
 ### Arguments
@@ -1229,13 +1272,13 @@ outlit schema [view | events | examples]
 
 ```bash
 # Every view with its columns and rules
-outlit schema
+outlit schema get
 
 # Describe a specific view
-outlit schema activity
+outlit schema get activity
 
 # Worked queries
-outlit schema examples --json
+outlit schema get examples --json
 ```
 
 Each column carries its type, nullability and, where they apply, its unit, the columns holding an amount's currency and decimals, its time zone and its allowed values. Each view states what a row is, what it excludes, how fresh it is, where it repeats and what time range it covers.
@@ -1284,7 +1327,7 @@ while working with Outlit. Feedback is product intake — it is not a support ti
 not guarantee a reply.
 
 ```text
-outlit feedback --body <text> [flags]
+outlit feedback submit --body <text> [flags]
 ```
 
 ### Flags
@@ -1308,19 +1351,19 @@ customer-intelligence reads. It does not consume paid usage quota.
 
 ```bash
 # Report a bug
-outlit feedback --body 'The customers merge preview did not list the losing record traits' --area customers
+outlit feedback submit --body 'The customers merge preview did not list the losing record traits' --area customers
 
 # Suggest a feature
-outlit feedback --body 'Add a way to export facts' --area facts --json
+outlit feedback submit --body 'Add a way to export facts' --area facts --json
 
 # Include diagnostic context
-outlit feedback \
-  --body 'The SQL tool rejected a valid LIMIT clause' \
-  --context '{"surface":"cli","command":"sql"}' \
+outlit feedback submit \
+  --body 'The query tool rejected a valid LIMIT clause' \
+  --context '{"surface":"cli","command":"query"}' \
   --json
 
 # Long-form feedback from files
-outlit feedback --body-file report.md --context-file diagnostics.json
+outlit feedback submit --body-file report.md --context-file diagnostics.json
 ```
 
 ### JSON response
@@ -1331,3 +1374,39 @@ outlit feedback --body-file report.md --context-file diagnostics.json
   "createdAt": "2026-09-28T12:00:00.000Z"
 }
 ```
+
+## Renamed commands
+
+Commands now follow the Agent API: a tool `outlit_<verb>_<noun>` is `outlit <noun> <verb>`, and
+flags are the tool's input names in kebab-case. The previous spellings keep working until
+2026-12-11. Each runs the new command and prints one line to stderr, `Renamed: use \`outlit …\``.
+They are left out of help and shell completions.
+
+| Previous | Now |
+|----------|-----|
+| `customers timeline <customer>` | `timeline get <customer>` |
+| `customers identity <customer> --links` | `identity get <customer> --include links` |
+| `identity suggestions list --customer-id` | `merge-suggestions list --customer` |
+| `identity suggestions reject --review-notes` | `merge-suggestions reject --note` |
+| `customers merge … --execute`, `--review-notes` | `customers merge … --mode execute`, `--note` |
+| `customers merge-status <id>` | `merges get <id>` |
+| `customers credits`, `features`, `relationship` | `customers get <customer> --include credits`, `features`, `relationship` |
+| `customers owner set` | `customers set-owner` |
+| `customers grant`, `customers revoke` | `customers set-access --role viewer\|editor`, `--role none` |
+| `ws-users list` | `members list` |
+| `users list` | `people list` |
+| `sql` | `query` |
+| `schema [view]` | `schema get [view]` |
+| `facts get --fact-id <id>` | `facts get <id>` |
+| `sources get --source-type <type> --source-id <id>` | `sources get <type> <id>` |
+| `destinations get <id>` | `destinations list --ids <id>` |
+| `destinations enable`, `disable` | `destinations update <id> --enabled true`, `false` |
+| `destinations create --default`, `--disabled` | `--is-default`, `--enabled false` |
+| `features create --source --event --key` | `--source-key --event-name --feature-key` |
+| `activation get` | `settings get` |
+| `activation update --event <event>` | `settings update --activation-event <event>` |
+| `activation disable` | `settings update --activation-event none` |
+| `settings update --default-timezone` | `settings update --timezone` |
+| `integrations status` | `integrations list` |
+| `feedback --body …` | `feedback submit --body …` |
+

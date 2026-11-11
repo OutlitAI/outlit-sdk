@@ -1,10 +1,11 @@
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { getClientOrExit } from "../../lib/api"
+import { getClientOrExit, runTool } from "../../lib/api"
 import { runConfirmedWrite, yesArg } from "../../lib/confirm"
 import { requiredTrimmedString } from "../../lib/platform-input"
 import { newRequestId } from "../../lib/request-id"
+import { parseWriteMode, writeModeArgs } from "../../lib/write-mode"
 
 type FeatureArchivePreview = {
   archived: boolean
@@ -46,6 +47,7 @@ export default defineCommand({
     ...authArgs,
     ...outputArgs,
     ...yesArg,
+    ...writeModeArgs,
     id: { type: "positional", description: "Opaque Feature id", required: true },
     revision: { type: "string", description: "Current opaque Feature revision" },
   },
@@ -54,9 +56,20 @@ export default defineCommand({
     const client = await getClientOrExit(args["api-key"], json)
     const id = requiredTrimmedString(args.id, "<id>", json)
     const revision = requiredTrimmedString(args.revision, "--revision", json)
+    const write = parseWriteMode(args, json)
+
+    if (write.explicit) {
+      return runTool(
+        client,
+        "outlit_archive_feature",
+        { id, revision, ...write.explicit, requestId: write.requestId },
+        json,
+        { spinnerMessage: "Archiving Feature..." },
+      )
+    }
 
     return runConfirmedWrite(client, "outlit_archive_feature", {
-      input: { id, revision, requestId: newRequestId() },
+      input: { id, revision, requestId: write.requestId },
       json,
       yes: args.yes === true,
       spinnerMessage: "Archiving Feature...",

@@ -54,7 +54,7 @@ describe("completions command", () => {
     expect(out).toContain("complete -F _outlit_completions outlit")
     expect(out).toContain("facts")
     expect(out).toContain("sources")
-    expect(out).toContain("ws-users")
+    expect(out).toContain("members")
     expect(out).toContain("settings")
     expect(out).toContain("features")
     expect(out).not.toContain("value-features")
@@ -67,6 +67,12 @@ describe("completions command", () => {
     expect(out).not.toContain("notify")
     expect(out).toContain("activation")
     expect(out).not.toContain("workspace-users")
+    // The previous spellings still run, but are not advertised.
+    for (const old of ["ws-users", " sql ", "merge-suggestions merge-status"]) {
+      expect(out).not.toContain(old)
+    }
+    expect(out).toContain("tasks")
+    expect(out).toContain("customer-fields")
   })
 
   test("bash — subcommand dispatch", async () => {
@@ -74,23 +80,21 @@ describe("completions command", () => {
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "facts" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "list get" -- "$cur"))')
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "sources" ]]`)
-    expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "ws-users" ]]`)
+    expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "members" ]]`)
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "customers" ]]`)
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "list get identity merge merge-status timeline owner grant revoke" -- "$cur"))',
+      'COMPREPLY=($(compgen -W "list get merge set-owner set-access" -- "$cur"))',
     )
-    expect(out).toContain(
-      `[[ $COMP_CWORD -eq 3 && "${bashCompWord(1)}" == "customers" && "${bashCompWord(2)}" == "owner" ]]`,
-    )
-    expect(out).toContain('COMPREPLY=($(compgen -W "set" -- "$cur"))')
+    expect(out).toContain('COMPREPLY=($(compgen -W "list reject" -- "$cur"))')
+    expect(out).toContain('COMPREPLY=($(compgen -W "list get act undo" -- "$cur"))')
     expect(out).not.toContain("assign-owner")
     expect(out).not.toContain("grant-access")
     expect(out).not.toContain("update-access")
     expect(out).not.toContain("revoke-access")
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "activation" ]]`)
-    expect(out).toContain('COMPREPLY=($(compgen -W "get preview update disable" -- "$cur"))')
+    expect(out).toContain('COMPREPLY=($(compgen -W "preview" -- "$cur"))')
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "integrations" ]]`)
-    expect(out).toContain('COMPREPLY=($(compgen -W "setup status" -- "$cur"))')
+    expect(out).toContain('COMPREPLY=($(compgen -W "setup list" -- "$cur"))')
     expect(out).not.toContain('COMPREPLY=($(compgen -W "list capabilities')
     expect(out).not.toContain(" add remove ")
     expect(out).toContain("COMP_CWORD -eq 2")
@@ -116,46 +120,49 @@ describe("completions command", () => {
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --source-types --fact-types --fact-categories --after --before"',
     )
-    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --fact-id --include"')
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --include"')
     expect(out).toContain(
-      `[[ $COMP_CWORD -gt 2 && "${bashCompWord(1)}" == "customers" && "${bashCompWord(2)}" == "grant" ]]`,
+      `[[ $COMP_CWORD -gt 2 && "${bashCompWord(1)}" == "customers" && "${bashCompWord(2)}" == "set-access" ]]`,
     )
-    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --yes --member --role"')
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --yes --member --role --mode --preview-token --request-id --undo-token"',
+    )
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --source-type --customer --participant --provider --has-transcript --after --before"',
     )
-    expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --source-type --source-id"',
-    )
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --limit --cursor"')
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --arr-above --arr-below --currency --renews-in --renews-after --renews-before --owner-id --owner-email --has-owner --activated-since --search --part-of"',
     )
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --event --lookback-days --example-limit"',
     )
-    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --event"')
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --config-stdin --accept-recommended"',
     )
     expect(out).not.toContain("--signals --match --threshold --window")
     expect(out).not.toContain("--client-request-id")
-    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --default-timezone"')
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --timezone --default-owner --activation-event --revision"',
+    )
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --source --weeks --candidate-limit --include --search --limit --cursor"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --source --event --key --name --property-filters"',
+      'COMPREPLY=($(compgen -W "--api-key --json --source-key --event-name --feature-key --request-id --name --property-filters"',
     )
-    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --yes --revision"')
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --yes --revision --mode --preview-token --request-id"',
+    )
     expect(out).not.toContain("--slack-channel-name")
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --type --channel-id --label --default --disabled"',
+      'COMPREPLY=($(compgen -W "--api-key --json --type --channel-id --label --is-default --enabled --request-id"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --label --default --enabled --disabled"',
+      'COMPREPLY=($(compgen -W "--api-key --json --label --is-default --enabled --revision"',
     )
-    expect(out).toContain("--customer-id --suggestion-id --status --confidence")
-    expect(out).toContain("--preview-token --request-id --suggestion-id --review-notes")
+    expect(out).toContain("--customer --suggestion-id --status --confidence")
+    expect(out).toContain("--preview-token --request-id --suggestion-id --note")
     expect(out).not.toContain('COMPREPLY=($(compgen -W "--api-key --json --destination-id"')
   })
 
@@ -166,14 +173,14 @@ describe("completions command", () => {
     expect(out).toContain("#compdef outlit")
     expect(out).toContain("CURRENT == 2")
     expect(out).toContain("'auth:Manage authentication'")
-    expect(out).toContain("'ws-users:Workspace-user operations'")
+    expect(out).toContain("'members:Workspace member operations'")
     expect(out).toContain("'settings:Configure workspace settings'")
     expect(out).toContain("'features:Configure Features'")
     expect(out).not.toContain("'metrics:Configure Behavior Metrics'")
     expect(out).not.toContain("'value-features:Configure Value Features'")
     expect(out).not.toContain("'attention:")
     expect(out).not.toContain("'identity:Inspect and manage identity resolution'")
-    expect(out).toContain("'activation:Configure contact and company activation'")
+    expect(out).toContain("'activation:Preview contact and company activation'")
     expect(out).not.toContain("workspace-users")
   })
 
@@ -181,10 +188,8 @@ describe("completions command", () => {
     const out = await captureCompletions("zsh")
     expect(out).toContain("CURRENT == 3")
     expect(out).toContain("'list:List and filter customers'")
-    expect(out).toContain("'owner:Manage the primary customer owner'")
-    expect(out).toContain("'set:Assign the primary customer owner'")
-    expect(out).toContain("'grant:Grant or change Viewer or Editor customer access'")
-    expect(out).toContain("'revoke:Revoke explicit customer access'")
+    expect(out).toContain("'set-owner:Assign the primary customer owner'")
+    expect(out).toContain("'set-access:Grant, change or remove customer access'")
     expect(out).not.toContain("assign-owner")
     expect(out).not.toContain("grant-access")
     expect(out).not.toContain("update-access")
@@ -198,24 +203,22 @@ describe("completions command", () => {
     expect(out).not.toContain("'remove:Disconnect an integration'")
     expect(out).toContain("'codex:Install the Outlit skill for Codex'")
     expect(out).toContain("'opencode:Install the Outlit skill for OpenCode'")
-    expect(out).not.toContain("'suggestions:Inspect customer identity merge suggestions'")
+    expect(out).toContain("'reject:Reject a saved suggestion'")
+    expect(out).toContain("'submit:Submit feedback: bugs, ideas or agent friction'")
   })
   test("zsh — flag completions with descriptions", async () => {
     const out = await captureCompletions("zsh")
     expect(out).toContain("'facts:Get customer facts'")
     expect(out).toContain("'sources:List or fetch concrete source records'")
     expect(out).toContain("'--status:Filter by fact status'")
-    expect(out).toContain("'--fact-id:Fact ID to fetch'")
     expect(out).toContain("'--source-type:Source type'")
     expect(out).toContain("'--owner-id:Filter by owner user ID'")
     expect(out).toContain("'--owner-email:Filter by owner email'")
     expect(out).toContain("'--has-owner:Only customers with an owner'")
     expect(out).toContain("'--member:Workspace member user ID or email'")
-    expect(out).toContain("'--role:Required access role (viewer, editor)'")
-    expect(out).toContain('[[ "$words[2]" == "customers" && "$words[3]" == "grant" ]]')
-    expect(out).toContain(
-      '[[ "$words[2]" == "customers" && "$words[3]" == "owner" && "$words[4]" == "set" ]]',
-    )
+    expect(out).toContain("'--role:Access role (viewer, editor, none)'")
+    expect(out).toContain('[[ "$words[2]" == "customers" && "$words[3]" == "set-access" ]]')
+    expect(out).toContain('[[ "$words[2]" == "customers" && "$words[3]" == "set-owner" ]]')
     expect(out).toContain('[[ "$words[2]" == "facts" && "$words[3]" == "list" ]]')
     expect(out).toContain('[[ "$words[2]" == "sources" && "$words[3]" == "list" ]]')
     expect(out).toContain('[[ "$words[2]" == "sources" && "$words[3]" == "get" ]]')
@@ -226,9 +229,8 @@ describe("completions command", () => {
     const out = await captureCompletions("fish")
     expect(out).toContain("-n '__outlit_using_cmd search' -l source-types")
     expect(out).toContain("-n '__outlit_using_cmd facts list' -l status")
-    expect(out).toContain("-n '__outlit_using_cmd facts get' -l fact-id")
+    expect(out).toContain("-n '__outlit_using_cmd facts get' -l include")
     expect(out).toContain("-n '__outlit_using_cmd sources list' -l participant")
-    expect(out).toContain("-n '__outlit_using_cmd sources get' -l source-type")
     expect(out).toContain("-n '__outlit_using_cmd sources get' -l limit")
     expect(out).toContain("-n '__outlit_using_cmd sources get' -l cursor")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l billing-status")
@@ -236,16 +238,15 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l activated-since")
     expect(out).toContain("-n '__outlit_using_cmd activation preview' -l lookback-days")
     expect(out).toContain("-n '__outlit_using_cmd activation preview' -l event")
-    expect(out).toContain("-n '__outlit_using_cmd activation update' -l event")
-    expect(out).toContain("-n '__outlit_using_cmd activation disable' -l json")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-id")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l owner-email")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l has-owner")
     expect(out).toContain("-n '__outlit_using_cmd customers list' -l trait")
-    expect(out).toContain("-n '__outlit_using_cmd customers owner set' -l member")
-    expect(out).toContain("-n '__outlit_using_cmd customers grant' -l member")
-    expect(out).toContain("-n '__outlit_using_cmd customers grant' -l role")
-    expect(out).toContain("-n '__outlit_using_cmd customers revoke' -l member")
+    expect(out).toContain("-n '__outlit_using_cmd customers set-owner' -l member")
+    expect(out).toContain("-n '__outlit_using_cmd customers set-owner' -l undo-token")
+    expect(out).toContain("-n '__outlit_using_cmd customers set-access' -l member")
+    expect(out).toContain("-n '__outlit_using_cmd customers set-access' -l role")
+    expect(out).toContain("-n '__outlit_using_cmd customers set-access' -l preview-token")
     expect(out).not.toContain("assign-owner")
     expect(out).not.toContain("grant-access")
     expect(out).not.toContain("update-access")
@@ -253,28 +254,39 @@ describe("completions command", () => {
     expect(out).toContain("-n '__outlit_using_cmd auth login' -l key")
     expect(out).toContain("-n '__outlit_using_cmd people list' -l journey-stage")
     expect(out).toContain("-n '__outlit_using_cmd people list' -l trait")
-    expect(out).toContain("-n '__outlit_using_cmd ws-users list' -l role")
-    expect(out).toContain("-n '__outlit_using_cmd ws-users list' -l has-owned-customers")
+    expect(out).toContain("-n '__outlit_using_cmd members list' -l role")
+    expect(out).toContain("-n '__outlit_using_cmd members list' -l has-owned-customers")
     expect(out).not.toContain("__outlit_using_cmd workspace-users")
     expect(out).not.toContain("-n '__outlit_using_cmd integrations setup' -l force")
     expect(out).not.toContain("-n '__outlit_using_cmd integrations setup' -l config -d")
     expect(out).toContain("-n '__outlit_using_cmd integrations setup' -l config-stdin")
     expect(out).toContain("-n '__outlit_using_cmd integrations setup' -l accept-recommended")
-    expect(out).not.toContain("__outlit_using_cmd integrations list")
+    expect(out).toContain("__outlit_using_cmd integrations list")
     expect(out).not.toContain("__outlit_using_cmd integrations capabilities")
     expect(out).not.toContain("__outlit_using_cmd integrations add")
     expect(out).not.toContain("__outlit_using_cmd integrations remove")
     expect(out).not.toContain("__outlit_using_cmd agents")
     expect(out).not.toContain("__outlit_using_cmd automations")
     expect(out).not.toContain("__outlit_using_cmd signals")
-    expect(out).toContain("-n '__outlit_using_cmd destinations create' -l default")
-    expect(out).toContain("-n '__outlit_using_cmd destinations update' -l default")
+    expect(out).toContain("-n '__outlit_using_cmd destinations create' -l is-default")
+    expect(out).toContain("-n '__outlit_using_cmd destinations update' -l is-default")
     expect(out).toContain("-n '__outlit_using_cmd settings' -a get")
     expect(out).not.toContain("-n '__outlit_using_cmd settings report'")
     expect(out).not.toContain("settings notifications default")
-    expect(out).toContain("-n '__outlit_using_cmd settings update' -l default-timezone")
+    expect(out).toContain("-n '__outlit_using_cmd settings update' -l timezone")
     expect(out).toContain("-n '__outlit_using_cmd features list' -l candidate-limit")
     expect(out).toContain("-n '__outlit_using_cmd features create' -l property-filters")
+    expect(out).toContain("-n '__outlit_using_cmd features create' -l source-key")
+    expect(out).not.toContain("__outlit_using_cmd destinations enable")
+    expect(out).not.toContain("__outlit_using_cmd destinations get")
+    expect(out).not.toContain("__outlit_using_cmd activation update")
+    expect(out).not.toContain("__outlit_using_cmd customers grant")
+    expect(out).not.toContain("__outlit_using_cmd customers timeline")
+    expect(out).not.toContain("__outlit_using_cmd sql")
+    expect(out).toContain("__outlit_using_cmd timeline get")
+    expect(out).toContain("__outlit_using_cmd tasks act")
+    expect(out).toContain("__outlit_using_cmd customer-fields list")
+    expect(out).toContain("__outlit_using_cmd setup-sessions get")
     expect(out).toContain("-n '__outlit_using_cmd features archive' -l revision")
     expect(out).toContain("-n '__outlit_using_cmd customers get' -l weeks")
     expect(out).toContain("-n '__outlit_using_cmd customers get' -l weekly")
@@ -286,7 +298,8 @@ describe("completions command", () => {
     expect(out).not.toContain("__outlit_using_cmd metrics")
     expect(out).not.toContain("-n '__outlit_using_cmd settings report update'")
     expect(out).not.toContain("settings notifications")
-    expect(out).toContain("__outlit_using_cmd identity suggestions")
+    expect(out).toContain("__outlit_using_cmd merge-suggestions list")
+    expect(out).not.toContain("__outlit_using_cmd identity suggestions")
     expect(out).not.toContain("-n '__outlit_using_cmd destinations options'")
     expect(out).toContain("-n '__outlit_using_cmd setup' -l yes")
     expect(out).toContain("-n '__outlit_using_cmd setup claude-code' -l json")
@@ -298,7 +311,6 @@ describe("completions command", () => {
   test("fish — activation subcommands expose exact setting flags", async () => {
     const out = await captureCompletions("fish")
 
-    expect(fishFlagsFor(out, "activation get")).toEqual(["api-key", "json"])
     expect(fishFlagsFor(out, "activation preview")).toEqual([
       "api-key",
       "json",
@@ -306,8 +318,7 @@ describe("completions command", () => {
       "lookback-days",
       "example-limit",
     ])
-    expect(fishFlagsFor(out, "activation update")).toEqual(["api-key", "json", "event"])
-    expect(fishFlagsFor(out, "activation disable")).toEqual(["api-key", "json"])
+    expect(fishFlagsFor(out, "settings update")).toContain("activation-event")
   })
 
   test("unknown shell — exits 1", async () => {

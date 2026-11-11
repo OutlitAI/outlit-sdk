@@ -21,39 +21,19 @@ describe("customers command", () => {
     const description = meta?.description ?? ""
     const subCommands = customersCmd.subCommands ? await resolve(customersCmd.subCommands) : {}
 
-    expect(Object.keys(subCommands)).toEqual([
-      "list",
-      "get",
-      "relationship",
-      "identity",
-      "merge",
-      "merge-status",
-      "features",
-      "credits",
-      "timeline",
-      "owner",
-      "grant",
-      "revoke",
-    ])
-    expect(description).toContain("owner set")
+    expect(Object.keys(subCommands)).toEqual(["list", "get", "merge", "set-owner", "set-access"])
+    expect(description).toContain("set-owner")
+    expect(description).toContain("set-access")
     expect(description).toContain("features")
     expect(description).toContain("credits")
-    expect(description).toContain("grant")
-    expect(description).toContain("revoke")
     expect(description).not.toContain("assign-owner")
     expect(description).not.toContain("grant-access")
     expect(description).not.toContain("update-access")
     expect(description).not.toContain("revoke-access")
 
-    const ownerCmd = await resolve(required(subCommands.owner, "owner"))
-    const ownerSubCommands = ownerCmd.subCommands ? await resolve(ownerCmd.subCommands) : {}
-    expect(Object.keys(ownerSubCommands)).toEqual(["set"])
-
-    const setCmd = await resolve(required(ownerSubCommands.set, "owner set"))
-    const grantCmd = await resolve(required(subCommands.grant, "grant"))
-    const revokeCmd = await resolve(required(subCommands.revoke, "revoke"))
-    expect((await resolve(setCmd.meta!)).name).toBe("set")
-    expect((await resolve(grantCmd.meta!)).name).toBe("grant")
-    expect((await resolve(revokeCmd.meta!)).name).toBe("revoke")
+    const ownerCmd = await resolve(required(subCommands["set-owner"], "set-owner"))
+    const accessCmd = await resolve(required(subCommands["set-access"], "set-access"))
+    expect((await resolve(ownerCmd.meta!)).name).toBe("set-owner")
+    expect((await resolve(accessCmd.meta!)).name).toBe("set-access")
   })
 })

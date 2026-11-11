@@ -3,8 +3,8 @@ title: "Integration setup (CLI)"
 description: "Set up integrations and inspect their configuration readiness from the CLI."
 ---
 
-The CLI exposes two integration commands: `outlit integrations setup` and
-`outlit integrations status`. Both use the public tool gateway. For personal connections, the API key needs `integrations:connect_own`. Workspace setup needs `integrations:manage`. Outlit determines which permission applies to each provider and request.
+The CLI exposes `outlit integrations setup`, `outlit integrations list` and
+`outlit setup-sessions get`. All use the public tool gateway. For personal connections, the API key needs `integrations:connect_own`. Workspace setup needs `integrations:manage`. Outlit determines which permission applies to each provider and request.
 
 ## Integration setup
 
@@ -79,11 +79,11 @@ fragments, or secret-bearing query parameters.
 ## Integration status
 
 ```bash
-outlit integrations status
-outlit integrations status hubspot --json
+outlit integrations list
+outlit integrations list hubspot --json
 ```
 
-`status` calls `outlit_list_integrations`, one entry per provider, and returns one of five
+`integrations list` calls `outlit_list_integrations`, one entry per provider, and returns one of five
 configuration-readiness states:
 
 | State | Meaning |
@@ -98,5 +98,16 @@ configuration-readiness states:
 finished, that customer data is present, or that provider data is current. For a connected provider
 the JSON output adds a `connection` section with `lastDataReceivedAt`, `syncStatus` and
 `hasSyncError`, and `setup` says whether the provider signs in with OAuth, an API key or basic auth.
-The status command does not expose browser-session or raw provider-state metadata. `gmail` is accepted as a
+The list command does not expose browser-session or raw provider-state metadata. `gmail` is accepted as a
 CLI alias for `google-mail`.
+
+## Setup sessions
+
+A browser sign-in that setup started returns a `sessionId` in its `browser_handoff` step. Check it with:
+
+```bash
+outlit setup-sessions get <id> --json
+```
+
+The result says whether the session is `pending`, `connected`, `expired` or `failed`. It is not an
+integration's ongoing status; use `outlit integrations list` for that.

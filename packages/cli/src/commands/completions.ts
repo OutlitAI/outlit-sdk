@@ -19,6 +19,12 @@ const API_KEY_F: Flag = { name: "--api-key", desc: "Outlit API key" }
 const LIMIT_F: Flag = { name: "--limit", desc: "Max results (1-100)" }
 const CURSOR_F: Flag = { name: "--cursor", desc: "Pagination cursor" }
 const YES_F: Flag = { name: "--yes", desc: "Confirm without asking" }
+const WRITE_MODE = [
+  { name: "--mode", desc: "preview or execute (execute needs --preview-token)" },
+  { name: "--preview-token", desc: "preview.token of the same change" },
+  { name: "--request-id", desc: "Stable request ID for retries" },
+] as const
+const UNDO_F: Flag = { name: "--undo-token", desc: "undo.token of an earlier change" }
 const MEMBER_F: Flag = { name: "--member", desc: "Workspace member user ID or email" }
 
 const COMMON = [API_KEY_F, JSON_F] as const
@@ -97,26 +103,61 @@ const COMMANDS: readonly CmdDef[] = [
         ],
       },
       {
-        name: "identity",
-        desc: "Inspect customer identity and possible split records",
-        flags: [...COMMON, { name: "--links", desc: "Also list records in other systems" }],
-      },
-      {
         name: "merge",
         desc: "Preview an exact customer merge; execution requires explicit inputs",
         flags: [
           ...COMMON,
-          { name: "--execute", desc: "Execute the reviewed merge instead of previewing" },
+          { name: "--mode", desc: "preview (default) or execute the reviewed merge" },
           { name: "--preview-token", desc: "Reviewed preview token" },
           { name: "--request-id", desc: "Stable execution request ID" },
           { name: "--suggestion-id", desc: "Optional originating suggestion ID" },
-          { name: "--review-notes", desc: "Optional merge explanation" },
+          { name: "--note", desc: "Optional merge explanation" },
         ],
       },
-      { name: "merge-status", desc: "Read an admitted merge operation", flags: [...COMMON] },
       {
-        name: "timeline",
-        desc: "Show activity timeline",
+        name: "set-owner",
+        desc: "Assign the primary customer owner",
+        flags: [...COMMON, YES_F, MEMBER_F, ...WRITE_MODE, UNDO_F],
+      },
+      {
+        name: "set-access",
+        desc: "Grant, change or remove customer access",
+        flags: [
+          ...COMMON,
+          YES_F,
+          MEMBER_F,
+          { name: "--role", desc: "Access role (viewer, editor, none)" },
+          ...WRITE_MODE,
+          UNDO_F,
+        ],
+      },
+    ],
+  },
+  {
+    name: "customer-fields",
+    desc: "Fields Outlit holds about customers",
+    subs: [
+      {
+        name: "list",
+        desc: "List CRM fields and SDK traits with values in use",
+        flags: [
+          ...PAGINATED,
+          {
+            name: "--source",
+            desc: "Only this source (hubspot, salesforce, attio, pylon, traits)",
+          },
+          { name: "--search", desc: "Only fields whose key or label contains this text" },
+        ],
+      },
+    ],
+  },
+  {
+    name: "timeline",
+    desc: "Customer activity timelines",
+    subs: [
+      {
+        name: "get",
+        desc: "Show the activity timeline for a customer",
         flags: [
           ...PAGINATED,
           { name: "--channels", desc: "Filter by channels" },
@@ -124,78 +165,59 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--timeframe", desc: "Event timeframe" },
           { name: "--start-date", desc: "Start date (ISO 8601)" },
           { name: "--end-date", desc: "End date (ISO 8601)" },
+          { name: "--product-detail", desc: "Product activity detail (none, material, raw)" },
+          { name: "--include-metadata", desc: "Add each event's metadata" },
         ],
-      },
-      {
-        name: "owner",
-        desc: "Manage the primary customer owner",
-        subs: [
-          {
-            name: "set",
-            desc: "Assign the primary customer owner",
-            flags: [...COMMON, YES_F, MEMBER_F],
-          },
-        ],
-      },
-      {
-        name: "grant",
-        desc: "Grant or change Viewer or Editor customer access",
-        flags: [
-          ...COMMON,
-          YES_F,
-          MEMBER_F,
-          { name: "--role", desc: "Required access role (viewer, editor)" },
-        ],
-      },
-      {
-        name: "revoke",
-        desc: "Revoke explicit customer access",
-        flags: [...COMMON, YES_F, MEMBER_F],
       },
     ],
   },
   {
     name: "identity",
-    desc: "Review customer identity suggestions",
+    desc: "Inspect customer identity and possible split records",
     subs: [
       {
-        name: "suggestions",
-        desc: "Saved suggestions and history",
-        subs: [
-          {
-            name: "list",
-            desc: "List complete suggestion details",
-            flags: [
-              ...PAGINATED,
-              { name: "--customer-id", desc: "Only suggestions with this customer" },
-              { name: "--suggestion-id", desc: "Retrieve one exact suggestion" },
-              { name: "--status", desc: "suggested, processing, merged, or rejected" },
-              { name: "--confidence", desc: "high, medium, or low" },
-              { name: "--include", desc: "impact, scope, jev, cluster" },
-            ],
-          },
-          {
-            name: "reject",
-            desc: "Reject a saved suggestion",
-            flags: [
-              ...COMMON,
-              { name: "--review-notes", desc: "Optional reason for rejection" },
-              { name: "--request-id", desc: "Stable request ID for retries" },
-            ],
-          },
+        name: "get",
+        desc: "Show identity coverage and candidate duplicates",
+        flags: [...COMMON, { name: "--include", desc: "Extras: links" }],
+      },
+    ],
+  },
+  {
+    name: "merge-suggestions",
+    desc: "Review saved customer merge suggestions",
+    subs: [
+      {
+        name: "list",
+        desc: "List saved suggestions and history",
+        flags: [
+          ...PAGINATED,
+          { name: "--customer", desc: "Only suggestions with this customer" },
+          { name: "--suggestion-id", desc: "Retrieve one exact suggestion" },
+          { name: "--status", desc: "suggested, processing, merged, or rejected" },
+          { name: "--confidence", desc: "high, medium, or low" },
+          { name: "--include", desc: "impact, scope, jev, cluster" },
+        ],
+      },
+      {
+        name: "reject",
+        desc: "Reject a saved suggestion",
+        flags: [
+          ...COMMON,
+          { name: "--note", desc: "Optional reason for rejection" },
+          { name: "--request-id", desc: "Stable request ID for retries" },
         ],
       },
     ],
   },
   {
+    name: "merges",
+    desc: "Read admitted customer merge operations",
+    subs: [{ name: "get", desc: "Read one merge operation", flags: [...COMMON] }],
+  },
+  {
     name: "activation",
-    desc: "Configure contact and company activation",
+    desc: "Preview contact and company activation",
     subs: [
-      {
-        name: "get",
-        desc: "Read the configured activation event",
-        flags: [...COMMON],
-      },
       {
         name: "preview",
         desc: "Preview historical exact-event activation matches",
@@ -205,16 +227,6 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--lookback-days", desc: "Historical lookback (1-90 days)" },
           { name: "--example-limit", desc: "Historical example count (1-20)" },
         ],
-      },
-      {
-        name: "update",
-        desc: "Update the configured activation event",
-        flags: [...COMMON, { name: "--event", desc: "Exact ordinary product event name" }],
-      },
-      {
-        name: "disable",
-        desc: "Disable future contact and company activation matching",
-        flags: [...COMMON],
       },
     ],
   },
@@ -238,8 +250,8 @@ const COMMANDS: readonly CmdDef[] = [
     ],
   },
   {
-    name: "ws-users",
-    desc: "Workspace-user operations",
+    name: "members",
+    desc: "Workspace member operations",
     subs: [
       {
         name: "list",
@@ -253,6 +265,42 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--order-by", desc: "Sort field (owned_customers, name)" },
           { name: "--order-direction", desc: "Sort direction (asc, desc)" },
         ],
+      },
+    ],
+  },
+  {
+    name: "tasks",
+    desc: "Read and act on your task list",
+    subs: [
+      {
+        name: "list",
+        desc: "List one section of your tasks",
+        flags: [
+          ...PAGINATED,
+          { name: "--section", desc: "today, open, snoozed, done or pool" },
+          { name: "--customer", desc: "Only this customer's tasks" },
+          { name: "--owner", desc: "Admins: a teammate's member ID" },
+        ],
+      },
+      {
+        name: "get",
+        desc: "Read a task with its conversation",
+        flags: [...COMMON, { name: "--include", desc: "source, draft, covered" }],
+      },
+      {
+        name: "act",
+        desc: "Take an action on a task",
+        flags: [
+          ...COMMON,
+          { name: "--until", desc: "snooze only: ISO 8601 date-time within 14 days" },
+          { name: "--reason", desc: "wont_do only: already_handled, not_needed, not_ours" },
+          { name: "--request-id", desc: "Stable request ID for retries" },
+        ],
+      },
+      {
+        name: "undo",
+        desc: "Reverse a task action within 24 hours",
+        flags: [...COMMON, { name: "--request-id", desc: "Stable request ID for retries" }],
       },
     ],
   },
@@ -276,11 +324,7 @@ const COMMANDS: readonly CmdDef[] = [
       {
         name: "get",
         desc: "Get a single fact by ID",
-        flags: [
-          ...COMMON,
-          { name: "--fact-id", desc: "Fact ID to fetch" },
-          { name: "--include", desc: "Best-effort expansions" },
-        ],
+        flags: [...COMMON, { name: "--include", desc: "Best-effort expansions" }],
       },
     ],
   },
@@ -305,24 +349,26 @@ const COMMANDS: readonly CmdDef[] = [
       {
         name: "get",
         desc: "Get one exact source record",
-        flags: [
-          ...PAGINATED,
-          { name: "--source-type", desc: "Source type" },
-          { name: "--source-id", desc: "Exact source ID" },
-        ],
+        flags: [...PAGINATED],
       },
     ],
   },
   {
     name: "feedback",
     desc: "Submit product feedback",
-    flags: [
-      ...COMMON,
-      { name: "--body", desc: "Feedback text (max 20000 chars)" },
-      { name: "--body-file", desc: "Read feedback text from a file" },
-      { name: "--area", desc: "Optional product area label" },
-      { name: "--context", desc: "Optional JSON context object (max 16 KiB)" },
-      { name: "--context-file", desc: "Read JSON context object from a file" },
+    subs: [
+      {
+        name: "submit",
+        desc: "Submit feedback: bugs, ideas or agent friction",
+        flags: [
+          ...COMMON,
+          { name: "--body", desc: "Feedback text (max 20000 chars)" },
+          { name: "--body-file", desc: "Read feedback text from a file" },
+          { name: "--area", desc: "Optional product area label" },
+          { name: "--context", desc: "Optional JSON context object (max 16 KiB)" },
+          { name: "--context-file", desc: "Read JSON context object from a file" },
+        ],
+      },
     ],
   },
   {
@@ -338,7 +384,7 @@ const COMMANDS: readonly CmdDef[] = [
     ],
   },
   {
-    name: "sql",
+    name: "query",
     desc: "Execute SQL queries",
     flags: [
       ...COMMON,
@@ -350,7 +396,9 @@ const COMMANDS: readonly CmdDef[] = [
   {
     name: "schema",
     desc: "Discover analytics views, event types and worked queries",
-    flags: [...COMMON],
+    subs: [
+      { name: "get", desc: "Describe the views, one view, events or examples", flags: [...COMMON] },
+    ],
   },
   {
     name: "integrations",
@@ -366,18 +414,26 @@ const COMMANDS: readonly CmdDef[] = [
         ],
       },
       {
-        name: "status",
+        name: "list",
         desc: "Show configuration readiness",
         flags: [...COMMON],
       },
     ],
   },
   {
+    name: "setup-sessions",
+    desc: "Check integration setup sign-ins",
+    subs: [{ name: "get", desc: "Read a setup session", flags: [...COMMON] }],
+  },
+  {
     name: "destinations",
     desc: "Inspect automation destinations",
     subs: [
-      { name: "list", desc: "List configured destinations", flags: [...PAGINATED] },
-      { name: "get", desc: "Get one configured destination", flags: [...COMMON] },
+      {
+        name: "list",
+        desc: "List configured destinations",
+        flags: [...PAGINATED, { name: "--ids", desc: "Comma-separated destination IDs" }],
+      },
       {
         name: "create",
         desc: "Create a Slack channel destination",
@@ -386,8 +442,9 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--type", desc: "Destination type" },
           { name: "--channel-id", desc: "Slack channel ID" },
           { name: "--label", desc: "Slack channel label" },
-          { name: "--default", desc: "Make this the default destination" },
-          { name: "--disabled", desc: "Create the destination disabled" },
+          { name: "--is-default", desc: "Make this the default destination" },
+          { name: "--enabled", desc: "true (default) or false" },
+          { name: "--request-id", desc: "Stable request ID for retries" },
         ],
       },
       {
@@ -396,14 +453,16 @@ const COMMANDS: readonly CmdDef[] = [
         flags: [
           ...COMMON,
           { name: "--label", desc: "Slack channel label" },
-          { name: "--default", desc: "Make this the default destination" },
-          { name: "--enabled", desc: "Enable the destination after update" },
-          { name: "--disabled", desc: "Disable the destination" },
+          { name: "--is-default", desc: "Make this the default destination" },
+          { name: "--enabled", desc: "true or false: enable or disable" },
+          { name: "--revision", desc: "Destination revision from a read" },
         ],
       },
-      { name: "enable", desc: "Enable a configured destination", flags: [...COMMON] },
-      { name: "disable", desc: "Disable a configured destination", flags: [...COMMON] },
-      { name: "archive", desc: "Archive a configured destination", flags: [...COMMON, YES_F] },
+      {
+        name: "archive",
+        desc: "Archive a configured destination",
+        flags: [...COMMON, YES_F, ...WRITE_MODE],
+      },
     ],
   },
   {
@@ -414,7 +473,13 @@ const COMMANDS: readonly CmdDef[] = [
       {
         name: "update",
         desc: "Update workspace settings",
-        flags: [...COMMON, { name: "--default-timezone", desc: "Default IANA timezone" }],
+        flags: [
+          ...COMMON,
+          { name: "--timezone", desc: "Default IANA timezone" },
+          { name: "--default-owner", desc: "Default customer owner (user ID or email, or none)" },
+          { name: "--activation-event", desc: "Activation event, or none to turn it off" },
+          { name: "--revision", desc: "settings.revision from settings get" },
+        ],
       },
     ],
   },
@@ -441,9 +506,10 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "Create one event-based Feature",
         flags: [
           ...COMMON,
-          { name: "--source", desc: "Product-event source key" },
-          { name: "--event", desc: "Exact tracked event name" },
-          { name: "--key", desc: "Stable lower_snake_case feature key" },
+          { name: "--source-key", desc: "Product-event source key" },
+          { name: "--event-name", desc: "Exact tracked event name" },
+          { name: "--feature-key", desc: "Stable lower_snake_case feature key" },
+          { name: "--request-id", desc: "Stable request ID for retries" },
           { name: "--name", desc: "Human-readable Feature name" },
           { name: "--property-filters", desc: "Optional JSON exact or exists filters" },
         ],
@@ -451,7 +517,12 @@ const COMMANDS: readonly CmdDef[] = [
       {
         name: "archive",
         desc: "Archive a non-final Feature",
-        flags: [...COMMON, YES_F, { name: "--revision", desc: "Current opaque feature revision" }],
+        flags: [
+          ...COMMON,
+          YES_F,
+          { name: "--revision", desc: "Current opaque feature revision" },
+          ...WRITE_MODE,
+        ],
       },
     ],
   },

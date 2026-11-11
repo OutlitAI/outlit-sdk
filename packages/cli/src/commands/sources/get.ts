@@ -14,14 +14,14 @@ export default defineCommand({
   meta: {
     name: "get",
     description: [
-      "Get one exact source by source type and source id: the `source {type, id}` another command returned.",
+      "Get one exact source by source type and id: the `source {type, id}` another command returned.",
       "Returns the same normalized source envelope as `sources list`, with its content a page of segments at a time.",
       "",
       "Examples:",
-      "  outlit sources get --source-type call --source-id call_123",
-      "  outlit sources get --source-type slack --source-id thread_123 --limit 50",
-      "  outlit sources get --source-type opportunity --source-id opp_123",
-      "  outlit sources get --source-type support_ticket --source-id ticket_456 --json",
+      "  outlit sources get call call_123",
+      "  outlit sources get slack thread_123 --limit 50",
+      "  outlit sources get opportunity opp_123",
+      "  outlit sources get support_ticket ticket_456 --json",
       "",
       `Source types: ${sourceTypeDescription}`,
       "Use `outlit sources list` when you need deterministic enumeration rather than exact lookup.",
@@ -32,13 +32,13 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    "source-type": {
-      type: "string",
+    type: {
+      type: "positional",
       description: `Source type (${sourceTypeDescription})`,
       required: true,
     },
-    "source-id": {
-      type: "string",
+    id: {
+      type: "positional",
       description: "Exact source id",
       required: true,
     },
@@ -55,7 +55,7 @@ export default defineCommand({
     const json = !!args.json
 
     // Any case is accepted, and the previously published aliases (CRM, STRIPE_INVOICE).
-    const requested = args["source-type"].trim()
+    const requested = args.type.trim()
     const sourceType =
       requested.toLowerCase() === EXTRACTED
         ? EXTRACTED
@@ -66,7 +66,7 @@ export default defineCommand({
     if (!sourceType) {
       return outputError(
         {
-          message: `--source-type must be one of ${sourceTypeDescription}`,
+          message: `<type> must be one of ${sourceTypeDescription}`,
           code: "invalid_input",
         },
         json,
@@ -90,7 +90,7 @@ export default defineCommand({
       client,
       publicToolContracts.outlit_get_source.toolName,
       {
-        source: { type: sourceType, id: args["source-id"] },
+        source: { type: sourceType, id: args.id.trim() },
         ...(limit !== undefined ? { limit } : {}),
         ...(args.cursor ? { cursor: args.cursor } : {}),
       },

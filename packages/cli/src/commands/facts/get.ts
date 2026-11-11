@@ -25,8 +25,8 @@ export default defineCommand({
       "Returns the fact with its customer. Use --include evidence to list every source the fact cites.",
       "",
       "Examples:",
-      "  outlit facts get --fact-id fact_123",
-      "  outlit facts get --fact-id fact_123 --include evidence",
+      "  outlit facts get fact_123",
+      "  outlit facts get fact_123 --include evidence",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -34,8 +34,8 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    "fact-id": {
-      type: "string",
+    id: {
+      type: "positional",
       description: "Fact ID to fetch",
       required: true,
     },
@@ -48,7 +48,7 @@ export default defineCommand({
     const json = !!args.json
 
     const params: Record<string, unknown> = {
-      factId: args["fact-id"],
+      factId: args.id.trim(),
     }
 
     const include = parseCsvArg(args.include)

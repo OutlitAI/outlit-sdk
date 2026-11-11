@@ -4,6 +4,7 @@ import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { relativeDate, truncate } from "../../lib/format"
+import { parseCsvList } from "../../lib/platform-input"
 
 export default defineCommand({
   meta: {
@@ -14,6 +15,7 @@ export default defineCommand({
       "Examples:",
       "  outlit destinations list",
       "  outlit destinations list --json",
+      "  outlit destinations list --ids 10000000-0000-4000-8000-000000000003 --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -22,6 +24,7 @@ export default defineCommand({
     ...authArgs,
     ...outputArgs,
     ...paginationArgs,
+    ids: { type: "string", description: "Comma-separated destination IDs to read" },
   },
   async run({ args }) {
     const json = !!args.json
@@ -29,6 +32,8 @@ export default defineCommand({
 
     const params: Record<string, unknown> = {}
     applyPagination(params, args, json)
+    const ids = parseCsvList(args.ids)
+    if (ids.length > 0) params.ids = ids
 
     return runTool(client, "outlit_list_destinations", params, json, {
       spinnerMessage: "Fetching destinations...",

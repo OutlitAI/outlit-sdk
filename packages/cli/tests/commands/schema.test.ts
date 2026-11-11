@@ -29,7 +29,7 @@ describe("schema", () => {
   })
 
   test("sends topic view and the view name for a requested view", async () => {
-    const { default: schemaCmd } = await import("../../src/commands/schema")
+    const { default: schemaCmd } = await import("../../src/commands/schema/get")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await schemaCmd.run!({
@@ -50,7 +50,7 @@ describe("schema", () => {
     ["examples", { topic: "examples" }],
     ["revenue", { topic: "view", view: "revenue" }],
   ])("maps %s to its schema topic", async (view, expected) => {
-    const { default: schemaCmd } = await import("../../src/commands/schema")
+    const { default: schemaCmd } = await import("../../src/commands/schema/get")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await schemaCmd.run!({
@@ -64,7 +64,7 @@ describe("schema", () => {
   })
 
   test("rejects a name that is neither a view nor a topic before calling Core", async () => {
-    const { default: schemaCmd } = await import("../../src/commands/schema")
+    const { default: schemaCmd } = await import("../../src/commands/schema/get")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
 
@@ -86,7 +86,7 @@ describe("schema", () => {
   })
 
   test("sends no params when no view is given, so Core describes every view", async () => {
-    const { default: schemaCmd } = await import("../../src/commands/schema")
+    const { default: schemaCmd } = await import("../../src/commands/schema/get")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await schemaCmd.run!({
@@ -105,7 +105,7 @@ describe("schema", () => {
     const createClientSpy = spyOn(clientModule, "createClient").mockRejectedValue(
       new Error("No API key found. Run `outlit auth login` or set OUTLIT_API_KEY."),
     )
-    const { default: schemaCmd } = await import("../../src/commands/schema")
+    const { default: schemaCmd } = await import("../../src/commands/schema/get")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
 

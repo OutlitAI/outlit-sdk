@@ -12,7 +12,7 @@ export default defineCommand({
       "  create                        Create one event-based Feature",
       "  archive <id>                  Archive a non-final Feature (asks first; --yes confirms)",
       "",
-      "Customer-level usage is available with `outlit customers features <customer>`.",
+      "Customer-level usage is available with `outlit customers get <customer> --include features`.",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),

@@ -95,9 +95,9 @@ describe("Feature commands", () => {
     await captureStdout(() =>
       createCmd.run!({
         args: {
-          source: " metric_source_v1_0123456789abcdef0123456789abcdef ",
-          event: " Report Exported ",
-          key: " reports_exported ",
+          "source-key": " metric_source_v1_0123456789abcdef0123456789abcdef ",
+          "event-name": " Report Exported ",
+          "feature-key": " reports_exported ",
           name: " Reports exported ",
           "property-filters": JSON.stringify([
             {
@@ -133,9 +133,9 @@ describe("Feature commands", () => {
     await captureStdout(() =>
       createCmd.run!({
         args: {
-          source: "metric_source_v1_0123456789abcdef0123456789abcdef",
-          event: "report_exported",
-          key: "reports_exported",
+          "source-key": "metric_source_v1_0123456789abcdef0123456789abcdef",
+          "event-name": "report_exported",
+          "feature-key": "reports_exported",
           name: "Reports exported",
           json: true,
         },
@@ -209,40 +209,6 @@ describe("Feature commands", () => {
     expect(result).toMatchObject({ archived: true })
   })
 
-  test("the previous customers features command reads the features and meters sections", async () => {
-    const { default: featureUsageCmd } = await import("../../src/commands/customers/features")
-
-    await captureStdout(() =>
-      featureUsageCmd.run!({
-        args: { customer: " acme.com ", weeks: "6", json: true },
-      } as Parameters<NonNullable<typeof featureUsageCmd.run>>[0]),
-    )
-
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer", {
-      customer: "acme.com",
-      include: ["features", "meters"],
-      features: { weeks: 6 },
-      meters: { weeks: 6 },
-    })
-  })
-
-  test("the previous customers features command can request weekly usage", async () => {
-    const { default: featureUsageCmd } = await import("../../src/commands/customers/features")
-
-    await captureStdout(() =>
-      featureUsageCmd.run!({
-        args: { customer: "acme.com", weeks: "53", weekly: true, json: true },
-      } as Parameters<NonNullable<typeof featureUsageCmd.run>>[0]),
-    )
-
-    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_customer", {
-      customer: "acme.com",
-      include: ["features", "meters"],
-      features: { weeks: 53, weekly: true },
-      meters: { weeks: 53, weekly: true },
-    })
-  })
-
   test("rejects malformed filters and out-of-range windows before calling Core", async () => {
     const { default: createCmd } = await import("../../src/commands/features/create")
     const { default: workspaceCmd } = await import("../../src/commands/features/list")
@@ -251,9 +217,9 @@ describe("Feature commands", () => {
       () =>
         createCmd.run!({
           args: {
-            source: "metric_source_v1_0123456789abcdef0123456789abcdef",
-            event: "report_exported",
-            key: "reports_exported",
+            "source-key": "metric_source_v1_0123456789abcdef0123456789abcdef",
+            "event-name": "report_exported",
+            "feature-key": "reports_exported",
             name: "Reports exported",
             "property-filters": "not-json",
             json: true,
