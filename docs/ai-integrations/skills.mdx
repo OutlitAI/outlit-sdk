@@ -5,30 +5,36 @@ description: "Give coding agents better guidance for customer queries and Outlit
 
 Agent skills teach coding agents how to work with Outlit. The `outlit` skill covers customer intelligence workflows. The optional `outlit-sdk` skill covers tracking and instrumentation work.
 
-Skills are open source at [github.com/OutlitAI/outlit-agent-skills](https://github.com/OutlitAI/outlit-agent-skills).
+Skills are open source at [github.com/OutlitAI/skills](https://github.com/OutlitAI/skills).
 
 Use skills when the agent runs local commands or needs workflow guidance. Use [MCP integration](/ai-integrations/mcp) for remote MCP clients, and use [Pi agents](/ai-integrations/pi) when you are packaging a Pi extension with Outlit tools, prompts, or custom skills.
 
-## Install
+## Give your agent the skill
 
-Install the `outlit` skill for detected local agents:
+The `outlit` skill ships inside the CLI. Tell your agent to run:
+
+```bash
+outlit --skill
+```
+
+It prints the full skill to stdout. It needs no API key and no network, and it always matches the installed CLI version, so there is nothing to keep up to date.
+
+## Install a skill stub (optional)
+
+To have agents discover Outlit on their own, install a small `outlit` skill that tells the agent to run `outlit --skill`:
 
 ```bash
 outlit setup --yes
 ```
 
-To choose agents manually or add the optional `outlit-sdk` skill, run `outlit setup skills`. For a specific agent, use `outlit setup <agent>`; [Set up coding agents](/cli/ai-agents#supported-agents) lists the supported names.
+This detects installed agents. To choose agents manually, run `outlit setup skills`. For a specific agent, use `outlit setup <agent>`; [Set up coding agents](/cli/ai-agents#supported-agents) lists the supported names. The installed stub never goes stale, because the instructions come from `outlit --skill` at run time.
 
-<Accordion title="Install directly with the skills installer">
+<Accordion title="Install the optional outlit-sdk skill">
 
-```bash
-npx -y skills add https://github.com/OutlitAI/outlit-agent-skills -g
-```
-
-To select a skill and agent explicitly:
+The `outlit-sdk` tracking skill is not part of the CLI. Install it with the skills installer:
 
 ```bash
-npx -y skills add https://github.com/OutlitAI/outlit-agent-skills --skill outlit --agent claude-code --agent opencode -y -g
+npx -y skills add OutlitAI/skills --skill outlit-sdk -g
 ```
 
 </Accordion>

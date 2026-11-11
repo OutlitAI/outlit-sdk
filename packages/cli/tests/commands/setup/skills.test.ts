@@ -41,7 +41,7 @@ describe("setup skills", () => {
         "-y",
         "skills",
         "add",
-        "https://github.com/OutlitAI/outlit-agent-skills",
+        expect.stringContaining("outlit-skill-"),
         "-g",
       ])
 
@@ -76,12 +76,7 @@ describe("setup skills", () => {
 
       const [runnerCmd, runnerArgs] = mockExecFileSync.mock.calls[2] as [string, string[]]
       expect(runnerCmd).toBe("bunx")
-      expect(runnerArgs).toEqual([
-        "skills",
-        "add",
-        "https://github.com/OutlitAI/outlit-agent-skills",
-        "-g",
-      ])
+      expect(runnerArgs).toEqual(["skills", "add", expect.stringContaining("outlit-skill-"), "-g"])
 
       const written = (calls[0]?.[0] as string) ?? ""
       const result = JSON.parse(written) as Record<string, unknown>
