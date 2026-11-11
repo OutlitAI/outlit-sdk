@@ -103,7 +103,7 @@ async function startCli() {
 
   // Old spellings run the new command; each prints one line naming the new spelling.
   const rewrite = rewriteLegacyArgs(process.argv.slice(2))
-  if (rewrite && !isHelpRequest(rewrite.argv)) {
+  if (rewrite?.use && !isHelpRequest(rewrite.argv)) {
     process.stderr.write(`${renamedNotice(rewrite.use)}\n`)
   }
 

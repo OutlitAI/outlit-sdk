@@ -220,10 +220,25 @@ describe("legacy spellings", () => {
     expect(rewriteLegacyArgs(["customers", "--json", "timeline", "acme.com"])?.argv).toEqual([
       "timeline",
       "get",
-      "--json",
       "acme.com",
+      "--json",
     ])
-    expect(rewriteLegacyArgs(["schema", "--json", "get", "activity"])).toBeNull()
+    expect(rewriteLegacyArgs(["schema", "--json", "get", "activity"])).toEqual({
+      argv: ["schema", "get", "activity", "--json"],
+      use: "",
+    })
+    expect(rewriteLegacyArgs(["schema", "--api-key", "KEY", "get", "activity"])?.argv).toEqual([
+      "schema",
+      "get",
+      "activity",
+      "--api-key",
+      "KEY",
+    ])
+    expect(rewriteLegacyArgs(["ws-users", "--api-key=K", "list"])?.argv).toEqual([
+      "members",
+      "list",
+      "--api-key=K",
+    ])
     expect(rewriteLegacyArgs(["schema", "--json"])?.argv).toEqual(["schema", "get", "--json"])
   })
 

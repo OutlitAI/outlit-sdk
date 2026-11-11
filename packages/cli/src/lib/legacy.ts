@@ -326,7 +326,34 @@ const addVerb: Array<{ command: string; verb: string }> = [
  * Rewrites an old spelling to the current one, or returns null when the arguments are current.
  * `outlit schema` and `outlit feedback` ran directly; they gained `get` and `submit`.
  */
-export function rewriteLegacyArgs(argv: readonly string[]): LegacyRewrite | null {
+/**
+ * Moves global options that sit among the leading command words (`schema --api-key K get`) to the
+ * end, where the command parses them; citty would take the option's value for a subcommand.
+ */
+function hoistGlobalOptions(argv: readonly string[]): string[] {
+  const words: string[] = []
+  const hoisted: string[] = []
+  let i = 0
+  while (i < argv.length && words.length < 3) {
+    const next = skipGlobalOptions(argv, i)
+    hoisted.push(...argv.slice(i, next))
+    i = next
+    const arg = argv[i]
+    if (arg === undefined || arg.startsWith("-")) break
+    words.push(arg)
+    i++
+  }
+  return [...words, ...argv.slice(i), ...hoisted]
+}
+
+export function rewriteLegacyArgs(input: readonly string[]): LegacyRewrite | null {
+  const argv = hoistGlobalOptions(input)
+  const result = rewriteCommand(argv)
+  if (result) return result
+  return argv.join("\0") === input.join("\0") ? null : { argv, use: "" }
+}
+
+function rewriteCommand(argv: readonly string[]): LegacyRewrite | null {
   for (const { command, verb } of addVerb) {
     if (argv[0] !== command) continue
     const next = argv[skipGlobalOptions(argv, 1)]
