@@ -9,12 +9,6 @@ import {
 } from "./lib/update"
 
 async function startCli() {
-  // citty only handles --version; support -v as a short alias
-  if (process.argv.includes("-v")) {
-    console.log(CLI_VERSION)
-    process.exit(0)
-  }
-
   // Prints the embedded skill: no auth, no network, no update check.
   // Only a leading `--skill` counts, so `outlit search -- --skill` stays search data.
   // Return instead of process.exit so piped stdout drains fully under Node.
@@ -35,6 +29,12 @@ async function startCli() {
     process.stdout.write(OUTLIT_SKILL.endsWith("\n") ? OUTLIT_SKILL : `${OUTLIT_SKILL}\n`)
     process.exitCode = 0
     return
+  }
+
+  // citty only handles --version; support -v as a short alias
+  if (process.argv.includes("-v")) {
+    console.log(CLI_VERSION)
+    process.exit(0)
   }
 
   if (process.argv.includes(INTERNAL_UPDATE_FLAG)) {
