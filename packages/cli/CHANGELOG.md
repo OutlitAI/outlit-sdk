@@ -1,5 +1,11 @@
 # @outlit/cli
 
+## 5.0.1
+
+### Patch Changes
+
+- [#308](https://github.com/OutlitAI/outlit-sdk/pull/308) [`8f910fd`](https://github.com/OutlitAI/outlit-sdk/commit/8f910fd22af2c4dd4083cd6c69aa7b86e759bdfc) Thanks [@leo-paz](https://github.com/leo-paz)! - Non-ASCII text (the skill's emoji, ellipses, dashes, box drawing) printed garbled when the npm-installed CLI ran under Bun.
+
 ## 5.0.0
 
 ### Major Changes
