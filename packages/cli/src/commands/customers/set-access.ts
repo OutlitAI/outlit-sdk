@@ -26,8 +26,8 @@ export default defineCommand({
       "",
       "A change you could not undo, such as reducing your own access, is shown first.",
       "In a terminal you are asked to confirm; otherwise pass --yes, or nothing changes and",
-      "the command exits 1. For two explicit steps, run with --mode preview, then with",
-      "--mode execute and its --preview-token. To reverse a change, pass --undo-token.",
+      "the command exits 1. A change that needs confirming returns a preview.token: send it",
+      "with --mode execute --preview-token <token>. To reverse a change, pass --undo-token.",
       "",
       "Examples:",
       "  outlit customers set-access acme.com --member user_123 --role viewer --json",
@@ -46,7 +46,7 @@ export default defineCommand({
   },
   async run({ args }) {
     const json = !!args.json
-    const write = parseWriteMode(args, json)
+    const write = parseWriteMode(args, json, { executeOnly: true })
     const undoToken = readUndoToken(args)
     if (undoToken) {
       const client = await getClientOrExit(args["api-key"], json)

@@ -35,7 +35,7 @@ function normalizeTimelineChannels(value: string): string[] {
 
 export default defineCommand({
   meta: {
-    name: "timeline",
+    name: "get",
     description: [
       "Show the activity timeline for a customer.",
       "",

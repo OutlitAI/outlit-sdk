@@ -627,8 +627,8 @@ outlit customers set-access acme.com --member user_123 --role none --json
 
 Run the same `set-access` command again with the other role to change an existing collaborator
 between Viewer and Editor; `--role none` removes explicit access. The result has `outcome`, the
-`role` and `previousRole`, and an `undo` token for `--undo-token`. `--mode`, `--preview-token` and
-`--request-id` work as for `set-owner`.
+`role` and `previousRole`, and an `undo` token for `--undo-token`. `--request-id` and `--undo-token` work as for `set-owner`. A change that needs confirming returns a
+`preview.token`: send it with `--mode execute --preview-token <token>` (`--mode preview` is not accepted here).
 
 `--role` accepts `viewer`, `editor` or `none` in any case; `OWNER` is represented by
 the separate primary-owner assignment. A missing or oversized member, a blank customer, and an

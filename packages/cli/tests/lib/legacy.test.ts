@@ -17,8 +17,8 @@ const cases: Array<[string, string[], string[], string]> = [
   [
     "customers features",
     ["customers", "features", "acme.com", "--weeks", "6"],
-    ["customers", "get", "acme.com", "--weeks", "6", "--include", "features"],
-    "outlit customers get <customer> --include features",
+    ["customers", "get", "acme.com", "--weeks", "6", "--include", "features,meters"],
+    "outlit customers get <customer> --include features,meters",
   ],
   [
     "customers relationship",
@@ -208,6 +208,54 @@ describe("legacy spellings", () => {
     const rewritten = rewriteLegacyArgs(old)
     expect(rewritten).not.toBeNull()
     expect(await resolves(rewritten?.argv ?? [])).toBe(true)
+  })
+
+  test("owner set reads the previous --target-user-id", () => {
+    expect(
+      rewriteLegacyArgs(["customers", "owner", "set", "acme.com", "--target-user-id", "u1"])?.argv,
+    ).toEqual(["customers", "set-owner", "acme.com", "--member", "u1"])
+  })
+
+  test("global options may sit between command words", () => {
+    expect(rewriteLegacyArgs(["customers", "--json", "timeline", "acme.com"])?.argv).toEqual([
+      "timeline",
+      "get",
+      "--json",
+      "acme.com",
+    ])
+    expect(rewriteLegacyArgs(["schema", "--json", "get", "activity"])).toBeNull()
+    expect(rewriteLegacyArgs(["schema", "--json"])?.argv).toEqual(["schema", "get", "--json"])
+  })
+
+  test("destinations get finds the id past --api-key and keeps generated options before --", () => {
+    expect(rewriteLegacyArgs(["destinations", "get", "--api-key", "KEY", "ID"])?.argv).toEqual([
+      "destinations",
+      "list",
+      "--api-key",
+      "KEY",
+      "--ids",
+      "ID",
+    ])
+    expect(rewriteLegacyArgs(["destinations", "disable", "--", "ID"])?.argv).toEqual([
+      "destinations",
+      "update",
+      "--enabled=false",
+      "--",
+      "ID",
+    ])
+    expect(rewriteLegacyArgs(["customers", "credits", "--", "acme.com"])?.argv).toEqual([
+      "customers",
+      "get",
+      "--include",
+      "credits",
+      "--",
+      "acme.com",
+    ])
+  })
+
+  test("an explicit --enabled value is the current spelling and is left alone", () => {
+    expect(rewriteLegacyArgs(["destinations", "update", "d1", "--enabled", "false"])).toBeNull()
+    expect(rewriteLegacyArgs(["destinations", "update", "d1", "--enabled", "FALSE"])).toBeNull()
   })
 
   test("the notice names the new spelling in one line", () => {

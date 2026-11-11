@@ -30,6 +30,7 @@ export interface WriteMode {
 export function parseWriteMode(
   args: { mode?: string; "preview-token"?: string; "request-id"?: string },
   json: boolean,
+  options: { executeOnly?: boolean } = {},
 ): WriteMode {
   const requestId = optionalTrimmedString(args["request-id"]) ?? newRequestId()
   const mode = optionalTrimmedString(args.mode)?.toLowerCase()
@@ -47,6 +48,15 @@ export function parseWriteMode(
   if (mode !== "preview" && mode !== "execute") {
     return outputError(
       { message: "--mode must be preview or execute", code: "invalid_input" },
+      json,
+    )
+  }
+  if (options.executeOnly && mode === "preview") {
+    return outputError(
+      {
+        message: "--mode accepts only execute here: a change that needs confirming says so",
+        code: "invalid_input",
+      },
       json,
     )
   }

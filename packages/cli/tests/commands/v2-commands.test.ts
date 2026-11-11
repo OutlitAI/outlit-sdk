@@ -318,7 +318,7 @@ describe("two-step write flags", () => {
     ])
   })
 
-  test("set-access --role none removes access", async () => {
+  test("set-access sends --role none, and takes only --mode execute", async () => {
     await invoke("customers", [
       "set-access",
       "acme.com",
@@ -327,10 +327,31 @@ describe("two-step write flags", () => {
       "--role",
       "none",
       "--mode",
-      "preview",
+      "execute",
+      "--preview-token",
+      "tok",
+      "--request-id",
+      "r1",
     ])
+    expect(calls[0]?.params).toEqual({
+      customer: "acme.com",
+      member: "u1",
+      role: "none",
+      mode: "execute",
+      previewToken: "tok",
+      requestId: "r1",
+    })
 
-    expect(calls[0]?.params).toMatchObject({ role: "none", mode: "preview" })
+    const setAccess = (await import("../../src/commands/customers/set-access")).default
+    calls.length = 0
+    await runExpectingError(
+      () =>
+        setAccess.run!({
+          args: { customer: "acme.com", member: "u1", role: "viewer", mode: "preview", json: true },
+        } as never),
+      "invalid_input",
+    )
+    expect(calls).toEqual([])
   })
 
   test("destinations archive and features archive take the same flags", async () => {

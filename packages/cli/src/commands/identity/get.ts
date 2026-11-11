@@ -7,7 +7,7 @@ import { parseCsvList, requiredTrimmedString } from "../../lib/platform-input"
 
 export default defineCommand({
   meta: {
-    name: "identity",
+    name: "get",
     description: [
       publicToolContracts.outlit_get_identity.description,
       "",

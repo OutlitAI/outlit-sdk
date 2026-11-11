@@ -81,13 +81,47 @@ function flagToPositional(args: string[], flags: string[]): string[] {
   return [...values, ...rest]
 }
 
+/** Appends generated options before a `--` terminator, so they stay options. */
+function withExtra(rest: string[], extra: string[]): string[] {
+  const dashes = rest.indexOf("--")
+  if (dashes === -1) return [...rest, ...extra]
+  return [...rest.slice(0, dashes), ...extra, ...rest.slice(dashes)]
+}
+
+/** Global options that may sit between command words: `--json`, `--yes`, `--api-key <key>`. */
+function skipGlobalOptions(argv: readonly string[], start: number): number {
+  let i = start
+  while (i < argv.length) {
+    const arg = argv[i] as string
+    if (arg === "--json" || arg === "--yes" || arg.startsWith("--api-key=")) i++
+    else if (arg === "--api-key") i += 2
+    else break
+  }
+  return i
+}
+
+/** The first positional of an argument list, skipping the value of `--api-key`. */
+function firstPositional(args: readonly string[]): string | undefined {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i] as string
+    if (arg === "--") return args[i + 1]
+    if (arg === "--api-key") i++
+    else if (!arg.startsWith("-")) return arg
+  }
+  return undefined
+}
+
 const rules: Rule[] = [
   // Customer sections that became `customers get --include`.
   ...(["credits", "features", "relationship"] as const).map(
     (section): Rule => ({
       from: ["customers", section],
-      to: (rest) => ["customers", "get", ...rest, "--include", section],
-      use: `outlit customers get <customer> --include ${section}`,
+      to: (rest) => [
+        "customers",
+        "get",
+        ...withExtra(rest, ["--include", section === "features" ? "features,meters" : section]),
+      ],
+      use: `outlit customers get <customer> --include ${section === "features" ? "features,meters" : section}`,
     }),
   ),
   {
@@ -99,7 +133,11 @@ const rules: Rule[] = [
     from: ["customers", "identity"],
     to: (rest) => {
       const links = takeSwitch(rest, "links")
-      return ["identity", "get", ...links.rest, ...(links.present ? ["--include", "links"] : [])]
+      return [
+        "identity",
+        "get",
+        ...withExtra(links.rest, links.present ? ["--include", "links"] : []),
+      ]
     },
     use: "outlit identity get <customer>",
   },
@@ -110,7 +148,7 @@ const rules: Rule[] = [
   },
   {
     from: ["customers", "owner", "set"],
-    to: (rest) => ["customers", "set-owner", ...rest],
+    to: (rest) => ["customers", "set-owner", ...renameFlags(rest, { "target-user-id": "member" })],
     use: "outlit customers set-owner <customer> --member <member>",
   },
   {
@@ -123,9 +161,7 @@ const rules: Rule[] = [
     to: (rest) => [
       "customers",
       "set-access",
-      ...renameFlags(rest, { "target-user-id": "member" }),
-      "--role",
-      "none",
+      ...withExtra(renameFlags(rest, { "target-user-id": "member" }), ["--role", "none"]),
     ],
     use: "outlit customers set-access <customer> --member <member> --role none",
   },
@@ -136,8 +172,10 @@ const rules: Rule[] = [
       return [
         "customers",
         "merge",
-        ...renameFlags(execute.rest, { "review-notes": "note" }),
-        ...(execute.present ? ["--mode", "execute"] : []),
+        ...withExtra(
+          renameFlags(execute.rest, { "review-notes": "note" }),
+          execute.present ? ["--mode", "execute"] : [],
+        ),
       ]
     },
     use: "outlit customers merge <survivor> <duplicate> --mode execute",
@@ -183,7 +221,7 @@ const rules: Rule[] = [
   },
   {
     from: ["activation", "disable"],
-    to: (rest) => ["settings", "update", ...rest, "--activation-event", "none"],
+    to: (rest) => ["settings", "update", ...withExtra(rest, ["--activation-event", "none"])],
     use: "outlit settings update --activation-event none",
   },
   {
@@ -209,12 +247,16 @@ const rules: Rule[] = [
   {
     from: ["destinations", "get"],
     to: (rest) => {
-      const id = rest.find((arg) => !arg.startsWith("-"))
+      const id = firstPositional(rest)
+      const at = id === undefined ? -1 : rest.indexOf(id)
+      const others = at === -1 ? rest : [...rest.slice(0, at), ...rest.slice(at + 1)]
       return [
         "destinations",
         "list",
-        ...(id ? ["--ids", id] : []),
-        ...rest.filter((arg) => arg !== id),
+        ...withExtra(
+          others.filter((a) => a !== "--" || at === -1),
+          id ? ["--ids", id] : [],
+        ),
       ]
     },
     use: "outlit destinations list --ids <id>",
@@ -222,7 +264,11 @@ const rules: Rule[] = [
   ...(["enable", "disable"] as const).map(
     (verb): Rule => ({
       from: ["destinations", verb],
-      to: (rest) => ["destinations", "update", ...rest, `--enabled=${verb === "enable"}`],
+      to: (rest) => [
+        "destinations",
+        "update",
+        ...withExtra(rest, [`--enabled=${verb === "enable"}`]),
+      ],
       use: `outlit destinations update <id> --enabled ${verb === "enable"}`,
     }),
   ),
@@ -259,10 +305,10 @@ function destinationFlags(args: string[]): string[] {
     if (arg === "--default") out.push("--is-default")
     else if (arg === "--disabled") out.push("--enabled=false")
     else if (arg === "--enabled") {
-      // A bare --enabled meant true; a value was never part of the old flag.
+      // A bare --enabled meant true. An explicit value is the current spelling: leave it alone.
       const next = args[i + 1]
-      if (next === "true" || next === "false") {
-        out.push(`--enabled=${next}`)
+      if (next !== undefined && /^(true|false)$/i.test(next)) {
+        out.push(arg, next)
         i++
       } else out.push("--enabled=true")
     } else out.push(arg)
@@ -276,25 +322,37 @@ const addVerb: Array<{ command: string; verb: string }> = [
   { command: "feedback", verb: "submit" },
 ]
 
-function matches(argv: readonly string[], from: readonly string[]): boolean {
-  return from.every((word, index) => argv[index] === word)
-}
-
 /**
  * Rewrites an old spelling to the current one, or returns null when the arguments are current.
  * `outlit schema` and `outlit feedback` ran directly; they gained `get` and `submit`.
  */
 export function rewriteLegacyArgs(argv: readonly string[]): LegacyRewrite | null {
   for (const { command, verb } of addVerb) {
-    if (argv[0] === command && argv[1] !== verb && !isHelp(argv[1])) {
+    if (argv[0] !== command) continue
+    const next = argv[skipGlobalOptions(argv, 1)]
+    if (next !== verb && !isHelp(next)) {
       return { argv: [command, verb, ...argv.slice(1)], use: `outlit ${command} ${verb}` }
     }
   }
 
   for (const rule of rules) {
-    if (!matches(argv, rule.from)) continue
-    const rest = argv.slice(rule.from.length)
-    const rewritten = rule.to([...rest])
+    // Command words may be separated by global options (`customers --json timeline acme.com`).
+    let index = 0
+    const skipped: string[] = []
+    let matched = true
+    for (const word of rule.from) {
+      const start = index
+      index = skipGlobalOptions(argv, index)
+      skipped.push(...argv.slice(start, index))
+      if (argv[index] !== word) {
+        matched = false
+        break
+      }
+      index++
+    }
+    if (!matched) continue
+    const rest = [...skipped, ...argv.slice(index)]
+    const rewritten = rule.to(rest)
     // A rule that changes nothing (a flag-only rule) is a notice only when the old flag was used.
     if (rewritten.join("\0") === [...rule.from, ...rest].join("\0")) continue
     return { argv: rewritten, use: rule.use }
