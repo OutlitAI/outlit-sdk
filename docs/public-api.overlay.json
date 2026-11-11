@@ -163,6 +163,12 @@
       }
     },
     {
+      "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_get_skill')]",
+      "update": {
+        "title": "Get skill"
+      }
+    },
+    {
       "target": "$.paths['/api/tools/call'].post.requestBody.content['application/json'].schema.oneOf[?(@.properties.tool.const == 'outlit_list_integrations')]",
       "update": {
         "title": "List integrations"
@@ -400,6 +406,12 @@
       "target": "$.components.schemas['ToolOutput_outlit_load_toolset']",
       "update": {
         "title": "Load toolset"
+      }
+    },
+    {
+      "target": "$.components.schemas['ToolOutput_outlit_get_skill']",
+      "update": {
+        "title": "Get skill"
       }
     },
     {
