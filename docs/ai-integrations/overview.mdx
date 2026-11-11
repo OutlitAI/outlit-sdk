@@ -12,7 +12,7 @@ Outlit is the product that monitors customers and completes approved customer wo
 | `outlit` CLI | Coding agents, scripts, terminal work | `ok_` API key (`--api-key`, `OUTLIT_API_KEY`, or stored credentials) | [CLI](/cli/overview) |
 | Remote MCP | MCP clients (Cursor, VS Code, Claude, custom clients) | OAuth (member permissions) or scoped API key (key grants) | [MCP](/ai-integrations/mcp) |
 | Tool gateway API | HTTP integrations, serverless, non-JS runtimes | `Authorization: Bearer ok_...` | [Tools](/api-reference/tools) |
-| Agent skills | Teaching agents workflows on top of CLI/MCP | Inherits the CLI/MCP credential | [Skills](/ai-integrations/skills) |
+| Agent skills | Teaching agents workflows on top of CLI/MCP: `outlit --skill` or the `outlit_get_skill` tool | None for `outlit --skill`; `outlit_get_skill` uses the MCP or API credential | [Skills](/ai-integrations/skills) |
 | `@outlit/pi` | Pi agents with embedded Outlit tools | `OUTLIT_API_KEY` | [Pi](/ai-integrations/pi) |
 | Tracking SDKs | Emitting events into Outlit (not querying) | `pk_` public key in the URL path | [Tracking](/tracking/quickstart) |
 

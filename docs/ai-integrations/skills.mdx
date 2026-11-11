@@ -11,13 +11,17 @@ Use skills when the agent runs local commands or needs workflow guidance. Use [M
 
 ## Give your agent the skill
 
-The `outlit` skill ships inside the CLI. Tell your agent to run:
+The `outlit` skill ships with every Outlit interface, so an agent can read it without installing anything.
+
+**CLI.** Tell your agent to run:
 
 ```bash
 outlit --skill
 ```
 
 It prints the full skill to stdout. It needs no API key and no network, and it always matches the installed CLI version, so there is nothing to keep up to date.
+
+**MCP or the tool gateway API.** Have your agent call `outlit_get_skill` once at the start of a session. It takes no input and returns the same skill text. It's in the `meta` toolset, which the default MCP URL (`?toolsets=core,work,meta`) loads. The skill is about 20 KB (5,000 tokens), and every call returns the same text, so one read per session is enough.
 
 ## Install a skill stub (optional)
 
