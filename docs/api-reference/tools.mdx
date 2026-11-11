@@ -41,8 +41,8 @@ against the shared `@outlit/tools` contract before the tool runs.
 |---|---|
 | `outlit_get_identity` | Read a customer's bounded possible duplicate records and the evidence behind each; `include: ["links"]` adds its records in other systems |
 | `outlit_list_merge_suggestions` | Browse saved merge suggestions and history; `include` adds impact, scope, Jev evidence and the cluster |
-| `outlit_reject_merge_suggestion` | Reject one saved suggestion by `id`; needs a `requestId` |
-| `outlit_merge_customers` | Two-phase customer merge by exact IDs: `mode: "preview"` (default, read-only) returns the impact, a linked-records diff and a `preview.token`; `mode: "execute"` needs that token and a `requestId` |
+| `outlit_reject_merge_suggestion` | Reject one saved suggestion by `id`; needs an `idempotencyKey` |
+| `outlit_merge_customers` | Two-phase customer merge by exact IDs: `mode: "preview"` (default, read-only) returns the impact, a linked-records diff and a `preview.token`; `mode: "execute"` needs that token and an `idempotencyKey` |
 | `outlit_get_merge` | Track a merge by its `operation.id` |
 
 ### Inbox
@@ -51,8 +51,8 @@ against the shared `@outlit/tools` contract before the tool runs.
 |---|---|
 | `outlit_list_tasks` | List one section of your Inbox (today, open, snoozed, done or pool), as tasks in the To do page's order, each with its task `id`, type, what it is part of and what it answers |
 | `outlit_get_task` | Retrieve one Inbox task by `id`; `include` adds `source`, `draft` (opt-in) and `covered` |
-| `outlit_act_on_task` | Act on your own Inbox task by `id` (done, won't do, wrong, reopen, snooze, unsnooze, take, put back, not covered, recover cover), as you would on the To do page; needs a `requestId`; returns an `undo` |
-| `outlit_undo_task_action` | Undo an action with its `undo.token` (as `undoToken`); needs a `requestId` |
+| `outlit_act_on_task` | Act on your own Inbox task by `id` (done, won't do, wrong, reopen, snooze, unsnooze, take, put back, not covered, recover cover), as you would on the To do page; needs an `idempotencyKey`; returns an `undo` |
+| `outlit_undo_task_action` | Undo an action with its `undo.token` (as `undoToken`); needs an `idempotencyKey` |
 
 ### Access
 
@@ -90,12 +90,13 @@ against the shared `@outlit/tools` contract before the tool runs.
 
 ### Toolsets
 
-Tools belong to a toolset: `core` (customers, people, facts, sources, search, SQL), `work` (your tasks, the Inbox, and acting on them, with undo), `identity` (merges), `admin` (access, destinations, integrations, settings, Features) and `meta` (feedback and these two tools).
+Tools belong to a toolset: `core` (customers, people, facts, sources, search, SQL), `work` (your tasks, the Inbox, and acting on them, with undo), `identity` (merges), `admin` (access, destinations, integrations, settings, Features) and `meta` (feedback and these three tools).
 
 | Tool | Purpose |
 |---|---|
 | `outlit_list_toolsets` | List the toolsets with their purpose and tools, whether this connection lists them, and the MCP URL that adds one (`null` outside MCP) |
 | `outlit_load_toolset` | Return a one-line summary of each tool in a toolset and the MCP URL that lists them; pass `tools` (at most 10 names) to get those tools' full descriptions and input JSON Schemas |
+| `outlit_get_skill` | Return the Outlit skill: the full guide to the tools, with when to use each, the order to call them in, and worked chains. About 20 KB (5,000 tokens) and the same text every call, so read it once |
 
 ### Configuration
 
@@ -465,9 +466,9 @@ Outlit; those metrics are not separate public resources.
 
 The admin tools change a workspace, so they share a few rules.
 
-- **Retries.** Writes that can be sent twice take a `requestId`, any unique string (`outlit_create_destination`, `outlit_archive_destination`, `outlit_set_customer_owner`, `outlit_set_customer_access`, `outlit_setup_integration`, `outlit_create_feature`, `outlit_archive_feature`). A retry with the same `requestId` and input returns the first result; a changed input with the same id is refused.
+- **Retries.** Writes that can be sent twice take an `idempotencyKey`, any unique string (`outlit_create_destination`, `outlit_archive_destination`, `outlit_set_customer_owner`, `outlit_set_customer_access`, `outlit_setup_integration`, `outlit_create_feature`, `outlit_archive_feature`). A retry with the same `idempotencyKey` and input returns the first result; a changed input with the same key is refused.
 - **Previews.** `outlit_archive_destination`, `outlit_archive_feature` and `outlit_set_customer_owner` change nothing on the first call. They return `preview.token`, what the change would affect, and `next`, the exact call to confirm. Confirm with the same target, `"mode": "execute"` and `"previewToken"`. A token lasts 15 minutes; a token that no longer matches the current state is refused with `preview_stale` and a fresh preview.
-- **Undo.** `outlit_set_customer_owner` and `outlit_set_customer_access` return `undo: { token, until }` (24 hours), or `null` when the change cannot be undone. Call the same tool with `{ "undoToken", "requestId" }` to put the earlier state back. When the caller could not undo a change, such as removing their own access, the first call returns `outcome: "needs_confirmation"` with the reason, a preview and `next`.
+- **Undo.** `outlit_set_customer_owner` and `outlit_set_customer_access` return `undo: { token, until }` (24 hours), or `null` when the change cannot be undone. Call the same tool with `{ "undoToken", "idempotencyKey" }` to put the earlier state back. When the caller could not undo a change, such as removing their own access, the first call returns `outcome: "needs_confirmation"` with the reason, a preview and `next`.
 - **Set state.** `outlit_update_destination` and `outlit_update_settings` take the end state; only the fields you send are written. `revision` is optional: when it is stale the call is refused with `stale_revision`, unless every field you asked for already holds its value.
 - **Shapes.** Lists return their rows (`items`; [other tools use another key](#reading-a-list)) and `page { hasMore, nextCursor, total }` (25 per page by default, at most 100), and `coverage` when empty. People are `{ id, name, email }`; customers `{ id, name, domain }`. Enums are lowercase. A missing permission is `TOOL_CALL_FORBIDDEN` with `missingPermission`.
 
@@ -478,7 +479,7 @@ The admin tools change a workspace, so they share a few rules.
     "customer": "acme.com",
     "member": "alex@example.com",
     "role": "viewer",
-    "requestId": "6d1c8a6e-5c0b-4c0e-9d6a-2f5f6a2c9d11"
+    "idempotencyKey": "6d1c8a6e-5c0b-4c0e-9d6a-2f5f6a2c9d11"
   }
 }
 ```
@@ -490,21 +491,21 @@ The admin tools change a workspace, so they share a few rules.
 | `outlit_get_destination {id}`, `outlit_list_destinations` → `{destinations}` | `outlit_list_destinations {ids: [id]}` → `{items, missing}`; `maskedConfig` is `config`, `syncStatus` and `lastSyncedAt` are `delivery`; each has a `revision` |
 | `outlit_enable_destination`, `outlit_disable_destination` | `outlit_update_destination {id, enabled}` |
 | `outlit_update_destination {id, type, label?, isDefault?}` | `{id, revision?, label?, isDefault?, enabled?}`; `type` is dropped |
-| `outlit_create_destination {type: "SLACK_CHANNEL", ...}` → `{destination}` | `{type: "slack_channel", ..., requestId}` → `{created, destination}` |
-| `outlit_archive_destination {id}` archives at once | `{id, requestId}` previews; `{..., mode: "execute", previewToken}` archives |
-| `outlit_assign_customer_owner {customerId, targetUserId}` | `outlit_set_customer_owner {customer, member, requestId}` |
-| `outlit_grant_customer_access`, `outlit_update_customer_access` `{customerId, targetUserId, role: "VIEWER" \| "EDITOR"}` | `outlit_set_customer_access {customer, member, role: "viewer" \| "editor", requestId}` |
+| `outlit_create_destination {type: "SLACK_CHANNEL", ...}` → `{destination}` | `{type: "slack_channel", ..., idempotencyKey}` → `{created, destination}` |
+| `outlit_archive_destination {id}` archives at once | `{id, idempotencyKey}` previews; `{..., mode: "execute", previewToken}` archives |
+| `outlit_assign_customer_owner {customerId, targetUserId}` | `outlit_set_customer_owner {customer, member, idempotencyKey}` |
+| `outlit_grant_customer_access`, `outlit_update_customer_access` `{customerId, targetUserId, role: "VIEWER" \| "EDITOR"}` | `outlit_set_customer_access {customer, member, role: "viewer" \| "editor", idempotencyKey}` |
 | `outlit_revoke_customer_access` | `outlit_set_customer_access {..., role: "none"}` |
 | `outlit_list_workspace_users {search, role, ..., orderBy: "owned_customer_count"}`, up to 1000 per page | `outlit_list_members {filters: {search, role, managerEmail, hasOwnedCustomers}, orderBy: "owned_customers" \| "name"}`, up to 100 per page; `ownedCustomerCount` is `ownedCustomers` |
 | `outlit_get_integration_capabilities`, `outlit_get_integration_status`, the earlier `outlit_list_integrations {connectedOnly}` | `outlit_list_integrations {provider?, filters: {connected?}}` → `items[]` with `status`, `setup {auth, mode}`, `connection` |
-| `outlit_begin_integration_setup {provider}` | `outlit_setup_integration {provider, handoff: true, requestId}` → `step: {kind: "browser_handoff", url, sessionId, expiresAt}` |
+| `outlit_begin_integration_setup {provider}` | `outlit_setup_integration {provider, handoff: true, idempotencyKey}` → `step: {kind: "browser_handoff", url, sessionId, expiresAt}` |
 | `outlit_setup_integration` → `next`, `error {code: "OWNER_REQUIRED"}`; `outlitStage: "Won"` | `step`, `problem {code: "owner_required", ...}`; `next` is a next call; `outlitStage: "won"` |
 | `outlit_get_integration_setup_status {sessionId}` | `outlit_get_setup_session {id}` → `{sessionId, provider, status, pollAfterSeconds?, next?}` |
 | `outlit_get_workspace_settings`, `outlit_get_customer_activation` | `outlit_get_settings` → `{settings: {general, activation}, revision}` |
 | `outlit_update_workspace_settings {defaultTimezone, customerOwnership}`, `outlit_update_customer_activation {eventName}` | `outlit_update_settings {revision?, timezone?, defaultOwner?, activationEvent?}` → `{settings, revision, changed}` |
 | `outlit_preview_customer_activation {eventName}` → `{preview: {...Count}}` | `outlit_preview_activation {event}` → `{customers, contacts, examples}` |
 | `outlit_list_features {sourceKey, weeks, candidateLimit: 100}`, always with evidence and candidates | `{filters: {sourceKey, eventSearch}, include: ["usage", "candidates"], weeks, candidateLimit: 25, limit, cursor}`; `features` is `items`, `evidence` is `usage`, `selectedSourceKey` is `sources[].selected`, `workspaceActiveFeatureCount` is `workspaceActiveFeatures`, candidates are a section |
-| `outlit_create_feature`, `outlit_archive_feature {id, revision}` | `requestId` added; archive previews first |
+| `outlit_create_feature`, `outlit_archive_feature {id, revision}` | `idempotencyKey` added; archive previews first |
 
 Each earlier name and input spelling keeps working until 2026-12-11.
 
@@ -538,7 +539,7 @@ Example list response:
 {
   "items": [
     {
-      "id": "cus_123",
+      "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
       "name": "Acme",
       "domain": "acme.com",
       "billingStatus": "paying",
@@ -566,6 +567,14 @@ Example list response:
 }
 ```
 
+## Call allowance and limits
+
+- **Plan allowance.** Every tool call spends one API call from the workspace's plan allowance, and a repeated write that replays a stored result still counts. A call the gateway ends without a result, such as a resource that is not found, is given back. When the allowance is spent the call is refused (`429 plan_api_limit_exceeded` on the free plan, `402 plan_billing_action_required` on a paid plan) with `resetsAt`, the time it renews. The refusal is not retryable before then. `outlit_submit_feedback` has its own quota and spends none of the allowance.
+- **Response size.** A result is at most 64 KiB. A list returns the rows that fit, with `truncation` saying how many it kept and `next` the call for the rest; any other tool returns `413 TOOL_RESULT_TOO_LARGE` with a `next` saying how to ask for less.
+- **Paging.** Lists return 25 rows by default and at most 100 per page, except `outlit_get_source`, whose content comes in segments of 10 by default, and `outlit_query` (default 100 rows, at most 1,000 per page).
+- **SQL.** `outlit_query` runs at most 3 queries at once per workspace; a fourth waits up to 10 seconds for a slot, then fails and can be retried. A query is stopped after about 30 seconds.
+- **Idempotency.** A write's result is kept for 24 hours under its idempotency key. A retry with the same key and input in that time returns the first result; the same key with different input is refused with `IDEMPOTENCY_CONFLICT`.
+
 ## Error responses
 
 Invalid JSON, unknown tool names, or invalid tool inputs return `400`:
@@ -579,11 +588,13 @@ Invalid JSON, unknown tool names, or invalid tool inputs return `400`:
 }
 ```
 
-Invalid credentials return `401`. Plan API-call limits can return `402` or `429` with a stable billing `code`.
+Invalid credentials return `401`. A workspace that has spent its plan allowance gets `429` with the code `plan_api_limit_exceeded` (free plan) or `402` with `plan_billing_action_required` (paid plan); see [Call allowance and limits](#call-allowance-and-limits). Both are `retryable: false` and carry `resetsAt`, an ISO 8601 time, and the earlier `resetAt` (milliseconds since the epoch; prefer `resetsAt`).
+
+Codes: `INVALID_JSON`, `INVALID_TOOL_CALL`, `INVALID_TOOL_INPUT` (400), `INVALID_CREDENTIALS` (401), `TOOL_CALL_FORBIDDEN` (403), `TOOL_RESOURCE_NOT_FOUND` (404), `CONFLICT` (409, a write that conflicts with the current state, such as a stale `revision`), `IDEMPOTENCY_CONFLICT` (409), `TOOL_RESULT_TOO_LARGE` (413), `RATE_LIMITED` (429, a tool's own rate limit: wait `retryAfterSeconds`), `INTERNAL_ERROR` (500) and `TOOL_GATEWAY_ERROR` (503, retryable). `TOOL_IMPLEMENTATION_ERROR` is what earlier releases sent for a conflict, a rate limit or a crash; it remains the code for other tool failures (an unreadable page, an outage), and clients should keep accepting it. Readers should ignore a code they do not know.
 
 A validation issue in `validationIssues` carries `path`, `code` and a `message` saying what to fix, written from the schema's own bounds and never from the received value; an enum or literal mismatch also lists `validValues`. A `429` carries `retryAfterSeconds` (and a `Retry-After` header): the whole seconds to wait. A key whose every grant is a read grant is refused for a write with `TOOL_CALL_FORBIDDEN`, "This key can only read" and the `missingPermission` the tool needs; previews of a write and `outlit_submit_feedback` still run. Reading destinations, behavior metrics and integrations takes the grants `destinations:read`, `behavior_metrics:read` and `integrations:read`.
 
-A request id that was already used with different input returns `409` with the code `IDEMPOTENCY_CONFLICT`; send a new request id, or repeat the original input. A result larger than 64 KiB is never returned whole: a list returns the items that fit with a `truncation` field whose `next` names the call for the rest, and anything else returns `413` with the code `TOOL_RESULT_TOO_LARGE` and a `next` saying how to ask for less.
+An idempotency key that was already used with different input returns `409` with the code `IDEMPOTENCY_CONFLICT`; send a new idempotency key, or repeat the original input. A result larger than 64 KiB is never returned whole: a list returns the items that fit with a `truncation` field whose `next` names the call for the rest, and anything else returns `413` with the code `TOOL_RESULT_TOO_LARGE` and a `next` saying how to ask for less.
 
 ### Response headers
 
@@ -593,8 +604,14 @@ Beside the result, the gateway can send these headers. `@outlit/tools` reports t
 |---|---|
 | `outlit-deprecation` | The call used a retired tool name. JSON `{ "tool", "use", "until", "message" }`: the name you called, the tool to call instead, and the last day the old name works. `Deprecation` and `Sunset` carry the same information as standard headers |
 | `outlit-notice` | A JSON array of sentences about an old input spelling the gateway changed, such as a limit lowered to the maximum or a 12-hour window rounded up to one day |
-| `idempotent-replayed` | `true` when the result was stored from an earlier call with the same request id |
+| `idempotent-replayed` | `true` when the result was stored from an earlier call with the same idempotency key |
+| `outlit-request-id` | The id of this request, on every response, results and errors alike. Quote it in a bug report or to support. The error body carries the same value as `requestId` |
+| `outlit-version` | The dated output version this answer follows, for example `2026-11-12` (see [Compatibility](/api-reference/compatibility)) |
 
-Every call from `@outlit/tools`, `@outlit/cli` and `@outlit/pi` sends `x-outlit-client: <package>/<version>`, for example `@outlit/cli/4.1.0`. The gateway uses it to add a deprecation notice to the response of a client below the minimum version for a release; see [Compatibility](/api-reference/compatibility). Send it from your own client too, naming your own package and version.
+A request may send `Outlit-Version: <date>` to say which output version it expects. Only the current version is accepted; any other value is refused before the call runs with `INVALID_TOOL_INPUT`, naming the value sent and the accepted one. Leave the header out to take the current version. MCP results carry the same values in `_meta`: `"outlit/requestId"` and `"outlit/version"`, and an error result carries its envelope in `_meta["outlit/error"]` with no `structuredContent`.
+
+`@outlit/tools` returns them as `meta.requestId` and `meta.version` from `client.callToolWithMeta()`, as `error.requestId` and `error.version` on `OutlitToolsApiError`, and in `onResponse`. `createOutlitClient({ version })` sends `Outlit-Version`. The CLI prints them to stderr with `--verbose` (a JSON line in JSON mode), and Pi puts them in the result's `details`.
+
+Every call from `@outlit/tools`, `@outlit/cli` and `@outlit/pi` sends `x-outlit-client: <package>/<version>`, for example `@outlit/cli/5.0.0`. The gateway uses it to add a deprecation notice to the response of a client below the minimum version for a release; see [Compatibility](/api-reference/compatibility). Send it from your own client too, naming your own package and version.
 
 Retired tool names answer until the date in their `outlit-deprecation` header, then return `INVALID_TOOL_INPUT` with the issue code `renamed_tool` and the new name in `next.tool`.

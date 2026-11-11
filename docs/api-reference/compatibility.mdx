@@ -1,13 +1,15 @@
 ---
 title: "Compatibility"
-description: "How Outlit changes the tool API: when outputs switch, how long old inputs keep working, and the minimum client versions for each Core release."
+description: "How Outlit changes the tool API: dated output versions, how long old inputs keep working, the minimum client versions, and what each release changed."
 ---
 
 The tool API ([Call a tool](/api-reference/tools)) is shared by the CLI, `@outlit/tools`, `@outlit/pi`, the MCP server and your own clients. This page says how it changes and what each release changed.
 
 ## Policy
 
-- **A changed output shape ships with a major SDK release.** A Core release that changes an output shape (a field's type, a default field set, a renamed or removed field) is paired with a major version of `@outlit/tools`, `@outlit/cli` and `@outlit/pi`, so a parser written against the earlier major never meets the new shape by accident. The gateway does not return both shapes; the minimum versions below are the majors that read the new one, and a client below them gets an upgrade notice. Each release below lists every output shape it changed. A Core release that only adds fields, or changes input spellings, is a minor SDK release.
+- **Every response names its version.** The `outlit-version` response header is a date, currently `2026-11-12`. A request may send `Outlit-Version: <date>`; the only value accepted is the current one, and any other is refused with `INVALID_TOOL_INPUT` before the call runs. MCP results carry it as `_meta["outlit/version"]`. Every response also carries `outlit-request-id`; quote it in a bug report.
+- **Outputs are additive-only within a dated version.** A field is never removed, renamed, retyped, made nullable, made optional or narrowed, and an enum value is never removed. New fields, new enum values and new union members can appear at any time, so a reader must ignore a field and an enum value it does not know. A change that cannot be additive needs a new dated version and a converter that serves the previous shape to clients that ask for it; Core's CI compares every tool's output schema with the last released contract and fails a breaking change that arrives without a new date.
+- **A new dated version ships with a major SDK release.** The gateway does not return two shapes at once. The versions of `@outlit/tools`, `@outlit/cli` and `@outlit/pi` that read the new shape are the minimums below, and a client under them gets an upgrade notice. A release that only adds fields or changes input spellings is a minor SDK release.
 - **Old output fields stay where it costs little.** When a field is replaced by a richer one, the old one stays beside it with its end date, so a parser can move on its own schedule. Each release below names the ones it kept.
 - **Old input spellings and retired tool names keep working for 30 days.** The gateway maps an old spelling to the current one and answers normally, with `Deprecation` and `Sunset` response headers (and the `outlit-deprecation` and `outlit-notice` headers described in [Response headers](/api-reference/tools#response-headers)) that state the last day it works. After that date the call is refused with `INVALID_TOOL_INPUT` and an issue that names the current spelling. Both clients print these notices; a custom client should read the headers.
 - **Clients say who they are.** `@outlit/tools`, `@outlit/cli` and `@outlit/pi` send `x-outlit-client: <package>/<version>` on every request, for example `x-outlit-client: @outlit/cli/5.0.0`. When a call comes from a client below the minimum version for the current release, the gateway adds a deprecation notice to the response saying which version to upgrade to. If you call the gateway directly, send the header with your own package name and version.
@@ -16,47 +18,64 @@ The tool API ([Call a tool](/api-reference/tools)) is shared by the CLI, `@outli
 
 | Core release | `@outlit/cli` | `@outlit/tools` | `@outlit/pi` |
 |---|---|---|---|
-| Agent API v2 polish (this release) | 5.0.0 | 4.0.0 | 4.0.0 |
-| Agent API v2 | 4.0.0 | 3.0.0 | 3.0.0 |
+| 2026-11-12, Agent API v2 polish (this release) | 5.0.0 | 4.0.0 | 4.0.0 |
+| 2026-11-10, Agent API v2 | 4.0.0 | 3.0.0 | 3.0.0 |
 
-A client below the minimum keeps working for the input windows below, then fails on the inputs it still sends the old way. It can also misread the output shapes this release changed (listed below), which is why the minimums are major versions. Upgrade with `outlit upgrade` or your package manager.
+A client below the minimum keeps working for the input windows below, then fails on the inputs it still sends the old way. It can also misread the output shapes this release changed (listed below), which is why the minimums are major versions. Releases are listed newest first, each under its date. Upgrade with `outlit upgrade` or your package manager.
 
-## Agent API v2 polish
+## 2026-11-12: Agent API v2 polish
 
-Old input spellings below work until **2026-12-12**.
+Old input spellings below work until **2026-12-12**. Read the [Output shapes](#output-shapes) before you upgrade a reader: this release changes 26 output shapes from the 2026-11-10 contract (`@outlit/tools` 3.0.0).
 
 ### Inputs
 
 | Tool | Now | Earlier |
 |---|---|---|
+| every write that takes one | `idempotencyKey` | `requestId` |
 | `outlit_get_fact` | `id` | `factId` |
 | `outlit_get_setup_session` | `id` | `sessionId` |
 | `outlit_get_customer` | `fields`: selectors `{ source?, key }` | `crmFields`: an array of keys |
 | `outlit_list_people` | `fields`: selectors `{ source?, key }` | `fields`: an array of keys |
 
-New inputs: `part` on `outlit_get_fact`; `include` (`reasoning`, `quote`, `evidence`) on `outlit_list_facts` and `outlit_search_customer_context`; `crmContacts` on `outlit_get_customer`; `filters.credits`, `orderBy: "meter_usage"` and `meter` on `outlit_list_customers`. The CLI spells these `facts get <id> --part`, `--include`, `customers get --fields` (was `--crm-fields`) and `--crm-contacts <connectionId>:<accountId>`, and `customers list --runs-out-within` and `--meter`.
+The `idempotencyKey` is on `outlit_create_destination`, `outlit_archive_destination`, `outlit_set_customer_owner`, `outlit_set_customer_access`, `outlit_setup_integration`, `outlit_create_feature`, `outlit_archive_feature`, `outlit_act_on_task`, `outlit_undo_task_action`, `outlit_reject_merge_suggestion` and `outlit_merge_customers`, and is optional on `outlit_submit_feedback`. The gateway still accepts `requestId` until 2026-12-12. In the CLI `--idempotency-key` replaces `--request-id`, which keeps working as a hidden alias and prints `Renamed: use \`--idempotency-key <key>\`` once to stderr.
+
+New inputs: `part` on `outlit_get_fact`; `include` (`reasoning`, `quote`, `evidence`) on `outlit_list_facts` and `outlit_search_customer_context`; `crmContacts` on `outlit_get_customer`; `fields` on `outlit_get_source`, which reads chosen CRM fields; `filters.credits`, `orderBy: "meter_usage"` and `meter` on `outlit_list_customers`. Activity windows take `Nd`, `Nh` and `Nm` durations (`30d`, `12h`, `45m`). The CLI spells these `facts get <id> --part`, `--include`, `customers get --fields` (was `--crm-fields`) and `--crm-contacts <connectionId>:<accountId>`, and `customers list --runs-out-within` and `--meter`.
+
+New tool: `outlit_get_skill` (toolset `meta`) returns the Outlit skill, the guide to the tools.
 
 ### Output shapes
 
-These change on the day the release is live; the SDK majors above read them. Only the enrichment totals keep their earlier field.
+These change on the day the release is live; the SDK majors above read them. The 26 changes from the 2026-11-10 contract are:
+
+- `page.total` can be `null` (13 places): `outlit_list_customers`, `outlit_list_customer_fields`, `outlit_list_people`, `outlit_list_members`, `outlit_query`, `outlit_list_destinations`, `outlit_list_integrations`, `outlit_list_features`, `outlit_list_tasks`, and the `features`, `meters`, `credits` and `hierarchy` sections of `outlit_get_customer`. A `null` total means counting every match would cost a second full read; page on `hasMore` and `nextCursor`.
+- `lifetimeRevenue` of the `revenue` section in `outlit_get_customer` can be `null`: the revenue could not be read in one currency, which is not the same as no revenue.
+- Facts (9 places, `outlit_list_facts`, `outlit_get_fact` and the fact results of `outlit_search_customer_context`): `reasoning` and `source.quote` are optional, `evidence` is an object instead of an array, and `fact` is optional on `outlit_get_fact` (absent when `part` reads one field).
+- CRM summary (3 places): `crmSummary` on customer list rows is an array instead of a map, and each field in `crmSummary[].fields[]` on `outlit_get_customer` is `{ field: { source, key }, label, values }` instead of `{ key, label, value }`.
+
+Only the enrichment totals keep their earlier field. The detail:
 
 - **Facts.** A fact from `outlit_list_facts` and `outlit_search_customer_context` has no `reasoning` or `source.quote` unless `include` asks for it; `outlit_get_fact` still returns both. `evidence` is `{ items, page, more }` (the first three excerpts) instead of an array. `outlit_get_fact` with `part` returns `{ customer, part }` and no `fact`.
 - **CRM summary.** `crmSummary` is an array of accounts `{ provider, connectionId, accountId, name, fields }` on list rows and on `outlit_get_customer`. List rows used a map of label to value.
-- **Enrichment.** In `enrichment`, `fundingSummary.totalInvestment` and `fundingSummary.lastRoundAmount` are money objects (`{ amount, currency, decimals, formatted }`) or `null`. They were `totalInvestmentUsd` and `lastRoundAmountUsd` numbers, which stay beside them, deprecated, until **2026-12-12**. Read the money objects.
+- **Enrichment.** In `enrichment`, `fundingSummary.totalInvestment` and `fundingSummary.lastRoundAmount` are money objects (`{ amount, currency, decimals, formatted }`) or `null`. `totalInvestmentUsd` and `lastRoundAmountUsd`, the numbers of earlier releases, stay beside them, deprecated, until **2026-12-12**. Read the money objects.
 - **Partial sections.** A section that holds only its first part, such as `users` and `recentTimeline`, carries `more: { omitted, next }`. `recentTimeline` entries carry `id` and `source`. A CRM account with more contacts than listed carries `contactsNext`, and `outlit_list_people` lists `accounts[]` (each with a `next`) under `crmContactsWithoutPerson`, and `connectionId` on `crmContactsTruncated` entries.
 - **Customer lists.** Rows carry `credits` with `filters.credits` and `meter` with `orderBy: "meter_usage"`. `coverage` can carry `stale`, `withoutMeter` and `ambiguous` counts when those leave customers out.
 - **Destinations.** `outlit_create_destination` refuses a channel that is already an active destination with `CONFLICT`; `created: true` means the channel is a destination now, new or restored from the archive. It no longer updates an existing one.
 - **Toolsets.** Each toolset from `outlit_list_toolsets` carries `cost`, the input tokens its tool definitions use, or `null`.
+- **Additions.** `outlit_get_customer` `links` carries a `cursor`, and `truncation`, `unreadable` and `omitted` say what a section left out and why. `outlit_list_sources` and `outlit_list_destinations` carry `omitted`. `outlit_list_customer_fields` `coverage` carries a `status` and a `reason` when part of the catalog could not be read. Timestamps ending in `At` declare the `date-time` format.
 - **Text fields.** `truncation.clipped` names text fields cut because one item alone was over the size cap, with the call that reads each whole. `outlit_get_source` can carry `truncation`.
 
 ### Errors and keys
 
+- New error codes `CONFLICT` (409), `RATE_LIMITED` (429) and `INTERNAL_ERROR` (500). Earlier releases sent `TOOL_IMPLEMENTATION_ERROR` for these; it remains the code for other tool failures and clients should keep accepting it.
+- A spent plan allowance (`plan_api_limit_exceeded`, `plan_billing_action_required`) is `retryable: false` and carries `resetsAt`, an ISO 8601 time, beside the earlier `resetAt` (epoch milliseconds, kept). See [Call allowance and limits](/api-reference/tools#call-allowance-and-limits).
+- Every response carries `outlit-request-id` and `outlit-version`; MCP results carry `_meta["outlit/requestId"]` and `_meta["outlit/version"]`, and an MCP error result carries its envelope in `_meta["outlit/error"]` with no `structuredContent`.
 - A validation issue carries a `message` saying what to fix, beside `path`, `code` and `validValues`.
 - A `429` carries `retryAfterSeconds` (and a `Retry-After` header).
 - A key whose every grant is a read grant is refused for a write with `TOOL_CALL_FORBIDDEN` and the `missingPermission` it needs. Previews of a write and `outlit_submit_feedback` still run.
 - New grants: `destinations:read`, `behavior_metrics:read` and `integrations:read`. The v1 API key validation response leaves them out; ask for the v2 response to see them.
 - MCP transport failures come back as typed errors.
+- `@outlit/tools` exposes the request id and version (`callToolWithMeta`, `OutlitToolsApiError.requestId`), the CLI prints them with `--verbose`, and Pi puts them in the result's `details`.
 
-## Agent API v2
+## 2026-11-10: Agent API v2
 
 Old input spellings and retired tool names work until **2026-12-11**. The [admin tool table](/api-reference/tools#moving-from-the-earlier-admin-tools) lists the renamed tools and inputs, and the CLI prints `Renamed: use \`outlit …\`` once to stderr when you use an earlier command or flag.

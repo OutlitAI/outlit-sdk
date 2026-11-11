@@ -13,7 +13,7 @@ outlit integrations setup hubspot
 outlit integrations setup hubspot --json
 ```
 
-Setup checks the provider name locally, then calls `outlit_setup_integration` without credentials. Each call carries its own `requestId`, so a retried call returns the first answer instead of repeating the write. The CLI no longer falls back to an older browser-handoff flow.
+Setup checks the provider name locally, then calls `outlit_setup_integration` without credentials. Each call carries its own `idempotencyKey`, so a retried call returns the first answer instead of repeating the write. The CLI no longer falls back to an older browser-handoff flow.
 
 Interactive setup can:
 

@@ -9,6 +9,7 @@ Most commands in this reference share these common flags:
 |------|-------------|
 | `--api-key <key>` | Override the active API key for this request |
 | `--json` | Force JSON output (auto-enabled when piped) |
+| `--verbose` | Print each call's request ID and API version to stderr (a JSON line in JSON mode); quote the request ID in a bug report |
 | `--help` | Show help for the command |
 
 ## Activation
@@ -456,7 +457,7 @@ outlit merge-suggestions list --suggestion-id "<suggestionId>" --json
 outlit merge-suggestions reject "<id>" --note "Different companies" --json
 ```
 
-List also accepts `--status suggested|processing|merged|rejected` and `--confidence high|medium|low` (the uppercase spelling still works). `--limit` defaults to 25. Rejection requires identity review authority and does not authorize merging. Each run sends a new request ID; pass `--request-id` to make a retry safe. It returns `{ "suggestion": { "id": "…", "status": "rejected" }, "next": … }`; read the suggestion list again for updated details.
+List also accepts `--status suggested|processing|merged|rejected` and `--confidence high|medium|low` (the uppercase spelling still works). `--limit` defaults to 25. Rejection requires identity review authority and does not authorize merging. Each run sends a new idempotency key; pass `--idempotency-key` to make a retry safe. It returns `{ "suggestion": { "id": "…", "status": "rejected" }, "next": … }`; read the suggestion list again for updated details.
 
 The merge command previews by default. Both positional arguments are exact IDs; the first is the surviving record. Without `--suggestion-id`, both records must be company customers. A pair involving an individual requires an eligible saved suggestion for that exact pair. An optional `--suggestion-id` links an existing suggestion to the exact pair, and `--note` records the review explanation.
 
@@ -470,10 +471,10 @@ The preview returns `preview.token` (pass it as `--preview-token`), the impact a
 Merge execution is dangerous and has no supported undo. It moves customer data and access relationships into the survivor. Execute only when authorized and certain that the records represent the same customer; two company records must represent the same company. Similar names, related domains, shared participants, and parent/subsidiary relationships do not establish that identity. If uncertain, do not execute.
 </Warning>
 
-Execution requires an explicit `--mode execute`, the reviewed preview's token, a stable request ID, and dedicated merge authority. A read-only credential can preview but cannot execute. A merge API key must include an explicitly selected `customer_identity:merge` grant; ordinary full-access and personal CLI presets exclude it. Use the same pair, token, request ID, and review inputs when retrying an execution. The result is `operation`: `{ id, survivor, duplicate, status, phase, failure }`.
+Execution requires an explicit `--mode execute`, the reviewed preview's token, a stable idempotency key, and dedicated merge authority. A read-only credential can preview but cannot execute. A merge API key must include an explicitly selected `customer_identity:merge` grant; ordinary full-access and personal CLI presets exclude it. Use the same pair, token, idempotency key, and review inputs when retrying an execution. The result is `operation`: `{ id, survivor, duplicate, status, phase, failure }`.
 
 ```bash
-outlit customers merge "<survivor>" "<duplicate>" --mode execute --preview-token "<token>" --request-id "<stableId>" --json
+outlit customers merge "<survivor>" "<duplicate>" --mode execute --preview-token "<token>" --idempotency-key "<stableId>" --json
 outlit merges get "<id>" --json
 ```
 
@@ -626,7 +627,7 @@ outlit customers set-owner acme.com --member user_123 --yes --json
 A change returns `outcome` (`changed` or `unchanged`), the new `owner`, the `previousOwner` and an
 `undo` token good for 24 hours. Pass that token as `--undo-token` to reverse the change
 (`outlit customers set-owner --undo-token <token>`). For two explicit steps instead of a prompt, run
-with `--mode preview`, then `--mode execute --preview-token <token>`; `--request-id` makes a retry
+with `--mode preview`, then `--mode execute --preview-token <token>`; `--idempotency-key` makes a retry
 return the first result.
 
 ### Grant, change or remove access
@@ -638,7 +639,7 @@ outlit customers set-access acme.com --member user_123 --role none --json
 
 Run the same `set-access` command again with the other role to change an existing collaborator
 between Viewer and Editor; `--role none` removes explicit access. The result has `outcome`, the
-`role` and `previousRole`, and an `undo` token for `--undo-token`. `--request-id` and `--undo-token` work as for `set-owner`. A change that needs confirming returns a
+`role` and `previousRole`, and an `undo` token for `--undo-token`. `--idempotency-key` and `--undo-token` work as for `set-owner`. A change that needs confirming returns a
 `preview.token`: send it with `--mode execute --preview-token <token>` (`--mode preview` is not accepted here).
 
 `--role` accepts `viewer`, `editor` or `none` in any case; `OWNER` is represented by
@@ -861,8 +862,8 @@ each with the actions it accepts.
 ```text
 outlit tasks list [--section <section>] [--customer <customer>] [--owner <member>] [flags]
 outlit tasks get <id> [--include source,draft,covered]
-outlit tasks act <id> <action> [--until <date-time>] [--reason <reason>] [--request-id <id>]
-outlit tasks undo <undo-token> [--request-id <id>]
+outlit tasks act <id> <action> [--until <date-time>] [--reason <reason>] [--idempotency-key <id>]
+outlit tasks undo <undo-token> [--idempotency-key <id>]
 ```
 
 | Command | Description |
@@ -872,7 +873,7 @@ outlit tasks undo <undo-token> [--request-id <id>]
 | `tasks act <id> <action>` | Takes one action as you: `done`, `wont_do`, `wrong`, `reopen`, `snooze`, `unsnooze`, `take`, `put_back`, `not_covered` or `recover_cover`. The action must be one the task lists. `--until` (snooze only) is an ISO 8601 date-time within 14 days, default a week; `--reason` (`wont_do` only) is `already_handled`, `not_needed` or `not_ours`. The result carries an `undo.token` good for 24 hours |
 | `tasks undo <undo-token>` | Reverses one action before `undo.until`, while its tasks are as it left them |
 
-`tasks act` and `tasks undo` send a new request ID each run; pass `--request-id` so a retry returns the
+`tasks act` and `tasks undo` send a new idempotency key on each run; pass `--idempotency-key` so a retry returns the
 first result instead of acting twice.
 
 ```bash
@@ -1180,7 +1181,7 @@ outlit destinations archive 10000000-0000-4000-8000-000000000003 --yes --json
 
 Destination creation and update are Slack-channel backed. Use `--is-default` on `destinations create` or `destinations update` to make a destination the default fallback. `--enabled true|false` enables or disables it (on create, it defaults to `true`). `destinations update` patches only the fields you pass, and `--revision` refuses the change if the destination changed since you read it. Raw destination secrets and unmasked provider configuration are not returned.
 
-`destinations list` pages its results (`--limit` up to 100, `--cursor` from the previous `page.nextCursor`). `destinations list --ids <id>,<id>` reads specific destinations and lists an ID it cannot show under `missing`. `--request-id` on `create` and `archive` makes a retry return the first result.
+`destinations list` pages its results (`--limit` up to 100, `--cursor` from the previous `page.nextCursor`). `destinations list --ids <id>,<id>` reads specific destinations and lists an ID it cannot show under `missing`. `--idempotency-key` on `create` and `archive` makes a retry return the first result.
 
 `destinations archive` first shows the destination and how many automation routes deliver to it. In a terminal you are asked to confirm. Without a terminal, pass `--yes`, or the command prints the preview, archives nothing and exits with code 1. For two explicit steps, use `--mode preview` and then `--mode execute --preview-token <token>`.
 
@@ -1362,6 +1363,7 @@ outlit feedback submit --body <text> [flags]
 | `--area` | string | — | Optional product area label such as `cli`, `mcp`, or `integrations`; trimmed, non-empty, at most 100 characters |
 | `--context` | string | — | Optional JSON object with diagnostic context; at most 16 KiB serialized |
 | `--context-file` | string | — | Read the JSON context object from a file instead of `--context` |
+| `--idempotency-key` | string | — | Optional idempotency key: a retry with the same key and input does not submit twice |
 
 `--body` and `--body-file` are mutually exclusive, as are `--context` and `--context-file`.
 Use `context` for diagnostics such as the surface, command, or client version — never for

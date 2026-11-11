@@ -90,14 +90,14 @@ Two-phase and auditable — preview first, then execute with the returned token.
 # 1. Preview the merge (no mutation yet)
 outlit customers merge '<survivor-uuid>' '<duplicate-uuid>' --json
 
-# 2. Execute — requires BOTH the preview token and a stable request ID
-outlit customers merge '<survivor-uuid>' '<duplicate-uuid>' --mode execute --preview-token '<token>' --request-id merge-acme-001 --json
+# 2. Execute — requires BOTH the preview token and a stable idempotency key
+outlit customers merge '<survivor-uuid>' '<duplicate-uuid>' --mode execute --preview-token '<token>' --idempotency-key merge-acme-001 --json
 
 # 3. Check progress (status reads never re-execute)
 outlit merges get '<operation-id>' --json
 ```
 
-Reuse the same `--request-id` for an identical retry — it makes the execution idempotent. A different request ID on the same pair is a new execution attempt.
+Reuse the same `--idempotency-key` for an identical retry — it makes the execution idempotent. A different idempotency key on the same pair is a new execution attempt.
 
 ## Recipe: SQL analytics
 
