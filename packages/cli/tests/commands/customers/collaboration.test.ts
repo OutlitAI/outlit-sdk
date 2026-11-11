@@ -145,14 +145,14 @@ describe("customer collaboration commands", () => {
     expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_set_customer_owner", {
       customer,
       member,
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
     expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_set_customer_owner", {
       customer,
       member,
       mode: "execute",
       previewToken: "owner_preview_token",
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
     expect(stdout).toBe(`${JSON.stringify(ownerChanged, null, 2)}\n`)
   })
@@ -167,7 +167,9 @@ describe("customer collaboration commands", () => {
       json: true,
     })
 
-    const ids = mockCallTool.mock.calls.map((call) => (call[1] as { requestId: string }).requestId)
+    const ids = mockCallTool.mock.calls.map(
+      (call) => (call[1] as { idempotencyKey: string }).idempotencyKey,
+    )
     expect(new Set(ids).size).toBe(2)
   })
 
@@ -209,7 +211,7 @@ describe("customer collaboration commands", () => {
       customer,
       member,
       role: "viewer",
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
     expect(stdout).toBe(`${JSON.stringify(accessChanged, null, 2)}\n`)
   })
@@ -226,7 +228,7 @@ describe("customer collaboration commands", () => {
       customer,
       member,
       role: "editor",
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
   })
 
@@ -242,7 +244,7 @@ describe("customer collaboration commands", () => {
       customer,
       member,
       role: "none",
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
     expect(stdout).toBe(`${JSON.stringify(accessChanged, null, 2)}\n`)
   })
@@ -264,7 +266,7 @@ describe("customer collaboration commands", () => {
       role: "none",
       mode: "execute",
       previewToken: "access_preview_token",
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
   })
 

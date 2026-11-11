@@ -14,6 +14,7 @@ export type SubmitFeedbackInput = {
   body: string
   area?: string
   context?: Record<string, unknown>
+  idempotencyKey?: string
 }
 
 export type OutlitToolParams<TToolName extends CliToolName> =

@@ -221,6 +221,13 @@ describe("runTool()", () => {
       retryable: false,
       missingPermission: "destinations:read",
     }
+    const quota = {
+      code: "plan_api_limit_exceeded" as const,
+      message: "API call limit exceeded",
+      requestId: "request_terminal_4",
+      retryable: false,
+      resetsAt: "2026-12-01T00:00:00.000Z",
+    }
     const { getClientOrExit, runTool } = await import("../../src/lib/api")
     const client = await getClientOrExit(TEST_API_KEY, false)
 
@@ -229,6 +236,7 @@ describe("runTool()", () => {
       [400, envelope],
       [429, rate],
       [403, forbidden],
+      [429, quota],
     ] as const) {
       mockCallTool.mockRejectedValueOnce(
         new OutlitToolsApiError(status, JSON.stringify(body), body),
@@ -257,6 +265,9 @@ describe("runTool()", () => {
     expect(printed[1]).toBe("Error: Too many requests\nRetry in 12s.")
     expect(printed[2]).toBe(
       "Error: Capability not authorized\nMissing permission: destinations:read",
+    )
+    expect(printed[3]).toBe(
+      "Error: API call limit exceeded\nPlan API call limit reached. Resets at 2026-12-01T00:00:00.000Z; retrying before then will fail.",
     )
   })
 

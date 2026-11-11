@@ -69,6 +69,10 @@ export type OutlitPiToolDetails = {
   result: unknown
   /** Set when the call failed at the gateway or the network; the agent sees it as the tool result. */
   error?: OutlitPiToolError
+  /** Core's `outlit-request-id` for this call, success or failure: quote it when reporting a problem. */
+  requestId?: string
+  /** Core's `outlit-version`: the dated output version that answered. */
+  version?: string
 }
 
 export type OutlitPiToolDefinition = ToolDefinition<TSchema, OutlitPiToolDetails>
@@ -124,7 +128,12 @@ export function createOutlitPiTool(
         return formatToolResult(toolName, result, responseInfo)
       } catch (error) {
         // A failed call is something the agent can act on, not a crash: hand it the envelope.
-        return formatToolError(toolName, toToolError(error), responseNotices(responseInfo))
+        return formatToolError(
+          toolName,
+          toToolError(error, responseInfo),
+          responseNotices(responseInfo),
+          responseInfo,
+        )
       }
     },
   }
@@ -205,13 +214,16 @@ function responseNotices(info: OutlitToolsResponseInfo | undefined): string[] {
   ]
 }
 
-function toToolError(error: unknown): OutlitPiToolError {
+function toToolError(error: unknown, info?: OutlitToolsResponseInfo): OutlitPiToolError {
   if (isOutlitToolsApiError(error)) {
     if (error.envelope) return { ...error.envelope, status: error.status }
     return {
       message: error.message,
       retryable: error.status === 429 || error.status >= 500,
       status: error.status,
+      ...((error.requestId ?? info?.requestId)
+        ? { requestId: error.requestId ?? info?.requestId }
+        : {}),
     }
   }
   // fetch rejecting (offline, DNS, reset) or a 200 whose body was not JSON.
@@ -222,6 +234,7 @@ function formatToolError(
   toolName: PiToolName,
   error: OutlitPiToolError,
   notices: string[],
+  info?: OutlitToolsResponseInfo,
 ): AgentToolResult<OutlitPiToolDetails> {
   const result = { error }
   return {
@@ -231,7 +244,18 @@ function formatToolError(
         ? [{ type: "text" as const, text: `Notice: ${notices.join(" ")}` }]
         : []),
     ],
-    details: { toolName, result, error },
+    details: { toolName, result, error, ...responseIds(info, error.requestId) },
+  }
+}
+
+function responseIds(
+  info: OutlitToolsResponseInfo | undefined,
+  fallbackRequestId?: string,
+): { requestId?: string; version?: string } {
+  const requestId = info?.requestId ?? fallbackRequestId
+  return {
+    ...(requestId ? { requestId } : {}),
+    ...(info?.version ? { version: info.version } : {}),
   }
 }
 
@@ -252,6 +276,7 @@ function formatToolResult(
     details: {
       toolName,
       result,
+      ...responseIds(info),
     },
   }
 }

@@ -42,8 +42,12 @@ import {
   matchesGeneratedJsonSchema,
   normalizeCustomerSourceToolInput,
   normalizeCustomerSourceType,
+  OUTLIT_API_VERSION,
   OUTLIT_TOOLS_CLIENT,
   outlitClientHeader,
+  outlitRequestIdHeader,
+  outlitVersionRequestHeader,
+  outlitVersionResponseHeader,
   piToolNames,
   publicOpenApiTransports,
   resolveCustomerContextSearchInput,
@@ -114,6 +118,7 @@ describe("toolsets", () => {
       "outlit_submit_feedback",
       "outlit_list_toolsets",
       "outlit_load_toolset",
+      "outlit_get_skill",
       "outlit_list_integrations",
       "outlit_setup_integration",
       "outlit_get_setup_session",
@@ -133,7 +138,7 @@ describe("toolsets", () => {
       "outlit_merge_customers",
       "outlit_get_merge",
     ])
-    expect(allPublicToolNames).toHaveLength(40)
+    expect(allPublicToolNames).toHaveLength(41)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -319,13 +324,13 @@ describe("tool contracts", () => {
       "eventName",
       "featureKey",
       "name",
-      "requestId",
+      "idempotencyKey",
     ])
     expect(create.inputSchema.properties.propertyFilters).toEqual(
       expect.objectContaining({ default: [], maxItems: 5 }),
     )
     expect(archive.commandId).toBe("value_feature.archive")
-    expect(archive.inputSchema.required).toEqual(["id", "revision", "requestId"])
+    expect(archive.inputSchema.required).toEqual(["id", "revision", "idempotencyKey"])
     expect(archive.inputSchema.properties).toEqual(
       expect.objectContaining({
         mode: expect.objectContaining({ enum: ["preview", "execute"] }),
@@ -604,7 +609,7 @@ describe("tool contracts", () => {
         {
           provider: "autumn",
           credentials: { apiKey: "am_sk_test_example" },
-          requestId: "request_autumn_1",
+          idempotencyKey: "request_autumn_1",
         },
         contract.inputSchema,
       ),
@@ -797,6 +802,100 @@ describe("createOutlitClient", () => {
     expect(OUTLIT_TOOLS_CLIENT).toBe(`@outlit/tools/${pkg.version}`)
     expect(headerOf(0)[outlitClientHeader]).toBe(`@outlit/tools/${pkg.version}`)
     expect(headerOf(1)[outlitClientHeader]).toBe("@outlit/cli/4.1.0")
+  })
+
+  test("sends Outlit-Version only when asked, and reads the request id and version off every answer", async () => {
+    const headers = { "outlit-request-id": "req_abc", "outlit-version": "2026-11-12" }
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async () => new Response(JSON.stringify({ items: [] }), { headers }))
+    const seen: unknown[] = []
+    const plain = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: fetchMock,
+      onResponse: (info) => seen.push(info),
+    })
+    const pinned = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: fetchMock,
+      version: OUTLIT_API_VERSION,
+    })
+
+    const { result, meta } = await plain.callToolWithMeta("outlit_list_customers", {})
+    await pinned.callTool("outlit_list_customers", {})
+    const sent = (call: number) =>
+      (fetchMock.mock.calls[call]?.[1] as RequestInit).headers as Record<string, string>
+
+    expect(result).toEqual({ items: [] })
+    expect(meta).toMatchObject({ requestId: "req_abc", version: "2026-11-12", status: 200 })
+    expect(seen[0]).toEqual(meta)
+    expect(sent(0)[outlitVersionRequestHeader]).toBeUndefined()
+    expect(sent(1)[outlitVersionRequestHeader]).toBe("2026-11-12")
+    expect(outlitRequestIdHeader).toBe("outlit-request-id")
+    expect(outlitVersionResponseHeader).toBe("outlit-version")
+  })
+
+  test("puts the request id and version on a gateway error, from the headers or else the envelope", async () => {
+    const envelope = {
+      code: "RATE_LIMITED",
+      message: "Slow down",
+      retryable: true,
+      requestId: "req_env",
+      retryAfterSeconds: 7,
+    }
+    const withHeaders = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockResolvedValue(
+        new Response(JSON.stringify(envelope), {
+          status: 429,
+          headers: { "outlit-request-id": "req_hdr", "outlit-version": "2026-11-12" },
+        }),
+      ),
+    })
+    const bare = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockResolvedValue(new Response(JSON.stringify(envelope), { status: 429 })),
+    })
+
+    const first = await withHeaders.callTool("outlit_list_customers").catch((e: unknown) => e)
+    const second = await bare.callTool("outlit_list_customers").catch((e: unknown) => e)
+    if (!isOutlitToolsApiError(first) || !isOutlitToolsApiError(second)) {
+      throw new Error("expected OutlitToolsApiError")
+    }
+
+    expect(first.requestId).toBe("req_hdr")
+    expect(first.version).toBe("2026-11-12")
+    expect(first.envelope?.retryAfterSeconds).toBe(7)
+    expect(second.requestId).toBe("req_env")
+    expect(second.version).toBeUndefined()
+  })
+
+  test("reads the quota denial's resetsAt, and the new error codes", async () => {
+    const quota = {
+      code: "plan_api_limit_exceeded",
+      message: "API call limit exceeded",
+      retryable: false,
+      requestId: "req_quota",
+      plan: "free",
+      resetAt: 1796083200000,
+      resetsAt: "2026-12-01T00:00:00.000Z",
+    }
+    const client = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockResolvedValue(new Response(JSON.stringify(quota), { status: 429 })),
+    })
+    const error = await client.callTool("outlit_list_customers").catch((e: unknown) => e)
+    if (!isOutlitToolsApiError(error)) throw new Error("expected OutlitToolsApiError")
+
+    expect(error.envelope).toEqual(quota)
+    for (const code of [
+      "CONFLICT",
+      "RATE_LIMITED",
+      "INTERNAL_ERROR",
+      "TOOL_IMPLEMENTATION_ERROR",
+    ]) {
+      expect(toolGatewayErrorCodes).toContain(code)
+    }
   })
 
   test("forwards a caller deadline signal to the gateway request", async () => {

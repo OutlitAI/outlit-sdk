@@ -191,16 +191,11 @@ describe("createOutlitPiExtension", () => {
       return pi.registeredTools.map((tool) => tool.name)
     }
 
-    expect(registered({ toolsets: ["meta"] })).toEqual([
-      "outlit_submit_feedback",
-      "outlit_list_toolsets",
-      "outlit_load_toolset",
-    ])
+    expect(registered({ toolsets: ["meta"] })).toEqual(toolNamesInToolsets(["meta"]))
+    expect(registered({ toolsets: ["meta"] })).toContain("outlit_submit_feedback")
     expect(registered({ toolsets: ["meta"], toolNames: ["outlit_get_customer"] })).toEqual([
       "outlit_get_customer",
-      "outlit_submit_feedback",
-      "outlit_list_toolsets",
-      "outlit_load_toolset",
+      ...toolNamesInToolsets(["meta"]),
     ])
     expect(registered({ toolsets: ["core", "work"] })).toEqual(
       toolNamesInToolsets(["core", "work"]),
@@ -305,6 +300,30 @@ describe("createOutlitPiExtension", () => {
     expect(JSON.parse((dropped.content[0] as { text: string }).text)).toEqual({
       error: { message: "fetch failed", retryable: true },
     })
+  })
+
+  test("puts the request id and output version in the details of a result and of an error", async () => {
+    const headers = { "outlit-request-id": "req_ok", "outlit-version": "2026-11-12" }
+    const ok = createOutlitPiTool("outlit_list_customers", {
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockResolvedValue(new Response(JSON.stringify({ items: [] }), { headers })),
+    })
+    const failed = createOutlitPiTool("outlit_list_customers", {
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockResolvedValue(
+        new Response("<html>Bad gateway</html>", {
+          status: 502,
+          headers: { ...headers, "outlit-request-id": "req_bad" },
+        }),
+      ),
+    })
+
+    const success = await ok.execute("call_1", {}, undefined, undefined, undefined as never)
+    const failure = await failed.execute("call_1", {}, undefined, undefined, undefined as never)
+
+    expect(success.details).toMatchObject({ requestId: "req_ok", version: "2026-11-12" })
+    expect(failure.details).toMatchObject({ requestId: "req_bad", version: "2026-11-12" })
+    expect(failure.details.error?.requestId).toBe("req_bad")
   })
 
   test("adds the gateway's deprecation and notices after the result", async () => {

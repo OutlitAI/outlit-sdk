@@ -119,18 +119,18 @@ describe("v2 commands", () => {
         id: "task_1",
         action: "snooze",
         until: "2026-11-14T09:00:00Z",
-        requestId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+        idempotencyKey: expect.stringMatching(/^[0-9a-f-]{36}$/),
       },
     })
     expect(calls[1]?.params).toMatchObject({ action: "wont_do", reason: "not_needed" })
-    expect(calls[1]?.params.requestId).not.toBe(calls[0]?.params.requestId)
+    expect(calls[1]?.params.idempotencyKey).not.toBe(calls[0]?.params.idempotencyKey)
   })
 
   test("tasks act keeps a given request id so a retry returns the first result", async () => {
-    await invoke("tasks", ["act", "task_1", "done", "--request-id", "req_7"])
-    await invoke("tasks", ["act", "task_1", "done", "--request-id", "req_7"])
+    await invoke("tasks", ["act", "task_1", "done", "--idempotency-key", "req_7"])
+    await invoke("tasks", ["act", "task_1", "done", "--idempotency-key", "req_7"])
 
-    expect(calls.map((call) => call.params.requestId)).toEqual(["req_7", "req_7"])
+    expect(calls.map((call) => call.params.idempotencyKey)).toEqual(["req_7", "req_7"])
   })
 
   test("tasks act refuses an unknown action or reason before calling Core", async () => {
@@ -149,12 +149,12 @@ describe("v2 commands", () => {
   })
 
   test("tasks undo takes the undo token as a positional", async () => {
-    await invoke("tasks", ["undo", "undo_token_1", "--request-id", "req_9"])
+    await invoke("tasks", ["undo", "undo_token_1", "--idempotency-key", "req_9"])
 
     expect(calls).toEqual([
       {
         tool: "outlit_undo_task_action",
-        params: { undoToken: "undo_token_1", requestId: "req_9" },
+        params: { undoToken: "undo_token_1", idempotencyKey: "req_9" },
       },
     ])
   })
@@ -209,7 +209,7 @@ describe("v2 commands", () => {
       "reports_exported",
       "--name",
       "Reports exported",
-      "--request-id",
+      "--idempotency-key",
       "req_1",
     ])
 
@@ -221,7 +221,7 @@ describe("v2 commands", () => {
         featureKey: "reports_exported",
         name: "Reports exported",
         propertyFilters: [],
-        requestId: "req_1",
+        idempotencyKey: "req_1",
       },
     })
   })
@@ -243,14 +243,14 @@ describe("two-step write flags", () => {
       "u1",
       "--mode",
       "preview",
-      "--request-id",
+      "--idempotency-key",
       "req_1",
     ])
 
     expect(calls).toEqual([
       {
         tool: "outlit_set_customer_owner",
-        params: { customer: "acme.com", member: "u1", mode: "preview", requestId: "req_1" },
+        params: { customer: "acme.com", member: "u1", mode: "preview", idempotencyKey: "req_1" },
       },
     ])
   })
@@ -265,7 +265,7 @@ describe("two-step write flags", () => {
       "execute",
       "--preview-token",
       "tok",
-      "--request-id",
+      "--idempotency-key",
       "req_2",
     ])
 
@@ -277,7 +277,7 @@ describe("two-step write flags", () => {
           member: "u1",
           mode: "execute",
           previewToken: "tok",
-          requestId: "req_2",
+          idempotencyKey: "req_2",
         },
       },
     ])
@@ -309,12 +309,12 @@ describe("two-step write flags", () => {
   })
 
   test("set-owner and set-access reverse an earlier change with --undo-token", async () => {
-    await invoke("customers", ["set-owner", "--undo-token", "undo_1", "--request-id", "r1"])
-    await invoke("customers", ["set-access", "--undo-token", "undo_2", "--request-id", "r2"])
+    await invoke("customers", ["set-owner", "--undo-token", "undo_1", "--idempotency-key", "r1"])
+    await invoke("customers", ["set-access", "--undo-token", "undo_2", "--idempotency-key", "r2"])
 
     expect(calls).toEqual([
-      { tool: "outlit_set_customer_owner", params: { undoToken: "undo_1", requestId: "r1" } },
-      { tool: "outlit_set_customer_access", params: { undoToken: "undo_2", requestId: "r2" } },
+      { tool: "outlit_set_customer_owner", params: { undoToken: "undo_1", idempotencyKey: "r1" } },
+      { tool: "outlit_set_customer_access", params: { undoToken: "undo_2", idempotencyKey: "r2" } },
     ])
   })
 
@@ -330,7 +330,7 @@ describe("two-step write flags", () => {
       "execute",
       "--preview-token",
       "tok",
-      "--request-id",
+      "--idempotency-key",
       "r1",
     ])
     expect(calls[0]?.params).toEqual({
@@ -339,7 +339,7 @@ describe("two-step write flags", () => {
       role: "none",
       mode: "execute",
       previewToken: "tok",
-      requestId: "r1",
+      idempotencyKey: "r1",
     })
 
     const setAccess = (await import("../../src/commands/customers/set-access")).default
@@ -355,7 +355,7 @@ describe("two-step write flags", () => {
   })
 
   test("destinations archive and features archive take the same flags", async () => {
-    await invoke("destinations", ["archive", "d1", "--mode", "preview", "--request-id", "r1"])
+    await invoke("destinations", ["archive", "d1", "--mode", "preview", "--idempotency-key", "r1"])
     await invoke("features", [
       "archive",
       "f1",
@@ -365,14 +365,14 @@ describe("two-step write flags", () => {
       "execute",
       "--preview-token",
       "tok",
-      "--request-id",
+      "--idempotency-key",
       "r2",
     ])
 
     expect(calls).toEqual([
       {
         tool: "outlit_archive_destination",
-        params: { id: "d1", mode: "preview", requestId: "r1" },
+        params: { id: "d1", mode: "preview", idempotencyKey: "r1" },
       },
       {
         tool: "outlit_archive_feature",
@@ -381,7 +381,7 @@ describe("two-step write flags", () => {
           revision: "rev",
           mode: "execute",
           previewToken: "tok",
-          requestId: "r2",
+          idempotencyKey: "r2",
         },
       },
     ])

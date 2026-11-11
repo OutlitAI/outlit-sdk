@@ -125,7 +125,7 @@ describe("completions command", () => {
       `[[ $COMP_CWORD -gt 2 && "${bashCompWord(1)}" == "customers" && "${bashCompWord(2)}" == "set-access" ]]`,
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --yes --member --role --mode --preview-token --request-id --undo-token"',
+      'COMPREPLY=($(compgen -W "--api-key --json --yes --member --role --mode --preview-token --idempotency-key --undo-token"',
     )
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --source-type --customer --participant --provider --has-transcript --after --before"',
@@ -149,20 +149,20 @@ describe("completions command", () => {
       'COMPREPLY=($(compgen -W "--api-key --json --source --weeks --candidate-limit --include --search --limit --cursor"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --source-key --event-name --feature-key --request-id --name --property-filters"',
+      'COMPREPLY=($(compgen -W "--api-key --json --source-key --event-name --feature-key --idempotency-key --name --property-filters"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --yes --revision --mode --preview-token --request-id"',
+      'COMPREPLY=($(compgen -W "--api-key --json --yes --revision --mode --preview-token --idempotency-key"',
     )
     expect(out).not.toContain("--slack-channel-name")
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --type --channel-id --label --is-default --enabled --request-id"',
+      'COMPREPLY=($(compgen -W "--api-key --json --type --channel-id --label --is-default --enabled --idempotency-key"',
     )
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --label --is-default --enabled --revision"',
     )
     expect(out).toContain("--customer --suggestion-id --status --confidence")
-    expect(out).toContain("--preview-token --request-id --suggestion-id --note")
+    expect(out).toContain("--preview-token --idempotency-key --suggestion-id --note")
     expect(out).not.toContain('COMPREPLY=($(compgen -W "--api-key --json --destination-id"')
   })
 

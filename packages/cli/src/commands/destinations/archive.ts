@@ -3,7 +3,7 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { runConfirmedWrite, yesArg } from "../../lib/confirm"
-import { newRequestId } from "../../lib/request-id"
+import { newIdempotencyKey } from "../../lib/idempotency-key"
 import { parseWriteMode, writeModeArgs } from "../../lib/write-mode"
 
 type ArchivePreview = {
@@ -65,14 +65,14 @@ export default defineCommand({
       return runTool(
         client,
         "outlit_archive_destination",
-        { id, ...write.explicit, requestId: write.requestId },
+        { id, ...write.explicit, idempotencyKey: write.idempotencyKey },
         json,
         { spinnerMessage: "Archiving destination..." },
       )
     }
 
     return runConfirmedWrite(client, "outlit_archive_destination", {
-      input: { id, requestId: write.requestId },
+      input: { id, idempotencyKey: write.idempotencyKey },
       json,
       yes: args.yes === true,
       spinnerMessage: "Archiving destination...",
@@ -81,7 +81,7 @@ export default defineCommand({
         id,
         mode: "execute",
         previewToken,
-        requestId: newRequestId(),
+        idempotencyKey: newIdempotencyKey(),
       }),
       question: "Archive this destination?",
       unchanged: "Nothing was archived",

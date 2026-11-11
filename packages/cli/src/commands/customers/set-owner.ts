@@ -3,7 +3,7 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { runConfirmedWrite, yesArg } from "../../lib/confirm"
-import { newRequestId } from "../../lib/request-id"
+import { newIdempotencyKey } from "../../lib/idempotency-key"
 import { parseWriteMode, writeModeArgs } from "../../lib/write-mode"
 import {
   customerCollaborationArgs,
@@ -70,7 +70,7 @@ export default defineCommand({
       return runTool(
         client,
         "outlit_set_customer_owner",
-        { undoToken, requestId: write.requestId },
+        { undoToken, idempotencyKey: write.idempotencyKey },
         json,
         { spinnerMessage: "Undoing the owner change..." },
       )
@@ -83,14 +83,14 @@ export default defineCommand({
       return runTool(
         client,
         "outlit_set_customer_owner",
-        { ...target, ...write.explicit, requestId: write.requestId },
+        { ...target, ...write.explicit, idempotencyKey: write.idempotencyKey },
         json,
         { spinnerMessage: "Assigning customer owner..." },
       )
     }
 
     return runConfirmedWrite(client, "outlit_set_customer_owner", {
-      input: { ...target, requestId: write.requestId },
+      input: { ...target, idempotencyKey: write.idempotencyKey },
       json,
       yes: args.yes === true,
       spinnerMessage: "Assigning customer owner...",
@@ -99,7 +99,7 @@ export default defineCommand({
         ...target,
         mode: "execute",
         previewToken,
-        requestId: newRequestId(),
+        idempotencyKey: newIdempotencyKey(),
       }),
       question: "Change the owner?",
       unchanged: "The owner was not changed",

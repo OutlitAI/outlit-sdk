@@ -355,9 +355,17 @@ function hoistGlobalOptions(argv: readonly string[]): string[] {
 export function rewriteLegacyArgs(input: readonly string[]): LegacyRewrite | null {
   const argv = hoistGlobalOptions(input)
   const result = rewriteCommand(argv)
-  if (result) return result
+  // `--request-id` is `--idempotency-key` on every write command, whichever command rewrote.
+  const renamed = renameFlags(result?.argv ?? argv, { "request-id": "idempotency-key" })
+  const keyRenamed = renamed.join("\0") !== (result?.argv ?? argv).join("\0")
+  if (result) {
+    return keyRenamed ? { argv: renamed, use: result.use || keyFlagUse } : result
+  }
+  if (keyRenamed) return { argv: renamed, use: keyFlagUse }
   return argv.join("\0") === input.join("\0") ? null : { argv, use: "" }
 }
+
+const keyFlagUse = "--idempotency-key <key>"
 
 function rewriteCommand(argv: readonly string[]): LegacyRewrite | null {
   for (const { command, verb } of addVerb) {

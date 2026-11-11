@@ -13,7 +13,7 @@ export default defineCommand({
       publicToolContracts.outlit_merge_customers.description,
       "",
       "Preview: outlit customers merge <survivor> <duplicate> --json",
-      "Execute: outlit customers merge <survivor> <duplicate> --mode execute --preview-token <token> --request-id <stableId> --json",
+      "Execute: outlit customers merge <survivor> <duplicate> --mode execute --preview-token <token> --idempotency-key <stableId> --json",
       "Status: outlit merges get <id> --json (the operation.id from execute)",
       "",
       AGENT_JSON_HINT,
@@ -32,9 +32,9 @@ export default defineCommand({
       type: "string",
       description: "preview.token from the preview, required with --mode execute",
     },
-    "request-id": {
+    "idempotency-key": {
       type: "string",
-      description: "Stable execution request ID, reuse for identical retries",
+      description: "Idempotency key, reuse it for identical retries",
     },
     "suggestion-id": {
       type: "string",
@@ -63,7 +63,11 @@ export default defineCommand({
     }
     if (execute) {
       input.previewToken = requiredTrimmedString(args["preview-token"], "--preview-token", json)
-      input.requestId = requiredTrimmedString(args["request-id"], "--request-id", json)
+      input.idempotencyKey = requiredTrimmedString(
+        args["idempotency-key"],
+        "--idempotency-key",
+        json,
+      )
     }
     const suggestionId = optionalTrimmedString(args["suggestion-id"])
     const note = optionalTrimmedString(args.note)

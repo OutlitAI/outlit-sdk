@@ -3,12 +3,12 @@ import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
+import { newIdempotencyKey } from "../../lib/idempotency-key"
 import {
   optionalTrimmedString,
   requiredString,
   requiredTrimmedString,
 } from "../../lib/platform-input"
-import { newRequestId } from "../../lib/request-id"
 import { parsePropertyFilters } from "./input"
 
 export default defineCommand({
@@ -32,7 +32,7 @@ export default defineCommand({
     "event-name": { type: "string", description: "Exact tracked event name" },
     "feature-key": { type: "string", description: "Stable lower_snake_case feature key" },
     name: { type: "string", description: "Human-readable Feature name" },
-    "request-id": {
+    "idempotency-key": {
       type: "string",
       description: "Stable retry key: the same id returns the first result (default: a new one)",
     },
@@ -54,7 +54,7 @@ export default defineCommand({
         featureKey: requiredTrimmedString(args["feature-key"], "--feature-key", json),
         name: requiredTrimmedString(args.name, "--name", json),
         propertyFilters: parsePropertyFilters(args["property-filters"], json),
-        requestId: optionalTrimmedString(args["request-id"]) ?? newRequestId(),
+        idempotencyKey: optionalTrimmedString(args["idempotency-key"]) ?? newIdempotencyKey(),
       },
       json,
       { spinnerMessage: "Creating Feature..." },

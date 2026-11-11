@@ -1,7 +1,7 @@
 import type { ArgsDef } from "citty"
+import { newIdempotencyKey } from "./idempotency-key"
 import { outputError } from "./output"
 import { optionalTrimmedString } from "./platform-input"
-import { newRequestId } from "./request-id"
 
 /** The two-step write inputs shared by the tools that preview before they change anything. */
 export const writeModeArgs = {
@@ -14,25 +14,25 @@ export const writeModeArgs = {
     type: "string",
     description: "preview.token from a preview of the same change, with --mode execute",
   },
-  "request-id": {
+  "idempotency-key": {
     type: "string",
-    description: "Stable retry key: the same id returns the first result (default: a new one)",
+    description: "Idempotency key: the same key returns the first result (default: a new one)",
   },
 } satisfies ArgsDef
 
 export interface WriteMode {
   /** The retry key to send: the one given, or a fresh one. */
-  requestId: string
+  idempotencyKey: string
   /** Set when --mode was given: the caller runs exactly that one call, without asking. */
   explicit?: { mode: "preview" | "execute"; previewToken?: string }
 }
 
 export function parseWriteMode(
-  args: { mode?: string; "preview-token"?: string; "request-id"?: string },
+  args: { mode?: string; "preview-token"?: string; "idempotency-key"?: string },
   json: boolean,
   options: { executeOnly?: boolean } = {},
 ): WriteMode {
-  const requestId = optionalTrimmedString(args["request-id"]) ?? newRequestId()
+  const idempotencyKey = optionalTrimmedString(args["idempotency-key"]) ?? newIdempotencyKey()
   const mode = optionalTrimmedString(args.mode)?.toLowerCase()
   const previewToken = optionalTrimmedString(args["preview-token"]) ?? undefined
 
@@ -43,7 +43,7 @@ export function parseWriteMode(
         json,
       )
     }
-    return { requestId }
+    return { idempotencyKey }
   }
   if (mode !== "preview" && mode !== "execute") {
     return outputError(
@@ -63,5 +63,5 @@ export function parseWriteMode(
   if (mode === "execute" && !previewToken) {
     return outputError({ message: "Provide --preview-token", code: "missing_input" }, json)
   }
-  return { requestId, explicit: { mode, ...(mode === "execute" ? { previewToken } : {}) } }
+  return { idempotencyKey, explicit: { mode, ...(mode === "execute" ? { previewToken } : {}) } }
 }

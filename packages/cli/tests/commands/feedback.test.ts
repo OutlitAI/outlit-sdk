@@ -45,6 +45,20 @@ describe("feedback", () => {
     expect(parsed).toMatchObject({ id: mockResult.id, createdAt: mockResult.createdAt })
   })
 
+  test("sends an idempotency key only when one is given", async () => {
+    const { default: command } = await import("../../src/commands/feedback/submit")
+    await captureStdout(() =>
+      command.run!({
+        args: { json: true, body: "Retry me", "idempotency-key": " feedback-1 " },
+      } as never),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_submit_feedback", {
+      body: "Retry me",
+      idempotencyKey: "feedback-1",
+    })
+  })
+
   test("trims surrounding whitespace from the body before submitting", async () => {
     const { default: command } = await import("../../src/commands/feedback/submit")
     await captureStdout(() =>

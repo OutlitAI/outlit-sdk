@@ -1,4 +1,5 @@
 export type {
+  OutlitToolsCallResult,
   OutlitToolsClient,
   OutlitToolsClientOptions,
   OutlitToolsFetch,
@@ -12,8 +13,12 @@ export {
   DEFAULT_OUTLIT_API_URL,
   isOutlitToolsApiError,
   matchesGeneratedJsonSchema,
+  OUTLIT_API_VERSION,
   OutlitToolsApiError,
   outlitClientHeader,
+  outlitRequestIdHeader,
+  outlitVersionRequestHeader,
+  outlitVersionResponseHeader,
 } from "./client.js"
 export type {
   Collection,

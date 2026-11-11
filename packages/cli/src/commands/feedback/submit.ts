@@ -6,6 +6,7 @@ import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import type { SubmitFeedbackInput } from "../../lib/client"
 import { errorMessage, outputError } from "../../lib/output"
+import { optionalTrimmedString } from "../../lib/platform-input"
 
 const BODY_MAX_LENGTH = 20_000
 const AREA_MAX_LENGTH = 100
@@ -148,6 +149,11 @@ export default defineCommand({
       description:
         "Path to a JSON file with diagnostic context (mutually exclusive with --context)",
     },
+    "idempotency-key": {
+      type: "string",
+      description:
+        "Optional idempotency key: a retry with the same key and input does not submit twice",
+    },
   },
   async run({ args }) {
     const json = !!args.json
@@ -163,6 +169,8 @@ export default defineCommand({
     const input: SubmitFeedbackInput = { body }
     if (area !== undefined) input.area = area
     if (context !== undefined) input.context = context
+    const idempotencyKey = optionalTrimmedString(args["idempotency-key"])
+    if (idempotencyKey) input.idempotencyKey = idempotencyKey
 
     return runTool(client, publicToolContracts.outlit_submit_feedback.toolName, input, json, {
       spinnerMessage: "Submitting feedback...",

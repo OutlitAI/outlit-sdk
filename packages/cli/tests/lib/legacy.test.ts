@@ -65,8 +65,31 @@ const cases: Array<[string, string[], string[], string]> = [
   [
     "customers merge --execute",
     ["customers", "merge", "a", "b", "--execute", "--review-notes", "same", "--request-id", "r"],
-    ["customers", "merge", "a", "b", "--note", "same", "--request-id", "r", "--mode", "execute"],
+    [
+      "customers",
+      "merge",
+      "a",
+      "b",
+      "--note",
+      "same",
+      "--idempotency-key",
+      "r",
+      "--mode",
+      "execute",
+    ],
     "outlit customers merge <survivor> <duplicate> --mode execute",
+  ],
+  [
+    "--request-id on a current command",
+    ["tasks", "act", "task_1", "done", "--request-id", "r1"],
+    ["tasks", "act", "task_1", "done", "--idempotency-key", "r1"],
+    "--idempotency-key <key>",
+  ],
+  [
+    "--request-id=value on a current command",
+    ["destinations", "create", "--request-id=r2"],
+    ["destinations", "create", "--idempotency-key=r2"],
+    "--idempotency-key <key>",
   ],
   [
     "identity suggestions list",
