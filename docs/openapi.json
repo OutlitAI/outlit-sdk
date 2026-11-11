@@ -1186,6 +1186,10 @@
                   "type": "string",
                   "maxLength": 200
                 },
+                "message": {
+                  "type": "string",
+                  "maxLength": 200
+                },
                 "validValues": {
                   "maxItems": 30,
                   "type": "array",
@@ -1232,6 +1236,11 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 100
+          },
+          "retryAfterSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 60
           }
         },
         "required": [
@@ -5005,7 +5014,7 @@
             "description": "From outlit_list_tasks"
           },
           "include": {
-            "description": "source, draft (up to 20 KB) and covered. Default: source and covered",
+            "description": "The sections to return, replacing the default (source and covered): source, draft (up to 20 KB) and covered. For the reply alone send [\"draft\"].",
             "maxItems": 3,
             "type": "array",
             "items": {
@@ -17277,6 +17286,39 @@
                     "additionalProperties": false
                   }
                 },
+                "cost": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "tokens": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Input tokens the toolset's tool definitions cost a client that loads them all."
+                        },
+                        "measuredAt": {
+                          "type": "string",
+                          "description": "When the cost was measured (an ISO date)."
+                        },
+                        "model": {
+                          "type": "string",
+                          "description": "The model it was measured on."
+                        }
+                      },
+                      "required": [
+                        "tokens",
+                        "measuredAt",
+                        "model"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "What listing this toolset's tools costs a model's context; null when not measured."
+                },
                 "listed": {
                   "anyOf": [
                     {
@@ -17304,6 +17346,7 @@
                 "name",
                 "purpose",
                 "tools",
+                "cost",
                 "listed",
                 "url"
               ],
@@ -24316,5 +24359,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "a5b395b05ffaafaf4a7fa05eeca84bb269144a5c3e912be5a130a5d4f5e90442"
+  "x-outlit-contract-hash": "bd4eefc2704dff25f15c2668c97262739007fc52ad0cc594eb0b47dc98cbf620"
 }
