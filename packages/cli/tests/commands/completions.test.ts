@@ -115,10 +115,10 @@ describe("completions command", () => {
     const out = await captureCompletions("bash")
     expect(out).toContain(`[[ $COMP_CWORD -gt 1 && "${bashCompWord(1)}" == "search" ]]`)
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --customer --limit --after --before --source-types"',
+      'COMPREPLY=($(compgen -W "--api-key --json --customer --limit --after --before --source-types --include"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --source-types --fact-types --fact-categories --after --before"',
+      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --source-types --fact-types --fact-categories --after --before --include"',
     )
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --include"')
     expect(out).toContain(
@@ -132,7 +132,7 @@ describe("completions command", () => {
     )
     expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --limit --cursor"')
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --arr-above --arr-below --currency --renews-in --renews-after --renews-before --owner-id --owner-email --has-owner --activated-since --search --part-of"',
+      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --arr-above --arr-below --currency --renews-in --renews-after --renews-before --owner-id --owner-email --has-owner --activated-since --search --part-of --runs-out-within --meter --meter-connection"',
     )
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --event --lookback-days --example-limit"',

@@ -4,6 +4,7 @@ import {
   startCliAuthRequest,
   waitForCliAuthApproval,
 } from "../../src/lib/cli-auth"
+import { CLI_CLIENT } from "../../src/lib/client-id"
 
 let activeFetchSpy: ReturnType<typeof spyOn> | undefined
 
@@ -40,6 +41,9 @@ describe("CLI browser auth client", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1)
     expect(fetchSpy.mock.calls[0]?.[0]).toBe("https://app.outlit.ai/api/cli-auth/start")
     expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).method).toBe("POST")
+    expect((fetchSpy.mock.calls[0]?.[1] as RequestInit).headers).toMatchObject({
+      "x-outlit-client": CLI_CLIENT,
+    })
   })
 
   test("polls a CLI auth request with the terminal-only poll token", async () => {
@@ -56,6 +60,7 @@ describe("CLI browser auth client", () => {
     expect(fetchSpy.mock.calls[0]?.[0]).toBe("https://app.outlit.ai/api/cli-auth/poll")
     const opts = fetchSpy.mock.calls[0]?.[1] as RequestInit
     expect(opts.method).toBe("POST")
+    expect(opts.headers).toMatchObject({ "x-outlit-client": CLI_CLIENT })
     expect(JSON.parse(opts.body as string)).toEqual({
       requestId: "req_123",
       pollToken: "poll_token_123",

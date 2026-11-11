@@ -13,9 +13,13 @@ import {
   toolNamesInToolsets,
 } from "@outlit/tools"
 import type { TSchema } from "@sinclair/typebox"
+import pkg from "../package.json" with { type: "json" }
 
 export const OUTLIT_API_KEY_ENV = "OUTLIT_API_KEY"
 export const OUTLIT_API_URL_ENV = "OUTLIT_API_URL"
+
+/** Sent as `x-outlit-client`, so Core can tell a Pi extension below a release's minimum version. */
+export const OUTLIT_PI_CLIENT = `@outlit/pi/${pkg.version}`
 
 const piToolNameSet = new Set<string>(piToolNames)
 
@@ -80,6 +84,7 @@ export function createOutlitPiTool(
         apiKey: resolveApiKey(options),
         baseUrl: resolveBaseUrl(options),
         fetch: options.fetch,
+        client: OUTLIT_PI_CLIENT,
         onResponse: (info) => {
           responseInfo = info
         },

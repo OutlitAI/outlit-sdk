@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 import { defaultToolNames, getPublicToolContract, toolNamesInToolsets } from "@outlit/tools"
 import { describe, expect, test, vi } from "vitest"
 
@@ -5,6 +7,7 @@ import {
   allPublicToolNames,
   createOutlitPiExtension,
   createOutlitPiTool,
+  OUTLIT_PI_CLIENT,
   type OutlitPiToolDefinition,
   type PiToolName,
   type PublicToolName,
@@ -28,6 +31,28 @@ function withoutRootSchema<T extends Record<string, unknown>>(schema: T): Omit<T
 }
 
 describe("createOutlitPiExtension", () => {
+  test("identifies itself to Core as @outlit/pi at its own version", async () => {
+    const { version } = JSON.parse(
+      readFileSync(resolve(import.meta.dirname, "../package.json"), "utf8"),
+    ) as { version: string }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true })))
+    const [tool] = (() => {
+      const pi = createPiMock()
+      createOutlitPiExtension({
+        apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+        fetch: fetchMock,
+        toolNames: ["outlit_list_customers"],
+      })(pi)
+      return pi.registeredTools
+    })()
+
+    await tool?.execute("call_1", {}, undefined, undefined, undefined as never)
+
+    expect(OUTLIT_PI_CLIENT).toBe(`@outlit/pi/${version}`)
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+    expect((init.headers as Record<string, string>)["x-outlit-client"]).toBe(OUTLIT_PI_CLIENT)
+  })
+
   test("defaults tools to the hosted Outlit endpoint", async () => {
     const previousApiUrl = process.env.OUTLIT_API_URL
     delete process.env.OUTLIT_API_URL
@@ -248,6 +273,7 @@ describe("createOutlitPiExtension", () => {
       headers: {
         Authorization: "Bearer ok_abcdefghijklmnopqrstuvwxyz123456",
         "Content-Type": "application/json",
+        "x-outlit-client": OUTLIT_PI_CLIENT,
       },
       body: JSON.stringify({
         tool: "outlit_list_customers",

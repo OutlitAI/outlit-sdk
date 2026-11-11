@@ -268,6 +268,95 @@ describe("customers list", () => {
     })
   }
 
+  test("maps --runs-out-within to filters.credits and --meter to the meter ranking", async () => {
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await listCmd.run!({
+        args: { "runs-out-within": "30d", json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+      expect(mockCallTool).toHaveBeenLastCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({ filters: { credits: { runsOutWithin: "30d" } } }),
+      )
+
+      await listCmd.run!({
+        args: {
+          "order-by": "meter_usage",
+          meter: "api_calls",
+          "meter-connection": "conn_1",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0])
+      expect(mockCallTool).toHaveBeenLastCalledWith(
+        "outlit_list_customers",
+        expect.objectContaining({
+          orderBy: "meter_usage",
+          meter: { feature: "api_calls", connection: "conn_1" },
+        }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  for (const [label, args] of [
+    ["a --runs-out-within window Core does not know", { "runs-out-within": "365d" }],
+    ["--order-by meter_usage without --meter", { "order-by": "meter_usage" }],
+    ["--meter-connection without --meter", { "meter-connection": "conn_1" }],
+  ] as const) {
+    test(`rejects ${label} before calling the customer tool`, async () => {
+      const { default: listCmd } = await import("../../../src/commands/customers/list")
+
+      await runExpectingError(async () => {
+        await listCmd.run!({
+          args: { ...args, json: true },
+        } as Parameters<NonNullable<typeof listCmd.run>>[0])
+      }, "invalid_input")
+
+      expect(mockCallTool).not.toHaveBeenCalled()
+    })
+  }
+
+  test("shows Credits and Meter columns when the rows carry them", async () => {
+    setInteractive()
+    mockCallTool.mockImplementationOnce(
+      async () =>
+        ({
+          items: [
+            {
+              id: "1",
+              name: "Acme",
+              domain: "acme.com",
+              billingStatus: "paying",
+              activatedAt: null,
+              credits: {
+                runsOutAt: "2026-12-01T08:30:00.000Z",
+                pool: { id: "p1", name: "Monthly" },
+                balance: { remaining: 1200, granted: 5000 },
+              },
+              meter: { feature: "api_calls", reported: 9500, accounts: 3, observed: null },
+            },
+          ],
+          page: { hasMore: false, nextCursor: null, total: 1 },
+        }) as never,
+    )
+    const { default: listCmd } = await import("../../../src/commands/customers/list")
+    const logSpy = spyOn(console, "log").mockImplementation(() => {})
+    try {
+      await listCmd.run!({ args: {} } as Parameters<NonNullable<typeof listCmd.run>>[0])
+
+      const output = logSpy.mock.calls.map((c) => c[0] as string).join("\n")
+      expect(output).toContain("Credits")
+      expect(output).toContain("runs out 2026-12-01 (1,200 left of 5,000)")
+      expect(output).toContain("Meter")
+      expect(output).toContain("9,500 (3 accounts)")
+    } finally {
+      logSpy.mockRestore()
+      setNonInteractive()
+    }
+  })
+
   test("accepts a zero ARR threshold", async () => {
     const { default: listCmd } = await import("../../../src/commands/customers/list")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)

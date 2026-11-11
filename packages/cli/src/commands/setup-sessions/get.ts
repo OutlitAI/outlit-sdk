@@ -22,20 +22,16 @@ export default defineCommand({
     ...outputArgs,
     id: {
       type: "positional",
-      description: "The sessionId from a browser_handoff step",
+      description: "The session id from a browser_handoff step",
       required: true,
     },
   },
   async run({ args }) {
     const json = !!args.json
-    const sessionId = requiredTrimmedString(args.id, "<id>", json)
+    const id = requiredTrimmedString(args.id, "<id>", json)
     const client = await getClientOrExit(args["api-key"], json)
-    return runTool(
-      client,
-      publicToolContracts.outlit_get_setup_session.toolName,
-      { sessionId },
-      json,
-      { spinnerMessage: "Checking the setup session..." },
-    )
+    return runTool(client, publicToolContracts.outlit_get_setup_session.toolName, { id }, json, {
+      spinnerMessage: "Checking the setup session...",
+    })
   },
 })

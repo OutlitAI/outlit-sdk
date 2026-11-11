@@ -1,7 +1,20 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test"
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 import { cliToolNames, toolGatewayTransport } from "@outlit/tools"
 import { createClient } from "../../src/lib/client"
+import { CLI_CLIENT } from "../../src/lib/client-id"
 import { TEST_API_KEY } from "../helpers"
+
+describe("CLI_CLIENT", () => {
+  test("is the package name and its own version, as sent in x-outlit-client", () => {
+    const pkg = JSON.parse(
+      readFileSync(join(import.meta.dir, "..", "..", "package.json"), "utf8"),
+    ) as { name: string; version: string }
+
+    expect(CLI_CLIENT).toBe(`${pkg.name}/${pkg.version}`)
+  })
+})
 
 describe("createClient", () => {
   let savedApiKey: string | undefined
@@ -71,6 +84,7 @@ describe("createClient", () => {
       expect(init?.headers).toEqual({
         Authorization: `Bearer ${TEST_API_KEY}`,
         "Content-Type": "application/json",
+        "x-outlit-client": CLI_CLIENT,
       })
     }
     fetchSpy.mockRestore()

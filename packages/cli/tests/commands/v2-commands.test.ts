@@ -159,13 +159,13 @@ describe("v2 commands", () => {
     ])
   })
 
-  test("setup-sessions get sends the session id under the wire key", async () => {
+  test("setup-sessions get sends the session id as id", async () => {
     await invoke("setup-sessions", ["get", "5b0e2f3a-6c1d-4e8a-9a3b-0c9d8e7f6a5b"])
 
     expect(calls).toEqual([
       {
         tool: "outlit_get_setup_session",
-        params: { sessionId: "5b0e2f3a-6c1d-4e8a-9a3b-0c9d8e7f6a5b" },
+        params: { id: "5b0e2f3a-6c1d-4e8a-9a3b-0c9d8e7f6a5b" },
       },
     ])
   })
@@ -173,7 +173,7 @@ describe("v2 commands", () => {
   test("facts get takes the fact id as a positional", async () => {
     await invoke("facts", ["get", "fact_1"])
 
-    expect(calls).toEqual([{ tool: "outlit_get_fact", params: { factId: "fact_1" } }])
+    expect(calls).toEqual([{ tool: "outlit_get_fact", params: { id: "fact_1" } }])
   })
 
   test("sources get takes the type and id as positionals", async () => {

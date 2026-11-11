@@ -125,6 +125,11 @@ const rules: Rule[] = [
     }),
   ),
   {
+    from: ["customers", "get"],
+    to: (rest) => ["customers", "get", ...renameFlags(rest, { "crm-fields": "fields" })],
+    use: "outlit customers get <customer> --include crm --fields <key,...>",
+  },
+  {
     from: ["customers", "timeline"],
     to: (rest) => ["timeline", "get", ...rest],
     use: "outlit timeline get <customer>",

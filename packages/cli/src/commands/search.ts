@@ -5,6 +5,7 @@ import {
 } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
+import { factIncludeArg, readFactIncludes } from "../args/fact-include"
 import { rawFlagValue } from "../args/filters"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
 import { getClientOrExit, runTool } from "../lib/api"
@@ -29,6 +30,7 @@ export default defineCommand({
       "  outlit search 'expansion opportunities' --limit 50 --json",
       "  outlit search 'support escalations' --after 2025-01-01T00:00:00Z --before 2025-03-31T23:59:59Z",
       "  outlit search 'renewal opportunities' --source-types call,opportunity",
+      "  outlit search 'pricing' --customer acme.com --include quote",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -63,6 +65,7 @@ export default defineCommand({
       type: "string",
       description: `Comma-separated generic source type filter (${sourceTypeDescription})`,
     },
+    ...factIncludeArg,
   },
   async run({ args, rawArgs }) {
     const json = !!args.json
@@ -84,6 +87,8 @@ export default defineCommand({
           .map((item) => item.trim())
           .filter(Boolean)
       : undefined
+
+    const include = readFactIncludes(args.include, json)
 
     const resolved = resolveCustomerContextSearchInput({
       query: args.query,
@@ -109,7 +114,7 @@ export default defineCommand({
     return runTool(
       client,
       publicToolContracts.outlit_search_customer_context.toolName,
-      resolved.request,
+      include ? { ...resolved.request, include } : resolved.request,
       json,
     )
   },

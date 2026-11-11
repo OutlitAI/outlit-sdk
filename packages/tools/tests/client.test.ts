@@ -42,6 +42,8 @@ import {
   matchesGeneratedJsonSchema,
   normalizeCustomerSourceToolInput,
   normalizeCustomerSourceType,
+  OUTLIT_TOOLS_CLIENT,
+  outlitClientHeader,
   piToolNames,
   publicOpenApiTransports,
   resolveCustomerContextSearchInput,
@@ -771,6 +773,32 @@ describe("createOutlitClient", () => {
     )
   })
 
+  test("sends x-outlit-client: <package>/<version>, this package's by default and a wrapper's when given", async () => {
+    const pkg = JSON.parse(
+      readFileSync(resolve(import.meta.dirname, "../package.json"), "utf8"),
+    ) as {
+      version: string
+    }
+    const fetchMock = vi.fn().mockImplementation(async () => new Response(JSON.stringify({})))
+    const headerOf = (call: number) =>
+      (fetchMock.mock.calls[call]?.[1] as RequestInit).headers as Record<string, string>
+
+    await createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: fetchMock,
+    }).callTool("outlit_list_customers", {})
+    await createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      client: "@outlit/cli/4.1.0",
+      fetch: fetchMock,
+    }).callTool("outlit_list_customers", {})
+
+    expect(outlitClientHeader).toBe("x-outlit-client")
+    expect(OUTLIT_TOOLS_CLIENT).toBe(`@outlit/tools/${pkg.version}`)
+    expect(headerOf(0)[outlitClientHeader]).toBe(`@outlit/tools/${pkg.version}`)
+    expect(headerOf(1)[outlitClientHeader]).toBe("@outlit/cli/4.1.0")
+  })
+
   test("forwards a caller deadline signal to the gateway request", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true })))
     const controller = new AbortController()
@@ -981,6 +1009,56 @@ describe("createOutlitClient", () => {
     const error = await client.callTool("outlit_list_customers").catch((value: unknown) => value)
     if (!isOutlitToolsApiError(error)) throw new Error("expected OutlitToolsApiError")
     expect(error.envelope).toEqual(envelope)
+  })
+
+  test("keeps the message on a validation issue and the retry interval on a 429", async () => {
+    const issue = {
+      code: "too_big",
+      path: "limit",
+      message: "limit is at most 100",
+    }
+    const envelopes = [
+      {
+        code: "INVALID_TOOL_INPUT",
+        message: "Invalid input",
+        retryable: false,
+        requestId: "request_issue_message",
+        validationIssues: [issue],
+      },
+      {
+        code: "TOOL_IMPLEMENTATION_ERROR",
+        message: "Rate limit reached",
+        retryable: true,
+        requestId: "request_retry_after",
+        retryAfterSeconds: 12,
+      },
+      {
+        code: "INVALID_TOOL_INPUT",
+        message: "Invalid input",
+        retryable: false,
+        requestId: "request_retry_after_elsewhere",
+        retryAfterSeconds: 12,
+      },
+    ]
+    const client = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockImplementation(async () => {
+        const body = envelopes.shift()
+        return new Response(JSON.stringify(body), { status: body?.retryAfterSeconds ? 429 : 400 })
+      }),
+    })
+    const errors: unknown[] = []
+    for (let i = 0; i < 3; i++) {
+      errors.push(await client.callTool("outlit_list_customers").catch((value: unknown) => value))
+    }
+    const envelopesSeen = errors.map((error) =>
+      isOutlitToolsApiError(error) ? error.envelope : undefined,
+    )
+
+    expect(envelopesSeen[0]?.validationIssues).toEqual([issue])
+    expect(envelopesSeen[1]?.retryAfterSeconds).toBe(12)
+    // Core reserves the interval for rate-limit codes, so any other code leaves the envelope unread.
+    expect(envelopesSeen[2]).toBeUndefined()
   })
 
   test("keeps the envelope and drops top-level fields this build does not know", async () => {

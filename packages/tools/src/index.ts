@@ -13,6 +13,7 @@ export {
   isOutlitToolsApiError,
   matchesGeneratedJsonSchema,
   OutlitToolsApiError,
+  outlitClientHeader,
 } from "./client.js"
 export type {
   CustomerContextSearchInput,
@@ -117,3 +118,4 @@ export {
   toolNamesInToolsets,
   toolsetNames,
 } from "./toolsets.js"
+export { OUTLIT_TOOLS_CLIENT, OUTLIT_TOOLS_VERSION } from "./version.js"

@@ -18,7 +18,7 @@ import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, paginationArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
-import { formatArr, relativeDate, truncate } from "../../lib/format"
+import { formatArr, formatCredits, formatMeter, relativeDate, truncate } from "../../lib/format"
 import { outputError } from "../../lib/output"
 import { isIso8601DateTime } from "../../lib/platform-input"
 
@@ -58,6 +58,10 @@ const renewalWindows =
   getPublicToolContract("outlit_list_customers").inputSchema.properties.filters.properties.renewal
     .properties.within.enum
 
+const creditWindows =
+  getPublicToolContract("outlit_list_customers").inputSchema.properties.filters.properties.credits
+    .properties.runsOutWithin.enum
+
 /** Previously published sort names, accepted and mapped to the current ones. */
 const legacyOrderFields: Record<string, (typeof customerListOrderFields)[number]> = {
   arr_cents: "arr",
@@ -88,6 +92,8 @@ export default defineCommand({
       "  outlit customers list --renews-in next_90d --order-by renewal_date",
       "  outlit customers list --activated-since 2026-07-01T00:00:00Z",
       "  outlit customers list --part-of sanofi.com --billing-status paying  # a parent's subsidiaries",
+      "  outlit customers list --runs-out-within 30d             # Autumn credit pools forecast to run out",
+      "  outlit customers list --order-by meter_usage --meter api_calls  # rank by one Autumn meter",
       "  outlit customers list --json | jq '.items[].domain'     # pipe-friendly",
       "",
       `Billing statuses: ${customerBillingStatuses.join(", ")}`,
@@ -165,6 +171,20 @@ export default defineCommand({
     search: {
       type: "string",
       description: "Search by customer name or domain",
+    },
+    "runs-out-within": {
+      type: "string",
+      description: `Only customers with an Autumn credit pool forecast to run out within this window (${creditWindows.join(", ")}); each row shows its soonest pool`,
+    },
+    meter: {
+      type: "string",
+      description:
+        "With --order-by meter_usage: the Autumn feature id to rank by, as `customers get --include meters` returns it",
+    },
+    "meter-connection": {
+      type: "string",
+      description:
+        "With --meter: the Autumn connection id, needed only when the feature exists on more than one connection",
     },
     "part-of": {
       type: "string",
@@ -257,6 +277,19 @@ export default defineCommand({
     }
     if (Object.keys(renewal).length > 0) filters.renewal = renewal
 
+    if (args["runs-out-within"]) {
+      if (!(creditWindows as readonly string[]).includes(args["runs-out-within"])) {
+        return outputError(
+          {
+            message: `--runs-out-within must be one of ${creditWindows.join(", ")}`,
+            code: "invalid_input",
+          },
+          json,
+        )
+      }
+      filters.credits = { runsOutWithin: args["runs-out-within"] }
+    }
+
     const { noActivityIn, hasActivityIn } = readActivityFilterArgs(args, rawArgs)
     const activity: Record<string, unknown> = {}
     if (hasActivityIn) activity.within = hasActivityIn
@@ -289,6 +322,23 @@ export default defineCommand({
     if (Object.keys(filters).length > 0) params.filters = filters
 
     if (args["order-by"]) params.orderBy = legacyOrderFields[args["order-by"]] ?? args["order-by"]
+    if (args.meter) {
+      params.meter = {
+        feature: args.meter,
+        ...(args["meter-connection"] ? { connection: args["meter-connection"] } : {}),
+      }
+    } else if (args["meter-connection"]) {
+      return outputError(
+        { message: "--meter-connection goes with --meter", code: "invalid_input" },
+        json,
+      )
+    }
+    if (params.orderBy === "meter_usage" && !params.meter) {
+      return outputError(
+        { message: "--order-by meter_usage needs --meter", code: "invalid_input" },
+        json,
+      )
+    }
     if (args["order-direction"]) params.orderDirection = args["order-direction"]
     applyPagination(params, args, json)
 
@@ -304,6 +354,9 @@ export default defineCommand({
           { header: "ARR", key: "arr", format: formatArr },
           { header: "Renews", key: "renewal", format: formatRenewal },
           { header: "Last Active", key: "lastActivityAt", format: relativeDate },
+          // Only with --runs-out-within or --order-by meter_usage: the rows carry these then.
+          { header: "Credits", key: "credits", format: formatCredits, optional: true },
+          { header: "Meter", key: "meter", format: formatMeter, optional: true },
         ],
       },
     })

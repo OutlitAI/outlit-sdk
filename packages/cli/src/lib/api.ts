@@ -12,8 +12,11 @@ import {
 } from "@outlit/tools"
 import type { OutlitClient, OutlitToolParams } from "./client"
 import { createClient } from "./client"
+import { CLI_CLIENT, CLIENT_HEADER } from "./client-id"
 import { DEFAULT_API_URL } from "./config"
+import { envelopeLines } from "./error-lines"
 import { warnIfKeyExpiresSoon } from "./key-expiry"
+import { moreLines } from "./next-command"
 import { errorMessage, isJsonMode, outputError, outputResult } from "./output"
 import { createSpinner } from "./spinner"
 import { renderPaginationHint, renderTable } from "./table"
@@ -23,6 +26,8 @@ export interface TableColumn {
   /** Property of each item; a dot-separated path reads a nested one (`source.type`). */
   key: string
   format?: (value: unknown) => string
+  /** Shown only when at least one row has a value here (a column some calls add to every row). */
+  optional?: boolean
 }
 
 export interface RunToolOptions {
@@ -85,6 +90,7 @@ export async function pingApiKey(apiKey: string): Promise<ApiKeyValidationPayloa
     method: apiKeyValidationTransport.method,
     headers: {
       Authorization: `Bearer ${apiKey}`,
+      [CLIENT_HEADER]: CLI_CLIENT,
       // Ask for v2 (adds the key's expiry); a server that predates it answers v1.
       [apiKeyContractHeader]: "2",
     },
@@ -176,7 +182,13 @@ export function outputApiError(
       process.exit(1)
     }
 
-    return outputError({ message: error.envelope.message, code: error.envelope.code }, json)
+    return outputError(
+      {
+        message: [error.envelope.message, ...envelopeLines(error.envelope)].join("\n"),
+        code: error.envelope.code,
+      },
+      json,
+    )
   }
 
   return outputError(fallback, json)
@@ -197,12 +209,17 @@ function renderApiTable(data: unknown, table: NonNullable<RunToolOptions["table"
     // An empty v2 list says what it searched, so "nothing found" is not read as "not looked".
     const searched = readPath(record, "coverage.searched")
     if (typeof searched === "string" && searched.length > 0) console.log(`Searched: ${searched}`)
+    const notes = coverageNotes(readPath(record, "coverage"))
+    if (notes) console.log(notes)
     return
   }
 
-  const headers = table.columns.map((c) => c.header)
+  const columns = table.columns.filter(
+    (col) => !col.optional || items.some((item) => readPath(item, col.key) != null),
+  )
+  const headers = columns.map((c) => c.header)
   const rows = items.map((item) =>
-    table.columns.map((col) => {
+    columns.map((col) => {
       const raw = readPath(item, col.key)
       return col.format ? col.format(raw) : raw == null ? "--" : String(raw)
     }),
@@ -217,6 +234,25 @@ function renderApiTable(data: unknown, table: NonNullable<RunToolOptions["table"
     const hint = renderPaginationHint(pagination, items.length)
     if (hint) console.log(`\n${hint}`)
   }
+  const notes = coverageNotes(readPath(record, "coverage"))
+  if (notes) console.log(`\n${notes}`)
+}
+
+/** Customers a credits or meter call could not rank, by why, so a short list is not read as complete. */
+function coverageNotes(coverage: unknown): string | undefined {
+  if (typeof coverage !== "object" || coverage === null) return undefined
+  const { stale, withoutMeter, ambiguous } = coverage as Record<string, unknown>
+  const notes: string[] = []
+  if (typeof stale === "number" && stale > 0) {
+    notes.push(`${stale} left out: Autumn scan over 3 hours old`)
+  }
+  if (typeof withoutMeter === "number" && withoutMeter > 0) {
+    notes.push(`${withoutMeter} left out: no usage for the meter`)
+  }
+  if (typeof ambiguous === "number" && ambiguous > 0) {
+    notes.push(`${ambiguous} left out: email matches several Autumn accounts`)
+  }
+  return notes.length > 0 ? `Not listed: ${notes.join("; ")}.` : undefined
 }
 
 function readPath(record: Record<string, unknown>, path: string): unknown {
@@ -256,7 +292,12 @@ export async function runTool<TToolName extends CliToolName>(
 
     const table = opts?.table
     if (isJsonMode(json) || !table) {
-      return outputResult(data)
+      outputResult(data)
+      // JSON readers get `more.next` in the result; a person at a terminal gets the command.
+      if (!isJsonMode(json)) {
+        for (const line of moreLines(data)) process.stderr.write(`${line}\n`)
+      }
+      return
     }
 
     renderApiTable(data, table)

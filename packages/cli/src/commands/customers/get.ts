@@ -6,6 +6,7 @@ import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
 import { outputError } from "../../lib/output"
 import { parseBoundedInteger } from "../features/input"
+import { parseCrmContacts, parseFieldSelectors } from "./crm-input"
 
 type SectionArgs = {
   weeks?: string
@@ -93,6 +94,9 @@ export default defineCommand({
       "is {status, asOf, data}, or a status and reason when there is nothing to show.",
       "features, meters, credits and hierarchy's children come in pages: --limit sets the page",
       "size, and --cursor continues one of them (the section's page.nextCursor).",
+      "With --include crm, --fields reads only some CRM fields (by key or label; prefix a system to pick one:",
+      "hubspot:hs_lead_status). --crm-contacts <connectionId>:<accountId> reads one CRM account's contacts,",
+      "25 at a time; --cursor continues it with the account's contactsNext.",
       "hierarchy is the parent company and direct subsidiaries the CRM records; to list the",
       "subsidiaries with ARR and filters, use `outlit customers list --part-of <customer>`.",
       "",
@@ -107,6 +111,8 @@ export default defineCommand({
       "  outlit customers get acme.com --include relationship,credits",
       "  outlit customers get acme.com --include features,meters --weeks 6 --weekly",
       "  outlit customers get opella.com --include hierarchy",
+      "  outlit customers get acme.com --include crm --fields hs_lead_status,salesforce:Type",
+      "  outlit customers get acme.com --crm-contacts <connectionId>:<accountId>",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -154,7 +160,17 @@ export default defineCommand({
     cursor: {
       type: "string",
       description:
-        "With one of --include features, meters, credits or hierarchy: the section's page.nextCursor",
+        "With one of --include features, meters, credits or hierarchy: the section's page.nextCursor. With --crm-contacts: the account's contactsNext cursor",
+    },
+    fields: {
+      type: "string",
+      description:
+        "With --include crm: only these CRM fields, comma-separated keys or labels, each optionally prefixed with its system (hubspot:hs_lead_status)",
+    },
+    "crm-contacts": {
+      type: "string",
+      description:
+        "Read one CRM account's contacts, 25 at a time: <connectionId>:<accountId> from include crm",
     },
   },
   async run({ args }) {
@@ -172,7 +188,16 @@ export default defineCommand({
     if (args.subscriptions) {
       params.subscriptions = args.subscriptions
     }
-    Object.assign(params, readSectionOptions(args, params.include as string[] | undefined, json))
+    if (args.fields) params.fields = parseFieldSelectors(args.fields, json)
+    if (args["crm-contacts"]) {
+      params.crmContacts = parseCrmContacts(args["crm-contacts"], args.cursor, json)
+    }
+    // With --crm-contacts the cursor belongs to the account's contacts, not to a paged section.
+    const sectionArgs = args["crm-contacts"] ? { ...args, cursor: undefined } : args
+    Object.assign(
+      params,
+      readSectionOptions(sectionArgs, params.include as string[] | undefined, json),
+    )
 
     return runTool(client, publicToolContracts.outlit_get_customer.toolName, params, json)
   },

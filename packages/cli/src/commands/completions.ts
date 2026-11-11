@@ -80,6 +80,9 @@ const COMMANDS: readonly CmdDef[] = [
             name: "--part-of",
             desc: "Only direct subsidiaries of this customer (ID, domain or name)",
           },
+          { name: "--runs-out-within", desc: "Autumn credit pool forecast to run out: 7d to 90d" },
+          { name: "--meter", desc: "With --order-by meter_usage: the Autumn feature id" },
+          { name: "--meter-connection", desc: "With --meter: the Autumn connection id" },
         ],
       },
       {
@@ -99,7 +102,12 @@ const COMMANDS: readonly CmdDef[] = [
             name: "--limit",
             desc: "With features, meters, credits or hierarchy: items per page (1-100)",
           },
-          { name: "--cursor", desc: "With one paged section: its page.nextCursor" },
+          { name: "--cursor", desc: "With one paged section or --crm-contacts: its next cursor" },
+          { name: "--fields", desc: "With crm: only these CRM fields (key or system:key)" },
+          {
+            name: "--crm-contacts",
+            desc: "One CRM account's contacts: <connectionId>:<accountId>",
+          },
         ],
       },
       {
@@ -319,12 +327,18 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--fact-categories", desc: "Filter by fact categories" },
           { name: "--after", desc: "Facts after date (ISO 8601)" },
           { name: "--before", desc: "Facts before date (ISO 8601)" },
+          { name: "--include", desc: "Add reasoning, quote or evidence to each fact" },
         ],
       },
       {
         name: "get",
         desc: "Get a single fact by ID",
-        flags: [...COMMON, { name: "--include", desc: "Best-effort expansions" }],
+        flags: [
+          ...COMMON,
+          { name: "--include", desc: "Best-effort expansions" },
+          { name: "--part", desc: "Read one long field a page at a time" },
+          CURSOR_F,
+        ],
       },
     ],
   },
@@ -381,6 +395,7 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "--after", desc: "Events after date (ISO 8601)" },
       { name: "--before", desc: "Events before date (ISO 8601)" },
       { name: "--source-types", desc: "Broad source type filter" },
+      { name: "--include", desc: "Add reasoning, quote or evidence to fact results" },
     ],
   },
   {

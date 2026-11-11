@@ -5,6 +5,16 @@ import {
   toolGatewayTransport,
 } from "./generated/contracts.js"
 import type { JsonSchemaValue, PublicToolResult } from "./results.js"
+import { OUTLIT_TOOLS_CLIENT } from "./version.js"
+
+/** Request header naming the calling package and its version, as `<package>/<version>`. */
+export const outlitClientHeader = "x-outlit-client"
+
+// The codes Core sends with HTTP 429, the only ones that may carry retryAfterSeconds.
+const retryAfterErrorCodes: ReadonlySet<string> = new Set([
+  "TOOL_IMPLEMENTATION_ERROR",
+  "plan_api_limit_exceeded",
+])
 
 const toolDeprecationHeader = "outlit-deprecation"
 const toolNoticeHeader = "outlit-notice"
@@ -40,6 +50,12 @@ export type OutlitToolsClientOptions = {
   apiKey: string
   baseUrl?: string
   fetch?: OutlitToolsFetch
+  /**
+   * Who is calling, as `<package>/<version>`, sent as the `x-outlit-client` header on every request so
+   * Core can tell a client below a release's minimum version. A package that wraps this client (the
+   * CLI, the Pi extension) passes its own; the default is this package.
+   */
+  client?: string
   /** Called after every response with its deprecation, notices and replay marker. */
   onResponse?: (info: OutlitToolsResponseInfo) => void
 }
@@ -89,6 +105,7 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
   const baseUrl = options.baseUrl ?? DEFAULT_OUTLIT_API_URL
   const fetchImpl = options.fetch ?? globalThis.fetch
   const onResponse = options.onResponse
+  const client = options.client?.trim() || OUTLIT_TOOLS_CLIENT
 
   if (!key) {
     throw new Error("apiKey is required")
@@ -115,6 +132,7 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
         headers: {
           Authorization: `Bearer ${key}`,
           "Content-Type": "application/json",
+          [outlitClientHeader]: client,
         },
         body: JSON.stringify({
           tool: toolName,
@@ -192,8 +210,9 @@ function parseGatewayError(text: string): ToolGatewayErrorEnvelope | undefined {
     const value = withoutUnknownEnvelopeFields(JSON.parse(text) as unknown)
     if (
       matchesGeneratedJsonSchema(value, toolGatewayErrorSchema) &&
-      // The generated schema can't carry Core's per-code rule for this field.
-      (value.missingPermission === undefined || value.code === "TOOL_CALL_FORBIDDEN")
+      // The generated schema can't carry Core's per-code rules for these fields.
+      (value.missingPermission === undefined || value.code === "TOOL_CALL_FORBIDDEN") &&
+      (value.retryAfterSeconds === undefined || retryAfterErrorCodes.has(value.code))
     ) {
       return value as ToolGatewayErrorEnvelope
     }

@@ -1,5 +1,6 @@
 // mock.module() must appear before any import statements — Bun hoists it.
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
+import { CLI_CLIENT } from "../../../src/lib/client-id"
 import {
   expectErrorExit,
   mockExitThrow,
@@ -115,6 +116,7 @@ describe("auth login", () => {
           method: "POST",
           headers: {
             Authorization: `Bearer ${TEST_API_KEY}`,
+            "x-outlit-client": CLI_CLIENT,
             "Outlit-Api-Key-Contract": "2",
           },
         },

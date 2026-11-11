@@ -192,4 +192,145 @@ describe("runTool()", () => {
       logSpy.mockRestore()
     }
   })
+  test("prints validation issues, the retry interval and the missing permission on a terminal", async () => {
+    const envelope = {
+      code: "INVALID_TOOL_INPUT" as const,
+      message: "Invalid input",
+      requestId: "request_terminal_1",
+      retryable: false,
+      validationIssues: [
+        { code: "too_big", path: "limit", message: "limit is at most 100" },
+        {
+          code: "invalid_value",
+          path: "filters.billingStatus",
+          validValues: ["paying", "trialing"],
+        },
+        { code: "custom", path: "" },
+      ],
+    }
+    const rate = {
+      code: "TOOL_IMPLEMENTATION_ERROR" as const,
+      message: "Too many requests",
+      requestId: "request_terminal_2",
+      retryable: true,
+      retryAfterSeconds: 12,
+    }
+    const forbidden = {
+      code: "TOOL_CALL_FORBIDDEN" as const,
+      message: "Capability not authorized",
+      requestId: "request_terminal_3",
+      retryable: false,
+      missingPermission: "destinations:read",
+    }
+    const { getClientOrExit, runTool } = await import("../../src/lib/api")
+    const client = await getClientOrExit(TEST_API_KEY, false)
+
+    const printed: string[] = []
+    for (const [status, body] of [
+      [400, envelope],
+      [429, rate],
+      [403, forbidden],
+    ] as const) {
+      mockCallTool.mockRejectedValueOnce(
+        new OutlitToolsApiError(status, JSON.stringify(body), body),
+      )
+      const errorSpy = spyOn(console, "error").mockImplementation(() => {})
+      const exitSpy = mockExitThrow()
+      setInteractive()
+      try {
+        await runTool(client, "outlit_list_customers", {}, false).catch(() => {})
+        printed.push(errorSpy.mock.calls.map((call) => call[0] as string).join("\n"))
+      } finally {
+        setNonInteractive()
+        errorSpy.mockRestore()
+        exitSpy.mockRestore()
+      }
+    }
+
+    expect(printed[0]).toBe(
+      [
+        "Error: Invalid input",
+        "  limit: limit is at most 100",
+        "  filters.billingStatus: invalid_value (one of: paying, trialing)",
+        "  input: custom",
+      ].join("\n"),
+    )
+    expect(printed[1]).toBe("Error: Too many requests\nRetry in 12s.")
+    expect(printed[2]).toBe(
+      "Error: Capability not authorized\nMissing permission: destinations:read",
+    )
+  })
+
+  test("shows a table column only when some row has a value, and says who a call could not rank", async () => {
+    const { getClientOrExit, runTool } = await import("../../src/lib/api")
+    const client = await getClientOrExit(TEST_API_KEY, false)
+    const table = {
+      paginationKey: "page",
+      columns: [
+        { header: "Name", key: "name" },
+        { header: "Credits", key: "credits", optional: true },
+      ],
+    }
+    const run = async (data: unknown) => {
+      mockCallTool.mockResolvedValueOnce(data)
+      const logSpy = spyOn(console, "log").mockImplementation(() => {})
+      setInteractive()
+      try {
+        await runTool(client, "outlit_list_customers", {}, false, { table })
+        return logSpy.mock.calls.map((call) => call[0] as string).join("\n")
+      } finally {
+        setNonInteractive()
+        logSpy.mockRestore()
+      }
+    }
+
+    const without = await run({ items: [{ name: "Acme" }], page: { hasMore: false } })
+    expect(without).toContain("Acme")
+    expect(without).not.toContain("Credits")
+
+    const withCredits = await run({
+      items: [{ name: "Acme", credits: "runs out 2026-12-01" }, { name: "Beta" }],
+      page: { hasMore: false },
+      coverage: { searched: "customers", stale: 3, withoutMeter: 0, ambiguous: 1 },
+    })
+    expect(withCredits).toContain("Credits")
+    expect(withCredits).toContain("runs out 2026-12-01")
+    expect(withCredits).toContain(
+      "Not listed: 3 left out: Autumn scan over 3 hours old; 1 left out: email matches several Autumn accounts.",
+    )
+  })
+
+  test("prints the command that reads each part a result only holds the first of", async () => {
+    mockCallTool.mockResolvedValueOnce({
+      customer: { id: "cust_1", name: "Acme" },
+      users: {
+        status: "available",
+        asOf: "2026-11-10T00:00:00Z",
+        data: [],
+        more: {
+          omitted: 12,
+          next: {
+            instruction: "All 22 people, a page at a time",
+            tool: "outlit_list_people",
+            input: { customer: "cust_1", limit: 10 },
+          },
+        },
+      },
+    })
+    const { getClientOrExit, runTool } = await import("../../src/lib/api")
+    const client = await getClientOrExit(TEST_API_KEY, false)
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    setInteractive()
+    try {
+      await runTool(client, "outlit_get_customer", { customer: "acme.com" }, false)
+      expect(stderrSpy.mock.calls.map((call) => call[0] as string)).toEqual([
+        "users: 12 more: outlit people list --customer cust_1 --limit 10\n",
+      ])
+    } finally {
+      setNonInteractive()
+      writeSpy.mockRestore()
+      stderrSpy.mockRestore()
+    }
+  })
 })
