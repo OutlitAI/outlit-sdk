@@ -42,7 +42,7 @@ describe("waitForIntegrationConnection", () => {
     expect(callTool).toHaveBeenCalledWith(
       "outlit_get_setup_session",
       {
-        sessionId: "00000000-0000-4000-8000-000000000001",
+        id: "00000000-0000-4000-8000-000000000001",
       },
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     )

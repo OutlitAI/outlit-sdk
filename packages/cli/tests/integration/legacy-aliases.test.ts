@@ -107,6 +107,26 @@ describe("old spellings through the real CLI", () => {
     expect(result.calls.map((call) => call.tool)).toEqual([tool])
   })
 
+  test("--crm-fields is --fields, with one notice", async () => {
+    const result = await run([
+      "customers",
+      "get",
+      "acme.com",
+      "--include",
+      "crm",
+      "--crm-fields",
+      "hs_lead_status",
+    ])
+
+    expect(notice(result.stderr)).toEqual([
+      "Renamed: use `outlit customers get <customer> --include crm --fields <key,...>`",
+    ])
+    expect(result.calls[0]).toEqual({
+      tool: "outlit_get_customer",
+      input: expect.objectContaining({ include: ["crm"], fields: [{ key: "hs_lead_status" }] }),
+    })
+  })
+
   test("a current spelling prints no notice", async () => {
     const result = await run(["timeline", "get", "acme.com"])
 
@@ -119,7 +139,7 @@ describe("old spellings through the real CLI", () => {
     const current = await run(["facts", "get", "f1", "--include", "evidence"])
 
     expect(old.calls).toEqual(current.calls)
-    expect(current.calls[0]?.input).toEqual({ factId: "f1", include: ["evidence"] })
+    expect(current.calls[0]?.input).toEqual({ id: "f1", include: ["evidence"] })
   })
 
   test("help for an old spelling prints no notice", async () => {

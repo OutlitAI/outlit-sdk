@@ -16,6 +16,7 @@ mock.module("../../../src/lib/client", () => ({
 }))
 
 import { default as whoamiCmd } from "../../../src/commands/auth/whoami"
+import { CLI_CLIENT } from "../../../src/lib/client-id"
 import * as configModule from "../../../src/lib/config"
 import { expectErrorExit, mockExitThrow, setInteractive, setNonInteractive } from "../../helpers"
 
@@ -86,6 +87,7 @@ describe("auth whoami", () => {
         method: "POST",
         headers: {
           Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
+          "x-outlit-client": CLI_CLIENT,
           "Outlit-Api-Key-Contract": "2",
         },
       })
@@ -151,6 +153,7 @@ describe("auth whoami", () => {
         method: "POST",
         headers: {
           Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
+          "x-outlit-client": CLI_CLIENT,
           "Outlit-Api-Key-Contract": "2",
         },
       })
@@ -191,6 +194,7 @@ describe("auth whoami", () => {
         method: "POST",
         headers: {
           Authorization: "Bearer ok_AbcdefGHIJKLMNOPQRSTUVWXYZ0123",
+          "x-outlit-client": CLI_CLIENT,
           "Outlit-Api-Key-Contract": "2",
         },
       })

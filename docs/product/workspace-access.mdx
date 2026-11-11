@@ -55,7 +55,7 @@ See [Gmail and Google Calendar](/integrations/gmail) for how personal mailbox co
 | Activation | Everyone | The product event that marks a customer activated |
 | Product usage | Admins | Feature/credit usage configuration |
 | API keys | Admins | `ok_*` keys for the CLI/MCP — workspace principals with their own grants, one-time reveal, revoke/regenerate |
-| CLI & MCP | Everyone | Workspace MCP URL (`https://mcp.outlit.ai/w/{your-workspace}/mcp`) and CLI auth |
+| CLI & MCP | Everyone | Workspace MCP URL (`https://mcp.outlit.ai/w/{your-workspace}/mcp?toolsets=core,work,meta`; loads core, work and meta, add admin or identity, or use `?toolsets=all` for every tool; the bare URL loads every tool) and CLI auth |
 | Plan usage, Billing | Everyone | Usage and billing for your Outlit subscription |
 | Account → Profile, Security | Everyone | Personal profile and sign-in security |
 

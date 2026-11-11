@@ -4,9 +4,9 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, outputApiError } from "../../lib/api"
 import type { OutlitClient } from "../../lib/client"
+import { newIdempotencyKey } from "../../lib/idempotency-key"
 import { isJsonMode, outputError, outputResult } from "../../lib/output"
 import { normalizeProviderInput } from "../../lib/providers"
-import { newRequestId } from "../../lib/request-id"
 import { openBrowser } from "../../lib/tty"
 import {
   collectMixpanelMapping,
@@ -188,7 +188,7 @@ async function runPreferredSetup(options: {
       // Each call is its own action, so each gets its own retry key.
       const raw = await client.callTool("outlit_setup_integration", {
         ...input,
-        requestId: newRequestId(),
+        idempotencyKey: newIdempotencyKey(),
       })
       setupCalls += 1
       if (!matchesGeneratedJsonSchema(raw, setupOutputSchema)) {

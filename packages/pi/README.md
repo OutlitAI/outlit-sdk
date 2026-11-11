@@ -19,7 +19,7 @@ pi
 
 ## Tools
 
-The default extension registers the default customer intelligence tools from `@outlit/tools`:
+The default extension registers the default customer intelligence tools from `@outlit/tools`, plus the two read-only toolset tools (`piDefaultToolNames`):
 
 - `outlit_list_customers`
 - `outlit_list_customer_fields`
@@ -31,8 +31,12 @@ The default extension registers the default customer intelligence tools from `@o
 - `outlit_get_source`
 - `outlit_list_sources`
 - `outlit_search_customer_context`
+- `outlit_list_toolsets`
+- `outlit_load_toolset`
 
-SQL and the other Pi-supported Platform capabilities are available from `@outlit/tools`, but the default Pi policy intentionally stays focused on customer intelligence. A custom Pi extension can opt into every Pi-supported tool with `piToolNames`, including task reads and actions, customer ownership and access actions, product-facing Feature list, create and archive tools, `outlit_list_toolsets` and `outlit_load_toolset`, plus safe integration setup, destination, activation, workspace-settings actions, and `outlit_submit_feedback` product feedback intake. The default and analytical policies remain unchanged.
+Pi registers its tools when a session starts, so `outlit_list_toolsets` and `outlit_load_toolset` tell the agent which toolset holds a tool it lacks; enabling that toolset is the extension's `toolsets` option (below).
+
+SQL and the other Pi-supported Platform capabilities are available from `@outlit/tools`, but the default Pi policy intentionally stays focused on customer intelligence. A custom Pi extension can opt into every Pi-supported tool with `piToolNames`, including task reads and actions, customer ownership and access actions, product-facing Feature list, create and archive tools, plus safe integration setup, destination, activation, workspace-settings actions, and `outlit_submit_feedback` product feedback intake. The analytical policy (`analyticalToolNames`) is unchanged and does not include the toolset tools.
 
 For analytical agents that need cohorts, usage trends, revenue filters, activation gaps, or aggregate checks, import `analyticalToolNames`. It combines the default customer intelligence tools with `outlit_get_schema` and `outlit_query` without exposing every customer tool:
 
@@ -67,6 +71,8 @@ export default createOutlitPiExtension({
   toolsets: ["core", "work"],
 })
 ```
+
+A call that fails (a gateway error, a rate limit, a dropped connection) is returned as the tool result `{ "error": { code, message, retryable, requestId, next, missingPermission, validationIssues, retryAfterSeconds } }`, with the fields the gateway sent, so the agent can fix its input, wait or report the missing permission. `details.error` holds the same object. A missing API key or non-object input still throws.
 
 A tool result that comes with a deprecation or an input notice from Outlit (for example a limit lowered to the maximum) carries it as a second text block after the JSON.
 

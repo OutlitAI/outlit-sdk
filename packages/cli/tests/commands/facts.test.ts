@@ -295,9 +295,81 @@ describe("facts commands", () => {
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_get_fact", {
-      factId: "fact_123",
+      id: "fact_123",
       include: ["evidence"],
     })
+  })
+
+  test("get reads one long field a page at a time with --part and --cursor", async () => {
+    const { default: factsGetCmd } = await import("../../src/commands/facts/get")
+
+    await captureStdout(() =>
+      factsGetCmd.run!({
+        args: { id: "fact_123", part: "Evidence", cursor: "page_2", json: true },
+      } as Parameters<NonNullable<typeof factsGetCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_get_fact", {
+      id: "fact_123",
+      part: { field: "evidence", cursor: "page_2" },
+    })
+  })
+
+  test.each([
+    ["an unknown --part", { part: "summary" }],
+    ["--cursor without --part", { cursor: "page_2" }],
+  ])("get rejects %s before calling Core", async (_name, flags) => {
+    const { default: factsGetCmd } = await import("../../src/commands/facts/get")
+
+    await runExpectingError(async () => {
+      await factsGetCmd.run!({
+        args: { id: "fact_123", json: true, ...flags },
+      } as Parameters<NonNullable<typeof factsGetCmd.run>>[0])
+    }, "invalid_input")
+
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("list sends --include as a lowercase list and refuses an unknown extra", async () => {
+    const { default: factsListCmd } = await import("../../src/commands/facts/list")
+
+    await captureStdout(() =>
+      factsListCmd.run!({
+        args: { customer: "acme.com", include: "Reasoning,quote", json: true },
+      } as Parameters<NonNullable<typeof factsListCmd.run>>[0]),
+    )
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_facts", {
+      customer: "acme.com",
+      include: ["reasoning", "quote"],
+    })
+
+    mockCallTool.mockClear()
+    await runExpectingError(async () => {
+      await factsListCmd.run!({
+        args: { customer: "acme.com", include: "reasoning,summary", json: true },
+      } as Parameters<NonNullable<typeof factsListCmd.run>>[0])
+    }, "invalid_input")
+    expect(mockCallTool).not.toHaveBeenCalled()
+  })
+
+  test("search sends --include with the query", async () => {
+    const { default: searchCmd } = await import("../../src/commands/search")
+
+    await captureStdout(() =>
+      searchCmd.run!({
+        args: { query: "pricing", customer: "acme.com", include: "quote,evidence", json: true },
+        rawArgs: [],
+      } as never),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith(
+      "outlit_search_customer_context",
+      expect.objectContaining({
+        query: "pricing",
+        customer: "acme.com",
+        include: ["quote", "evidence"],
+      }),
+    )
   })
 
   test("get rejects an include value the tool does not take", async () => {

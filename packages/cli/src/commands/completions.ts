@@ -22,7 +22,10 @@ const YES_F: Flag = { name: "--yes", desc: "Confirm without asking" }
 const WRITE_MODE = [
   { name: "--mode", desc: "preview or execute (execute needs --preview-token)" },
   { name: "--preview-token", desc: "preview.token of the same change" },
-  { name: "--request-id", desc: "Stable request ID for retries" },
+  {
+    name: "--idempotency-key",
+    desc: "Idempotency key: a retry with the same key returns the first result",
+  },
 ] as const
 const UNDO_F: Flag = { name: "--undo-token", desc: "undo.token of an earlier change" }
 const MEMBER_F: Flag = { name: "--member", desc: "Workspace member user ID or email" }
@@ -80,6 +83,9 @@ const COMMANDS: readonly CmdDef[] = [
             name: "--part-of",
             desc: "Only direct subsidiaries of this customer (ID, domain or name)",
           },
+          { name: "--runs-out-within", desc: "Autumn credit pool forecast to run out: 7d to 90d" },
+          { name: "--meter", desc: "With --order-by meter_usage: the Autumn feature id" },
+          { name: "--meter-connection", desc: "With --meter: the Autumn connection id" },
         ],
       },
       {
@@ -99,7 +105,12 @@ const COMMANDS: readonly CmdDef[] = [
             name: "--limit",
             desc: "With features, meters, credits or hierarchy: items per page (1-100)",
           },
-          { name: "--cursor", desc: "With one paged section: its page.nextCursor" },
+          { name: "--cursor", desc: "With one paged section or --crm-contacts: its next cursor" },
+          { name: "--fields", desc: "With crm: only these CRM fields (key or system:key)" },
+          {
+            name: "--crm-contacts",
+            desc: "One CRM account's contacts: <connectionId>:<accountId>",
+          },
         ],
       },
       {
@@ -109,7 +120,7 @@ const COMMANDS: readonly CmdDef[] = [
           ...COMMON,
           { name: "--mode", desc: "preview (default) or execute the reviewed merge" },
           { name: "--preview-token", desc: "Reviewed preview token" },
-          { name: "--request-id", desc: "Stable execution request ID" },
+          { name: "--idempotency-key", desc: "Idempotency key for the execution" },
           { name: "--suggestion-id", desc: "Optional originating suggestion ID" },
           { name: "--note", desc: "Optional merge explanation" },
         ],
@@ -204,7 +215,10 @@ const COMMANDS: readonly CmdDef[] = [
         flags: [
           ...COMMON,
           { name: "--note", desc: "Optional reason for rejection" },
-          { name: "--request-id", desc: "Stable request ID for retries" },
+          {
+            name: "--idempotency-key",
+            desc: "Idempotency key: a retry with the same key returns the first result",
+          },
         ],
       },
     ],
@@ -294,13 +308,22 @@ const COMMANDS: readonly CmdDef[] = [
           ...COMMON,
           { name: "--until", desc: "snooze only: ISO 8601 date-time within 14 days" },
           { name: "--reason", desc: "wont_do only: already_handled, not_needed, not_ours" },
-          { name: "--request-id", desc: "Stable request ID for retries" },
+          {
+            name: "--idempotency-key",
+            desc: "Idempotency key: a retry with the same key returns the first result",
+          },
         ],
       },
       {
         name: "undo",
         desc: "Reverse a task action within 24 hours",
-        flags: [...COMMON, { name: "--request-id", desc: "Stable request ID for retries" }],
+        flags: [
+          ...COMMON,
+          {
+            name: "--idempotency-key",
+            desc: "Idempotency key: a retry with the same key returns the first result",
+          },
+        ],
       },
     ],
   },
@@ -319,12 +342,18 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--fact-categories", desc: "Filter by fact categories" },
           { name: "--after", desc: "Facts after date (ISO 8601)" },
           { name: "--before", desc: "Facts before date (ISO 8601)" },
+          { name: "--include", desc: "Add reasoning, quote or evidence to each fact" },
         ],
       },
       {
         name: "get",
         desc: "Get a single fact by ID",
-        flags: [...COMMON, { name: "--include", desc: "Best-effort expansions" }],
+        flags: [
+          ...COMMON,
+          { name: "--include", desc: "Best-effort expansions" },
+          { name: "--part", desc: "Read one long field a page at a time" },
+          CURSOR_F,
+        ],
       },
     ],
   },
@@ -381,6 +410,7 @@ const COMMANDS: readonly CmdDef[] = [
       { name: "--after", desc: "Events after date (ISO 8601)" },
       { name: "--before", desc: "Events before date (ISO 8601)" },
       { name: "--source-types", desc: "Broad source type filter" },
+      { name: "--include", desc: "Add reasoning, quote or evidence to fact results" },
     ],
   },
   {
@@ -444,7 +474,10 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--label", desc: "Slack channel label" },
           { name: "--is-default", desc: "Make this the default destination" },
           { name: "--enabled", desc: "true (default) or false" },
-          { name: "--request-id", desc: "Stable request ID for retries" },
+          {
+            name: "--idempotency-key",
+            desc: "Idempotency key: a retry with the same key returns the first result",
+          },
         ],
       },
       {
@@ -509,7 +542,10 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--source-key", desc: "Product-event source key" },
           { name: "--event-name", desc: "Exact tracked event name" },
           { name: "--feature-key", desc: "Stable lower_snake_case feature key" },
-          { name: "--request-id", desc: "Stable request ID for retries" },
+          {
+            name: "--idempotency-key",
+            desc: "Idempotency key: a retry with the same key returns the first result",
+          },
           { name: "--name", desc: "Human-readable Feature name" },
           { name: "--property-filters", desc: "Optional JSON exact or exists filters" },
         ],

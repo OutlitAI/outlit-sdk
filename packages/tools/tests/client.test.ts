@@ -42,6 +42,12 @@ import {
   matchesGeneratedJsonSchema,
   normalizeCustomerSourceToolInput,
   normalizeCustomerSourceType,
+  OUTLIT_API_VERSION,
+  OUTLIT_TOOLS_CLIENT,
+  outlitClientHeader,
+  outlitRequestIdHeader,
+  outlitVersionRequestHeader,
+  outlitVersionResponseHeader,
   piToolNames,
   publicOpenApiTransports,
   resolveCustomerContextSearchInput,
@@ -112,6 +118,7 @@ describe("toolsets", () => {
       "outlit_submit_feedback",
       "outlit_list_toolsets",
       "outlit_load_toolset",
+      "outlit_get_skill",
       "outlit_list_integrations",
       "outlit_setup_integration",
       "outlit_get_setup_session",
@@ -131,7 +138,7 @@ describe("toolsets", () => {
       "outlit_merge_customers",
       "outlit_get_merge",
     ])
-    expect(allPublicToolNames).toHaveLength(40)
+    expect(allPublicToolNames).toHaveLength(41)
     expect(allPublicToolNames).not.toContain("outlit_send_notification")
     expect(allPublicToolNames).not.toContain("outlit_submit_agent_output")
   })
@@ -317,13 +324,13 @@ describe("tool contracts", () => {
       "eventName",
       "featureKey",
       "name",
-      "requestId",
+      "idempotencyKey",
     ])
     expect(create.inputSchema.properties.propertyFilters).toEqual(
       expect.objectContaining({ default: [], maxItems: 5 }),
     )
     expect(archive.commandId).toBe("value_feature.archive")
-    expect(archive.inputSchema.required).toEqual(["id", "revision", "requestId"])
+    expect(archive.inputSchema.required).toEqual(["id", "revision", "idempotencyKey"])
     expect(archive.inputSchema.properties).toEqual(
       expect.objectContaining({
         mode: expect.objectContaining({ enum: ["preview", "execute"] }),
@@ -602,7 +609,7 @@ describe("tool contracts", () => {
         {
           provider: "autumn",
           credentials: { apiKey: "am_sk_test_example" },
-          requestId: "request_autumn_1",
+          idempotencyKey: "request_autumn_1",
         },
         contract.inputSchema,
       ),
@@ -769,6 +776,126 @@ describe("createOutlitClient", () => {
       "https://app.outlit.ai/api/tools/call",
       expect.any(Object),
     )
+  })
+
+  test("sends x-outlit-client: <package>/<version>, this package's by default and a wrapper's when given", async () => {
+    const pkg = JSON.parse(
+      readFileSync(resolve(import.meta.dirname, "../package.json"), "utf8"),
+    ) as {
+      version: string
+    }
+    const fetchMock = vi.fn().mockImplementation(async () => new Response(JSON.stringify({})))
+    const headerOf = (call: number) =>
+      (fetchMock.mock.calls[call]?.[1] as RequestInit).headers as Record<string, string>
+
+    await createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: fetchMock,
+    }).callTool("outlit_list_customers", {})
+    await createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      client: "@outlit/cli/4.1.0",
+      fetch: fetchMock,
+    }).callTool("outlit_list_customers", {})
+
+    expect(outlitClientHeader).toBe("x-outlit-client")
+    expect(OUTLIT_TOOLS_CLIENT).toBe(`@outlit/tools/${pkg.version}`)
+    expect(headerOf(0)[outlitClientHeader]).toBe(`@outlit/tools/${pkg.version}`)
+    expect(headerOf(1)[outlitClientHeader]).toBe("@outlit/cli/4.1.0")
+  })
+
+  test("sends Outlit-Version only when asked, and reads the request id and version off every answer", async () => {
+    const headers = { "outlit-request-id": "req_abc", "outlit-version": "2026-11-12" }
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(async () => new Response(JSON.stringify({ items: [] }), { headers }))
+    const seen: unknown[] = []
+    const plain = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: fetchMock,
+      onResponse: (info) => seen.push(info),
+    })
+    const pinned = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: fetchMock,
+      version: OUTLIT_API_VERSION,
+    })
+
+    const { result, meta } = await plain.callToolWithMeta("outlit_list_customers", {})
+    await pinned.callTool("outlit_list_customers", {})
+    const sent = (call: number) =>
+      (fetchMock.mock.calls[call]?.[1] as RequestInit).headers as Record<string, string>
+
+    expect(result).toEqual({ items: [] })
+    expect(meta).toMatchObject({ requestId: "req_abc", version: "2026-11-12", status: 200 })
+    expect(seen[0]).toEqual(meta)
+    expect(sent(0)[outlitVersionRequestHeader]).toBeUndefined()
+    expect(sent(1)[outlitVersionRequestHeader]).toBe("2026-11-12")
+    expect(outlitRequestIdHeader).toBe("outlit-request-id")
+    expect(outlitVersionResponseHeader).toBe("outlit-version")
+  })
+
+  test("puts the request id and version on a gateway error, from the headers or else the envelope", async () => {
+    const envelope = {
+      code: "RATE_LIMITED",
+      message: "Slow down",
+      retryable: true,
+      requestId: "req_env",
+      retryAfterSeconds: 7,
+    }
+    const withHeaders = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockResolvedValue(
+        new Response(JSON.stringify(envelope), {
+          status: 429,
+          headers: { "outlit-request-id": "req_hdr", "outlit-version": "2026-11-12" },
+        }),
+      ),
+    })
+    const bare = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockResolvedValue(new Response(JSON.stringify(envelope), { status: 429 })),
+    })
+
+    const first = await withHeaders.callTool("outlit_list_customers").catch((e: unknown) => e)
+    const second = await bare.callTool("outlit_list_customers").catch((e: unknown) => e)
+    if (!isOutlitToolsApiError(first) || !isOutlitToolsApiError(second)) {
+      throw new Error("expected OutlitToolsApiError")
+    }
+
+    expect(first.requestId).toBe("req_hdr")
+    expect(first.version).toBe("2026-11-12")
+    expect(first.envelope?.retryAfterSeconds).toBe(7)
+    expect(second.requestId).toBe("req_env")
+    expect(second.version).toBeUndefined()
+  })
+
+  test("reads the quota denial's resetsAt, and the new error codes", async () => {
+    const quota = {
+      code: "plan_api_limit_exceeded",
+      message: "API call limit exceeded",
+      retryable: false,
+      requestId: "req_quota",
+      plan: "free",
+      resetAt: 1796083200000,
+      resetsAt: "2026-12-01T00:00:00.000Z",
+    }
+    const client = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockResolvedValue(new Response(JSON.stringify(quota), { status: 429 })),
+    })
+    const error = await client.callTool("outlit_list_customers").catch((e: unknown) => e)
+    if (!isOutlitToolsApiError(error)) throw new Error("expected OutlitToolsApiError")
+
+    expect(error.envelope).toEqual(quota)
+    for (const code of [
+      "CONFLICT",
+      "RATE_LIMITED",
+      "INTERNAL_ERROR",
+      "TOOL_IMPLEMENTATION_ERROR",
+    ]) {
+      expect(toolGatewayErrorCodes).toContain(code)
+    }
   })
 
   test("forwards a caller deadline signal to the gateway request", async () => {
@@ -981,6 +1108,56 @@ describe("createOutlitClient", () => {
     const error = await client.callTool("outlit_list_customers").catch((value: unknown) => value)
     if (!isOutlitToolsApiError(error)) throw new Error("expected OutlitToolsApiError")
     expect(error.envelope).toEqual(envelope)
+  })
+
+  test("keeps the message on a validation issue and the retry interval on a 429", async () => {
+    const issue = {
+      code: "too_big",
+      path: "limit",
+      message: "limit is at most 100",
+    }
+    const envelopes = [
+      {
+        code: "INVALID_TOOL_INPUT",
+        message: "Invalid input",
+        retryable: false,
+        requestId: "request_issue_message",
+        validationIssues: [issue],
+      },
+      {
+        code: "TOOL_IMPLEMENTATION_ERROR",
+        message: "Rate limit reached",
+        retryable: true,
+        requestId: "request_retry_after",
+        retryAfterSeconds: 12,
+      },
+      {
+        code: "INVALID_TOOL_INPUT",
+        message: "Invalid input",
+        retryable: false,
+        requestId: "request_retry_after_elsewhere",
+        retryAfterSeconds: 12,
+      },
+    ]
+    const client = createOutlitClient({
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockImplementation(async () => {
+        const body = envelopes.shift()
+        return new Response(JSON.stringify(body), { status: body?.retryAfterSeconds ? 429 : 400 })
+      }),
+    })
+    const errors: unknown[] = []
+    for (let i = 0; i < 3; i++) {
+      errors.push(await client.callTool("outlit_list_customers").catch((value: unknown) => value))
+    }
+    const envelopesSeen = errors.map((error) =>
+      isOutlitToolsApiError(error) ? error.envelope : undefined,
+    )
+
+    expect(envelopesSeen[0]?.validationIssues).toEqual([issue])
+    expect(envelopesSeen[1]?.retryAfterSeconds).toBe(12)
+    // Core reserves the interval for rate-limit codes, so any other code leaves the envelope unread.
+    expect(envelopesSeen[2]).toBeUndefined()
   })
 
   test("keeps the envelope and drops top-level fields this build does not know", async () => {

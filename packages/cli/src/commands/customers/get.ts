@@ -2,10 +2,12 @@ import { customerIncludeSections, customerTimeframes, publicToolContracts } from
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
+import { PAGE_SIZE } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
 import { outputError } from "../../lib/output"
 import { parseBoundedInteger } from "../features/input"
+import { parseCrmContacts, parseFieldSelectors } from "./crm-input"
 
 type SectionArgs = {
   weeks?: string
@@ -64,7 +66,7 @@ export function readSectionOptions(
 
   const weeks = args.weeks ? parseBoundedInteger(args.weeks, 12, "--weeks", 1, 53, json) : undefined
   const limit = args.limit
-    ? parseBoundedInteger(args.limit, 25, "--limit", 1, 100, json)
+    ? parseBoundedInteger(args.limit, PAGE_SIZE.default, "--limit", 1, PAGE_SIZE.max, json)
     : undefined
   const options: Record<string, Record<string, unknown>> = {}
   for (const section of paged) {
@@ -93,6 +95,9 @@ export default defineCommand({
       "is {status, asOf, data}, or a status and reason when there is nothing to show.",
       "features, meters, credits and hierarchy's children come in pages: --limit sets the page",
       "size, and --cursor continues one of them (the section's page.nextCursor).",
+      "With --include crm, --fields reads only some CRM fields (by key or label; prefix a system to pick one:",
+      "hubspot:hs_lead_status). --crm-contacts <connectionId>:<accountId> reads one CRM account's contacts,",
+      "25 at a time; --cursor continues it with the account's contactsNext.",
       "hierarchy is the parent company and direct subsidiaries the CRM records; to list the",
       "subsidiaries with ARR and filters, use `outlit customers list --part-of <customer>`.",
       "",
@@ -107,6 +112,8 @@ export default defineCommand({
       "  outlit customers get acme.com --include relationship,credits",
       "  outlit customers get acme.com --include features,meters --weeks 6 --weekly",
       "  outlit customers get opella.com --include hierarchy",
+      "  outlit customers get acme.com --include crm --fields hs_lead_status,salesforce:Type",
+      "  outlit customers get acme.com --crm-contacts <connectionId>:<accountId>",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -148,13 +155,22 @@ export default defineCommand({
     },
     limit: {
       type: "string",
-      description:
-        "With --include features, meters, credits or hierarchy: items per page (1-100, default: 25)",
+      description: `With --include features, meters, credits or hierarchy: items per page (1-${PAGE_SIZE.max}, default: ${PAGE_SIZE.default})`,
     },
     cursor: {
       type: "string",
       description:
-        "With one of --include features, meters, credits or hierarchy: the section's page.nextCursor",
+        "With one of --include features, meters, credits or hierarchy: the section's page.nextCursor. With --crm-contacts: the account's contactsNext cursor",
+    },
+    fields: {
+      type: "string",
+      description:
+        "With --include crm: only these CRM fields, comma-separated keys or labels, each optionally prefixed with its system (hubspot:hs_lead_status)",
+    },
+    "crm-contacts": {
+      type: "string",
+      description:
+        "Read one CRM account's contacts, 25 at a time: <connectionId>:<accountId> from include crm",
     },
   },
   async run({ args }) {
@@ -172,7 +188,16 @@ export default defineCommand({
     if (args.subscriptions) {
       params.subscriptions = args.subscriptions
     }
-    Object.assign(params, readSectionOptions(args, params.include as string[] | undefined, json))
+    if (args.fields) params.fields = parseFieldSelectors(args.fields, json)
+    if (args["crm-contacts"]) {
+      params.crmContacts = parseCrmContacts(args["crm-contacts"], args.cursor, json)
+    }
+    // With --crm-contacts the cursor belongs to the account's contacts, not to a paged section.
+    const sectionArgs = args["crm-contacts"] ? { ...args, cursor: undefined } : args
+    Object.assign(
+      params,
+      readSectionOptions(sectionArgs, params.include as string[] | undefined, json),
+    )
 
     return runTool(client, publicToolContracts.outlit_get_customer.toolName, params, json)
   },

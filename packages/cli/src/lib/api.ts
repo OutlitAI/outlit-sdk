@@ -7,13 +7,18 @@ import {
   apiKeyValidationSuccessSchemaV2,
   apiKeyValidationTransport,
   type CliToolName,
+  type Collection,
+  collectionOf,
   isOutlitToolsApiError,
   matchesGeneratedJsonSchema,
 } from "@outlit/tools"
 import type { OutlitClient, OutlitToolParams } from "./client"
 import { createClient } from "./client"
+import { CLI_CLIENT, CLIENT_HEADER } from "./client-id"
 import { DEFAULT_API_URL } from "./config"
+import { envelopeLines } from "./error-lines"
 import { warnIfKeyExpiresSoon } from "./key-expiry"
+import { moreLines, nextCommand } from "./next-command"
 import { errorMessage, isJsonMode, outputError, outputResult } from "./output"
 import { createSpinner } from "./spinner"
 import { renderPaginationHint, renderTable } from "./table"
@@ -23,16 +28,14 @@ export interface TableColumn {
   /** Property of each item; a dot-separated path reads a nested one (`source.type`). */
   key: string
   format?: (value: unknown) => string
+  /** Shown only when at least one row has a value here (a column some calls add to every row). */
+  optional?: boolean
 }
 
 export interface RunToolOptions {
   /** Column definitions for TTY table rendering. */
   table?: {
     columns: TableColumn[]
-    /** Dot-separated key path to the items array in the response (default: "items"). */
-    itemsKey?: string
-    /** Dot-separated key path to pagination metadata in the response (default: "pagination"; v2 tools use "page"). */
-    paginationKey?: string
   }
   /** Spinner message shown during the API call (TTY only). */
   spinnerMessage?: string
@@ -85,6 +88,7 @@ export async function pingApiKey(apiKey: string): Promise<ApiKeyValidationPayloa
     method: apiKeyValidationTransport.method,
     headers: {
       Authorization: `Bearer ${apiKey}`,
+      [CLIENT_HEADER]: CLI_CLIENT,
       // Ask for v2 (adds the key's expiry); a server that predates it answers v1.
       [apiKeyContractHeader]: "2",
     },
@@ -176,33 +180,48 @@ export function outputApiError(
       process.exit(1)
     }
 
-    return outputError({ message: error.envelope.message, code: error.envelope.code }, json)
+    return outputError(
+      {
+        message: [error.envelope.message, ...envelopeLines(error.envelope)].join("\n"),
+        code: error.envelope.code,
+      },
+      json,
+    )
   }
 
   return outputError(fallback, json)
 }
 
 /** Renders API response data as a TTY table with optional pagination hint. */
-function renderApiTable(data: unknown, table: NonNullable<RunToolOptions["table"]>): void {
+function renderApiTable(
+  toolName: string,
+  data: unknown,
+  table: NonNullable<RunToolOptions["table"]>,
+): void {
   const record =
     typeof data === "object" && data !== null && !Array.isArray(data)
       ? (data as Record<string, unknown>)
       : {}
-  const itemsKey = table.itemsKey ?? "items"
-  const rawItems = readPath(record, itemsKey)
-  const items = Array.isArray(rawItems) ? (rawItems as Array<Record<string, unknown>>) : undefined
+  // The tool's own collection key (items, facts, events, results), page and truncation.
+  const collection = collectionOf(toolName, data)
+  const items = collection?.items as Array<Record<string, unknown>> | undefined
 
   if (!items || items.length === 0) {
     console.log("(no results)")
     // An empty v2 list says what it searched, so "nothing found" is not read as "not looked".
     const searched = readPath(record, "coverage.searched")
     if (typeof searched === "string" && searched.length > 0) console.log(`Searched: ${searched}`)
+    const notes = coverageNotes(readPath(record, "coverage"))
+    if (notes) console.log(notes)
     return
   }
 
-  const headers = table.columns.map((c) => c.header)
+  const columns = table.columns.filter(
+    (col) => !col.optional || items.some((item) => readPath(item, col.key) != null),
+  )
+  const headers = columns.map((c) => c.header)
   const rows = items.map((item) =>
-    table.columns.map((col) => {
+    columns.map((col) => {
       const raw = readPath(item, col.key)
       return col.format ? col.format(raw) : raw == null ? "--" : String(raw)
     }),
@@ -210,13 +229,40 @@ function renderApiTable(data: unknown, table: NonNullable<RunToolOptions["table"
 
   console.log(renderTable(headers, rows))
 
-  const pagination = readPath(record, table.paginationKey ?? "pagination") as
-    | { hasMore: boolean; nextCursor: string | null; total?: number }
-    | undefined
-  if (pagination) {
-    const hint = renderPaginationHint(pagination, items.length)
+  if (collection?.page) {
+    const hint = renderPaginationHint(collection.page, items.length)
     if (hint) console.log(`\n${hint}`)
   }
+  const cut = truncationNote(collection?.truncation)
+  if (cut) console.log(`\n${cut}`)
+  const notes = coverageNotes(readPath(record, "coverage"))
+  if (notes) console.log(`\n${notes}`)
+}
+
+/** What a list the gateway cut to fit its size cap says: how many rows it kept and how to read the rest. */
+function truncationNote(truncation: Collection["truncation"]): string | undefined {
+  if (!truncation) return undefined
+  const kept = typeof truncation.returned === "number" ? `${truncation.returned} rows kept. ` : ""
+  const next = truncation.next
+  const how = next ? (nextCommand(next.tool, next.input) ?? next.instruction) : ""
+  return `Cut to fit the response size: ${kept}${how}`.trim()
+}
+
+/** Customers a credits or meter call could not rank, by why, so a short list is not read as complete. */
+function coverageNotes(coverage: unknown): string | undefined {
+  if (typeof coverage !== "object" || coverage === null) return undefined
+  const { stale, withoutMeter, ambiguous } = coverage as Record<string, unknown>
+  const notes: string[] = []
+  if (typeof stale === "number" && stale > 0) {
+    notes.push(`${stale} left out: Autumn scan over 3 hours old`)
+  }
+  if (typeof withoutMeter === "number" && withoutMeter > 0) {
+    notes.push(`${withoutMeter} left out: no usage for the meter`)
+  }
+  if (typeof ambiguous === "number" && ambiguous > 0) {
+    notes.push(`${ambiguous} left out: email matches several Autumn accounts`)
+  }
+  return notes.length > 0 ? `Not listed: ${notes.join("; ")}.` : undefined
 }
 
 function readPath(record: Record<string, unknown>, path: string): unknown {
@@ -256,10 +302,15 @@ export async function runTool<TToolName extends CliToolName>(
 
     const table = opts?.table
     if (isJsonMode(json) || !table) {
-      return outputResult(data)
+      outputResult(data)
+      // JSON readers get `more.next` in the result; a person at a terminal gets the command.
+      if (!isJsonMode(json)) {
+        for (const line of moreLines(data)) process.stderr.write(`${line}\n`)
+      }
+      return
     }
 
-    renderApiTable(data, table)
+    renderApiTable(toolName, data, table)
   } catch (err) {
     spinner?.fail("Failed")
     return outputApiError(err, json, {

@@ -72,7 +72,7 @@ describe("platform lifecycle commands", () => {
       label: "#customer-ops",
       enabled: true,
       isDefault: true,
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
     expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_update_destination", {
       id: destinationId,
@@ -181,13 +181,13 @@ describe("platform lifecycle commands", () => {
 
     expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_archive_destination", {
       id,
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
     expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_archive_destination", {
       id,
       mode: "execute",
       previewToken: "preview_token_1",
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
     expect(result).toMatchObject({ archived: true })
   })

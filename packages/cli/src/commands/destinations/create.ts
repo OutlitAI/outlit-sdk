@@ -2,13 +2,13 @@ import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
+import { newIdempotencyKey } from "../../lib/idempotency-key"
 import { outputError } from "../../lib/output"
 import {
   optionalTrimmedString,
   parseBooleanFlag,
   requiredTrimmedString,
 } from "../../lib/platform-input"
-import { newRequestId } from "../../lib/request-id"
 
 function parseDestinationType(type: string | undefined, json: boolean): "slack_channel" {
   const normalized = optionalTrimmedString(type)?.toLowerCase()
@@ -46,7 +46,7 @@ export default defineCommand({
       type: "string",
       description: "true (default) or false: create the destination enabled or disabled",
     },
-    "request-id": {
+    "idempotency-key": {
       type: "string",
       description: "Stable retry key: the same id returns the first result (default: a new one)",
     },
@@ -72,7 +72,7 @@ export default defineCommand({
         label: requiredTrimmedString(args.label, "--label", json),
         enabled,
         isDefault,
-        requestId: optionalTrimmedString(args["request-id"]) ?? newRequestId(),
+        idempotencyKey: optionalTrimmedString(args["idempotency-key"]) ?? newIdempotencyKey(),
       },
       json,
       { spinnerMessage: "Creating destination..." },

@@ -165,7 +165,7 @@ describe("integrations setup", () => {
     expect(mockCallTool).toHaveBeenCalledTimes(1)
     expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_setup_integration", {
       provider: "hubspot",
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
     expect(result).toEqual(setupResult())
   })
@@ -428,11 +428,11 @@ describe("integrations setup", () => {
     expect(mockConfirm).toHaveBeenCalledTimes(1)
     expect(setupCalls).toBe(3)
     // Each call is its own action with its own retry key; a shared key would replay the first answer.
-    const requestIds = mockCallTool.mock.calls.map(
-      (call) => (call[1] as { requestId?: string }).requestId,
+    const idempotencyKeys = mockCallTool.mock.calls.map(
+      (call) => (call[1] as { idempotencyKey?: string }).idempotencyKey,
     )
-    expect(requestIds).toHaveLength(3)
-    expect(new Set(requestIds).size).toBe(3)
+    expect(idempotencyKeys).toHaveLength(3)
+    expect(new Set(idempotencyKeys).size).toBe(3)
   })
 
   test("preserves a supplied CRM mapping through an OAuth continuation", async () => {
@@ -948,6 +948,7 @@ describe("integrations setup", () => {
     expect(Object.keys(setup.args ?? {})).toEqual([
       "api-key",
       "json",
+      "verbose",
       "config-stdin",
       "accept-recommended",
       "provider",

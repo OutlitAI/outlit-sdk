@@ -78,9 +78,9 @@ describe("identity CLI tools", () => {
     ],
     [
       "reject",
-      ["proposal_1", "--note", "Different companies", "--request-id", "request_9"],
+      ["proposal_1", "--note", "Different companies", "--idempotency-key", "request_9"],
       "outlit_reject_merge_suggestion",
-      { id: "proposal_1", note: "Different companies", requestId: "request_9" },
+      { id: "proposal_1", note: "Different companies", idempotencyKey: "request_9" },
     ],
     [
       "merge",
@@ -97,7 +97,7 @@ describe("identity CLI tools", () => {
         "execute",
         "--preview-token",
         "reviewed_token",
-        "--request-id",
+        "--idempotency-key",
         "request_1",
         "--suggestion-id",
         "proposal_1",
@@ -110,7 +110,7 @@ describe("identity CLI tools", () => {
         survivor: "survivor_1",
         duplicate: "duplicate_1",
         previewToken: "reviewed_token",
-        requestId: "request_1",
+        idempotencyKey: "request_1",
         suggestionId: "proposal_1",
         note: "Same company verified",
       },
@@ -132,16 +132,16 @@ describe("identity CLI tools", () => {
     }
   })
 
-  test("reject sends a fresh request ID when none is passed, so a replay needs --request-id", async () => {
+  test("reject sends a fresh idempotency key when none is passed, so a replay needs --idempotency-key", async () => {
     const cmd = await command("reject")
     const write = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await runCommand(cmd.root, { rawArgs: [...cmd.prefix, "proposal_1", "--json"] })
       await runCommand(cmd.root, { rawArgs: [...cmd.prefix, "proposal_1", "--json"] })
-      const ids = calls.map((call) => (call.params as { requestId: string }).requestId)
+      const ids = calls.map((call) => (call.params as { idempotencyKey: string }).idempotencyKey)
       expect(ids[0]).toMatch(/^[0-9a-f-]{36}$/)
       expect(ids[1]).not.toBe(ids[0])
-      expect(calls[0]?.params).toEqual({ id: "proposal_1", requestId: ids[0] })
+      expect(calls[0]?.params).toEqual({ id: "proposal_1", idempotencyKey: ids[0] })
     } finally {
       write.mockRestore()
     }
@@ -150,7 +150,7 @@ describe("identity CLI tools", () => {
   for (const executionArgs of [
     ["--mode", "execute"],
     ["--mode", "execute", "--preview-token", "reviewed"],
-    ["--mode", "execute", "--request-id", "request_1"],
+    ["--mode", "execute", "--idempotency-key", "request_1"],
   ]) {
     test(`rejects incomplete execution before transport: ${executionArgs.join(" ")}`, async () => {
       const cmd = await command("merge")

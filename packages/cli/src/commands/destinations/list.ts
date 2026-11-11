@@ -1,7 +1,7 @@
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { applyPagination, paginationArgs } from "../../args/pagination"
+import { applyPagination, pageSizeArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { relativeDate, truncate } from "../../lib/format"
 import { parseCsvList } from "../../lib/platform-input"
@@ -23,7 +23,7 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    ...paginationArgs,
+    ...pageSizeArgs,
     ids: { type: "string", description: "Comma-separated destination IDs to read" },
   },
   async run({ args }) {
@@ -38,7 +38,6 @@ export default defineCommand({
     return runTool(client, "outlit_list_destinations", params, json, {
       spinnerMessage: "Fetching destinations...",
       table: {
-        paginationKey: "page",
         columns: [
           { header: "ID", key: "id", format: (v) => truncate(v, 22) },
           { header: "Name", key: "name", format: (v) => truncate(v, 32) },

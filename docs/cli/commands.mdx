@@ -9,6 +9,7 @@ Most commands in this reference share these common flags:
 |------|-------------|
 | `--api-key <key>` | Override the active API key for this request |
 | `--json` | Force JSON output (auto-enabled when piped) |
+| `--verbose` | Print each call's request ID and API version to stderr (a JSON line in JSON mode); quote the request ID in a bug report |
 | `--help` | Show help for the command |
 
 ## Activation
@@ -107,12 +108,15 @@ outlit customers list [flags]
 | `--renews-in` | string | — | Only customers with a stored renewal date in this window from today: `next_30d`, `next_60d`, `next_90d`, `next_180d`, `next_365d`. Customers with no stored renewal date never match |
 | `--renews-after` | string | — | Renewing on or after this UTC date (`YYYY-MM-DD`) |
 | `--renews-before` | string | — | Renewing before this UTC date (`YYYY-MM-DD`, that day excluded) |
+| `--runs-out-within` | string | — | Only customers with an Autumn credit pool forecast to run out within this window: `7d`, `14d`, `30d`, `90d`. Each row gets `credits: { runsOutAt, pool, balance }` for its soonest pool; `coverage.stale` counts customers left out because their Autumn scan is over 3 hours old |
+| `--meter` | string | — | With `--order-by meter_usage`: the Autumn feature id to rank by, as `customers get --include meters` returns it. Each row gets `meter: { feature, reported, accounts, observed }` |
+| `--meter-connection` | string | — | With `--meter`: the Autumn connection id, needed only when the feature exists on more than one connection |
 | `--trait` | string | — | Exact trait filters as comma-separated `key=value` pairs (for example `segment=enterprise,active=true`) |
 | `--activated-since` | string | — | Company activation at or after an ISO-8601 datetime; explicit offsets are accepted |
 | `--search` | string | — | Search by name or domain |
-| `--order-by` | string | `last_activity_at` | Sort field: `last_activity_at`, `first_synced_at`, `name`, `arr` (customers with unknown ARR sort last when descending), `renewal_date` (the stored renewal date the Customers page shows; customers with none sort last) |
+| `--order-by` | string | `last_activity_at` | Sort field: `last_activity_at`, `first_synced_at`, `name`, `meter_usage` (needs `--meter`), `arr` (customers with unknown ARR sort last when descending), `renewal_date` (the stored renewal date the Customers page shows; customers with none sort last) |
 | `--order-direction` | string | `desc` | Sort direction: `asc`, `desc`. `asc` when sorting by `renewal_date`, so the soonest renewal comes first |
-| `--limit` | number | `20` | Results per page (1–100) |
+| `--limit` | number | `25` | Results per page (1–100) |
 | `--cursor` | string | — | Cursor from a previous response (`page.nextCursor`) |
 
 ### Examples
@@ -197,6 +201,8 @@ In interactive mode, the CLI shows a hint after the table:
 Showing 20 of 150 total. Next page: --cursor cursor_abc123
 ```
 
+A call with `--runs-out-within` or `--order-by meter_usage` adds `Credits` or `Meter` columns, and lists after the table how many customers it left out and why.
+
 ## Customers get
 
 Get a detailed customer profile with optional sections.
@@ -221,7 +227,9 @@ outlit customers get <customer> [flags]
 | `--weeks` | number | `12` | With `--include features` or `meters`: weeks of history (1–53) |
 | `--weekly` | boolean | `false` | With `--include features` or `meters`: add each item's week-by-week usage |
 | `--limit` | number | `25` | With `--include features`, `meters` or `credits`: items per page (1–100) |
-| `--cursor` | string | — | With exactly one of those sections: the section's `page.nextCursor` |
+| `--cursor` | string | — | With exactly one of those sections: the section's `page.nextCursor`. With `--crm-contacts`: the account's `contactsNext` cursor |
+| `--fields` | string | — | With `--include crm`: only these CRM fields, comma-separated keys or labels, each optionally prefixed with its system (`hubspot:hs_lead_status`). Selectors that match nothing come back in `unmatchedFields` |
+| `--crm-contacts` | string | — | Read one CRM account's contacts, 25 at a time, most recently modified first: `<connectionId>:<accountId>`, as `--include crm` returns them. `--cursor` continues it |
 
 ### Examples
 
@@ -360,15 +368,19 @@ outlit customers get 550e8400-e29b-41d4-a716-446655440000
     "asOf": "2025-02-11T09:00:00.000Z",
     "data": [
       {
+        "id": "evt_8f2a",
         "type": "PAGE_VIEW",
         "title": "Pricing page viewed",
         "contact": "jane@acme.com",
-        "occurredAt": "2025-02-10T15:30:00Z"
+        "occurredAt": "2025-02-10T15:30:00Z",
+        "source": null
       }
     ]
   }
 }
 ```
+
+A section that holds only its first part, such as `users` or `recentTimeline`, also carries `more: { omitted, next }`: how many more there are and the call that reads them (at a terminal the CLI prints the command to stderr). A `recentTimeline` entry's `id` is the event id `timeline get` returns, and its `source` is what `sources get` opens (`null` when none is readable).
 
 Every included section is an object with a `status`. `"available"` carries `asOf` (when it was read) and `data`. Any other status, `"empty"`, `"not_connected"`, `"not_synced"` or `"unavailable"`, has a `reason` instead of `data`, and sometimes a `next` call to make, so a section with nothing to show is told apart from one that was not read.
 
@@ -445,7 +457,7 @@ outlit merge-suggestions list --suggestion-id "<suggestionId>" --json
 outlit merge-suggestions reject "<id>" --note "Different companies" --json
 ```
 
-List also accepts `--status suggested|processing|merged|rejected` and `--confidence high|medium|low` (the uppercase spelling still works). `--limit` defaults to 25. Rejection requires identity review authority and does not authorize merging. Each run sends a new request ID; pass `--request-id` to make a retry safe. It returns `{ "suggestion": { "id": "…", "status": "rejected" }, "next": … }`; read the suggestion list again for updated details.
+List also accepts `--status suggested|processing|merged|rejected` and `--confidence high|medium|low` (the uppercase spelling still works). `--limit` defaults to 25. Rejection requires identity review authority and does not authorize merging. Each run sends a new idempotency key; pass `--idempotency-key` to make a retry safe. It returns `{ "suggestion": { "id": "…", "status": "rejected" }, "next": … }`; read the suggestion list again for updated details.
 
 The merge command previews by default. Both positional arguments are exact IDs; the first is the surviving record. Without `--suggestion-id`, both records must be company customers. A pair involving an individual requires an eligible saved suggestion for that exact pair. An optional `--suggestion-id` links an existing suggestion to the exact pair, and `--note` records the review explanation.
 
@@ -459,10 +471,10 @@ The preview returns `preview.token` (pass it as `--preview-token`), the impact a
 Merge execution is dangerous and has no supported undo. It moves customer data and access relationships into the survivor. Execute only when authorized and certain that the records represent the same customer; two company records must represent the same company. Similar names, related domains, shared participants, and parent/subsidiary relationships do not establish that identity. If uncertain, do not execute.
 </Warning>
 
-Execution requires an explicit `--mode execute`, the reviewed preview's token, a stable request ID, and dedicated merge authority. A read-only credential can preview but cannot execute. A merge API key must include an explicitly selected `customer_identity:merge` grant; ordinary full-access and personal CLI presets exclude it. Use the same pair, token, request ID, and review inputs when retrying an execution. The result is `operation`: `{ id, survivor, duplicate, status, phase, failure }`.
+Execution requires an explicit `--mode execute`, the reviewed preview's token, a stable idempotency key, and dedicated merge authority. A read-only credential can preview but cannot execute. A merge API key must include an explicitly selected `customer_identity:merge` grant; ordinary full-access and personal CLI presets exclude it. Use the same pair, token, idempotency key, and review inputs when retrying an execution. The result is `operation`: `{ id, survivor, duplicate, status, phase, failure }`.
 
 ```bash
-outlit customers merge "<survivor>" "<duplicate>" --mode execute --preview-token "<token>" --request-id "<stableId>" --json
+outlit customers merge "<survivor>" "<duplicate>" --mode execute --preview-token "<token>" --idempotency-key "<stableId>" --json
 outlit merges get "<id>" --json
 ```
 
@@ -522,7 +534,7 @@ when exactly one is eligible.
 | `--candidate-limit` | `25` | Maximum event candidates from 1 to 100 |
 | `--include` | `usage,candidates` | Which sections to read: `usage`, `candidates`, or both |
 | `--search` | none | Only candidates whose event name contains this text |
-| `--limit`, `--cursor` | 20 | Page through the features (1 to 100) |
+| `--limit`, `--cursor` | 25 | Page through the features (1 to 100) |
 
 Create one feature from one exact event rule:
 
@@ -589,7 +601,7 @@ you intentionally want to restrict discovery to current owners.
 | `--has-owned-customers` | Only members who own customers |
 | `--order-by` | `owned_customers` (default, descending) or `name` (ascending). `owned_customer_count` is still read as `owned_customers`; `email` is no longer a sort field |
 | `--order-direction` | `asc` or `desc` |
-| `--limit`, `--cursor` | Page through members (1–100, default 20) |
+| `--limit`, `--cursor` | Page through members (1–100, default 25) |
 
 Each item has `id`, `name`, `email`, `title`, `role`, `managerEmail`, `territory` and `ownedCustomers`.
 
@@ -615,7 +627,7 @@ outlit customers set-owner acme.com --member user_123 --yes --json
 A change returns `outcome` (`changed` or `unchanged`), the new `owner`, the `previousOwner` and an
 `undo` token good for 24 hours. Pass that token as `--undo-token` to reverse the change
 (`outlit customers set-owner --undo-token <token>`). For two explicit steps instead of a prompt, run
-with `--mode preview`, then `--mode execute --preview-token <token>`; `--request-id` makes a retry
+with `--mode preview`, then `--mode execute --preview-token <token>`; `--idempotency-key` makes a retry
 return the first result.
 
 ### Grant, change or remove access
@@ -627,7 +639,7 @@ outlit customers set-access acme.com --member user_123 --role none --json
 
 Run the same `set-access` command again with the other role to change an existing collaborator
 between Viewer and Editor; `--role none` removes explicit access. The result has `outcome`, the
-`role` and `previousRole`, and an `undo` token for `--undo-token`. `--request-id` and `--undo-token` work as for `set-owner`. A change that needs confirming returns a
+`role` and `previousRole`, and an `undo` token for `--undo-token`. `--idempotency-key` and `--undo-token` work as for `set-owner`. A change that needs confirming returns a
 `preview.token`: send it with `--mode execute --preview-token <token>` (`--mode preview` is not accepted here).
 
 `--role` accepts `viewer`, `editor` or `none` in any case; `OWNER` is represented by
@@ -772,7 +784,7 @@ outlit people list [flags]
 | `--search` | string | — | Search by name or email |
 | `--order-by` | string | `last_activity_at` | Sort field: `last_activity_at`, `first_synced_at`, `email` |
 | `--order-direction` | string | `desc` | Sort direction: `asc`, `desc` |
-| `--limit` | number | `20` | Results per page (1–100) |
+| `--limit` | number | `25` | Results per page (1–100) |
 | `--cursor` | string | — | `page.nextCursor` from a previous response |
 
 ### Examples
@@ -850,8 +862,8 @@ each with the actions it accepts.
 ```text
 outlit tasks list [--section <section>] [--customer <customer>] [--owner <member>] [flags]
 outlit tasks get <id> [--include source,draft,covered]
-outlit tasks act <id> <action> [--until <date-time>] [--reason <reason>] [--request-id <id>]
-outlit tasks undo <undo-token> [--request-id <id>]
+outlit tasks act <id> <action> [--until <date-time>] [--reason <reason>] [--idempotency-key <id>]
+outlit tasks undo <undo-token> [--idempotency-key <id>]
 ```
 
 | Command | Description |
@@ -861,7 +873,7 @@ outlit tasks undo <undo-token> [--request-id <id>]
 | `tasks act <id> <action>` | Takes one action as you: `done`, `wont_do`, `wrong`, `reopen`, `snooze`, `unsnooze`, `take`, `put_back`, `not_covered` or `recover_cover`. The action must be one the task lists. `--until` (snooze only) is an ISO 8601 date-time within 14 days, default a week; `--reason` (`wont_do` only) is `already_handled`, `not_needed` or `not_ours`. The result carries an `undo.token` good for 24 hours |
 | `tasks undo <undo-token>` | Reverses one action before `undo.until`, while its tasks are as it left them |
 
-`tasks act` and `tasks undo` send a new request ID each run; pass `--request-id` so a retry returns the
+`tasks act` and `tasks undo` send a new idempotency key on each run; pass `--idempotency-key` so a retry returns the
 first result instead of acting twice.
 
 ```bash
@@ -895,6 +907,7 @@ outlit facts get <id> [flags]
 | `--fact-categories` | string | — | Comma-separated fact category filter: `memory`, `relationship`, `custom` |
 | `--after` | string | — | Lower bound on fact occurrence time (ISO 8601 datetime) |
 | `--before` | string | — | Upper bound on fact occurrence time (ISO 8601 datetime) |
+| `--include` | string | — | Comma-separated extras on each fact: `reasoning`, `quote`, `evidence`. Without it a fact has no `reasoning` or `source.quote` |
 | `--limit` | number | `25` | Results per page (1–100) |
 | `--cursor` | string | — | Pagination cursor |
 
@@ -903,7 +916,9 @@ outlit facts get <id> [flags]
 | Argument or flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `id` | argument | — | Exact fact identifier |
-| `--include` | string | — | Comma-separated expansions. `evidence` lists every source the fact cites; any other value is rejected |
+| `--include` | string | — | Comma-separated expansions. `evidence` adds the first cited excerpts; any other value is rejected |
+| `--part` | string | — | Read one long field a page at a time: `assertion`, `reasoning`, `quote` or `evidence` |
+| `--cursor` | string | — | With `--part`: the previous page's `nextCursor` |
 
 ### Examples
 
@@ -922,6 +937,12 @@ outlit facts list acme.com --json | jq '.facts[] | select(.type == "churn_risk")
 
 # Fetch one exact fact with the sources it cites
 outlit facts get fact_123 --include evidence
+
+# Read the rest of a long field, a page at a time
+outlit facts get fact_123 --part evidence --cursor "$CURSOR"
+
+# List facts with their reasoning and source quote
+outlit facts list acme.com --include reasoning,quote
 ```
 
 ### JSON response
@@ -966,7 +987,9 @@ outlit facts get fact_123 --include evidence
 }
 ```
 
-`facts list` returns each fact with the `source` it came from (`null` when it has none); `outlit.recordedAt` is when Outlit stored it. `facts get` returns `{ customer, fact }`, where `fact` has the same shape; `--include evidence` adds `fact.evidence`, one `{ id, source, excerpt }` per cited source. An unknown `--include` value is rejected rather than ignored. An empty `facts` list carries `coverage.searched`.
+A fact from `facts list` or `search` is concise: `reasoning` and `source.quote` appear only with `--include`, and `--include evidence` carries the first three cited excerpts as `evidence: { items, page, more }`. `facts get` always returns `reasoning` and the quote.
+
+`facts list` returns each fact with the `source` it came from (`null` when it has none); `outlit.recordedAt` is when Outlit stored it. `facts get` returns `{ customer, fact }`, where `fact` has the same shape; `--include evidence` adds `fact.evidence`, `{ items, page, more }` with the first three cited `{ id, source, excerpt }` (`--part evidence` reads the rest). `--part` returns `{ customer, part }` instead, `part` being `{ field, text | items, page }`. An unknown `--include` value is rejected rather than ignored. An empty `facts` list carries `coverage.searched`.
 
 ## Search
 
@@ -987,10 +1010,11 @@ outlit search <query> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--customer` | string | — | Scope to a specific customer (domain or UUID) |
-| `--limit` | number | `20` | Maximum results to return (1–50) |
+| `--limit` | number | `25` | Maximum results to return (1–100) |
 | `--after` | string | — | Filter to events after this ISO 8601 datetime |
 | `--before` | string | — | Filter to events before this ISO 8601 datetime |
 | `--source-types` | string | — | Comma-separated generic source type filter (`email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, `crm_note`). Case-insensitive. Aliases: `CRM`, `CRM_OPPORTUNITY` |
+| `--include` | string | — | Extras on each fact result: `reasoning`, `quote`, `evidence` |
 
 The CLI sends `--source-types`, `--after` and `--before` as the tool's `filters`, with lowercase source types.
 
@@ -1157,7 +1181,7 @@ outlit destinations archive 10000000-0000-4000-8000-000000000003 --yes --json
 
 Destination creation and update are Slack-channel backed. Use `--is-default` on `destinations create` or `destinations update` to make a destination the default fallback. `--enabled true|false` enables or disables it (on create, it defaults to `true`). `destinations update` patches only the fields you pass, and `--revision` refuses the change if the destination changed since you read it. Raw destination secrets and unmasked provider configuration are not returned.
 
-`destinations list` pages its results (`--limit` up to 100, `--cursor` from the previous `page.nextCursor`). `destinations list --ids <id>,<id>` reads specific destinations and lists an ID it cannot show under `missing`. `--request-id` on `create` and `archive` makes a retry return the first result.
+`destinations list` pages its results (`--limit` up to 100, `--cursor` from the previous `page.nextCursor`). `destinations list --ids <id>,<id>` reads specific destinations and lists an ID it cannot show under `missing`. `--idempotency-key` on `create` and `archive` makes a retry return the first result.
 
 `destinations archive` first shows the destination and how many automation routes deliver to it. In a terminal you are asked to confirm. Without a terminal, pass `--yes`, or the command prints the preview, archives nothing and exits with code 1. For two explicit steps, use `--mode preview` and then `--mode execute --preview-token <token>`.
 
@@ -1339,6 +1363,7 @@ outlit feedback submit --body <text> [flags]
 | `--area` | string | — | Optional product area label such as `cli`, `mcp`, or `integrations`; trimmed, non-empty, at most 100 characters |
 | `--context` | string | — | Optional JSON object with diagnostic context; at most 16 KiB serialized |
 | `--context-file` | string | — | Read the JSON context object from a file instead of `--context` |
+| `--idempotency-key` | string | — | Optional idempotency key: a retry with the same key and input does not submit twice |
 
 `--body` and `--body-file` are mutually exclusive, as are `--context` and `--context-file`.
 Use `context` for diagnostics such as the surface, command, or client version — never for

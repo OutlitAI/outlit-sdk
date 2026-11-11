@@ -10,7 +10,7 @@ import {
   traitFilterArgs,
 } from "../../args/filters"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { applyPagination, paginationArgs } from "../../args/pagination"
+import { applyPagination, pageSizeArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { splitCsv } from "../../lib/config"
 import { relativeDate, truncate } from "../../lib/format"
@@ -92,7 +92,7 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    ...paginationArgs,
+    ...pageSizeArgs,
     ...traitFilterArgs,
     ...activityFilterArgs,
     ...orderArgs,
@@ -189,7 +189,6 @@ export default defineCommand({
     return runTool(client, "outlit_list_people", params, json, {
       spinnerMessage: "Fetching people...",
       table: {
-        paginationKey: "page",
         columns: [
           { header: "Email", key: "email", format: (v) => truncate(v, 30) },
           { header: "Name", key: "name", format: (v) => truncate(v, 20) },

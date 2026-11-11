@@ -3,6 +3,8 @@ import {
   capitalize,
   formatArr,
   formatCents,
+  formatCredits,
+  formatMeter,
   formatNumber,
   relativeDate,
   truncate,
@@ -125,5 +127,46 @@ describe("formatNumber", () => {
     expect(formatNumber(null)).toBe("--")
     expect(formatNumber(undefined)).toBe("--")
     expect(formatNumber("not a number")).toBe("--")
+  })
+})
+
+describe("formatCredits", () => {
+  test("names when the soonest pool runs out and what is left", () => {
+    expect(
+      formatCredits({
+        runsOutAt: "2026-12-01T08:30:00.000Z",
+        pool: { id: "pool_1", name: "Monthly" },
+        balance: { remaining: 1200, granted: 5000 },
+      }),
+    ).toBe("runs out 2026-12-01 (1,200 left of 5,000)")
+    expect(
+      formatCredits({
+        runsOutAt: "2026-12-01T08:30:00.000Z",
+        pool: { id: "pool_1", name: null },
+        balance: { remaining: 40, granted: null },
+      }),
+    ).toBe("runs out 2026-12-01 (40 left)")
+  })
+
+  test("returns -- for a row without a forecast", () => {
+    expect(formatCredits(undefined)).toBe("--")
+    expect(formatCredits(null)).toBe("--")
+    expect(formatCredits({ pool: {} })).toBe("--")
+  })
+})
+
+describe("formatMeter", () => {
+  test("shows the reported usage, and how many accounts it sums when more than one", () => {
+    expect(formatMeter({ feature: "api_calls", reported: 1204, accounts: 1, observed: null })).toBe(
+      "1,204",
+    )
+    expect(formatMeter({ feature: "api_calls", reported: 9500, accounts: 3, observed: null })).toBe(
+      "9,500 (3 accounts)",
+    )
+  })
+
+  test("returns -- for a row without a meter", () => {
+    expect(formatMeter(undefined)).toBe("--")
+    expect(formatMeter({ feature: "api_calls" })).toBe("--")
   })
 })

@@ -30,8 +30,10 @@ Headless clients that cannot complete OAuth may send an Outlit API key as their 
     It looks like:
 
     ```text
-    https://mcp.outlit.ai/w/<workspace-slug>/mcp
+    https://mcp.outlit.ai/w/<workspace-slug>/mcp?toolsets=core,work,meta
     ```
+
+    Loads core, work and meta. Add admin or identity, or use `?toolsets=all` for every tool. The bare URL without `?toolsets` loads every tool, which is a long list for a client to carry; the slim URL keeps it short, and `outlit_list_toolsets` tells an agent how to add the rest.
   </Step>
   <Step title="Add the URL to your MCP client">
     Use your client's remote MCP / connector / server settings and add the Outlit URL directly.
@@ -42,7 +44,7 @@ Headless clients that cannot complete OAuth may send an Outlit API key as their 
     {
       "mcpServers": {
         "outlit": {
-          "url": "https://mcp.outlit.ai/w/<workspace-slug>/mcp"
+          "url": "https://mcp.outlit.ai/w/<workspace-slug>/mcp?toolsets=core,work,meta"
         }
       }
     }
@@ -81,8 +83,8 @@ For coding agents that run local commands, see [Agent skills](/ai-integrations/s
 |---|---|
 | `outlit_get_identity` | Read a customer's possible duplicate records and the evidence behind each; `include: ["links"]` adds its records in other systems |
 | `outlit_list_merge_suggestions` | Browse saved merge suggestions and history; `include` adds impact, scope, Jev evidence and the cluster |
-| `outlit_reject_merge_suggestion` | Reject one saved suggestion by `id`, with a `requestId` so a retry never rejects twice |
-| `outlit_merge_customers` | Two-phase customer merge by exact IDs: `mode: "preview"` (default, read-only, with a linked-records diff and a `preview.token`), then `mode: "execute"` with that token and a `requestId` |
+| `outlit_reject_merge_suggestion` | Reject one saved suggestion by `id`, with an `idempotencyKey` so a retry never rejects twice |
+| `outlit_merge_customers` | Two-phase customer merge by exact IDs: `mode: "preview"` (default, read-only, with a linked-records diff and a `preview.token`), then `mode: "execute"` with that token and an `idempotencyKey` |
 | `outlit_get_merge` | Track a merge by its `operation.id`: status, phase and, after a failure, whether anything moved |
 
 ### Tasks and access
@@ -91,8 +93,8 @@ For coding agents that run local commands, see [Agent skills](/ai-integrations/s
 |---|---|
 | `outlit_list_tasks` | List one section of your Inbox (today, open, snoozed, done or pool) as tasks, each with its task `id` |
 | `outlit_get_task` | Retrieve one Inbox task by `id`; `include` adds its source, the prepared reply (`draft`, opt-in) and covered tasks |
-| `outlit_act_on_task` | Act on your own Inbox task (done, won't do, snooze, take and more), returning an `undo` to pass to `outlit_undo_task_action`; needs a `requestId` |
-| `outlit_undo_task_action` | Undo an action with the `undo.token` it returned (as `undoToken`), within `undo.until`; needs a `requestId` |
+| `outlit_act_on_task` | Act on your own Inbox task (done, won't do, snooze, take and more), returning an `undo` to pass to `outlit_undo_task_action`; needs an `idempotencyKey` |
+| `outlit_undo_task_action` | Undo an action with the `undo.token` it returned (as `undoToken`), within `undo.until`; needs an `idempotencyKey` |
 | `outlit_set_customer_owner` | Assign a customer's primary owner; previews first, and returns an undo token |
 | `outlit_set_customer_access` | Set a member's access to a customer to viewer, editor, or none; returns an undo token |
 
@@ -102,7 +104,7 @@ For coding agents that run local commands, see [Agent skills](/ai-integrations/s
 |---|---|
 | `outlit_get_timeline` | Get the activity timeline for a customer, with `filters` for channel, event type and a time window (`within`, or `after` and `before`) |
 | `outlit_list_facts` | Retrieve structured customer facts with `filters` for status, source type, public fact type and category and occurrence time, `page` pagination, and the `source` each fact came from (`type`, `id`, `occurredAt`, `quote`, and `permalink`) |
-| `outlit_get_fact` | Retrieve one exact fact by ID as `{ customer, fact }`; `include: ["evidence"]` lists every source it cites |
+| `outlit_get_fact` | Retrieve one exact fact by ID as `{ customer, fact }`; `include: ["evidence"]` adds its first three cited excerpts, and `part` reads the rest |
 | `outlit_get_source` | Retrieve one exact source record by the `source` (`type` and `id`) another tool returned |
 | `outlit_list_sources` | List concrete source records such as calls, emails, calendar events, support tickets, Slack conversations, or opportunities |
 | `outlit_search_customer_context` | Search across customer facts, emails, calls, calendar events, support tickets, Slack conversations, and CRM opportunities using natural language. Returns grouped artifact-level matches for `source` and `fact` results, with `filters` for source types and a time range, and `coverage` when nothing matches |

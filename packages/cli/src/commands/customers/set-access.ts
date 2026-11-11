@@ -3,7 +3,7 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { runConfirmedWrite, yesArg } from "../../lib/confirm"
-import { newRequestId } from "../../lib/request-id"
+import { newIdempotencyKey } from "../../lib/idempotency-key"
 import { parseWriteMode, writeModeArgs } from "../../lib/write-mode"
 import { readAccessConfirmation } from "./access-confirmation"
 import {
@@ -53,7 +53,7 @@ export default defineCommand({
       return runTool(
         client,
         "outlit_set_customer_access",
-        { undoToken, requestId: write.requestId },
+        { undoToken, idempotencyKey: write.idempotencyKey },
         json,
         { spinnerMessage: "Undoing the access change..." },
       )
@@ -67,14 +67,14 @@ export default defineCommand({
       return runTool(
         client,
         "outlit_set_customer_access",
-        { ...target, role, ...write.explicit, requestId: write.requestId },
+        { ...target, role, ...write.explicit, idempotencyKey: write.idempotencyKey },
         json,
         { spinnerMessage: "Changing customer access..." },
       )
     }
 
     return runConfirmedWrite(client, "outlit_set_customer_access", {
-      input: { ...target, role, requestId: write.requestId },
+      input: { ...target, role, idempotencyKey: write.idempotencyKey },
       json,
       yes: args.yes === true,
       spinnerMessage: "Changing customer access...",
@@ -84,7 +84,7 @@ export default defineCommand({
         role,
         mode: "execute",
         previewToken,
-        requestId: newRequestId(),
+        idempotencyKey: newIdempotencyKey(),
       }),
       question: role === "none" ? "Remove this access?" : "Change this access?",
       unchanged: "Access was not changed",

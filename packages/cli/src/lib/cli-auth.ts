@@ -1,3 +1,4 @@
+import { CLI_CLIENT, CLIENT_HEADER } from "./client-id"
 import { CLI_VERSION, DEFAULT_API_URL } from "./config"
 import { type PollOptions, pollUntil } from "./poll"
 
@@ -65,6 +66,7 @@ export async function startCliAuthRequest(
     method: "POST",
     headers: {
       "User-Agent": `outlit-cli/${CLI_VERSION}`,
+      [CLIENT_HEADER]: CLI_CLIENT,
     },
   })
   const payload = await readJsonObject(response)
@@ -106,6 +108,7 @@ export async function pollCliAuthRequest(
     headers: {
       "Content-Type": "application/json",
       "User-Agent": `outlit-cli/${CLI_VERSION}`,
+      [CLIENT_HEADER]: CLI_CLIENT,
     },
     body: JSON.stringify(input),
   })

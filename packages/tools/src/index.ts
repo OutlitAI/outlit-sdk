@@ -1,4 +1,5 @@
 export type {
+  OutlitToolsCallResult,
   OutlitToolsClient,
   OutlitToolsClientOptions,
   OutlitToolsFetch,
@@ -12,8 +13,20 @@ export {
   DEFAULT_OUTLIT_API_URL,
   isOutlitToolsApiError,
   matchesGeneratedJsonSchema,
+  OUTLIT_API_VERSION,
   OutlitToolsApiError,
+  outlitClientHeader,
+  outlitRequestIdHeader,
+  outlitVersionRequestHeader,
+  outlitVersionResponseHeader,
 } from "./client.js"
+export type {
+  Collection,
+  CollectionPage,
+  CollectionToolName,
+  CollectionTruncation,
+} from "./collections.js"
+export { collectionKeys, collectionOf, isCollectionTool } from "./collections.js"
 export type {
   CustomerContextSearchInput,
   CustomerSourceType,
@@ -117,3 +130,4 @@ export {
   toolNamesInToolsets,
   toolsetNames,
 } from "./toolsets.js"
+export { OUTLIT_TOOLS_CLIENT, OUTLIT_TOOLS_VERSION } from "./version.js"

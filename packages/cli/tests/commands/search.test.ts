@@ -107,7 +107,7 @@ describe("search", () => {
     })
   })
 
-  test("error when --limit exceeds 50", async () => {
+  test("error when --limit exceeds the contract maximum of 100", async () => {
     const { default: searchCmd } = await import("../../src/commands/search")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -115,7 +115,7 @@ describe("search", () => {
     let thrown: unknown
     try {
       await searchCmd.run!({
-        args: { query: "test", limit: "100", json: true },
+        args: { query: "test", limit: "101", json: true },
       } as Parameters<NonNullable<typeof searchCmd.run>>[0])
     } catch (error) {
       thrown = error
@@ -126,6 +126,21 @@ describe("search", () => {
 
       expectErrorExit(thrown, stderrOutput, "invalid_input")
     }
+  })
+
+  test("accepts a --limit up to the contract maximum of 100", async () => {
+    const { default: searchCmd } = await import("../../src/commands/search")
+
+    await captureStdout(() =>
+      searchCmd.run!({
+        args: { query: "pricing", limit: "100", json: true },
+      } as Parameters<NonNullable<typeof searchCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_search_customer_context", {
+      query: "pricing",
+      limit: 100,
+    })
   })
 
   test("error when query is missing", async () => {

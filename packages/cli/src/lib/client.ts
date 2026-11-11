@@ -6,6 +6,7 @@ import {
   type PublicToolName,
 } from "@outlit/tools"
 import type { ActivationPreviewInput } from "./activation"
+import { CLI_CLIENT } from "./client-id"
 import { DEFAULT_API_URL, OUTLIT_DASHBOARD_URL, resolveApiKey } from "./config"
 import { reportResponseNotices } from "./notices"
 
@@ -13,6 +14,7 @@ export type SubmitFeedbackInput = {
   body: string
   area?: string
   context?: Record<string, unknown>
+  idempotencyKey?: string
 }
 
 export type OutlitToolParams<TToolName extends CliToolName> =
@@ -51,6 +53,7 @@ export async function createClient(flagApiKey?: string): Promise<OutlitClient> {
   const toolsClient = createOutlitClient({
     apiKey: credential.key,
     baseUrl,
+    client: CLI_CLIENT,
     onResponse: reportResponseNotices,
   })
 

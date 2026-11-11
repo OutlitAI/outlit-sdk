@@ -16,10 +16,10 @@ function parseLimit(value: string | undefined, json: boolean): number | undefine
   if (!value) return undefined
 
   const limit = Number(value)
-  if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+  if (!Number.isInteger(limit) || limit < 1 || limit > PAGE_SIZE.max) {
     outputError(
       {
-        message: `--limit must be an integer between 1 and 100 (got: ${value})`,
+        message: `--limit must be an integer between 1 and ${PAGE_SIZE.max} (got: ${value})`,
         code: "invalid_input",
       },
       json,
@@ -183,7 +183,6 @@ export default defineCommand({
 
     return runTool(client, publicToolContracts.outlit_list_sources.toolName, params, json, {
       table: {
-        paginationKey: "page",
         columns: [
           { header: "TYPE", key: "source.type" },
           { header: "OCCURRED", key: "occurredAt" },

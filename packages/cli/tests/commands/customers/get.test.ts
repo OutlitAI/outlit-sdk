@@ -170,6 +170,89 @@ describe("customers get", () => {
     }
   })
 
+  test("sends --fields as selectors, with an optional system in front", async () => {
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await getCmd.run!({
+        args: {
+          customer: "acme.com",
+          include: "crm",
+          fields: "hs_lead_status, Salesforce:Type,Job Title,note:with colon",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof getCmd.run>>[0])
+
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_get_customer",
+        expect.objectContaining({
+          include: ["crm"],
+          fields: [
+            { key: "hs_lead_status" },
+            { source: "salesforce", key: "Type" },
+            { key: "Job Title" },
+            { key: "note:with colon" },
+          ],
+        }),
+      )
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("reads one CRM account's contacts with --crm-contacts, and --cursor continues it", async () => {
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      await getCmd.run!({
+        args: {
+          customer: "acme.com",
+          "crm-contacts": "conn_1:001ABC",
+          cursor: "page_2",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof getCmd.run>>[0])
+
+      const params = mockCallTool.mock.calls[0]?.[1] as Record<string, unknown>
+      expect(params.crmContacts).toEqual({
+        connectionId: "conn_1",
+        accountId: "001ABC",
+        cursor: "page_2",
+      })
+      // The cursor belongs to the account's contacts, so no paged section gets it.
+      expect(params).not.toHaveProperty("credits")
+      expect(params).not.toHaveProperty("features")
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test.each([
+    ["--crm-contacts without an account", { "crm-contacts": "conn_1" }],
+    ["--crm-contacts with an empty connection", { "crm-contacts": ":001ABC" }],
+    ["--fields with no key", { fields: " , " }],
+  ])("rejects %s before calling Core", async (_name, flags) => {
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+
+    let thrown: unknown
+    try {
+      await getCmd.run!({
+        args: { customer: "acme.com", json: true, ...flags },
+      } as Parameters<NonNullable<typeof getCmd.run>>[0])
+    } catch (e) {
+      thrown = e
+    } finally {
+      const stderrOutput = stderrSpy.mock.calls.map((c) => c[0] as string).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+
+      expectErrorExit(thrown, stderrOutput, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
+    }
+  })
+
   test.each([
     ["--cursor with two paged sections", { include: "features,credits", cursor: "c" }],
     ["--weeks without features or meters", { include: "credits", weeks: "4" }],

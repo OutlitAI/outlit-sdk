@@ -34,8 +34,8 @@ The generated [OpenAPI specification](/openapi.json) and `@outlit/tools`
 Call `outlit_list_integrations` with the provider first when you need to know how it signs in. Do
 not include credentials in this request. Then call `outlit_setup_integration` with the provider and,
 when requested, its generated `connectionMode`, `credentials`, or `configuration` shape. Every setup
-call takes a `requestId`: any unique string. A retry with the same id and input returns the first
-result instead of repeating the setup, and a changed input needs a new id.
+call takes an `idempotencyKey`: any unique string. A retry with the same key and input returns the first
+result instead of repeating the setup, and a changed input needs a new key.
 
 <RequestExample>
 

@@ -187,6 +187,7 @@
             "pages": [
               "api-reference/validation",
               "api-reference/tools",
+              "api-reference/compatibility",
               "api-reference/integrations",
               "api-reference/feedback"
             ]

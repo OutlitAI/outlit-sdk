@@ -55,3 +55,30 @@ export function formatNumber(value: unknown): string {
   if (value == null || typeof value !== "number" || Number.isNaN(value)) return "--"
   return value.toLocaleString("en-US")
 }
+
+/** A credit pool forecast: `runs out 2026-12-01 (1,200 left of 5,000)`. Returns "--" when there is none. */
+export function formatCredits(value: unknown): string {
+  if (typeof value !== "object" || value === null) return "--"
+  const { runsOutAt, balance } = value as {
+    runsOutAt?: unknown
+    balance?: { remaining?: unknown; granted?: unknown }
+  }
+  if (typeof runsOutAt !== "string") return "--"
+  const date = runsOutAt.slice(0, 10)
+  const remaining = balance?.remaining
+  if (typeof remaining !== "number") return `runs out ${date}`
+  const granted = balance?.granted
+  return typeof granted === "number"
+    ? `runs out ${date} (${formatNumber(remaining)} left of ${formatNumber(granted)})`
+    : `runs out ${date} (${formatNumber(remaining)} left)`
+}
+
+/** The usage a list is ranked by: `1,204 (3 accounts)`. Returns "--" when the row has none. */
+export function formatMeter(value: unknown): string {
+  if (typeof value !== "object" || value === null) return "--"
+  const { reported, accounts } = value as { reported?: unknown; accounts?: unknown }
+  if (typeof reported !== "number") return "--"
+  return typeof accounts === "number" && accounts > 1
+    ? `${formatNumber(reported)} (${accounts} accounts)`
+    : formatNumber(reported)
+}

@@ -8,4 +8,9 @@ export const outputArgs = {
     description:
       "Force JSON output.\nNote: JSON is also auto-enabled when stdout is piped (e.g. in CI, scripts, or AI agent contexts).",
   },
+  verbose: {
+    type: "boolean",
+    description:
+      "Print each call's request ID and API version to stderr (quote the request ID in a bug report).",
+  },
 } satisfies ArgsDef

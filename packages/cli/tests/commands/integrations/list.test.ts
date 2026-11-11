@@ -71,7 +71,7 @@ describe("integrations status", () => {
 
   test("does not expose a browser-auth session argument", async () => {
     const { default: statusCmd } = await import("../../../src/commands/integrations/list")
-    expect(Object.keys(statusCmd.args ?? {})).toEqual(["api-key", "json", "provider"])
+    expect(Object.keys(statusCmd.args ?? {})).toEqual(["api-key", "json", "verbose", "provider"])
   })
 
   test("normalizes the Gmail alias before calling Core", async () => {

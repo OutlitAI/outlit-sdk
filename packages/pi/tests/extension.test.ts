@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
 import { defaultToolNames, getPublicToolContract, toolNamesInToolsets } from "@outlit/tools"
 import { describe, expect, test, vi } from "vitest"
 
@@ -5,9 +7,11 @@ import {
   allPublicToolNames,
   createOutlitPiExtension,
   createOutlitPiTool,
+  OUTLIT_PI_CLIENT,
   type OutlitPiToolDefinition,
   type PiToolName,
   type PublicToolName,
+  piDefaultToolNames,
   piToolNames,
 } from "../src/index.js"
 
@@ -28,6 +32,28 @@ function withoutRootSchema<T extends Record<string, unknown>>(schema: T): Omit<T
 }
 
 describe("createOutlitPiExtension", () => {
+  test("identifies itself to Core as @outlit/pi at its own version", async () => {
+    const { version } = JSON.parse(
+      readFileSync(resolve(import.meta.dirname, "../package.json"), "utf8"),
+    ) as { version: string }
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true })))
+    const [tool] = (() => {
+      const pi = createPiMock()
+      createOutlitPiExtension({
+        apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+        fetch: fetchMock,
+        toolNames: ["outlit_list_customers"],
+      })(pi)
+      return pi.registeredTools
+    })()
+
+    await tool?.execute("call_1", {}, undefined, undefined, undefined as never)
+
+    expect(OUTLIT_PI_CLIENT).toBe(`@outlit/pi/${version}`)
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit
+    expect((init.headers as Record<string, string>)["x-outlit-client"]).toBe(OUTLIT_PI_CLIENT)
+  })
+
   test("defaults tools to the hosted Outlit endpoint", async () => {
     const previousApiUrl = process.env.OUTLIT_API_URL
     delete process.env.OUTLIT_API_URL
@@ -83,7 +109,13 @@ describe("createOutlitPiExtension", () => {
       "outlit_list_sources",
       "outlit_search_customer_context",
     ])
-    expect(registeredNames).toEqual([...defaultToolNames])
+    expect(registeredNames).toEqual([
+      ...defaultToolNames,
+      "outlit_list_toolsets",
+      "outlit_load_toolset",
+    ])
+    expect(registeredNames).toEqual([...piDefaultToolNames])
+    expect(registeredNames).not.toContain("outlit_query")
   })
 
   test("rejects retired notification sending", () => {
@@ -159,21 +191,139 @@ describe("createOutlitPiExtension", () => {
       return pi.registeredTools.map((tool) => tool.name)
     }
 
-    expect(registered({ toolsets: ["meta"] })).toEqual([
-      "outlit_submit_feedback",
-      "outlit_list_toolsets",
-      "outlit_load_toolset",
-    ])
+    expect(registered({ toolsets: ["meta"] })).toEqual(toolNamesInToolsets(["meta"]))
+    expect(registered({ toolsets: ["meta"] })).toContain("outlit_submit_feedback")
     expect(registered({ toolsets: ["meta"], toolNames: ["outlit_get_customer"] })).toEqual([
       "outlit_get_customer",
-      "outlit_submit_feedback",
-      "outlit_list_toolsets",
-      "outlit_load_toolset",
+      ...toolNamesInToolsets(["meta"]),
     ])
     expect(registered({ toolsets: ["core", "work"] })).toEqual(
       toolNamesInToolsets(["core", "work"]),
     )
     expect(registered({ toolsets: [] })).toEqual([])
+  })
+
+  test("returns a gateway error as the tool result with its whole envelope", async () => {
+    const envelope = {
+      code: "INVALID_TOOL_INPUT",
+      message: "The input did not match outlit_get_customer.",
+      retryable: false,
+      requestId: "req_123",
+      validationIssues: [
+        {
+          path: "include.0",
+          code: "invalid_value",
+          message: "Use one of the listed sections.",
+          validValues: ["billing", "users"],
+        },
+      ],
+      next: {
+        instruction: "Call outlit_list_customers to find the customer.",
+        tool: "outlit_list_customers",
+      },
+      missingPermission: undefined,
+    }
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify(envelope), { status: 400 }))
+    const tool = createOutlitPiTool("outlit_get_customer", {
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: fetchMock,
+    })
+
+    const result = await tool.execute("call_1", {}, undefined, undefined, undefined as never)
+
+    const shown = JSON.parse((result.content[0] as { text: string }).text) as {
+      error: Record<string, unknown>
+    }
+    expect(shown.error).toMatchObject({
+      code: "INVALID_TOOL_INPUT",
+      message: envelope.message,
+      retryable: false,
+      requestId: "req_123",
+      status: 400,
+      validationIssues: envelope.validationIssues,
+      next: envelope.next,
+    })
+    expect(result.details.error).toEqual(shown.error)
+    expect(result.details.result).toEqual(shown)
+  })
+
+  test("returns the permission, retry delay and request id of a refusal", async () => {
+    const run = async (status: number, body: Record<string, unknown>) => {
+      const tool = createOutlitPiTool("outlit_set_customer_owner", {
+        apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+        fetch: vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status })),
+      })
+      const result = await tool.execute("call_1", {}, undefined, undefined, undefined as never)
+      return result.details.error
+    }
+
+    expect(
+      await run(403, {
+        code: "TOOL_CALL_FORBIDDEN",
+        message: "This key cannot change owners.",
+        retryable: false,
+        requestId: "req_403",
+        missingPermission: "customers:write",
+      }),
+    ).toMatchObject({ missingPermission: "customers:write", requestId: "req_403", status: 403 })
+    expect(
+      await run(429, {
+        code: "plan_api_limit_exceeded",
+        message: "Rate limit reached.",
+        retryable: true,
+        requestId: "req_429",
+        retryAfterSeconds: 12,
+      }),
+    ).toMatchObject({ retryAfterSeconds: 12, retryable: true, requestId: "req_429" })
+  })
+
+  test("returns a failure with no envelope, and a dropped connection, as results too", async () => {
+    const proxyError = createOutlitPiTool("outlit_list_customers", {
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockResolvedValue(new Response("<html>Bad gateway</html>", { status: 502 })),
+    })
+    const proxied = await proxyError.execute("call_1", {}, undefined, undefined, undefined as never)
+    expect(proxied.details.error).toEqual({
+      message: "API error (502): <html>Bad gateway</html>",
+      retryable: true,
+      status: 502,
+    })
+
+    const offline = createOutlitPiTool("outlit_list_customers", {
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockRejectedValue(new TypeError("fetch failed")),
+    })
+    const dropped = await offline.execute("call_1", {}, undefined, undefined, undefined as never)
+    expect(dropped.details.error).toEqual({ message: "fetch failed", retryable: true })
+    expect(JSON.parse((dropped.content[0] as { text: string }).text)).toEqual({
+      error: { message: "fetch failed", retryable: true },
+    })
+  })
+
+  test("puts the request id and output version in the details of a result and of an error", async () => {
+    const headers = { "outlit-request-id": "req_ok", "outlit-version": "2026-11-12" }
+    const ok = createOutlitPiTool("outlit_list_customers", {
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockResolvedValue(new Response(JSON.stringify({ items: [] }), { headers })),
+    })
+    const failed = createOutlitPiTool("outlit_list_customers", {
+      apiKey: "ok_abcdefghijklmnopqrstuvwxyz123456",
+      fetch: vi.fn().mockResolvedValue(
+        new Response("<html>Bad gateway</html>", {
+          status: 502,
+          headers: { ...headers, "outlit-request-id": "req_bad" },
+        }),
+      ),
+    })
+
+    const success = await ok.execute("call_1", {}, undefined, undefined, undefined as never)
+    const failure = await failed.execute("call_1", {}, undefined, undefined, undefined as never)
+
+    expect(success.details).toMatchObject({ requestId: "req_ok", version: "2026-11-12" })
+    expect(failure.details).toMatchObject({ requestId: "req_bad", version: "2026-11-12" })
+    expect(failure.details.error?.requestId).toBe("req_bad")
   })
 
   test("adds the gateway's deprecation and notices after the result", async () => {
@@ -248,6 +398,7 @@ describe("createOutlitPiExtension", () => {
       headers: {
         Authorization: "Bearer ok_abcdefghijklmnopqrstuvwxyz123456",
         "Content-Type": "application/json",
+        "x-outlit-client": OUTLIT_PI_CLIENT,
       },
       body: JSON.stringify({
         tool: "outlit_list_customers",

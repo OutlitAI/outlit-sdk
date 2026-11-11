@@ -2,7 +2,7 @@ import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { applyPagination, paginationArgs } from "../../args/pagination"
+import { applyPagination, pageSizeArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
 import { optionalTrimmedString, parseCsvList } from "../../lib/platform-input"
@@ -59,7 +59,7 @@ export default defineCommand({
       type: "string",
       description: "Only event candidates whose event name contains this text",
     },
-    ...paginationArgs,
+    ...pageSizeArgs,
   },
   async run({ args }) {
     const json = !!args.json

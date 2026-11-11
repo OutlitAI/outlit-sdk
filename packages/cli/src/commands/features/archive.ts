@@ -3,8 +3,8 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { runConfirmedWrite, yesArg } from "../../lib/confirm"
+import { newIdempotencyKey } from "../../lib/idempotency-key"
 import { requiredTrimmedString } from "../../lib/platform-input"
-import { newRequestId } from "../../lib/request-id"
 import { parseWriteMode, writeModeArgs } from "../../lib/write-mode"
 
 type FeatureArchivePreview = {
@@ -62,14 +62,14 @@ export default defineCommand({
       return runTool(
         client,
         "outlit_archive_feature",
-        { id, revision, ...write.explicit, requestId: write.requestId },
+        { id, revision, ...write.explicit, idempotencyKey: write.idempotencyKey },
         json,
         { spinnerMessage: "Archiving Feature..." },
       )
     }
 
     return runConfirmedWrite(client, "outlit_archive_feature", {
-      input: { id, revision, requestId: write.requestId },
+      input: { id, revision, idempotencyKey: write.idempotencyKey },
       json,
       yes: args.yes === true,
       spinnerMessage: "Archiving Feature...",
@@ -79,7 +79,7 @@ export default defineCommand({
         revision,
         mode: "execute",
         previewToken,
-        requestId: newRequestId(),
+        idempotencyKey: newIdempotencyKey(),
       }),
       question: "Archive this Feature?",
       unchanged: "Nothing was archived",

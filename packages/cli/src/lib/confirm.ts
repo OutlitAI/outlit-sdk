@@ -28,7 +28,7 @@ export interface ConfirmedWriteOptions<TToolName extends CliToolName> {
   spinnerMessage: string
   /** Reads the confirmation off the first result; null when that call had already finished. */
   pending: (result: unknown) => PendingConfirmation | null
-  /** The confirming call for a token. Give it a fresh requestId: the first call's id was spent. */
+  /** The confirming call for a token. Give it a fresh idempotencyKey: the first call's id was spent. */
   confirmed: (token: string) => OutlitToolParams<TToolName>
   /** The yes/no question asked in a terminal. */
   question: string

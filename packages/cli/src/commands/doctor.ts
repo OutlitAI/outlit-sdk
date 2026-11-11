@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs"
 import { homedir } from "node:os"
 import { join } from "node:path"
-import { isOutlitToolsApiError } from "@outlit/tools"
+import { collectionOf, isOutlitToolsApiError } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
 import { outputArgs } from "../args/output"
@@ -301,13 +301,10 @@ async function checkIntegrations(
     const timeout = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error("Integrations check timed out")), 10_000),
     )
-    const data = (await Promise.race([
-      client.callTool("outlit_list_integrations", {}),
-      timeout,
-    ])) as {
-      items?: Array<{ status: string }>
-    }
-    const items = data.items ?? []
+    const data = await Promise.race([client.callTool("outlit_list_integrations", {}), timeout])
+    const items = (collectionOf("outlit_list_integrations", data)?.items ?? []) as Array<{
+      status: string
+    }>
     const ready = items.filter((item) => item.status === "ready").length
     const requiringIntervention = items.filter(
       (item) => item.status === "requires_intervention",

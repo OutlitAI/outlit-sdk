@@ -123,7 +123,7 @@ describe("Feature commands", () => {
           value: { type: "string", value: "production" },
         },
       ],
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
   })
 
@@ -148,7 +148,7 @@ describe("Feature commands", () => {
       featureKey: "reports_exported",
       name: "Reports exported",
       propertyFilters: [],
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
   })
 
@@ -172,7 +172,7 @@ describe("Feature commands", () => {
     expect(mockCallTool).toHaveBeenCalledWith("outlit_archive_feature", {
       id: "value_feature_v1_0123456789abcdef0123456789abcdef",
       revision: "value_feature_revision_v1_fedcba9876543210fedcba9876543210",
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
   })
 
@@ -204,7 +204,7 @@ describe("Feature commands", () => {
       revision: "value_feature_revision_v1_fedcba9876543210fedcba9876543210",
       mode: "execute",
       previewToken: "preview_token_1",
-      requestId: expect.any(String),
+      idempotencyKey: expect.any(String),
     })
     expect(result).toMatchObject({ archived: true })
   })

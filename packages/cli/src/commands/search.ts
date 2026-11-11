@@ -5,8 +5,10 @@ import {
 } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
+import { factIncludeArg, readFactIncludes } from "../args/fact-include"
 import { rawFlagValue } from "../args/filters"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
+import { SEARCH_PAGE_SIZE } from "../args/pagination"
 import { getClientOrExit, runTool } from "../lib/api"
 import { splitCsv } from "../lib/config"
 import { outputError } from "../lib/output"
@@ -29,6 +31,7 @@ export default defineCommand({
       "  outlit search 'expansion opportunities' --limit 50 --json",
       "  outlit search 'support escalations' --after 2025-01-01T00:00:00Z --before 2025-03-31T23:59:59Z",
       "  outlit search 'renewal opportunities' --source-types call,opportunity",
+      "  outlit search 'pricing' --customer acme.com --include quote",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -47,7 +50,7 @@ export default defineCommand({
     },
     limit: {
       type: "string",
-      description: "Maximum number of results to return (1–50). Default: 20.",
+      description: `Maximum number of results to return (1-${SEARCH_PAGE_SIZE.max}). Default: ${SEARCH_PAGE_SIZE.default}.`,
     },
     after: {
       type: "string",
@@ -63,6 +66,7 @@ export default defineCommand({
       type: "string",
       description: `Comma-separated generic source type filter (${sourceTypeDescription})`,
     },
+    ...factIncludeArg,
   },
   async run({ args, rawArgs }) {
     const json = !!args.json
@@ -72,9 +76,15 @@ export default defineCommand({
     const flag = args.limit === undefined ? "top-k" : "limit"
     const rawLimit = args.limit ?? rawFlagValue(rawArgs, "top-k")
     const limit = rawLimit === undefined ? undefined : Number(rawLimit)
-    if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 50)) {
+    if (
+      limit !== undefined &&
+      (!Number.isInteger(limit) || limit < 1 || limit > SEARCH_PAGE_SIZE.max)
+    ) {
       return outputError(
-        { message: `--${flag} must be an integer between 1 and 50`, code: "invalid_input" },
+        {
+          message: `--${flag} must be an integer between 1 and ${SEARCH_PAGE_SIZE.max}`,
+          code: "invalid_input",
+        },
         json,
       )
     }
@@ -84,6 +94,8 @@ export default defineCommand({
           .map((item) => item.trim())
           .filter(Boolean)
       : undefined
+
+    const include = readFactIncludes(args.include, json)
 
     const resolved = resolveCustomerContextSearchInput({
       query: args.query,
@@ -109,7 +121,7 @@ export default defineCommand({
     return runTool(
       client,
       publicToolContracts.outlit_search_customer_context.toolName,
-      resolved.request,
+      include ? { ...resolved.request, include } : resolved.request,
       json,
     )
   },

@@ -1,4 +1,5 @@
 import {
+  collectionOf,
   publicToolContracts,
   toolFactCategories,
   toolFactStatuses,
@@ -8,6 +9,7 @@ import {
 } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
+import { factIncludeArg, readFactIncludes } from "../../args/fact-include"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, pageSizeArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
@@ -40,18 +42,14 @@ function isOneOf(values: readonly string[], value: unknown): value is string {
 }
 
 function annotateFactFilterability(data: unknown): unknown {
-  if (typeof data !== "object" || data === null || Array.isArray(data)) {
-    return data
-  }
-
-  const record = data as Record<string, unknown>
-  if (!Array.isArray(record.facts)) {
+  const collection = collectionOf("outlit_list_facts", data)
+  if (!collection || !Array.isArray((data as Record<string, unknown>)[collection.key])) {
     return data
   }
 
   return {
-    ...record,
-    facts: record.facts.map((fact) => {
+    ...(data as Record<string, unknown>),
+    [collection.key]: collection.items.map((fact) => {
       if (typeof fact !== "object" || fact === null || Array.isArray(fact)) {
         return fact
       }
@@ -75,12 +73,14 @@ export default defineCommand({
       "List structured facts for a customer.",
       "",
       "Filter by fact status, type, category, source type, or occurrence date range.",
+      "A fact has no reasoning or source quote unless --include asks for it (reasoning, quote, evidence).",
       "",
       "Examples:",
       "  outlit facts list acme.com",
       "  outlit facts list acme.com --status active",
       "  outlit facts list acme.com --fact-types churn_risk,expansion",
       "  outlit facts list acme.com --source-types call,opportunity --after 2025-01-01T00:00:00Z",
+      "  outlit facts list acme.com --include reasoning,quote",
       "  outlit facts list acme.com --limit 50 --json",
       "",
       `Statuses: ${toolFactStatuses.join(", ")}`,
@@ -116,6 +116,7 @@ export default defineCommand({
       type: "string",
       description: `Comma-separated fact category filter (${toolFactCategories.join(", ")})`,
     },
+    ...factIncludeArg,
     after: {
       type: "string",
       description: "Filter to facts occurring after this ISO 8601 datetime",
@@ -198,6 +199,8 @@ export default defineCommand({
       )
     }
 
+    const include = readFactIncludes(args.include, json)
+
     const afterDate = args.after ? new Date(args.after) : null
     const beforeDate = args.before ? new Date(args.before) : null
 
@@ -243,6 +246,7 @@ export default defineCommand({
     if (args.before) filters.before = args.before
     const params: Record<string, unknown> = { customer: args.customer }
     if (Object.keys(filters).length > 0) params.filters = filters
+    if (include) params.include = include
     applyPagination(params, args, json)
 
     return runTool(client, publicToolContracts.outlit_list_facts.toolName, params, json, {

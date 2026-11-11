@@ -3,9 +3,9 @@ import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
+import { newIdempotencyKey } from "../../lib/idempotency-key"
 import { outputError } from "../../lib/output"
 import { optionalTrimmedString, requiredTrimmedString } from "../../lib/platform-input"
-import { newRequestId } from "../../lib/request-id"
 
 const properties = publicToolContracts.outlit_act_on_task.inputSchema.properties
 const actions = properties.action.enum
@@ -42,7 +42,7 @@ export default defineCommand({
       description: "snooze only: ISO 8601 date-time within 14 days (default: a week)",
     },
     reason: { type: "string", description: `wont_do only (${reasons.join(", ")})` },
-    "request-id": {
+    "idempotency-key": {
       type: "string",
       description: "Stable retry key: the same id returns the first result (default: a new one)",
     },
@@ -70,7 +70,7 @@ export default defineCommand({
       }
       input.reason = reason
     }
-    input.requestId = optionalTrimmedString(args["request-id"]) ?? newRequestId()
+    input.idempotencyKey = optionalTrimmedString(args["idempotency-key"]) ?? newIdempotencyKey()
 
     const client = await getClientOrExit(args["api-key"], json)
     return runTool(client, publicToolContracts.outlit_act_on_task.toolName, input, json, {

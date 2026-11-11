@@ -105,6 +105,7 @@ describe("Core-generated OpenAPI spec", () => {
       "api-reference/introduction",
       "api-reference/validation",
       "api-reference/tools",
+      "api-reference/compatibility",
       "api-reference/integrations",
       "api-reference/feedback",
       "api-reference/ingest",

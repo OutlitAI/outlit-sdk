@@ -23,6 +23,7 @@ mock.module("../../src/lib/client", () => ({
 }))
 
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
+import { CLI_CLIENT } from "../../src/lib/client-id"
 import {
   captureStdout,
   runExpectingError,
@@ -101,6 +102,7 @@ describe("onboard", () => {
     const fetchInit = fetchSpy.mock.calls[0]?.[1] as RequestInit | undefined
     expect(fetchInit?.headers).toEqual({
       Authorization: `Bearer ${TEST_API_KEY}`,
+      "x-outlit-client": CLI_CLIENT,
       "Outlit-Api-Key-Contract": "2",
     })
     expect(fetchUrls(fetchSpy)).toEqual([

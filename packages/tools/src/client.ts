@@ -5,6 +5,30 @@ import {
   toolGatewayTransport,
 } from "./generated/contracts.js"
 import type { JsonSchemaValue, PublicToolResult } from "./results.js"
+import { OUTLIT_TOOLS_CLIENT } from "./version.js"
+
+/** Request header naming the calling package and its version, as `<package>/<version>`. */
+export const outlitClientHeader = "x-outlit-client"
+
+/** Request header naming the output version the caller expects. Core accepts only its current one. */
+export const outlitVersionRequestHeader = "Outlit-Version"
+
+/** Response header with the output version, a date, that every answer follows. */
+export const outlitVersionResponseHeader = "outlit-version"
+
+/** Response header with the id of this request, on results and errors alike. Quote it in a report. */
+export const outlitRequestIdHeader = "outlit-request-id"
+
+/** The output version this package was written against; `Outlit-Version` accepts only Core's current one. */
+export const OUTLIT_API_VERSION = "2026-11-12"
+
+// The codes Core sends with HTTP 429 that may carry retryAfterSeconds. TOOL_IMPLEMENTATION_ERROR is
+// the earlier spelling of RATE_LIMITED, still accepted.
+const retryAfterErrorCodes: ReadonlySet<string> = new Set([
+  "RATE_LIMITED",
+  "TOOL_IMPLEMENTATION_ERROR",
+  "plan_api_limit_exceeded",
+])
 
 const toolDeprecationHeader = "outlit-deprecation"
 const toolNoticeHeader = "outlit-notice"
@@ -32,14 +56,35 @@ export type OutlitToolsResponseInfo = {
   sunset?: string
   /** What the gateway changed in the input, one sentence each. */
   notices: string[]
-  /** True when the result was stored from an earlier call with the same request id. */
+  /** True when the result was stored from an earlier call with the same idempotency key. */
   replayed: boolean
+  /** Core's `outlit-request-id`: the id of this request, for a bug report or a support question. */
+  requestId?: string
+  /** Core's `outlit-version`: the dated output version this answer follows. */
+  version?: string
+}
+
+/** The result of a call with what came beside it: its request id and output version, notices, replay. */
+export type OutlitToolsCallResult<TToolName extends PublicToolName> = {
+  result: PublicToolResult<TToolName>
+  meta: OutlitToolsResponseInfo
 }
 
 export type OutlitToolsClientOptions = {
   apiKey: string
   baseUrl?: string
   fetch?: OutlitToolsFetch
+  /**
+   * Who is calling, as `<package>/<version>`, sent as the `x-outlit-client` header on every request so
+   * Core can tell a client below a release's minimum version. A package that wraps this client (the
+   * CLI, the Pi extension) passes its own; the default is this package.
+   */
+  client?: string
+  /**
+   * The output version to ask for, sent as `Outlit-Version`. Leave it out to take whatever Core
+   * serves; Core refuses any value but its current one with `INVALID_TOOL_INPUT`.
+   */
+  version?: string
   /** Called after every response with its deprecation, notices and replay marker. */
   onResponse?: (info: OutlitToolsResponseInfo) => void
 }
@@ -61,12 +106,24 @@ export type ToolGatewayErrorEnvelope = {
 export class OutlitToolsApiError extends Error {
   readonly status: number
   readonly envelope?: ToolGatewayErrorEnvelope
+  /** The `outlit-request-id` header, else the envelope's `requestId`. */
+  readonly requestId?: string
+  /** The `outlit-version` header: the output version that answered. */
+  readonly version?: string
 
-  constructor(status: number, responseText: string, envelope?: ToolGatewayErrorEnvelope) {
+  constructor(
+    status: number,
+    responseText: string,
+    envelope?: ToolGatewayErrorEnvelope,
+    meta: { requestId?: string; version?: string } = {},
+  ) {
     super(envelope?.message ?? `API error (${status}): ${responseText}`)
     this.name = "OutlitToolsApiError"
     this.status = status
     this.envelope = envelope
+    const requestId = meta.requestId ?? envelope?.requestId
+    if (requestId) this.requestId = requestId
+    if (meta.version) this.version = meta.version
   }
 }
 
@@ -82,6 +139,12 @@ export type OutlitToolsClient = {
     input?: Record<string, unknown>,
     options?: { signal?: AbortSignal },
   ): Promise<PublicToolResult<TToolName>>
+  /** `callTool` that also returns the request id, output version, notices and replay marker. */
+  callToolWithMeta<TToolName extends PublicToolName>(
+    toolName: TToolName,
+    input?: Record<string, unknown>,
+    options?: { signal?: AbortSignal },
+  ): Promise<OutlitToolsCallResult<TToolName>>
 }
 
 export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToolsClient {
@@ -89,6 +152,8 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
   const baseUrl = options.baseUrl ?? DEFAULT_OUTLIT_API_URL
   const fetchImpl = options.fetch ?? globalThis.fetch
   const onResponse = options.onResponse
+  const client = options.client?.trim() || OUTLIT_TOOLS_CLIENT
+  const version = options.version?.trim()
 
   if (!key) {
     throw new Error("apiKey is required")
@@ -98,45 +163,57 @@ export function createOutlitClient(options: OutlitToolsClientOptions): OutlitToo
     throw new Error("fetch is not available")
   }
 
+  async function callToolWithMeta<TToolName extends PublicToolName>(
+    toolName: TToolName,
+    input: Record<string, unknown> = {},
+    callOptions?: { signal?: AbortSignal },
+  ): Promise<OutlitToolsCallResult<TToolName>> {
+    if (!isPublicToolName(toolName)) {
+      throw new Error(`Unknown public tool: ${toolName}`)
+    }
+
+    const response = await fetchImpl(new URL(toolGatewayTransport.path, baseUrl).toString(), {
+      method: toolGatewayTransport.method,
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        [outlitClientHeader]: client,
+        ...(version ? { [outlitVersionRequestHeader]: version } : {}),
+      },
+      body: JSON.stringify({
+        tool: toolName,
+        input,
+      }),
+      ...(callOptions?.signal ? { signal: callOptions.signal } : {}),
+    })
+
+    const meta = readResponseInfo(toolName, response)
+    if (onResponse) {
+      try {
+        onResponse(meta)
+      } catch {
+        // A reporting hook must not turn a received result into a failure.
+      }
+    }
+
+    if (!response.ok) {
+      const text = await response.text()
+      throw new OutlitToolsApiError(response.status, text, parseGatewayError(text), meta)
+    }
+
+    return { result: (await response.json()) as PublicToolResult<TToolName>, meta }
+  }
+
   return {
     key,
     baseUrl,
+    callToolWithMeta,
     async callTool<TToolName extends PublicToolName>(
       toolName: TToolName,
       input: Record<string, unknown> = {},
       callOptions?: { signal?: AbortSignal },
     ): Promise<PublicToolResult<TToolName>> {
-      if (!isPublicToolName(toolName)) {
-        throw new Error(`Unknown public tool: ${toolName}`)
-      }
-
-      const response = await fetchImpl(new URL(toolGatewayTransport.path, baseUrl).toString(), {
-        method: toolGatewayTransport.method,
-        headers: {
-          Authorization: `Bearer ${key}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          tool: toolName,
-          input,
-        }),
-        ...(callOptions?.signal ? { signal: callOptions.signal } : {}),
-      })
-
-      if (onResponse) {
-        try {
-          onResponse(readResponseInfo(toolName, response))
-        } catch {
-          // A reporting hook must not turn a received result into a failure.
-        }
-      }
-
-      if (!response.ok) {
-        const text = await response.text()
-        throw new OutlitToolsApiError(response.status, text, parseGatewayError(text))
-      }
-
-      return (await response.json()) as PublicToolResult<TToolName>
+      return (await callToolWithMeta(toolName, input, callOptions)).result
     },
   }
 }
@@ -148,6 +225,10 @@ function readResponseInfo(tool: PublicToolName, response: Response): OutlitTools
     notices: parseNoticeHeader(response.headers.get(toolNoticeHeader)),
     replayed: response.headers.get(toolReplayedHeader) === "true",
   }
+  const requestId = response.headers.get(outlitRequestIdHeader)
+  if (requestId) info.requestId = requestId
+  const version = response.headers.get(outlitVersionResponseHeader)
+  if (version) info.version = version
   const deprecation = parseDeprecationHeader(response.headers.get(toolDeprecationHeader))
   if (deprecation) info.deprecation = deprecation
   const sunset = response.headers.get("sunset")
@@ -192,8 +273,9 @@ function parseGatewayError(text: string): ToolGatewayErrorEnvelope | undefined {
     const value = withoutUnknownEnvelopeFields(JSON.parse(text) as unknown)
     if (
       matchesGeneratedJsonSchema(value, toolGatewayErrorSchema) &&
-      // The generated schema can't carry Core's per-code rule for this field.
-      (value.missingPermission === undefined || value.code === "TOOL_CALL_FORBIDDEN")
+      // The generated schema can't carry Core's per-code rules for these fields.
+      (value.missingPermission === undefined || value.code === "TOOL_CALL_FORBIDDEN") &&
+      (value.retryAfterSeconds === undefined || retryAfterErrorCodes.has(value.code))
     ) {
       return value as ToolGatewayErrorEnvelope
     }
