@@ -7,18 +7,19 @@ The tool API ([Call a tool](/api-reference/tools)) is shared by the CLI, `@outli
 
 ## Policy
 
-- **Outputs switch on a Core release.** A new output shape replaces the old one the day the release is live. The gateway does not return both. Each release below lists the output shapes it changed, so you can update a parser before you upgrade the client that reads it.
+- **A changed output shape ships with a major SDK release.** A Core release that changes an output shape (a field's type, a default field set, a renamed or removed field) is paired with a major version of `@outlit/tools`, `@outlit/cli` and `@outlit/pi`, so a parser written against the earlier major never meets the new shape by accident. The gateway does not return both shapes; the minimum versions below are the majors that read the new one, and a client below them gets an upgrade notice. Each release below lists every output shape it changed. A Core release that only adds fields, or changes input spellings, is a minor SDK release.
+- **Old output fields stay where it costs little.** When a field is replaced by a richer one, the old one stays beside it with its end date, so a parser can move on its own schedule. Each release below names the ones it kept.
 - **Old input spellings and retired tool names keep working for 30 days.** The gateway maps an old spelling to the current one and answers normally, with `Deprecation` and `Sunset` response headers (and the `outlit-deprecation` and `outlit-notice` headers described in [Response headers](/api-reference/tools#response-headers)) that state the last day it works. After that date the call is refused with `INVALID_TOOL_INPUT` and an issue that names the current spelling. Both clients print these notices; a custom client should read the headers.
-- **Clients say who they are.** `@outlit/tools`, `@outlit/cli` and `@outlit/pi` send `x-outlit-client: <package>/<version>` on every request, for example `x-outlit-client: @outlit/cli/4.1.0`. When a call comes from a client below the minimum version for the current release, the gateway adds a deprecation notice to the response saying which version to upgrade to. If you call the gateway directly, send the header with your own package name and version.
+- **Clients say who they are.** `@outlit/tools`, `@outlit/cli` and `@outlit/pi` send `x-outlit-client: <package>/<version>` on every request, for example `x-outlit-client: @outlit/cli/5.0.0`. When a call comes from a client below the minimum version for the current release, the gateway adds a deprecation notice to the response saying which version to upgrade to. If you call the gateway directly, send the header with your own package name and version.
 
 ## Minimum client versions
 
 | Core release | `@outlit/cli` | `@outlit/tools` | `@outlit/pi` |
 |---|---|---|---|
-| Agent API v2 polish (this release) | 4.1.0 | 3.1.0 | 3.1.0 |
+| Agent API v2 polish (this release) | 5.0.0 | 4.0.0 | 4.0.0 |
 | Agent API v2 | 4.0.0 | 3.0.0 | 3.0.0 |
 
-A client below the minimum keeps working for the input windows below, then fails on the inputs it still sends the old way. Upgrade with `outlit upgrade` or your package manager.
+A client below the minimum keeps working for the input windows below, then fails on the inputs it still sends the old way. It can also misread the output shapes this release changed (listed below), which is why the minimums are major versions. Upgrade with `outlit upgrade` or your package manager.
 
 ## Agent API v2 polish
 
@@ -37,9 +38,11 @@ New inputs: `part` on `outlit_get_fact`; `include` (`reasoning`, `quote`, `evide
 
 ### Output shapes
 
+These change on the day the release is live; the SDK majors above read them. Only the enrichment totals keep their earlier field.
+
 - **Facts.** A fact from `outlit_list_facts` and `outlit_search_customer_context` has no `reasoning` or `source.quote` unless `include` asks for it; `outlit_get_fact` still returns both. `evidence` is `{ items, page, more }` (the first three excerpts) instead of an array. `outlit_get_fact` with `part` returns `{ customer, part }` and no `fact`.
 - **CRM summary.** `crmSummary` is an array of accounts `{ provider, connectionId, accountId, name, fields }` on list rows and on `outlit_get_customer`. List rows used a map of label to value.
-- **Enrichment.** In `enrichment`, `fundingSummary.totalInvestment` and `fundingSummary.lastRoundAmount` are money objects (`{ amount, currency, decimals, formatted }`) or `null`. They were `totalInvestmentUsd` and `lastRoundAmountUsd` numbers.
+- **Enrichment.** In `enrichment`, `fundingSummary.totalInvestment` and `fundingSummary.lastRoundAmount` are money objects (`{ amount, currency, decimals, formatted }`) or `null`. They were `totalInvestmentUsd` and `lastRoundAmountUsd` numbers, which stay beside them, deprecated, until **2026-12-12**. Read the money objects.
 - **Partial sections.** A section that holds only its first part, such as `users` and `recentTimeline`, carries `more: { omitted, next }`. `recentTimeline` entries carry `id` and `source`. A CRM account with more contacts than listed carries `contactsNext`, and `outlit_list_people` lists `accounts[]` (each with a `next`) under `crmContactsWithoutPerson`, and `connectionId` on `crmContactsTruncated` entries.
 - **Customer lists.** Rows carry `credits` with `filters.credits` and `meter` with `orderBy: "meter_usage"`. `coverage` can carry `stale`, `withoutMeter` and `ambiguous` counts when those leave customers out.
 - **Destinations.** `outlit_create_destination` refuses a channel that is already an active destination with `CONFLICT`; `created: true` means the channel is a destination now, new or restored from the archive. It no longer updates an existing one.

@@ -158,6 +158,30 @@ const result = await outlit.callTool(
 
 The package also exports `publicToolContracts`, `publicToolNames`, server-defined `consumerToolPolicies`, `defaultToolNames`, `analyticalToolNames`, `piToolNames`, `cliToolNames`, `allPublicToolNames`, `publicOpenApiTransports`, `toolGatewayTransport`, `apiKeyValidationTransport`, `toolGatewayErrorCodes`, `toolGatewayErrorSchema`, `ingestTransport`, and enum lists such as `sourceTypes`. The context tools take and return lowercase values (`email`, `calendar_event`, `churn_risk`). `opportunity` is the source type for CRM opportunities; `CRM` and `CRM_OPPORTUNITY` are older input spellings. `invoice` is the Stripe invoice source type; `outlit_get_source` and `outlit_list_sources` also accept `STRIPE_INVOICE` as an older spelling, but search and `outlit_list_facts` do not.
 
+### Reading a list
+
+A list tool returns its rows under a key named for what they are, not always `items`, beside `page` and, when the gateway cut the list to fit the size cap, `truncation`.
+
+| Tool | Rows key |
+|---|---|
+| `outlit_list_customers`, `outlit_list_customer_fields`, `outlit_list_people`, `outlit_list_members`, `outlit_list_sources`, `outlit_list_destinations`, `outlit_list_integrations`, `outlit_list_features`, `outlit_list_tasks`, `outlit_list_merge_suggestions` | `items` |
+| `outlit_list_facts` | `facts` |
+| `outlit_get_timeline` | `events` |
+| `outlit_search_customer_context` | `results` (no `page`) |
+| `outlit_query` | `rows` (with `columns`) |
+
+`@outlit/tools` reads them one way: `collectionOf(toolName, output)` returns `{ key, items, page?, truncation? }`, or `undefined` for a tool that returns no list. `items` is empty when the output holds no rows, so check `truncation` and `page.hasMore` before reading it as "nothing there". `isCollectionTool(name)` and the `collectionKeys` table are exported too, and a test checks the table against the generated output schemas.
+
+```typescript
+import { collectionOf } from "@outlit/tools"
+
+const output = await outlit.callTool("outlit_list_facts", { customer: "acme.com" })
+const list = collectionOf("outlit_list_facts", output)
+for (const fact of list?.items ?? []) console.log(fact)
+if (list?.page?.hasMore) console.log("next cursor:", list.page.nextCursor)
+if (list?.truncation) console.log(list.truncation.next?.instruction)
+```
+
 ## Examples
 
 ### List paying customers
@@ -445,7 +469,7 @@ The admin tools change a workspace, so they share a few rules.
 - **Previews.** `outlit_archive_destination`, `outlit_archive_feature` and `outlit_set_customer_owner` change nothing on the first call. They return `preview.token`, what the change would affect, and `next`, the exact call to confirm. Confirm with the same target, `"mode": "execute"` and `"previewToken"`. A token lasts 15 minutes; a token that no longer matches the current state is refused with `preview_stale` and a fresh preview.
 - **Undo.** `outlit_set_customer_owner` and `outlit_set_customer_access` return `undo: { token, until }` (24 hours), or `null` when the change cannot be undone. Call the same tool with `{ "undoToken", "requestId" }` to put the earlier state back. When the caller could not undo a change, such as removing their own access, the first call returns `outcome: "needs_confirmation"` with the reason, a preview and `next`.
 - **Set state.** `outlit_update_destination` and `outlit_update_settings` take the end state; only the fields you send are written. `revision` is optional: when it is stale the call is refused with `stale_revision`, unless every field you asked for already holds its value.
-- **Shapes.** Lists return `items` and `page { hasMore, nextCursor, total }` (25 per page by default, at most 100), and `coverage` when empty. People are `{ id, name, email }`; customers `{ id, name, domain }`. Enums are lowercase. A missing permission is `TOOL_CALL_FORBIDDEN` with `missingPermission`.
+- **Shapes.** Lists return their rows (`items`; [other tools use another key](#reading-a-list)) and `page { hasMore, nextCursor, total }` (25 per page by default, at most 100), and `coverage` when empty. People are `{ id, name, email }`; customers `{ id, name, domain }`. Enums are lowercase. A missing permission is `TOOL_CALL_FORBIDDEN` with `missingPermission`.
 
 ```json
 {

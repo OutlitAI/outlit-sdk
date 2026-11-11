@@ -20,7 +20,7 @@ pi
 
 ## Default tools
 
-The default Pi extension exposes the customer intelligence tools that are read-only:
+The default Pi extension exposes the customer intelligence tools that are read-only, plus the two toolset tools:
 
 | Tool | What it does |
 |------|--------------|
@@ -34,6 +34,12 @@ The default Pi extension exposes the customer intelligence tools that are read-o
 | `outlit_get_source` | Retrieve one exact source record behind a fact or search result |
 | `outlit_list_sources` | List concrete source records for a customer |
 | `outlit_search_customer_context` | Search grouped source and fact results with natural language |
+| `outlit_list_toolsets` | List Core's toolsets and the tools each holds, so the agent can tell you which one to enable |
+| `outlit_load_toolset` | Summarize one toolset's tools, or return full definitions for up to 10 of them |
+
+Pi registers tools when a session starts, so loading a toolset does not make its tools callable in that session; enable one with the `toolsets` option below.
+
+A call that fails comes back to the agent as the tool result `{ "error": { code, message, retryable, requestId, ... } }` with the gateway's `next`, `missingPermission`, `validationIssues` and `retryAfterSeconds` when it sent them, not as a crash.
 
 SQL tools are available through `@outlit/tools`, but they are not enabled by default in `@outlit/pi`. Use them only for agents that should run read-only SQL.
 
@@ -67,7 +73,7 @@ export default createOutlitPiExtension({
 })
 ```
 
-Use the default policy for ten read-only customer tools. Use `analyticalToolNames` when the agent also needs `outlit_get_schema` and read-only `outlit_query` (12 tools total). `piToolNames` is broader: it includes SQL, the toolset tools, customer ownership and access actions, Feature tools, workspace configuration, and `outlit_submit_feedback` for product feedback intake. Choose the smallest set your Pi agent needs.
+Use the default policy for ten read-only customer tools and the two toolset tools. Use `analyticalToolNames` when the agent also needs `outlit_get_schema` and read-only `outlit_query` (12 tools total, without the toolset tools). `piToolNames` is broader: it includes SQL, the toolset tools, customer ownership and access actions, Feature tools, workspace configuration, and `outlit_submit_feedback` for product feedback intake. Choose the smallest set your Pi agent needs.
 
 ## Growth agent examples
 

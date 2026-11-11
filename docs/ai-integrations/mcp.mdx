@@ -104,7 +104,7 @@ For coding agents that run local commands, see [Agent skills](/ai-integrations/s
 |---|---|
 | `outlit_get_timeline` | Get the activity timeline for a customer, with `filters` for channel, event type and a time window (`within`, or `after` and `before`) |
 | `outlit_list_facts` | Retrieve structured customer facts with `filters` for status, source type, public fact type and category and occurrence time, `page` pagination, and the `source` each fact came from (`type`, `id`, `occurredAt`, `quote`, and `permalink`) |
-| `outlit_get_fact` | Retrieve one exact fact by ID as `{ customer, fact }`; `include: ["evidence"]` lists every source it cites |
+| `outlit_get_fact` | Retrieve one exact fact by ID as `{ customer, fact }`; `include: ["evidence"]` adds its first three cited excerpts, and `part` reads the rest |
 | `outlit_get_source` | Retrieve one exact source record by the `source` (`type` and `id`) another tool returned |
 | `outlit_list_sources` | List concrete source records such as calls, emails, calendar events, support tickets, Slack conversations, or opportunities |
 | `outlit_search_customer_context` | Search across customer facts, emails, calls, calendar events, support tickets, Slack conversations, and CRM opportunities using natural language. Returns grouped artifact-level matches for `source` and `fact` results, with `filters` for source types and a time range, and `coverage` when nothing matches |
