@@ -409,11 +409,11 @@ describe("doctor command", () => {
 
     // A read-only key still gets the identity/merge read surfaces; only the
     // write operations are unavailable.
-    expect(permissions?.detail).not.toContain("identity suggestions list")
-    expect(permissions?.detail).not.toContain("merge-status")
+    expect(permissions?.detail).not.toContain("merge-suggestions list")
+    expect(permissions?.detail).not.toContain("merges get")
     expect(permissions?.detail).not.toContain("merge (preview)")
-    expect(permissions?.detail).toContain("identity suggestions reject")
-    expect(permissions?.detail).toContain("customers merge --execute")
+    expect(permissions?.detail).toContain("merge-suggestions reject")
+    expect(permissions?.detail).toContain("customers merge --mode execute")
 
     // Restricted key: integrations check explains the missing grant without a
     // guaranteed-denied API call.
@@ -475,17 +475,17 @@ describe("doctor command", () => {
 
     // Write operations are available to this key — they must not be listed.
     expect(permissions?.detail).not.toContain("settings update")
-    expect(permissions?.detail).not.toContain("activation update")
-    expect(permissions?.detail).not.toContain("identity suggestions reject")
-    expect(permissions?.detail).not.toContain("customers merge --execute")
-    expect(permissions?.detail).not.toContain("customers grant")
+    expect(permissions?.detail).not.toContain("settings update --activation-event")
+    expect(permissions?.detail).not.toContain("merge-suggestions reject")
+    expect(permissions?.detail).not.toContain("customers merge --mode execute")
+    expect(permissions?.detail).not.toContain("customers set-access")
 
     // The matching read operations require read grants this key lacks.
     expect(permissions?.detail).toContain("settings get")
-    expect(permissions?.detail).toContain("activation get, preview")
-    expect(permissions?.detail).toContain("identity suggestions list")
+    expect(permissions?.detail).toContain("activation preview")
+    expect(permissions?.detail).toContain("merge-suggestions list")
     expect(permissions?.detail).toContain("customers merge (preview)")
-    expect(permissions?.detail).toContain("merge-status")
+    expect(permissions?.detail).toContain("merges get")
   })
 
   test("runs the integrations check when the key grants integrations access", async () => {

@@ -10,13 +10,14 @@ export default defineCommand({
       "",
       "Commands:",
       "  setup <provider>    Run bounded provider setup when authorized",
-      "  status [provider]   Show canonical integration readiness",
+      "  list [provider]     Show canonical integration readiness",
+      "Check a browser sign-in that setup started with `outlit setup-sessions get <id>`.",
       "",
       "Core determines whether the requested setup is actor-owned or workspace/admin scoped.",
     ].join("\n"),
   },
   subCommands: {
     setup: () => import("./setup").then((m) => m.default),
-    status: () => import("./status").then((m) => m.default),
+    list: () => import("./list").then((m) => m.default),
   },
 })

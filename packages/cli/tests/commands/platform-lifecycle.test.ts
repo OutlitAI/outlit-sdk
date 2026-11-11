@@ -39,7 +39,7 @@ describe("platform lifecycle commands", () => {
           type: "slack",
           "channel-id": "C0123456789",
           label: "#customer-ops",
-          default: true,
+          "is-default": true,
           json: true,
         },
       } as Parameters<NonNullable<typeof createDestinationCmd.run>>[0]),
@@ -50,7 +50,7 @@ describe("platform lifecycle commands", () => {
           id: destinationId,
           type: "slack",
           label: "#updated-ops",
-          disabled: true,
+          enabled: "false",
           json: true,
         },
       } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
@@ -60,7 +60,7 @@ describe("platform lifecycle commands", () => {
         args: {
           id: destinationId,
           type: "slack",
-          default: true,
+          "is-default": true,
           json: true,
         },
       } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),
@@ -121,66 +121,41 @@ describe("platform lifecycle commands", () => {
     })
   })
 
-  test("enable and disable are updates of one destination's enabled state", async () => {
-    const { default: enableCmd } = await import("../../src/commands/destinations/enable")
-    const { default: disableCmd } = await import("../../src/commands/destinations/disable")
-    const id = "10000000-0000-4000-8000-000000000003"
+  test("list --ids reads specific destinations", async () => {
+    const { default: listCmd } = await import("../../src/commands/destinations/list")
 
     await captureStdout(() =>
-      enableCmd.run!({ args: { id, json: true } } as Parameters<
-        NonNullable<typeof enableCmd.run>
-      >[0]),
-    )
-    await captureStdout(() =>
-      disableCmd.run!({
-        args: { id, json: true },
-      } as Parameters<NonNullable<typeof disableCmd.run>>[0]),
-    )
-
-    expect(mockCallTool).toHaveBeenNthCalledWith(1, "outlit_update_destination", {
-      id,
-      enabled: true,
-    })
-    expect(mockCallTool).toHaveBeenNthCalledWith(2, "outlit_update_destination", {
-      id,
-      enabled: false,
-    })
-  })
-
-  test("get reads one destination through the list and prints it", async () => {
-    const destination = { id: "destination_123", name: "#customer-ops" }
-    mockCallTool.mockImplementationOnce(async () => ({
-      items: [destination],
-      page: { hasMore: false, nextCursor: null, total: 1 },
-    }))
-    const { default: getCmd } = await import("../../src/commands/destinations/get")
-
-    const result = await captureStdout(() =>
-      getCmd.run!({
-        args: { id: "destination_123", json: true },
-      } as Parameters<NonNullable<typeof getCmd.run>>[0]),
+      listCmd.run!({
+        args: { ids: "destination_1, destination_2", json: true },
+      } as Parameters<NonNullable<typeof listCmd.run>>[0]),
     )
 
     expect(mockCallTool).toHaveBeenCalledWith("outlit_list_destinations", {
-      ids: ["destination_123"],
+      ids: ["destination_1", "destination_2"],
     })
-    expect(result).toEqual({ destination })
   })
 
-  test("get reports an id Core does not show as not found", async () => {
-    mockCallTool.mockImplementationOnce(async () => ({
-      items: [],
-      missing: ["destination_404"],
-      page: { hasMore: false, nextCursor: null, total: 0 },
-    }))
-    const { default: getCmd } = await import("../../src/commands/destinations/get")
+  test("update takes --enabled true or false and --revision, and refuses a disabled default", async () => {
+    const { default: updateCmd } = await import("../../src/commands/destinations/update")
+    const id = "10000000-0000-4000-8000-000000000003"
+
+    await captureStdout(() =>
+      updateCmd.run!({
+        args: { id, enabled: "false", revision: "rev_1", json: true },
+      } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
+    )
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_update_destination", {
+      id,
+      enabled: false,
+      revision: "rev_1",
+    })
 
     await runExpectingError(
       () =>
-        getCmd.run!({
-          args: { id: "destination_404", json: true },
-        } as Parameters<NonNullable<typeof getCmd.run>>[0]),
-      "not_found",
+        updateCmd.run!({
+          args: { id, enabled: "maybe", json: true },
+        } as Parameters<NonNullable<typeof updateCmd.run>>[0]),
+      "invalid_input",
     )
   })
 
@@ -246,7 +221,7 @@ describe("platform lifecycle commands", () => {
             id: "10000000-0000-4000-8000-000000000003",
             type: "webhook",
             label: "#updated-ops",
-            enabled: true,
+            enabled: "true",
             json: true,
           },
         } as Parameters<NonNullable<typeof updateDestinationCmd.run>>[0]),

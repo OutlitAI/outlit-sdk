@@ -3,7 +3,11 @@ import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { getClientOrExit, runTool } from "../../lib/api"
 import { outputError } from "../../lib/output"
-import { optionalTrimmedString, requiredTrimmedString } from "../../lib/platform-input"
+import {
+  optionalTrimmedString,
+  parseBooleanFlag,
+  requiredTrimmedString,
+} from "../../lib/platform-input"
 import { newRequestId } from "../../lib/request-id"
 
 function parseDestinationType(type: string | undefined, json: boolean): "slack_channel" {
@@ -26,7 +30,7 @@ export default defineCommand({
       "",
       "Examples:",
       "  outlit destinations create --type slack --channel-id C0123456789 --label '#customer-ops' --json",
-      "  outlit destinations create --type slack --channel-id C0123456789 --label '#customer-ops' --default --json",
+      "  outlit destinations create --type slack --channel-id C0123456789 --label '#customer-ops' --is-default --json",
       "",
       AGENT_JSON_HINT,
     ].join("\n"),
@@ -37,15 +41,24 @@ export default defineCommand({
     type: { type: "string", description: "Destination type. Currently supports: slack" },
     "channel-id": { type: "string", description: "Slack channel ID" },
     label: { type: "string", description: "Slack channel label" },
-    default: { type: "boolean", description: "Make this the default destination" },
-    disabled: { type: "boolean", description: "Create the destination disabled" },
+    "is-default": { type: "boolean", description: "Make this the default destination" },
+    enabled: {
+      type: "string",
+      description: "true (default) or false: create the destination enabled or disabled",
+    },
+    "request-id": {
+      type: "string",
+      description: "Stable retry key: the same id returns the first result (default: a new one)",
+    },
   },
   async run({ args }) {
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
-    if (args.default === true && args.disabled === true) {
+    const isDefault = args["is-default"] === true
+    const enabled = parseBooleanFlag(args.enabled, "--enabled", json) ?? true
+    if (isDefault && !enabled) {
       return outputError(
-        { message: "Use either --default or --disabled, not both", code: "invalid_input" },
+        { message: "A default destination cannot be disabled", code: "invalid_input" },
         json,
       )
     }
@@ -57,9 +70,9 @@ export default defineCommand({
         type: parseDestinationType(args.type, json),
         channelId: requiredTrimmedString(args["channel-id"], "--channel-id", json),
         label: requiredTrimmedString(args.label, "--label", json),
-        enabled: args.default === true ? true : !args.disabled,
-        isDefault: args.default === true,
-        requestId: newRequestId(),
+        enabled,
+        isDefault,
+        requestId: optionalTrimmedString(args["request-id"]) ?? newRequestId(),
       },
       json,
       { spinnerMessage: "Creating destination..." },

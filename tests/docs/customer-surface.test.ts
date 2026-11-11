@@ -116,7 +116,7 @@ describe("customer-surface documentation", () => {
   test("keeps every CLI source-type flag reference aligned with canonical source types", () => {
     const rows = readDoc("docs/cli/commands.mdx")
       .split("\n")
-      .filter((line) => /^\| `--source-types?` \|/.test(line))
+      .filter((line) => /^\| `(--source-types?|type)` \|/.test(line))
 
     expect(rows).toHaveLength(4)
     for (const row of rows) {

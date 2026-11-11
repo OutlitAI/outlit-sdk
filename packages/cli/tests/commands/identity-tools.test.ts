@@ -19,8 +19,16 @@ mock.module("../../src/lib/client", () => ({
 
 async function command(name: string) {
   if (name === "list" || name === "reject") {
+    const { default: root } = await import("../../src/commands/merge-suggestions/index")
+    return { root, prefix: [name] }
+  }
+  if (name === "identity") {
     const { default: root } = await import("../../src/commands/identity/index")
-    return { root, prefix: ["suggestions", name] }
+    return { root, prefix: ["get"] }
+  }
+  if (name === "merge-status") {
+    const { default: root } = await import("../../src/commands/merges/index")
+    return { root, prefix: ["get"] }
   }
   const { default: root } = await import("../../src/commands/customers/index")
   return { root, prefix: [name] }
@@ -37,14 +45,14 @@ describe("identity CLI tools", () => {
     ["identity", ["customer_1"], "outlit_get_identity", { customer: "customer_1" }],
     [
       "identity",
-      ["customer_1", "--links"],
+      ["customer_1", "--include", "links"],
       "outlit_get_identity",
       { customer: "customer_1", include: ["links"] },
     ],
     [
       "list",
       [
-        "--customer-id",
+        "--customer",
         "customer_1",
         "--suggestion-id",
         "proposal_1",
@@ -70,7 +78,7 @@ describe("identity CLI tools", () => {
     ],
     [
       "reject",
-      ["proposal_1", "--review-notes", "Different companies", "--request-id", "request_9"],
+      ["proposal_1", "--note", "Different companies", "--request-id", "request_9"],
       "outlit_reject_merge_suggestion",
       { id: "proposal_1", note: "Different companies", requestId: "request_9" },
     ],
@@ -85,14 +93,15 @@ describe("identity CLI tools", () => {
       [
         "survivor_1",
         "duplicate_1",
-        "--execute",
+        "--mode",
+        "execute",
         "--preview-token",
         "reviewed_token",
         "--request-id",
         "request_1",
         "--suggestion-id",
         "proposal_1",
-        "--review-notes",
+        "--note",
         "Same company verified",
       ],
       "outlit_merge_customers",
@@ -139,9 +148,9 @@ describe("identity CLI tools", () => {
   })
 
   for (const executionArgs of [
-    ["--execute"],
-    ["--execute", "--preview-token", "reviewed"],
-    ["--execute", "--request-id", "request_1"],
+    ["--mode", "execute"],
+    ["--mode", "execute", "--preview-token", "reviewed"],
+    ["--mode", "execute", "--request-id", "request_1"],
   ]) {
     test(`rejects incomplete execution before transport: ${executionArgs.join(" ")}`, async () => {
       const cmd = await command("merge")

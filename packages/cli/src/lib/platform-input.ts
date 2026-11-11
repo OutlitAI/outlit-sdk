@@ -98,3 +98,17 @@ export function readJsonBodyOrExit(input: {
     )
   }
 }
+
+/** Reads a `true` or `false` flag value; undefined when the flag was not given. */
+export function parseBooleanFlag(
+  value: string | boolean | undefined,
+  flag: string,
+  json: boolean,
+): boolean | undefined {
+  if (value === undefined) return undefined
+  if (typeof value === "boolean") return value
+  const normalized = value.trim().toLowerCase()
+  if (normalized === "true") return true
+  if (normalized === "false") return false
+  return outputError({ message: `${flag} must be true or false`, code: "invalid_input" }, json)
+}

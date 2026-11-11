@@ -248,11 +248,11 @@ describe("public documentation examples", () => {
       ["Customers list", "outlit_list_customers"],
       ["Customers get", "outlit_get_customer"],
       ["Customers get: relationship", "outlit_get_customer"],
-      ["Customers timeline", "outlit_get_timeline"],
+      ["Timeline", "outlit_get_timeline"],
       ["People list", "outlit_list_people"],
       ["Facts", "outlit_list_facts"],
       ["Search", "outlit_search_customer_context"],
-      ["SQL", "outlit_query"],
+      ["Query", "outlit_query"],
       ["Schema", "outlit_get_schema"],
     ] as const
     const failures: string[] = []
@@ -308,10 +308,7 @@ describe("public documentation examples", () => {
     const legacyEndOfDay = "2025-03-01T23:59:59Z"
     const preciseEndOfDay = "2025-03-01T23:59:59.999Z"
 
-    for (const file of [
-      "docs/cli/commands.mdx",
-      "packages/cli/src/commands/customers/timeline.ts",
-    ]) {
+    for (const file of ["docs/cli/commands.mdx", "packages/cli/src/commands/timeline/get.ts"]) {
       const source = readFileSync(file, "utf8")
 
       expect(source).not.toContain(legacyEndOfDay)

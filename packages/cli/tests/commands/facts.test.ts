@@ -287,7 +287,7 @@ describe("facts commands", () => {
     await captureStdout(() =>
       factsGetCmd.run!({
         args: {
-          "fact-id": "fact_123",
+          id: "fact_123",
           include: "Evidence",
           json: true,
         },
@@ -305,7 +305,7 @@ describe("facts commands", () => {
 
     await runExpectingError(async () => {
       await factsGetCmd.run!({
-        args: { "fact-id": "fact_123", include: "evidence,ignored", json: true },
+        args: { id: "fact_123", include: "evidence,ignored", json: true },
       } as Parameters<NonNullable<typeof factsGetCmd.run>>[0])
     }, "invalid_input")
 

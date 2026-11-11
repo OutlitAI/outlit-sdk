@@ -74,7 +74,7 @@ outlit --version
     outlit search "pricing objections last quarter"
 
     # Run SQL
-    outlit sql "SELECT event_type, COUNT(*) FROM activity GROUP BY 1"
+    outlit query "SELECT event_type, COUNT(*) FROM activity GROUP BY 1"
     ```
   </Step>
   <Step title="Set up AI agents (optional)">
@@ -140,22 +140,26 @@ ok_ab...1234 (config)
 
 | Command | Description |
 |---------|-------------|
-| [`activation`](/cli/commands#activation) | Read, preview against past events, update, or disable the exact product event used for contact and company activation |
+| [`activation preview`](/cli/commands#activation) | Preview the exact product event used for contact and company activation against past events (set it with `settings update --activation-event`) |
 | [`customers list`](/cli/commands#customers-list) | Filter and list customers by billing status, ARR, activity, and traits |
 | [`customers get`](/cli/commands#customers-get) | Get a detailed customer profile with optional sections (users, revenue, relationship, features, meters, credits, etc.) |
-| [`customers timeline`](/cli/commands#customers-timeline) | View activity timeline filtered by channel and event type |
+| [`customer-fields list`](/cli/commands#customer-fields) | List the CRM fields and SDK traits Outlit holds about customers |
+| [`timeline get`](/cli/commands#timeline) | View activity timeline filtered by channel and event type |
 | [`features`](/cli/commands#features) | Read, create, and archive workspace Features |
 | [`people list`](/cli/commands#people-list) | Filter and list the people at customers by journey stage, role, activity, customer, and traits |
+| [`tasks`](/cli/commands#tasks) | List, read, act on and undo the tasks on your To do page |
 | [`facts`](/cli/commands#facts) | Retrieve AI-generated facts and insights for a customer |
 | [`search`](/cli/commands#search) | Natural language search across customer context |
 | [`sources get`](/cli/commands#sources) | Retrieve one exact source record behind a fact or search result |
-| [`sql`](/cli/commands#sql) | Run SQL queries against analytics views |
-| [`schema`](/cli/commands#schema) | Discover analytics views and columns |
-| [`feedback`](/cli/commands#feedback) | Submit product feedback (bugs, ideas, agent friction) to the Outlit team |
+| [`query`](/cli/commands#query) | Run SQL queries against analytics views |
+| [`schema get`](/cli/commands#schema) | Discover analytics views and columns |
+| [`feedback submit`](/cli/commands#feedback) | Submit product feedback (bugs, ideas, agent friction) to the Outlit team |
 | [`onboard`](/cli/ai-agents#onboarding) | Bootstrap auth, install an agent skill, and inspect integration readiness |
 | [`integrations setup`](/cli/integrations#integration-setup) | Connect a provider from the terminal |
-| [`integrations status`](/cli/integrations#integration-status) | Show whether each integration is configured |
+| [`integrations list`](/cli/integrations#integration-status) | Show whether each integration is configured |
 | [`destinations list`](/cli/commands#destinations) | List configured delivery destinations with masked configuration |
+| [`members list`](/cli/commands#customer-ownership-and-access) | List workspace members to name as owners or collaborators |
+| [`settings`](/cli/commands#settings) | Read and update the timezone, default owner and activation event |
 | [`setup`](/cli/ai-agents) | Install Outlit skills for coding agents |
 | [`doctor`](/cli/ai-agents#diagnostics) | Run environment diagnostics |
 | [`completions`](/cli/configuration#shell-completions) | Generate shell completion scripts |

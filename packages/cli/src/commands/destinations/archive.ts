@@ -1,9 +1,10 @@
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
-import { getClientOrExit } from "../../lib/api"
+import { getClientOrExit, runTool } from "../../lib/api"
 import { runConfirmedWrite, yesArg } from "../../lib/confirm"
 import { newRequestId } from "../../lib/request-id"
+import { parseWriteMode, writeModeArgs } from "../../lib/write-mode"
 
 type ArchivePreview = {
   archived: boolean
@@ -47,6 +48,7 @@ export default defineCommand({
     ...authArgs,
     ...outputArgs,
     ...yesArg,
+    ...writeModeArgs,
     id: {
       type: "positional",
       description: "Destination ID to archive",
@@ -57,9 +59,20 @@ export default defineCommand({
     const json = !!args.json
     const client = await getClientOrExit(args["api-key"], json)
     const id = args.id
+    const write = parseWriteMode(args, json)
+
+    if (write.explicit) {
+      return runTool(
+        client,
+        "outlit_archive_destination",
+        { id, ...write.explicit, requestId: write.requestId },
+        json,
+        { spinnerMessage: "Archiving destination..." },
+      )
+    }
 
     return runConfirmedWrite(client, "outlit_archive_destination", {
-      input: { id, requestId: newRequestId() },
+      input: { id, requestId: write.requestId },
       json,
       yes: args.yes === true,
       spinnerMessage: "Archiving destination...",

@@ -205,11 +205,11 @@ const COMMAND_GRANTS: ReadonlyArray<{
   anyOf: readonly ApiKeyGrant[]
 }> = [
   {
-    commands: "customers (read), people, facts, sources, search",
+    commands: "customers (read), customer-fields, people, facts, sources, timeline, search",
     anyOf: ["customer_intelligence:read"],
   },
-  { commands: "ws-users", anyOf: ["workspace_members:read"] },
-  { commands: "sql, schema", anyOf: ["analytics:read"] },
+  { commands: "members", anyOf: ["workspace_members:read"] },
+  { commands: "query, schema", anyOf: ["analytics:read"] },
   { commands: "destinations", anyOf: ["destinations:manage"] },
   { commands: "features", anyOf: ["behavior_metrics:manage"] },
   {
@@ -218,24 +218,24 @@ const COMMAND_GRANTS: ReadonlyArray<{
   },
   // Read and manage grants are independent: Core enforces them per operation,
   // so a manage-only key still cannot use the read subcommands.
-  { commands: "activation get, preview", anyOf: ["activation:read"] },
-  { commands: "activation update, disable", anyOf: ["activation:manage"] },
+  { commands: "activation preview", anyOf: ["activation:read"] },
+  { commands: "settings update --activation-event", anyOf: ["activation:manage"] },
   { commands: "settings get", anyOf: ["workspace_settings:read"] },
   { commands: "settings update", anyOf: ["workspace_settings:manage"] },
-  { commands: "customers grant, revoke, owner", anyOf: ["customer_access:manage"] },
+  { commands: "customers set-owner, set-access", anyOf: ["customer_access:manage"] },
   {
-    commands: "identity suggestions list",
+    commands: "merge-suggestions list, identity get",
     anyOf: ["customer_intelligence:read"],
   },
   {
-    commands: "identity suggestions reject",
+    commands: "merge-suggestions reject",
     anyOf: ["customer_identity:review"],
   },
   {
-    commands: "customers merge (preview), customers merge-status",
+    commands: "customers merge (preview), merges get",
     anyOf: ["customer_intelligence:read"],
   },
-  { commands: "customers merge --execute", anyOf: ["customer_identity:merge"] },
+  { commands: "customers merge --mode execute", anyOf: ["customer_identity:merge"] },
 ]
 
 function grantUsable(
@@ -318,7 +318,7 @@ async function checkIntegrations(
         name: "Integrations",
         status: "warn",
         message: `${ready} ready, ${requiringIntervention} requiring intervention`,
-        detail: "Run `outlit integrations status` for details",
+        detail: "Run `outlit integrations list` for details",
       }
     }
     if (ready === 0) {
@@ -326,7 +326,7 @@ async function checkIntegrations(
         name: "Integrations",
         status: "pass",
         message: "No integrations ready",
-        detail: "Run `outlit integrations status` to inspect integrations",
+        detail: "Run `outlit integrations list` to inspect integrations",
       }
     }
     return {

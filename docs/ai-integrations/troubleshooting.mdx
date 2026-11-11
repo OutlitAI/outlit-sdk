@@ -17,16 +17,16 @@ description: "Auth, permissions, identity, JSON output, MCP, and SDK delivery fa
 ## Permissions and authorization
 
 - **`TOOL_CALL_FORBIDDEN` with `retryable: false`** — the key or member lacks the underlying grant. Add the grant on the key (or use an OAuth session with permission); retrying the identical call won't help.
-- **`ws-users list` works but `owner set`/`grant` fails** — discovery needs `workspace_members:read`; collaboration writes need `customer_access:manage`. They are separate grants and the full flow needs both.
+- **`members list` works but `set-owner`/`set-access` fails** — discovery needs `workspace_members:read`; collaboration writes need `customer_access:manage`. They are separate grants and the full flow needs both.
 - **A key can't see what its creator sees** — API keys are independent principals and do not inherit the creator's permissions or customer access.
-- **Writes reject a name** — mutations take a customer ID, domain or exact name, and refuse a name that matches several customers (`customers owner set acme.com --member user_…`). Resolve the ID with `customers get` first, and the member with `ws-users list`.
-- **`owner set` or an archive prints a preview and exits 1** — nothing was changed. Outside a terminal these commands need `--yes` to confirm.
+- **Writes reject a name** — mutations take a customer ID, domain or exact name, and refuse a name that matches several customers (`customers set-owner acme.com --member user_…`). Resolve the ID with `customers get` first, and the member with `ws-users list`.
+- **`set-owner` or an archive prints a preview and exits 1** — nothing was changed. Outside a terminal these commands need `--yes` to confirm.
 
 ## Empty or partial results
 
 | Symptom | Check |
 |---------|-------|
-| Customer has no activity | `outlit integrations status <provider>` reports configuration readiness only — `ready` doesn't prove data synced. Enumerate real records with `sources list`; check sync/backfill freshness in the app's integration settings. Never report "inactive" for a source you can't confirm synced |
+| Customer has no activity | `outlit integrations list <provider>` reports configuration readiness only — `ready` doesn't prove data synced. Enumerate real records with `sources list`; check sync/backfill freshness in the app's integration settings. Never report "inactive" for a source you can't confirm synced |
 | `customers get --include features` or `meters` empty | The response distinguishes *unavailable source evidence* from *no matches* — check which one applies |
 | `customers get --include credits` empty | Same: unavailable/stale observations are distinct from a zero balance |
 | Search returns nothing | Read `coverage.searched` for what was searched. Try `sources list --customer <id>` for deterministic enumeration; search is artifact-level (`source` + `fact` groups), not raw chunks |
@@ -59,7 +59,7 @@ description: "Auth, permissions, identity, JSON output, MCP, and SDK delivery fa
 
 ## Identity mismatches
 
-- **Duplicate customers appearing** — check `outlit identity suggestions list`; reject wrong pairs with `suggestions reject <id>`, merge real duplicates with `customers merge` (preview first).
+- **Duplicate customers appearing** — check `outlit merge-suggestions list`; reject wrong pairs with `merge-suggestions reject <id>`, merge real duplicates with `customers merge` (preview first).
 - **User events attributed to the wrong account** — Outlit Browser SDK and Outlit server SDK `identify()` accept `customerId` for explicit account attribution; Outlit server SDK `track()` does too.
 - **Personal-email domains** — `user@gmail.com` resolves to an individual customer keyed on the full address, not a `gmail.com` company; expect separate customers per personal email.
 
