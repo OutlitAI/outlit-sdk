@@ -994,6 +994,50 @@ export const publicToolContracts = {
               ],
               "additionalProperties": false,
             },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
+            },
           },
           "required": [
             "truncated",
@@ -1246,6 +1290,50 @@ export const publicToolContracts = {
                 "instruction",
               ],
               "additionalProperties": false,
+            },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
             },
           },
           "required": [
@@ -7152,6 +7240,50 @@ export const publicToolContracts = {
               ],
               "additionalProperties": false,
             },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
+            },
           },
           "required": [
             "truncated",
@@ -7424,6 +7556,50 @@ export const publicToolContracts = {
                 "instruction",
               ],
               "additionalProperties": false,
+            },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
             },
           },
           "required": [
@@ -8883,6 +9059,50 @@ export const publicToolContracts = {
               ],
               "additionalProperties": false,
             },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
+            },
           },
           "required": [
             "truncated",
@@ -8915,7 +9135,7 @@ export const publicToolContracts = {
     "commandVersion": 2,
     "ownerDomain": "customer-context",
     "title": "List Customer Facts",
-    "description": "List what Outlit has learned about one customer as facts (risks, commitments, sentiment and more), newest first, each with the source it came from. Use it to review what is known; for a topic use outlit_search_customer_context, for one fact outlit_get_fact. No source content: open a fact's source with outlit_get_source.",
+    "description": "List what Outlit has learned about one customer as facts (risks, commitments, sentiment and more), newest first, each with its source ref. Use it to review what is known; include reasoning or quote for why and the passage it came from. For a topic use outlit_search_customer_context, for one fact outlit_get_fact. No source content: open a fact's source with outlit_get_source.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -9023,6 +9243,19 @@ export const publicToolContracts = {
           },
           "additionalProperties": false,
         },
+        "include": {
+          "description": "Extra parts of each fact: reasoning, quote (the source passage it cites) and evidence (the first 3 cited excerpts; outlit_get_fact has the rest). Omit for the concise fact.",
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "reasoning",
+              "quote",
+              "evidence",
+            ],
+          },
+        },
         "limit": {
           "default": 25,
           "description": "Items per page: default 25, max 100.",
@@ -9096,6 +9329,7 @@ export const publicToolContracts = {
                 "maxLength": 20000,
               },
               "reasoning": {
+                "description": "Only with include [\"reasoning\"]; outlit_get_fact always returns it.",
                 "anyOf": [
                   {
                     "type": "string",
@@ -9188,6 +9422,7 @@ export const publicToolContracts = {
                         ],
                       },
                       "quote": {
+                        "description": "Only with include [\"quote\"]; outlit_get_fact always returns it.",
                         "anyOf": [
                           {
                             "type": "string",
@@ -9214,7 +9449,6 @@ export const publicToolContracts = {
                       "type",
                       "id",
                       "occurredAt",
-                      "quote",
                       "permalink",
                     ],
                     "additionalProperties": false,
@@ -9262,75 +9496,163 @@ export const publicToolContracts = {
                 "additionalProperties": false,
               },
               "evidence": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "maxLength": 500,
-                    },
-                    "source": {
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "type": "string",
-                              "enum": [
-                                "email",
-                                "call",
-                                "calendar_event",
-                                "support_ticket",
-                                "opportunity",
-                                "slack",
-                                "person_profile",
-                                "invoice",
-                                "crm_note",
-                              ],
-                            },
-                            "id": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 500,
-                            },
-                          },
-                          "required": [
-                            "type",
-                            "id",
-                          ],
-                          "additionalProperties": false,
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                    "excerpt": {
-                      "anyOf": [
-                        {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
                           "type": "string",
-                          "maxLength": 20000,
+                          "maxLength": 500,
                         },
-                        {
-                          "type": "null",
+                        "source": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "email",
+                                    "call",
+                                    "calendar_event",
+                                    "support_ticket",
+                                    "opportunity",
+                                    "slack",
+                                    "person_profile",
+                                    "invoice",
+                                    "crm_note",
+                                  ],
+                                },
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 500,
+                                },
+                              },
+                              "required": [
+                                "type",
+                                "id",
+                              ],
+                              "additionalProperties": false,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
                         },
+                        "excerpt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "maxLength": 20000,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                        },
+                      },
+                      "required": [
+                        "id",
+                        "source",
+                        "excerpt",
                       ],
+                      "additionalProperties": false,
                     },
                   },
-                  "required": [
-                    "id",
-                    "source",
-                    "excerpt",
-                  ],
-                  "additionalProperties": false,
+                  "page": {
+                    "type": "object",
+                    "properties": {
+                      "hasMore": {
+                        "type": "boolean",
+                      },
+                      "nextCursor": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "total": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                        "description": "How many items match, over every page.",
+                      },
+                    },
+                    "required": [
+                      "hasMore",
+                      "nextCursor",
+                      "total",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  "more": {
+                    "description": "Present when data is only the first part: how many more, and the call for the rest.",
+                    "type": "object",
+                    "properties": {
+                      "omitted": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "next": {
+                        "type": "object",
+                        "properties": {
+                          "instruction": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 300,
+                          },
+                          "tool": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "pattern": "^outlit_[a-z0-9_]+$",
+                          },
+                          "input": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                            },
+                            "additionalProperties": {},
+                          },
+                        },
+                        "required": [
+                          "instruction",
+                        ],
+                        "additionalProperties": false,
+                      },
+                    },
+                    "required": [
+                      "omitted",
+                      "next",
+                    ],
+                    "additionalProperties": false,
+                  },
                 },
+                "required": [
+                  "items",
+                  "page",
+                ],
+                "additionalProperties": false,
               },
             },
             "required": [
               "id",
               "assertion",
-              "reasoning",
               "type",
               "category",
               "status",
@@ -9439,6 +9761,50 @@ export const publicToolContracts = {
               ],
               "additionalProperties": false,
             },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
+            },
           },
           "required": [
             "truncated",
@@ -9465,7 +9831,7 @@ export const publicToolContracts = {
     "commandVersion": 2,
     "ownerDomain": "customer-context",
     "title": "Get Customer Fact",
-    "description": "Get one fact by the id outlit_list_facts or search returned, with its customer; include evidence to list every source it cites. To read a source, use outlit_get_source.",
+    "description": "Get one fact by the id outlit_list_facts or search returned, with its customer; include evidence for the first sources it cites; part reads one long field (assertion, reasoning, quote or evidence) a page at a time. To read a source, use outlit_get_source.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -9489,6 +9855,31 @@ export const publicToolContracts = {
               "evidence",
             ],
           },
+        },
+        "part": {
+          "description": "Read one long field of the fact a page at a time (text: 8,000 bytes a page; evidence: as many excerpts as fit 16,000) instead of the whole fact.",
+          "type": "object",
+          "properties": {
+            "field": {
+              "type": "string",
+              "enum": [
+                "assertion",
+                "reasoning",
+                "quote",
+                "evidence",
+              ],
+            },
+            "cursor": {
+              "description": "nextCursor from the last page.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000,
+            },
+          },
+          "required": [
+            "field",
+          ],
+          "additionalProperties": false,
         },
       },
       "required": [
@@ -9535,6 +9926,7 @@ export const publicToolContracts = {
           "additionalProperties": false,
         },
         "fact": {
+          "description": "The whole fact. Absent when the call set part.",
           "type": "object",
           "properties": {
             "id": {
@@ -9548,6 +9940,7 @@ export const publicToolContracts = {
               "maxLength": 20000,
             },
             "reasoning": {
+              "description": "Only with include [\"reasoning\"]; outlit_get_fact always returns it.",
               "anyOf": [
                 {
                   "type": "string",
@@ -9640,6 +10033,7 @@ export const publicToolContracts = {
                       ],
                     },
                     "quote": {
+                      "description": "Only with include [\"quote\"]; outlit_get_fact always returns it.",
                       "anyOf": [
                         {
                           "type": "string",
@@ -9666,7 +10060,6 @@ export const publicToolContracts = {
                     "type",
                     "id",
                     "occurredAt",
-                    "quote",
                     "permalink",
                   ],
                   "additionalProperties": false,
@@ -9714,6 +10107,191 @@ export const publicToolContracts = {
               "additionalProperties": false,
             },
             "evidence": {
+              "type": "object",
+              "properties": {
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 500,
+                      },
+                      "source": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "email",
+                                  "call",
+                                  "calendar_event",
+                                  "support_ticket",
+                                  "opportunity",
+                                  "slack",
+                                  "person_profile",
+                                  "invoice",
+                                  "crm_note",
+                                ],
+                              },
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 500,
+                              },
+                            },
+                            "required": [
+                              "type",
+                              "id",
+                            ],
+                            "additionalProperties": false,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "excerpt": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "maxLength": 20000,
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                    },
+                    "required": [
+                      "id",
+                      "source",
+                      "excerpt",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "page": {
+                  "type": "object",
+                  "properties": {
+                    "hasMore": {
+                      "type": "boolean",
+                    },
+                    "nextCursor": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "How many items match, over every page.",
+                    },
+                  },
+                  "required": [
+                    "hasMore",
+                    "nextCursor",
+                    "total",
+                  ],
+                  "additionalProperties": false,
+                },
+                "more": {
+                  "description": "Present when data is only the first part: how many more, and the call for the rest.",
+                  "type": "object",
+                  "properties": {
+                    "omitted": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "next": {
+                      "type": "object",
+                      "properties": {
+                        "instruction": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 300,
+                        },
+                        "tool": {
+                          "type": "string",
+                          "maxLength": 100,
+                          "pattern": "^outlit_[a-z0-9_]+$",
+                        },
+                        "input": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                          },
+                          "additionalProperties": {},
+                        },
+                      },
+                      "required": [
+                        "instruction",
+                      ],
+                      "additionalProperties": false,
+                    },
+                  },
+                  "required": [
+                    "omitted",
+                    "next",
+                  ],
+                  "additionalProperties": false,
+                },
+              },
+              "required": [
+                "items",
+                "page",
+              ],
+              "additionalProperties": false,
+            },
+          },
+          "required": [
+            "id",
+            "assertion",
+            "type",
+            "category",
+            "status",
+            "occurredAt",
+            "validUntil",
+            "source",
+            "evidenceCount",
+            "occurrenceCount",
+            "outlit",
+          ],
+          "additionalProperties": false,
+        },
+        "part": {
+          "description": "The page of one field, when the call set part.",
+          "type": "object",
+          "properties": {
+            "field": {
+              "type": "string",
+              "maxLength": 600,
+              "description": "The field read: assertion, reasoning, quote or evidence; evidence:<id> when one excerpt is itself long and is read as text pages.",
+            },
+            "text": {
+              "description": "This page of the field's text.",
+              "type": "string",
+              "maxLength": 8000,
+            },
+            "items": {
+              "description": "This page of evidence excerpts.",
               "type": "array",
               "items": {
                 "type": "object",
@@ -9778,32 +10356,58 @@ export const publicToolContracts = {
                 "additionalProperties": false,
               },
             },
+            "page": {
+              "type": "object",
+              "properties": {
+                "hasMore": {
+                  "type": "boolean",
+                },
+                "nextCursor": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "total": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                  "description": "How many items match, over every page; null when counting them would cost a second full read.",
+                },
+              },
+              "required": [
+                "hasMore",
+                "nextCursor",
+                "total",
+              ],
+              "additionalProperties": false,
+            },
           },
           "required": [
-            "id",
-            "assertion",
-            "reasoning",
-            "type",
-            "category",
-            "status",
-            "occurredAt",
-            "validUntil",
-            "source",
-            "evidenceCount",
-            "occurrenceCount",
-            "outlit",
+            "field",
+            "page",
           ],
           "additionalProperties": false,
         },
       },
       "required": [
         "customer",
-        "fact",
       ],
       "additionalProperties": false,
     },
     "toolset": "core",
-    "sizeHint": "Omit include evidence, or read each cited source with outlit_get_source.",
+    "sizeHint": "Omit include evidence, or read one long field a page at a time with part {field}.",
   },
   "outlit_get_source": {
     "toolName": "outlit_get_source",
@@ -9853,7 +10457,7 @@ export const publicToolContracts = {
           "description": "As another tool returned it; extracted names a memory entry.",
         },
         "limit": {
-          "description": "Content segments per page (default 10).",
+          "description": "Content segments per page (default 10, max 100).",
           "type": "integer",
           "minimum": 1,
           "maximum": 100,
@@ -10530,6 +11134,104 @@ export const publicToolContracts = {
               "additionalProperties": false,
             },
           ],
+        },
+        "truncation": {
+          "type": "object",
+          "properties": {
+            "truncated": {
+              "type": "boolean",
+              "const": true,
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "byte_cap",
+                "row_cap",
+              ],
+            },
+            "returned": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+            },
+            "next": {
+              "type": "object",
+              "properties": {
+                "instruction": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 300,
+                },
+                "tool": {
+                  "type": "string",
+                  "maxLength": 100,
+                  "pattern": "^outlit_[a-z0-9_]+$",
+                },
+                "input": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                  },
+                  "additionalProperties": {},
+                },
+              },
+              "required": [
+                "instruction",
+              ],
+              "additionalProperties": false,
+            },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
+            },
+          },
+          "required": [
+            "truncated",
+            "reason",
+            "returned",
+            "next",
+          ],
+          "additionalProperties": false,
         },
       },
       "required": [
@@ -11248,6 +11950,50 @@ export const publicToolContracts = {
               ],
               "additionalProperties": false,
             },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
+            },
           },
           "required": [
             "truncated",
@@ -11337,6 +12083,19 @@ export const publicToolContracts = {
             },
           },
           "additionalProperties": false,
+        },
+        "include": {
+          "description": "Extra parts of each fact: reasoning, quote (the source passage it cites) and evidence (the first 3 cited excerpts; outlit_get_fact has the rest). Omit for the concise fact.",
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "reasoning",
+              "quote",
+              "evidence",
+            ],
+          },
         },
         "limit": {
           "default": 25,
@@ -11492,6 +12251,7 @@ export const publicToolContracts = {
                         "maxLength": 20000,
                       },
                       "reasoning": {
+                        "description": "Only with include [\"reasoning\"]; outlit_get_fact always returns it.",
                         "anyOf": [
                           {
                             "type": "string",
@@ -11584,6 +12344,7 @@ export const publicToolContracts = {
                                 ],
                               },
                               "quote": {
+                                "description": "Only with include [\"quote\"]; outlit_get_fact always returns it.",
                                 "anyOf": [
                                   {
                                     "type": "string",
@@ -11610,7 +12371,6 @@ export const publicToolContracts = {
                               "type",
                               "id",
                               "occurredAt",
-                              "quote",
                               "permalink",
                             ],
                             "additionalProperties": false,
@@ -11658,75 +12418,163 @@ export const publicToolContracts = {
                         "additionalProperties": false,
                       },
                       "evidence": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string",
-                              "maxLength": 500,
-                            },
-                            "source": {
-                              "anyOf": [
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "email",
-                                        "call",
-                                        "calendar_event",
-                                        "support_ticket",
-                                        "opportunity",
-                                        "slack",
-                                        "person_profile",
-                                        "invoice",
-                                        "crm_note",
-                                      ],
-                                    },
-                                    "id": {
-                                      "type": "string",
-                                      "minLength": 1,
-                                      "maxLength": 500,
-                                    },
-                                  },
-                                  "required": [
-                                    "type",
-                                    "id",
-                                  ],
-                                  "additionalProperties": false,
-                                },
-                                {
-                                  "type": "null",
-                                },
-                              ],
-                            },
-                            "excerpt": {
-                              "anyOf": [
-                                {
+                        "type": "object",
+                        "properties": {
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
                                   "type": "string",
-                                  "maxLength": 20000,
+                                  "maxLength": 500,
                                 },
-                                {
-                                  "type": "null",
+                                "source": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "type": {
+                                          "type": "string",
+                                          "enum": [
+                                            "email",
+                                            "call",
+                                            "calendar_event",
+                                            "support_ticket",
+                                            "opportunity",
+                                            "slack",
+                                            "person_profile",
+                                            "invoice",
+                                            "crm_note",
+                                          ],
+                                        },
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 500,
+                                        },
+                                      },
+                                      "required": [
+                                        "type",
+                                        "id",
+                                      ],
+                                      "additionalProperties": false,
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
                                 },
+                                "excerpt": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "maxLength": 20000,
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                },
+                              },
+                              "required": [
+                                "id",
+                                "source",
+                                "excerpt",
                               ],
+                              "additionalProperties": false,
                             },
                           },
-                          "required": [
-                            "id",
-                            "source",
-                            "excerpt",
-                          ],
-                          "additionalProperties": false,
+                          "page": {
+                            "type": "object",
+                            "properties": {
+                              "hasMore": {
+                                "type": "boolean",
+                              },
+                              "nextCursor": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "total": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991,
+                                "description": "How many items match, over every page.",
+                              },
+                            },
+                            "required": [
+                              "hasMore",
+                              "nextCursor",
+                              "total",
+                            ],
+                            "additionalProperties": false,
+                          },
+                          "more": {
+                            "description": "Present when data is only the first part: how many more, and the call for the rest.",
+                            "type": "object",
+                            "properties": {
+                              "omitted": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991,
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "next": {
+                                "type": "object",
+                                "properties": {
+                                  "instruction": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 300,
+                                  },
+                                  "tool": {
+                                    "type": "string",
+                                    "maxLength": 100,
+                                    "pattern": "^outlit_[a-z0-9_]+$",
+                                  },
+                                  "input": {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string",
+                                    },
+                                    "additionalProperties": {},
+                                  },
+                                },
+                                "required": [
+                                  "instruction",
+                                ],
+                                "additionalProperties": false,
+                              },
+                            },
+                            "required": [
+                              "omitted",
+                              "next",
+                            ],
+                            "additionalProperties": false,
+                          },
                         },
+                        "required": [
+                          "items",
+                          "page",
+                        ],
+                        "additionalProperties": false,
                       },
                     },
                     "required": [
                       "id",
                       "assertion",
-                      "reasoning",
                       "type",
                       "category",
                       "status",
@@ -12006,6 +12854,50 @@ export const publicToolContracts = {
               ],
               "additionalProperties": false,
             },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
+            },
           },
           "required": [
             "truncated",
@@ -12179,6 +13071,50 @@ export const publicToolContracts = {
                 "instruction",
               ],
               "additionalProperties": false,
+            },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
             },
           },
           "required": [
@@ -13062,6 +13998,50 @@ export const publicToolContracts = {
                 "instruction",
               ],
               "additionalProperties": false,
+            },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
             },
           },
           "required": [
@@ -14726,6 +15706,50 @@ export const publicToolContracts = {
                 "instruction",
               ],
               "additionalProperties": false,
+            },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
             },
           },
           "required": [
@@ -17677,6 +18701,50 @@ export const publicToolContracts = {
               ],
               "additionalProperties": false,
             },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
+            },
           },
           "required": [
             "truncated",
@@ -18848,6 +19916,50 @@ export const publicToolContracts = {
                 "instruction",
               ],
               "additionalProperties": false,
+            },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
             },
           },
           "required": [
@@ -21924,6 +23036,50 @@ export const publicToolContracts = {
                 "instruction",
               ],
               "additionalProperties": false,
+            },
+            "clipped": {
+              "description": "Text fields cut because one item alone was over the cap: each path, and the call that reads it whole when one exists.",
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 200,
+                  },
+                  "next": {
+                    "type": "object",
+                    "properties": {
+                      "instruction": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 300,
+                      },
+                      "tool": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^outlit_[a-z0-9_]+$",
+                      },
+                      "input": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                        },
+                        "additionalProperties": {},
+                      },
+                    },
+                    "required": [
+                      "instruction",
+                    ],
+                    "additionalProperties": false,
+                  },
+                },
+                "required": [
+                  "path",
+                ],
+                "additionalProperties": false,
+              },
             },
           },
           "required": [
@@ -25043,4 +26199,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "bd4eefc2704dff25f15c2668c97262739007fc52ad0cc594eb0b47dc98cbf620" as const
+export const sdkConsumerContractHash = "75576fe22e3aad207b1e70f7857ef81a6f0752e0b8b3d94d27504229b41fe10f" as const
