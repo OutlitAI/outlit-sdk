@@ -1,5 +1,13 @@
 # @outlit/tools
 
+## 4.0.1
+
+### Patch Changes
+
+- [#314](https://github.com/OutlitAI/outlit-sdk/pull/314) [`aefebdd`](https://github.com/OutlitAI/outlit-sdk/commit/aefebdda78fb48e12ede80cfc6b62abff00cb3cd) Thanks [@leo-paz](https://github.com/leo-paz)! - The task tools (`outlit_list_tasks`, `outlit_act_on_task`) name the page they mirror as the Attention Inbox, its name in the app since Nov 6, instead of "To do". Words only; no schema change.
+
+- [#310](https://github.com/OutlitAI/outlit-sdk/pull/310) [`1ccfbdc`](https://github.com/OutlitAI/outlit-sdk/commit/1ccfbdc52b1e75b70c08e76d111e65ead71d1fb5) Thanks [@leo-paz](https://github.com/leo-paz)! - `outlit_create_destination` is `destructiveHint: true` again: with `isDefault: true` it replaces the workspace's current default destination. Clients that act on MCP annotations can use this to ask before running it, depending on their own policy.
+
 ## 4.0.0
 
 ### Major Changes
