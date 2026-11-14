@@ -21872,7 +21872,7 @@ export const publicToolContracts = {
     "commandVersion": 2,
     "ownerDomain": "inbox",
     "title": "List tasks",
-    "description": "Returns one section of your task list in the To do page's order: what each task asks, why now, what it is part of and the actions it accepts. Use when asked what to do today or what's open on a customer. Don't use it for a task's conversation and draft (use outlit_get_task); it returns neither. Done is the only history kept. Size: M.",
+    "description": "Returns one section of your task list in the Attention Inbox's order: what each task asks, why now, what it is part of and the actions it accepts. Use when asked what to do today or what's open on a customer. Don't use it for a task's conversation and draft (use outlit_get_task); it returns neither. Done is the only history kept. Size: M.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -22802,7 +22802,7 @@ export const publicToolContracts = {
           "additionalProperties": false,
         },
         "source": {
-          "description": "With include source: what the task turns on, as the To do pane shows it",
+          "description": "With include source: what the task turns on, as the Attention Inbox pane shows it",
           "oneOf": [
             {
               "type": "object",
@@ -23481,7 +23481,7 @@ export const publicToolContracts = {
     "commandVersion": 2,
     "ownerDomain": "inbox",
     "title": "Act on task",
-    "description": "Takes one action on a task as you, as the To do page does. Use when asked to finish, snooze or hand back a task; the action must be in its actions. Returns an undo for 24 h. Don't use it to take an action back (use outlit_undo_task_action). Size: S.",
+    "description": "Takes one action on a task as you, as the Attention Inbox does. Use when asked to finish, snooze or hand back a task; the action must be in its actions. Returns an undo for 24 h. Don't use it to take an action back (use outlit_undo_task_action). Size: S.",
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": true,
@@ -28905,4 +28905,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "fe2d384ce7fabbebb91ebd353f369f941e7fa7ea871e81310d55c714b3de94e0" as const
+export const sdkConsumerContractHash = "efa894675136c094645b226d3dffd2b6d103f5a446e2dc5d44b5052983b06c6d" as const
