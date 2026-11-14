@@ -24444,7 +24444,7 @@
             "additionalProperties": false
           },
           "source": {
-            "description": "With include source: what the task turns on, as the To do pane shows it",
+            "description": "With include source: what the task turns on, as the Attention Inbox pane shows it",
             "oneOf": [
               {
                 "type": "object",
@@ -28205,5 +28205,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "fe2d384ce7fabbebb91ebd353f369f941e7fa7ea871e81310d55c714b3de94e0"
+  "x-outlit-contract-hash": "efa894675136c094645b226d3dffd2b6d103f5a446e2dc5d44b5052983b06c6d"
 }
