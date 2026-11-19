@@ -146,4 +146,36 @@ describe("EventQueue.flush", () => {
     expect(send.batches).toEqual([["first"], ["first"]])
     expect(queue.size).toBe(0)
   })
+
+  it("an event enqueued from inside onFlush waits for the in-flight send", async () => {
+    const send = controlledSend()
+    let queue: EventQueue
+    let nested = true
+    const onFlush = vi.fn((events: TrackerEvent[]) => {
+      if (nested) {
+        nested = false
+        void queue.enqueue(event("nested"))
+      }
+      return send.onFlush(events)
+    })
+    queue = new EventQueue({ maxSize: 1, onFlush })
+
+    const first = queue.enqueue(event("first"))
+    await send.settle()
+
+    expect(send.batches).toEqual([["first"]])
+    expect(queue.flushing).toBe(true)
+    expect(queue.size).toBe(1)
+
+    send.pending[0]?.resolve()
+    await first
+    const rest = queue.flush()
+    await send.settle()
+    send.pending[1]?.resolve()
+    await rest
+
+    expect(send.batches).toEqual([["first"], ["nested"]])
+    expect(queue.size).toBe(0)
+    expect(queue.flushing).toBe(false)
+  })
 })
