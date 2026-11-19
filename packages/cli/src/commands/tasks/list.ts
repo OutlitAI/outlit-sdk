@@ -1,6 +1,7 @@
 import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
+import { customerFlagArgs, readCustomerSelector } from "../../args/customer"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, pageSizeArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
@@ -29,7 +30,7 @@ export default defineCommand({
     ...outputArgs,
     ...pageSizeArgs,
     section: { type: "string", description: `Section to read (${sections.join(", ")})` },
-    customer: { type: "string", description: "Only this customer's tasks (ID, domain or name)" },
+    ...customerFlagArgs,
     owner: {
       type: "string",
       description: "Admins: a teammate's member ID (today and open only)",
@@ -48,7 +49,7 @@ export default defineCommand({
       }
       params.section = section
     }
-    const customer = optionalTrimmedString(args.customer)
+    const customer = readCustomerSelector(args, json)
     if (customer) params.customer = customer
     const owner = optionalTrimmedString(args.owner)
     if (owner) params.filters = { owner }

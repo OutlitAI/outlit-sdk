@@ -1,6 +1,13 @@
 import { publicToolContracts } from "@outlit/tools"
+import {
+  CUSTOMER_SELECTOR_HINT,
+  type CustomerSelectorArgs,
+  customerFlagArgs,
+  requireCustomerSelector,
+} from "../../args/customer"
 import { outputError } from "../../lib/output"
 import { optionalTrimmedString, requiredString } from "../../lib/platform-input"
+import { labeledPositional } from "../../lib/strict-args"
 
 const memberMaxLength =
   publicToolContracts.outlit_set_customer_access.inputSchema.properties.member.maxLength
@@ -9,12 +16,13 @@ const memberMaxLength =
 export const customerAccessRoles = ["viewer", "editor", "none"] as const
 
 export const customerCollaborationArgs = {
-  customer: {
+  customerPositional: labeledPositional("customer", {
     type: "positional",
-    description: "Customer ID, domain (acme.com), or exact name",
-    // Optional only so that --undo-token can reverse an earlier change without naming it again.
+    description: `${CUSTOMER_SELECTOR_HINT}; same as --customer`,
+    // Optional so that --undo-token can reverse an earlier change without naming it again.
     required: false,
-  },
+  }),
+  ...customerFlagArgs,
   member: {
     type: "string",
     description: "Workspace member's user ID or email, from `outlit members list --json`",
@@ -34,10 +42,11 @@ export const customerAccessRoleArg = {
 
 /** The customer and member a collaboration write names, as the tool takes them. */
 export function parseCustomerCollaboration(
-  args: { customer?: string; member?: string },
+  args: CustomerSelectorArgs & { member?: string },
+  command: string,
   json: boolean,
 ): { customer: string; member: string } {
-  const customer = requiredString(args.customer, "<customer>", json).trim()
+  const customer = requireCustomerSelector(args, command, json)
   const member = args.member?.trim()
   if (!member) {
     return outputError({ message: "Provide --member", code: "missing_input" }, json)

@@ -5,6 +5,7 @@ import {
 } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../args/auth"
+import { customerFlagArgs, readCustomerSelector } from "../args/customer"
 import { factIncludeArg, readFactIncludes } from "../args/fact-include"
 import { rawFlagValue } from "../args/filters"
 import { AGENT_JSON_HINT, outputArgs } from "../args/output"
@@ -12,6 +13,7 @@ import { SEARCH_PAGE_SIZE } from "../args/pagination"
 import { getClientOrExit, runTool } from "../lib/api"
 import { splitCsv } from "../lib/config"
 import { outputError } from "../lib/output"
+import { hiddenArg } from "../lib/strict-args"
 
 const sourceTypeDescription = toolSourceTypes.join(", ")
 
@@ -44,10 +46,8 @@ export default defineCommand({
       description: "Natural language search query",
       required: true,
     },
-    customer: {
-      type: "string",
-      description: "Scope search to a specific customer (UUID or domain)",
-    },
+    ...customerFlagArgs,
+    "top-k": hiddenArg({ type: "string", description: "Compatibility spelling of --limit" }),
     limit: {
       type: "string",
       description: `Maximum number of results to return (1-${SEARCH_PAGE_SIZE.max}). Default: ${SEARCH_PAGE_SIZE.default}.`,
@@ -72,7 +72,7 @@ export default defineCommand({
     const json = !!args.json
 
     // Validate arguments before authenticating. --top-k is the previously published spelling of
-    // --limit: still accepted from the raw arguments, but no longer declared or advertised.
+    // --limit: still accepted and read from the raw arguments, but hidden from help.
     const flag = args.limit === undefined ? "top-k" : "limit"
     const rawLimit = args.limit ?? rawFlagValue(rawArgs, "top-k")
     const limit = rawLimit === undefined ? undefined : Number(rawLimit)
@@ -99,7 +99,7 @@ export default defineCommand({
 
     const resolved = resolveCustomerContextSearchInput({
       query: args.query,
-      customer: args.customer,
+      customer: readCustomerSelector(args, json),
       limit,
       after: args.after,
       before: args.before,

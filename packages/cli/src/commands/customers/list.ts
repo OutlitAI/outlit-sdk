@@ -22,6 +22,7 @@ import { splitCsv } from "../../lib/config"
 import { formatArr, formatCredits, formatMeter, relativeDate, truncate } from "../../lib/format"
 import { outputError } from "../../lib/output"
 import { isIso8601DateTime } from "../../lib/platform-input"
+import { hiddenArg } from "../../lib/strict-args"
 
 function normalizeCustomerListResult(data: unknown): unknown {
   const collection = collectionOf("outlit_list_customers", data)
@@ -131,6 +132,14 @@ export default defineCommand({
       type: "string",
       description: "Filter by ARR below threshold per year, in the same units as --arr-above",
     },
+    "mrr-above": hiddenArg({
+      type: "string",
+      description: "Compatibility spelling of --arr-above",
+    }),
+    "mrr-below": hiddenArg({
+      type: "string",
+      description: "Compatibility spelling of --arr-below",
+    }),
     currency: {
       type: "string",
       description:
@@ -210,8 +219,8 @@ export default defineCommand({
       : []
     if (billingStatuses.length > 0) filters.billingStatus = billingStatuses
 
-    // --mrr-above and --mrr-below are previously published spellings: still accepted from the raw
-    // arguments, but no longer declared, so help and completions advertise only --arr-*. A monthly
+    // --mrr-above and --mrr-below are previously published spellings: still accepted and read from
+    // the raw arguments, but hidden, so help and completions advertise only --arr-*. A monthly
     // amount filters as twelve months of it.
     const numericFlags = [
       ["arr-above", "above", 1, args["arr-above"]],

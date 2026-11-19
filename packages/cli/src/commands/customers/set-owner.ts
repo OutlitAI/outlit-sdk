@@ -76,7 +76,7 @@ export default defineCommand({
       )
     }
 
-    const target = parseCustomerCollaboration(args, json)
+    const target = parseCustomerCollaboration(args, "outlit customers set-owner", json)
     const client = await getClientOrExit(args["api-key"], json)
 
     if (write.explicit) {

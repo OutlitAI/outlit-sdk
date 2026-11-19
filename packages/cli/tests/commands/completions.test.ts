@@ -99,7 +99,9 @@ describe("completions command", () => {
     expect(out).not.toContain(" add remove ")
     expect(out).toContain("COMP_CWORD -eq 2")
     expect(out).toContain("signup login logout status whoami")
-    expect(out).toContain("claude-code codex gemini droid opencode pi openclaw skills --json --yes")
+    expect(out).toContain(
+      "claude-code codex gemini droid opencode pi openclaw skills --json --verbose --yes",
+    )
     expect(out).not.toContain(`"${bashCompWord(1)}" == "agents"`)
     expect(out).toContain(`[[ $COMP_CWORD -eq 2 && "${bashCompWord(1)}" == "settings" ]]`)
     expect(out).toContain('COMPREPLY=($(compgen -W "get update" -- "$cur"))')
@@ -115,55 +117,57 @@ describe("completions command", () => {
     const out = await captureCompletions("bash")
     expect(out).toContain(`[[ $COMP_CWORD -gt 1 && "${bashCompWord(1)}" == "search" ]]`)
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --customer --limit --after --before --source-types --include"',
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --customer --limit --after --before --source-types --include"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --status --source-types --fact-types --fact-categories --after --before --include"',
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --limit --cursor --customer --status --source-types --fact-types --fact-categories --after --before --include"',
     )
-    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --include"')
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --verbose --include"')
     expect(out).toContain(
       `[[ $COMP_CWORD -gt 2 && "${bashCompWord(1)}" == "customers" && "${bashCompWord(2)}" == "set-access" ]]`,
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --yes --member --role --mode --preview-token --idempotency-key --undo-token"',
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --customer --yes --member --role --mode --preview-token --idempotency-key --undo-token"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --source-type --customer --participant --provider --has-transcript --after --before"',
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --limit --cursor --source-type --customer --participant --provider --has-transcript --after --before"',
     )
-    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --limit --cursor"')
+    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --verbose --limit --cursor"')
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --arr-above --arr-below --currency --renews-in --renews-after --renews-before --owner-id --owner-email --has-owner --activated-since --search --part-of --runs-out-within --meter --meter-connection"',
-    )
-    expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --event --lookback-days --example-limit"',
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --arr-above --arr-below --currency --renews-in --renews-after --renews-before --owner-id --owner-email --has-owner --activated-since --search --part-of --runs-out-within --meter --meter-connection"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --config-stdin --accept-recommended"',
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --event --lookback-days --example-limit"',
+    )
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --config-stdin --accept-recommended"',
     )
     expect(out).not.toContain("--signals --match --threshold --window")
     expect(out).not.toContain("--client-request-id")
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --timezone --default-owner --activation-event --revision"',
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --timezone --default-owner --activation-event --revision"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --source --weeks --candidate-limit --include --search --limit --cursor"',
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --source --weeks --candidate-limit --include --search --limit --cursor"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --source-key --event-name --feature-key --idempotency-key --name --property-filters"',
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --source-key --event-name --feature-key --idempotency-key --name --property-filters"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --yes --revision --mode --preview-token --idempotency-key"',
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --yes --revision --mode --preview-token --idempotency-key"',
     )
     expect(out).not.toContain("--slack-channel-name")
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --type --channel-id --label --is-default --enabled --idempotency-key"',
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --type --channel-id --label --is-default --enabled --idempotency-key"',
     )
     expect(out).toContain(
-      'COMPREPLY=($(compgen -W "--api-key --json --label --is-default --enabled --revision"',
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --type --label --is-default --enabled --revision"',
     )
     expect(out).toContain("--customer --suggestion-id --status --confidence")
     expect(out).toContain("--preview-token --idempotency-key --suggestion-id --note")
-    expect(out).not.toContain('COMPREPLY=($(compgen -W "--api-key --json --destination-id"')
+    expect(out).not.toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --destination-id"',
+    )
   })
 
   // ── Zsh ─────────────────────────────────────────────────────────────────
@@ -229,6 +233,13 @@ describe("completions command", () => {
     const out = await captureCompletions("fish")
     expect(out).toContain("-n '__outlit_using_cmd search' -l source-types")
     expect(out).toContain("-n '__outlit_using_cmd facts list' -l status")
+    expect(out).toContain("-n '__outlit_using_cmd facts list' -l customer")
+    expect(out).toContain("-n '__outlit_using_cmd timeline get' -l customer")
+    expect(out).toContain("-n '__outlit_using_cmd identity get' -l customer")
+    expect(out).toContain("-n '__outlit_using_cmd customers get' -l customer")
+    expect(out).not.toContain("-l customer-id")
+    expect(out).not.toContain("-l mrr-above")
+    expect(out).not.toContain("-l top-k")
     expect(out).toContain("-n '__outlit_using_cmd facts get' -l include")
     expect(out).toContain("-n '__outlit_using_cmd sources list' -l participant")
     expect(out).toContain("-n '__outlit_using_cmd sources get' -l limit")
@@ -314,6 +325,7 @@ describe("completions command", () => {
     expect(fishFlagsFor(out, "activation preview")).toEqual([
       "api-key",
       "json",
+      "verbose",
       "event",
       "lookback-days",
       "example-limit",

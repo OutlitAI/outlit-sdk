@@ -33,6 +33,54 @@ describe("customers get", () => {
     mockCallTool.mockClear()
   })
 
+  test("takes the customer as <customer>, --customer, or the --customer-id alias", async () => {
+    const { runCommand } = await import("citty")
+    const { default: getCmd } = await import("../../../src/commands/customers/get")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      for (const rawArgs of [
+        ["acme.com", "--json"],
+        ["--customer", "acme.com", "--json"],
+        ["--customer-id", "acme.com", "--json"],
+        ["acme.com", "--customer", "acme.com", "--json"],
+      ]) {
+        mockCallTool.mockClear()
+        await runCommand(getCmd, { rawArgs })
+        expect(mockCallTool).toHaveBeenCalledWith(
+          "outlit_get_customer",
+          expect.objectContaining({ customer: "acme.com" }),
+        )
+      }
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  for (const [label, rawArgs, code] of [
+    ["two different customers", ["acme.com", "--customer", "beta.com", "--json"], "invalid_input"],
+    ["a blank --customer", ["--customer", " ", "--json"], "invalid_input"],
+    ["no customer", ["--json"], "missing_input"],
+  ] as const) {
+    test(`rejects ${label} before an API call`, async () => {
+      const { runCommand } = await import("citty")
+      const { default: getCmd } = await import("../../../src/commands/customers/get")
+      const exitSpy = mockExitThrow()
+      const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+      let thrown: unknown
+      try {
+        await runCommand(getCmd, { rawArgs: [...rawArgs] })
+      } catch (error) {
+        thrown = error
+      } finally {
+        const stderr = stderrSpy.mock.calls.map((call) => String(call[0])).join("")
+        exitSpy.mockRestore()
+        stderrSpy.mockRestore()
+        expectErrorExit(thrown, stderr, code)
+        expect(mockCallTool).not.toHaveBeenCalled()
+      }
+    })
+  }
+
   test("passes positional customer arg to API", async () => {
     const { default: getCmd } = await import("../../../src/commands/customers/get")
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
