@@ -1,6 +1,7 @@
 import { publicToolContracts, timelineTimeframes, toolTimelineChannels } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
+import { customerArgs, requireCustomerSelector } from "../../args/customer"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, pageSizeArgs } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
@@ -39,7 +40,7 @@ export default defineCommand({
     description: [
       "Show the activity timeline for a customer.",
       "",
-      "The customer argument accepts:",
+      "The customer (<customer> or --customer) accepts:",
       "  - Customer domain (acme.com)",
       "  - Customer ID (UUID)",
       "",
@@ -51,6 +52,7 @@ export default defineCommand({
       "Examples:",
       "  outlit timeline get acme.com",
       "  outlit timeline get acme.com --timeframe 90d",
+      "  outlit timeline get --customer acme.com --json",
       "  outlit timeline get acme.com --channels communication,meeting",
       "  outlit timeline get acme.com --start-date 2025-01-01T00:00:00Z --end-date 2025-03-01T23:59:59.999Z",
       "  outlit timeline get acme.com --event-types note_added,email_received --limit 50",
@@ -62,11 +64,7 @@ export default defineCommand({
     ...authArgs,
     ...outputArgs,
     ...pageSizeArgs,
-    customer: {
-      type: "positional",
-      description: "Customer ID or domain (acme.com)",
-      required: true,
-    },
+    ...customerArgs,
     channels: {
       type: "string",
       description: `Comma-separated list of channels to filter (${toolTimelineChannels.join(", ")})`,
@@ -101,9 +99,10 @@ export default defineCommand({
   },
   async run({ args }) {
     const json = !!args.json
+    const customer = requireCustomerSelector(args, "outlit timeline get", json)
     const client = await getClientOrExit(args["api-key"], json)
 
-    const params: Record<string, unknown> = { customer: args.customer }
+    const params: Record<string, unknown> = { customer }
 
     // v2 puts the window under filters: `after` is an explicit start, otherwise `within` counts
     // back from `before` (or from now). `--timeframe` and `--end-date` therefore work together.

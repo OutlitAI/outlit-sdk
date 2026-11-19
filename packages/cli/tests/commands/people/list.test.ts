@@ -142,8 +142,7 @@ describe("people list", () => {
     const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
     try {
       await listCmd.run!({
-        args: { "order-by": "first_seen_at", json: true },
-        rawArgs: ["list", "--customer-id", "cust-uuid-123"],
+        args: { "order-by": "first_seen_at", "customer-id": "cust-uuid-123", json: true },
       } as Parameters<NonNullable<typeof listCmd.run>>[0])
 
       expect(mockCallTool).toHaveBeenCalledWith(
@@ -244,6 +243,43 @@ describe("people list", () => {
       stderrSpy.mockRestore()
 
       expectErrorExit(thrown, stderrOutput, "auth_required")
+    }
+  })
+
+  test("takes --customer, or the --customer-id alias, as the customer", async () => {
+    const { runCommand } = await import("citty")
+    const { default: listCmd } = await import("../../../src/commands/people/list")
+    const writeSpy = spyOn(process.stdout, "write").mockImplementation(() => true)
+    try {
+      for (const flag of ["--customer", "--customer-id"]) {
+        mockCallTool.mockClear()
+        await runCommand(listCmd, { rawArgs: [flag, "athenahq.ai", "--json"] })
+        expect(mockCallTool).toHaveBeenCalledWith(
+          "outlit_list_people",
+          expect.objectContaining({ customer: "athenahq.ai" }),
+        )
+      }
+    } finally {
+      writeSpy.mockRestore()
+    }
+  })
+
+  test("fails on an empty --customer instead of listing every person", async () => {
+    const { runCommand } = await import("citty")
+    const { default: listCmd } = await import("../../../src/commands/people/list")
+    const exitSpy = mockExitThrow()
+    const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
+    let thrown: unknown
+    try {
+      await runCommand(listCmd, { rawArgs: ["--customer", "", "--json"] })
+    } catch (error) {
+      thrown = error
+    } finally {
+      const stderr = stderrSpy.mock.calls.map((call) => String(call[0])).join("")
+      exitSpy.mockRestore()
+      stderrSpy.mockRestore()
+      expectErrorExit(thrown, stderr, "invalid_input")
+      expect(mockCallTool).not.toHaveBeenCalled()
     }
   })
 

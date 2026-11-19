@@ -16,6 +16,7 @@ type CommandPath = { readonly path: readonly string[]; readonly command: CmdDef 
 // Shared flag groups
 const JSON_F: Flag = { name: "--json", desc: "Force JSON output" }
 const API_KEY_F: Flag = { name: "--api-key", desc: "Outlit API key" }
+const VERBOSE_F: Flag = { name: "--verbose", desc: "Print request IDs and API version to stderr" }
 const LIMIT_F: Flag = { name: "--limit", desc: "Max results (1-100)" }
 const CURSOR_F: Flag = { name: "--cursor", desc: "Pagination cursor" }
 const YES_F: Flag = { name: "--yes", desc: "Confirm without asking" }
@@ -29,8 +30,10 @@ const WRITE_MODE = [
 ] as const
 const UNDO_F: Flag = { name: "--undo-token", desc: "undo.token of an earlier change" }
 const MEMBER_F: Flag = { name: "--member", desc: "Workspace member user ID or email" }
+const CUSTOMER_F: Flag = { name: "--customer", desc: "Customer domain, exact name, or ID" }
 
-const COMMON = [API_KEY_F, JSON_F] as const
+const OUTPUT = [JSON_F, VERBOSE_F] as const
+const COMMON = [API_KEY_F, ...OUTPUT] as const
 const PAGINATED = [...COMMON, LIMIT_F, CURSOR_F] as const
 const ACTIVITY_ORDER = [
   { name: "--no-activity-in", desc: "No activity in period" },
@@ -40,18 +43,22 @@ const ACTIVITY_ORDER = [
 ] as const
 
 /** Single source of truth for all completion scripts. */
-const COMMANDS: readonly CmdDef[] = [
+export const COMMANDS: readonly CmdDef[] = [
   {
     name: "auth",
     desc: "Manage authentication",
     subs: [
-      { name: "signup", desc: "Create an Outlit account", flags: [JSON_F] },
+      { name: "signup", desc: "Create an Outlit account", flags: [...OUTPUT] },
       {
         name: "login",
         desc: "Store API key",
-        flags: [JSON_F, { name: "--key", desc: "API key to store" }],
+        flags: [
+          ...OUTPUT,
+          { name: "--key", desc: "API key to store" },
+          { name: "--browser", desc: "Approve a scoped key in the browser" },
+        ],
       },
-      { name: "logout", desc: "Remove stored key", flags: [JSON_F] },
+      { name: "logout", desc: "Remove stored key", flags: [...OUTPUT] },
       { name: "status", desc: "Check auth state", flags: [...COMMON] },
       { name: "whoami", desc: "Print masked key", flags: [...COMMON] },
     ],
@@ -93,6 +100,7 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "Get customer by ID or domain",
         flags: [
           ...COMMON,
+          CUSTOMER_F,
           { name: "--include", desc: `Sections: ${customerIncludeSections.join(", ")}` },
           { name: "--timeframe", desc: "Metrics timeframe" },
           {
@@ -128,13 +136,14 @@ const COMMANDS: readonly CmdDef[] = [
       {
         name: "set-owner",
         desc: "Assign the primary customer owner",
-        flags: [...COMMON, YES_F, MEMBER_F, ...WRITE_MODE, UNDO_F],
+        flags: [...COMMON, CUSTOMER_F, YES_F, MEMBER_F, ...WRITE_MODE, UNDO_F],
       },
       {
         name: "set-access",
         desc: "Grant, change or remove customer access",
         flags: [
           ...COMMON,
+          CUSTOMER_F,
           YES_F,
           MEMBER_F,
           { name: "--role", desc: "Access role (viewer, editor, none)" },
@@ -171,6 +180,7 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "Show the activity timeline for a customer",
         flags: [
           ...PAGINATED,
+          CUSTOMER_F,
           { name: "--channels", desc: "Filter by channels" },
           { name: "--event-types", desc: "Filter by event types" },
           { name: "--timeframe", desc: "Event timeframe" },
@@ -189,7 +199,7 @@ const COMMANDS: readonly CmdDef[] = [
       {
         name: "get",
         desc: "Show identity coverage and candidate duplicates",
-        flags: [...COMMON, { name: "--include", desc: "Extras: links" }],
+        flags: [...COMMON, CUSTOMER_F, { name: "--include", desc: "Extras: links" }],
       },
     ],
   },
@@ -336,6 +346,7 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "List customer facts",
         flags: [
           ...PAGINATED,
+          CUSTOMER_F,
           { name: "--status", desc: "Filter by fact status" },
           { name: "--source-types", desc: "Filter by source types" },
           { name: "--fact-types", desc: "Filter by fact types" },
@@ -367,7 +378,7 @@ const COMMANDS: readonly CmdDef[] = [
         flags: [
           ...PAGINATED,
           { name: "--source-type", desc: "Source type" },
-          { name: "--customer", desc: "Scope to customer" },
+          { name: "--customer", desc: "Scope to one customer (domain, name or ID)" },
           { name: "--participant", desc: "Filter by participant" },
           { name: "--provider", desc: "Filter by provider" },
           { name: "--has-transcript", desc: "Only calls with transcripts" },
@@ -396,6 +407,10 @@ const COMMANDS: readonly CmdDef[] = [
           { name: "--area", desc: "Optional product area label" },
           { name: "--context", desc: "Optional JSON context object (max 16 KiB)" },
           { name: "--context-file", desc: "Read JSON context object from a file" },
+          {
+            name: "--idempotency-key",
+            desc: "Idempotency key: a retry with the same key does not submit twice",
+          },
         ],
       },
     ],
@@ -405,7 +420,7 @@ const COMMANDS: readonly CmdDef[] = [
     desc: "Search customer context",
     flags: [
       ...COMMON,
-      { name: "--customer", desc: "Scope to customer (UUID or domain)" },
+      { name: "--customer", desc: "Scope to one customer (domain, name or ID)" },
       { name: "--limit", desc: "Max results" },
       { name: "--after", desc: "Events after date (ISO 8601)" },
       { name: "--before", desc: "Events before date (ISO 8601)" },
@@ -485,6 +500,7 @@ const COMMANDS: readonly CmdDef[] = [
         desc: "Update a Slack channel destination",
         flags: [
           ...COMMON,
+          { name: "--type", desc: "Optional; only slack" },
           { name: "--label", desc: "Slack channel label" },
           { name: "--is-default", desc: "Make this the default destination" },
           { name: "--enabled", desc: "true or false: enable or disable" },
@@ -570,19 +586,23 @@ const COMMANDS: readonly CmdDef[] = [
   {
     name: "setup",
     desc: "Install Outlit skills for coding agents",
-    flags: [JSON_F, { name: "--yes", desc: "Skip prompts" }],
+    flags: [...OUTPUT, { name: "--yes", desc: "Skip prompts" }],
     subs: [
-      { name: "claude-code", desc: "Install the Outlit skill for Claude Code", flags: [JSON_F] },
-      { name: "codex", desc: "Install the Outlit skill for Codex", flags: [JSON_F] },
-      { name: "gemini", desc: "Install the Outlit skill for Gemini CLI", flags: [JSON_F] },
-      { name: "droid", desc: "Install the Outlit skill for Droid", flags: [JSON_F] },
-      { name: "opencode", desc: "Install the Outlit skill for OpenCode", flags: [JSON_F] },
-      { name: "pi", desc: "Install the Outlit skill for Pi", flags: [JSON_F] },
-      { name: "openclaw", desc: "Install the Outlit skill for OpenClaw", flags: [JSON_F] },
-      { name: "skills", desc: "Launch the interactive Outlit skills installer", flags: [JSON_F] },
+      { name: "claude-code", desc: "Install the Outlit skill for Claude Code", flags: [...OUTPUT] },
+      { name: "codex", desc: "Install the Outlit skill for Codex", flags: [...OUTPUT] },
+      { name: "gemini", desc: "Install the Outlit skill for Gemini CLI", flags: [...OUTPUT] },
+      { name: "droid", desc: "Install the Outlit skill for Droid", flags: [...OUTPUT] },
+      { name: "opencode", desc: "Install the Outlit skill for OpenCode", flags: [...OUTPUT] },
+      { name: "pi", desc: "Install the Outlit skill for Pi", flags: [...OUTPUT] },
+      { name: "openclaw", desc: "Install the Outlit skill for OpenClaw", flags: [...OUTPUT] },
+      {
+        name: "skills",
+        desc: "Launch the interactive Outlit skills installer",
+        flags: [...OUTPUT],
+      },
     ],
   },
-  { name: "upgrade", desc: "Upgrade the CLI", flags: [] },
+  { name: "upgrade", desc: "Upgrade the CLI", flags: [...OUTPUT] },
   { name: "doctor", desc: "Diagnose environment", flags: [...COMMON] },
   { name: "completions", desc: "Generate shell completions", flags: [] },
 ]

@@ -1,11 +1,11 @@
 import { getPublicToolContract, personOrderFields } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
+import { customerFlagArgs, readCustomerSelector } from "../../args/customer"
 import {
   activityFilterArgs,
   orderArgs,
   parseTraitFilters,
-  rawFlagValue,
   readActivityFilterArgs,
   traitFilterArgs,
 } from "../../args/filters"
@@ -96,10 +96,7 @@ export default defineCommand({
     ...traitFilterArgs,
     ...activityFilterArgs,
     ...orderArgs,
-    customer: {
-      type: "string",
-      description: "Only the people at this customer (ID, domain or name)",
-    },
+    ...customerFlagArgs,
     "journey-stage": {
       type: "string",
       description: `Filter by journey stage (${journeyStages.join(", ")}); comma-separate several`,
@@ -120,13 +117,13 @@ export default defineCommand({
   },
   async run({ args, rawArgs }) {
     const json = !!args.json
+    // --customer-id is the previously published spelling: still accepted, not advertised.
+    const customer = readCustomerSelector(args, json)
     const client = await getClientOrExit(args["api-key"], json)
 
     const params: Record<string, unknown> = {}
     const filters: Record<string, unknown> = {}
 
-    // --customer-id is the previously published spelling: still accepted, no longer declared.
-    const customer = args.customer ?? rawFlagValue(rawArgs, "customer-id")
     if (customer) params.customer = customer
 
     if (args["journey-stage"]) {

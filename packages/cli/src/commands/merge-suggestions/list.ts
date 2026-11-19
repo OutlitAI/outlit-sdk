@@ -1,6 +1,7 @@
 import { publicToolContracts } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
+import { customerFlagArgs, readCustomerSelector } from "../../args/customer"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { PAGE_SIZE } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
@@ -20,10 +21,7 @@ export default defineCommand({
   args: {
     ...authArgs,
     ...outputArgs,
-    customer: {
-      type: "string",
-      description: "Only suggestions with this customer (ID, domain or name)",
-    },
+    ...customerFlagArgs,
     "suggestion-id": {
       type: "string",
       description: "Retrieve one exact saved suggestion in the list envelope",
@@ -46,7 +44,7 @@ export default defineCommand({
       limit: parseIntegerFlag(args.limit, PAGE_SIZE.default, "--limit", json),
     }
     const filters: Record<string, string> = {}
-    const customer = optionalTrimmedString(args.customer)
+    const customer = readCustomerSelector(args, json)
     const cursor = optionalTrimmedString(args.cursor)
     const include = parseCsvList(args.include).map((value) => value.toLowerCase())
     if (customer) input.customer = customer

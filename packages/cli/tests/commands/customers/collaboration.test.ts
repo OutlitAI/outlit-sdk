@@ -348,8 +348,32 @@ describe("customer collaboration commands", () => {
     await expectLocalValidationError(
       import("../../../src/commands/customers/set-access"),
       { customer: "  ", member, role: "none", json: true },
+      "invalid_input",
+    )
+  })
+
+  test("rejects a missing customer before any network call", async () => {
+    await expectLocalValidationError(
+      import("../../../src/commands/customers/set-owner"),
+      { member, json: true },
       "missing_input",
     )
+  })
+
+  test("takes the customer as <customer> or --customer", async () => {
+    for (const args of [{ customerPositional: "acme.com" }, { customer: "acme.com" }]) {
+      mockCallTool.mockClear()
+      await runCommand(import("../../../src/commands/customers/set-access"), {
+        ...args,
+        member,
+        role: "viewer",
+        json: true,
+      })
+      expect(mockCallTool).toHaveBeenCalledWith(
+        "outlit_set_customer_access",
+        expect.objectContaining({ customer: "acme.com" }),
+      )
+    }
   })
 
   test("preserves Core's structured permission error envelope", async () => {

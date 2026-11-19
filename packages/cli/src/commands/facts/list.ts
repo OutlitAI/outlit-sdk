@@ -9,6 +9,7 @@ import {
 } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
+import { customerArgs, requireCustomerSelector } from "../../args/customer"
 import { factIncludeArg, readFactIncludes } from "../../args/fact-include"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { applyPagination, pageSizeArgs } from "../../args/pagination"
@@ -74,10 +75,12 @@ export default defineCommand({
       "",
       "Filter by fact status, type, category, source type, or occurrence date range.",
       "A fact has no reasoning or source quote unless --include asks for it (reasoning, quote, evidence).",
+      "The customer (<customer> or --customer) accepts a customer domain, name, or ID.",
       "",
       "Examples:",
       "  outlit facts list acme.com",
       "  outlit facts list acme.com --status active",
+      "  outlit facts list --customer acme.com --json",
       "  outlit facts list acme.com --fact-types churn_risk,expansion",
       "  outlit facts list acme.com --source-types call,opportunity --after 2025-01-01T00:00:00Z",
       "  outlit facts list acme.com --include reasoning,quote",
@@ -94,11 +97,7 @@ export default defineCommand({
     ...authArgs,
     ...outputArgs,
     ...pageSizeArgs,
-    customer: {
-      type: "positional",
-      description: "Customer UUID or domain to retrieve facts for",
-      required: true,
-    },
+    ...customerArgs,
     status: {
       type: "string",
       description: `Comma-separated fact statuses (${toolFactStatuses.join(", ")})`,
@@ -128,6 +127,7 @@ export default defineCommand({
   },
   async run({ args }) {
     const json = !!args.json
+    const customer = requireCustomerSelector(args, "outlit facts list", json)
     const statuses = parseCsvArg(args.status)
     const sourceTypes = parseCsvArg(args["source-types"])
     const factTypes = parseCsvArg(args["fact-types"])
@@ -244,7 +244,7 @@ export default defineCommand({
     if (factCategories) filters.categories = factCategories
     if (args.after) filters.after = args.after
     if (args.before) filters.before = args.before
-    const params: Record<string, unknown> = { customer: args.customer }
+    const params: Record<string, unknown> = { customer }
     if (Object.keys(filters).length > 0) params.filters = filters
     if (include) params.include = include
     applyPagination(params, args, json)

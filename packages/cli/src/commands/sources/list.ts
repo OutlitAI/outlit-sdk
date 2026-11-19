@@ -1,6 +1,7 @@
 import { publicToolContracts, sourceTypes as toolSourceTypes } from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
+import { customerFlagArgs, readCustomerSelector } from "../../args/customer"
 import { AGENT_JSON_HINT, outputArgs } from "../../args/output"
 import { PAGE_SIZE } from "../../args/pagination"
 import { getClientOrExit, runTool } from "../../lib/api"
@@ -84,10 +85,7 @@ export default defineCommand({
       type: "string",
       description: `Source type, or several separated by commas (${sourceTypeDescription})`,
     },
-    customer: {
-      type: "string",
-      description: "Customer UUID, domain, or name to scope source listing",
-    },
+    ...customerFlagArgs,
     participant: {
       type: "string",
       description: "Participant email or name to filter source records",
@@ -119,6 +117,7 @@ export default defineCommand({
   },
   async run({ args }) {
     const json = !!args.json
+    const customer = readCustomerSelector(args, json)
     // Any case is accepted, and the previously published aliases (CRM, STRIPE_INVOICE).
     const requestedTypes = args["source-type"]
       ? splitCsv(args["source-type"])
@@ -168,7 +167,7 @@ export default defineCommand({
 
     const client = await getClientOrExit(args["api-key"], json)
     const params: Record<string, unknown> = {}
-    if (args.customer) params.customer = args.customer
+    if (customer) params.customer = customer
     // v2 puts every filter under `filters`; source types are any-of.
     const filters: Record<string, unknown> = {}
     if (sourceTypes.length > 0) filters.sourceTypes = sourceTypes
