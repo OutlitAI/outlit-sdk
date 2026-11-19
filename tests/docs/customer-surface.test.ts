@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs"
 import { describe, expect, test } from "vitest"
 import {
+  publicToolNames,
   sourceTypes,
   toolFactCategories,
   toolFactTypes,
@@ -21,6 +22,12 @@ const contactTransitionFactTypes = [
 ] as const
 
 describe("customer-surface documentation", () => {
+  test("lists every public tool in the API reference", () => {
+    const apiDocs = readDoc("docs/api-reference/tools.mdx")
+
+    for (const toolName of publicToolNames) expect(apiDocs).toContain(`| \`${toolName}\` |`)
+  })
+
   test("documents customer collaboration tools in API and MCP references", () => {
     const apiDocs = readDoc("docs/api-reference/tools.mdx")
     const mcpDocs = readDoc("docs/ai-integrations/mcp.mdx")
