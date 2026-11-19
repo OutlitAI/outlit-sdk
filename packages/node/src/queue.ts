@@ -67,8 +67,14 @@ export class EventQueue {
 
     const events = [...this.queue]
     this.queue = []
-    const sending = this.send(events)
+    // Mark the send in flight before onFlush runs, so an event enqueued from inside onFlush sees
+    // it instead of starting a second send.
+    let settle!: { resolve: () => void; reject: (error: unknown) => void }
+    const sending = new Promise<void>((resolve, reject) => {
+      settle = { resolve, reject }
+    })
     this.inFlight = sending
+    this.send(events).then(settle.resolve, settle.reject)
 
     try {
       await sending
