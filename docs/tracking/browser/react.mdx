@@ -715,23 +715,32 @@ Track custom form events:
 
 ```tsx
 import { useOutlit } from '@outlit/browser/react'
+import type { FormEvent } from 'react'
 
 function ContactForm() {
   const { track, identify } = useOutlit()
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    const formData = new FormData(e.target)
-    
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const email = formData.get('email')
+
+    if (typeof email !== 'string') return
+
+    const stringValue = (name: string) => {
+      const value = formData.get(name)
+      return typeof value === 'string' ? value : ''
+    }
+
     track('contact_form_submitted', {
-      subject: formData.get('subject')
+      subject: stringValue('subject')
     })
 
     identify({
-      email: formData.get('email'),
+      email,
       traits: {
-        name: formData.get('name'),
-        company: formData.get('company')
+        name: stringValue('name'),
+        company: stringValue('company')
       }
     })
   }
