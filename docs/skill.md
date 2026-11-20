@@ -51,42 +51,47 @@ Tool availability depends on the MCP server or Pi tool policy. If a named tool i
 |------|-------------------|-----|
 | Browse customers | `outlit_list_customers` | `outlit customers list` |
 | Browse customer-associated users | `outlit_list_people` | `outlit people list` |
-| Browse workspace users | `outlit_list_members` | `outlit ws-users list` |
+| Browse workspace users | `outlit_list_members` | `outlit members list` |
 | Single account profile | `outlit_get_customer` | `outlit customers get` |
 | Current customer relationship | `outlit_get_customer` with `include: ["relationship"]` | `outlit customers get --include relationship` |
-| Chronology | `outlit_get_timeline` | `outlit customers timeline` |
+| Chronology | `outlit_get_timeline` | `outlit timeline get` |
 | Known structured signals | `outlit_list_facts`, `outlit_get_fact` | `outlit facts list/get` |
 | Source enumeration and retrieval | `outlit_list_sources`, `outlit_get_source` | `outlit sources list/get` |
 | Thematic or fuzzy question | `outlit_search_customer_context` | `outlit search` |
-| Custom analytics | `outlit_get_schema` (`topic`: `views`, `view`, `event_types`, `examples`), then `outlit_query` | `outlit schema`, then `outlit sql` |
-| Customer ownership and access | `outlit_set_customer_owner`, `outlit_set_customer_access` | `outlit customers owner set`, `outlit customers grant/revoke` |
-| Browse automation destinations | `outlit_list_destinations` | `outlit destinations list/get` |
-| Configure automation destinations | `outlit_create_destination`, `outlit_update_destination` (including `enabled`) | `outlit destinations create/update/enable/disable` |
+| Custom analytics | `outlit_get_schema` (`topic`: `views`, `view`, `event_types`, `examples`), then `outlit_query` | `outlit schema get`, then `outlit query` |
+| Customer ownership and access | `outlit_set_customer_owner`, `outlit_set_customer_access` | `outlit customers set-owner`, `outlit customers set-access` |
+| Browse automation destinations | `outlit_list_destinations` | `outlit destinations list` (`--ids` for specific ones) |
+| Configure automation destinations | `outlit_create_destination`, `outlit_update_destination` (including `enabled`) | `outlit destinations create/update` (`--enabled true\|false`) |
 | Archive a destination | `outlit_archive_destination` (preview, then confirm) | `outlit destinations archive` |
-| Integration readiness or setup | `outlit_list_integrations`, `outlit_setup_integration`, `outlit_get_setup_session` | `outlit integrations setup/status` |
-| Activation setting | `outlit_get_settings`, `outlit_preview_activation`, `outlit_update_settings` | `outlit activation get/preview/update/disable` |
+| Integration readiness or setup | `outlit_list_integrations`, `outlit_setup_integration`, `outlit_get_setup_session` | `outlit integrations list/setup`, `outlit setup-sessions get` |
+| Activation setting | `outlit_get_settings`, `outlit_preview_activation`, `outlit_update_settings` | `outlit settings get`, `outlit activation preview`, `outlit settings update --activation-event` |
 | Workspace timezone | `outlit_get_settings`, `outlit_update_settings` | `outlit settings get/update` |
 | Workspace Features | `outlit_list_features`, `outlit_create_feature`, `outlit_archive_feature` | `outlit features list/create/archive` |
 | Customer Feature usage and metered quantities | `outlit_get_customer` with `include: ["features", "meters"]` | `outlit customers get --include features,meters` |
 | Customer credit pools | `outlit_get_customer` with `include: ["credits"]` | `outlit customers get --include credits` |
-| Diagnose possible identity splits | `outlit_get_identity` | `outlit customers identity <customerId>` |
-| Browse saved merge suggestions and history | `outlit_list_merge_suggestions` | `outlit identity suggestions list` |
-| Reject a saved suggestion | `outlit_reject_merge_suggestion` | `outlit identity suggestions reject <suggestionId>` |
+| Diagnose possible identity splits | `outlit_get_identity` | `outlit identity get <customer>` |
+| Browse saved merge suggestions and history | `outlit_list_merge_suggestions` | `outlit merge-suggestions list` |
+| Reject a saved suggestion | `outlit_reject_merge_suggestion` | `outlit merge-suggestions reject <suggestionId>` |
 | Preview or execute a customer merge | `outlit_merge_customers` | `outlit customers merge <survivorId> <duplicateId>` |
-| Track a merge operation | `outlit_get_merge` | `outlit customers merge-status <operationId>` |
+| Track a merge operation | `outlit_get_merge` | `outlit merges get <operationId>` |
+| Attention Inbox tasks | `outlit_list_tasks`, `outlit_get_task`, `outlit_act_on_task`, `outlit_undo_task_action` | `outlit tasks list/get/act/undo` |
 | See or load toolsets | `outlit_list_toolsets`, `outlit_load_toolset` | n/a |
 
-`outlit customers grant` also updates an existing collaborator's role; access commands are siblings of `owner`, not subcommands of it.
+`outlit customers set-access` grants or changes a member's role (`viewer`, `editor`), and `--role none` removes it. The primary owner changes only through `outlit customers set-owner`.
+
+The task tools and `outlit tasks` work only with a person-scoped key or OAuth (a workspace API key has no task list) and only where the workspace has them enabled; otherwise they return not found. Acting on or undoing a task is a write: do it only when the user asks.
 
 Customer-associated users belong to customer accounts. Workspace users are internal Outlit members used for ownership and access actions. Do not substitute one ID type for the other.
 
-Find the fields customers can be filtered on (CRM and support tool account fields, SDK traits) with `outlit_list_customer_fields`.
+Find the fields customers can be filtered on (CRM and support tool account fields, SDK traits) with `outlit_list_customer_fields` or `outlit customer-fields list`.
 
 The earlier names `outlit_list_users`, `outlit_get_customer_relationship`, `outlit_get_customer_features`, `outlit_get_customer_credits`, `outlit_list_crm_fields` and `outlit_schema` answer as aliases until 2026-12-11 and then return an error naming the new tool. Use the new names.
 
 The earlier admin names (`outlit_get_destination`, `outlit_enable_destination`, `outlit_disable_destination`, `outlit_assign_customer_owner`, `outlit_grant_customer_access`, `outlit_update_customer_access`, `outlit_revoke_customer_access`, `outlit_list_workspace_users`, the integration setup and status tools, the workspace settings and customer activation tools) also answer as aliases until 2026-12-11.
 
 The earlier identity names (`outlit_get_customer_identity`, `outlit_list_identity_merge_suggestions`, `outlit_reject_identity_merge_suggestion`, `outlit_get_customer_merge_status`) also answer as aliases until 2026-12-11.
+
+Earlier CLI spellings run until 2026-12-11 and print `Renamed: use …` to stderr; switch to the command it names. Writes take `--idempotency-key` (tool input `idempotencyKey`).
 
 Use customer lookups before SQL. SQL is for aggregates, cohorts, joins, time-series checks, and custom reporting.
 
@@ -99,34 +104,34 @@ Use customer lookups before SQL. SQL is for aggregates, cohorts, joins, time-ser
 - Request only the fields or include sections needed.
 - Treat write operations as changes to the user's workspace. Assign owners, change access, configure integrations, reject merge suggestions, merge customer records, or mutate destinations, activation, settings, and Features only when the user explicitly asks.
 - Do not treat integration `ready` status as proof that a sync or backfill finished or that customer data is current.
-- When the user wants to share Outlit product feedback, use `outlit_submit_feedback` when available with `body` and optional `area`/`context`, or `outlit feedback --body "..." --json`. Feedback does not open a support ticket.
+- When the user wants to share Outlit product feedback, use `outlit_submit_feedback` when available with `body` and optional `area`/`context`, or `outlit feedback submit --body "..." --json`. Feedback does not open a support ticket.
 
 ## Facts, Search, Sources, and Timeline
 
 - Use `facts list` to browse known structured intelligence for one account.
-- Public `factTypes` filters accept `CUSTOM`, `COMPANY_CHANGE`, `FUNDING_REVENUE`, `TECHNOLOGY`, `STRATEGY`, `COMPETITIVE`, `SENTIMENT`, `CHAMPION_RISK`, `EXPANSION`, `CHURN_RISK`, `TIMELINE`, `BUDGET`, `DECISION_MAKER`, `REQUIREMENTS`, `PRODUCT_USAGE`, `CONTACT_INFO`, `CONTACT_PREFERENCE`, `CONTACT_DEPARTURE`, `CONTACT_POSITION_CHANGE`, and `CONTACT_DISENGAGEMENT`.
-- Public `factCategories` filters accept `MEMORY`, `RELATIONSHIP`, and `CUSTOM`.
+- Public fact type filters (`filters.types`; CLI `--fact-types`) accept `custom`, `company_change`, `funding_revenue`, `technology`, `strategy`, `competitive`, `sentiment`, `champion_risk`, `expansion`, `churn_risk`, `timeline`, `budget`, `decision_maker`, `requirements`, `blocker`, `commitment`, `success_criterion`, `product_usage`, `contact_info`, `contact_preference`, `contact_departure`, `contact_position_change`, and `contact_disengagement`.
+- Public fact category filters (`filters.categories`; CLI `--fact-categories`) accept `memory`, `relationship`, and `custom`.
 - Contact-transition facts are neutral, source-backed observations about a known contact:
-  - `CONTACT_DEPARTURE`: the contact left or is leaving the customer's company. Exclude temporary leave, ordinary out-of-office notices, candidates, and people discussed as part of the customer's own business.
-  - `CONTACT_POSITION_CHANGE`: the contact changed title, department, team, or professional responsibility at the customer's company. This is not an Outlit relationship-role change; use `CONTACT_DEPARTURE` if the person left the company.
-  - `CONTACT_DISENGAGEMENT`: the contact explicitly stopped participating, organizing, responding, or owning the initiative. A single unanswered message, scheduling friction, or an out-of-office notice is insufficient. It remains extractable but does not currently wake Churn; current contact-transition Churn signals cover only confirmed departures and position changes.
-- `CHAMPION_RISK` remains historical and readable, but new extraction uses the specific contact-transition types instead of inferring a broad relationship judgment.
+  - `contact_departure`: the contact left or is leaving the customer's company. Exclude temporary leave, ordinary out-of-office notices, candidates, and people discussed as part of the customer's own business.
+  - `contact_position_change`: the contact changed title, department, team, or professional responsibility at the customer's company. This is not an Outlit relationship-role change; use `contact_departure` if the person left the company.
+  - `contact_disengagement`: the contact explicitly stopped participating, organizing, responding, or owning the initiative. A single unanswered message, scheduling friction, or an out-of-office notice is insufficient. It remains extractable but does not currently wake Churn; current contact-transition Churn signals cover only confirmed departures and position changes.
+- `champion_risk` remains historical and readable, but new extraction uses the specific contact-transition types instead of inferring a broad relationship judgment.
 - Do not request internal anomaly-detector types such as `CORE_ACTION_DECAY`, `CADENCE_BREAK`, `QUIET_ACCOUNT`, `ACTIVATION_RATE_DROP`, or `FUNNEL_DROPOFF` as public fact filters.
 - Use `facts get` with a known fact ID for the canonical payload or best-effort `evidence`.
 - Use `search` for a specific question or theme, including cross-customer questions. Search returns grouped source and fact artifacts, not raw vector chunks.
 - Use `sources list` for deterministic enumeration of emails, calls, calendar events, support tickets, CRM opportunities, or Slack messages.
 - Use `sources get` when another result points to a concrete source and you need the exact artifact.
-- Use `timeline` when order, recency, or sequence matters.
+- Use `timeline get` when order, recency, or sequence matters.
 
-Supported generic source types are `EMAIL`, `CALL`, `CALENDAR_EVENT`, `SUPPORT_TICKET`, `OPPORTUNITY`, and `SLACK`. `CRM` and `CRM_OPPORTUNITY` are accepted aliases for opportunity filters.
+Source types are `email`, `call`, `calendar_event`, `support_ticket`, `opportunity`, `slack`, `person_profile`, `invoice`, and `crm_note` (CRM notes only where the workspace has them enabled). `sources get` also reads `extracted`.
 
 ## Identity and Customer Merges
 
 When calls or other communications exist but product usage is absent, use `outlit_get_identity` for bounded split-record diagnosis alongside source readiness and usage checks. Candidates and shared participants are leads, not permission to combine evidence or proof of one company. Empty or incomplete identity results do not establish inactivity.
 
-Merging is dangerous and has no supported undo. Only execute when the user authorized it and the records are certainly the same customer. Similar names, related domains, shared participants, a suggested match, or parent/subsidiary relationships are insufficient. The merge command defaults to preview; execution requires explicit permission, the reviewed preview token, and a stable request ID. Any pair involving an `INDIVIDUAL` requires an eligible saved suggestion.
+Merging is dangerous and has no supported undo. Only execute when the user authorized it and the records are certainly the same customer. Similar names, related domains, shared participants, a suggested match, or parent/subsidiary relationships are insufficient. The merge command defaults to preview; execution requires explicit permission, the reviewed preview token, and a stable idempotency key. Any pair involving an `individual` requires an eligible saved suggestion.
 
-Read [the identity and merge workflow](https://raw.githubusercontent.com/OutlitAI/skills/bda641e1f0cc9b53dd2235aaf2cc4916d05dfd33/skills/outlit/references/identity.md) before previewing, rejecting, executing, retrying, or tracking a merge. It includes the five tool contracts, CLI examples, and asynchronous status handling.
+Read [the identity and merge workflow](https://raw.githubusercontent.com/OutlitAI/skills/fcf27001629739858ab209360576dffe7cccdd76/skills/outlit/references/identity.md) before previewing, rejecting, executing, retrying, or tracking a merge. It includes the five tool contracts, CLI examples, and asynchronous status handling.
 
 Outlit-owned Churn and Renewal agents receive only the identity diagnostic for their assigned customer. Outlit-owned agents, including the Slack assistant acting for an admin, cannot reject suggestions or execute merges. Do not switch to CLI, API keys, or another identity to bypass an agent's tool policy or permissions. Customer-controlled agents may use the public tools within their granted authority.
 
@@ -139,6 +144,9 @@ Current read grants are:
 - `customer_intelligence:read`
 - `workspace_members:read`
 - `analytics:read`
+- `destinations:read`
+- `behavior_metrics:read`
+- `integrations:read`
 - `activation:read`
 - `workspace_settings:read`
 
@@ -169,7 +177,7 @@ Call schema before writing SQL.
 - Inspect JSON or trait column shapes before filtering nested values.
 - Keep SQL read-only.
 
-For ClickHouse syntax and query patterns, read [references/sql-reference.md](https://raw.githubusercontent.com/OutlitAI/skills/bda641e1f0cc9b53dd2235aaf2cc4916d05dfd33/skills/outlit/references/sql-reference.md).
+For ClickHouse syntax and query patterns, read [references/sql-reference.md](https://raw.githubusercontent.com/OutlitAI/skills/fcf27001629739858ab209360576dffe7cccdd76/skills/outlit/references/sql-reference.md).
 
 ## CLI Setup
 
@@ -230,11 +238,12 @@ For custom TypeScript clients, `@outlit/tools` exports `publicToolContracts`, `p
 
 ## Integrations
 
-Use `setup` to connect or repair a data source; use `status` to inspect readiness. The current CLI exposes two commands:
+Use `setup` to connect or repair a data source; use `list` to inspect readiness. The current CLI exposes three commands:
 
 ```text
 outlit integrations setup <provider>
-outlit integrations status [provider]
+outlit integrations list [provider]
+outlit setup-sessions get <id>
 ```
 
 Interactive `setup` negotiates capabilities first. It can securely prompt for a credential, open a validated browser handoff, or ask the user to confirm a CRM or Mixpanel mapping.
@@ -248,7 +257,7 @@ printf '%s\n' '{"credentials":{"apiKey":"<provider-api-key>"}}' \
 
 Use `--accept-recommended` only to accept the exact CRM recommendation returned by the current setup response. Explicit mappings also go through `--config-stdin`.
 
-JSON mode never prompts, opens a browser, or polls. It returns the setup result, including any handoff or required next step. `status` reports configuration readiness as `not_connected`, `awaiting_auth`, `setup_required`, `ready`, or `requires_intervention`. It does not expose setup-session or synchronization metadata.
+JSON mode never prompts, opens a browser, or polls. It returns the setup result, including any handoff or required next step. `list` reports configuration readiness as `not_connected`, `awaiting_auth`, `setup_required`, `ready`, or `requires_intervention`, not sync or backfill progress. `setup-sessions get` reports a browser sign-in that setup started (`pending`, `connected`, `expired`, or `failed`), using the `sessionId` its handoff returned.
 
 Disconnect integrations through the Outlit web app. The CLI does not expose destructive integration removal.
 
@@ -256,7 +265,7 @@ Disconnect integrations through the Outlit web app. The CLI does not expose dest
 
 - Missing API key: use `outlit onboard --agent <agent> --json`, `outlit auth login`, or set `OUTLIT_API_KEY`. CI requires a key.
 - Valid key but `403`: inspect the key's grants under **Settings > API Keys**.
-- Setup issues: run `outlit doctor --json` and `outlit integrations status [provider] --json`.
+- Setup issues: run `outlit doctor --json` and `outlit integrations list [provider] --json`.
 - Stale CLI or missing current commands: run `outlit upgrade`.
 - MCP auth issues: use the workspace URL and OAuth flow. Do not assume remote MCP requires an API key.
 - Empty data: inspect integration readiness and data freshness before concluding that a customer has no activity. If communications and usage disagree, check identity coverage too.
