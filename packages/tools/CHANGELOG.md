@@ -1,5 +1,11 @@
 # @outlit/tools
 
+## 4.1.0
+
+### Minor Changes
+
+- [#319](https://github.com/OutlitAI/outlit-sdk/pull/319) [`2fa2d2f`](https://github.com/OutlitAI/outlit-sdk/commit/2fa2d2f6df234cd396c6860cc615d99fb097ed11) Thanks [@leo-paz](https://github.com/leo-paz)! - Open the exact attachment page cited by a memory fact or search match. The source tool returns the page text and a temporary PNG preview URL when available. Use `outlit sources get email <id> --attachments` to find files and `--attachment <key> --page <n>` to open a page.
+
 ## 4.0.1
 
 ### Patch Changes

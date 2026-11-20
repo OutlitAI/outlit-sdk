@@ -1,5 +1,22 @@
 # @outlit/cli
 
+## 5.1.0
+
+### Minor Changes
+
+- [#319](https://github.com/OutlitAI/outlit-sdk/pull/319) [`2fa2d2f`](https://github.com/OutlitAI/outlit-sdk/commit/2fa2d2f6df234cd396c6860cc615d99fb097ed11) Thanks [@leo-paz](https://github.com/leo-paz)! - Open the exact attachment page cited by a memory fact or search match. The source tool returns the page text and a temporary PNG preview URL when available. Use `outlit sources get email <id> --attachments` to find files and `--attachment <key> --page <n>` to open a page.
+
+- [#257](https://github.com/OutlitAI/outlit-sdk/pull/257) [`de32470`](https://github.com/OutlitAI/outlit-sdk/commit/de32470804ddb9c2c34b0ae7a3a7ea3c33012ed8) Thanks [@leo-paz](https://github.com/leo-paz)! - Fail on input the CLI does not understand instead of ignoring it. An unknown flag, an extra or misplaced positional argument, a flag without its value, or an unknown subcommand now exits 1 before any request, naming the bad input, suggesting the closest valid flag, and listing the valid flags (as JSON on stderr when piped or with `--json`). For example, `outlit sources list acme.com --source-types call` used to return the whole workspace's newest sources; it now fails and suggests `--source-type` and `--customer acme.com`. Scripts that passed such input and relied on it being ignored now fail; fix the flag the error names. Input that worked before keeps working: the renamed spellings (`users list`, `--customer-id`, `--top-k`, `--mrr-above`, and the others) still run, camelCase spellings such as `--apiKey` or `--orderBy` are still accepted (and now keep their value, which was dropped when the flag had a default), and a flag typed before the subcommand, as in `outlit --json customers list`, is passed to the subcommand. A value that starts with `-` must now be attached (`--search=-draft`). Values that look like credentials are never echoed in these errors.
+
+  Every command that takes one customer accepts `--customer <domain|name|id>`, next to the existing `<customer>` positional where there is one: `customers get`, `customers set-owner`, `customers set-access`, `timeline get`, `identity get` and `facts list` gain it. Giving the positional and `--customer` with different customers fails, and a blank customer fails with `invalid_input` instead of meaning every customer (`people list --customer ""` used to list everyone). Shell completions now list exactly the flags each command takes, adding `--customer`, `--verbose`, `auth login --browser`, `feedback submit --idempotency-key`, `destinations update --type` and `upgrade --json`.
+
+### Patch Changes
+
+- [#318](https://github.com/OutlitAI/outlit-sdk/pull/318) [`0bea508`](https://github.com/OutlitAI/outlit-sdk/commit/0bea50801e906b7730211ca0887c7346dd1d1701) Thanks [@github-actions](https://github.com/apps/github-actions)! - `outlit --skill` now teaches the CLI 5 command spellings (`timeline get`, `members list`, `query`, `schema get`, `identity get`, `merge-suggestions`, `customers set-owner`/`set-access`, `settings update`), so agents stop reaching for the old spellings before they stop working on 2026-12-11.
+
+- Updated dependencies [[`2fa2d2f`](https://github.com/OutlitAI/outlit-sdk/commit/2fa2d2f6df234cd396c6860cc615d99fb097ed11)]:
+  - @outlit/tools@4.1.0
+
 ## 5.0.2
 
 ### Patch Changes
