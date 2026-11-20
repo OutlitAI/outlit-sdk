@@ -132,7 +132,9 @@ describe("completions command", () => {
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --verbose --limit --cursor --source-type --customer --participant --provider --has-transcript --after --before"',
     )
-    expect(out).toContain('COMPREPLY=($(compgen -W "--api-key --json --verbose --limit --cursor"')
+    expect(out).toContain(
+      'COMPREPLY=($(compgen -W "--api-key --json --verbose --limit --cursor --attachments --attachment --page --revision"',
+    )
     expect(out).toContain(
       'COMPREPLY=($(compgen -W "--api-key --json --verbose --limit --cursor --no-activity-in --has-activity-in --order-by --order-direction --trait --billing-status --arr-above --arr-below --currency --renews-in --renews-after --renews-before --owner-id --owner-email --has-owner --activated-since --search --part-of --runs-out-within --meter --meter-connection"',
     )

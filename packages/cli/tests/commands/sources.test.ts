@@ -49,6 +49,27 @@ describe("sources get", () => {
     })
   })
 
+  test("opens the exact attachment page returned by a fact or file listing", async () => {
+    const { default: cmd } = await import("../../src/commands/sources/get")
+    const key = "a".repeat(32)
+    const run = (flags: Record<string, unknown>) =>
+      captureStdout(() =>
+        cmd.run!({
+          args: { type: "email", id: "m", json: true, ...flags },
+        } as Parameters<NonNullable<typeof cmd.run>>[0]),
+      )
+    await run({ attachments: true })
+    expect(mockCallTool).toHaveBeenLastCalledWith("outlit_get_source", {
+      source: { type: "email", id: "m" },
+      includeAttachments: true,
+    })
+    const revision = `${"a".repeat(64)}:pages.2`
+    await run({ attachment: key, page: "2", revision })
+    expect(mockCallTool).toHaveBeenLastCalledWith("outlit_get_source", {
+      source: { type: "email", id: "m", attachmentPage: { key, page: 2, revision } },
+    })
+  })
+
   test.each([
     "slack",
     "call",
