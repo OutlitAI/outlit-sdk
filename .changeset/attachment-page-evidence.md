@@ -1,5 +1,6 @@
 ---
 "@outlit/tools": minor
+"@outlit/pi": patch
 "@outlit/cli": minor
 ---
 
