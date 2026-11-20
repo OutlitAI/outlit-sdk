@@ -151,6 +151,57 @@ function findFencedBlockInSection(
   )[blockIndex]
 }
 
+const legacyCliPatterns = [
+  /\boutlit\s+customers\s+(?:credits|features|relationship|timeline|identity|merge-status|grant|revoke)\b/,
+  /\boutlit\s+customers\s+owner\s+set\b/,
+  /\boutlit\s+identity\s+suggestions\s+(?:list|reject)\b/,
+  /\boutlit\s+(?:ws-users|users|sql)\b/,
+  /\boutlit\s+activation\s+(?:get|update|disable)\b/,
+  /\boutlit\s+integrations\s+status\b/,
+  /\boutlit\s+destinations\s+(?:get|enable|disable)\b/,
+  /\boutlit\s+destinations\s+(?:create|update)\b[^\n]*--(?:default|disabled)\b/,
+  /\boutlit\s+features\s+create\b[^\n]*--(?:source|event|key)(?=[=\s]|$)/,
+  /\boutlit\b[^\n]*--(?:request-id|customer-id|crm-fields|target-user-id|review-notes|default-timezone)\b/,
+  /\boutlit\s+facts\s+get\b[^\n]*--fact-id\b/,
+  /\boutlit\s+sources\s+get\b[^\n]*--(?:source-type|source-id)\b/,
+]
+
+function normalizeCliCommandText(source: string): string {
+  return source
+    .replace(/\\\r?\n\s*/g, " ")
+    .replace(/(^|\s)--(?:json|yes|verbose)(?=\s|$)/g, "$1")
+    .replace(
+      /(^|\s)--api-key(?:=(?:"[^"]*"|'[^']*'|\S+)|\s+(?:"[^"]*"|'[^']*'|\S+))(?=\s|$)/g,
+      "$1",
+    )
+    .replace(/[ \t]{2,}/g, " ")
+}
+
+function findLegacyCliPatterns(source: string): RegExp[] {
+  const normalized = normalizeCliCommandText(source)
+  return legacyCliPatterns.filter((pattern) => pattern.test(normalized))
+}
+
+function toolRequestProblem(value: unknown): string | undefined {
+  if (typeof value !== "object" || value === null) return undefined
+
+  const request = value as Record<string, unknown>
+  if (typeof request.tool !== "string" || !request.tool.startsWith("outlit_")) return undefined
+
+  const toolName = request.tool
+  if (!("input" in request)) return `${toolName}: missing input`
+
+  const contract = Object.hasOwn(publicToolContracts, toolName)
+    ? publicToolContracts[toolName as keyof typeof publicToolContracts]
+    : undefined
+  if (!contract) return `${toolName}: unknown public tool`
+  if (!matchesGeneratedJsonSchema(request.input, contract.inputSchema)) {
+    return `${toolName}: input does not match its generated schema`
+  }
+
+  return undefined
+}
+
 describe("public documentation examples", () => {
   test("extracts tilde and longer backtick fences", () => {
     const fixtureDirectory = mkdtempSync(join(tmpdir(), "outlit-docs-doctest-"))
@@ -246,17 +297,20 @@ describe("public documentation examples", () => {
       for (const block of extractFencedBlocks(file)) {
         if (block.language !== "json") continue
 
-        const request = JSON.parse(block.code) as { input?: unknown; tool?: unknown } | null
-        if (!request || typeof request.tool !== "string" || !("input" in request)) continue
+        const request = JSON.parse(block.code) as unknown
+        if (
+          typeof request !== "object" ||
+          request === null ||
+          !("tool" in request) ||
+          typeof request.tool !== "string" ||
+          !request.tool.startsWith("outlit_")
+        ) {
+          continue
+        }
 
         requestCount += 1
-        const toolName = request.tool
-        const contract = Object.hasOwn(publicToolContracts, toolName)
-          ? publicToolContracts[toolName as keyof typeof publicToolContracts]
-          : undefined
-        if (!contract || !matchesGeneratedJsonSchema(request.input, contract.inputSchema)) {
-          failures.push(`${file}:${block.line}: ${toolName}`)
-        }
+        const problem = toolRequestProblem(request)
+        if (problem) failures.push(`${file}:${block.line}: ${problem}`)
       }
     }
 
@@ -264,35 +318,39 @@ describe("public documentation examples", () => {
     expect(failures).toEqual([])
   })
 
+  test("rejects a public tool request that omits input", () => {
+    expect(toolRequestProblem({ tool: "outlit_get_source" })).toBe(
+      "outlit_get_source: missing input",
+    )
+    expect(toolRequestProblem({ label: "unrelated JSON" })).toBeUndefined()
+  })
+
   test("does not publish compatibility-only CLI spellings in shell examples", () => {
-    const legacyPatterns = [
-      /\boutlit\s+customers\s+(?:credits|features|relationship|timeline|identity|merge-status|grant|revoke)\b/,
-      /\boutlit\s+customers\s+owner\s+set\b/,
-      /\boutlit\s+identity\s+suggestions\s+(?:list|reject)\b/,
-      /\boutlit\s+(?:ws-users|users|sql)\b/,
-      /\boutlit\s+activation\s+(?:get|update|disable)\b/,
-      /\boutlit\s+integrations\s+status\b/,
-      /\boutlit\s+destinations\s+(?:get|enable|disable)\b/,
-      /\boutlit\s+destinations\s+(?:create|update)\b[^\n]*--(?:default|disabled)\b/,
-      /\boutlit\s+features\s+create\b[^\n]*--(?:source|event|key)(?=[=\s]|$)/,
-      /\boutlit\b[^\n]*--(?:request-id|customer-id|crm-fields|target-user-id|review-notes|default-timezone)\b/,
-      /\boutlit\s+facts\s+get\b[^\n]*--fact-id\b/,
-      /\boutlit\s+sources\s+get\b[^\n]*--(?:source-type|source-id)\b/,
-    ]
     const failures: string[] = []
 
     for (const file of listPublicDocumentationFiles()) {
       for (const block of extractFencedBlocks(file)) {
         if (!new Set(["bash", "sh", "shell"]).has(block.language)) continue
 
-        const commandText = block.code.replace(/\\\r?\n\s*/g, " ")
-        for (const pattern of legacyPatterns) {
-          if (pattern.test(commandText)) failures.push(`${file}:${block.line}: ${pattern.source}`)
+        for (const pattern of findLegacyCliPatterns(block.code)) {
+          failures.push(`${file}:${block.line}: ${pattern.source}`)
         }
       }
     }
 
     expect(failures).toEqual([])
+  })
+
+  test.each([
+    "outlit destinations get dest_123",
+    "outlit --json destinations get dest_123",
+    "outlit destinations --api-key ok_example get dest_123",
+  ])("recognizes a legacy CLI command with interspersed global options: %s", (command) => {
+    expect(findLegacyCliPatterns(command)).not.toEqual([])
+  })
+
+  test("does not reject the current destination-list spelling after normalizing options", () => {
+    expect(findLegacyCliPatterns("outlit --json destinations list --ids dest_123")).toEqual([])
   })
 
   test("validates the documented exact-source content response against its generated schema", () => {
