@@ -19935,7 +19935,7 @@ export const publicToolContracts = {
     "commandVersion": 2,
     "ownerDomain": "customer_activation",
     "title": "Preview Activation",
-    "description": "Preview making a product event the activation event: how many customers and contacts matched it recently and would activate, with examples. Use when choosing an activation event, before setting it. Changes nothing. Not for setting it.",
+    "description": "Preview making a product event, or a definition (counts, windows, active days, a property, people on the account, all or any), the activation rule: how many customers and contacts matched it recently and would activate, with examples, and its reach and separation over new accounts. Use when choosing activation, before setting it. Changes nothing. Not for setting it.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -19947,9 +19947,108 @@ export const publicToolContracts = {
       "type": "object",
       "properties": {
         "event": {
+          "description": "One product event's name; or send definition",
           "type": "string",
           "minLength": 1,
           "maxLength": 191,
+        },
+        "definition": {
+          "description": "A rule instead of one event: all or any of 1-5 conditions, each an event (or anyProductEvent) with an optional property equality, atLeast times or days, withinDays and, for the account, people",
+          "type": "object",
+          "properties": {
+            "match": {
+              "default": "all",
+              "type": "string",
+              "enum": [
+                "all",
+                "any",
+              ],
+            },
+            "conditions": {
+              "minItems": 1,
+              "maxItems": 5,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "event": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191,
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "anyProductEvent": {
+                            "type": "boolean",
+                            "const": true,
+                          },
+                        },
+                        "required": [
+                          "anyProductEvent",
+                        ],
+                        "additionalProperties": false,
+                      },
+                    ],
+                  },
+                  "where": {
+                    "type": "object",
+                    "properties": {
+                      "property": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191,
+                      },
+                      "equals": {
+                        "type": "string",
+                        "maxLength": 1000,
+                      },
+                    },
+                    "required": [
+                      "property",
+                      "equals",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  "atLeast": {
+                    "default": 1,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                  },
+                  "unit": {
+                    "default": "times",
+                    "type": "string",
+                    "enum": [
+                      "times",
+                      "days",
+                    ],
+                  },
+                  "withinDays": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 90,
+                  },
+                  "people": {
+                    "default": 1,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                  },
+                },
+                "required": [
+                  "event",
+                ],
+                "additionalProperties": false,
+              },
+            },
+          },
+          "required": [
+            "conditions",
+          ],
+          "additionalProperties": false,
         },
         "lookbackDays": {
           "default": 30,
@@ -19966,9 +20065,6 @@ export const publicToolContracts = {
           "maximum": 20,
         },
       },
-      "required": [
-        "event",
-      ],
       "additionalProperties": false,
     },
     "outputSchema": {
@@ -19977,6 +20073,7 @@ export const publicToolContracts = {
       "properties": {
         "event": {
           "type": "string",
+          "description": "The event, or a one-line description of the definition",
         },
         "window": {
           "type": "object",
@@ -20147,6 +20244,121 @@ export const publicToolContracts = {
             "additionalProperties": false,
           },
         },
+        "quality": {
+          "description": "Reach and separation; null when they couldn't be computed",
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "firstUse": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                    },
+                    "to": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                    },
+                  },
+                  "required": [
+                    "from",
+                    "to",
+                  ],
+                  "additionalProperties": false,
+                  "description": "Accounts whose first product use fell here and weren't paying yet",
+                },
+                "newCustomers": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                },
+                "reached": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "Met it within 14 days of first use",
+                },
+                "reach": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                  "description": "reached / newCustomers",
+                },
+                "payingIfReached": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "payingIfNotReached": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                },
+                "separation": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": -1,
+                      "maximum": 1,
+                    },
+                    {
+                      "type": "null",
+                    },
+                  ],
+                  "description": "payingIfReached - payingIfNotReached; higher separates better",
+                },
+                "planFeatureWarning": {
+                  "type": "boolean",
+                  "description": "A condition is mostly done by accounts already paying: likely a plan feature",
+                },
+                "truncated": {
+                  "type": "boolean",
+                  "description": "More accounts than the preview reads; rates are estimates",
+                },
+              },
+              "required": [
+                "firstUse",
+                "newCustomers",
+                "reached",
+                "reach",
+                "payingIfReached",
+                "payingIfNotReached",
+                "separation",
+                "planFeatureWarning",
+                "truncated",
+              ],
+              "additionalProperties": false,
+            },
+            {
+              "type": "null",
+            },
+          ],
+        },
       },
       "required": [
         "event",
@@ -20178,7 +20390,7 @@ export const publicToolContracts = {
     "commandVersion": 2,
     "ownerDomain": "settings",
     "title": "Get Settings",
-    "description": "Get the workspace time zone, default customer owner and activation event, with the revision updates take. Use when reading a setting or about to change one. A part you lack permission for says so. Not for integrations or features, which it doesn't return.",
+    "description": "Get the workspace time zone, default customer owner and activation event or definition, with the revision updates take. Use when reading a setting or about to change one. A part you lack permission for says so. Not for integrations or features, which it doesn't return.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -20389,6 +20601,127 @@ export const publicToolContracts = {
                           ],
                           "description": "The product event that marks a customer and user activated; null when activation by event is off",
                         },
+                        "definition": {
+                          "description": "The activation definition with its version, when one is saved; event is set too when it is one plain event",
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "match": {
+                                  "default": "all",
+                                  "type": "string",
+                                  "enum": [
+                                    "all",
+                                    "any",
+                                  ],
+                                },
+                                "conditions": {
+                                  "minItems": 1,
+                                  "maxItems": 5,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "event": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 191,
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "anyProductEvent": {
+                                                "type": "boolean",
+                                                "const": true,
+                                              },
+                                            },
+                                            "required": [
+                                              "anyProductEvent",
+                                            ],
+                                            "additionalProperties": false,
+                                          },
+                                        ],
+                                      },
+                                      "where": {
+                                        "type": "object",
+                                        "properties": {
+                                          "property": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 191,
+                                          },
+                                          "equals": {
+                                            "type": "string",
+                                            "maxLength": 1000,
+                                          },
+                                        },
+                                        "required": [
+                                          "property",
+                                          "equals",
+                                        ],
+                                        "additionalProperties": false,
+                                      },
+                                      "atLeast": {
+                                        "default": 1,
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 1000,
+                                      },
+                                      "unit": {
+                                        "default": "times",
+                                        "type": "string",
+                                        "enum": [
+                                          "times",
+                                          "days",
+                                        ],
+                                      },
+                                      "withinDays": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 90,
+                                      },
+                                      "people": {
+                                        "default": 1,
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 100,
+                                      },
+                                    },
+                                    "required": [
+                                      "event",
+                                      "atLeast",
+                                      "unit",
+                                      "people",
+                                    ],
+                                    "additionalProperties": false,
+                                  },
+                                },
+                                "version": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991,
+                                },
+                                "savedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                                },
+                              },
+                              "required": [
+                                "match",
+                                "conditions",
+                                "version",
+                                "savedAt",
+                              ],
+                              "additionalProperties": false,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                        },
                       },
                       "required": [
                         "event",
@@ -20547,7 +20880,7 @@ export const publicToolContracts = {
     "commandVersion": 2,
     "ownerDomain": "settings",
     "title": "Update Settings",
-    "description": "Change the workspace time zone, default customer owner or activation event. Use when a setting should change. Send only what you change; a value already set changes nothing. Not for reading them.",
+    "description": "Change the workspace time zone, default customer owner, or activation event or definition. Use when a setting should change. Send only what you change; a value already set changes nothing. Not for reading them.",
     "annotations": {
       "readOnlyHint": false,
       "destructiveHint": true,
@@ -20594,6 +20927,104 @@ export const publicToolContracts = {
               "type": "null",
             },
           ],
+        },
+        "activationDefinition": {
+          "description": "Instead of activationEvent, with Plays on: all or any of 1-5 conditions; saving re-checks the last 90 days for accounts and people not yet activated",
+          "type": "object",
+          "properties": {
+            "match": {
+              "default": "all",
+              "type": "string",
+              "enum": [
+                "all",
+                "any",
+              ],
+            },
+            "conditions": {
+              "minItems": 1,
+              "maxItems": 5,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "event": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191,
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "anyProductEvent": {
+                            "type": "boolean",
+                            "const": true,
+                          },
+                        },
+                        "required": [
+                          "anyProductEvent",
+                        ],
+                        "additionalProperties": false,
+                      },
+                    ],
+                  },
+                  "where": {
+                    "type": "object",
+                    "properties": {
+                      "property": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 191,
+                      },
+                      "equals": {
+                        "type": "string",
+                        "maxLength": 1000,
+                      },
+                    },
+                    "required": [
+                      "property",
+                      "equals",
+                    ],
+                    "additionalProperties": false,
+                  },
+                  "atLeast": {
+                    "default": 1,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                  },
+                  "unit": {
+                    "default": "times",
+                    "type": "string",
+                    "enum": [
+                      "times",
+                      "days",
+                    ],
+                  },
+                  "withinDays": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 90,
+                  },
+                  "people": {
+                    "default": 1,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                  },
+                },
+                "required": [
+                  "event",
+                ],
+                "additionalProperties": false,
+              },
+            },
+          },
+          "required": [
+            "conditions",
+          ],
+          "additionalProperties": false,
         },
       },
       "additionalProperties": false,
@@ -20796,6 +21227,127 @@ export const publicToolContracts = {
                           ],
                           "description": "The product event that marks a customer and user activated; null when activation by event is off",
                         },
+                        "definition": {
+                          "description": "The activation definition with its version, when one is saved; event is set too when it is one plain event",
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "match": {
+                                  "default": "all",
+                                  "type": "string",
+                                  "enum": [
+                                    "all",
+                                    "any",
+                                  ],
+                                },
+                                "conditions": {
+                                  "minItems": 1,
+                                  "maxItems": 5,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "event": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 191,
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "anyProductEvent": {
+                                                "type": "boolean",
+                                                "const": true,
+                                              },
+                                            },
+                                            "required": [
+                                              "anyProductEvent",
+                                            ],
+                                            "additionalProperties": false,
+                                          },
+                                        ],
+                                      },
+                                      "where": {
+                                        "type": "object",
+                                        "properties": {
+                                          "property": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 191,
+                                          },
+                                          "equals": {
+                                            "type": "string",
+                                            "maxLength": 1000,
+                                          },
+                                        },
+                                        "required": [
+                                          "property",
+                                          "equals",
+                                        ],
+                                        "additionalProperties": false,
+                                      },
+                                      "atLeast": {
+                                        "default": 1,
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 1000,
+                                      },
+                                      "unit": {
+                                        "default": "times",
+                                        "type": "string",
+                                        "enum": [
+                                          "times",
+                                          "days",
+                                        ],
+                                      },
+                                      "withinDays": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 90,
+                                      },
+                                      "people": {
+                                        "default": 1,
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 100,
+                                      },
+                                    },
+                                    "required": [
+                                      "event",
+                                      "atLeast",
+                                      "unit",
+                                      "people",
+                                    ],
+                                    "additionalProperties": false,
+                                  },
+                                },
+                                "version": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991,
+                                },
+                                "savedAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                                },
+                              },
+                              "required": [
+                                "match",
+                                "conditions",
+                                "version",
+                                "savedAt",
+                              ],
+                              "additionalProperties": false,
+                            },
+                            {
+                              "type": "null",
+                            },
+                          ],
+                        },
                       },
                       "required": [
                         "event",
@@ -20931,6 +21483,7 @@ export const publicToolContracts = {
               "timezone",
               "defaultOwner",
               "activationEvent",
+              "activationDefinition",
             ],
           },
           "description": "The settings this call changed; empty when every value was already set",
@@ -29600,4 +30153,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "fe3da0eac2a99caf36ff7879f791f34bf5fa6c1dfe680c6debf947ecf492cc90" as const
+export const sdkConsumerContractHash = "88cb0dfb893b022cb5d62529da14889a12612c8ffdb988389a706216820f4332" as const
