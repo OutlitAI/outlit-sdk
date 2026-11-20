@@ -389,7 +389,13 @@ export const COMMANDS: readonly CmdDef[] = [
       {
         name: "get",
         desc: "Get one exact source record",
-        flags: [...PAGINATED],
+        flags: [
+          ...PAGINATED,
+          { name: "--attachments", desc: "List files on an email or ticket" },
+          { name: "--attachment", desc: "Open a file by its key" },
+          { name: "--page", desc: "Page number in a file" },
+          { name: "--revision", desc: "Revision from a cited attachment page" },
+        ],
       },
     ],
   },
