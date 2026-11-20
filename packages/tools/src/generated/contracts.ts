@@ -20708,6 +20708,49 @@ export const publicToolContracts = {
                                   "format": "date-time",
                                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                                 },
+                                "provenance": {
+                                  "type": "object",
+                                  "properties": {
+                                    "source": {
+                                      "type": "string",
+                                      "enum": [
+                                        "suggested",
+                                        "provisional",
+                                      ],
+                                    },
+                                    "methodVersion": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991,
+                                    },
+                                    "at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                                    },
+                                    "numbers": {
+                                      "type": "object",
+                                      "propertyNames": {
+                                        "type": "string",
+                                      },
+                                      "additionalProperties": {
+                                        "anyOf": [
+                                          {
+                                            "type": "number",
+                                          },
+                                          {
+                                            "type": "null",
+                                          },
+                                        ],
+                                      },
+                                    },
+                                  },
+                                  "required": [
+                                    "source",
+                                    "at",
+                                  ],
+                                  "additionalProperties": false,
+                                },
                               },
                               "required": [
                                 "match",
@@ -21333,6 +21376,49 @@ export const publicToolContracts = {
                                   "type": "string",
                                   "format": "date-time",
                                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                                },
+                                "provenance": {
+                                  "type": "object",
+                                  "properties": {
+                                    "source": {
+                                      "type": "string",
+                                      "enum": [
+                                        "suggested",
+                                        "provisional",
+                                      ],
+                                    },
+                                    "methodVersion": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991,
+                                    },
+                                    "at": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                                    },
+                                    "numbers": {
+                                      "type": "object",
+                                      "propertyNames": {
+                                        "type": "string",
+                                      },
+                                      "additionalProperties": {
+                                        "anyOf": [
+                                          {
+                                            "type": "number",
+                                          },
+                                          {
+                                            "type": "null",
+                                          },
+                                        ],
+                                      },
+                                    },
+                                  },
+                                  "required": [
+                                    "source",
+                                    "at",
+                                  ],
+                                  "additionalProperties": false,
                                 },
                               },
                               "required": [
@@ -30153,4 +30239,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "88cb0dfb893b022cb5d62529da14889a12612c8ffdb988389a706216820f4332" as const
+export const sdkConsumerContractHash = "7645e5390621b9db9dcdf3d366a00451ecfb18f914b081588d1d740adf601aac" as const
