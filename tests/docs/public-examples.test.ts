@@ -238,32 +238,57 @@ describe("public documentation examples", () => {
     ).toBe(true)
   })
 
-  test("keeps tool-gateway request examples aligned with generated input schemas", () => {
-    const file = "docs/api-reference/tools.mdx"
-    const cases = [
-      ["Get customer details", "outlit_get_customer"],
-      ["Search customer context", "outlit_search_customer_context"],
-      ["List active contact transition facts", "outlit_list_facts"],
-      ["Open one source record", "outlit_get_source"],
-      ["Read exact source content", "outlit_get_source"],
-      ["Follow person profile evidence", "outlit_get_source"],
-      ["Read customer features", "outlit_get_customer"],
-    ] as const
+  test("keeps every tool-gateway JSON request aligned with its generated input schema", () => {
+    const failures: string[] = []
+    let requestCount = 0
+
+    for (const file of listPublicDocumentationFiles()) {
+      for (const block of extractFencedBlocks(file)) {
+        if (block.language !== "json") continue
+
+        const request = JSON.parse(block.code) as { input?: unknown; tool?: unknown } | null
+        if (!request || typeof request.tool !== "string" || !("input" in request)) continue
+
+        requestCount += 1
+        const toolName = request.tool
+        const contract = Object.hasOwn(publicToolContracts, toolName)
+          ? publicToolContracts[toolName as keyof typeof publicToolContracts]
+          : undefined
+        if (!contract || !matchesGeneratedJsonSchema(request.input, contract.inputSchema)) {
+          failures.push(`${file}:${block.line}: ${toolName}`)
+        }
+      }
+    }
+
+    expect(requestCount).toBeGreaterThan(0)
+    expect(failures).toEqual([])
+  })
+
+  test("does not publish compatibility-only CLI spellings in shell examples", () => {
+    const legacyPatterns = [
+      /\boutlit\s+customers\s+(?:credits|features|relationship|timeline|identity|merge-status|grant|revoke)\b/,
+      /\boutlit\s+customers\s+owner\s+set\b/,
+      /\boutlit\s+identity\s+suggestions\s+(?:list|reject)\b/,
+      /\boutlit\s+(?:ws-users|users|sql)\b/,
+      /\boutlit\s+activation\s+(?:get|update|disable)\b/,
+      /\boutlit\s+integrations\s+status\b/,
+      /\boutlit\s+destinations\s+(?:get|enable|disable)\b/,
+      /\boutlit\s+destinations\s+(?:create|update)\b[^\n]*--(?:default|disabled)\b/,
+      /\boutlit\s+features\s+create\b[^\n]*--(?:source|event|key)(?=[=\s]|$)/,
+      /\boutlit\b[^\n]*--(?:request-id|customer-id|crm-fields|target-user-id|review-notes|default-timezone)\b/,
+      /\boutlit\s+facts\s+get\b[^\n]*--fact-id\b/,
+      /\boutlit\s+sources\s+get\b[^\n]*--(?:source-type|source-id)\b/,
+    ]
     const failures: string[] = []
 
-    for (const [heading, toolName] of cases) {
-      const requestBlock = findFencedBlockInSection(file, heading, 3)
-      const request = JSON.parse(requestBlock?.code ?? "null") as {
-        input?: unknown
-        tool?: string
-      } | null
+    for (const file of listPublicDocumentationFiles()) {
+      for (const block of extractFencedBlocks(file)) {
+        if (!new Set(["bash", "sh", "shell"]).has(block.language)) continue
 
-      if (
-        !requestBlock ||
-        request?.tool !== toolName ||
-        !matchesGeneratedJsonSchema(request?.input, publicToolContracts[toolName].inputSchema)
-      ) {
-        failures.push(`${heading}: ${toolName}`)
+        const commandText = block.code.replace(/\\\r?\n\s*/g, " ")
+        for (const pattern of legacyPatterns) {
+          if (pattern.test(commandText)) failures.push(`${file}:${block.line}: ${pattern.source}`)
+        }
       }
     }
 
