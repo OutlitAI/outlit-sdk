@@ -14576,12 +14576,15 @@ export const publicToolContracts = {
                 ],
               },
               "contentOmitted": {
-                "description": "Present when the content was left out so the page fits the response budget.",
+                "description": "Present when the content was left out of the list: byte_cap so the page fits the response budget, direct_read_required when this caller must use the direct source read.",
                 "type": "object",
                 "properties": {
                   "reason": {
                     "type": "string",
-                    "const": "byte_cap",
+                    "enum": [
+                      "byte_cap",
+                      "direct_read_required",
+                    ],
                   },
                   "next": {
                     "type": "object",
@@ -30289,4 +30292,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "b313d05730ade63c8d2b4ac9b2e450871c9b4686f81497f66625f052c7301014" as const
+export const sdkConsumerContractHash = "b390137a0afc65819b4568a962845469a4b0b7c5a588829c2b2c5c5c5659c8cc" as const
