@@ -1677,7 +1677,7 @@ export const publicToolContracts = {
           ],
         },
         "subscriptions": {
-          "description": "With include billing: live (default) lists subscriptions that bill now; all adds the 20 most recently ended, for whether one was replaced or why there are two billing accounts.",
+          "description": "With include billing: live (default) lists subscriptions that bill now; all adds the 50 most recently ended, for whether one was replaced or why there are two billing accounts.",
           "type": "string",
           "enum": [
             "live",
@@ -2942,6 +2942,50 @@ export const publicToolContracts = {
                                 ],
                                 "description": "When its last subscription ended; null while active.",
                               },
+                              "segment": {
+                                "description": "Stripe metadata segment when present.",
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "endCustomer": {
+                                "description": "End customer declared in Stripe customer metadata, or in invoice metadata for reseller billing, when present.",
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "billingDomain": {
+                                "description": "Stripe metadata domain when present.",
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "billingCountry": {
+                                "description": "Stripe billing address country when present.",
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
                             },
                             "required": [
                               "provider",
@@ -3199,6 +3243,106 @@ export const publicToolContracts = {
                                 ],
                                 "description": "When the subscription ended; null while it is live.",
                               },
+                              "canceledAt": {
+                                "description": "When Stripe recorded the cancellation; null while uncanceled or unknown.",
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "cancellationReason": {
+                                "description": "Stripe's cancellation_details.reason when present.",
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "cancellationFeedback": {
+                                "description": "Stripe's cancellation_details.feedback when present.",
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "cancellationComment": {
+                                "description": "Stripe's cancellation_details.comment when present.",
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "trial": {
+                                "description": "The subscription's stored trial dates and outcome; null when it had no trial.",
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "startedAt": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                                        "description": "When the subscription's trial started.",
+                                      },
+                                      "endedAt": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                                          },
+                                          {
+                                            "type": "null",
+                                          },
+                                        ],
+                                        "description": "When the subscription's trial ended or ends; null when Stripe has none.",
+                                      },
+                                      "outcome": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "converted",
+                                              "lapsed",
+                                              "in_progress",
+                                            ],
+                                          },
+                                          {
+                                            "type": "null",
+                                          },
+                                        ],
+                                        "description": "converted when the subscription lived past trial end, lapsed when it ended at trial end or expired incomplete, in_progress while still trialing; null while the outcome is unknown.",
+                                      },
+                                    },
+                                    "required": [
+                                      "startedAt",
+                                      "endedAt",
+                                      "outcome",
+                                    ],
+                                    "additionalProperties": false,
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
                             },
                             "required": [
                               "id",
@@ -3309,6 +3453,272 @@ export const publicToolContracts = {
                       ],
                       "description": "Open invoices past due, oldest first (at most 20); null when unreadable.",
                     },
+                    "events": {
+                      "description": "Stored billing history newest first, including invoice lifecycle events, failed charges, refunds, disputes with outcomes, credit notes, and write-offs; null when unreadable (see unreadable). Optional for compatibility with responses written before billing history was added.",
+                      "anyOf": [
+                        {
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "objectType": {
+                                "type": "string",
+                                "enum": [
+                                  "invoice",
+                                  "charge",
+                                  "refund",
+                                  "dispute",
+                                  "credit_note",
+                                  "other",
+                                ],
+                              },
+                              "objectId": {
+                                "type": "string",
+                                "description": "The provider object's id.",
+                              },
+                              "type": {
+                                "type": "string",
+                                "description": "The stored provider event type, for example invoice.paid or dispute.won.",
+                              },
+                              "occurredAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                              },
+                              "amount": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "amount": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991,
+                                      },
+                                      "currency": {
+                                        "type": "string",
+                                        "pattern": "^[A-Z]{3}$",
+                                        "description": "ISO 4217 code.",
+                                      },
+                                      "decimals": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 4,
+                                      },
+                                      "formatted": {
+                                        "type": "string",
+                                        "description": "For example \"$12,000.00\".",
+                                      },
+                                    },
+                                    "required": [
+                                      "amount",
+                                      "currency",
+                                      "decimals",
+                                      "formatted",
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "amount is in minor units; divide by 10^decimals, or read formatted.",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "currency": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "status": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "invoiceId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                                "description": "The related Stripe invoice when the object carries one.",
+                              },
+                              "reason": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                              },
+                              "failureCode": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                                "description": "Stripe's decline/failure code for a failed charge.",
+                              },
+                              "outcome": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                  },
+                                  {
+                                    "type": "null",
+                                  },
+                                ],
+                                "description": "A dispute outcome (won or lost) or Stripe charge outcome when stored.",
+                              },
+                            },
+                            "required": [
+                              "objectType",
+                              "objectId",
+                              "type",
+                              "occurredAt",
+                              "amount",
+                              "currency",
+                              "status",
+                              "invoiceId",
+                              "reason",
+                              "failureCode",
+                              "outcome",
+                            ],
+                            "additionalProperties": false,
+                          },
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
+                    "eventsHasMore": {
+                      "description": "Whether more billing-history rows exist past the 50 listed. Optional for compatibility with responses written before billing history was added.",
+                      "type": "boolean",
+                    },
+                    "payingSince": {
+                      "description": "The first paid invoice with exact provider payment-time evidence; null when none is stored, when legacy evidence lacks the provider paidAt, or when unreadable (see unreadable). Optional for compatibility with responses written before paying-since evidence was added.",
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "at": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                              "description": "When the first stored paid invoice was paid.",
+                            },
+                            "evidence": {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "type": "string",
+                                  "const": "invoice_paid",
+                                },
+                                "invoice": {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "enum": [
+                                        "email",
+                                        "call",
+                                        "calendar_event",
+                                        "support_ticket",
+                                        "opportunity",
+                                        "slack",
+                                        "person_profile",
+                                        "invoice",
+                                        "crm_note",
+                                      ],
+                                    },
+                                    "id": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 500,
+                                    },
+                                    "attachmentPage": {
+                                      "description": "An exact page of a file on this source. Pass the complete source to outlit_get_source to read the page and request its preview.",
+                                      "type": "object",
+                                      "properties": {
+                                        "key": {
+                                          "type": "string",
+                                          "pattern": "^[a-f0-9]{32}$",
+                                        },
+                                        "page": {
+                                          "type": "integer",
+                                          "exclusiveMinimum": 0,
+                                          "maximum": 9007199254740991,
+                                        },
+                                        "revision": {
+                                          "description": "Pins the published attachment version. Keep this value when citing a page, so a changed document cannot resolve as the original.",
+                                          "type": "string",
+                                          "pattern": "^[0-9a-f]{64}:[A-Za-z0-9.+_-]{1,64}$",
+                                        },
+                                      },
+                                      "required": [
+                                        "key",
+                                        "page",
+                                      ],
+                                      "additionalProperties": false,
+                                    },
+                                  },
+                                  "required": [
+                                    "type",
+                                    "id",
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "The paid invoice this paying-since date comes from.",
+                                },
+                                "invoiceNumber": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                    },
+                                    {
+                                      "type": "null",
+                                    },
+                                  ],
+                                  "description": "Stripe's readable invoice number when stored.",
+                                },
+                              },
+                              "required": [
+                                "kind",
+                                "invoice",
+                                "invoiceNumber",
+                              ],
+                              "additionalProperties": false,
+                            },
+                          },
+                          "required": [
+                            "at",
+                            "evidence",
+                          ],
+                          "additionalProperties": false,
+                        },
+                        {
+                          "type": "null",
+                        },
+                      ],
+                    },
                     "omitted": {
                       "description": "Present when a list was cut at 20: how many are left out.",
                       "type": "object",
@@ -3320,7 +3730,7 @@ export const publicToolContracts = {
                           "maximum": 9007199254740991,
                         },
                         "endedSubscriptions": {
-                          "description": "With subscriptions all: how many older ended subscriptions exist past the 20 listed. Terminal: no call lists them; billing accounts already reflect every one.",
+                          "description": "With subscriptions all: how many older ended subscriptions exist past the 50 listed. Terminal: no call lists them; billing accounts already reflect every one.",
                           "type": "integer",
                           "minimum": 1,
                           "maximum": 9007199254740991,
@@ -4492,6 +4902,37 @@ export const publicToolContracts = {
                         "billing",
                       ],
                       "description": "Set in Outlit, a CRM opportunity, or the billing period of a yearly subscription",
+                    },
+                    "conflict": {
+                      "description": "A lower-precedence renewal source that disagrees with the selected date; compare its date and source with the selected date and source alongside it.",
+                      "type": "object",
+                      "properties": {
+                        "date": {
+                          "type": "string",
+                          "description": "The lower-precedence source's renewal date, YYYY-MM-DD",
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "outlit",
+                            "crm",
+                            "billing",
+                          ],
+                          "description": "The lower-precedence source that disagrees with the selected date",
+                        },
+                        "daysDifferent": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Whole days between the selected renewal date and this source's date",
+                        },
+                      },
+                      "required": [
+                        "date",
+                        "source",
+                        "daysDifferent",
+                      ],
+                      "additionalProperties": false,
                     },
                   },
                   "required": [
@@ -30292,4 +30733,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "b390137a0afc65819b4568a962845469a4b0b7c5a588829c2b2c5c5c5659c8cc" as const
+export const sdkConsumerContractHash = "89fc0fe51223ec66ffd7c67414ab96677d69da72a06d76fbae5fdf70eef521db" as const
