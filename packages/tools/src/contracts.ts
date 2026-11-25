@@ -18,8 +18,29 @@ export type ToolSourceType = (typeof sourceTypes)[number]
 
 const publicToolNameSet = new Set<string>(publicToolNames)
 const customerSourceTypeSet = new Set<string>(customerSourceTypes)
-const iso8601UtcDateTimeRegex =
-  /^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$/
+const iso8601DatePattern =
+  "(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))"
+const iso8601DateRegex = new RegExp(`^${iso8601DatePattern}$`)
+const iso8601DateTimeRegex = new RegExp(
+  `^${iso8601DatePattern}T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$`,
+)
+const dayMilliseconds = 24 * 60 * 60 * 1000
+
+/** The filter-instant shape the generated v2 contracts accept: a valid date or offset date-time. */
+export function isFilterInstant(value: string): boolean {
+  return iso8601DateRegex.test(value) || iso8601DateTimeRegex.test(value)
+}
+
+/** An inclusive lower bound: a date-only value starts that UTC day. */
+export function filterInstantAfter(value: string): Date {
+  return new Date(value)
+}
+
+/** An inclusive upper bound: a date-only value ends that UTC day at 23:59:59.999. */
+export function filterInstantBefore(value: string): Date {
+  const instant = new Date(value)
+  return iso8601DateRegex.test(value) ? new Date(instant.getTime() + dayMilliseconds - 1) : instant
+}
 
 export function isPublicToolName(value: string): value is PublicToolName {
   return publicToolNameSet.has(value)
@@ -95,19 +116,21 @@ export function resolveCustomerContextSearchInput(
     return { ok: false, message: "Query must be at least 2 non-whitespace characters" }
   }
 
-  if (value.after !== undefined && !iso8601UtcDateTimeRegex.test(value.after)) {
-    return { ok: false, message: "--after must be a valid ISO 8601 datetime" }
+  if (value.after !== undefined && !isFilterInstant(value.after)) {
+    return { ok: false, message: "--after must be a valid ISO 8601 date or date-time" }
   }
-  const afterTime = value.after === undefined ? undefined : new Date(value.after).getTime()
+  const afterTime =
+    value.after === undefined ? undefined : filterInstantAfter(value.after).getTime()
   if (afterTime !== undefined && Number.isNaN(afterTime)) {
-    return { ok: false, message: "--after must be a valid ISO 8601 datetime" }
+    return { ok: false, message: "--after must be a valid ISO 8601 date or date-time" }
   }
-  if (value.before !== undefined && !iso8601UtcDateTimeRegex.test(value.before)) {
-    return { ok: false, message: "--before must be a valid ISO 8601 datetime" }
+  if (value.before !== undefined && !isFilterInstant(value.before)) {
+    return { ok: false, message: "--before must be a valid ISO 8601 date or date-time" }
   }
-  const beforeTime = value.before === undefined ? undefined : new Date(value.before).getTime()
+  const beforeTime =
+    value.before === undefined ? undefined : filterInstantBefore(value.before).getTime()
   if (beforeTime !== undefined && Number.isNaN(beforeTime)) {
-    return { ok: false, message: "--before must be a valid ISO 8601 datetime" }
+    return { ok: false, message: "--before must be a valid ISO 8601 date or date-time" }
   }
   if (afterTime !== undefined && beforeTime !== undefined && afterTime > beforeTime) {
     return { ok: false, message: "--after must be before or equal to --before" }

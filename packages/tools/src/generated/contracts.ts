@@ -418,44 +418,13 @@ export const publicToolContracts = {
                 ],
               },
               "status": {
-                "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                 "type": "string",
                 "enum": [
                   "provisional",
                   "active",
                   "churned",
                   "merged",
-                ],
-              },
-              "openMergeTarget": {
-                "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                      },
-                      "name": {
-                        "anyOf": [
-                          {
-                            "type": "string",
-                          },
-                          {
-                            "type": "null",
-                          },
-                        ],
-                      },
-                    },
-                    "required": [
-                      "id",
-                      "name",
-                    ],
-                    "additionalProperties": false,
-                  },
-                  {
-                    "type": "null",
-                  },
                 ],
               },
               "billingStatus": {
@@ -1928,44 +1897,13 @@ export const publicToolContracts = {
               ],
             },
             "status": {
-              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
               "type": "string",
               "enum": [
                 "provisional",
                 "active",
                 "churned",
                 "merged",
-              ],
-            },
-            "openMergeTarget": {
-              "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-              "anyOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                    },
-                    "name": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                  ],
-                  "additionalProperties": false,
-                },
-                {
-                  "type": "null",
-                },
               ],
             },
             "billingStatus": {
@@ -7617,44 +7555,13 @@ export const publicToolContracts = {
                               ],
                             },
                             "status": {
-                              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                               "type": "string",
                               "enum": [
                                 "provisional",
                                 "active",
                                 "churned",
                                 "merged",
-                              ],
-                            },
-                            "openMergeTarget": {
-                              "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                              "anyOf": [
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "id": {
-                                      "type": "string",
-                                    },
-                                    "name": {
-                                      "anyOf": [
-                                        {
-                                          "type": "string",
-                                        },
-                                        {
-                                          "type": "null",
-                                        },
-                                      ],
-                                    },
-                                  },
-                                  "required": [
-                                    "id",
-                                    "name",
-                                  ],
-                                  "additionalProperties": false,
-                                },
-                                {
-                                  "type": "null",
-                                },
                               ],
                             },
                             "source": {
@@ -7716,44 +7623,13 @@ export const publicToolContracts = {
                             ],
                           },
                           "status": {
-                            "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                            "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                             "type": "string",
                             "enum": [
                               "provisional",
                               "active",
                               "churned",
                               "merged",
-                            ],
-                          },
-                          "openMergeTarget": {
-                            "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string",
-                                  },
-                                  "name": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string",
-                                      },
-                                      {
-                                        "type": "null",
-                                      },
-                                    ],
-                                  },
-                                },
-                                "required": [
-                                  "id",
-                                  "name",
-                                ],
-                                "additionalProperties": false,
-                              },
-                              {
-                                "type": "null",
-                              },
                             ],
                           },
                           "source": {
@@ -8430,44 +8306,13 @@ export const publicToolContracts = {
                     ],
                   },
                   "status": {
-                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                     "type": "string",
                     "enum": [
                       "provisional",
                       "active",
                       "churned",
                       "merged",
-                    ],
-                  },
-                  "openMergeTarget": {
-                    "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                          },
-                          "name": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                              },
-                              {
-                                "type": "null",
-                              },
-                            ],
-                          },
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                        ],
-                        "additionalProperties": false,
-                      },
-                      {
-                        "type": "null",
-                      },
                     ],
                   },
                 },
@@ -9567,44 +9412,13 @@ export const publicToolContracts = {
                   ],
                 },
                 "status": {
-                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                   "type": "string",
                   "enum": [
                     "provisional",
                     "active",
                     "churned",
                     "merged",
-                  ],
-                },
-                "openMergeTarget": {
-                  "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                        },
-                        "name": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    {
-                      "type": "null",
-                    },
                   ],
                 },
               },
@@ -9821,44 +9635,13 @@ export const publicToolContracts = {
                   ],
                 },
                 "status": {
-                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                   "type": "string",
                   "enum": [
                     "provisional",
                     "active",
                     "churned",
                     "merged",
-                  ],
-                },
-                "openMergeTarget": {
-                  "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                        },
-                        "name": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    {
-                      "type": "null",
-                    },
                   ],
                 },
               },
@@ -10004,44 +9787,13 @@ export const publicToolContracts = {
                   ],
                 },
                 "status": {
-                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                   "type": "string",
                   "enum": [
                     "provisional",
                     "active",
                     "churned",
                     "merged",
-                  ],
-                },
-                "openMergeTarget": {
-                  "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                        },
-                        "name": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    {
-                      "type": "null",
-                    },
                   ],
                 },
               },
@@ -10212,44 +9964,13 @@ export const publicToolContracts = {
                   ],
                 },
                 "status": {
-                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                   "type": "string",
                   "enum": [
                     "provisional",
                     "active",
                     "churned",
                     "merged",
-                  ],
-                },
-                "openMergeTarget": {
-                  "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                        },
-                        "name": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    {
-                      "type": "null",
-                    },
                   ],
                 },
               },
@@ -10373,44 +10094,13 @@ export const publicToolContracts = {
                   ],
                 },
                 "status": {
-                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                   "type": "string",
                   "enum": [
                     "provisional",
                     "active",
                     "churned",
                     "merged",
-                  ],
-                },
-                "openMergeTarget": {
-                  "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                        },
-                        "name": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    {
-                      "type": "null",
-                    },
                   ],
                 },
               },
@@ -10723,44 +10413,13 @@ export const publicToolContracts = {
               ],
             },
             "status": {
-              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
               "type": "string",
               "enum": [
                 "provisional",
                 "active",
                 "churned",
                 "merged",
-              ],
-            },
-            "openMergeTarget": {
-              "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-              "anyOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                    },
-                    "name": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                  ],
-                  "additionalProperties": false,
-                },
-                {
-                  "type": "null",
-                },
               ],
             },
           },
@@ -11498,44 +11157,13 @@ export const publicToolContracts = {
               ],
             },
             "status": {
-              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
               "type": "string",
               "enum": [
                 "provisional",
                 "active",
                 "churned",
                 "merged",
-              ],
-            },
-            "openMergeTarget": {
-              "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-              "anyOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                    },
-                    "name": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                  ],
-                  "additionalProperties": false,
-                },
-                {
-                  "type": "null",
-                },
               ],
             },
           },
@@ -12210,44 +11838,13 @@ export const publicToolContracts = {
               ],
             },
             "status": {
-              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
               "type": "string",
               "enum": [
                 "provisional",
                 "active",
                 "churned",
                 "merged",
-              ],
-            },
-            "openMergeTarget": {
-              "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-              "anyOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                    },
-                    "name": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                  ],
-                  "additionalProperties": false,
-                },
-                {
-                  "type": "null",
-                },
               ],
             },
           },
@@ -13093,44 +12690,13 @@ export const publicToolContracts = {
                   ],
                 },
                 "status": {
-                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                   "type": "string",
                   "enum": [
                     "provisional",
                     "active",
                     "churned",
                     "merged",
-                  ],
-                },
-                "openMergeTarget": {
-                  "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                        },
-                        "name": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    {
-                      "type": "null",
-                    },
                   ],
                 },
               },
@@ -14349,44 +13915,13 @@ export const publicToolContracts = {
                         ],
                       },
                       "status": {
-                        "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                        "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                         "type": "string",
                         "enum": [
                           "provisional",
                           "active",
                           "churned",
                           "merged",
-                        ],
-                      },
-                      "openMergeTarget": {
-                        "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                        "anyOf": [
-                          {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                              },
-                              "name": {
-                                "anyOf": [
-                                  {
-                                    "type": "string",
-                                  },
-                                  {
-                                    "type": "null",
-                                  },
-                                ],
-                              },
-                            },
-                            "required": [
-                              "id",
-                              "name",
-                            ],
-                            "additionalProperties": false,
-                          },
-                          {
-                            "type": "null",
-                          },
                         ],
                       },
                     },
@@ -15419,44 +14954,13 @@ export const publicToolContracts = {
                   ],
                 },
                 "status": {
-                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                   "type": "string",
                   "enum": [
                     "provisional",
                     "active",
                     "churned",
                     "merged",
-                  ],
-                },
-                "openMergeTarget": {
-                  "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                        },
-                        "name": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    {
-                      "type": "null",
-                    },
                   ],
                 },
               },
@@ -15515,44 +15019,13 @@ export const publicToolContracts = {
                             ],
                           },
                           "status": {
-                            "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                            "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                             "type": "string",
                             "enum": [
                               "provisional",
                               "active",
                               "churned",
                               "merged",
-                            ],
-                          },
-                          "openMergeTarget": {
-                            "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string",
-                                  },
-                                  "name": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string",
-                                      },
-                                      {
-                                        "type": "null",
-                                      },
-                                    ],
-                                  },
-                                },
-                                "required": [
-                                  "id",
-                                  "name",
-                                ],
-                                "additionalProperties": false,
-                              },
-                              {
-                                "type": "null",
-                              },
                             ],
                           },
                         },
@@ -16162,44 +15635,13 @@ export const publicToolContracts = {
                             ],
                           },
                           "status": {
-                            "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                            "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                             "type": "string",
                             "enum": [
                               "provisional",
                               "active",
                               "churned",
                               "merged",
-                            ],
-                          },
-                          "openMergeTarget": {
-                            "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                            "anyOf": [
-                              {
-                                "type": "object",
-                                "properties": {
-                                  "id": {
-                                    "type": "string",
-                                  },
-                                  "name": {
-                                    "anyOf": [
-                                      {
-                                        "type": "string",
-                                      },
-                                      {
-                                        "type": "null",
-                                      },
-                                    ],
-                                  },
-                                },
-                                "required": [
-                                  "id",
-                                  "name",
-                                ],
-                                "additionalProperties": false,
-                              },
-                              {
-                                "type": "null",
-                              },
                             ],
                           },
                         },
@@ -21187,44 +20629,13 @@ export const publicToolContracts = {
                     ],
                   },
                   "status": {
-                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                     "type": "string",
                     "enum": [
                       "provisional",
                       "active",
                       "churned",
                       "merged",
-                    ],
-                  },
-                  "openMergeTarget": {
-                    "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                          },
-                          "name": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                              },
-                              {
-                                "type": "null",
-                              },
-                            ],
-                          },
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                        ],
-                        "additionalProperties": false,
-                      },
-                      {
-                        "type": "null",
-                      },
                     ],
                   },
                 },
@@ -23867,44 +23278,13 @@ export const publicToolContracts = {
                     ],
                   },
                   "status": {
-                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                     "type": "string",
                     "enum": [
                       "provisional",
                       "active",
                       "churned",
                       "merged",
-                    ],
-                  },
-                  "openMergeTarget": {
-                    "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                          },
-                          "name": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                              },
-                              {
-                                "type": "null",
-                              },
-                            ],
-                          },
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                        ],
-                        "additionalProperties": false,
-                      },
-                      {
-                        "type": "null",
-                      },
                     ],
                   },
                 },
@@ -24456,44 +23836,13 @@ export const publicToolContracts = {
                   ],
                 },
                 "status": {
-                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                   "type": "string",
                   "enum": [
                     "provisional",
                     "active",
                     "churned",
                     "merged",
-                  ],
-                },
-                "openMergeTarget": {
-                  "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                        },
-                        "name": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    {
-                      "type": "null",
-                    },
                   ],
                 },
               },
@@ -25721,44 +25070,13 @@ export const publicToolContracts = {
               ],
             },
             "status": {
-              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
               "type": "string",
               "enum": [
                 "provisional",
                 "active",
                 "churned",
                 "merged",
-              ],
-            },
-            "openMergeTarget": {
-              "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-              "anyOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                    },
-                    "name": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                        },
-                        {
-                          "type": "null",
-                        },
-                      ],
-                    },
-                  },
-                  "required": [
-                    "id",
-                    "name",
-                  ],
-                  "additionalProperties": false,
-                },
-                {
-                  "type": "null",
-                },
               ],
             },
           },
@@ -25907,44 +25225,13 @@ export const publicToolContracts = {
                     ],
                   },
                   "status": {
-                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                     "type": "string",
                     "enum": [
                       "provisional",
                       "active",
                       "churned",
                       "merged",
-                    ],
-                  },
-                  "openMergeTarget": {
-                    "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                    "anyOf": [
-                      {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                          },
-                          "name": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                              },
-                              {
-                                "type": "null",
-                              },
-                            ],
-                          },
-                        },
-                        "required": [
-                          "id",
-                          "name",
-                        ],
-                        "additionalProperties": false,
-                      },
-                      {
-                        "type": "null",
-                      },
                     ],
                   },
                 },
@@ -26476,44 +25763,13 @@ export const publicToolContracts = {
                         ],
                       },
                       "status": {
-                        "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                        "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                         "type": "string",
                         "enum": [
                           "provisional",
                           "active",
                           "churned",
                           "merged",
-                        ],
-                      },
-                      "openMergeTarget": {
-                        "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                        "anyOf": [
-                          {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                              },
-                              "name": {
-                                "anyOf": [
-                                  {
-                                    "type": "string",
-                                  },
-                                  {
-                                    "type": "null",
-                                  },
-                                ],
-                              },
-                            },
-                            "required": [
-                              "id",
-                              "name",
-                            ],
-                            "additionalProperties": false,
-                          },
-                          {
-                            "type": "null",
-                          },
                         ],
                       },
                     },
@@ -26615,44 +25871,13 @@ export const publicToolContracts = {
                         ],
                       },
                       "status": {
-                        "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                        "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                         "type": "string",
                         "enum": [
                           "provisional",
                           "active",
                           "churned",
                           "merged",
-                        ],
-                      },
-                      "openMergeTarget": {
-                        "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                        "anyOf": [
-                          {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                              },
-                              "name": {
-                                "anyOf": [
-                                  {
-                                    "type": "string",
-                                  },
-                                  {
-                                    "type": "null",
-                                  },
-                                ],
-                              },
-                            },
-                            "required": [
-                              "id",
-                              "name",
-                            ],
-                            "additionalProperties": false,
-                          },
-                          {
-                            "type": "null",
-                          },
                         ],
                       },
                     },
@@ -27311,44 +26536,13 @@ export const publicToolContracts = {
                                       ],
                                     },
                                     "status": {
-                                      "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                                      "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                                       "type": "string",
                                       "enum": [
                                         "provisional",
                                         "active",
                                         "churned",
                                         "merged",
-                                      ],
-                                    },
-                                    "openMergeTarget": {
-                                      "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                                      "anyOf": [
-                                        {
-                                          "type": "object",
-                                          "properties": {
-                                            "id": {
-                                              "type": "string",
-                                            },
-                                            "name": {
-                                              "anyOf": [
-                                                {
-                                                  "type": "string",
-                                                },
-                                                {
-                                                  "type": "null",
-                                                },
-                                              ],
-                                            },
-                                          },
-                                          "required": [
-                                            "id",
-                                            "name",
-                                          ],
-                                          "additionalProperties": false,
-                                        },
-                                        {
-                                          "type": "null",
-                                        },
                                       ],
                                     },
                                   },
@@ -27450,44 +26644,13 @@ export const publicToolContracts = {
                                       ],
                                     },
                                     "status": {
-                                      "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                                      "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                                       "type": "string",
                                       "enum": [
                                         "provisional",
                                         "active",
                                         "churned",
                                         "merged",
-                                      ],
-                                    },
-                                    "openMergeTarget": {
-                                      "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                                      "anyOf": [
-                                        {
-                                          "type": "object",
-                                          "properties": {
-                                            "id": {
-                                              "type": "string",
-                                            },
-                                            "name": {
-                                              "anyOf": [
-                                                {
-                                                  "type": "string",
-                                                },
-                                                {
-                                                  "type": "null",
-                                                },
-                                              ],
-                                            },
-                                          },
-                                          "required": [
-                                            "id",
-                                            "name",
-                                          ],
-                                          "additionalProperties": false,
-                                        },
-                                        {
-                                          "type": "null",
-                                        },
                                       ],
                                     },
                                   },
@@ -27649,44 +26812,13 @@ export const publicToolContracts = {
                               ],
                             },
                             "status": {
-                              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                               "type": "string",
                               "enum": [
                                 "provisional",
                                 "active",
                                 "churned",
                                 "merged",
-                              ],
-                            },
-                            "openMergeTarget": {
-                              "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                              "anyOf": [
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "id": {
-                                      "type": "string",
-                                    },
-                                    "name": {
-                                      "anyOf": [
-                                        {
-                                          "type": "string",
-                                        },
-                                        {
-                                          "type": "null",
-                                        },
-                                      ],
-                                    },
-                                  },
-                                  "required": [
-                                    "id",
-                                    "name",
-                                  ],
-                                  "additionalProperties": false,
-                                },
-                                {
-                                  "type": "null",
-                                },
                               ],
                             },
                           },
@@ -28202,44 +27334,13 @@ export const publicToolContracts = {
                   ],
                 },
                 "status": {
-                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                   "type": "string",
                   "enum": [
                     "provisional",
                     "active",
                     "churned",
                     "merged",
-                  ],
-                },
-                "openMergeTarget": {
-                  "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                        },
-                        "name": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    {
-                      "type": "null",
-                    },
                   ],
                 },
               },
@@ -28277,44 +27378,13 @@ export const publicToolContracts = {
                   ],
                 },
                 "status": {
-                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                   "type": "string",
                   "enum": [
                     "provisional",
                     "active",
                     "churned",
                     "merged",
-                  ],
-                },
-                "openMergeTarget": {
-                  "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                        },
-                        "name": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    {
-                      "type": "null",
-                    },
                   ],
                 },
               },
@@ -28928,44 +27998,13 @@ export const publicToolContracts = {
                       ],
                     },
                     "status": {
-                      "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                      "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                       "type": "string",
                       "enum": [
                         "provisional",
                         "active",
                         "churned",
                         "merged",
-                      ],
-                    },
-                    "openMergeTarget": {
-                      "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string",
-                            },
-                            "name": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                },
-                                {
-                                  "type": "null",
-                                },
-                              ],
-                            },
-                          },
-                          "required": [
-                            "id",
-                            "name",
-                          ],
-                          "additionalProperties": false,
-                        },
-                        {
-                          "type": "null",
-                        },
                       ],
                     },
                   },
@@ -29003,44 +28042,13 @@ export const publicToolContracts = {
                       ],
                     },
                     "status": {
-                      "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                      "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                       "type": "string",
                       "enum": [
                         "provisional",
                         "active",
                         "churned",
                         "merged",
-                      ],
-                    },
-                    "openMergeTarget": {
-                      "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                      "anyOf": [
-                        {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string",
-                            },
-                            "name": {
-                              "anyOf": [
-                                {
-                                  "type": "string",
-                                },
-                                {
-                                  "type": "null",
-                                },
-                              ],
-                            },
-                          },
-                          "required": [
-                            "id",
-                            "name",
-                          ],
-                          "additionalProperties": false,
-                        },
-                        {
-                          "type": "null",
-                        },
                       ],
                     },
                   },
@@ -29222,44 +28230,13 @@ export const publicToolContracts = {
                   ],
                 },
                 "status": {
-                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                   "type": "string",
                   "enum": [
                     "provisional",
                     "active",
                     "churned",
                     "merged",
-                  ],
-                },
-                "openMergeTarget": {
-                  "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                        },
-                        "name": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    {
-                      "type": "null",
-                    },
                   ],
                 },
               },
@@ -29297,44 +28274,13 @@ export const publicToolContracts = {
                   ],
                 },
                 "status": {
-                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. If openMergeTarget is set, it is probably a duplicate of that customer. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
                   "type": "string",
                   "enum": [
                     "provisional",
                     "active",
                     "churned",
                     "merged",
-                  ],
-                },
-                "openMergeTarget": {
-                  "description": "When status is provisional: the customer an open merge proposal would merge this record into. Null when no open proposal names one; omitted when not read.",
-                  "anyOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                        },
-                        "name": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                            },
-                            {
-                              "type": "null",
-                            },
-                          ],
-                        },
-                      },
-                      "required": [
-                        "id",
-                        "name",
-                      ],
-                      "additionalProperties": false,
-                    },
-                    {
-                      "type": "null",
-                    },
                   ],
                 },
               },
@@ -31343,4 +30289,4 @@ export const schemaTables = [
   "revenue",
 ] as const
 
-export const sdkConsumerContractHash = "c7e48d5a6a728d9a5e54fbfc40a156f92f8c883510e0e824278f6b94ebd9a79c" as const
+export const sdkConsumerContractHash = "8adc2284ab73d6f4836a128495ca85d697df5226d6cab201c82d98fc27bc92fd" as const

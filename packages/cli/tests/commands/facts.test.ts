@@ -159,7 +159,7 @@ describe("facts commands", () => {
     }
   })
 
-  test("list rejects malformed ISO datetimes", async () => {
+  test("list rejects malformed ISO dates", async () => {
     const { default: factsListCmd } = await import("../../src/commands/facts/list")
     const exitSpy = mockExitThrow()
     const stderrSpy = spyOn(process.stderr, "write").mockImplementation(() => true)
@@ -181,9 +181,32 @@ describe("facts commands", () => {
       stderrSpy.mockRestore()
 
       expectErrorExit(thrown, stderrOutput, "invalid_input")
-      expect(stderrOutput).toContain("--after must be a valid ISO 8601 datetime")
+      expect(stderrOutput).toContain("--after must be a valid ISO 8601 date or date-time")
       expect(mockCallTool).not.toHaveBeenCalled()
     }
+  })
+
+  test("list accepts date-only and offset datetime filters like the generated contract", async () => {
+    const { default: factsListCmd } = await import("../../src/commands/facts/list")
+
+    await captureStdout(() =>
+      factsListCmd.run!({
+        args: {
+          customer: "acme.com",
+          after: "2025-01-01T12:00:00+02:00",
+          before: "2025-01-01",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof factsListCmd.run>>[0]),
+    )
+
+    expect(mockCallTool).toHaveBeenCalledWith(
+      "outlit_list_facts",
+      expect.objectContaining({
+        customer: "acme.com",
+        filters: { after: "2025-01-01T12:00:00+02:00", before: "2025-01-01" },
+      }),
+    )
   })
 
   test("list rejects anomaly detector fact type filters", async () => {

@@ -1207,7 +1207,7 @@ describe("resolveCustomerContextSearchInput", () => {
       }),
     ).toEqual({
       ok: false,
-      message: "--after must be a valid ISO 8601 datetime",
+      message: "--after must be a valid ISO 8601 date or date-time",
     })
 
     expect(
@@ -1217,19 +1217,23 @@ describe("resolveCustomerContextSearchInput", () => {
       }),
     ).toEqual({
       ok: false,
-      message: "--before must be a valid ISO 8601 datetime",
+      message: "--before must be a valid ISO 8601 date or date-time",
     })
   })
 
-  test("rejects date-only filters because the schema requires datetimes", () => {
+  test("accepts date-only and offset filters, comparing date-only before as the end of that UTC day", () => {
     expect(
       resolveCustomerContextSearchInput({
         query: "churn risk",
-        after: "2025-01-01",
+        after: "2025-01-01T12:00:00+02:00",
+        before: "2025-01-01",
       }),
     ).toEqual({
-      ok: false,
-      message: "--after must be a valid ISO 8601 datetime",
+      ok: true,
+      request: {
+        query: "churn risk",
+        filters: { after: "2025-01-01T12:00:00+02:00", before: "2025-01-01" },
+      },
     })
   })
 

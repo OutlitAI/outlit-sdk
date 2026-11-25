@@ -316,21 +316,22 @@ describe("sources list", () => {
     expect(mockCallTool).not.toHaveBeenCalled()
   })
 
-  test("rejects non-UTC datetime filters before calling the API", async () => {
+  test("accepts date-only and offset datetime filters like the generated contract", async () => {
     const { default: sourcesListCmd } = await import("../../src/commands/sources/list")
 
-    await runExpectingError(
-      () =>
-        sourcesListCmd.run!({
-          args: {
-            after: "2025-01-01",
-            json: true,
-          },
-        } as Parameters<NonNullable<typeof sourcesListCmd.run>>[0]),
-      "invalid_input",
+    await captureStdout(() =>
+      sourcesListCmd.run!({
+        args: {
+          after: "2025-01-01T12:00:00+02:00",
+          before: "2025-01-01",
+          json: true,
+        },
+      } as Parameters<NonNullable<typeof sourcesListCmd.run>>[0]),
     )
 
-    expect(mockCallTool).not.toHaveBeenCalled()
+    expect(mockCallTool).toHaveBeenCalledWith("outlit_list_sources", {
+      filters: { after: "2025-01-01T12:00:00+02:00", before: "2025-01-01" },
+    })
   })
 
   test("renders TTY source type and id from source, and pagination from page", async () => {

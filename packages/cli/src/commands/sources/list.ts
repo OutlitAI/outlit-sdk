@@ -1,4 +1,10 @@
-import { publicToolContracts, sourceTypes as toolSourceTypes } from "@outlit/tools"
+import {
+  filterInstantAfter,
+  filterInstantBefore,
+  isFilterInstant,
+  publicToolContracts,
+  sourceTypes as toolSourceTypes,
+} from "@outlit/tools"
 import { defineCommand } from "citty"
 import { authArgs } from "../../args/auth"
 import { customerFlagArgs, readCustomerSelector } from "../../args/customer"
@@ -10,9 +16,6 @@ import { outputError } from "../../lib/output"
 import { toWireSourceTypes } from "../../lib/source-types"
 
 const sourceTypeDescription = toolSourceTypes.join(", ")
-const ISO_8601_UTC_DATE_TIME_REGEX =
-  /^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$/
-
 function parseLimit(value: string | undefined, json: boolean): number | undefined {
   if (!value) return undefined
 
@@ -34,10 +37,10 @@ function parseLimit(value: string | undefined, json: boolean): number | undefine
 function parseDateArg(name: "--after" | "--before", value: string | undefined, json: boolean) {
   if (!value) return null
 
-  if (!ISO_8601_UTC_DATE_TIME_REGEX.test(value)) {
+  if (!isFilterInstant(value)) {
     outputError(
       {
-        message: `${name} must be a valid ISO 8601 UTC datetime`,
+        message: `${name} must be a valid ISO 8601 date or date-time`,
         code: "invalid_input",
       },
       json,
@@ -49,7 +52,7 @@ function parseDateArg(name: "--after" | "--before", value: string | undefined, j
   if (Number.isNaN(date.getTime())) {
     outputError(
       {
-        message: `${name} must be a valid ISO 8601 datetime`,
+        message: `${name} must be a valid ISO 8601 date or date-time`,
         code: "invalid_input",
       },
       json,
@@ -152,7 +155,12 @@ export default defineCommand({
     const beforeDate = parseDateArg("--before", args.before, json)
     if (args.before && !beforeDate) return
 
-    if (afterDate && beforeDate && afterDate.getTime() > beforeDate.getTime()) {
+    if (
+      afterDate &&
+      beforeDate &&
+      (args.after ? filterInstantAfter(args.after).getTime() : 0) >
+        (args.before ? filterInstantBefore(args.before).getTime() : 0)
+    ) {
       return outputError(
         {
           message: "--after must be before or equal to --before",
