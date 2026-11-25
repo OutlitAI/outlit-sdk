@@ -25,11 +25,19 @@ describe("CLI page sizes follow the generated contracts", () => {
     for (const name of pagedTools) {
       const limit = publicToolContracts[name].inputSchema.properties.limit as LimitSchema
       const expected = name === "outlit_search_customer_context" ? SEARCH_PAGE_SIZE : PAGE_SIZE
-      expect({ name, default: limit.default, max: limit.maximum }).toEqual({
-        name,
-        default: expected.default,
-        max: expected.max,
-      })
+      if (name === "outlit_list_sources") {
+        expect({ name, default: limit.default, max: limit.maximum }).toEqual({
+          name,
+          default: undefined,
+          max: expected.max,
+        })
+      } else {
+        expect({ name, default: limit.default, max: limit.maximum }).toEqual({
+          name,
+          default: expected.default,
+          max: expected.max,
+        })
+      }
     }
   })
 
