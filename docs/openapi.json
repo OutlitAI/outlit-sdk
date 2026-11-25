@@ -3939,7 +3939,7 @@
           },
           "limit": {
             "default": 100,
-            "description": "Rows per page: default 100, max 1000. A page also stops at about 56 KiB of JSON, so it can hold fewer rows. Your SQL's own LIMIT still applies; this only sizes the page.",
+            "description": "Rows per page: default 100, max 1000. A page also stops at the response budget for the request, so it can hold fewer rows. Your SQL's own LIMIT still applies; this only sizes the page.",
             "type": "integer",
             "minimum": 1,
             "maximum": 1000
@@ -29589,5 +29589,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "8adc2284ab73d6f4836a128495ca85d697df5226d6cab201c82d98fc27bc92fd"
+  "x-outlit-contract-hash": "b313d05730ade63c8d2b4ac9b2e450871c9b4686f81497f66625f052c7301014"
 }
