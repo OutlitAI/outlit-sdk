@@ -2560,8 +2560,8 @@
             }
           },
           "fields": {
-            "description": "Customer fields to return on each customer. Fields as outlit_list_customer_fields lists them; for CRM contact fields, the keys include crm returns.",
-            "maxItems": 5,
+            "description": "Customer fields to return on each customer (at most 20). Fields as outlit_list_customer_fields lists them; for CRM contact fields, the keys include crm returns.",
+            "maxItems": 20,
             "type": "array",
             "items": {
               "type": "object",
@@ -3352,16 +3352,34 @@
                 ]
               },
               "after": {
-                "description": "ISO 8601 date-time; from this instant on (at or after it: inclusive).",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                "description": "ISO 8601 date or date-time; from this instant on (at or after it: inclusive). A date-only value starts that UTC day.",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                ]
               },
               "before": {
-                "description": "ISO 8601 date-time; up to this instant (at or before it: inclusive).",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                "description": "ISO 8601 date or date-time; up to this instant (at or before it: inclusive). A date-only value ends that UTC day at 23:59:59.999.",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -3484,16 +3502,34 @@
                 }
               },
               "after": {
-                "description": "Facts said or observed at or after this ISO 8601 date-time (occurredAt; inclusive), e.g. \"2026-01-01T00:00:00.000Z\".",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                "description": "Facts said or observed at or after this ISO 8601 date or date-time (occurredAt; inclusive), e.g. \"2026-01-01\" or \"2026-01-01T00:00:00.000Z\".",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                ]
               },
               "before": {
-                "description": "Facts said or observed at or before this ISO 8601 date-time (inclusive).",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                "description": "Facts said or observed at or before this ISO 8601 date or date-time (inclusive).",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -3718,16 +3754,34 @@
                 }
               },
               "after": {
-                "description": "ISO 8601 date-time; from this instant on (at or after it: inclusive).",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                "description": "ISO 8601 date or date-time; from this instant on (at or after it: inclusive). A date-only value starts that UTC day.",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                ]
               },
               "before": {
-                "description": "ISO 8601 date-time; up to this instant (at or before it: inclusive).",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                "description": "ISO 8601 date or date-time; up to this instant (at or before it: inclusive). A date-only value ends that UTC day at 23:59:59.999.",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                ]
               },
               "participant": {
                 "description": "Email or name.",
@@ -3748,9 +3802,18 @@
             },
             "additionalProperties": false
           },
+          "include": {
+            "description": "Pass [\"content\"] for each listed source's first content page. Content pages have up to 10 segments each; with it limit is at most 5.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "content"
+              ]
+            }
+          },
           "limit": {
-            "default": 25,
-            "description": "Items per page: default 25, max 100.",
+            "description": "Items per page: default 25, max 100; with include [\"content\"], default and max 5.",
             "type": "integer",
             "minimum": 1,
             "maximum": 100
@@ -3807,16 +3870,34 @@
                 }
               },
               "after": {
-                "description": "ISO 8601 date-time; from this instant on (at or after it: inclusive).",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                "description": "ISO 8601 date or date-time; from this instant on (at or after it: inclusive). A date-only value starts that UTC day.",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                ]
               },
               "before": {
-                "description": "ISO 8601 date-time; up to this instant (at or before it: inclusive).",
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                "description": "ISO 8601 date or date-time; up to this instant (at or before it: inclusive). A date-only value ends that UTC day at 23:59:59.999.",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -3858,7 +3939,7 @@
           },
           "limit": {
             "default": 100,
-            "description": "Rows per page: default 100, max 1000. A page also stops at about 56 KiB of JSON, so it can hold fewer rows. Your SQL's own LIMIT still applies; this only sizes the page.",
+            "description": "Rows per page: default 100, max 1000. A page also stops at the response budget for the request, so it can hold fewer rows. Your SQL's own LIMIT still applies; this only sizes the page.",
             "type": "integer",
             "minimum": 1,
             "maximum": 1000
@@ -5599,6 +5680,16 @@
                     }
                   ]
                 },
+                "status": {
+                  "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                  "type": "string",
+                  "enum": [
+                    "provisional",
+                    "active",
+                    "churned",
+                    "merged"
+                  ]
+                },
                 "billingStatus": {
                   "type": "string",
                   "enum": [
@@ -6753,6 +6844,16 @@
                   {
                     "type": "null"
                   }
+                ]
+              },
+              "status": {
+                "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                "type": "string",
+                "enum": [
+                  "provisional",
+                  "active",
+                  "churned",
+                  "merged"
                 ]
               },
               "billingStatus": {
@@ -12403,6 +12504,16 @@
                                   }
                                 ]
                               },
+                              "status": {
+                                "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                                "type": "string",
+                                "enum": [
+                                  "provisional",
+                                  "active",
+                                  "churned",
+                                  "merged"
+                                ]
+                              },
                               "source": {
                                 "type": "string",
                                 "enum": [
@@ -12459,6 +12570,16 @@
                                 {
                                   "type": "null"
                                 }
+                              ]
+                            },
+                            "status": {
+                              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                              "type": "string",
+                              "enum": [
+                                "provisional",
+                                "active",
+                                "churned",
+                                "merged"
                               ]
                             },
                             "source": {
@@ -12862,6 +12983,16 @@
                         {
                           "type": "null"
                         }
+                      ]
+                    },
+                    "status": {
+                      "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                      "type": "string",
+                      "enum": [
+                        "provisional",
+                        "active",
+                        "churned",
+                        "merged"
                       ]
                     }
                   },
@@ -13788,6 +13919,16 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "status": {
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "type": "string",
+                    "enum": [
+                      "provisional",
+                      "active",
+                      "churned",
+                      "merged"
+                    ]
                   }
                 },
                 "required": [
@@ -14001,6 +14142,16 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "status": {
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "type": "string",
+                    "enum": [
+                      "provisional",
+                      "active",
+                      "churned",
+                      "merged"
+                    ]
                   }
                 },
                 "required": [
@@ -14143,6 +14294,16 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "status": {
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "type": "string",
+                    "enum": [
+                      "provisional",
+                      "active",
+                      "churned",
+                      "merged"
+                    ]
                   }
                 },
                 "required": [
@@ -14222,6 +14383,16 @@
                       {
                         "type": "null"
                       }
+                    ]
+                  },
+                  "status": {
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "type": "string",
+                    "enum": [
+                      "provisional",
+                      "active",
+                      "churned",
+                      "merged"
                     ]
                   }
                 },
@@ -14342,6 +14513,16 @@
                       {
                         "type": "null"
                       }
+                    ]
+                  },
+                  "status": {
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "type": "string",
+                    "enum": [
+                      "provisional",
+                      "active",
+                      "churned",
+                      "merged"
                     ]
                   }
                 },
@@ -14494,6 +14675,16 @@
                   {
                     "type": "null"
                   }
+                ]
+              },
+              "status": {
+                "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                "type": "string",
+                "enum": [
+                  "provisional",
+                  "active",
+                  "churned",
+                  "merged"
                 ]
               }
             },
@@ -15054,6 +15245,16 @@
                   {
                     "type": "null"
                   }
+                ]
+              },
+              "status": {
+                "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                "type": "string",
+                "enum": [
+                  "provisional",
+                  "active",
+                  "churned",
+                  "merged"
                 ]
               }
             },
@@ -15658,6 +15859,16 @@
                   {
                     "type": "null"
                   }
+                ]
+              },
+              "status": {
+                "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                "type": "string",
+                "enum": [
+                  "provisional",
+                  "active",
+                  "churned",
+                  "merged"
                 ]
               }
             },
@@ -16374,6 +16585,16 @@
                       {
                         "type": "null"
                       }
+                    ]
+                  },
+                  "status": {
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "type": "string",
+                    "enum": [
+                      "provisional",
+                      "active",
+                      "churned",
+                      "merged"
                     ]
                   }
                 },
@@ -17468,6 +17689,16 @@
                               "type": "null"
                             }
                           ]
+                        },
+                        "status": {
+                          "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                          "type": "string",
+                          "enum": [
+                            "provisional",
+                            "active",
+                            "churned",
+                            "merged"
+                          ]
                         }
                       },
                       "required": [
@@ -17903,6 +18134,267 @@
                     }
                   ],
                   "description": "The source's own fields, by kind."
+                },
+                "content": {
+                  "description": "Only with include [\"content\"]: this source's first content page.",
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "const": "available"
+                        },
+                        "asOf": {
+                          "type": "string"
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "email_body",
+                                "call_transcript",
+                                "support_thread",
+                                "slack_thread"
+                              ]
+                            },
+                            "segments": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 1000
+                                  },
+                                  "occurredAt": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                                  },
+                                  "authorLabel": {
+                                    "type": "string",
+                                    "maxLength": 500
+                                  },
+                                  "text": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "text"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "page": {
+                              "type": "object",
+                              "properties": {
+                                "hasMore": {
+                                  "type": "boolean"
+                                },
+                                "nextCursor": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "total": {
+                                  "anyOf": [
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "How many items match, over every page; null when counting them would cost a second full read."
+                                }
+                              },
+                              "required": [
+                                "hasMore",
+                                "nextCursor",
+                                "total"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "omittedFields": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "maxLength": 500
+                              }
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "segments",
+                            "page",
+                            "omittedFields"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "more": {
+                          "description": "Present when data is only the first part: how many more, and the call for the rest.",
+                          "type": "object",
+                          "properties": {
+                            "omitted": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "next": {
+                              "type": "object",
+                              "properties": {
+                                "instruction": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 300
+                                },
+                                "tool": {
+                                  "type": "string",
+                                  "maxLength": 100,
+                                  "pattern": "^outlit_[a-z0-9_]+$"
+                                },
+                                "input": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {}
+                                }
+                              },
+                              "required": [
+                                "instruction"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "omitted",
+                            "next"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "asOf",
+                        "data"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "empty",
+                            "not_connected",
+                            "not_synced",
+                            "unavailable"
+                          ]
+                        },
+                        "reason": {
+                          "type": "string",
+                          "maxLength": 300
+                        },
+                        "next": {
+                          "type": "object",
+                          "properties": {
+                            "instruction": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 300
+                            },
+                            "tool": {
+                              "type": "string",
+                              "maxLength": 100,
+                              "pattern": "^outlit_[a-z0-9_]+$"
+                            },
+                            "input": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            }
+                          },
+                          "required": [
+                            "instruction"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "reason"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "contentOmitted": {
+                  "description": "Present when the content was left out of the list: byte_cap so the page fits the response budget, direct_read_required when this caller must use the direct source read.",
+                  "type": "object",
+                  "properties": {
+                    "reason": {
+                      "type": "string",
+                      "enum": [
+                        "byte_cap",
+                        "direct_read_required"
+                      ]
+                    },
+                    "next": {
+                      "type": "object",
+                      "properties": {
+                        "instruction": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 300
+                        },
+                        "tool": {
+                          "type": "string",
+                          "maxLength": 100,
+                          "pattern": "^outlit_[a-z0-9_]+$"
+                        },
+                        "input": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        }
+                      },
+                      "required": [
+                        "instruction"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The direct single-source read of this source's first content page."
+                    }
+                  },
+                  "required": [
+                    "reason",
+                    "next"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -18120,6 +18612,16 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "status": {
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "type": "string",
+                    "enum": [
+                      "provisional",
+                      "active",
+                      "churned",
+                      "merged"
+                    ]
                   }
                 },
                 "required": [
@@ -18174,6 +18676,16 @@
                                 {
                                   "type": "null"
                                 }
+                              ]
+                            },
+                            "status": {
+                              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                              "type": "string",
+                              "enum": [
+                                "provisional",
+                                "active",
+                                "churned",
+                                "merged"
                               ]
                             }
                           },
@@ -18780,6 +19292,16 @@
                                 {
                                   "type": "null"
                                 }
+                              ]
+                            },
+                            "status": {
+                              "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                              "type": "string",
+                              "enum": [
+                                "provisional",
+                                "active",
+                                "churned",
+                                "merged"
                               ]
                             }
                           },
@@ -22323,6 +22845,16 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "status": {
+                      "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                      "type": "string",
+                      "enum": [
+                        "provisional",
+                        "active",
+                        "churned",
+                        "merged"
+                      ]
                     }
                   },
                   "required": [
@@ -24440,6 +24972,16 @@
                           "type": "null"
                         }
                       ]
+                    },
+                    "status": {
+                      "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                      "type": "string",
+                      "enum": [
+                        "provisional",
+                        "active",
+                        "churned",
+                        "merged"
+                      ]
                     }
                   },
                   "required": [
@@ -24936,6 +25478,16 @@
                       {
                         "type": "null"
                       }
+                    ]
+                  },
+                  "status": {
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "type": "string",
+                    "enum": [
+                      "provisional",
+                      "active",
+                      "churned",
+                      "merged"
                     ]
                   }
                 },
@@ -25983,6 +26535,16 @@
                     "type": "null"
                   }
                 ]
+              },
+              "status": {
+                "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                "type": "string",
+                "enum": [
+                  "provisional",
+                  "active",
+                  "churned",
+                  "merged"
+                ]
               }
             },
             "required": [
@@ -26127,6 +26689,16 @@
                         {
                           "type": "null"
                         }
+                      ]
+                    },
+                    "status": {
+                      "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                      "type": "string",
+                      "enum": [
+                        "provisional",
+                        "active",
+                        "churned",
+                        "merged"
                       ]
                     }
                   },
@@ -26560,6 +27132,16 @@
                               "type": "null"
                             }
                           ]
+                        },
+                        "status": {
+                          "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                          "type": "string",
+                          "enum": [
+                            "provisional",
+                            "active",
+                            "churned",
+                            "merged"
+                          ]
                         }
                       },
                       "required": [
@@ -26657,6 +27239,16 @@
                             {
                               "type": "null"
                             }
+                          ]
+                        },
+                        "status": {
+                          "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                          "type": "string",
+                          "enum": [
+                            "provisional",
+                            "active",
+                            "churned",
+                            "merged"
                           ]
                         }
                       },
@@ -26890,6 +27482,16 @@
                     {
                       "type": "null"
                     }
+                  ]
+                },
+                "evidenceLane": {
+                  "description": "What kind of evidence the proposal rests on; a label only, not proof or eligibility.",
+                  "type": "string",
+                  "enum": [
+                    "provider_or_domain",
+                    "person_into_account",
+                    "other",
+                    "name_only"
                   ]
                 },
                 "canMerge": {
@@ -27303,6 +27905,16 @@
                                             "type": "null"
                                           }
                                         ]
+                                      },
+                                      "status": {
+                                        "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                                        "type": "string",
+                                        "enum": [
+                                          "provisional",
+                                          "active",
+                                          "churned",
+                                          "merged"
+                                        ]
                                       }
                                     },
                                     "required": [
@@ -27400,6 +28012,16 @@
                                           {
                                             "type": "null"
                                           }
+                                        ]
+                                      },
+                                      "status": {
+                                        "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                                        "type": "string",
+                                        "enum": [
+                                          "provisional",
+                                          "active",
+                                          "churned",
+                                          "merged"
                                         ]
                                       }
                                     },
@@ -27558,6 +28180,16 @@
                                   {
                                     "type": "null"
                                   }
+                                ]
+                              },
+                              "status": {
+                                "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                                "type": "string",
+                                "enum": [
+                                  "provisional",
+                                  "active",
+                                  "churned",
+                                  "merged"
                                 ]
                               }
                             },
@@ -27943,6 +28575,16 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "status": {
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "type": "string",
+                    "enum": [
+                      "provisional",
+                      "active",
+                      "churned",
+                      "merged"
+                    ]
                   }
                 },
                 "required": [
@@ -27976,6 +28618,16 @@
                       {
                         "type": "null"
                       }
+                    ]
+                  },
+                  "status": {
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "type": "string",
+                    "enum": [
+                      "provisional",
+                      "active",
+                      "churned",
+                      "merged"
                     ]
                   }
                 },
@@ -28587,6 +29239,16 @@
                             "type": "null"
                           }
                         ]
+                      },
+                      "status": {
+                        "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                        "type": "string",
+                        "enum": [
+                          "provisional",
+                          "active",
+                          "churned",
+                          "merged"
+                        ]
                       }
                     },
                     "required": [
@@ -28620,6 +29282,16 @@
                           {
                             "type": "null"
                           }
+                        ]
+                      },
+                      "status": {
+                        "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                        "type": "string",
+                        "enum": [
+                          "provisional",
+                          "active",
+                          "churned",
+                          "merged"
                         ]
                       }
                     },
@@ -28767,6 +29439,16 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "status": {
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "type": "string",
+                    "enum": [
+                      "provisional",
+                      "active",
+                      "churned",
+                      "merged"
+                    ]
                   }
                 },
                 "required": [
@@ -28800,6 +29482,16 @@
                       {
                         "type": "null"
                       }
+                    ]
+                  },
+                  "status": {
+                    "description": "The customer record's lifecycle status. provisional: a company Outlit has seen (in the CRM, an email domain or product analytics) but has not confirmed as a customer: no billing link yet, or awaiting a merge review. It is not counted as a customer and is left out of customer lists and search. Present on a direct read of a provisional record; usually omitted elsewhere.",
+                    "type": "string",
+                    "enum": [
+                      "provisional",
+                      "active",
+                      "churned",
+                      "merged"
                     ]
                   }
                 },
@@ -28900,5 +29592,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "fe3da0eac2a99caf36ff7879f791f34bf5fa6c1dfe680c6debf947ecf492cc90"
+  "x-outlit-contract-hash": "b390137a0afc65819b4568a962845469a4b0b7c5a588829c2b2c5c5c5659c8cc"
 }

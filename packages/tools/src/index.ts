@@ -38,7 +38,10 @@ export type {
   ToolSourceType,
 } from "./contracts.js"
 export {
+  filterInstantAfter,
+  filterInstantBefore,
   getPublicToolContract,
+  isFilterInstant,
   isPublicToolName,
   normalizeCustomerSourceToolInput,
   normalizeCustomerSourceType,

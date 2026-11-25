@@ -1,5 +1,8 @@
 import {
   collectionOf,
+  filterInstantAfter,
+  filterInstantBefore,
+  isFilterInstant,
   publicToolContracts,
   toolFactCategories,
   toolFactStatuses,
@@ -204,27 +207,37 @@ export default defineCommand({
     const afterDate = args.after ? new Date(args.after) : null
     const beforeDate = args.before ? new Date(args.before) : null
 
-    if (afterDate && Number.isNaN(afterDate.getTime())) {
+    if (
+      (args.after && !isFilterInstant(args.after)) ||
+      (afterDate && Number.isNaN(afterDate.getTime()))
+    ) {
       return outputError(
         {
-          message: "--after must be a valid ISO 8601 datetime",
+          message: "--after must be a valid ISO 8601 date or date-time",
           code: "invalid_input",
         },
         json,
       )
     }
 
-    if (beforeDate && Number.isNaN(beforeDate.getTime())) {
+    if (
+      (args.before && !isFilterInstant(args.before)) ||
+      (beforeDate && Number.isNaN(beforeDate.getTime()))
+    ) {
       return outputError(
         {
-          message: "--before must be a valid ISO 8601 datetime",
+          message: "--before must be a valid ISO 8601 date or date-time",
           code: "invalid_input",
         },
         json,
       )
     }
 
-    if (afterDate && beforeDate && afterDate.getTime() > beforeDate.getTime()) {
+    if (
+      args.after &&
+      args.before &&
+      filterInstantAfter(args.after).getTime() > filterInstantBefore(args.before).getTime()
+    ) {
       return outputError(
         {
           message: "--after must be before or equal to --before",
