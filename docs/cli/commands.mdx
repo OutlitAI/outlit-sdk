@@ -290,7 +290,7 @@ outlit customers get acme.com --include credits --cursor "$CURSOR"
 outlit customers get 550e8400-e29b-41d4-a716-446655440000
 ```
 
-`relationship` is a summary and at most eight current statements, each with an ISO `observedAt` when the source supports one bounded `sourceLabels`, and `evidence`: the `factId`s behind it, to read with `outlit facts get --fact-id`. Never raw quotes. `features` counts Outlit product events against the Features you configured; `meters` reads imported Autumn metered quantities that are not credits; `credits` reads Autumn credit pools with balance, reset date and burn rate. Complete, partial and unavailable evidence stay distinct: unavailable is never rendered as zero. The three come in pages of 25.
+`relationship` is a summary and at most eight current statements, each with an ISO `observedAt` when the source supports one bounded `sourceLabels`, and `evidence`: the `factId`s behind it, to read with `outlit facts get <fact-id>`. Never raw quotes. `features` counts Outlit product events against the Features you configured; `meters` reads imported Autumn metered quantities that are not credits; `credits` reads Autumn credit pools with balance, reset date and burn rate. Complete, partial and unavailable evidence stay distinct: unavailable is never rendered as zero. The three come in pages of 25.
 
 ### JSON response
 
