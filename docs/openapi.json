@@ -3372,7 +3372,7 @@
                 }
               },
               "within": {
-                "description": "Window ending at before (or now). Default 30d unless after is given.",
+                "description": "Window ending at before (or now). Default 30d unless after is given. To bound one end exactly, pass after and/or before without within, or pass within \"all\" together with them (the only combination accepted).",
                 "type": "string",
                 "enum": [
                   "7d",
@@ -6950,14 +6950,15 @@
                 ]
               },
               "resolvedFrom": {
-                "description": "Present when the input was a secondary domain or an absorbed merged customer id rather than this customer's primary id, domain or name.",
+                "description": "Present when the input was a secondary domain, an absorbed merged customer id or a person's email rather than this customer's primary id, domain or name.",
                 "type": "object",
                 "properties": {
                   "kind": {
                     "type": "string",
                     "enum": [
                       "secondary_domain",
-                      "merged_customer"
+                      "merged_customer",
+                      "person_email"
                     ]
                   },
                   "input": {
@@ -8166,6 +8167,17 @@
                                         ],
                                         "description": "The billing provider's price id (price_...)."
                                       },
+                                      "priceNickname": {
+                                        "description": "The billing provider price nickname: the plan tier label, such as \"Starter\". Null when the price has none or the stored projection predates it; optional for compatibility with responses written before it was kept.",
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      },
                                       "quantity": {
                                         "anyOf": [
                                           {
@@ -8626,7 +8638,7 @@
                                       "additionalProperties": false,
                                       "description": "amount is in minor units; divide by 10^decimals, or read formatted."
                                     },
-                                    "description": "Open invoice amounts 1 through 30 days past due."
+                                    "description": "Open invoice amounts up to 30 days past due: any invoice past its due instant lands here, even one overdue by less than a full day (its daysOverdue rounds down to 0)."
                                   },
                                   "days31To60": {
                                     "type": "array",
@@ -8662,7 +8674,7 @@
                                       "additionalProperties": false,
                                       "description": "amount is in minor units; divide by 10^decimals, or read formatted."
                                     },
-                                    "description": "Open invoice amounts 31 through 60 days past due."
+                                    "description": "Open invoice amounts more than 30 and up to 60 days past due."
                                   },
                                   "days61To90": {
                                     "type": "array",
@@ -8698,7 +8710,7 @@
                                       "additionalProperties": false,
                                       "description": "amount is in minor units; divide by 10^decimals, or read formatted."
                                     },
-                                    "description": "Open invoice amounts 61 through 90 days past due."
+                                    "description": "Open invoice amounts more than 60 and up to 90 days past due."
                                   },
                                   "days91Plus": {
                                     "type": "array",
@@ -9243,11 +9255,11 @@
                                     "description": "Which stored billing fact the date comes from."
                                   },
                                   "subscriptionId": {
-                                    "description": "The subscription whose start is the date when kind is subscription_start.",
+                                    "description": "The subscription whose start is the date; always present when kind is subscription_start, absent otherwise.",
                                     "type": "string"
                                   },
                                   "invoice": {
-                                    "description": "The first paid invoice when kind is first_paid_invoice.",
+                                    "description": "The first paid invoice; always present when kind is first_paid_invoice, absent otherwise.",
                                     "type": "object",
                                     "properties": {
                                       "type": {
@@ -9302,7 +9314,7 @@
                                     "additionalProperties": false
                                   },
                                   "invoiceNumber": {
-                                    "description": "Stripe's readable invoice number when stored.",
+                                    "description": "Stripe's readable invoice number when stored; present only alongside invoice.",
                                     "anyOf": [
                                       {
                                         "type": "string"
@@ -32037,5 +32049,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "1e21419edbcbc07d9697ad47a312d76597861bb8315ae4660b9a73dec0d4318f"
+  "x-outlit-contract-hash": "6ae4fad17498a6b1cdd23bc8849b6d4ededdd753e0293d84198916782a3e4e71"
 }
