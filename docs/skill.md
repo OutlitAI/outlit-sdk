@@ -73,6 +73,7 @@ A customer read by id may come back with status `provisional`: a company Outlit 
 ### State the answer with its evidence
 
 - State the conclusion the evidence supports plainly and give its evidence; don't hedge a supported conclusion. Retrieved invoices, balances, fact assertions, timeline events, search excerpts, and SQL rows are evidence. Include what each relevant requested section says even when it confirms the obvious.
+- When the question is answerable, proceed on a reasonable stated assumption rather than stopping to ask the user, and say what you assumed.
 - For "most recent" or "latest," sort by the relevant date and take the newest.
 - When a customer's latest email or ticket contradicts an older CRM field, the newer source wins; cite both.
 - Name the timestamp you grouped or filtered by, and call a partial period partial.
@@ -80,6 +81,8 @@ A customer read by id may come back with status `provisional`: a company Outlit 
 - Drop out-of-scope records before counting.
 - Read each customer in scope before generalising about the group.
 - Low logins alone don't mean low engagement: check integrations, digests, and API activity.
+- The support section counts ticket messages only, so replies sent by email need the email or timeline sources.
+- A CRM health or at-risk field is evidence: weigh it with billing and usage, and don't override it with a long contract term alone.
 - Contracted expansion shows in deals and paper; self-serve expansion shows in billed volume.
 - Read engagement and activity fields (opens, clicks, digests) when the question is about engagement.
 - If a record looks backfilled, compare ingestion time with `occurred_at` before calling something recent.
@@ -107,13 +110,13 @@ Source types are `email`, `call`, `calendar_event`, `support_ticket`, `opportuni
 
 ### SQL analytics
 
-Call `outlit_get_schema` before writing SQL. The public views are `activity`, `customers`, `users`, and `revenue`; the schema describes each view's columns, units, coverage, freshness, duplicates, and rules. Keep SQL read-only, filter activity by time, use `LIMIT`, prefer specific columns, and inspect JSON shapes before filtering nested values. Money is in minor units: divide `arr_amount` by `10^arr_decimals`, keep its `arr_currency` separate, and never add amounts across currencies. For syntax and query patterns, read [references/sql-reference.md](https://raw.githubusercontent.com/OutlitAI/skills/52c5987824602ba740e7a2cd622d712cfb4100ff/skills/outlit/references/sql-reference.md).
+Call `outlit_get_schema` before writing SQL. The public views are `activity`, `customers`, `users`, and `revenue`; the schema describes each view's columns, units, coverage, freshness, duplicates, and rules. Keep SQL read-only, filter activity by time, use `LIMIT`, prefer specific columns, and inspect JSON shapes before filtering nested values. Money is in minor units: divide `arr_amount` by `10^arr_decimals`, keep its `arr_currency` separate, and never add amounts across currencies. For syntax and query patterns, read [references/sql-reference.md](https://raw.githubusercontent.com/OutlitAI/skills/52a9bffb76f1882f1c156ae8f81bc889fdfa27d3/skills/outlit/references/sql-reference.md).
 
 ## Setup, Administration, and Writes
 
 Answering customer questions is read-only. Interface setup, authentication, CLI and MCP configuration, Pi packages, authorization, integrations, customer ownership and access, destinations, workspace settings, Features, tasks, identity diagnosis, and customer merges are separate workspace-administration workflows. Read the full setup/admin reference at <https://github.com/OutlitAI/skills/blob/main/skills/outlit/references/setup-and-admin.md> (packaged path `skills/outlit/references/setup-and-admin.md`) for those workflows.
 
-Use write tools only when the user explicitly asks. Writes take `idempotencyKey` (CLI `--idempotency-key`); a retry with the same key and input returns the first result. Customer merges are dangerous and permanent: read [references/identity.md](https://raw.githubusercontent.com/OutlitAI/skills/52c5987824602ba740e7a2cd622d712cfb4100ff/skills/outlit/references/identity.md) before previewing, rejecting, executing, retrying, or tracking one.
+Use write tools only when the user explicitly asks. Writes take `idempotencyKey` (CLI `--idempotency-key`); a retry with the same key and input returns the first result. Customer merges are dangerous and permanent: read [references/identity.md](https://raw.githubusercontent.com/OutlitAI/skills/52a9bffb76f1882f1c156ae8f81bc889fdfa27d3/skills/outlit/references/identity.md) before previewing, rejecting, executing, retrying, or tracking one.
 
 When the user wants to share Outlit product feedback, use `outlit_submit_feedback` when available with `body` and optional `area`/`context`, or `outlit feedback submit --body "..." --json`. Feedback does not open a support ticket.
 
