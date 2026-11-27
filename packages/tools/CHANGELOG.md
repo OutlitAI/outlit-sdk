@@ -1,5 +1,19 @@
 # @outlit/tools
 
+## 4.2.0
+
+### Minor Changes
+
+- [#328](https://github.com/OutlitAI/outlit-sdk/pull/328) [`672f576`](https://github.com/OutlitAI/outlit-sdk/commit/672f576ca6f1aafbeb66f6b52909c71e18ad986e) Thanks [@leo-paz](https://github.com/leo-paz)! - Regenerate contracts for the MCP read fixes: person-email customer resolution with resolvedFrom person_email, subscription item priceNickname, the timeline within "all" with after/before combination, clarified ordering and receivables-bucket descriptions, and customerSince evidence references documented as present per kind.
+
+- [#327](https://github.com/OutlitAI/outlit-sdk/pull/327) [`5fb800e`](https://github.com/OutlitAI/outlit-sdk/commit/5fb800e41793374d0a158c66bbcbe776919865b5) Thanks [@leo-paz](https://github.com/leo-paz)! - Regenerate the Agent API contracts for customer context sections. Customer reads add billing, support, identity and weekly usage context; billing output renames the customer-level live subscription rollup to `subscriptionMrr`. The `customers` SQL view documented through `outlit_get_schema` gains `owner` and `subscription_mrr_*`, and SQL analytics adds `customer_metrics_weekly`. The CLI also syncs its embedded Outlit skill text from the current no-usage upstream skill; this skill-text refresh is patch-level for `@outlit/cli` and is included in the package's minor customer-context release.
+
+- [#322](https://github.com/OutlitAI/outlit-sdk/pull/322) [`4532f04`](https://github.com/OutlitAI/outlit-sdk/commit/4532f048516788702df58639e14480a011d5440a) Thanks [@leo-paz](https://github.com/leo-paz)! - Regenerate the Agent API contracts for customer read-path fixes. Source listing can include each listed source's first content page, provisional customer reads explain their status and merge target, and the separate batch source-reading tool is removed.
+
+### Patch Changes
+
+- [#325](https://github.com/OutlitAI/outlit-sdk/pull/325) [`76329f4`](https://github.com/OutlitAI/outlit-sdk/commit/76329f42ff189b85aa0a9876ef1e0535249fdba8) Thanks [@leo-paz](https://github.com/leo-paz)! - Regenerate the Agent API contracts for billing coverage: Stripe charges, refunds, disputes and credit notes in customer billing history.
+
 ## 4.1.0
 
 ### Minor Changes
