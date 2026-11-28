@@ -54,7 +54,7 @@ export const publicToolContracts = {
     "commandVersion": 2,
     "ownerDomain": "customers",
     "title": "List Customers",
-    "description": "Browse and filter customers by billing status, ARR, owner, activity, renewal window, name or any customer field (CRM, support tool or SDK trait; find them with outlit_list_customer_fields). Returns a page of customers with ARR, last activity, status and stored renewal date, total ARR per currency, and with fields each customer's values for the fields asked for, e.g. segment and health across the book. filters.partOf lists a parent company's direct subsidiaries (from the CRM's parent accounts); one customer's parent is outlit_get_customer include hierarchy. filters.renewal (within next_30d to next_365d, or after and before) and orderBy renewal_date use the renewal dates outlit_get_customer include renewal shows, billing-derived ones included, at most 5,000 customers at a time; add filters if it says the window is too broad. filters.credits (runsOutWithin 7d to 90d) lists customers whose Autumn credit pool is forecast to run out in time, each with its soonest pool; orderBy meter_usage with meter {feature} ranks customers by one Autumn meter's usage. Both read live accounts from stored snapshots and count the customers they left out in coverage. Use when finding or ranking customers across the book. Don't use it for one customer (use outlit_get_customer) or for people (use outlit_list_people). Returns no contacts, events or conversation content.",
+    "description": "Browse and filter customers by billing status, ARR, owner, activity, renewal window, name or any customer field (CRM, support tool or SDK trait; find them with outlit_list_customer_fields). Returns a page of customers with ARR, last activity, status and stored renewal date, total ARR per currency, and with fields each customer's values for the fields asked for, e.g. segment and health across the book; CRM contract fields such as term end, auto-renewal and notice period can be requested as columns when the CRM carries them. filters.partOf lists a parent company's direct subsidiaries (from the CRM's parent accounts); one customer's parent is outlit_get_customer include hierarchy. To use the existing renewal capabilities: filters.renewal (within next_30d to next_365d, or after and before) filters the renewal window and orderBy renewal_date orders by that renewal date, asc for soonest first; these use the renewal dates outlit_get_customer include renewal shows, billing-derived ones included, at most 5,000 customers at a time. Add filters if it says the window is too broad. filters.credits (runsOutWithin 7d to 90d) lists customers whose Autumn credit pool is forecast to run out in time, each with its soonest pool; orderBy meter_usage with meter {feature} ranks customers by one Autumn meter's usage. Both read live accounts from stored snapshots and count the customers they left out in coverage. Use when finding or ranking customers across the book. Don't use it for one customer (use outlit_get_customer) or for people (use outlit_list_people). Returns no contacts, events or conversation content.",
     "annotations": {
       "readOnlyHint": true,
       "destructiveHint": false,
@@ -81,6 +81,7 @@ export const publicToolContracts = {
                   "past_due",
                   "churned",
                 ],
+                "description": "none: no billing evidence of a live or former paying relationship; trialing: at least one subscription is trialing and none is active/unpaused; paying: has an active, unpaused subscription, including one that charges nothing, or currently covered paid billing evidence; past_due: no active/trialing subscription wins priority and at least one subscription is past due (a customer whose subscriptions are all past due reads past_due); churned: billing evidence ended or lapsed with no current paid coverage. Send several statuses together when a count needs their union.",
               },
             },
             "arr": {
@@ -436,6 +437,7 @@ export const publicToolContracts = {
                   "past_due",
                   "churned",
                 ],
+                "description": "none: no billing evidence of a live or former paying relationship; trialing: at least one subscription is trialing and none is active/unpaused; paying: has an active, unpaused subscription, including one that charges nothing, or currently covered paid billing evidence; past_due: no active/trialing subscription wins priority and at least one subscription is past due (a customer whose subscriptions are all past due reads past_due); churned: billing evidence ended or lapsed with no current paid coverage.",
               },
               "activatedAt": {
                 "anyOf": [
@@ -3194,6 +3196,33 @@ export const publicToolContracts = {
                                       ],
                                       "description": "The billing provider's product id (prod_...).",
                                     },
+                                    "sku": {
+                                      "description": "The catalogue SKU from price metadata, product metadata, or the price lookup key; null or absent when none is stored.",
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                    },
+                                    "skuSource": {
+                                      "description": "Which billing-provider field sku came from.",
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "enum": [
+                                            "price_metadata",
+                                            "product_metadata",
+                                            "lookup_key",
+                                          ],
+                                        },
+                                        {
+                                          "type": "null",
+                                        },
+                                      ],
+                                    },
                                     "productName": {
                                       "anyOf": [
                                         {
@@ -3512,7 +3541,7 @@ export const publicToolContracts = {
                                             "type": "null",
                                           },
                                         ],
-                                        "description": "converted only when a paid subscription invoice after trial end settled money, lapsed when it ended without that payment or expired incomplete, in_progress while still trialing; null while the outcome is unknown.",
+                                        "description": "converted only when a paid subscription invoice after trial end settled money; lapsed when the trial ended without a paid invoice after the trial, or expired incomplete — trial nonconversion evidence, not by itself proof the whole customer churned when another subscription or paid invoice remains; in_progress while still trialing; null while the outcome is unknown.",
                                       },
                                     },
                                     "required": [
@@ -15447,6 +15476,44 @@ export const publicToolContracts = {
                           },
                         ],
                       },
+                      "productId": {
+                        "description": "The billing provider's product id (prod_...).",
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "sku": {
+                        "description": "The catalogue SKU from price metadata, product metadata, or the price lookup key; null when none is stored. Absent only in results saved before SKU existed.",
+                        "anyOf": [
+                          {
+                            "type": "string",
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
+                      "skuSource": {
+                        "description": "Which billing-provider field sku came from.",
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "price_metadata",
+                              "product_metadata",
+                              "lookup_key",
+                            ],
+                          },
+                          {
+                            "type": "null",
+                          },
+                        ],
+                      },
                     },
                     "required": [
                       "amount",
@@ -16666,6 +16733,44 @@ export const publicToolContracts = {
                                   ],
                                   "additionalProperties": false,
                                   "description": "amount is in minor units; divide by 10^decimals, or read formatted.",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "productId": {
+                              "description": "The billing provider's product id (prod_...).",
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "sku": {
+                              "description": "The catalogue SKU from price metadata, product metadata, or the price lookup key; null when none is stored. Absent only in results saved before SKU existed.",
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                },
+                                {
+                                  "type": "null",
+                                },
+                              ],
+                            },
+                            "skuSource": {
+                              "description": "Which billing-provider field sku came from.",
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "enum": [
+                                    "price_metadata",
+                                    "product_metadata",
+                                    "lookup_key",
+                                  ],
                                 },
                                 {
                                   "type": "null",
@@ -32753,4 +32858,4 @@ export const schemaTables = [
   "customer_metrics_weekly",
 ] as const
 
-export const sdkConsumerContractHash = "6ae4fad17498a6b1cdd23bc8849b6d4ededdd753e0293d84198916782a3e4e71" as const
+export const sdkConsumerContractHash = "a5760adb62a84cfeac8c788a0df91ad5209482669dae3e3fa7b433284760058b" as const

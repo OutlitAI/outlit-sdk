@@ -2339,7 +2339,8 @@
                     "paying",
                     "past_due",
                     "churned"
-                  ]
+                  ],
+                  "description": "none: no billing evidence of a live or former paying relationship; trialing: at least one subscription is trialing and none is active/unpaused; paying: has an active, unpaused subscription, including one that charges nothing, or currently covered paid billing evidence; past_due: no active/trialing subscription wins priority and at least one subscription is past due (a customer whose subscriptions are all past due reads past_due); churned: billing evidence ended or lapsed with no current paid coverage. Send several statuses together when a count needs their union."
                 }
               },
               "arr": {
@@ -5730,7 +5731,8 @@
                     "paying",
                     "past_due",
                     "churned"
-                  ]
+                  ],
+                  "description": "none: no billing evidence of a live or former paying relationship; trialing: at least one subscription is trialing and none is active/unpaused; paying: has an active, unpaused subscription, including one that charges nothing, or currently covered paid billing evidence; past_due: no active/trialing subscription wins priority and at least one subscription is past due (a customer whose subscriptions are all past due reads past_due); churned: billing evidence ended or lapsed with no current paid coverage."
                 },
                 "activatedAt": {
                   "anyOf": [
@@ -8145,6 +8147,33 @@
                                         ],
                                         "description": "The billing provider's product id (prod_...)."
                                       },
+                                      "sku": {
+                                        "description": "The catalogue SKU from price metadata, product metadata, or the price lookup key; null or absent when none is stored.",
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      },
+                                      "skuSource": {
+                                        "description": "Which billing-provider field sku came from.",
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "enum": [
+                                              "price_metadata",
+                                              "product_metadata",
+                                              "lookup_key"
+                                            ]
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      },
                                       "productName": {
                                         "anyOf": [
                                           {
@@ -8463,7 +8492,7 @@
                                               "type": "null"
                                             }
                                           ],
-                                          "description": "converted only when a paid subscription invoice after trial end settled money, lapsed when it ended without that payment or expired incomplete, in_progress while still trialing; null while the outcome is unknown."
+                                          "description": "converted only when a paid subscription invoice after trial end settled money; lapsed when the trial ended without a paid invoice after the trial, or expired incomplete — trial nonconversion evidence, not by itself proof the whole customer churned when another subscription or paid invoice remains; in_progress while still trialing; null while the outcome is unknown."
                                         }
                                       },
                                       "required": [
@@ -19345,6 +19374,44 @@
                               "type": "null"
                             }
                           ]
+                        },
+                        "productId": {
+                          "description": "The billing provider's product id (prod_...).",
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "sku": {
+                          "description": "The catalogue SKU from price metadata, product metadata, or the price lookup key; null when none is stored. Absent only in results saved before SKU existed.",
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "skuSource": {
+                          "description": "Which billing-provider field sku came from.",
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "price_metadata",
+                                "product_metadata",
+                                "lookup_key"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         }
                       },
                       "required": [
@@ -20443,6 +20510,44 @@
                                     ],
                                     "additionalProperties": false,
                                     "description": "amount is in minor units; divide by 10^decimals, or read formatted."
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "productId": {
+                                "description": "The billing provider's product id (prod_...).",
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "sku": {
+                                "description": "The catalogue SKU from price metadata, product metadata, or the price lookup key; null when none is stored. Absent only in results saved before SKU existed.",
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "skuSource": {
+                                "description": "Which billing-provider field sku came from.",
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "price_metadata",
+                                      "product_metadata",
+                                      "lookup_key"
+                                    ]
                                   },
                                   {
                                     "type": "null"
@@ -32049,5 +32154,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "6ae4fad17498a6b1cdd23bc8849b6d4ededdd753e0293d84198916782a3e4e71"
+  "x-outlit-contract-hash": "a5760adb62a84cfeac8c788a0df91ad5209482669dae3e3fa7b433284760058b"
 }
