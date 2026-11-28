@@ -2340,7 +2340,7 @@
                     "past_due",
                     "churned"
                   ],
-                  "description": "none: no billing evidence of a live or former paying relationship; trialing: at least one subscription is trialing and none is active/unpaused; paying: has an active, unpaused subscription, including one that charges nothing, or currently covered paid billing evidence; past_due: no active/trialing subscription wins priority and at least one subscription is past due (a customer whose subscriptions are all past due reads past_due); churned: billing evidence ended or lapsed with no current paid coverage. Send several statuses together when a count needs their union."
+                  "description": "Decision order: an active, unpaused subscription reads paying first; trialing is checked next; past_due is checked next; only then can currently covered paid invoice evidence read paying. none: no billing evidence of a live or former paying relationship; trialing: at least one subscription is trialing and none is active/unpaused; paying: has an active, unpaused subscription, including one that charges nothing, or currently covered paid billing evidence after trialing and past_due subscriptions have been ruled out; past_due: no active/trialing subscription wins priority and at least one subscription is past due, even when a covering one-off invoice exists (a customer whose subscriptions are all past due reads past_due); churned: billing evidence ended or lapsed with no current paid coverage. Send several statuses together when a count needs their union."
                 }
               },
               "arr": {
@@ -5732,7 +5732,7 @@
                     "past_due",
                     "churned"
                   ],
-                  "description": "none: no billing evidence of a live or former paying relationship; trialing: at least one subscription is trialing and none is active/unpaused; paying: has an active, unpaused subscription, including one that charges nothing, or currently covered paid billing evidence; past_due: no active/trialing subscription wins priority and at least one subscription is past due (a customer whose subscriptions are all past due reads past_due); churned: billing evidence ended or lapsed with no current paid coverage."
+                  "description": "Decision order: an active, unpaused subscription reads paying first; trialing is checked next; past_due is checked next; only then can currently covered paid invoice evidence read paying. none: no billing evidence of a live or former paying relationship; trialing: at least one subscription is trialing and none is active/unpaused; paying: has an active, unpaused subscription, including one that charges nothing, or currently covered paid billing evidence after trialing and past_due subscriptions have been ruled out; past_due: no active/trialing subscription wins priority and at least one subscription is past due, even when a covering one-off invoice exists (a customer whose subscriptions are all past due reads past_due); churned: billing evidence ended or lapsed with no current paid coverage."
                 },
                 "activatedAt": {
                   "anyOf": [
@@ -8492,7 +8492,7 @@
                                               "type": "null"
                                             }
                                           ],
-                                          "description": "converted only when a paid subscription invoice after trial end settled money; lapsed when the trial ended without a paid invoice after the trial, or expired incomplete — trial nonconversion evidence, not by itself proof the whole customer churned when another subscription or paid invoice remains; in_progress while still trialing; null while the outcome is unknown."
+                                          "description": "converted only when the same subscription has a positive settled payment strictly after trial end; lapsed when the trial expired incomplete, or when it ended without a qualifying payment (a positive settlement on the same subscription, strictly after trial end) and the payment-evidence read is complete — trial nonconversion evidence, not by itself proof the whole customer churned when another subscription or paid invoice remains; in_progress while still trialing; null while the outcome is unknown, including when payment evidence is incomplete."
                                         }
                                       },
                                       "required": [
@@ -32154,5 +32154,5 @@
       }
     }
   },
-  "x-outlit-contract-hash": "a5760adb62a84cfeac8c788a0df91ad5209482669dae3e3fa7b433284760058b"
+  "x-outlit-contract-hash": "ca56981573c7f17b6e062d1a413e1395426711ede9130a065ebd7160c6dee7aa"
 }
