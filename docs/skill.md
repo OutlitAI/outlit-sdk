@@ -53,7 +53,7 @@ Choose the tool whose result carries the answer. There is no blanket "SQL last" 
 | Deterministic enumeration of records | `outlit_list_sources` with customer, type, participant, provider, and date filters; use it when enumeration itself is the question | `outlit sources list` |
 | Counts, totals, trends, cohorts, custom calculations, or fields SQL carries but the other tools do not | `outlit_get_schema` (`topic`: `views`, `view`, `event_types`, or `examples`), then `outlit_query` | `outlit schema get`, then `outlit query` |
 
-For these summary questions, read the summary section before paging individual records.
+For these summary questions, read the summary section first. When the question reaches past what the section covers (its window, `coverage`, or fields), widen the window or open the underlying records before concluding.
 
 For ARR, rank within one currency: use `outlit_list_customers` with `orderBy: "arr"` and `filters.arr.currency` (CLI `outlit customers list --order-by arr --currency USD`), or rank each currency separately. Never rank across currencies without conversion. `outlit_list_customers` also returns `totals.arr`, the current ARR total of the matched customers, one amount per currency. If neither the customer tools nor SQL can rank the requested field, say plainly that Outlit cannot rank it and offer the closest result it can compute. For fields with no workspace-wide ranking, such as credit balances, compare the named accounts the user cares about with `outlit_get_customer` per account, using the include that carries that field (`credits` for credit balances, `meters` for metered quantities, `features` for feature use), and say that you compared those accounts rather than the whole book. State which path and currency scope you used.
 
@@ -72,16 +72,17 @@ A customer read by id may come back with status `provisional`: a company Outlit 
 
 ### State the answer with its evidence
 
-- State the conclusion the evidence supports plainly and give its evidence; don't hedge a supported conclusion. Retrieved invoices, balances, fact assertions, timeline events, search excerpts, and SQL rows are evidence. Include what each relevant requested section says even when it confirms the obvious.
-- When the question is answerable, proceed on a reasonable stated assumption rather than stopping to ask the user, and say what you assumed.
+- Before writing, list every part the question asks for: each figure, name, date, judgment, and recommendation. Answer each one, or say which tools and scope you checked for it.
+- State a conclusion as settled when a retrieved record settles it, and cite that record. Retrieved invoices, balances, fact assertions, timeline events, search excerpts, and SQL rows are evidence. Hedge only when two records conflict or the record that would settle the point is missing; then name the conflicting records, or the missing record and where you looked. Include what each relevant requested section says even when it confirms the obvious.
+- When a record you can read would settle a point, read it rather than assume. Otherwise, when the question is answerable, proceed on a reasonable stated assumption rather than stopping to ask the user, and say what you assumed.
 - For "most recent" or "latest," sort by the relevant date and take the newest.
 - When a customer's latest email or ticket contradicts an older CRM field, the newer source wins; cite both.
 - Name the timestamp you grouped or filtered by, and call a partial period partial.
-- When a section returns several items for what was asked, report every one.
+- When a section, search, or listing returns several items for what was asked, report every one, or say why you set one aside.
 - Drop out-of-scope records before counting.
 - Read each customer in scope before generalising about the group.
 - Low logins alone don't mean low engagement: check integrations, digests, and API activity.
-- The support section counts ticket messages only, so replies sent by email need the email or timeline sources.
+- The support section summarises support tickets only; replies sent by email need the email or timeline sources.
 - A CRM health or at-risk field is evidence: weigh it with billing and usage, and don't override it with a long contract term alone.
 - Contracted expansion shows in deals and paper; self-serve expansion shows in billed volume.
 - Read engagement and activity fields (opens, clicks, digests) when the question is about engagement.
@@ -110,13 +111,13 @@ Source types are `email`, `call`, `calendar_event`, `support_ticket`, `opportuni
 
 ### SQL analytics
 
-Call `outlit_get_schema` before writing SQL. The public views are `activity`, `customers`, `users`, and `revenue`; the schema describes each view's columns, units, coverage, freshness, duplicates, and rules. Keep SQL read-only, filter activity by time, use `LIMIT`, prefer specific columns, and inspect JSON shapes before filtering nested values. Money is in minor units: divide `arr_amount` by `10^arr_decimals`, keep its `arr_currency` separate, and never add amounts across currencies. For syntax and query patterns, read [references/sql-reference.md](https://raw.githubusercontent.com/OutlitAI/skills/52a9bffb76f1882f1c156ae8f81bc889fdfa27d3/skills/outlit/references/sql-reference.md).
+Call `outlit_get_schema` before writing SQL. The public views are `activity`, `customers`, `users`, and `revenue`; the schema describes each view's columns, units, coverage, freshness, duplicates, and rules. Keep SQL read-only, filter activity by time, use `LIMIT`, prefer specific columns, and inspect JSON shapes before filtering nested values. Money is in minor units: divide `arr_amount` by `10^arr_decimals`, keep its `arr_currency` separate, and never add amounts across currencies. For syntax and query patterns, read [references/sql-reference.md](https://raw.githubusercontent.com/OutlitAI/skills/720d65fa4e3729e25e77336edd592a0879534806/skills/outlit/references/sql-reference.md).
 
 ## Setup, Administration, and Writes
 
 Answering customer questions is read-only. Interface setup, authentication, CLI and MCP configuration, Pi packages, authorization, integrations, customer ownership and access, destinations, workspace settings, Features, tasks, identity diagnosis, and customer merges are separate workspace-administration workflows. Read the full setup/admin reference at <https://github.com/OutlitAI/skills/blob/main/skills/outlit/references/setup-and-admin.md> (packaged path `skills/outlit/references/setup-and-admin.md`) for those workflows.
 
-Use write tools only when the user explicitly asks. Writes take `idempotencyKey` (CLI `--idempotency-key`); a retry with the same key and input returns the first result. Customer merges are dangerous and permanent: read [references/identity.md](https://raw.githubusercontent.com/OutlitAI/skills/52a9bffb76f1882f1c156ae8f81bc889fdfa27d3/skills/outlit/references/identity.md) before previewing, rejecting, executing, retrying, or tracking one.
+Use write tools only when the user explicitly asks. Writes take `idempotencyKey` (CLI `--idempotency-key`); a retry with the same key and input returns the first result. Customer merges are dangerous and permanent: read [references/identity.md](https://raw.githubusercontent.com/OutlitAI/skills/720d65fa4e3729e25e77336edd592a0879534806/skills/outlit/references/identity.md) before previewing, rejecting, executing, retrying, or tracking one.
 
 When the user wants to share Outlit product feedback, use `outlit_submit_feedback` when available with `body` and optional `area`/`context`, or `outlit feedback submit --body "..." --json`. Feedback does not open a support ticket.
 
