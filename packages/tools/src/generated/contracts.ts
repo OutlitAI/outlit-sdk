@@ -3197,7 +3197,7 @@ export const publicToolContracts = {
                                       "description": "The billing provider's product id (prod_...).",
                                     },
                                     "sku": {
-                                      "description": "The catalogue SKU from price metadata, product metadata, or the price lookup key; null or absent when none is stored.",
+                                      "description": "The catalogue SKU from price metadata, product metadata, or the price lookup key; null or absent when none is stored or catalog evidence is unavailable.",
                                       "anyOf": [
                                         {
                                           "type": "string",
@@ -3208,7 +3208,7 @@ export const publicToolContracts = {
                                       ],
                                     },
                                     "skuSource": {
-                                      "description": "Which billing-provider field sku came from.",
+                                      "description": "Which billing-provider field sku came from; unavailable when the catalog could not be read, so no lower-priority SKU was substituted.",
                                       "anyOf": [
                                         {
                                           "type": "string",
@@ -3216,6 +3216,7 @@ export const publicToolContracts = {
                                             "price_metadata",
                                             "product_metadata",
                                             "lookup_key",
+                                            "unavailable",
                                           ],
                                         },
                                         {
@@ -15488,7 +15489,7 @@ export const publicToolContracts = {
                         ],
                       },
                       "sku": {
-                        "description": "The catalogue SKU from price metadata, product metadata, or the price lookup key; null when none is stored. Absent only in results saved before SKU existed.",
+                        "description": "The catalogue SKU from price metadata, product metadata, or the price lookup key; null when none is stored or catalog evidence is unavailable. Absent only in results saved before SKU existed.",
                         "anyOf": [
                           {
                             "type": "string",
@@ -15499,7 +15500,7 @@ export const publicToolContracts = {
                         ],
                       },
                       "skuSource": {
-                        "description": "Which billing-provider field sku came from.",
+                        "description": "Which billing-provider field sku came from; unavailable when the catalog could not be read, so no lower-priority SKU was substituted.",
                         "anyOf": [
                           {
                             "type": "string",
@@ -15507,6 +15508,7 @@ export const publicToolContracts = {
                               "price_metadata",
                               "product_metadata",
                               "lookup_key",
+                              "unavailable",
                             ],
                           },
                           {
@@ -16751,7 +16753,7 @@ export const publicToolContracts = {
                               ],
                             },
                             "sku": {
-                              "description": "The catalogue SKU from price metadata, product metadata, or the price lookup key; null when none is stored. Absent only in results saved before SKU existed.",
+                              "description": "The catalogue SKU from price metadata, product metadata, or the price lookup key; null when none is stored or catalog evidence is unavailable. Absent only in results saved before SKU existed.",
                               "anyOf": [
                                 {
                                   "type": "string",
@@ -16762,7 +16764,7 @@ export const publicToolContracts = {
                               ],
                             },
                             "skuSource": {
-                              "description": "Which billing-provider field sku came from.",
+                              "description": "Which billing-provider field sku came from; unavailable when the catalog could not be read, so no lower-priority SKU was substituted.",
                               "anyOf": [
                                 {
                                   "type": "string",
@@ -16770,6 +16772,7 @@ export const publicToolContracts = {
                                     "price_metadata",
                                     "product_metadata",
                                     "lookup_key",
+                                    "unavailable",
                                   ],
                                 },
                                 {
@@ -32858,4 +32861,4 @@ export const schemaTables = [
   "customer_metrics_weekly",
 ] as const
 
-export const sdkConsumerContractHash = "ca56981573c7f17b6e062d1a413e1395426711ede9130a065ebd7160c6dee7aa" as const
+export const sdkConsumerContractHash = "de03c65a77d02c0cbdbd1c2a1e60aa6903ff06c2a581b4f413bf5df0eb76d497" as const
